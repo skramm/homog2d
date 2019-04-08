@@ -13,19 +13,19 @@
 namespace homog2d {
 
 //------------------------------------------------------------------
+/// "Private" class
 class Root
 {
 	protected:
-		Root( double a=0., double b=0., double c=1. )
-			: _a(a), _b(b), _c(c)
-		{}
+	Root( double a=0., double b=0., double c=1. )
+		: _a(a), _b(b), _c(c)
+	{}
 	double _a, _b, _c;
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 	friend Root crossProduct( const Root& r1, const Root& r2 )
 	{
 		Root res;
-//		std::cout << "Root crossProduct, r1=" << r1 << " r2=" << r2 << "\n";
 		res._a = r1._b * r2._c - r1._c * r2._b;
 		res._b = r1._c * r2._a - r1._a * r2._c;
 		res._c = r1._a * r2._b - r1._b * r2._a;
@@ -53,13 +53,12 @@ class Line2d : public Root
 	}
 
 	public:
-		Line2d( double dx, double dy )
-		{
-			normalize();
-		}
+		Line2d( double dx, double dy );
+		Line2d( const Point2d&, const Point2d& );
+		/// creates a vertical line
 		Line2d(): Root(1.,0.,0.)
 		{}
-		double DistToPoint( const Point2d& ) const;
+		double distToPoint( const Point2d& ) const;
 		Point2d operator * ( const Line2d& );
 		std::pair<double,double> getVector() const;
 		bool operator == ( const Line2d& li ) const
@@ -75,12 +74,11 @@ class Line2d : public Root
 
 		}
 	private:
-		/// Normalise to unit length, and make sure \c a is always >0
-
 		Line2d( const Root& r ): Root(r)
 		{
 			normalize();
 		}
+		/// Normalise to unit length, and make sure \c a is always >0
 		void normalize()
 		{
 			auto sq = std::hypot( _a, _b );
@@ -94,7 +92,6 @@ class Line2d : public Root
 				_c = - _c;
 			}
 		}
-
 };
 
 //------------------------------------------------------------------
@@ -113,9 +110,10 @@ class Point2d : public Root
 		{
 			normalize();
 		}
+		Point2d( const Line2d&, const Line2d& );
 		Line2d operator * ( const Point2d& );
 		double getX() const
-		{
+		{ /// \todo \c c should always be 1 if stored as normalized values, so what's the point here ? Clear out this.
 			return _a/_c;
 		}
 		double getY() const
@@ -158,10 +156,33 @@ inline
 Line2d
 Point2d::operator * ( const Point2d& p2 )
 {
-//	std::cout << "Point2d::operator *\n p1=" << *this << " p2=" << p2 << "\n";
 	auto res = static_cast<Line2d>(crossProduct( *this, p2 ) );
 	res.normalize();
 	return res;
+}
+
+//------------------------------------------------------------------
+/// Creates a line starting from (0,0) and with the given slope (dx,dy)
+inline
+Line2d::Line2d( double dx, double dy )
+{
+	Point2d( dx, dy );
+	*this = Point2d() * Point2d( dx, dy );
+	normalize();
+}
+//------------------------------------------------------------------
+inline
+Line2d::Line2d( const Point2d& p1, const Point2d& p2 )
+{
+	*this = static_cast<Line2d>(crossProduct( p1, p2 ) );
+	normalize();
+}
+//------------------------------------------------------------------
+inline
+Point2d::Point2d( const Line2d& l1, const Line2d& l2 )
+{
+	*this = static_cast<Point2d>(crossProduct( l1, l2 ) );
+	normalize();
 }
 
 //------------------------------------------------------------------
@@ -176,7 +197,7 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 */
 inline
 double
-Line2d::DistToPoint( const Point2d& pt ) const
+Line2d::distToPoint( const Point2d& pt ) const
 {
 	return std::fabs( (_a * pt.getX() + _b * pt.getY() + _c) / std::hypot( _a, _b ) );
 }

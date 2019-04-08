@@ -9,7 +9,6 @@ run with "make test"
 
 #include "homog2d.hpp"
 
-
 using namespace homog2d;
 
 TEST_CASE( "a test", "[test1]" )
@@ -20,10 +19,25 @@ TEST_CASE( "a test", "[test1]" )
 	Point2d ptA2(2,2);
 	std::cout << "ptA2="<< ptA2 << '\n';
 
-	Line2d lA, lB;
-	std::cout << "lineA="<< lA << '\n';
-	lA = ptA1 * ptA2;
 
-	std::cout << "lineA="<< lA << '\n';
+	Line2d lA = ptA1 * ptA2;
+	Line2d lA2 = ptA2 * ptA1;
+	CHECK( lA == lA2 );
+
+	Point2d ptB1(0,2);
+	Point2d ptB2(2,0);
+	Line2d  lB = ptB1 * ptB2;
+
+	Point2d middle = lA * lB;
+
+	std::cout << "middle="<< middle << '\n';
+	CHECK( middle == Point2d(1.,1.) );
+
 }
 
+TEST_CASE( "test2", "[test2]" )
+{
+	Line2d li(2,1);
+	auto d = li.distToPoint( Point2d() );
+	CHECK( d == 0. );
+}
