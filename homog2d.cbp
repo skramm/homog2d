@@ -22,6 +22,12 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="LICENSE" />
+		<Unit filename="Makefile" />
+		<Unit filename="README.md" />
+		<Unit filename="doxyfile" />
+		<Unit filename="homog2d.hpp" />
+		<Unit filename="homog2d_test.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

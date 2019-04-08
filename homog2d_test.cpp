@@ -54,7 +54,7 @@ TEST_CASE( "test2", "[test2]" )
 
 TEST_CASE( "test3", "[test3]" )
 {
-	Line2d li(2,1);
-	auto d = li.distToPoint( Point2d() );
-	CHECK( d == 0. );
+	Line2d lA( Point2d(0,0), Point2d(2,2) );
+	lA.addVertOffset( 2. );
+	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
 }

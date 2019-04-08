@@ -96,7 +96,11 @@ class Line2d : public Root
 			if( std::fabs( _c - li._c ) > eps )
 				return false;
 			return true;
-
+		}
+		void addVertOffset( double v )
+		{
+			_c += _b * v;
+			normalize();
 		}
 	private:
 		Line2d( const Root& r ): Root(r)
@@ -110,7 +114,7 @@ class Line2d : public Root
 			_a /= sq;
 			_b /= sq;
 			_c /= sq;
-			if( std::signbit(_a) )
+			if( std::signbit(_a) ) //a allways >0
 			{
 				_a = - _a;
 				_b = - _b;
@@ -204,6 +208,15 @@ Point2d::Point2d( const Line2d& l1, const Line2d& l2 )
 {
 	*this = static_cast<Point2d>(crossProduct( l1, l2 ) );
 	normalize();
+}
+//------------------------------------------------------------------
+/// returns slope of line as a unit-length vector (dx, dy), with dx>0
+inline
+std::pair<double,double>
+Line2d::getVector() const
+{
+	std::pair<double,double> res;
+	return res;
 }
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt
