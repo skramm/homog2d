@@ -1,8 +1,33 @@
+/**************************************************************************
+
+    This file is the C++ library "homog2d", dedicated to
+    handle 2D lines and points
+
+    Author & Copyright 2019 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr, or http://www.litislab.eu/
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file homog2d.hpp
-\brief single header file, implements some 2D homogeneous stuff
+\brief single header file, implements some 2D homogeneous stuff.
+See https://github.com/skramm/homog2d
 */
-
 
 #ifndef HG_HOMOG2D_HPP
 #define HG_HOMOG2D_HPP
@@ -146,9 +171,7 @@ inline
 Point2d
 Line2d::operator * ( const Line2d& l2 )
 {
-	auto res = static_cast<Point2d>(crossProduct( *this, l2 ));
-	res.normalize();
-	return res;
+	return Point2d( *this, l2 );
 }
 
 /// A line is defined by 2 points
@@ -156,9 +179,7 @@ inline
 Line2d
 Point2d::operator * ( const Point2d& p2 )
 {
-	auto res = static_cast<Line2d>(crossProduct( *this, p2 ) );
-	res.normalize();
-	return res;
+	return Line2d( *this, p2 );
 }
 
 //------------------------------------------------------------------
@@ -184,7 +205,6 @@ Point2d::Point2d( const Line2d& l1, const Line2d& l2 )
 	*this = static_cast<Point2d>(crossProduct( l1, l2 ) );
 	normalize();
 }
-
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt
 /**
