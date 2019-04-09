@@ -5,7 +5,7 @@ test: homog2d_test
 
 
 homog2d_test: homog2d_test.cpp homog2d.hpp
-	$(CXX) -o homog2d_test homog2d_test.cpp
+	$(CXX) -std=c++11 -o homog2d_test homog2d_test.cpp
 
 doc: html/index.html
 	@echo "done !"
