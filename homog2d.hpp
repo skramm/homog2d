@@ -79,11 +79,12 @@ class Line2d : public Root
 
 	public:
 		Line2d( double dx, double dy );
+		/// Create a line from two points
 		Line2d( const Point2d&, const Point2d& );
 		/// creates a vertical line
 		Line2d(): Root(1.,0.,0.)
 		{}
-		double distToPoint( const Point2d& ) const;
+		double distToPoint( const Point2d& pt ) const;
 		Point2d operator * ( const Line2d& );
 		std::pair<double,double> getVector() const;
 		bool operator == ( const Line2d& li ) const
@@ -97,9 +98,10 @@ class Line2d : public Root
 				return false;
 			return true;
 		}
+		/// Adds vertical offset to line
 		void addVertOffset( double v )
 		{
-			_c += _b * v;
+			_c = _c - v*_b;
 			normalize();
 		}
 	private:
@@ -215,7 +217,7 @@ inline
 std::pair<double,double>
 Line2d::getVector() const
 {
-	std::pair<double,double> res;
+	std::pair<double,double> res(_a,_b);
 	return res;
 }
 //------------------------------------------------------------------
@@ -227,6 +229,8 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
   d = -----------------------
          sqrt( a*a + b*b )
 </pre>
+
+\todo Do we really require computation of hypot (because the line is supposed to be normalized, i.e. h=1 ?)
 */
 inline
 double
