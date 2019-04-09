@@ -65,6 +65,9 @@ class Root
 
 class Point2d;
 
+/// Used in Line2d::getValue()
+enum En_GivenCoord { GC_X, GC_Y };
+
 //------------------------------------------------------------------
 /// Homogeneous 2D line
 class Line2d : public Root
@@ -103,6 +106,14 @@ class Line2d : public Root
 		{
 			_c = _c - v*_b;
 			normalize();
+		}
+		/// Returns one of the coordinates of a point on the line, given the other one
+		double getValue( En_GivenCoord gc, double other )
+		{
+			if( gc == GC_X )
+				return ( -_a * other - _c ) / _b;
+			else
+				return ( -_b * other - _c ) / _a;
 		}
 	private:
 		Line2d( const Root& r ): Root(r)

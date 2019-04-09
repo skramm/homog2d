@@ -50,6 +50,11 @@ TEST_CASE( "dist2points", "[test2]" )
 	Line2d li(2,1);
 	auto d = li.distToPoint( Point2d() );
 	CHECK( d == 0. );
+	CHECK( li.getValue( GC_X, 0. ) == 0. );
+	CHECK( li.getValue( GC_X, 2. ) == 1. );
+
+	CHECK( li.getValue( GC_Y, 0. ) == 0. );
+	CHECK( li.getValue( GC_Y, 1. ) == 2. );
 }
 
 TEST_CASE( "offset test", "[test3]" )
