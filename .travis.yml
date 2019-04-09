@@ -1,2 +1,3 @@
 language: cpp
+install: wget https://github.com/catchorg/Catch2/releases/download/v2.7.0/catch.hpp -O /usr/local/include
 script: make test
