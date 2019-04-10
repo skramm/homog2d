@@ -34,6 +34,7 @@ See https://github.com/skramm/homog2d
 
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 namespace homog2d {
 
@@ -42,30 +43,34 @@ namespace homog2d {
 class Homogr
 {
 	public:
+	/// Default constructor, initialize to unit transformation
 	Homogr()
 	{
-		_data.resize(3);
-		for( auto& li: _data )
-			li.resize(3,0.);
+		p_allocate();
 		_data[0][0] = _data[1][1] = _data[2][2] = 1.;
 		_isNormalized = true;
 	}
-
-	Homogr( const std::vector<std::vector<double>>& in )
+/// Constructor, used to fill with another "vector of vector" matrix
+/** \warning
+-Input matrix \b must be 3 x 3
+-no checking is done on validity of matrix as an homography.
+Thus some assert can be triggered elsewhere
+*/
+	template<typename T>
+	Homogr( const std::vector<std::vector<T>>& in )
 	{
-		_data = in;
+		assert( in.size() == 3 );
+		for( auto li: in )
+			assert( li.size() == 3 );
+		p_allocate();
+		for( auto i=0; i<3; i++ )
+			for( auto j=0; j<3; j++ )
+				_data[i][j] = in[i][j];
 		normalize();
 	}
 	void clear()
 	{
-#if 1
 		_data = { { 1., 0., 0.}, { 0., 1., 0.}, {0., 0., 1.} };
-#else
-		for( auto& li: _data )
-			for( auto& e: li )
-				e = 0.;
-		_data[0][0] = _data[1][1] = _data[2][2] = 1.;
-#endif
 		_isNormalized = true;
 	}
 	/// Setter \warning No normalization is done, as this can be done
@@ -98,7 +103,7 @@ class Homogr
 		_data[1][2] = ty;
 		_isNormalized = true;
 	}
-
+/// Normalisation
 	void normalize() const
 	{
 		auto eps = std::numeric_limits<double>::epsilon();
@@ -113,6 +118,37 @@ class Homogr
 					e = -e;
 		_isNormalized = true;
 	}
+/// Transpose matrix
+	void transpose()
+	{
+		Homogr out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				out._data[i][j] = _data[j][i];
+		*this = out;
+	}
+/// Inversr matrix
+	void inverse()
+	{
+		Homogr adjugate = p_adjugate() / p_det();
+		*this = adjugate;
+	}
+	Homogr& operator / (double v )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				_data[i][j] /= v;
+		return *this;
+	}
+	Homogr& operator * (double v )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				_data[i][j] *= v;
+		return *this;
+	}
+
+/// Matrix multiplication
 	friend Homogr operator * ( const Homogr& h1, const Homogr& h2 )
 	{
 		Homogr out;
@@ -123,7 +159,7 @@ class Homogr
 					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
 		return out;
 	}
-/// Comparison operator. Does normalisation if required
+/// Comparison operator. Does normalization if required
 	bool operator == ( const Homogr& li ) const
 	{
 		if( !_isNormalized )
@@ -139,12 +175,21 @@ class Homogr
 		return true;
 	}
 
+//////////////////////////
+//   PRIVATE FUNCTIONS  //
+//////////////////////////
 	private:
 	void p_zero()
 	{
 		for( auto& li: _data )
 			for( auto& e: li )
 				e = 0.;
+	}
+	void p_allocate()
+	{
+		_data.resize(3);
+		for( auto& li: _data )
+			li.resize(3,0.);
 	}
 	void p_divideBy( size_t r, size_t c ) const
 	{
@@ -153,7 +198,49 @@ class Homogr
 				for( auto& e: li )
 					e /= _data[r][c];
 	}
+/// Return determinant of matrix
+/**
+See https://en.wikipedia.org/wiki/Determinant
+*/
+	double p_det()
+	{
+		double det;
+		return det;
+	}
+	double p_det2x2( std::vector<int> v )
+	{
+		std::transform(
+			std::begin(v),
+			std::end(v),
+			std::begin(v),
+			[](int& a){ return a-1;}
+		);
+		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
+		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
+		return det;
+	}
+/// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
+	Homogr p_adjugate()
+	{
+		Homogr out;
+		setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 2,3} ) );
+		setValue( 0, 1, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
+		setValue( 0, 2,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
 
+		setValue( 1, 0, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
+		setValue( 1, 1,  p_det2x2( {1,1, 1,3, 3,1, 3,3} ) );
+		setValue( 1, 2, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
+
+		setValue( 2, 0,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
+		setValue( 2, 1, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
+		setValue( 2, 2,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
+
+		return out;
+	}
+//////////////////////////
+//      DATA SECTION    //
+//////////////////////////
+	private:
 	mutable std::vector<std::vector<double>> _data;
 	mutable bool _isNormalized = false;
 

@@ -68,9 +68,29 @@ TEST_CASE( "offset test", "[test3]" )
 
 TEST_CASE( "test matrix", "[testH]" )
 {
+/*	std::vector<double> vA(25,3.14);
+	std::vector<double> vB;
+	vB = vA;
+	std::cout << "vB=" << vB[0] << "\n";
+*/
 	Homogr H1,H2;
 	std::cout << H1 << "\n";
 	Homogr H = H1*H2;
 	CHECK( H == H1 );
+
+	std::vector<std::vector<float>> m1a(3);
+	for( auto& li: m1a)
+		li.resize(3,1);
+	Homogr H3a(m1a);
+
+	std::vector<std::vector<double>> m1b(3);
+	for( auto& li: m1b)
+		li.resize(3,1);
+	Homogr H3b(m1b);
+
+	std::vector<std::vector<int>> m1c(3);
+	for( auto& li: m1c)
+		li.resize(3,1);
+	Homogr H3c(m1c);
 
 }
