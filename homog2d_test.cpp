@@ -1,3 +1,28 @@
+/**************************************************************************
+
+    This file is part of the C++ library "homog2d", dedicated to
+    handle 2D lines and points
+
+    Author & Copyright 2019 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr, or http://www.litislab.eu/
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file homog2d_test.cpp
 \brief A test file for homog2d, needs Catch https://github.com/catchorg/Catch2,
@@ -68,11 +93,6 @@ TEST_CASE( "offset test", "[test3]" )
 
 TEST_CASE( "test matrix", "[testH]" )
 {
-/*	std::vector<double> vA(25,3.14);
-	std::vector<double> vB;
-	vB = vA;
-	std::cout << "vB=" << vB[0] << "\n";
-*/
 	Homogr H1,H2;
 	std::cout << H1 << "\n";
 	Homogr H = H1*H2;
@@ -92,5 +112,13 @@ TEST_CASE( "test matrix", "[testH]" )
 	for( auto& li: m1c)
 		li.resize(3,1);
 	Homogr H3c(m1c);
+
+	Homogr Ht;
+	Ht.setTranslation( 3., 2. );
+	Point2d pt1(1,1);
+	Point2d pt2 = Ht * pt1;
+	std::cout << "Ht="<<  Ht << " pt2=" << pt2 << "\n";
+	CHECK( pt2.getX() == 4. );
+	CHECK( pt2.getY() == 3. );
 
 }

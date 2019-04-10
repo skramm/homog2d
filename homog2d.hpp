@@ -38,6 +38,9 @@ See https://github.com/skramm/homog2d
 
 namespace homog2d {
 
+// forward declaration
+class Point2d;
+
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
 class Homogr
@@ -52,8 +55,8 @@ class Homogr
 	}
 /// Constructor, used to fill with another "vector of vector" matrix
 /** \warning
--Input matrix \b must be 3 x 3
--no checking is done on validity of matrix as an homography.
+- Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
+- no checking is done on validity of matrix as an homography.
 Thus some assert can be triggered elsewhere
 */
 	template<typename T>
@@ -127,20 +130,26 @@ Thus some assert can be triggered elsewhere
 				out._data[i][j] = _data[j][i];
 		*this = out;
 	}
-/// Inversr matrix
+/// Inverse matrix
 	void inverse()
 	{
 		Homogr adjugate = p_adjugate() / p_det();
 		*this = adjugate;
 	}
-	Homogr& operator / (double v )
+/// Divide all elements by scalar
+	Homogr& operator / (double v)
 	{
+#if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] /= v;
 		return *this;
+#else
+		return *this * 1.0/v;
+#endif
 	}
-	Homogr& operator * (double v )
+/// Multiply all elements by scalar
+	Homogr& operator * (double v)
 	{
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -159,6 +168,10 @@ Thus some assert can be triggered elsewhere
 					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
 		return out;
 	}
+
+/// Apply homography to a point
+	friend Point2d operator * ( const Homogr& h1, const Point2d& h2 );
+
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Homogr& li ) const
 	{
@@ -204,7 +217,9 @@ See https://en.wikipedia.org/wiki/Determinant
 */
 	double p_det()
 	{
-		double det;
+		double det = _data[0][0] * p_det2x2( {2,2, 2,3, 3,2, 3,3} );
+		det       -= _data[0][1] * p_det2x2( {2,1, 2,3, 3,1, 3,3} );
+		det       += _data[0][2] * p_det2x2( {2,1, 2,2, 3,1, 3,2} );
 		return det;
 	}
 	double p_det2x2( std::vector<int> v )
@@ -213,13 +228,16 @@ See https://en.wikipedia.org/wiki/Determinant
 			std::begin(v),
 			std::end(v),
 			std::begin(v),
-			[](int& a){ return a-1;}
+			[](int& a){ return a-1;} // lambda
 		);
 		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
 		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
+/**
+\todo Decrement each index so we can remove the need for std::transform()
+*/
 	Homogr p_adjugate()
 	{
 		Homogr out;
@@ -260,29 +278,34 @@ See https://en.wikipedia.org/wiki/Determinant
 /// "Private" class
 class Root
 {
+	friend class Homogr;
 	protected:
 	Root( double a=0., double b=0., double c=1. )
-		: _a(a), _b(b), _c(c)
-	{}
-	double _a, _b, _c;
+	{
+		_v.resize(3);
+		_v[0] = a;
+		_v[1] = b;
+		_v[2] = c;
+	}
+
+	std::vector<double> _v;
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 	friend Root crossProduct( const Root& r1, const Root& r2 )
 	{
 		Root res;
-		res._a = r1._b * r2._c - r1._c * r2._b;
-		res._b = r1._c * r2._a - r1._a * r2._c;
-		res._c = r1._a * r2._b - r1._b * r2._a;
+		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
+		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
+		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
 		return res;
 	}
 	friend std::ostream& operator << ( std::ostream& f, const Root& r )
 	{
-		f << '[' << r._a << ',' << r._b << ',' << r._c << "] ";
+		f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 		return f;
 	}
 };
 
-class Point2d;
 
 /// Used in Line2d::getValue()
 enum En_GivenCoord { GC_X, GC_Y };
@@ -312,27 +335,24 @@ class Line2d : public Root
 		bool operator == ( const Line2d& li ) const
 		{
 			auto eps = std::numeric_limits<double>::epsilon();
-			if( std::fabs( _a - li._a ) > eps )
-				return false;
-			if( std::fabs( _b - li._b ) > eps )
-				return false;
-			if( std::fabs( _c - li._c ) > eps )
-				return false;
+			for( int i=0; i<3; i++ )
+				if( std::fabs( _v[i] - li._v[i] ) > eps )
+					return false;
 			return true;
 		}
 		/// Adds vertical offset to line
 		void addVertOffset( double v )
 		{
-			_c = _c - v*_b;
+			_v[2] = _v[2] - v*_v[1];
 			normalize();
 		}
 		/// Returns one of the coordinates of a point on the line, given the other one
 		double getValue( En_GivenCoord gc, double other )
 		{
 			if( gc == GC_X )
-				return ( -_a * other - _c ) / _b;
+				return ( -_v[0] * other - _v[2] ) / _v[1];
 			else
-				return ( -_b * other - _c ) / _a;
+				return ( -_v[1] * other - _v[2] ) / _v[0];
 		}
 	private:
 		Line2d( const Root& r ): Root(r)
@@ -342,16 +362,12 @@ class Line2d : public Root
 		/// Normalise to unit length, and make sure \c a is always >0
 		void normalize()
 		{
-			auto sq = std::hypot( _a, _b );
-			_a /= sq;
-			_b /= sq;
-			_c /= sq;
-			if( std::signbit(_a) ) //a allways >0
-			{
-				_a = - _a;
-				_b = - _b;
-				_c = - _c;
-			}
+			auto sq = std::hypot( _v[0], _v[1] );
+			for( int i=0; i<3; i++ )
+				_v[i] /= sq;
+			if( std::signbit(_v[0]) ) //a allways >0
+				for( int i=0; i<3; i++ )
+					_v[i] = -_v[i];
 		}
 };
 
@@ -360,6 +376,7 @@ class Line2d : public Root
 class Point2d : public Root
 {
 	friend class Line2d;
+	friend Point2d operator * ( const Homogr& h, const Point2d& pt_in );
 	friend std::ostream& operator << ( std::ostream& f, const Point2d& pt )
 	{
 		f << static_cast<Root>(pt);
@@ -375,18 +392,18 @@ class Point2d : public Root
 		Line2d operator * ( const Point2d& );
 		double getX() const
 		{ /// \todo \c c should always be 1 if stored as normalized values, so what's the point here ? Clear out this.
-			return _a/_c;
+			return _v[0]/_v[2];
 		}
 		double getY() const
 		{
-			return _b/_c;
+			return _v[1]/_v[2];
 		}
 		bool operator == ( const Point2d& pt ) const
 		{
 			auto eps = std::numeric_limits<double>::epsilon();
-			if( std::fabs( _a - pt._a ) > eps )
+			if( std::fabs( _v[0] - pt._v[0] ) > eps )
 				return false;
-			if( std::fabs( _b - pt._b ) > eps )
+			if( std::fabs( _v[1] - pt._v[1] ) > eps )
 				return false;
 			return true;
 		}
@@ -395,9 +412,9 @@ class Point2d : public Root
 		{}
 		void normalize()
 		{
-			_a /= _c;
-			_b /= _c;
-			_c /= 1.;
+			_v[0] /= _v[2];
+			_v[1] /= _v[2];
+			_v[2] /= 1.;
 		}
 };
 
@@ -447,7 +464,7 @@ inline
 std::pair<double,double>
 Line2d::getVector() const
 {
-	std::pair<double,double> res(_a,_b);
+	std::pair<double,double> res(_v[0],_v[1]);
 	return res;
 }
 //------------------------------------------------------------------
@@ -466,11 +483,21 @@ inline
 double
 Line2d::distToPoint( const Point2d& pt ) const
 {
-	return std::fabs( (_a * pt.getX() + _b * pt.getY() + _c) / std::hypot( _a, _b ) );
+	return std::fabs( (_v[0] * pt.getX() + _v[1] * pt.getY() + _v[2]) / std::hypot( _v[0], _v[1] ) );
 }
 //------------------------------------------------------------------
+/// Apply homography to a point
+Point2d operator * ( const Homogr& h, const Point2d& pt_in )
+{
+	Point2d pt_out;
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			pt_out._v[i] += h._data[i][j] * pt_in._v[j];
 
+	return pt_out;
+}
 
+//------------------------------------------------------------------
 
 
 } // namespace homog2d end
