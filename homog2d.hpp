@@ -38,6 +38,138 @@ See https://github.com/skramm/homog2d
 namespace homog2d {
 
 //------------------------------------------------------------------
+/// A 2D homography (3x3 matrix)
+class Homogr
+{
+	public:
+	Homogr()
+	{
+		_data.resize(3);
+		for( auto& li: _data )
+			li.resize(3,0.);
+		_data[0][0] = _data[1][1] = _data[2][2] = 1.;
+		_isNormalized = true;
+	}
+
+	Homogr( const std::vector<std::vector<double>>& in )
+	{
+		_data = in;
+		normalize();
+	}
+	void clear()
+	{
+#if 1
+		_data = { { 1., 0., 0.}, { 0., 1., 0.}, {0., 0., 1.} };
+#else
+		for( auto& li: _data )
+			for( auto& e: li )
+				e = 0.;
+		_data[0][0] = _data[1][1] = _data[2][2] = 1.;
+#endif
+		_isNormalized = true;
+	}
+	/// Setter \warning No normalization is done, as this can be done
+	/// several times to store values, we therefore must not normalize in between
+	void setValue( size_t r, size_t c, double v )
+	{
+		_data[r][c] = v;
+		_isNormalized = false;
+	}
+	double getValue( size_t r, size_t c )
+	{
+		return _data[r][c];
+	}
+	/// Adds a translation tx,ty to the matrix
+	template<typename T>
+	void addTranslation( T tx, T ty )
+	{
+		Homogr trans;
+		_data[0][2] = tx;
+		_data[1][2] = ty;
+		*this = trans * *this;
+		normalize();
+	}
+	/// Sets the matrix as a translation tx,ty
+	template<typename T>
+	void setTranslation( T tx, T ty )
+	{
+		clear();
+		_data[0][2] = tx;
+		_data[1][2] = ty;
+		_isNormalized = true;
+	}
+
+	void normalize() const
+	{
+		auto eps = std::numeric_limits<double>::epsilon();
+
+		if( std::fabs(_data[2][2]) < eps ) // if [2][2] is null, then we use [2][1]
+			p_divideBy( 2, 1 );
+		else
+			p_divideBy( 2, 2 );
+		if( std::signbit(_data[2][2]) )
+			for( auto& li: _data )
+				for( auto& e: li )
+					e = -e;
+		_isNormalized = true;
+	}
+	friend Homogr operator * ( const Homogr& h1, const Homogr& h2 )
+	{
+		Homogr out;
+		out.p_zero();
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				for( int k=0; k<3; k++ )
+					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
+		return out;
+	}
+/// Comparison operator. Does normalisation if required
+	bool operator == ( const Homogr& li ) const
+	{
+		if( !_isNormalized )
+			normalize();
+		if( !li._isNormalized )
+			li.normalize();
+
+		auto eps = std::numeric_limits<double>::epsilon();
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				if( std::fabs( _data[i][j] - li._data[i][j] ) > eps )
+					return false;
+		return true;
+	}
+
+	private:
+	void p_zero()
+	{
+		for( auto& li: _data )
+			for( auto& e: li )
+				e = 0.;
+	}
+	void p_divideBy( size_t r, size_t c ) const
+	{
+		assert( std::fabs( _data[r][c] ) > std::numeric_limits<double>::epsilon() );
+			for( auto& li: _data )
+				for( auto& e: li )
+					e /= _data[r][c];
+	}
+
+	mutable std::vector<std::vector<double>> _data;
+	mutable bool _isNormalized = false;
+
+	friend std::ostream& operator << ( std::ostream& f, const Homogr& h )
+	{
+		for( const auto& li: h._data )
+		{
+			f << "| ";
+			for( const auto& e: li )
+				f << std::setw(6) << e << ' ';
+			f << " |\n";
+		}
+		return f;
+	}
+};
+//------------------------------------------------------------------
 /// "Private" class
 class Root
 {

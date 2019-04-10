@@ -3,12 +3,14 @@
 A very small single-file header-only C++ library dedicated to
 handling 2d lines and points, using (internally) homogeneous coordinates.
 
-- Author: S. Kramm
-- Licence: GPL v3
 - Language: C++11
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and get going.
-- Status: alpha !!!
+- Status: beta
+- Author: S. Kramm
+- Licence: GPL v3
+- Dependencies: none, other than standard library
+
 
 A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
 When installed, run `make` (or `make test`).

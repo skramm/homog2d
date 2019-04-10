@@ -65,3 +65,12 @@ TEST_CASE( "offset test", "[test3]" )
 	lA.addVertOffset( 2. );
 	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
 }
+
+TEST_CASE( "test matrix", "[testH]" )
+{
+	Homogr H1,H2;
+	std::cout << H1 << "\n";
+	Homogr H = H1*H2;
+	CHECK( H == H1 );
+
+}
