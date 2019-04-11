@@ -432,6 +432,11 @@ class Line2d : public Root
 			else
 				return ( -_v[1] * other - _v[2] ) / _v[0];
 		}
+
+#ifdef HOMOG2D_USE_OPENCV
+		void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8 );
+#endif
+
 	private:
 		Line2d( const Root& r ): Root(r)
 		{
@@ -451,6 +456,9 @@ class Line2d : public Root
 
 //------------------------------------------------------------------
 /// Homogeneous 2D point
+/**
+Values are stored "as is" (not normalized), so we can handle far away values
+*/
 class Point2d : public Root
 {
 	friend class Line2d;
@@ -458,7 +466,11 @@ class Point2d : public Root
 
 	friend std::ostream& operator << ( std::ostream& f, const Point2d& pt )
 	{
+#if 0
 		f << static_cast<Root>(pt);
+#else
+		f << '[' << pt.getX() << ',' << pt.getY() << ']';
+#endif
 		return f;
 	}
 
@@ -474,7 +486,7 @@ class Point2d : public Root
 		Point2d( const Line2d&, const Line2d& );
 		Line2d operator * ( const Point2d& );
 		double getX() const
-		{ /// \todo \c c should always be 1 if stored as normalized values, so what's the point here ? Clear out this.
+		{
 			return _v[0]/_v[2];
 		}
 		double getY() const
@@ -493,9 +505,16 @@ class Point2d : public Root
 			return true;
 		}
 #ifdef HOMOG2D_USE_OPENCV
-		cv::Point2d getCvPt_i() const
+		cv::Point2d getCvPtd() const
 		{
-			return cv::Point2d( getX(), getY() );
+			return cv::Point2d(
+				static_cast<int>(std::round(getX())),
+				static_cast<int>(std::round(getY()))
+			);
+		}
+		cv::Point2f getCvPtf() const
+		{
+			return cv::Point2f( getX(),getY() );
 		}
 #endif
 	private:
@@ -588,7 +607,8 @@ Point2d::distToPoint( const Point2d& pt ) const
 
 //------------------------------------------------------------------
 /// Apply homography to a point or line
-Root operator * ( const Homogr& h, const Root& in )
+Root
+operator * ( const Homogr& h, const Root& in )
 {
 	Root out;
 	out._v[2] = 0.;
@@ -599,16 +619,54 @@ Root operator * ( const Homogr& h, const Root& in )
 }
 //------------------------------------------------------------------
 /// Apply homography to a point
-Point2d operator * ( const Homogr& h, const Point2d& in )
+Point2d
+operator * ( const Homogr& h, const Point2d& in )
 {
 	return static_cast<Point2d>( h * static_cast<Root>(in) );
 }
 //------------------------------------------------------------------
 /// Apply homography to a line
-Line2d operator * ( const Homogr& h, const Line2d& in )
+Line2d
+operator * ( const Homogr& h, const Line2d& in )
 {
 	return h * static_cast<Root>(in);
 }
+//------------------------------------------------------------------
+#ifdef HOMOG2D_USE_OPENCV
+/// Draw the line on image \c mat
+inline
+void
+Line2d::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
+{
+	Point2d p00;
+	Point2d p01(0,mat.cols);
+	Point2d p10(mat.rows,0);
+	Point2d p11(mat.rows,mat.cols);
+	Line2d l[4];
+	l[0] = Line2d( p00, p01 );
+	l[1] = Line2d( p10, p11 );
+	l[2] = Line2d( p00, p10 );
+	l[3] = Line2d( p01, p11 );
+	std::vector<Point2d> v;
+	for( int i=0; i<4; i++ )
+	{
+		Point2d pt = *this * l[i];
+		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
+		if( pt.getX()>0 && pt.getX()<mat.cols )
+			if( pt.getY()>0 && pt.getY()<mat.rows )
+				v.push_back( pt );
+	}
+	std::cout << "v size=" << v.size() << '\n';
+
+	if( v.size()>2 )
+	{
+		for( int i=0; i<v.size(); i++ )
+			std::cout << "i=" << i << " pt=" << v[i] << '\n';
+	}
+	if( v.size()>1 )
+		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
+}
+#endif
 //------------------------------------------------------------------
 
 

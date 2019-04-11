@@ -19,17 +19,20 @@ int g_height = 500;
 void mouse_CB( int event, int x, int y, int flags, void* param )
 {
 	static int c;
+	std::cout << "count:" << c++ << '\n';
 	g_img = cv::Scalar(255,255,255);
 	homog2d::Point2d pt1( x, y );
 	homog2d::Point2d pt0( g_width/2, g_height/2 );
 	homog2d::Line2d lA( pt1, pt0 );
-	cv::line( g_img, pt0.getCvPt_i(), pt1.getCvPt_i(), cv::Scalar(0,50,200), 2 );
+	cv::line( g_img, pt0.getCvPtd(), pt1.getCvPtd(), cv::Scalar(0,50,200), 2 );
 
-	homog2d::Line2d lB( 1, 1 ); // 45° line
+	homog2d::Line2d lB( 2, 1 ); // 45° line
+	lB.drawCvMat( g_img, cv::Scalar(200,50,20), 2 );
+
 	homog2d::Point2d pt3( lA, lB ); // intersection of lines
 	homog2d::Point2d pt4(g_width, g_height );
 
-	cv::line( g_img, pt3.getCvPt_i(), pt4.getCvPt_i(), cv::Scalar(0,250,50), 2 );
+	cv::line( g_img, pt3.getCvPtd(), pt4.getCvPtd(), cv::Scalar(0,250,50), 2 );
 
 
 	cv::imshow( g_wndname, g_img );

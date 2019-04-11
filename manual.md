@@ -1,11 +1,18 @@
 # Manual
 
-home page: https://github.com/skramm/homog2d
+Home page: https://github.com/skramm/homog2d
 
+- [Lines and points](#basic)
+- [2D transformation (aka homographies)](#matrix)
+- [Bindings](#bind)
+- [Technical details](#tech)
+
+## General
 
 All the code is in the namespace `homog2d`, so either add `using namespace homog2d`, either use it as a prefix on each type.
 
 ## 2D lines and points
+<a name="basic"></a>
 
 - Create a 2D point:
 ```
@@ -37,7 +44,7 @@ li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
 
 ## Homographies
-
+<a name="matrix"></a>
 - You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"):
 
 ```
@@ -71,9 +78,30 @@ auto v = h.getValue( 0, 0 ); // 3.14
 However, when using setValue(), no guarantee is given that the result will be a valid matrix!
 
 
+## Binding with other libraries
+<a name="bind"></a>
+
+Import from other types is pretty much straight forward.
+For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
+For homographies, you can import directly from
+`std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`
+
+For export, additional functions are provided to interface with [Opencv](https://opencv.org).
+This is enable by defining the symbol HOMOG2D_USE_OPENCV.
+You can the write this:
+```
+Point2d pt;
+...
+cv::Point2d ptcv1 = pt.getCvPtd();
+cv::Point2f ptcv2 = pt.getCvPtf()
+```
+
+A demo demonstrating this Opencv binding is provided, try it with
+`make demo` (requires of course that Opencv is installed on your machine).
 
 
 ## Technical details
+<a name="tech"></a>
 
 - Points are stored as non-normalized values, any computation will keep the resulting values
 - Lines are always stored as normalized values (a^2+b^2 = 1)

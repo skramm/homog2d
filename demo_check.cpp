@@ -1,5 +1,5 @@
 /**
-\file demo.cpp
+\file demo_check.cpp
 \brief Build with test, just there to make sure all required headers are included in header
 */
 

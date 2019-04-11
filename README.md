@@ -1,7 +1,8 @@
 # homog2d
 
 A very small single-file header-only C++ library dedicated to
-handling 2d lines, points and homographies, using (internally) homogeneous coordinates.
+handling 2d lines, points and homographies (2D transformations),
+using (internally) homogeneous coordinates.
 
 - Language: C++11
 - Home: https://github.com/skramm/homog2d
