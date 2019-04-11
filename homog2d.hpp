@@ -35,6 +35,10 @@ See https://github.com/skramm/homog2d
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <vector>
+//#include <array>
+#include <iomanip>
+#include <cassert>
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -224,9 +228,6 @@ Thus some assert can be triggered elsewhere
 					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
 		return out;
 	}
-
-/// Apply homography to a point
-	friend Point2d operator * ( const Homogr& h1, const Point2d& h2 );
 
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Homogr& li ) const
@@ -466,6 +467,10 @@ class Point2d : public Root
 		{
 //			normalize();
 		}
+		template<typename T>
+		Point2d( T pt ) : Root( pt.x, pt.y, 1.)
+		{}
+
 		Point2d( const Line2d&, const Line2d& );
 		Line2d operator * ( const Point2d& );
 		double getX() const
@@ -487,6 +492,12 @@ class Point2d : public Root
 				return false;
 			return true;
 		}
+#ifdef HOMOG2D_USE_OPENCV
+		cv::Point2d getCvPt_i() const
+		{
+			return cv::Point2d( getX(), getY() );
+		}
+#endif
 	private:
 		Point2d( const Root& r ): Root(r)
 		{}
@@ -579,7 +590,6 @@ Point2d::distToPoint( const Point2d& pt ) const
 /// Apply homography to a point or line
 Root operator * ( const Homogr& h, const Root& in )
 {
-	std::cout << "Root operator * ( const Homogr& h, const Root& in )\n";
 	Root out;
 	out._v[2] = 0.;
 	for( int i=0; i<3; i++ )
@@ -587,38 +597,18 @@ Root operator * ( const Homogr& h, const Root& in )
 			out._v[i] += h._data[i][j] * in._v[j];
 	return out;
 }
-
 //------------------------------------------------------------------
 /// Apply homography to a point
 Point2d operator * ( const Homogr& h, const Point2d& in )
 {
-	std::cout << "Point2d operator * ( const Homogr& h, const Point2d& in )\n";
-/*	Point2d out
-	pt_out._v[2] = 0.;
-	for( int i=0; i<3; i++ )
-		for( int j=0; j<3; j++ )
-			out._v[i] += h._data[i][j] * in._v[j];
-	return out;
-	*/
-//	return static_cast<Point2d>( h * static_cast<Root>(in) );
 	return static_cast<Point2d>( h * static_cast<Root>(in) );
-
 }
 //------------------------------------------------------------------
 /// Apply homography to a line
 Line2d operator * ( const Homogr& h, const Line2d& in )
 {
-	std::cout << "Line2d operator * ( const Homogr& h, const Line2d& in )\n";
-/*	Line2d out;
-	pt_out._v[2] = 0.;
-	for( int i=0; i<3; i++ )
-		for( int j=0; j<3; j++ )
-			pt_out._v[i] += h._data[i][j] * in._v[j];
-	return out;*/
-//	return static_cast<Line2d>( h * static_cast<Root>(in) );
 	return h * static_cast<Root>(in);
 }
-
 //------------------------------------------------------------------
 
 
