@@ -34,6 +34,9 @@ run with "make test"
 
 #include "homog2d.hpp"
 
+#define DIFFERENCE_IS_NULL(a,b) \
+	( ( std::fabs((a)-(b)) < std::numeric_limits<double>::epsilon() ) ? true : false )
+
 using namespace homog2d;
 
 TEST_CASE( "test1", "[test1]" )
@@ -87,8 +90,17 @@ TEST_CASE( "offset test", "[test3]" )
 	Line2d lA( Point2d(0,0), Point2d(2,2) );
 	CHECK( lA.distToPoint( Point2d(1.,1.) ) == 0. );
 
-	lA.addVertOffset( 2. );
+	lA.addOffset( OD_Vert, 2. );
 	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
+}
+
+TEST_CASE( "manual code", "[testM]" )
+{
+	Point2d pt1;       // 0,0
+	Point2d pt2(3,4);
+	Line2d li1; // vertical line at x=0
+	Line2d li2( pt1, pt2 ); // from two points:
+	Point2d pt3(li1,li2);
 }
 
 TEST_CASE( "test matrix", "[testH]" )
@@ -128,8 +140,7 @@ TEST_CASE( "test matrix", "[testH]" )
 		H.setRotation( M_PI/2. );
 		Point2d pt2 = H * pt1;
 
-		CHECK( pt2.getX() == -1. );
-		std::cout << "x=" << std::scientific << pt2.getX() << "\n";
+		CHECK( DIFFERENCE_IS_NULL( pt2.getX(), -1. ) );
 		CHECK( pt2.getY() == 1. );
 	}
 

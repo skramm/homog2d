@@ -346,6 +346,8 @@ class Root
 
 /// Used in Line2d::getValue()
 enum En_GivenCoord { GC_X, GC_Y };
+/// Used in Line2d::addOffset
+enum En_OffsetDir{ OD_Vert, OD_Horiz };
 
 //------------------------------------------------------------------
 /// Homogeneous 2D line
@@ -377,12 +379,26 @@ class Line2d : public Root
 					return false;
 			return true;
 		}
+
+/// Add offset (vertical or horizontal) to line
+	template<typename T>
+	void addOffset( En_OffsetDir dir, T v )
+	{
+		if( dir == OD_Vert )
+			_v[2] = _v[2] - v*_v[1];
+		else
+			_v[2] = _v[2] - v*_v[0];
+		normalize();
+	}
+#if 0
 /// Adds vertical offset to line
 		void addVertOffset( double v )
 		{
 			_v[2] = _v[2] - v*_v[1];
 			normalize();
 		}
+#endif
+
 /// Returns one of the coordinates of a point on the line, given the other one
 		double getValue( En_GivenCoord gc, double other )
 		{
