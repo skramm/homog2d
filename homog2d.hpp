@@ -36,15 +36,21 @@ See https://github.com/skramm/homog2d
 #include <iostream>
 #include <algorithm>
 
+#ifdef HOMOG2D_USE_OPENCV
+	#include "opencv2/imgproc.hpp"
+#endif
+
 namespace homog2d {
 
 // forward declaration
 class Point2d;
+class Root;
 
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
 class Homogr
 {
+	friend Root operator * ( const Homogr& h, const Root& in );
 	public:
 	/// Default constructor, initialize to unit transformation
 	Homogr()
@@ -58,24 +64,27 @@ class Homogr
 		setRotation( val );
 	}
 
-/// Constructor, used to fill with another "vector of vector" matrix
+/// Constructor, used to fill with another "vector of vector" matrix (or std::array)
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
 - no checking is done on validity of matrix as an homography.
 Thus some assert can be triggered elsewhere
 */
+
 	template<typename T>
 	Homogr( const std::vector<std::vector<T>>& in )
 	{
 		assert( in.size() == 3 );
 		for( auto li: in )
 			assert( li.size() == 3 );
-
-		for( auto i=0; i<3; i++ )
-			for( auto j=0; j<3; j++ )
-				_data[i][j] = in[i][j];
-		normalize();
+		p_fillWith( in );
 	}
+	template<typename T>
+	Homogr( const std::array<std::array<T,3>,3>& in )
+	{
+		p_fillWith( in );
+	}
+
 	void clear()
 	{
 		for( auto& li: _data )
@@ -152,7 +161,6 @@ Thus some assert can be triggered elsewhere
 		_data[1][1] = ky;
 		_isNormalized = true;
 	}
-
 
 /// Normalisation
 	void normalize() const
@@ -246,7 +254,14 @@ Thus some assert can be triggered elsewhere
 			for( auto& e: li )
 				e = 0.;
 	}
-
+	template<typename T>
+	void p_fillWith( const T& in )
+	{
+		for( auto i=0; i<3; i++ )
+			for( auto j=0; j<3; j++ )
+				_data[i][j] = in[i][j];
+		normalize();
+	}
 	void p_divideBy( size_t r, size_t c ) const
 	{
 		assert( std::fabs( _data[r][c] ) > std::numeric_limits<double>::epsilon() );
@@ -324,6 +339,7 @@ See https://en.wikipedia.org/wiki/Determinant
 class Root
 {
 	friend class Homogr;
+	friend Root operator * ( const Homogr&, const Root& );
 	protected:
 	Root( double a=0., double b=0., double c=1. )
 	{
@@ -361,6 +377,7 @@ enum En_OffsetDir{ OD_Vert, OD_Horiz };
 class Line2d : public Root
 {
 	friend class Point2d;
+	friend Line2d operator * ( const Homogr& h, const Line2d& in );
 
 	friend std::ostream& operator << ( std::ostream& f, const Line2d& li )
 	{
@@ -436,7 +453,8 @@ class Line2d : public Root
 class Point2d : public Root
 {
 	friend class Line2d;
-	friend Point2d operator * ( const Homogr& h, const Point2d& pt_in );
+	friend Point2d operator * ( const Homogr& h, const Point2d& in );
+
 	friend std::ostream& operator << ( std::ostream& f, const Point2d& pt )
 	{
 		f << static_cast<Root>(pt);
@@ -446,7 +464,7 @@ class Point2d : public Root
 	public:
 		Point2d( double x=0., double y=0. ) : Root(x, y, 1.)
 		{
-			normalize();
+//			normalize();
 		}
 		Point2d( const Line2d&, const Line2d& );
 		Line2d operator * ( const Point2d& );
@@ -472,12 +490,12 @@ class Point2d : public Root
 	private:
 		Point2d( const Root& r ): Root(r)
 		{}
-		void normalize()
+/*		void normalize()
 		{
 			_v[0] /= _v[2];
 			_v[1] /= _v[2];
 			_v[2] /= 1.;
-		}
+		}*/
 };
 
 //------------------------------------------------------------------
@@ -518,7 +536,7 @@ inline
 Point2d::Point2d( const Line2d& l1, const Line2d& l2 )
 {
 	*this = static_cast<Point2d>(crossProduct( l1, l2 ) );
-	normalize();
+//	normalize();
 }
 //------------------------------------------------------------------
 /// returns slope of line as a unit-length vector (dx, dy), with dx>0
@@ -558,15 +576,47 @@ Point2d::distToPoint( const Point2d& pt ) const
 }
 
 //------------------------------------------------------------------
-/// Apply homography to a point
-Point2d operator * ( const Homogr& h, const Point2d& pt_in )
+/// Apply homography to a point or line
+Root operator * ( const Homogr& h, const Root& in )
 {
-	Point2d pt_out;
+	std::cout << "Root operator * ( const Homogr& h, const Root& in )\n";
+	Root out;
+	out._v[2] = 0.;
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			out._v[i] += h._data[i][j] * in._v[j];
+	return out;
+}
+
+//------------------------------------------------------------------
+/// Apply homography to a point
+Point2d operator * ( const Homogr& h, const Point2d& in )
+{
+	std::cout << "Point2d operator * ( const Homogr& h, const Point2d& in )\n";
+/*	Point2d out
 	pt_out._v[2] = 0.;
 	for( int i=0; i<3; i++ )
 		for( int j=0; j<3; j++ )
-			pt_out._v[i] += h._data[i][j] * pt_in._v[j];
-	return pt_out;
+			out._v[i] += h._data[i][j] * in._v[j];
+	return out;
+	*/
+//	return static_cast<Point2d>( h * static_cast<Root>(in) );
+	return static_cast<Point2d>( h * static_cast<Root>(in) );
+
+}
+//------------------------------------------------------------------
+/// Apply homography to a line
+Line2d operator * ( const Homogr& h, const Line2d& in )
+{
+	std::cout << "Line2d operator * ( const Homogr& h, const Line2d& in )\n";
+/*	Line2d out;
+	pt_out._v[2] = 0.;
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			pt_out._v[i] += h._data[i][j] * in._v[j];
+	return out;*/
+//	return static_cast<Line2d>( h * static_cast<Root>(in) );
+	return h * static_cast<Root>(in);
 }
 
 //------------------------------------------------------------------

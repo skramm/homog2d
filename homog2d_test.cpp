@@ -121,21 +121,34 @@ TEST_CASE( "test matrix", "[testH]" )
 		std::cout << H1 << "\n";
 		Homogr H = H1*H2;
 		CHECK( H == H1 );
-
+	}
+	{
 		std::vector<std::vector<float>> m1a(3);
 		for( auto& li: m1a)
 			li.resize(3,1);
-		Homogr H3a(m1a);
+		Homogr H1a(m1a);
 
 		std::vector<std::vector<double>> m1b(3);
 		for( auto& li: m1b)
 			li.resize(3,1);
-		Homogr H3b(m1b);
+		Homogr H1b(m1b);
 
 		std::vector<std::vector<int>> m1c(3);
 		for( auto& li: m1c)
 			li.resize(3,1);
-		Homogr H3c(m1c);
+		Homogr H1c(m1c);
+
+		std::array<std::array<float,3>,3> m2a;
+		m2a[2][2] = 1.;
+		Homogr H2a(m2a);
+
+		std::array<std::array<double,3>,3> m2b;
+		m2b[2][2] = 1.;
+		Homogr H2b(m2b);
+
+		std::array<std::array<int,3>,3> m2c;
+		m2c[2][2] = 1.;
+		Homogr H2c(m2c);
 	}
 
 	Homogr H;
@@ -154,5 +167,7 @@ TEST_CASE( "test matrix", "[testH]" )
 		CHECK( DIFFERENCE_IS_NULL( pt2.getX(), -1. ) );
 		CHECK( pt2.getY() == 1. );
 	}
+	Line2d li;
+	Line2d liB = H * li;
 
 }
