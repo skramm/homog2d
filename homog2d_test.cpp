@@ -93,32 +93,44 @@ TEST_CASE( "offset test", "[test3]" )
 
 TEST_CASE( "test matrix", "[testH]" )
 {
-	Homogr H1,H2;
-	std::cout << H1 << "\n";
-	Homogr H = H1*H2;
-	CHECK( H == H1 );
+	{
+		Homogr H1,H2;
+		std::cout << H1 << "\n";
+		Homogr H = H1*H2;
+		CHECK( H == H1 );
 
-	std::vector<std::vector<float>> m1a(3);
-	for( auto& li: m1a)
-		li.resize(3,1);
-	Homogr H3a(m1a);
+		std::vector<std::vector<float>> m1a(3);
+		for( auto& li: m1a)
+			li.resize(3,1);
+		Homogr H3a(m1a);
 
-	std::vector<std::vector<double>> m1b(3);
-	for( auto& li: m1b)
-		li.resize(3,1);
-	Homogr H3b(m1b);
+		std::vector<std::vector<double>> m1b(3);
+		for( auto& li: m1b)
+			li.resize(3,1);
+		Homogr H3b(m1b);
 
-	std::vector<std::vector<int>> m1c(3);
-	for( auto& li: m1c)
-		li.resize(3,1);
-	Homogr H3c(m1c);
+		std::vector<std::vector<int>> m1c(3);
+		for( auto& li: m1c)
+			li.resize(3,1);
+		Homogr H3c(m1c);
+	}
 
-	Homogr Ht;
-	Ht.setTranslation( 3., 2. );
+	Homogr H;
 	Point2d pt1(1,1);
-	Point2d pt2 = Ht * pt1;
-	std::cout << "Ht="<<  Ht << " pt2=" << pt2 << "\n";
-	CHECK( pt2.getX() == 4. );
-	CHECK( pt2.getY() == 3. );
+
+	{
+		H.setTranslation( 3., 2. );
+		Point2d pt2 = H * pt1;
+		CHECK( pt2.getX() == 4. );
+		CHECK( pt2.getY() == 3. );
+	}
+	{
+		H.setRotation( M_PI/2. );
+		Point2d pt2 = H * pt1;
+
+		CHECK( pt2.getX() == -1. );
+		std::cout << "x=" << std::scientific << pt2.getX() << "\n";
+		CHECK( pt2.getY() == 1. );
+	}
 
 }

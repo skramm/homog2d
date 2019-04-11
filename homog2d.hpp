@@ -90,17 +90,16 @@ Thus some assert can be triggered elsewhere
 	{
 		return _data[r][c];
 	}
-	/// Adds a translation tx,ty to the matrix
+	/// Adds a translation \c tx,ty to the matrix
 	template<typename T>
 	void addTranslation( T tx, T ty )
 	{
-		Homogr trans;
-		_data[0][2] = tx;
-		_data[1][2] = ty;
-		*this = trans * *this;
+		Homogr out;
+		out.setTranslation( tx, ty );
+		*this = out * *this;
 		normalize();
 	}
-	/// Sets the matrix as a translation tx,ty
+	/// Sets the matrix as a translation \c tx,ty
 	template<typename T>
 	void setTranslation( T tx, T ty )
 	{
@@ -109,6 +108,45 @@ Thus some assert can be triggered elsewhere
 		_data[1][2] = ty;
 		_isNormalized = true;
 	}
+	/// Adds a rotation with an angle \c theta (radians) to the matrix
+	template<typename T>
+	void addRotation( T theta )
+	{
+		Homogr out;
+		out.setRotation( theta );
+		*this = out * *this;
+		normalize();
+	}
+	/// Sets the matrix as a rotation with an angle \c theta (radians)
+	template<typename T>
+	void setRotation( T theta )
+	{
+		clear();
+		_data[0][0] = _data[1][1] = std::cos(theta);
+		_data[1][0] = std::sin(theta);
+		_data[0][1] = -_data[1][0];
+		_isNormalized = true;
+	}
+	/// Adds a scale factor to the matrix
+	template<typename T>
+	void addScale( T kx, T ky )
+	{
+		Homogr out;
+		out.setScale( kx, ky );
+		*this = out * *this;
+		normalize();
+	}
+	/// Sets the matrix as a scaling
+	template<typename T>
+	void setScale( T kx, T ky )
+	{
+		clear();
+		_data[0][0] = kx;
+		_data[1][1] = ky;
+		_isNormalized = true;
+	}
+
+
 /// Normalisation
 	void normalize() const
 	{
@@ -397,6 +435,8 @@ class Point2d : public Root
 		{
 			return _v[1]/_v[2];
 		}
+		double distToPoint( const Point2d& pt ) const;
+
 		bool operator == ( const Point2d& pt ) const
 		{
 			auto eps = std::numeric_limits<double>::epsilon();
@@ -484,6 +524,16 @@ Line2d::distToPoint( const Point2d& pt ) const
 {
 	return std::fabs( (_v[0] * pt.getX() + _v[1] * pt.getY() + _v[2]) / std::hypot( _v[0], _v[1] ) );
 }
+
+//------------------------------------------------------------------
+/// Returns distance between the point and another point \b pt
+inline
+double
+Point2d::distToPoint( const Point2d& pt ) const
+{
+	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
+}
+
 //------------------------------------------------------------------
 /// Apply homography to a point
 Point2d operator * ( const Homogr& h, const Point2d& pt_in )
