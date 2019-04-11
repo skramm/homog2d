@@ -49,9 +49,7 @@ class Homogr
 	/// Default constructor, initialize to unit transformation
 	Homogr()
 	{
-		p_allocate();
-		_data[0][0] = _data[1][1] = _data[2][2] = 1.;
-		_isNormalized = true;
+		clear();
 	}
 /// Constructor, used to fill with another "vector of vector" matrix
 /** \warning
@@ -65,7 +63,7 @@ Thus some assert can be triggered elsewhere
 		assert( in.size() == 3 );
 		for( auto li: in )
 			assert( li.size() == 3 );
-		p_allocate();
+
 		for( auto i=0; i<3; i++ )
 			for( auto j=0; j<3; j++ )
 				_data[i][j] = in[i][j];
@@ -73,7 +71,12 @@ Thus some assert can be triggered elsewhere
 	}
 	void clear()
 	{
-		_data = { { 1., 0., 0.}, { 0., 1., 0.}, {0., 0., 1.} };
+		for( auto& li: _data )
+			for( auto& elem: li )
+				elem = 0.;
+		_data[0][0] = 1.;
+		_data[1][1] = 1.;
+		_data[2][2] = 1.;
 		_isNormalized = true;
 	}
 	/// Setter \warning No normalization is done, as this can be done
@@ -198,12 +201,7 @@ Thus some assert can be triggered elsewhere
 			for( auto& e: li )
 				e = 0.;
 	}
-	void p_allocate()
-	{
-		_data.resize(3);
-		for( auto& li: _data )
-			li.resize(3,0.);
-	}
+
 	void p_divideBy( size_t r, size_t c ) const
 	{
 		assert( std::fabs( _data[r][c] ) > std::numeric_limits<double>::epsilon() );
@@ -255,11 +253,12 @@ See https://en.wikipedia.org/wiki/Determinant
 
 		return out;
 	}
+
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 	private:
-	mutable std::vector<std::vector<double>> _data;
+	mutable std::array<std::array<double,3>,3> _data;
 	mutable bool _isNormalized = false;
 
 	friend std::ostream& operator << ( std::ostream& f, const Homogr& h )
@@ -276,19 +275,19 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 //------------------------------------------------------------------
 /// "Private" class
+/// \todo template root type
 class Root
 {
 	friend class Homogr;
 	protected:
 	Root( double a=0., double b=0., double c=1. )
 	{
-		_v.resize(3);
 		_v[0] = a;
 		_v[1] = b;
 		_v[2] = c;
 	}
 
-	std::vector<double> _v;
+	double _v[3];
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 	friend Root crossProduct( const Root& r1, const Root& r2 )
@@ -324,9 +323,9 @@ class Line2d : public Root
 
 	public:
 		Line2d( double dx, double dy );
-		/// Create a line from two points
+/// Create a line from two points
 		Line2d( const Point2d&, const Point2d& );
-		/// creates a vertical line
+/// creates a vertical line
 		Line2d(): Root(1.,0.,0.)
 		{}
 		double distToPoint( const Point2d& pt ) const;
@@ -340,13 +339,13 @@ class Line2d : public Root
 					return false;
 			return true;
 		}
-		/// Adds vertical offset to line
+/// Adds vertical offset to line
 		void addVertOffset( double v )
 		{
 			_v[2] = _v[2] - v*_v[1];
 			normalize();
 		}
-		/// Returns one of the coordinates of a point on the line, given the other one
+/// Returns one of the coordinates of a point on the line, given the other one
 		double getValue( En_GivenCoord gc, double other )
 		{
 			if( gc == GC_X )
@@ -359,7 +358,7 @@ class Line2d : public Root
 		{
 			normalize();
 		}
-		/// Normalise to unit length, and make sure \c a is always >0
+/// Normalise to unit length, and make sure \c a is always >0
 		void normalize()
 		{
 			auto sq = std::hypot( _v[0], _v[1] );
@@ -490,10 +489,10 @@ Line2d::distToPoint( const Point2d& pt ) const
 Point2d operator * ( const Homogr& h, const Point2d& pt_in )
 {
 	Point2d pt_out;
+	pt_out._v[2] = 0.;
 	for( int i=0; i<3; i++ )
 		for( int j=0; j<3; j++ )
 			pt_out._v[i] += h._data[i][j] * pt_in._v[j];
-
 	return pt_out;
 }
 
