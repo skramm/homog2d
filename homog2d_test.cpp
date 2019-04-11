@@ -90,8 +90,12 @@ TEST_CASE( "offset test", "[test3]" )
 	Line2d lA( Point2d(0,0), Point2d(2,2) );
 	CHECK( lA.distToPoint( Point2d(1.,1.) ) == 0. );
 
+	Line2d lB = lA;
 	lA.addOffset( OD_Vert, 2. );
 	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
+
+	lB.addOffset( OD_Horiz, 2. );
+	CHECK( lB == Line2d( Point2d(2,0), Point2d(4,2) ) );
 }
 
 TEST_CASE( "manual code", "[testM]" )
@@ -101,6 +105,13 @@ TEST_CASE( "manual code", "[testM]" )
 	Line2d li1; // vertical line at x=0
 	Line2d li2( pt1, pt2 ); // from two points:
 	Point2d pt3(li1,li2);
+	{
+		Homogr h1; // unit transformation
+		h1.setTranslation(3,4);
+		Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
+		Homogr h3a = h1*h2; // first, rotation, then translation
+		Homogr h3b = h2*h1; // first, rotation, then translation
+	}
 }
 
 TEST_CASE( "test matrix", "[testH]" )

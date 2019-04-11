@@ -51,6 +51,13 @@ class Homogr
 	{
 		clear();
 	}
+	/// Build a rotation transformation of \c val radians
+	template<typename T>
+	Homogr( T val )
+	{
+		setRotation( val );
+	}
+
 /// Constructor, used to fill with another "vector of vector" matrix
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
