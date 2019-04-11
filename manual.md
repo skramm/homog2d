@@ -1,5 +1,7 @@
 # Manual
 
+# THIS IS PRELIMINAR !
+
 Home page: https://github.com/skramm/homog2d
 
 - [Lines and points](#basic)
@@ -88,7 +90,7 @@ For homographies, you can import directly from
 
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
 This is enable by defining the symbol HOMOG2D_USE_OPENCV.
-You can the write this:
+You can then write this:
 ```
 Point2d pt;
 ...
@@ -103,7 +105,8 @@ A demo demonstrating this Opencv binding is provided, try it with
 ## Technical details
 <a name="tech"></a>
 
-- Points are stored as non-normalized values, any computation will keep the resulting values
+- Points are stored as non-normalized values, any computation will keep the resulting values.
+Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
-- Homographies are stored as normalized values, either ass h33=0, or (if null) as h23=0
+- Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1
 

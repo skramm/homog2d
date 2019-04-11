@@ -31,7 +31,7 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 	lB.drawCvMat( g_img, cv::Scalar(200,50,20), 2 );
 
 	homog2d::Point2d pt3( lA, lB ); // intersection of lines
-	homog2d::Point2d pt4(g_width, g_height );
+	homog2d::Point2d pt4(g_width, g_height);
 
 	cv::line( g_img, pt3.getCvPtd(), pt4.getCvPtd(), cv::Scalar(0,250,50), 2 );
 

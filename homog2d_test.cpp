@@ -57,19 +57,22 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d ptB2(2,0);
 		Line2d  lB = ptB1 * ptB2;
 
-		Point2d middle = lA * lB;
+//		Point2d middle = lA * lB;
 
-		std::cout << "middle="<< middle << '\n';
-		CHECK( middle == Point2d(1.,1.) );
+//		std::cout << "middle="<< middle << '\n';
+//		CHECK( middle == Point2d(1.,1.) );
 	}
 	{
 		Line2d lA( Point2d(0,0), Point2d(2,2) );
 		Line2d lB( Point2d(0,2), Point2d(2,0) );
 
-		Point2d middle = lA * lB;
+		Point2d middle1 = lA * lB;
+		Point2d middle2 = lB * lA;
 
-		std::cout << "middle="<< middle << '\n';
-		CHECK( middle == Point2d(1.,1.) );
+		CHECK( middle1 == Point2d(1.,1.) );
+		CHECK( middle2 == Point2d(1.,1.) );
+//		std::cout.precision( std::numeric_limits<double>::max_digits10 );
+//		std::cout << std::scientific << "x=" << middle2.getX() << " y=" << middle2.getY() << '\n';
 	}
 }
 
@@ -78,6 +81,10 @@ TEST_CASE( "dist2points", "[test2]" )
 	Line2d li(2,1);
 	auto d = li.distToPoint( Point2d() );
 	CHECK( d == 0. );
+
+	auto d2 = li.distToPoint( Point2d(4,2) );
+	CHECK( d2 == 0. );
+
 	CHECK( li.getValue( GC_X, 0. ) == 0. );
 	CHECK( li.getValue( GC_X, 2. ) == 1. );
 
@@ -151,23 +158,21 @@ TEST_CASE( "test matrix", "[testH]" )
 		Homogr H2c(m2c);
 	}
 
-	Homogr H;
-	Point2d pt1(1,1);
-
 	{
+		Homogr H;
+		Point2d pt1(1,1);
 		H.setTranslation( 3., 2. );
 		Point2d pt2 = H * pt1;
 		CHECK( pt2.getX() == 4. );
 		CHECK( pt2.getY() == 3. );
-	}
-	{
-		H.setRotation( M_PI/2. );
-		Point2d pt2 = H * pt1;
 
-		CHECK( DIFFERENCE_IS_NULL( pt2.getX(), -1. ) );
-		CHECK( pt2.getY() == 1. );
+		H.setRotation( M_PI/2. );
+		Point2d pt3 = H * pt1;
+
+		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
+		CHECK( pt3.getY() == 1. );
 	}
-	Line2d li;
-	Line2d liB = H * li;
+//	Line2d li;
+//	Line2d liB = H * li;
 
 }

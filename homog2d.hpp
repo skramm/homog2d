@@ -364,6 +364,17 @@ class Root
 		f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 		return f;
 	}
+	bool operator == ( const Root& other ) const
+	{
+		auto eps = std::numeric_limits<double>::epsilon();
+		for( int i=0; i<3; i++ )
+			if( std::fabs( _v[i] - other._v[i] ) > eps )
+			{
+				std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
+				return false;
+			}
+		return true;
+	}
 };
 
 
@@ -397,11 +408,7 @@ class Line2d : public Root
 		std::pair<double,double> getVector() const;
 		bool operator == ( const Line2d& li ) const
 		{
-			auto eps = std::numeric_limits<double>::epsilon();
-			for( int i=0; i<3; i++ )
-				if( std::fabs( _v[i] - li._v[i] ) > eps )
-					return false;
-			return true;
+			return Root::operator == (li);
 		}
 
 /// Add offset (vertical or horizontal) to line
@@ -489,9 +496,9 @@ class Point2d : public Root
 		bool operator == ( const Point2d& pt ) const
 		{
 			auto eps = std::numeric_limits<double>::epsilon();
-			if( std::fabs( _v[0] - pt._v[0] ) > eps )
+			if( std::fabs( getX() - pt.getX() ) > eps )
 				return false;
-			if( std::fabs( _v[1] - pt._v[1] ) > eps )
+			if( std::fabs( getY() - pt.getY() ) > eps )
 				return false;
 			return true;
 		}
