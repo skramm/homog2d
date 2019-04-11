@@ -36,7 +36,6 @@ See https://github.com/skramm/homog2d
 #include <iostream>
 #include <algorithm>
 #include <vector>
-//#include <array>
 #include <iomanip>
 #include <cassert>
 
@@ -415,14 +414,6 @@ class Line2d : public Root
 			_v[2] = _v[2] - v*_v[0];
 		normalize();
 	}
-#if 0
-/// Adds vertical offset to line
-		void addVertOffset( double v )
-		{
-			_v[2] = _v[2] - v*_v[1];
-			normalize();
-		}
-#endif
 
 /// Returns one of the coordinates of a point on the line, given the other one
 		double getValue( En_GivenCoord gc, double other )
@@ -638,31 +629,32 @@ inline
 void
 Line2d::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
 {
+//	std::cout << "drawCvMat line= " << *this << "\n";
 	Point2d p00;
 	Point2d p01(0,mat.cols);
 	Point2d p10(mat.rows,0);
 	Point2d p11(mat.rows,mat.cols);
 	Line2d l[4];
 	l[0] = Line2d( p00, p01 );
-	l[1] = Line2d( p10, p11 );
-	l[2] = Line2d( p00, p10 );
-	l[3] = Line2d( p01, p11 );
+	l[1] = Line2d(      p01, p11 );
+	l[2] = Line2d(           p11, p10 );
+	l[3] = Line2d(                p10, p00 );
 	std::vector<Point2d> v;
 	for( int i=0; i<4; i++ )
 	{
 		Point2d pt = *this * l[i];
-		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
+//		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
 		if( pt.getX()>0 && pt.getX()<mat.cols )
 			if( pt.getY()>0 && pt.getY()<mat.rows )
 				v.push_back( pt );
 	}
-	std::cout << "v size=" << v.size() << '\n';
+/*	std::cout << "v size=" << v.size() << '\n';
 
 	if( v.size()>2 )
 	{
 		for( int i=0; i<v.size(); i++ )
 			std::cout << "i=" << i << " pt=" << v[i] << '\n';
-	}
+	}*/
 	if( v.size()>1 )
 		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
 }

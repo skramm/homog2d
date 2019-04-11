@@ -16,6 +16,7 @@ cv::Mat g_img;
 int g_width = 600;
 int g_height = 500;
 
+/// Mouse callback
 void mouse_CB( int event, int x, int y, int flags, void* param )
 {
 	static int c;

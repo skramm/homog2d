@@ -26,7 +26,7 @@
 		<Unit filename="LICENSE" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
-		<Unit filename="demo.cpp" />
+		<Unit filename="demo_check.cpp" />
 		<Unit filename="demo_opencv.cpp" />
 		<Unit filename="doxyfile" />
 		<Unit filename="homog2d.hpp" />
