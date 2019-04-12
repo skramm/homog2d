@@ -423,7 +423,19 @@ Root<IsPoint>::set( double x, double y )
 	_v[2] = 1.;
 }
 
-// specialization for lines (no implementation for points)
+/// Normalise to unit length, and make sure \c a is always >0
+template<>
+void Root<IsLine>::normalize()
+{
+	auto sq = std::hypot( _v[0], _v[1] );
+	for( int i=0; i<3; i++ )
+		_v[i] /= sq;
+	if( std::signbit(_v[0]) ) //a allways >0
+		for( int i=0; i<3; i++ )
+			_v[i] = -_v[i];
+}
+
+/// specialization for lines (no implementation for points)
 template<>
 double
 Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
@@ -483,68 +495,67 @@ namespace detail
 	template<typename Out, typename In>
 	Root<Out> crossProduct( const Root<In>& r1, const Root<In>& r2 )
 	{
+//		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
 		Root<Out> res;
-		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-		std::cout << "CP res=" << res << "\n";
+//		std::cout << "CP res=" << res << "\n";
 		return res;
 	}
 }
 
 Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
-{
-	return detail::crossProduct<IsLine>(lhs, rhs);
+{	static int c;
+//	std::cout << c++ << ": <IsLine>operator lhs=" << lhs << " rhs=" << rhs << '\n';
+	auto line = detail::crossProduct<IsLine>(lhs, rhs);
+	line.normalize();
+	return line;
 }
 
 Root<IsPoint>
 operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 {
+//	std::cout << "<IsPoint>operator lhs=" << lhs << " rhs=" << rhs << '\n';
 	return detail::crossProduct<IsPoint>(lhs, rhs);
 }
 
-/// Normalise to unit length, and make sure \c a is always >0
-template<>
-void Root<IsLine>::normalize()
-{
-	auto sq = std::hypot( _v[0], _v[1] );
-	for( int i=0; i<3; i++ )
-		_v[i] /= sq;
-	if( std::signbit(_v[0]) ) //a allways >0
-		for( int i=0; i<3; i++ )
-			_v[i] = -_v[i];
-}
 
 
 ///////////////////////////////////////////
 // CONSTRUCTORS
 ///////////////////////////////////////////
 
-/// Default constructors, calls the scalar constructor
+/// Default constructor, generic function, used for points
 template<typename LP>
-Root<LP>::Root() : Root<LP>( 0., 0. )
-{}
+Root<LP>::Root()
+{
+	_v[0] = 0.;
+	_v[1] = 0.;
+	_v[2] = 1.;
+	std::cout << "C1:" << *this << "\n";
+}
 
+/// Default constructor, specialization for lines
+template<>
+Root<IsLine>::Root()
+{
+	_v[0] = 1.;
+	_v[1] = 0.;
+	_v[2] = 0.;
+	std::cout << "C2:" << *this << "\n";;
+}
 
 /// generic constructor implementation
 template<typename LP>
 template<typename T>
 Root<LP>::Root( const T& v0, const T& v1 )
 {
+	std::cout << "C3:" << *this << "\n";
 	assert(0);
 }
 
-
-
-// generic constructor implementation
-/*template<>
-template<typename T>
-Root<IsLine>::Root( const T& v0, const T& v1 )
-{
-	assert(0);
-}*/
 
 /// constructor of a point from two values (specialization)
 template<>
@@ -554,6 +565,7 @@ Root<IsPoint>::Root( const T& v0, const T& v1 )
 	_v[0] = v0;
 	_v[1] = v1;
 	_v[2] = 1.;
+	std::cout << "C4:" << *this << "\n";
 }
 
 
@@ -562,8 +574,9 @@ template<>
 template<typename T>
 Root<IsLine>::Root( const T& dx, const T& dy )
 {
-	*this = Root<IsPoint>() * Root<IsPoint>( dx, dy );
+	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
 	normalize();
+	std::cout << "C5:" << *this << "\n";
 }
 
 /// constructor of a point from two lines (specialization)
@@ -572,6 +585,7 @@ template<>
 Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
 {
 	*this = detail::crossProduct<IsPoint>( v1, v2 );
+	std::cout << "C6:" << *this << "\n";
 }
 
 /// Constructor of a line from two points (specialization)
@@ -581,7 +595,10 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 {
 	*this = detail::crossProduct<IsLine>( v1, v2 );
 	normalize();
+	std::cout << "C7:" << *this << "\n";
 }
+
+
 
 /// Generic implementation (never called)
 template<typename LP>

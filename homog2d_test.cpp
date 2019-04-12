@@ -48,20 +48,26 @@ TEST_CASE( "test1", "[test1]" )
 	std::cout << "ptA2="<< ptA2 << '\n';
 	CHECK( ptA2.getX() == 2. );
 	CHECK( ptA2.getY() == 2. );
+	std::cout << "ptA1="<< ptA1 << '\n';
+	std::cout << "ptA2="<< ptA2 << '\n';
+
 	{
-		Line2d lA = ptA1 * ptA2;
+		Line2d lA1 = ptA1 * ptA2;
+		std::cout << "lA1="<< lA1 << '\n';
+
 		Line2d lA2 = ptA2 * ptA1;
-		CHECK( lA == lA2 );
+		std::cout << "lA2="<< lA2 << '\n';
+
+		CHECK( lA1 == lA2 );
 
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
+	std::cout << "ptB1="<< ptB1 << '\n';
+	std::cout << "ptB2="<< ptB2 << '\n';
 		Line2d  lB = ptB1 * ptB2;
-
-//		Point2d middle = lA * lB;
-
-//		std::cout << "middle="<< middle << '\n';
-//		CHECK( middle == Point2d(1.,1.) );
 	}
+
+#if 0
 	{
 		Line2d lA( Point2d(0,0), Point2d(2,2) );
 		Line2d lB( Point2d(0,2), Point2d(2,0) );
@@ -74,6 +80,7 @@ TEST_CASE( "test1", "[test1]" )
 //		std::cout.precision( std::numeric_limits<double>::max_digits10 );
 //		std::cout << std::scientific << "x=" << middle2.getX() << " y=" << middle2.getY() << '\n';
 	}
+#endif
 }
 
 TEST_CASE( "dist2points", "[test2]" )
