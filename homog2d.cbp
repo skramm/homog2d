@@ -30,7 +30,9 @@
 		<Unit filename="demo_opencv.cpp" />
 		<Unit filename="doxyfile" />
 		<Unit filename="homog2d.hpp" />
+		<Unit filename="homog2d_T.hpp" />
 		<Unit filename="homog2d_test.cpp" />
+		<Unit filename="homog2d_test_T.cpp" />
 		<Unit filename="manual.md" />
 		<Extensions>
 			<envvars />

@@ -24,13 +24,13 @@
 **************************************************************************/
 
 /**
-\file homog2d.hpp
+\file homog2d_T.hpp
 \brief single header file, implements some 2D homogeneous stuff.
 See https://github.com/skramm/homog2d
 */
 
-#ifndef HG_HOMOG2D_HPP
-#define HG_HOMOG2D_HPP
+#ifndef HG_HOMOG2DT_HPP
+#define HG_HOMOG2DT_HPP
 
 #include <cmath>
 #include <iostream>
@@ -46,14 +46,19 @@ See https://github.com/skramm/homog2d
 namespace homog2d {
 
 // forward declaration
-class Point2d;
+//class Point2d;
+
+template<typename LP>
 class Root;
+
 
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
+//template<typename LP>
 class Homogr
 {
-	friend Root operator * ( const Homogr& h, const Root& in );
+	template<typename LP>
+	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
 	public:
 	/// Default constructor, initialize to unit transformation
 	Homogr()
@@ -333,14 +338,24 @@ See https://en.wikipedia.org/wiki/Determinant
 		return f;
 	}
 };
+
+
+struct IsLine
+{
+};
+struct IsPoint
+{
+};
 //------------------------------------------------------------------
 /// "Private" class
 /// \todo template root type
+template<typename LP>
 class Root
 {
 	friend class Homogr;
-	friend Root operator * ( const Homogr&, const Root& );
-	protected:
+//	friend Root operator * ( const Homogr&, const Root& );
+	public:
+//	protected:
 	Root( double a=0., double b=0., double c=1. )
 	{
 		_v[0] = a;
@@ -348,12 +363,13 @@ class Root
 		_v[2] = c;
 	}
 
+	private:
 	double _v[3];
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	friend Root crossProduct( const Root& r1, const Root& r2 )
+	friend Root<LP> crossProduct( const Root<LP>& r1, const Root<LP>& r2 )
 	{
-		Root res;
+		Root<LP> res;
 		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
@@ -361,23 +377,105 @@ class Root
 		std::cout << "CP res=" << res << "\n";
 		return res;
 	}
-	friend std::ostream& operator << ( std::ostream& f, const Root& r )
-	{
-		f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
-		return f;
-	}
-	bool operator == ( const Root& other ) const
-	{
-		auto eps = std::numeric_limits<double>::epsilon();
-		for( int i=0; i<3; i++ )
-			if( std::fabs( _v[i] - other._v[i] ) > eps )
-			{
-				std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
-				return false;
-			}
-		return true;
-	}
+
+	public:
+
+	template<class T>
+	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
+
+	bool operator == ( const Root<LP>& other ) const;
+
+	double getX() const;
+	double getY() const;
+	void set( double x, double y );
+
+	template<typename T>
+	Root<T> operator * ( const Root<LP>& );
 };
+
+/// default comparison operator, used for Lines
+template<typename LP>
+bool
+Root<LP>::operator == ( const Root<LP>& other ) const
+{
+	auto eps = std::numeric_limits<double>::epsilon();
+	for( int i=0; i<3; i++ )
+		if( std::fabs( _v[i] - other._v[i] ) > eps )
+		{
+			std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
+			return false;
+		}
+	return true;
+}
+
+/// specialization of comparison operator for points
+template<>
+bool
+Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
+{
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( std::fabs( getX() - other.getX() ) > eps )
+		return false;
+	if( std::fabs( getY() - other.getY() ) > eps )
+		return false;
+	return true;
+}
+
+/// default operator << for lines
+template<typename LP>
+std::ostream&
+operator << ( std::ostream& f, const Root<LP>& r )
+{
+	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+	return f;
+}
+
+/// specialization of operator << for points
+template<>
+std::ostream&
+operator << ( std::ostream& f, const Root<IsPoint>& r )
+{
+	f << '[' << r.getX() << ',' << r.getY() << "] ";
+	return f;
+}
+
+
+template<typename LP,typename T>
+Root<T> Root<LP>::operator * ( const Root<LP>& other )
+{
+	static_assert( std::is_same<LP,T>::value, "cannot return same type" );
+
+}
+
+
+// specialization for points
+template<>
+double
+Root<IsPoint>::getX() const
+{
+	return _v[0]/_v[2];
+}
+template<>
+double
+Root<IsPoint>::getY() const
+{
+	return _v[1]/_v[2];
+}
+
+template<>
+void
+Root<IsPoint>::set( double x, double y )
+{
+	_v[0] = x;
+	_v[1] = y;
+	_v[2] = 1.;
+}
+
+
+
+
+
+
 
 
 /// Used in Line2d::getValue()
@@ -385,6 +483,7 @@ enum En_GivenCoord { GC_X, GC_Y };
 /// Used in Line2d::addOffset
 enum En_OffsetDir{ OD_Vert, OD_Horiz };
 
+#if 0
 //------------------------------------------------------------------
 /// Homogeneous 2D line
 class Line2d : public Root
@@ -679,7 +778,13 @@ Line2d::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lin
 #endif
 //------------------------------------------------------------------
 
+#endif //0
+
+typedef Root<IsLine> Line2d;
+typedef Root<IsPoint> Point2d;
 
 } // namespace homog2d end
 
+
 #endif
+
