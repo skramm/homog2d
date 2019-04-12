@@ -45,16 +45,11 @@ See https://github.com/skramm/homog2d
 
 namespace homog2d {
 
-// forward declaration
-//class Point2d;
-
 template<typename LP>
 class Root;
 
-
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
-//template<typename LP>
 class Homogr
 {
 	template<typename LP>
@@ -359,6 +354,12 @@ class Root
 {
 	friend class Homogr;
 //	friend Root operator * ( const Homogr&, const Root& );
+
+	template<typename T>
+	friend Root<IsPoint> crossProduct( const Root<IsLine>&, const Root<IsLine>& );
+	template<typename T>
+	friend Root<IsLine> crossProduct( const Root<IsPoint>&, const Root<IsPoint>& );
+
 	public:
 //	protected:
 	Root( double a=0., double b=0., double c=1. )
@@ -376,24 +377,24 @@ class Root
 	double getValue( En_GivenCoord gc, double other ) const;
 	template<typename T>
 	void addOffset( En_OffsetDir dir, T v );
-
-	private:
-	double _v[3];
-
-
-	public:
-
-	template<class T>
-	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
-
-	bool operator == ( const Root<LP>& other ) const;
-
+	void normalize();
 	double getX() const;
 	double getY() const;
 	void set( double x, double y );
 
+// operators
+	bool operator == ( const Root<LP>& other ) const;
 	template<typename T>
 	Root<T> operator * ( const Root<LP>& );
+
+// friend functions and operators
+	template<class T>
+	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
+
+
+//	private:
+	double _v[3];
+
 };
 
 //------------------------------------------------------------------
@@ -502,10 +503,30 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 	return detail::crossProduct<IsPoint>(lhs, rhs);
 }
 
-template<typename LP>
+/// constructor of a point from two values
+template<>
 template<class T>
-Root<LP>::Root( const T&, const T& )
+Root<IsPoint>::Root( const T& v0, const T& v1 )
 {
+	_v[0] = v0;
+	_v[1] = v1;
+	_v[2] = 1.;
+}
+
+/// constructor of a point from two lines
+template<>
+template<>
+Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
+{
+	*this = detail::crossProduct<IsPoint>( v1, v2 );
+}
+
+/// constructor of a line from two points
+template<>
+template<>
+Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
+{
+	*this = detail::crossProduct<IsLine>( v1, v2 );
 }
 
 
@@ -515,6 +536,17 @@ Root<LP>::distToPoint( const Root<IsPoint>& pt ) const
 {
 }
 
+/// Normalise to unit length, and make sure \c a is always >0
+template<>
+void Root<IsLine>::normalize()
+{
+	auto sq = std::hypot( _v[0], _v[1] );
+	for( int i=0; i<3; i++ )
+		_v[i] /= sq;
+	if( std::signbit(_v[0]) ) //a allways >0
+		for( int i=0; i<3; i++ )
+			_v[i] = -_v[i];
+}
 
 /// Add offset (vertical or horizontal) to line (implementation for lines)
 template<>
@@ -526,6 +558,21 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 	else
 		_v[2] = _v[2] - v*_v[0];
 	normalize();
+}
+
+
+//------------------------------------------------------------------
+/// Apply homography to a point or line. Free function, templated by point or line
+template<typename LP>
+Root<LP>
+operator * ( const Homogr& h, const Root<LP>& in )
+{
+	Root<LP> out;
+	out._v[2] = 0.;
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			out._v[i] += h._data[i][j] * in._v[j];
+	return out;
 }
 
 

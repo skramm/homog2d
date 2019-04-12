@@ -105,6 +105,8 @@ A demo demonstrating this Opencv binding is provided, try it with
 ## Technical details
 <a name="tech"></a>
 
+- The library is fully templated, the two types (Point2d and Line2d) are actually the same datatype,
+behavior differs due to some policy-based design.
 - Points are stored as non-normalized values, any computation will keep the resulting values.
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
