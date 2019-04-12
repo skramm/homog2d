@@ -340,6 +340,11 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 
+/// Used in Line2d::getValue()
+enum En_GivenCoord { GC_X, GC_Y };
+/// Used in Line2d::addOffset
+enum En_OffsetDir{ OD_Vert, OD_Horiz };
+
 struct IsLine
 {
 };
@@ -363,20 +368,18 @@ class Root
 		_v[2] = c;
 	}
 
+	template<class T>
+	Root( const T&, const T& );
+
+	double distToPoint( const Root<IsPoint>& pt ) const;
+
+	double getValue( En_GivenCoord gc, double other ) const;
+	template<typename T>
+	void addOffset( En_OffsetDir dir, T v );
+
 	private:
 	double _v[3];
 
-	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	friend Root<LP> crossProduct( const Root<LP>& r1, const Root<LP>& r2 )
-	{
-		Root<LP> res;
-		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
-		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
-		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
-		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-		std::cout << "CP res=" << res << "\n";
-		return res;
-	}
 
 	public:
 
@@ -392,6 +395,37 @@ class Root
 	template<typename T>
 	Root<T> operator * ( const Root<LP>& );
 };
+
+//------------------------------------------------------------------
+// specialization for points
+template<>
+double
+Root<IsPoint>::getX() const
+{
+	return _v[0]/_v[2];
+}
+template<>
+double
+Root<IsPoint>::getY() const
+{
+	return _v[1]/_v[2];
+}
+
+template<>
+void
+Root<IsPoint>::set( double x, double y )
+{
+	_v[0] = x;
+	_v[1] = y;
+	_v[2] = 1.;
+}
+
+// specialization for lines (no implementation for points)
+template<>
+double
+Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
+{
+}
 
 /// default comparison operator, used for Lines
 template<typename LP>
@@ -439,49 +473,62 @@ operator << ( std::ostream& f, const Root<IsPoint>& r )
 	return f;
 }
 
-
-template<typename LP,typename T>
-Root<T> Root<LP>::operator * ( const Root<LP>& other )
+/// Inner implementation details
+namespace detail
 {
-	static_assert( std::is_same<LP,T>::value, "cannot return same type" );
+	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+	template<typename Out, typename In>
+	Root<Out> crossProduct( const Root<In>& r1, const Root<In>& r2 )
+	{
+		Root<Out> res;
+		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
+		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
+		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
+		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
+		std::cout << "CP res=" << res << "\n";
+		return res;
+	}
+}
 
+Root<IsLine>
+operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
+{
+	return detail::crossProduct<IsLine>(lhs, rhs);
+}
+
+Root<IsPoint>
+operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
+{
+	return detail::crossProduct<IsPoint>(lhs, rhs);
+}
+
+template<typename LP>
+template<class T>
+Root<LP>::Root( const T&, const T& )
+{
 }
 
 
-// specialization for points
-template<>
+template<typename LP>
 double
-Root<IsPoint>::getX() const
+Root<LP>::distToPoint( const Root<IsPoint>& pt ) const
 {
-	return _v[0]/_v[2];
 }
+
+
+/// Add offset (vertical or horizontal) to line (implementation for lines)
 template<>
-double
-Root<IsPoint>::getY() const
+template<typename T>
+void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 {
-	return _v[1]/_v[2];
-}
-
-template<>
-void
-Root<IsPoint>::set( double x, double y )
-{
-	_v[0] = x;
-	_v[1] = y;
-	_v[2] = 1.;
+	if( dir == OD_Vert )
+		_v[2] = _v[2] - v*_v[1];
+	else
+		_v[2] = _v[2] - v*_v[0];
+	normalize();
 }
 
 
-
-
-
-
-
-
-/// Used in Line2d::getValue()
-enum En_GivenCoord { GC_X, GC_Y };
-/// Used in Line2d::addOffset
-enum En_OffsetDir{ OD_Vert, OD_Horiz };
 
 #if 0
 //------------------------------------------------------------------
