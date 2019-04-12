@@ -32,7 +32,7 @@ run with "make test"
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
-#include "homog2d_T.hpp"
+#include "homog2d.hpp"
 
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) < std::numeric_limits<double>::epsilon() ) ? true : false )

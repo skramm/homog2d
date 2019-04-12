@@ -335,10 +335,9 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 
-
-
 /// Used in Line2d::getValue()
 enum En_GivenCoord { GC_X, GC_Y };
+
 /// Used in Line2d::addOffset
 enum En_OffsetDir{ OD_Vert, OD_Horiz };
 
@@ -349,8 +348,12 @@ struct IsPoint
 {
 };
 //------------------------------------------------------------------
-/// "Private" class
-/// \todo template root type
+/// Base class, will be instanciated as a Point or a Line
+/**
+\todo template root type
+\todo put back the data as private (needs some tweaks with friend functions)
+
+*/
 template<typename LP>
 class Root
 {
@@ -371,9 +374,8 @@ class Root
 	}
 
 	public:
-	template<typename T>
-	Root( const T&, const T&);
 
+	template<typename T> Root( const T&, const T&);
 	Root();
 
 	double getValue( En_GivenCoord gc, double other ) const;
@@ -394,19 +396,27 @@ class Root
 	template<class T>
 	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
 
+// optional stuff
+#ifdef HOMOG2D_USE_OPENCV
+	void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8 );
+	cv::Point2d getCvPtd() const;
+	cv::Point2f getCvPtf() const;
+#endif
+
 //	private:
 	double _v[3];
-
 };
 
 //------------------------------------------------------------------
-// specialization for points
+/// specialization for points (undefined for lines
 template<>
 double
 Root<IsPoint>::getX() const
 {
 	return _v[0]/_v[2];
 }
+
+/// specialization for points (undefined for lines
 template<>
 double
 Root<IsPoint>::getY() const
@@ -414,6 +424,7 @@ Root<IsPoint>::getY() const
 	return _v[1]/_v[2];
 }
 
+/// specialization for points (undefined for lines
 template<>
 void
 Root<IsPoint>::set( double x, double y )
@@ -423,7 +434,7 @@ Root<IsPoint>::set( double x, double y )
 	_v[2] = 1.;
 }
 
-/// Normalise to unit length, and make sure \c a is always >0
+/// Normalize to unit length, and make sure \c a is always >0
 template<>
 void Root<IsLine>::normalize()
 {
@@ -435,14 +446,18 @@ void Root<IsLine>::normalize()
 			_v[i] = -_v[i];
 }
 
-/// specialization for lines (no implementation for points)
+/// Specialization for lines (no implementation for points)
 template<>
 double
 Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
 {
+	if( gc == GC_X )
+		return ( -_v[0] * other - _v[2] ) / _v[1];
+	else
+		return ( -_v[1] * other - _v[2] ) / _v[0];
 }
 
-/// default comparison operator, used for Lines
+/// Default comparison operator, used for Lines
 template<typename LP>
 bool
 Root<LP>::operator == ( const Root<LP>& other ) const
@@ -457,7 +472,7 @@ Root<LP>::operator == ( const Root<LP>& other ) const
 	return true;
 }
 
-/// specialization of comparison operator for points
+/// Specialization of comparison operator for points
 template<>
 bool
 Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
@@ -470,7 +485,7 @@ Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
 	return true;
 }
 
-/// default operator << for lines
+/// Default operator << for lines
 template<typename LP>
 std::ostream&
 operator << ( std::ostream& f, const Root<LP>& r )
@@ -479,7 +494,7 @@ operator << ( std::ostream& f, const Root<LP>& r )
 	return f;
 }
 
-/// specialization of operator << for points
+/// Specialization of operator << for points
 template<>
 std::ostream&
 operator << ( std::ostream& f, const Root<IsPoint>& r )
@@ -507,8 +522,7 @@ namespace detail
 
 Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
-{	static int c;
-//	std::cout << c++ << ": <IsLine>operator lhs=" << lhs << " rhs=" << rhs << '\n';
+{
 	auto line = detail::crossProduct<IsLine>(lhs, rhs);
 	line.normalize();
 	return line;
@@ -517,10 +531,8 @@ operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 Root<IsPoint>
 operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 {
-//	std::cout << "<IsPoint>operator lhs=" << lhs << " rhs=" << rhs << '\n';
 	return detail::crossProduct<IsPoint>(lhs, rhs);
 }
-
 
 
 ///////////////////////////////////////////
@@ -663,6 +675,60 @@ operator * ( const Homogr& h, const Root<LP>& in )
 }
 
 
+#ifdef HOMOG2D_USE_OPENCV
+template<>
+cv::Point2d
+Root<IsPoint>::getCvPtd() const
+{
+	return cv::Point2d(
+		static_cast<int>(std::round(getX())),
+		static_cast<int>(std::round(getY()))
+	);
+}
+
+template<>
+cv::Point2f
+Root<IsPoint>::getCvPtf() const
+{
+	return cv::Point2f( getX(),getY() );
+}
+
+/// Draw line on Cv::Mat. Specialization for lines, unavailable for Points
+template<>
+void
+Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
+{
+//	std::cout << "drawCvMat line= " << *this << "\n";
+	Root<IsPoint> p00;
+	Root<IsPoint> p01(0,mat.cols);
+	Root<IsPoint> p10(mat.rows,0);
+	Root<IsPoint> p11(mat.rows,mat.cols);
+	Root<IsLine> l[4];
+	l[0] = Root<IsLine>( p00, p01 );
+	l[1] = Root<IsLine>(      p01, p11 );
+	l[2] = Root<IsLine>(           p11, p10 );
+	l[3] = Root<IsLine>(                p10, p00 );
+	std::vector<Root<IsPoint>> v;
+	for( int i=0; i<4; i++ )
+	{
+		Root<IsPoint> pt = *this * l[i];
+		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
+		if( pt.getX()>0 && pt.getX()<mat.cols )
+			if( pt.getY()>0 && pt.getY()<mat.rows )
+				v.push_back( pt );
+	}
+/*	std::cout << "v size=" << v.size() << '\n';
+
+	if( v.size()>2 )
+	{
+		for( int i=0; i<v.size(); i++ )
+			std::cout << "i=" << i << " pt=" << v[i] << '\n';
+	}*/
+	if( v.size()>1 )
+		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
+}
+
+#endif
 
 
 
@@ -685,6 +751,7 @@ operator * ( const Homogr& h, const Root<LP>& in )
 
 
 #if 0
+// PREVIOUS CODE
 //------------------------------------------------------------------
 /// Homogeneous 2D line
 class Line2d : public Root

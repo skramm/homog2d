@@ -3,7 +3,7 @@
 \brief Build with test, just there to make sure all required headers are included in header
 */
 
-#include "homog2d_T.hpp"
+#include "homog2d.hpp"
 
 using namespace homog2d;
 
