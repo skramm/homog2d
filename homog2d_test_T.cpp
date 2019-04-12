@@ -49,9 +49,9 @@ TEST_CASE( "test1", "[test1]" )
 	CHECK( ptA2.getX() == 2. );
 	CHECK( ptA2.getY() == 2. );
 	{
-		Line2d lA = ptA1 * ptA2;
+		Line2d lA1 = ptA1 * ptA2;
 		Line2d lA2 = ptA2 * ptA1;
-		CHECK( lA == lA2 );
+		CHECK( lA1 == lA2 );
 
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);

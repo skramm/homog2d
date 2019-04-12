@@ -335,6 +335,8 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 
+
+
 /// Used in Line2d::getValue()
 enum En_GivenCoord { GC_X, GC_Y };
 /// Used in Line2d::addOffset
@@ -360,27 +362,28 @@ class Root
 	template<typename T>
 	friend Root<IsLine> crossProduct( const Root<IsPoint>&, const Root<IsPoint>& );
 
-	public:
-//	protected:
-	Root( double a=0., double b=0., double c=1. )
+	private:
+	Root( double a, double b, double c )
 	{
 		_v[0] = a;
 		_v[1] = b;
 		_v[2] = c;
 	}
 
-	template<class T>
-	Root( const T&, const T& );
+	public:
+	template<typename T>
+	Root( const T&, const T&);
 
-	double distToPoint( const Root<IsPoint>& pt ) const;
+	Root();
 
 	double getValue( En_GivenCoord gc, double other ) const;
 	template<typename T>
-	void addOffset( En_OffsetDir dir, T v );
-	void normalize();
+	void   addOffset( En_OffsetDir dir, T v );
+	void   normalize();
 	double getX() const;
 	double getY() const;
-	void set( double x, double y );
+	void   set( double x, double y );
+	double distToPoint( const Root<IsPoint>& pt ) const;
 
 // operators
 	bool operator == ( const Root<LP>& other ) const;
@@ -390,7 +393,6 @@ class Root
 // friend functions and operators
 	template<class T>
 	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
-
 
 //	private:
 	double _v[3];
@@ -503,39 +505,6 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 	return detail::crossProduct<IsPoint>(lhs, rhs);
 }
 
-/// constructor of a point from two values
-template<>
-template<class T>
-Root<IsPoint>::Root( const T& v0, const T& v1 )
-{
-	_v[0] = v0;
-	_v[1] = v1;
-	_v[2] = 1.;
-}
-
-/// constructor of a point from two lines
-template<>
-template<>
-Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
-{
-	*this = detail::crossProduct<IsPoint>( v1, v2 );
-}
-
-/// constructor of a line from two points
-template<>
-template<>
-Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
-{
-	*this = detail::crossProduct<IsLine>( v1, v2 );
-}
-
-
-template<typename LP>
-double
-Root<LP>::distToPoint( const Root<IsPoint>& pt ) const
-{
-}
-
 /// Normalise to unit length, and make sure \c a is always >0
 template<>
 void Root<IsLine>::normalize()
@@ -546,6 +515,107 @@ void Root<IsLine>::normalize()
 	if( std::signbit(_v[0]) ) //a allways >0
 		for( int i=0; i<3; i++ )
 			_v[i] = -_v[i];
+}
+
+
+///////////////////////////////////////////
+// CONSTRUCTORS
+///////////////////////////////////////////
+
+/// Default constructors, calls the scalar constructor
+template<typename LP>
+Root<LP>::Root() : Root<LP>( 0., 0. )
+{}
+
+
+/// generic constructor implementation
+template<typename LP>
+template<typename T>
+Root<LP>::Root( const T& v0, const T& v1 )
+{
+	assert(0);
+}
+
+
+
+// generic constructor implementation
+/*template<>
+template<typename T>
+Root<IsLine>::Root( const T& v0, const T& v1 )
+{
+	assert(0);
+}*/
+
+/// constructor of a point from two values (specialization)
+template<>
+template<typename T>
+Root<IsPoint>::Root( const T& v0, const T& v1 )
+{
+	_v[0] = v0;
+	_v[1] = v1;
+	_v[2] = 1.;
+}
+
+
+/// constructor of a line from two values (vector dx/dy). (specialization)
+template<>
+template<typename T>
+Root<IsLine>::Root( const T& dx, const T& dy )
+{
+	*this = Root<IsPoint>() * Root<IsPoint>( dx, dy );
+	normalize();
+}
+
+/// constructor of a point from two lines (specialization)
+template<>
+template<>
+Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
+{
+	*this = detail::crossProduct<IsPoint>( v1, v2 );
+}
+
+/// Constructor of a line from two points (specialization)
+template<>
+template<>
+Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
+{
+	*this = detail::crossProduct<IsLine>( v1, v2 );
+	normalize();
+}
+
+/// Generic implementation (never called)
+template<typename LP>
+double
+Root<LP>::distToPoint( const Root<IsPoint>& pt ) const
+{
+	assert(0);
+}
+
+//------------------------------------------------------------------
+/// Returns distance between the line and point \b pt. Specialization
+/**
+http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+<pre>
+        | a.x0 + b.y0 + c |
+  d = -----------------------
+         sqrt( a*a + b*b )
+</pre>
+\todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
+*/
+template<>
+double
+Root<IsLine>::distToPoint( const Root<IsPoint>& pt ) const
+{
+	return std::fabs( (_v[0] * pt.getX() + _v[1] * pt.getY() + _v[2]) / std::hypot( _v[0], _v[1] ) );
+}
+
+//------------------------------------------------------------------
+/// Returns distance between the point and another point \b pt. Specialization
+template<>
+double
+Root<IsPoint>::distToPoint( const Root<IsPoint>& pt ) const
+{
+	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
 }
 
 /// Add offset (vertical or horizontal) to line (implementation for lines)
@@ -574,6 +644,26 @@ operator * ( const Homogr& h, const Root<LP>& in )
 			out._v[i] += h._data[i][j] * in._v[j];
 	return out;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
