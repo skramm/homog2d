@@ -32,11 +32,16 @@ void Draw()
 		g_pt[i].drawCvMat( g_img, cv::Scalar(50,50,250) );
 	}
 
-	homog2d::Line2d lA( g_pt[0], g_pt[2] );
-	homog2d::Line2d lB( g_pt[0], g_pt[3] );
-	homog2d::Line2d lC( g_pt[1], g_pt[2] );
-	homog2d::Line2d lD( g_pt[1], g_pt[3] );
+	Line2d lA( g_pt[0], g_pt[2] );
+	Line2d lB( g_pt[0], g_pt[3] );
+	Line2d lC( g_pt[1], g_pt[2] );
+	Line2d lD( g_pt[1], g_pt[3] );
 
+	std::cout << "lC: x=0: y=" << lC.getValue(GC_X, 0 ) << ", x=600 y=" << lC.getValue(GC_X, g_width ) << '\n';
+	std::cout << "lC: y=0: x=" << lC.getValue(GC_Y, 0 ) << ", y=500 x=" << lC.getValue(GC_Y, g_height ) << "\n";
+
+	std::cout << "lD: x=0: y=" << lD.getValue(GC_X, 0 ) << ", x=600 y=" << lD.getValue(GC_X, g_width ) << '\n';
+	std::cout << "lD: y=0: x=" << lD.getValue(GC_Y, 0 ) << ", y=500 x=" << lD.getValue(GC_Y, g_height ) << "\n";
 
 //	std::cout << "g_p00=" <<  g_p00 << " g_p01=" << g_p01 << " lA=" << lA << '\n';
 //	cv::line( g_img, g_p00.getCvPtd(), g_p01.getCvPtd(), cv::Scalar(10,50,20), 2 );

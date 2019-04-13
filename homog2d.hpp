@@ -24,7 +24,7 @@
 **************************************************************************/
 
 /**
-\file homog2d_T.hpp
+\file homog2d.hpp
 \brief single header file, implements some 2D homogeneous stuff.
 See https://github.com/skramm/homog2d
 */
@@ -399,6 +399,7 @@ class Root
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
 	void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8 );
+	void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int delta=5 );
 	cv::Point2d getCvPtd() const;
 	cv::Point2f getCvPtf() const;
 #endif
@@ -708,13 +709,17 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, i
 	l[2] = Root<IsLine>(           p11, p10 );
 	l[3] = Root<IsLine>(                p10, p00 );
 	std::vector<Root<IsPoint>> v;
+	std::cout << "mat.cols=" << mat.cols << " mat.rows=" << mat.rows << '\n';
 	for( int i=0; i<4; i++ )
 	{
 		Root<IsPoint> pt = *this * l[i];
 		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
 		if( pt.getX()>=0 && pt.getX()<=mat.cols )
 			if( pt.getY()>=0 && pt.getY()<=mat.rows )
+			{
+				std::cout << "OK !\n";
 				v.push_back( pt );
+			}
 	}
 	std::cout << "v size=" << v.size() << '\n';
 
@@ -730,9 +735,8 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, i
 /// Draw line on Cv::Mat. Specialization for points
 template<>
 void
-Root<IsPoint>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
+Root<IsPoint>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int delta )
 {
-	int delta = 5;
 	std::cout << "drawCvMat point= " << *this << "\n";
 	cv::Point2d p00( this->getX()-delta, this->getY() );
 	cv::Point2d p11( this->getX()+delta, this->getY() );
@@ -740,8 +744,8 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, 
 	cv::Point2d p01( this->getX(), this->getY()-delta );
 	cv::Point2d p10( this->getX(), this->getY()+delta );
 
-	cv::line( mat, p00, p11, color, thickness, lineType );
-	cv::line( mat, p01, p10, color, thickness, lineType );
+	cv::line( mat, p00, p11, color );
+	cv::line( mat, p01, p10, color );
 }
 
 #endif

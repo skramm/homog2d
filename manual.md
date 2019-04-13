@@ -98,6 +98,20 @@ cv::Point2d ptcv1 = pt.getCvPtd();
 cv::Point2f ptcv2 = pt.getCvPtf()
 ```
 
+You can also directly points and lines:
+```
+Point2d pt( ... );
+Line2d li( ... );
+li.drawCvMat( mat, cv::Scalar(b,g,r), thickness, linetype );
+pt.drawCvMat( mat, cv::Scalar(b,g,r), delta );
+```
+
+Dor lines, the API follows the Opencv interface (color, line thickness, line type),
+[see here](https://docs.opencv.org/3.4.5/d6/d6e/group__imgproc__draw.html#ga7078a9fae8c7e7d13d24dac2520ae4a2).
+Please note that the Opencv function actually draws a **segment** while this function here will draw a line spanning the whole image.
+
+For points, this will just draw a small cross: 2 H/V lines, length is `delta` (integer).
+
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
