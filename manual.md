@@ -1,7 +1,5 @@
 # Manual
 
-# THIS IS PRELIMINAR !
-
 Home page: https://github.com/skramm/homog2d
 
 - [Lines and points](#basic)
@@ -122,7 +120,6 @@ li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor( r,g,b) 
 
 ```
 with r,g,b bytes in the range [0,255].
-
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).

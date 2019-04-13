@@ -45,25 +45,16 @@ TEST_CASE( "test1", "[test1]" )
 	CHECK( ptA1 == Point2d(0,0) );
 
 	Point2d ptA2(2,2);
-	std::cout << "ptA2="<< ptA2 << '\n';
 	CHECK( ptA2.getX() == 2. );
 	CHECK( ptA2.getY() == 2. );
-	std::cout << "ptA1="<< ptA1 << '\n';
-	std::cout << "ptA2="<< ptA2 << '\n';
 
 	{ // build line from two points
 		Line2d lA1 = ptA1 * ptA2;
-		std::cout << "lA1="<< lA1 << '\n';
-
 		Line2d lA2 = ptA2 * ptA1;
-		std::cout << "lA2="<< lA2 << '\n';
-
 		CHECK( lA1 == lA2 );
 
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
-	std::cout << "ptB1="<< ptB1 << '\n';
-	std::cout << "ptB2="<< ptB2 << '\n';
 		Line2d  lB = ptB1 * ptB2;
 	}
 
@@ -72,11 +63,13 @@ TEST_CASE( "test1", "[test1]" )
 // build point from two diagonal lines
 		Line2d lA( Point2d(0,0), Point2d(2,2) );
 		Line2d lB( Point2d(0,2), Point2d(2,0) );
+		CHECK( Line2d() != lA );
 
 		Point2d mA1 = lA * lB;
 		Point2d mA2 = lB * lA;
 		CHECK( mA1 == Point2d(1.,1.) );
 		CHECK( mA2 == Point2d(1.,1.) );
+		CHECK( mA1 != Point2d() );
 
 // build point from two H/V lines
 		Line2d lv0( 0, 1 );  // vertical, x=0
@@ -137,21 +130,14 @@ TEST_CASE( "offset test", "[test3]" )
 	lB.addOffset( OD_Horiz, 2. );
 	CHECK( lB == Line2d( Point2d(2,0), Point2d(4,2) ) );
 	{
-		std::cout << "offset test\n";
 		Line2d v;
 		Line2d h(1,0);
-		std::cout << "h=" << h << " v=" << v << " v*h=" << v*h << '\n';
-
 		CHECK( v*h == Point2d() );    // intersection is (0,0)
 
 		v.addOffset( OD_Horiz, 1 );
-		std::cout << "A: h=" << h << " v=" << v << " v*h=" << v*h << '\n';
 		CHECK( v*h == Point2d(1,0) ); // intersection is (1,0)
 
 		h.addOffset( OD_Vert, 1 );
-		std::cout << "B: h=" << h << " v=" << v << " v*h=" << v*h << '\n';
-
-
 		CHECK( v*h == Point2d(1,1) ); // intersection is (1,0)
 	}
 }
@@ -235,7 +221,11 @@ TEST_CASE( "test matrix", "[testH]" )
 		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
 		CHECK( pt3.getY() == 1. );
 	}
-//	Line2d li;
-//	Line2d liB = H * li;
-
+}
+TEST_CASE( "matrix chained operations", "[testH2]" )
+{
+	Homogr H1,H2;
+	H1.addTranslation(4,5).addRotation( 1 ).addScale( 5,6);
+	H2.addRotation( 1 ).addTranslation(4,5).addScale( 5,6);
+	CHECK( H1 != H2 );
 }

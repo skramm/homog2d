@@ -111,12 +111,13 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Adds a translation \c tx,ty to the matrix
 	template<typename T>
-	void addTranslation( T tx, T ty )
+	Homogr& addTranslation( T tx, T ty )
 	{
 		Homogr out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
 		normalize();
+		return *this;
 	}
 	/// Sets the matrix as a translation \c tx,ty
 	template<typename T>
@@ -129,12 +130,13 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Adds a rotation with an angle \c theta (radians) to the matrix
 	template<typename T>
-	void addRotation( T theta )
+	Homogr& addRotation( T theta )
 	{
 		Homogr out;
 		out.setRotation( theta );
 		*this = out * *this;
 		normalize();
+		return *this;
 	}
 	/// Sets the matrix as a rotation with an angle \c theta (radians)
 	template<typename T>
@@ -148,12 +150,13 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Adds a scale factor to the matrix
 	template<typename T>
-	void addScale( T kx, T ky )
+	Homogr& addScale( T kx, T ky )
 	{
 		Homogr out;
 		out.setScale( kx, ky );
 		*this = out * *this;
 		normalize();
+		return *this;
 	}
 	/// Sets the matrix as a scaling
 	template<typename T>
@@ -242,6 +245,11 @@ Thus some assert can be triggered elsewhere
 				if( std::fabs( _data[i][j] - h._data[i][j] ) >= eps )
 					return false;
 		return true;
+	}
+/// Comparison operator. Does normalization if required
+	bool operator != ( const Homogr& h ) const
+	{
+		return !(*this == h);
 	}
 
 //////////////////////////
@@ -409,6 +417,10 @@ class Root
 
 // operators
 	bool operator == ( const Root<LP>& other ) const;
+	bool operator != ( const Root<LP>& other ) const
+	{
+		return !(*this == other);
+	}
 	template<typename T>
 	Root<T> operator * ( const Root<LP>& );
 
