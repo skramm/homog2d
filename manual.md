@@ -92,7 +92,7 @@ For homographies, you can import directly from
 `std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`
 
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
-This is enable by defining the symbol HOMOG2D_USE_OPENCV.
+This is enabled by defining the symbol HOMOG2D_USE_OPENCV.
 You can then write this:
 ```
 Point2d pt;
@@ -101,7 +101,7 @@ cv::Point2d ptcv1 = pt.getCvPtd();
 cv::Point2f ptcv2 = pt.getCvPtf()
 ```
 
-You can also directly points and lines:
+You can also directly draw points and lines on an image (cv::Mat):
 ```
 Point2d pt( ... );
 Line2d li( ... );
@@ -109,17 +109,16 @@ li.drawCvMat( mat );
 pt.drawCvMat( mat );
 ```
 
-Please note that this function here will draw a line spanning the whole image, as opposed to
+Please note that for lines, this will draw a line spanning the whole image, as opposed to
 the Opencv function `cv::line()` that actually draws a **segment** only.
 For points, this will just draw a small cross: 2 H/V lines.
 
-These two functions support a second optional argument of type `CvDrawParams`, that holds various parameters for drawing.
-So you can have for example set the color and line width with:
+These two functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+So you can for example set the color and line width with:
 ```
 li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor( r,g,b) );
-
 ```
-with r,g,b bytes in the range [0,255].
+with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
