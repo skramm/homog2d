@@ -20,7 +20,10 @@ This will copy in `/usr/local/include`.
 
 Usage: see [manual](manual.md)
 
-Rationale: usage simplicity (see manual), and no dependency!
+Rationale:
+- Usage simplicity (see manual)
+- No dependency
+- Modern C++ policy-based design
 
 [![Build Status](https://travis-ci.com/skramm/homog2d.svg?branch=master)](https://travis-ci.com/skramm/homog2d)
 

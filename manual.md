@@ -45,6 +45,11 @@ li1.addOffset( OD_Horiz, 5 ); // horizontal offset
 li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
 
+Of course two parallel lines will never cross, and two identical points do not define a line
+So if you code attempts to do so, this will trigger a
+[std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
+exception.
+
 ## Homographies
 <a name="matrix"></a>
 - You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"):

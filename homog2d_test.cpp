@@ -139,7 +139,8 @@ TEST_CASE( "offset test", "[test3]" )
 	{
 		std::cout << "offset test\n";
 		Line2d v;
-		Line2d h(0,1);
+		Line2d h(1,0);
+		std::cout << "h=" << h << " v=" << v << " v*h=" << v*h << '\n';
 
 		CHECK( v*h == Point2d() );    // intersection is (0,0)
 
@@ -153,6 +154,18 @@ TEST_CASE( "offset test", "[test3]" )
 
 		CHECK( v*h == Point2d(1,1) ); // intersection is (1,0)
 	}
+}
+
+TEST_CASE( "exceptions", "[testE]" )
+{
+	Line2d v1,v2; // 2 identical vertical lines
+
+	CHECK_THROWS( v1*v2);
+	v2.addOffset( OD_Horiz, 1 );
+	CHECK_THROWS( v1*v2); // still no intersection (they never cross)
+
+	Point2d p1,p2;
+	CHECK_THROWS( p1*p2); // same points can't define a line
 }
 
 TEST_CASE( "manual code", "[testM]" )

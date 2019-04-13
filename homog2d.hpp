@@ -170,7 +170,7 @@ Thus some assert can be triggered elsewhere
 	{
 		auto eps = std::numeric_limits<double>::epsilon();
 
-		if( std::fabs(_data[2][2]) < eps ) // if [2][2] is null, then we use [2][1]
+		if( std::fabs(_data[2][2]) <= eps ) // if [2][2] is null, then we use [2][1]
 			p_divideBy( 2, 1 );
 		else
 			p_divideBy( 2, 2 );
@@ -229,17 +229,17 @@ Thus some assert can be triggered elsewhere
 	}
 
 /// Comparison operator. Does normalization if required
-	bool operator == ( const Homogr& li ) const
+	bool operator == ( const Homogr& h ) const
 	{
 		if( !_isNormalized )
 			normalize();
-		if( !li._isNormalized )
-			li.normalize();
+		if( !h._isNormalized )
+			h.normalize();
 
 		auto eps = std::numeric_limits<double>::epsilon();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				if( std::fabs( _data[i][j] - li._data[i][j] ) > eps )
+				if( std::fabs( _data[i][j] - h._data[i][j] ) >= eps )
 					return false;
 		return true;
 	}
@@ -402,7 +402,6 @@ class Root
 	double getValue( En_GivenCoord gc, double other ) const;
 	template<typename T>
 	void   addOffset( En_OffsetDir dir, T v );
-	void   normalize();
 	double getX() const;
 	double getY() const;
 	void   set( double x, double y );
@@ -426,6 +425,10 @@ class Root
 
 //	private:
 	double _v[3];
+
+// PRIVATE FUNCTIONS
+	void P_normalizeLine();
+
 };
 
 //------------------------------------------------------------------
@@ -457,9 +460,12 @@ Root<IsPoint>::set( double x, double y )
 
 /// Normalize to unit length, and make sure \c a is always >0
 template<>
-void Root<IsLine>::normalize()
+void Root<IsLine>::P_normalizeLine()
 {
 	auto sq = std::hypot( _v[0], _v[1] );
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( sq <= eps )
+		throw std::runtime_error( "unable to normalize line" );
 	for( int i=0; i<3; i++ )
 		_v[i] /= sq;
 	if( std::signbit(_v[0]) ) //a allways >0
@@ -487,7 +493,7 @@ Root<LP>::operator == ( const Root<LP>& other ) const
 	for( int i=0; i<3; i++ )
 		if( std::fabs( _v[i] - other._v[i] ) > eps )
 		{
-			std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
+//			std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
 			return false;
 		}
 	return true;
@@ -535,6 +541,9 @@ namespace detail
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
+		for ( int i=0; i<3; i++)
+//			std::cout << "v[" << i << "]=" << res._v[i] << " ";
+//		std::cout  << '\n';
 		return res;
 	}
 }
@@ -543,14 +552,20 @@ Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 {
 	auto line = detail::crossProduct<IsLine>(lhs, rhs);
-	line.normalize();
+//	std::cout << "LINE BEFORE NORMALIZE:" << line << '\n';
+	line.P_normalizeLine();
+//	std::cout << "LINE AFTER NORMALIZE:" << line << '\n';
 	return line;
 }
 
 Root<IsPoint>
 operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 {
-	return detail::crossProduct<IsPoint>(lhs, rhs);
+	auto pt = detail::crossProduct<IsPoint>(lhs, rhs);
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( std::fabs(pt._v[2]) <= eps )
+		throw std::runtime_error( "unable to compute point from two lines" );
+	return pt;
 }
 
 
@@ -605,7 +620,7 @@ template<typename T>
 Root<IsLine>::Root( const T& dx, const T& dy )
 {
 	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
-	normalize();
+	P_normalizeLine();
 //	std::cout << "C5:" << *this << "\n";
 }
 
@@ -624,7 +639,7 @@ template<>
 Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 {
 	*this = detail::crossProduct<IsLine>( v1, v2 );
-	normalize();
+	P_normalizeLine();
 //	std::cout << "C7:" << *this << "\n";
 }
 
@@ -665,7 +680,7 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 		_v[2] = _v[2] - v*_v[1];
 	else
 		_v[2] = _v[2] - v*_v[0];
-	normalize();
+	P_normalizeLine();
 }
 
 //------------------------------------------------------------------
@@ -681,7 +696,6 @@ operator * ( const Homogr& h, const Root<LP>& in )
 			out._v[i] += h._data[i][j] * in._v[j];
 	return out;
 }
-
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
