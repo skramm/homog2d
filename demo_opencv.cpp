@@ -1,3 +1,28 @@
+/**************************************************************************
+
+    This file is part of the C++ library "homog2d", dedicated to
+    handle 2D lines and points, see https://github.com/skramm/homog2d
+
+    Author & Copyright 2019 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr, or http://www.litislab.eu/
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file demo_opencv.cpp
 \brief demo of interfacing with Opencv (PRELIMINAR)
@@ -15,7 +40,7 @@ std::string g_wndname = "homog2d demo";
 cv::Mat g_img;
 int g_width = 600;
 int g_height = 500;
-
+int g_selected = -1;
 homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
@@ -24,12 +49,14 @@ void Draw()
 	g_img = cv::Scalar(255,255,255);
 
 // line from origin to mouse pos
-	cv::line( g_img, cv::Point2d(), g_pt_mouse.getCvPtd(), cv::Scalar(0,50,20), 2 );
+	cv::line( g_img, cv::Point2d(), g_pt_mouse.getCvPtd(), cv::Scalar(0,50,20), 1, cv::LINE_AA );
 
 	for( int i=0; i<4; i++ )
 	{
-		std::cout << "i=" << i << " pt=" << g_pt[i] << '\n';
-		g_pt[i].drawCvMat( g_img, CvDrawParams().setColor(50,50,250) );
+		if( g_selected == i )
+			g_pt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150) );
+		else
+			g_pt[i].drawCvMat( g_img );
 	}
 
 	Line2d lA( g_pt[0], g_pt[2] );
@@ -37,19 +64,17 @@ void Draw()
 	Line2d lC( g_pt[1], g_pt[2] );
 	Line2d lD( g_pt[1], g_pt[3] );
 
-	std::cout << "lC: x=0: y=" << lC.getValue(GC_X, 0 ) << ", x=600 y=" << lC.getValue(GC_X, g_width ) << '\n';
-	std::cout << "lC: y=0: x=" << lC.getValue(GC_Y, 0 ) << ", y=500 x=" << lC.getValue(GC_Y, g_height ) << "\n";
+	lA.drawCvMat( g_img, CvDrawParams().setColor(   0,  50, 150) );
+	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
+	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
+	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
 
-	std::cout << "lD: x=0: y=" << lD.getValue(GC_X, 0 ) << ", x=600 y=" << lD.getValue(GC_X, g_width ) << '\n';
-	std::cout << "lD: y=0: x=" << lD.getValue(GC_Y, 0 ) << ", y=500 x=" << lD.getValue(GC_Y, g_height ) << "\n";
+	auto la_V = lA;
+	la_V.addOffset( OD_Vert, 25);
+	la_V.drawCvMat( g_img, CvDrawParams().setColor(250,0,250) );
 
-//	std::cout << "g_p00=" <<  g_p00 << " g_p01=" << g_p01 << " lA=" << lA << '\n';
-//	cv::line( g_img, g_p00.getCvPtd(), g_p01.getCvPtd(), cv::Scalar(10,50,20), 2 );
-
-	lA.drawCvMat( g_img, CvDrawParams().setColor(250,50,50) );
-	lB.drawCvMat( g_img, CvDrawParams().setColor(50,250,50) );
-	lC.drawCvMat( g_img );
-	lD.drawCvMat( g_img );
+	lA.addOffset( OD_Horiz, 25);
+	lA.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
 
 	cv::imshow( g_wndname, g_img );
 }
@@ -61,6 +86,15 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 	std::cout << "count:" << c++ << '\n';
 	Draw();
 	g_pt_mouse.set( x, y );
+	g_selected = -1;
+	Point2d pt( g_pt_mouse );
+	for( int i=0; i<4; i++ )
+		if( pt.distToPoint( g_pt[i]) < 10 )
+		{
+			g_pt[i] = pt;
+			g_selected = i;
+			break;
+		}
 }
 
 int main()

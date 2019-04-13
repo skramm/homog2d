@@ -9,7 +9,7 @@ using (internally) homogeneous coordinates.
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and get going.
 - Status: beta
 - Author: S. Kramm
-- Licence: GPL v3
+- Licence: LGPL v3
 - Dependencies: none, other than standard library
 
 A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of the C++ library "homog2d", dedicated to
-    handle 2D lines and points
+    handle 2D lines and points, see https://github.com/skramm/homog2d
 
     Author & Copyright 2019 Sebastien Kramm
 

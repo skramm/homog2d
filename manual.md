@@ -102,15 +102,22 @@ You can also directly points and lines:
 ```
 Point2d pt( ... );
 Line2d li( ... );
-li.drawCvMat( mat, cv::Scalar(b,g,r), thickness, linetype );
-pt.drawCvMat( mat, cv::Scalar(b,g,r), delta );
+li.drawCvMat( mat );
+pt.drawCvMat( mat );
 ```
 
-Dor lines, the API follows the Opencv interface (color, line thickness, line type),
-[see here](https://docs.opencv.org/3.4.5/d6/d6e/group__imgproc__draw.html#ga7078a9fae8c7e7d13d24dac2520ae4a2).
-Please note that the Opencv function actually draws a **segment** while this function here will draw a line spanning the whole image.
+Please note that this function here will draw a line spanning the whole image, as opposed to
+the Opencv function `cv::line()` that actually draws a **segment** only.
+For points, this will just draw a small cross: 2 H/V lines.
 
-For points, this will just draw a small cross: 2 H/V lines, length is `delta` (integer).
+These two functions support a second optional argument of type `CvDrawParams`, that holds various parameters for drawing.
+So you can have for example set the color and line width with:
+```
+li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor( r,g,b) );
+
+```
+with r,g,b bytes in the range [0,255].
+
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).

@@ -1,7 +1,7 @@
 /**************************************************************************
 
-    This file is the C++ library "homog2d", dedicated to
-    handle 2D lines and points
+    This file is part of the C++ library "homog2d", dedicated to
+    handle 2D lines and points, see https://github.com/skramm/homog2d
 
     Author & Copyright 2019 Sebastien Kramm
 
@@ -29,8 +29,8 @@
 See https://github.com/skramm/homog2d
 */
 
-#ifndef HG_HOMOG2DT_HPP
-#define HG_HOMOG2DT_HPP
+#ifndef HG_HOMOG2D_HPP
+#define HG_HOMOG2D_HPP
 
 #include <cmath>
 #include <iostream>
@@ -335,13 +335,14 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 #ifdef HOMOG2D_USE_OPENCV
-/// draw parameters for Opencv binding, see Root::drawCvMat()
+/// Draw parameters for Opencv binding, see Root::drawCvMat()
 struct CvDrawParams
 {
 	cv::Scalar _color         = cv::Scalar(128,128,128);
 	int        _lineThickness = 1;
-	int        _lineType      = cv::LINE_AA; // cv::LINE_8
+	int        _lineType      = cv::LINE_AA; // or cv::LINE_8
 	int        _ptDelta       = 5; // pixels
+
 	CvDrawParams& setThickness( int t )
 	{
 		_lineThickness = t;
@@ -530,12 +531,10 @@ namespace detail
 	template<typename Out, typename In>
 	Root<Out> crossProduct( const Root<In>& r1, const Root<In>& r2 )
 	{
-//		std::cout << "CP r1=" << r1 << " r2=" << r2 << "\n";
 		Root<Out> res;
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-//		std::cout << "CP res=" << res << "\n";
 		return res;
 	}
 }
@@ -569,7 +568,7 @@ Root<LP>::Root()
 //	std::cout << "C1:" << *this << "\n";
 }
 
-/// Default constructor, specialization for lines
+/// Default constructor, specialization for lines, build vertical line at x=0
 template<>
 Root<IsLine>::Root()
 {
@@ -579,7 +578,7 @@ Root<IsLine>::Root()
 //	std::cout << "C2:" << *this << "\n";;
 }
 
-/// generic constructor implementation
+/// generic 2 arg constructor implementation
 template<typename LP>
 template<typename T>
 Root<LP>::Root( const T& v0, const T& v1 )
@@ -587,7 +586,6 @@ Root<LP>::Root( const T& v0, const T& v1 )
 //	std::cout << "C3:" << *this << "\n";
 	assert(0);
 }
-
 
 /// constructor of a point from two values (specialization)
 template<>
@@ -630,15 +628,6 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 //	std::cout << "C7:" << *this << "\n";
 }
 
-
-
-/// Generic implementation (never called)
-template<typename LP>
-double
-Root<LP>::distToPoint( const Root<IsPoint>& pt ) const
-{
-	assert(0);
-}
 
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. Specialization
@@ -694,6 +683,7 @@ operator * ( const Homogr& h, const Root<LP>& in )
 }
 
 
+//------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 template<>
 cv::Point2d
@@ -712,51 +702,45 @@ Root<IsPoint>::getCvPtf() const
 	return cv::Point2f( getX(),getY() );
 }
 
+//------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for lines.
 template<>
 void
 Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
-	std::cout << "drawCvMat line= " << *this << "\n";
-	Root<IsPoint> p00;
-	Root<IsPoint> p01(0,mat.cols);
-	Root<IsPoint> p10(mat.rows,0);
-	Root<IsPoint> p11(mat.rows,mat.cols);
+	Root<IsPoint> p00(0,        0);
+	Root<IsPoint> p01(0,        mat.rows);
+	Root<IsPoint> p10(mat.cols, 0);
+	Root<IsPoint> p11(mat.cols, mat.rows  );
 	Root<IsLine> l[4];
 	l[0] = Root<IsLine>( p00, p01 );
 	l[1] = Root<IsLine>(      p01, p11 );
 	l[2] = Root<IsLine>(           p11, p10 );
 	l[3] = Root<IsLine>(                p10, p00 );
 	std::vector<Root<IsPoint>> v;
-	std::cout << "mat.cols=" << mat.cols << " mat.rows=" << mat.rows << '\n';
 	for( int i=0; i<4; i++ )
 	{
 		Root<IsPoint> pt = *this * l[i];
-		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
 		if( pt.getX()>=0 && pt.getX()<=mat.cols )
 			if( pt.getY()>=0 && pt.getY()<=mat.rows )
-			{
-				std::cout << "OK !\n";
 				v.push_back( pt );
-			}
 	}
-	std::cout << "v size=" << v.size() << '\n';
 
-	if( v.size()>2 )
+/*	if( v.size()>2 )
 	{
 		for( int i=0; i<v.size(); i++ )
 			std::cout << "i=" << i << " pt=" << v[i] << '\n';
-	}
+	}*/
 	if( v.size()>1 )
 		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), dp._color, dp._lineThickness, dp._lineType );
 }
 
+//------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for points
 template<>
 void
 Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
-	std::cout << "drawCvMat point= " << *this << "\n";
 	cv::Point2d p00( this->getX()-dp._ptDelta, this->getY() );
 	cv::Point2d p11( this->getX()+dp._ptDelta, this->getY() );
 
@@ -767,288 +751,9 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 	cv::line( mat, p01, p10, dp._color );
 }
 
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-// PREVIOUS CODE
 //------------------------------------------------------------------
-/// Homogeneous 2D line
-class Line2d : public Root
-{
-	friend class Point2d;
-	friend Line2d operator * ( const Homogr& h, const Line2d& in );
+#endif // HOMOG2D_USE_OPENCV
 
-	friend std::ostream& operator << ( std::ostream& f, const Line2d& li )
-	{
-		f << static_cast<Root>(li);
-		return f;
-	}
-
-	public:
-		Line2d( double dx, double dy );
-/// Create a line from two points
-		Line2d( const Point2d&, const Point2d& );
-/// creates a vertical line
-		Line2d(): Root(1.,0.,0.)
-		{}
-		double distToPoint( const Point2d& pt ) const;
-		Point2d operator * ( const Line2d& );
-		std::pair<double,double> getVector() const;
-		bool operator == ( const Line2d& li ) const
-		{
-			return Root::operator == (li);
-		}
-
-/// Add offset (vertical or horizontal) to line
-	template<typename T>
-	void addOffset( En_OffsetDir dir, T v )
-	{
-		if( dir == OD_Vert )
-			_v[2] = _v[2] - v*_v[1];
-		else
-			_v[2] = _v[2] - v*_v[0];
-		normalize();
-	}
-
-/// Returns one of the coordinates of a point on the line, given the other one
-		double getValue( En_GivenCoord gc, double other )
-		{
-			if( gc == GC_X )
-				return ( -_v[0] * other - _v[2] ) / _v[1];
-			else
-				return ( -_v[1] * other - _v[2] ) / _v[0];
-		}
-
-#ifdef HOMOG2D_USE_OPENCV
-		void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8 );
-#endif
-
-	private:
-		explicit Line2d( const Root& r ): Root(r)
-		{
-			normalize();
-		}
-/// Normalise to unit length, and make sure \c a is always >0
-		void normalize()
-		{
-			auto sq = std::hypot( _v[0], _v[1] );
-			for( int i=0; i<3; i++ )
-				_v[i] /= sq;
-			if( std::signbit(_v[0]) ) //a allways >0
-				for( int i=0; i<3; i++ )
-					_v[i] = -_v[i];
-		}
-};
-
-//------------------------------------------------------------------
-/// Homogeneous 2D point
-/**
-Values are stored "as is" (not normalized), so we can handle far away values
-*/
-class Point2d : public Root
-{
-	friend class Line2d;
-	friend Point2d operator * ( const Homogr& h, const Point2d& in );
-
-	friend std::ostream& operator << ( std::ostream& f, const Point2d& pt )
-	{
-#if 0
-		f << static_cast<Root>(pt);
-#else
-		f << '[' << pt.getX() << ',' << pt.getY() << ']';
-#endif
-		return f;
-	}
-
-	public:
-		Point2d( double x=0., double y=0. ) : Root(x, y, 1.)
-		{
-		}
-		template<typename T>
-		Point2d( T pt ) : Root( pt.x, pt.y, 1.)
-		{}
-
-		Point2d( const Line2d&, const Line2d& );
-		Line2d operator * ( const Point2d& );
-		double getX() const
-		{
-			return _v[0]/_v[2];
-		}
-		double getY() const
-		{
-			return _v[1]/_v[2];
-		}
-		void set( double x, double y )
-		{
-			_v[0] = x;
-			_v[1] = y;
-			_v[2] = 1.;
-		}
-
-		double distToPoint( const Point2d& pt ) const;
-
-		bool operator == ( const Point2d& pt ) const
-		{
-			auto eps = std::numeric_limits<double>::epsilon();
-			if( std::fabs( getX() - pt.getX() ) > eps )
-				return false;
-			if( std::fabs( getY() - pt.getY() ) > eps )
-				return false;
-			return true;
-		}
-#ifdef HOMOG2D_USE_OPENCV
-		cv::Point2d getCvPtd() const
-		{
-			return cv::Point2d(
-				static_cast<int>(std::round(getX())),
-				static_cast<int>(std::round(getY()))
-			);
-		}
-		cv::Point2f getCvPtf() const
-		{
-			return cv::Point2f( getX(),getY() );
-		}
-#endif
-	private:
-//		explicit Point2d( const Root& r ): Root(r)
-//		{}
-/*		void normalize()
-		{
-			_v[0] /= _v[2];
-			_v[1] /= _v[2];
-			_v[2] /= 1.;
-		}*/
-};
-
-//------------------------------------------------------------------
-/// A point is the intersection of 2 lines
-inline
-Point2d
-Line2d::operator * ( const Line2d& l2 )
-{
-	return Point2d( *this, l2 );
-}
-
-/// A line is defined by 2 points
-inline
-Line2d
-Point2d::operator * ( const Point2d& p2 )
-{
-	return Line2d( *this, p2 );
-}
-
-//------------------------------------------------------------------
-/// Creates a line starting from (0,0) and with the given slope (dx,dy)
-inline
-Line2d::Line2d( double dx, double dy )
-{
-	*this = Point2d() * Point2d( dx, dy );
-	normalize();
-}
-//------------------------------------------------------------------
-inline
-Line2d::Line2d( const Point2d& p1, const Point2d& p2 )
-{
-//	*this = static_cast<Line2d>(crossProduct( p1, p2 ) );
-	*this = crossProduct( p1, p2 );
-	normalize();
-}
-//------------------------------------------------------------------
-inline
-Point2d::Point2d( const Line2d& l1, const Line2d& l2 )
-{
-//	*this = static_cast<Point2d>(crossProduct( l1, l2 ) );
-	*this = crossProduct( l1, l2 );
-	std::cout << "Point2d::Point2d(): l1=" << l1 << " l2=" << l2 << " res=" << *this << "\n";
-//	normalize();
-}
-//------------------------------------------------------------------
-/// returns slope of line as a unit-length vector (dx, dy), with dx>0
-inline
-std::pair<double,double>
-Line2d::getVector() const
-{
-	std::pair<double,double> res(_v[0],_v[1]);
-	return res;
-}
-//------------------------------------------------------------------
-/// Returns distance between the line and point \b pt
-/**
-http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
-<pre>
-        | a.x0 + b.y0 + c |
-  d = -----------------------
-         sqrt( a*a + b*b )
-</pre>
-
-\todo Do we really require computation of hypot (because the line is supposed to be normalized, i.e. h=1 ?)
-*/
-inline
-double
-Line2d::distToPoint( const Point2d& pt ) const
-{
-	return std::fabs( (_v[0] * pt.getX() + _v[1] * pt.getY() + _v[2]) / std::hypot( _v[0], _v[1] ) );
-}
-
-//------------------------------------------------------------------
-/// Returns distance between the point and another point \b pt
-inline
-double
-Point2d::distToPoint( const Point2d& pt ) const
-{
-	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
-}
-
-//------------------------------------------------------------------
-/// Apply homography to a point or line
-Root
-operator * ( const Homogr& h, const Root& in )
-{
-	Root out;
-	out._v[2] = 0.;
-	for( int i=0; i<3; i++ )
-		for( int j=0; j<3; j++ )
-			out._v[i] += h._data[i][j] * in._v[j];
-	return out;
-}
-//------------------------------------------------------------------
-/// Apply homography to a point
-Point2d
-operator * ( const Homogr& h, const Point2d& in )
-{
-	return static_cast<Point2d>( h * static_cast<Root>(in) );
-}
-//------------------------------------------------------------------
-/// Apply homography to a line
-Line2d
-operator * ( const Homogr& h, const Line2d& in )
-{
-	return h * static_cast<Root>(in);
-//	return h * in;
-}
-//------------------------------------------------------------------
-
-#endif //0
 
 typedef Root<IsLine> Line2d;
 typedef Root<IsPoint> Point2d;
@@ -1056,5 +761,5 @@ typedef Root<IsPoint> Point2d;
 } // namespace homog2d end
 
 
-#endif
+#endif // HG_HOMOG2D_HPP
 
