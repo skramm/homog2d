@@ -51,7 +51,7 @@ TEST_CASE( "test1", "[test1]" )
 	std::cout << "ptA1="<< ptA1 << '\n';
 	std::cout << "ptA2="<< ptA2 << '\n';
 
-	{
+	{ // build line from two points
 		Line2d lA1 = ptA1 * ptA2;
 		std::cout << "lA1="<< lA1 << '\n';
 
@@ -67,20 +67,42 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d  lB = ptB1 * ptB2;
 	}
 
-#if 0
 	{
+
+// build point from two diagonal lines
 		Line2d lA( Point2d(0,0), Point2d(2,2) );
 		Line2d lB( Point2d(0,2), Point2d(2,0) );
 
-		Point2d middle1 = lA * lB;
-		Point2d middle2 = lB * lA;
+		Point2d mA1 = lA * lB;
+		Point2d mA2 = lB * lA;
+		CHECK( mA1 == Point2d(1.,1.) );
+		CHECK( mA2 == Point2d(1.,1.) );
 
-		CHECK( middle1 == Point2d(1.,1.) );
-		CHECK( middle2 == Point2d(1.,1.) );
-//		std::cout.precision( std::numeric_limits<double>::max_digits10 );
-//		std::cout << std::scientific << "x=" << middle2.getX() << " y=" << middle2.getY() << '\n';
+// build point from two H/V lines
+		Line2d lv0( 0, 1 );  // vertical, x=0
+		Line2d lh0( 1, 0 );  // horizontal, x=0
+
+		CHECK( lv0 * lh0 == Point2d(0.,0.) );
+		CHECK( lh0 * lv0 == Point2d(0.,0.) );
+
+		Line2d lv2( Point2d(2,0), Point2d(2,2) ); // vertical, x=2
+		Line2d lh2( Point2d(0,2), Point2d(2,2) ); // horizontal, y=2
+
+		CHECK( lv2*lh2 == Point2d(2.,2.) );
+
+		CHECK( lv0*lA == Point2d() );
+		CHECK( lh0*lA == Point2d() );
+
+		CHECK( lv0*lB == Point2d(0,2) );
+		CHECK( lh0*lB == Point2d(2,0) );
+
+		CHECK( lv2*lA == Point2d(2.,2.) );
+		CHECK( lh2*lA == Point2d(2.,2.) );
+
+		CHECK( lv2*lB == Point2d(2.,0.) );
+		CHECK( lh2*lB == Point2d(0.,2.) );
 	}
-#endif
+
 }
 
 TEST_CASE( "dist2points", "[test2]" )
@@ -97,6 +119,10 @@ TEST_CASE( "dist2points", "[test2]" )
 
 	CHECK( li.getValue( GC_Y, 0. ) == 0. );
 	CHECK( li.getValue( GC_Y, 1. ) == 2. );
+
+	Point2d p1( 3,3);
+	Point2d p2( 4,4);
+	CHECK( p1.distToPoint( p2 ) == std::sqrt(2) );
 }
 
 TEST_CASE( "offset test", "[test3]" )

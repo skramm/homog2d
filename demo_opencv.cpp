@@ -16,11 +16,7 @@ cv::Mat g_img;
 int g_width = 600;
 int g_height = 500;
 
-homog2d::Point2d g_p00( g_width/2,   g_height/4 );
-homog2d::Point2d g_p01( g_width/4,   g_height*3/4 );
-homog2d::Point2d g_p10( g_width*3/4, g_height/4 );
-homog2d::Point2d g_p11( g_width/2,   g_height*3/4 );
-
+homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
 void Draw()
@@ -28,11 +24,28 @@ void Draw()
 	g_img = cv::Scalar(255,255,255);
 
 // line from origin to mouse pos
-	cv::line( g_img, cv::Point2d(), g_pt_mouse.getCvPtd(), cv::Scalar(0,50,200), 2 );
+	cv::line( g_img, cv::Point2d(), g_pt_mouse.getCvPtd(), cv::Scalar(0,50,20), 2 );
 
-	homog2d::Line2d lA( g_p00, g_p01 );
-	std::cout << "g_p00=" <<  g_p00 << " g_p01=" << g_p01 << '\n';
-	lA.drawCvMat( g_img, cv::Scalar(200,50,20), 2 );
+	for( int i=0; i<4; i++ )
+	{
+		std::cout << "i=" << i << " pt=" << g_pt[i] << '\n';
+		g_pt[i].drawCvMat( g_img, cv::Scalar(50,50,250) );
+	}
+
+	homog2d::Line2d lA( g_pt[0], g_pt[2] );
+	homog2d::Line2d lB( g_pt[0], g_pt[3] );
+	homog2d::Line2d lC( g_pt[1], g_pt[2] );
+	homog2d::Line2d lD( g_pt[1], g_pt[3] );
+
+
+//	std::cout << "g_p00=" <<  g_p00 << " g_p01=" << g_p01 << " lA=" << lA << '\n';
+//	cv::line( g_img, g_p00.getCvPtd(), g_p01.getCvPtd(), cv::Scalar(10,50,20), 2 );
+
+//	lA.drawCvMat( g_img, cv::Scalar(   50, 150,   0 ) );
+//	lB.drawCvMat( g_img, cv::Scalar(   0,  150,  50 ) );
+	lC.drawCvMat( g_img, cv::Scalar( 150,   0,   50 ) );
+	lD.drawCvMat( g_img, cv::Scalar(   0,   50, 150 ) );
+
 	cv::imshow( g_wndname, g_img );
 }
 
@@ -41,25 +54,8 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 {
 	static int c;
 	std::cout << "count:" << c++ << '\n';
-
 	Draw();
-
 	g_pt_mouse.set( x, y );
-/*
-	homog2d::Point2d pt0( g_width/2, g_height/2 );
-	homog2d::Line2d lA( pt1, pt0 );
-	cv::line( g_img, pt0.getCvPtd(), pt1.getCvPtd(), cv::Scalar(0,50,200), 2 );
-
-	homog2d::Line2d lB( 2, 1 ); // 45° line
-	lB.drawCvMat( g_img, cv::Scalar(200,50,20), 2 );
-
-	homog2d::Point2d pt3( lA, lB ); // intersection of lines
-	homog2d::Point2d pt4(g_width, g_height);
-
-	cv::line( g_img, pt3.getCvPtd(), pt4.getCvPtd(), cv::Scalar(0,250,50), 2 );
-
-
-	cv::imshow( g_wndname, g_img );*/
 }
 
 int main()
@@ -69,8 +65,15 @@ int main()
 	cv::namedWindow( g_wndname );
 	cv::setMouseCallback( g_wndname, mouse_CB );
 
-	g_img.create( g_width, g_height, CV_8UC3 );
+	int n=5;
+	g_pt[0].set( g_width/2,       g_height/n );
+	g_pt[1].set( g_width/2,       g_height*(n-1)/n );
+	g_pt[2].set( g_width/n,       g_height/2 );
+	g_pt[3].set( g_width*(n-1)/n, g_height/2 );
+
+	g_img.create( g_height, g_width, CV_8UC3 );
 	Draw();
 	char key = cv::waitKey(0);
 }
-;
+
+

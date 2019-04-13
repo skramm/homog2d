@@ -546,7 +546,7 @@ Root<LP>::Root()
 	_v[0] = 0.;
 	_v[1] = 0.;
 	_v[2] = 1.;
-	std::cout << "C1:" << *this << "\n";
+//	std::cout << "C1:" << *this << "\n";
 }
 
 /// Default constructor, specialization for lines
@@ -556,7 +556,7 @@ Root<IsLine>::Root()
 	_v[0] = 1.;
 	_v[1] = 0.;
 	_v[2] = 0.;
-	std::cout << "C2:" << *this << "\n";;
+//	std::cout << "C2:" << *this << "\n";;
 }
 
 /// generic constructor implementation
@@ -564,7 +564,7 @@ template<typename LP>
 template<typename T>
 Root<LP>::Root( const T& v0, const T& v1 )
 {
-	std::cout << "C3:" << *this << "\n";
+//	std::cout << "C3:" << *this << "\n";
 	assert(0);
 }
 
@@ -577,7 +577,7 @@ Root<IsPoint>::Root( const T& v0, const T& v1 )
 	_v[0] = v0;
 	_v[1] = v1;
 	_v[2] = 1.;
-	std::cout << "C4:" << *this << "\n";
+//	std::cout << "C4:" << *this << "\n";
 }
 
 
@@ -588,7 +588,7 @@ Root<IsLine>::Root( const T& dx, const T& dy )
 {
 	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
 	normalize();
-	std::cout << "C5:" << *this << "\n";
+//	std::cout << "C5:" << *this << "\n";
 }
 
 /// constructor of a point from two lines (specialization)
@@ -597,7 +597,7 @@ template<>
 Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
 {
 	*this = detail::crossProduct<IsPoint>( v1, v2 );
-	std::cout << "C6:" << *this << "\n";
+//	std::cout << "C6:" << *this << "\n";
 }
 
 /// Constructor of a line from two points (specialization)
@@ -607,7 +607,7 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 {
 	*this = detail::crossProduct<IsLine>( v1, v2 );
 	normalize();
-	std::cout << "C7:" << *this << "\n";
+//	std::cout << "C7:" << *this << "\n";
 }
 
 
@@ -659,7 +659,6 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 	normalize();
 }
 
-
 //------------------------------------------------------------------
 /// Apply homography to a point or line. Free function, templated by point or line
 template<typename LP>
@@ -698,7 +697,7 @@ template<>
 void
 Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
 {
-//	std::cout << "drawCvMat line= " << *this << "\n";
+	std::cout << "drawCvMat line= " << *this << "\n";
 	Root<IsPoint> p00;
 	Root<IsPoint> p01(0,mat.cols);
 	Root<IsPoint> p10(mat.rows,0);
@@ -713,19 +712,36 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, i
 	{
 		Root<IsPoint> pt = *this * l[i];
 		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
-		if( pt.getX()>0 && pt.getX()<mat.cols )
-			if( pt.getY()>0 && pt.getY()<mat.rows )
+		if( pt.getX()>=0 && pt.getX()<=mat.cols )
+			if( pt.getY()>=0 && pt.getY()<=mat.rows )
 				v.push_back( pt );
 	}
-/*	std::cout << "v size=" << v.size() << '\n';
+	std::cout << "v size=" << v.size() << '\n';
 
 	if( v.size()>2 )
 	{
 		for( int i=0; i<v.size(); i++ )
 			std::cout << "i=" << i << " pt=" << v[i] << '\n';
-	}*/
+	}
 	if( v.size()>1 )
 		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
+}
+
+/// Draw line on Cv::Mat. Specialization for points
+template<>
+void
+Root<IsPoint>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
+{
+	int delta = 5;
+	std::cout << "drawCvMat point= " << *this << "\n";
+	cv::Point2d p00( this->getX()-delta, this->getY() );
+	cv::Point2d p11( this->getX()+delta, this->getY() );
+
+	cv::Point2d p01( this->getX(), this->getY()-delta );
+	cv::Point2d p10( this->getX(), this->getY()+delta );
+
+	cv::line( mat, p00, p11, color, thickness, lineType );
+	cv::line( mat, p01, p10, color, thickness, lineType );
 }
 
 #endif
@@ -1007,43 +1023,6 @@ operator * ( const Homogr& h, const Line2d& in )
 	return h * static_cast<Root>(in);
 //	return h * in;
 }
-//------------------------------------------------------------------
-#ifdef HOMOG2D_USE_OPENCV
-/// Draw the line on image \c mat
-inline
-void
-Line2d::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
-{
-//	std::cout << "drawCvMat line= " << *this << "\n";
-	Point2d p00;
-	Point2d p01(0,mat.cols);
-	Point2d p10(mat.rows,0);
-	Point2d p11(mat.rows,mat.cols);
-	Line2d l[4];
-	l[0] = Line2d( p00, p01 );
-	l[1] = Line2d(      p01, p11 );
-	l[2] = Line2d(           p11, p10 );
-	l[3] = Line2d(                p10, p00 );
-	std::vector<Point2d> v;
-	for( int i=0; i<4; i++ )
-	{
-		Point2d pt = *this * l[i];
-		std::cout << "line: " << l[i] << " pt=" << pt << '\n';
-		if( pt.getX()>0 && pt.getX()<mat.cols )
-			if( pt.getY()>0 && pt.getY()<mat.rows )
-				v.push_back( pt );
-	}
-/*	std::cout << "v size=" << v.size() << '\n';
-
-	if( v.size()>2 )
-	{
-		for( int i=0; i<v.size(); i++ )
-			std::cout << "i=" << i << " pt=" << v[i] << '\n';
-	}*/
-	if( v.size()>1 )
-		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
-}
-#endif
 //------------------------------------------------------------------
 
 #endif //0
