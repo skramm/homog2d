@@ -29,7 +29,7 @@ void Draw()
 	for( int i=0; i<4; i++ )
 	{
 		std::cout << "i=" << i << " pt=" << g_pt[i] << '\n';
-		g_pt[i].drawCvMat( g_img, cv::Scalar(50,50,250) );
+		g_pt[i].drawCvMat( g_img, CvDrawParams().setColor(50,50,250) );
 	}
 
 	Line2d lA( g_pt[0], g_pt[2] );
@@ -46,10 +46,10 @@ void Draw()
 //	std::cout << "g_p00=" <<  g_p00 << " g_p01=" << g_p01 << " lA=" << lA << '\n';
 //	cv::line( g_img, g_p00.getCvPtd(), g_p01.getCvPtd(), cv::Scalar(10,50,20), 2 );
 
-//	lA.drawCvMat( g_img, cv::Scalar(   50, 150,   0 ) );
-//	lB.drawCvMat( g_img, cv::Scalar(   0,  150,  50 ) );
-	lC.drawCvMat( g_img, cv::Scalar( 150,   0,   50 ) );
-	lD.drawCvMat( g_img, cv::Scalar(   0,   50, 150 ) );
+	lA.drawCvMat( g_img, CvDrawParams().setColor(250,50,50) );
+	lB.drawCvMat( g_img, CvDrawParams().setColor(50,250,50) );
+	lC.drawCvMat( g_img );
+	lD.drawCvMat( g_img );
 
 	cv::imshow( g_wndname, g_img );
 }

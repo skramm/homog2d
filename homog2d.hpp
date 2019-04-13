@@ -334,6 +334,26 @@ See https://en.wikipedia.org/wiki/Determinant
 	}
 };
 
+#ifdef HOMOG2D_USE_OPENCV
+/// draw parameters for Opencv binding, see Root::drawCvMat()
+struct CvDrawParams
+{
+	cv::Scalar _color         = cv::Scalar(128,128,128);
+	int        _lineThickness = 1;
+	int        _lineType      = cv::LINE_AA; // cv::LINE_8
+	int        _ptDelta       = 5; // pixels
+	CvDrawParams& setThickness( int t )
+	{
+		_lineThickness = t;
+		return *this;
+	}
+	CvDrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	{
+		_color = cv::Scalar(b,g,r);
+		return *this;
+	}
+};
+#endif
 
 /// Used in Line2d::getValue()
 enum En_GivenCoord { GC_X, GC_Y };
@@ -398,8 +418,7 @@ class Root
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-	void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8 );
-	void drawCvMat( cv::Mat& mat, const cv::Scalar& color, int delta=5 );
+	void drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() );
 	cv::Point2d getCvPtd() const;
 	cv::Point2f getCvPtf() const;
 #endif
@@ -693,10 +712,10 @@ Root<IsPoint>::getCvPtf() const
 	return cv::Point2f( getX(),getY() );
 }
 
-/// Draw line on Cv::Mat. Specialization for lines, unavailable for Points
+/// Draw line on Cv::Mat. Specialization for lines.
 template<>
 void
-Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, int lineType )
+Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
 	std::cout << "drawCvMat line= " << *this << "\n";
 	Root<IsPoint> p00;
@@ -729,23 +748,23 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int thickness, i
 			std::cout << "i=" << i << " pt=" << v[i] << '\n';
 	}
 	if( v.size()>1 )
-		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), color, thickness, lineType );
+		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), dp._color, dp._lineThickness, dp._lineType );
 }
 
 /// Draw line on Cv::Mat. Specialization for points
 template<>
 void
-Root<IsPoint>::drawCvMat( cv::Mat& mat, const cv::Scalar& color, int delta )
+Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
 	std::cout << "drawCvMat point= " << *this << "\n";
-	cv::Point2d p00( this->getX()-delta, this->getY() );
-	cv::Point2d p11( this->getX()+delta, this->getY() );
+	cv::Point2d p00( this->getX()-dp._ptDelta, this->getY() );
+	cv::Point2d p11( this->getX()+dp._ptDelta, this->getY() );
 
-	cv::Point2d p01( this->getX(), this->getY()-delta );
-	cv::Point2d p10( this->getX(), this->getY()+delta );
+	cv::Point2d p01( this->getX(), this->getY()-dp._ptDelta );
+	cv::Point2d p10( this->getX(), this->getY()+dp._ptDelta );
 
-	cv::line( mat, p00, p11, color );
-	cv::line( mat, p01, p10, color );
+	cv::line( mat, p00, p11, dp._color );
+	cv::line( mat, p01, p10, dp._color );
 }
 
 #endif
