@@ -93,6 +93,12 @@ h.applyTo( v_pts );
 ```
 This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
+- You can compute the inverse and/or the transpose of the matrix:
+```
+h.inverse();
+h.transpose();
+```
+**WARNING : 20190414: issues at present with inversion of matrix!**
 
 ## Bindings with other libraries
 <a name="bind"></a>

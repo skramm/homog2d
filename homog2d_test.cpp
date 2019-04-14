@@ -240,6 +240,33 @@ TEST_CASE( "test matrix", "[testH]" )
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
 }
+TEST_CASE( "matrix inversion", "[testH3]" )
+{
+	Homogr H;
+	Homogr HR=H;
+	HR.inverse();
+	CHECK( HR == H );
+
+// checked with https://ncalculators.com/matrix/inverse-matrix.htm
+	H = std::vector<std::vector<double>>{
+		{ 1, -1,  2 },
+		{ 4,  0,  6 },
+		{ 5,  1, -1 }
+	};
+	std::cout << "H:\n" << H;
+	H.inverse();
+	std::cout << "H-1:\n" << H;
+
+	HR = std::vector<std::vector<double>>{
+		{   6./32, - 1./32,  6./32 },
+		{ -34./32,  11./32, -2./32 },
+		{ - 4./32,   6./32, -4./32 }
+	};
+	std::cout << "HR:\n" << HR;
+
+//	CHECK( HR == H );
+}
+
 TEST_CASE( "matrix chained operations", "[testH2]" )
 {
 	Homogr H1,H2;

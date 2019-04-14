@@ -217,19 +217,31 @@ Thus some assert can be triggered elsewhere
 /// Inverse matrix \todo UNTESTED YET !
 	void inverse()
 	{
-		Homogr adjugate = p_adjugate() / p_det();
-		*this = adjugate;
+		Homogr adjugate = p_adjugate();
+//		std::cout << "adj=\n" << adjugate << "\n";
+//		std::cout << "AVANT DET:\n"  << *this << "\n";
+
+		double det = p_det();
+
+		if( std::fabs(det) <= std::numeric_limits<double>::epsilon() )
+			std::runtime_error( "matrix is not invertible" );
+//		std::cout << "det=" << det << "\n";
+		*this = adjugate / det;
+		normalize();
 	}
 /// Divide all elements by scalar
 	Homogr& operator / (double v)
 	{
+		if( std::fabs(v) <= std::numeric_limits<double>::epsilon() )
+			std::runtime_error( "unable to divide by " + std::to_string(v) );
+//	std::cout <<"DIV by " << v << "\n";
 #if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] /= v;
 		return *this;
 #else
-		return *this * 1.0/v;
+		return *this * (1.0/v);
 #endif
 	}
 /// Multiply all elements by scalar
@@ -305,9 +317,16 @@ See https://en.wikipedia.org/wiki/Determinant
 */
 	double p_det()
 	{
+//		std::cout << "compute det:\n";
 		double det = _data[0][0] * p_det2x2( {2,2, 2,3, 3,2, 3,3} );
+//		std::cout << "det1="<<     p_det2x2( {2,2, 2,3, 3,2, 3,3} ) << "\n";
+
 		det       -= _data[0][1] * p_det2x2( {2,1, 2,3, 3,1, 3,3} );
+//		std::cout << "det2="<<     p_det2x2( {2,1, 2,3, 3,1, 3,3} ) << "\n";
+
 		det       += _data[0][2] * p_det2x2( {2,1, 2,2, 3,1, 3,2} );
+//		std::cout << "det3="<<     p_det2x2( {2,1, 2,2, 3,1, 3,2} ) << "\n";
+
 		return det;
 	}
 	double p_det2x2( std::vector<int> v )
@@ -320,6 +339,7 @@ See https://en.wikipedia.org/wiki/Determinant
 		);
 		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
 		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
+//		std::cout << "p_det2x2: a=" << _data[v[0]][v[1]] << " b=" << _data[v[6]][v[7]] << " c= " << _data[v[2]][v[3]] << " d=" << _data[v[4]][v[5]] << '\n';
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
@@ -329,17 +349,18 @@ See https://en.wikipedia.org/wiki/Determinant
 	Homogr p_adjugate()
 	{
 		Homogr out;
-		setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 2,3} ) );
-		setValue( 0, 1, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
-		setValue( 0, 2,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
 
-		setValue( 1, 0, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
-		setValue( 1, 1,  p_det2x2( {1,1, 1,3, 3,1, 3,3} ) );
-		setValue( 1, 2, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
+		out.setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 3,3} ) );
+		out.setValue( 0, 1, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
+		out.setValue( 0, 2,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
 
-		setValue( 2, 0,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
-		setValue( 2, 1, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
-		setValue( 2, 2,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
+		out.setValue( 1, 0, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
+		out.setValue( 1, 1,  p_det2x2( {1,1, 1,3, 3,1, 3,3} ) );
+		out.setValue( 1, 2, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
+
+		out.setValue( 2, 0,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
+		out.setValue( 2, 1, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
+		out.setValue( 2, 2,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 
 		return out;
 	}
