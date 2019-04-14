@@ -38,6 +38,7 @@ See https://github.com/skramm/homog2d
 #include <vector>
 #include <iomanip>
 #include <cassert>
+#include <sstream>
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -148,6 +149,12 @@ Thus some assert can be triggered elsewhere
 		_data[0][1] = -_data[1][0];
 		_isNormalized = true;
 	}
+	/// Adds the same scale factor to the matrix
+	template<typename T>
+	Homogr& addScale( T k )
+	{
+		return this->addScale( k, k );
+	}
 	/// Adds a scale factor to the matrix
 	template<typename T>
 	Homogr& addScale( T kx, T ky )
@@ -158,7 +165,13 @@ Thus some assert can be triggered elsewhere
 		normalize();
 		return *this;
 	}
-	/// Sets the matrix as a scaling
+	/// Sets the matrix as a scaling transformation
+	template<typename T>
+	void setScale( T k )
+	{
+		setScale( k, k );
+	}
+	/// Sets the matrix as a scaling transformation
 	template<typename T>
 	void setScale( T kx, T ky )
 	{
@@ -576,7 +589,12 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 	auto pt = detail::crossProduct<IsPoint>(lhs, rhs);
 	auto eps = std::numeric_limits<double>::epsilon();
 	if( std::fabs(pt._v[2]) <= eps )
-		throw std::runtime_error( "unable to compute point from two lines" );
+	{
+		std::ostringstream lh,lr;
+		lh << lhs;
+		lr << rhs;
+		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
+	}
 	return pt;
 }
 
@@ -730,10 +748,19 @@ Root<IsPoint>::getCvPtf() const
 
 //------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for lines.
+/**
+Steps:
+ -# builds the 4 corner points of the image
+ -# build the 4 corresponding lines (borders of the image)
+ -# find the intersection points between the line and these 4 lines. Should find 2
+ -# draw a line between these 2 points
+*/
 template<>
 void
 Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
+	assert( mat.rows > 2 );
+	assert( mat.cols > 2 );
 	Root<IsPoint> p00(0,        0);
 	Root<IsPoint> p01(0,        mat.rows);
 	Root<IsPoint> p10(mat.cols, 0);
@@ -746,10 +773,19 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 	std::vector<Root<IsPoint>> v;
 	for( int i=0; i<4; i++ )
 	{
-		Root<IsPoint> pt = *this * l[i];
-		if( pt.getX()>=0 && pt.getX()<=mat.cols )
-			if( pt.getY()>=0 && pt.getY()<=mat.rows )
-				v.push_back( pt );
+		Root<IsPoint> pt;
+		bool okFlag(true);
+		try{
+			pt = *this * l[i];
+		}
+		catch( const std::exception& err )
+		{
+			okFlag = false;
+		}
+		if( okFlag )
+			if( pt.getX()>=0 && pt.getX()<=mat.cols )
+				if( pt.getY()>=0 && pt.getY()<=mat.rows )
+					v.push_back( pt );
 	}
 
 /*	if( v.size()>2 )

@@ -44,13 +44,9 @@ int g_selected = -1;
 homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
-void Draw()
+void drawLines()
 {
 	g_img = cv::Scalar(255,255,255);
-
-// line from origin to mouse pos
-	cv::line( g_img, cv::Point2d(), g_pt_mouse.getCvPtd(), cv::Scalar(0,50,20), 1, cv::LINE_AA );
-
 	for( int i=0; i<4; i++ )
 	{
 		if( g_selected == i )
@@ -68,13 +64,19 @@ void Draw()
 	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
 	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
 	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
+}
 
-	auto la_V = lA;
+void draw1()
+{
+	drawLines();
+
+	Line2d l( g_pt[0], g_pt[2] );
+	Line2d la_V( l );
 	la_V.addOffset( OD_Vert, 25);
 	la_V.drawCvMat( g_img, CvDrawParams().setColor(250,0,250) );
 
-	lA.addOffset( OD_Horiz, 25);
-	lA.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
+	l.addOffset( OD_Horiz, 25);
+	l.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
 
 	cv::imshow( g_wndname, g_img );
 }
@@ -84,7 +86,7 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 {
 	static int c;
 	std::cout << "count:" << c++ << '\n';
-	Draw();
+	draw1();
 	g_pt_mouse.set( x, y );
 	g_selected = -1;
 	Point2d pt( g_pt_mouse );
@@ -97,11 +99,9 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 		}
 }
 
-int main()
+int demo1()
 {
-	int w = 600;
-	int h = 400;
-	cv::namedWindow( g_wndname );
+	std::cout << "Demo 1 !\n";
 	cv::setMouseCallback( g_wndname, mouse_CB );
 
 	int n=5;
@@ -111,8 +111,87 @@ int main()
 	g_pt[3].set( g_width*(n-1)/n, g_height/2 );
 
 	g_img.create( g_height, g_width, CV_8UC3 );
-	Draw();
+	draw1();
 	char key = cv::waitKey(0);
 }
 
+void applyH( const Homogr& H )
+{
+	for( int i=0; i<4; i++ )
+		g_pt[i] = H * g_pt[i];
+}
+
+void draw2()
+{
+	drawLines();
+	cv::imshow( g_wndname, g_img );
+}
+
+void demo2()
+{
+	std::cout << "Demo 2 !\n";
+//	cv::setMouseCallback( g_wndname, mouse_CB );
+//	cv::namedWindow( g_wndname );
+	char key = 0;
+	Homogr H;
+	double angle = 0.;
+	double angle_delta = 5.;
+	double scale = 1.;
+	double scale_delta = 1.2;
+	double tx = 0;
+	double ty = 0;
+	double trans_delta = 20;
+	double K = M_PI/180.;
+	g_pt[0].set( 50, 50);
+	g_pt[1].set( 150, 150);
+	g_pt[2].set( 150, 50);
+	g_pt[3].set( 50, 150);
+	draw2();
+	std::cout << "Hit a key: scale:[op], angle:[lm], translation:[gh,yb]\n";
+	while( key != 27 ) // ESC
+	{
+		bool change = true;
+		switch( key = cv::waitKey(0) )
+		{
+			case 'r': // reset
+				angle = 0.;
+				scale = 1.;
+				tx = 0;
+				ty = 0;
+			break;
+			case 'm': angle += angle_delta; break;
+			case 'l': angle -= angle_delta; break;
+
+			case 'h': tx += trans_delta; break;
+			case 'g': tx -= trans_delta; break;
+			case 'b': ty += trans_delta; break;
+			case 'y': ty -= trans_delta; break;
+
+			case 'p': scale *= scale_delta; break;
+			case 'o': scale /= scale_delta; break;
+			default: change = false; break;
+		}
+		if( change )
+		{
+			std::cout << "angle=" << angle << " scale=" << scale << "\n";
+			H.setRotation( angle*K );
+			H.addTranslation( tx, ty );
+			H.addScale( scale );
+			std::cout << H << '\n';
+			for( int i=0; i<4; i++ )
+				g_pt[i] = H * g_pt[i];
+			draw2();
+		}
+	}
+}
+
+int main()
+{
+	cv::namedWindow( g_wndname );
+	demo1();
+
+	cv::destroyAllWindows(); // to disable the mouse callback
+	cv::namedWindow( g_wndname );
+	demo2();
+}
 

@@ -5,6 +5,7 @@ Home page: https://github.com/skramm/homog2d
 - [Lines and points](#basic)
 - [2D transformation (aka homographies)](#matrix)
 - [Bindings](#bind)
+- [Build options](#options)
 - [Technical details](#tech)
 
 ## General
@@ -83,7 +84,7 @@ auto v = h.getValue( 0, 0 ); // 3.14
 However, when using setValue(), no guarantee is given that the result will be a valid matrix!
 
 
-## Binding with other libraries
+## Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -122,6 +123,17 @@ with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
+
+## Build options
+<a name="options"></a>
+
+Below are some options that can be passed, to activate them, just define the symbol.
+You can do that in the makefile or just add a `#define` on top of your program,
+**before** the `#include "homog2d"`
+
+- `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
+
+(TO BE EXPANDED)
 
 
 ## Technical details
