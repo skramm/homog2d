@@ -34,6 +34,8 @@ run with "make test"
 
 #include "homog2d.hpp"
 
+#include <list>
+
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) < std::numeric_limits<double>::epsilon() ) ? true : false )
 
@@ -220,6 +222,22 @@ TEST_CASE( "test matrix", "[testH]" )
 
 		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
 		CHECK( pt3.getY() == 1. );
+	}
+	{
+		Homogr H;
+		H.setTranslation(5,6);
+
+		std::vector<Point2d> v_pt(3);
+		H.applyTo( v_pt );
+		CHECK( v_pt[2].getX() == 5 );
+
+		std::array<Point2d,3> a_pt;
+		H.applyTo( a_pt );
+		CHECK( a_pt[2].getX() == 5 );
+
+		std::list<Point2d> l_pt(3);
+		H.applyTo( l_pt );
+		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
 }
 TEST_CASE( "matrix chained operations", "[testH2]" )

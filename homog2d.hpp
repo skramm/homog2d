@@ -55,6 +55,7 @@ class Homogr
 {
 	template<typename LP>
 	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
+
 	public:
 	/// Default constructor, initialize to unit transformation
 	Homogr()
@@ -180,6 +181,14 @@ Thus some assert can be triggered elsewhere
 		_data[1][1] = ky;
 		_isNormalized = true;
 	}
+
+/*	template<typename LP>
+	void
+	applyTo( std::vector<Root<LP>>& ) const;
+	*/
+	template<typename T>
+	void
+	applyTo( T& ) const;
 
 /// Normalisation
 	void normalize() const
@@ -726,7 +735,22 @@ operator * ( const Homogr& h, const Root<LP>& in )
 			out._v[i] += h._data[i][j] * in._v[j];
 	return out;
 }
-
+//------------------------------------------------------------------
+/// Apply homography to a vector of points or lines. Free function, templated by point or line
+/*template<typename LP>
+void
+Homogr::applyTo( std::vector<Root<LP>>& vin ) const
+{
+	for( auto& elem: vin )
+		elem = *this * elem;
+}*/
+template<typename T>
+void
+Homogr::applyTo( T& vin ) const
+{
+	for( auto& elem: vin )
+		elem = *this * elem;
+}
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 template<>

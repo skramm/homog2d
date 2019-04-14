@@ -24,13 +24,13 @@ Point2d pt2(3,4);
 - Create a 2D line:
 ```C++
 Line2d li1;             // vertical line at x=0
-Line2d li2( pt1, pt2 ); // from two points:
 Line2d li2( 3, 4 );     // line passing through (0,0) and (3,4)
 ```
 
-- Create a point from two lines:
+- Create a point from two lines, and a line from two points:
 ```
-Point2d pt3(li1,li2);
+Point2d pt3( li1, li2 );
+Line2d  li3( pt1, pt2 );
 ```
 
 - Get line from two points, and point from two lines:
@@ -38,16 +38,18 @@ Point2d pt3(li1,li2);
 pt1 = li1 * li2;
 li1 = pt1 * pt2;
 ```
+
+Beware, two parallel lines will never cross, and two identical points do not define a line.
+So if you code attempts to do so, this will trigger a
+[std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
+exception.
+
 - Add some offset to a line
 ```
 li1.addOffset( OD_Horiz, 5 ); // horizontal offset
 li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
 
-Of course two parallel lines will never cross, and two identical points do not define a line
-So if you code attempts to do so, this will trigger a
-[std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
-exception.
 
 ## Homographies
 <a name="matrix"></a>
@@ -82,6 +84,14 @@ h.setValue( 0, 0, 3.14 );
 auto v = h.getValue( 0, 0 ); // 3.14
 ```
 However, when using setValue(), no guarantee is given that the result will be a valid matrix!
+
+- You can apply the homography to a set of points or lines:
+```
+std::vector<Point2d> v_pts;
+... // fill with values
+h.applyTo( v_pts );
+```
+This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
 
 ## Bindings with other libraries
