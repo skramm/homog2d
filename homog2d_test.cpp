@@ -253,18 +253,14 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 		{ 4,  0,  6 },
 		{ 5,  1, -1 }
 	};
-	std::cout << "H:\n" << H;
 	H.inverse();
-	std::cout << "H-1:\n" << H;
 
 	HR = std::vector<std::vector<double>>{
-		{   6./32, - 1./32,  6./32 },
-		{ -34./32,  11./32, -2./32 },
-		{ - 4./32,   6./32, -4./32 }
+		{   6, - 1,  6 },
+		{ -34,  11, -2 },
+		{ - 4,   6, -4 }
 	};
-	std::cout << "HR:\n" << HR;
-
-//	CHECK( HR == H );
+	CHECK( HR == H );
 }
 
 TEST_CASE( "matrix chained operations", "[testH2]" )

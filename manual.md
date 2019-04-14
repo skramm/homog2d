@@ -98,7 +98,6 @@ This actually works with any other container on whom one can iterate, such as `s
 h.inverse();
 h.transpose();
 ```
-**WARNING : 20190414: issues at present with inversion of matrix!**
 
 ## Bindings with other libraries
 <a name="bind"></a>

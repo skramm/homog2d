@@ -351,15 +351,15 @@ See https://en.wikipedia.org/wiki/Determinant
 		Homogr out;
 
 		out.setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 3,3} ) );
-		out.setValue( 0, 1, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
-		out.setValue( 0, 2,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
+		out.setValue( 0, 1, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
+		out.setValue( 0, 2,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
 
-		out.setValue( 1, 0, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
+		out.setValue( 1, 0, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
 		out.setValue( 1, 1,  p_det2x2( {1,1, 1,3, 3,1, 3,3} ) );
-		out.setValue( 1, 2, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
+		out.setValue( 1, 2, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
 
-		out.setValue( 2, 0,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
-		out.setValue( 2, 1, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
+		out.setValue( 2, 0,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
+		out.setValue( 2, 1, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
 		out.setValue( 2, 2,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 
 		return out;
@@ -386,16 +386,37 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 #ifdef HOMOG2D_USE_OPENCV
+/// Point drawing style
+enum PointStyle
+{
+	PS_PLUS,   ///< "+" symbol
+	PS_TIMES,  ///< "times" symbol
+	PS_STAR,   ///< "*" symbol
+	PS_DIAM   ///< diamond
+};
 /// Draw parameters for Opencv binding, see Root::drawCvMat()
 struct CvDrawParams
 {
 	cv::Scalar _color         = cv::Scalar(128,128,128);
 	int        _lineThickness = 1;
 	int        _lineType      = cv::LINE_AA; // or cv::LINE_8
-	int        _ptDelta       = 5; // pixels
+	int        _ptDelta       = 8; // pixels, used for drawing points
+	PointStyle _ptStyle       = PS_PLUS;
 
+	CvDrawParams& setPointStyle( PointStyle ps )
+	{
+		_ptStyle = ps;
+		return *this;
+	}
+	CvDrawParams& setPointSize( int ps )
+	{
+		assert( ps>1 );
+		_ptDelta = ps;
+		return *this;
+	}
 	CvDrawParams& setThickness( int t )
 	{
+		assert( t>0 );
 		_lineThickness = t;
 		return *this;
 	}
@@ -843,19 +864,78 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 }
 
 //------------------------------------------------------------------
+namespace detail {
+/// Private helper function, used by Root<IsPoint>::drawCvMat()
+void
+drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
+{
+	auto delta  = dp._ptDelta;
+	auto delta2 = std::round( 0.85 * delta);
+	switch( ps )
+	{
+		case PS_TIMES:
+			vpt[0].x -= delta2;
+			vpt[0].y += delta2;
+			vpt[1].x += delta2;
+			vpt[1].y -= delta2;
+
+			vpt[2].x += delta2;
+			vpt[2].y += delta2;
+			vpt[3].x -= delta2;
+			vpt[3].y -= delta2;
+		break;
+
+		case PS_PLUS:
+		case PS_DIAM:
+			vpt[0].x -= delta;
+			vpt[1].x += delta;
+			vpt[2].y -= delta;
+			vpt[3].y += delta;
+		break;
+		default: assert(0);
+	}
+	if( !drawDiag )
+	{
+		cv::line( mat, vpt[0], vpt[1], dp._color );
+		cv::line( mat, vpt[2], vpt[3], dp._color );
+	}
+	else
+	{
+		cv::line( mat, vpt[0], vpt[2], dp._color );
+		cv::line( mat, vpt[2], vpt[1], dp._color );
+		cv::line( mat, vpt[1], vpt[3], dp._color );
+		cv::line( mat, vpt[0], vpt[3], dp._color );
+	}
+}
+} // namespace detail
+//------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for points
 template<>
 void
 Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
-	cv::Point2d p00( this->getX()-dp._ptDelta, this->getY() );
-	cv::Point2d p11( this->getX()+dp._ptDelta, this->getY() );
+	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
+	switch( dp._ptStyle )
+	{
+		case PS_PLUS:   // "+" symbol
+			detail::drawPt( mat, PS_PLUS,  vpt, dp );
+		break;
 
-	cv::Point2d p01( this->getX(), this->getY()-dp._ptDelta );
-	cv::Point2d p10( this->getX(), this->getY()+dp._ptDelta );
+		case PS_STAR:
+			detail::drawPt( mat, PS_PLUS,  vpt, dp );
+			detail::drawPt( mat, PS_TIMES, vpt, dp );
+		break;
 
-	cv::line( mat, p00, p11, dp._color );
-	cv::line( mat, p01, p10, dp._color );
+		case PS_DIAM:
+			detail::drawPt( mat, PS_PLUS,  vpt, dp, true );
+		break;
+
+		case PS_TIMES:      ///< "times" symbol
+			detail::drawPt( mat, PS_TIMES, vpt, dp );
+		break;
+
+		default: assert(0);
+	}
 }
 
 //------------------------------------------------------------------

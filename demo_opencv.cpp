@@ -50,9 +50,9 @@ void drawLines()
 	for( int i=0; i<4; i++ )
 	{
 		if( g_selected == i )
-			g_pt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150) );
+			g_pt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
 		else
-			g_pt[i].drawCvMat( g_img );
+			g_pt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
 
 	Line2d lA( g_pt[0], g_pt[2] );
