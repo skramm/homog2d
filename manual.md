@@ -53,7 +53,14 @@ li1.addOffset( OD_Vert, 5 ); // vertical offset
 
 ## Homographies
 <a name="matrix"></a>
-- You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"):
+
+You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography").
+The three basic transformations (rotation, translation, scaling) are available.
+Each of these is available in two forms: "`setXxxx()`" and "`addXxxx()`".
+The first one starts from the identity transformation and applies the requested one.
+The second form adds the requested transformation to the matrix.
+
+- First example:
 
 ```
 Homogr h; // unit transformation
@@ -71,14 +78,13 @@ Homogr h3a = h1*h2; // first, rotation, then translation
 Homogr h3b = h2*h1; // first, rotation, then translation
 ```
 
-- But you can also add some transformation to a given matrix:
+- But you can also used "chained syntax":
 ```
 Homogr h; // unit transformation
-h.setTranslation(3,4);
-h.addRotation( 45. * M_PI / 180.); // 45° rotation
+h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
 ```
 
-- You can also access individual values of the matrix:
+- You can access individual values of the matrix:
 ```
 h.setValue( 0, 0, 3.14 );
 auto v = h.getValue( 0, 0 ); // 3.14

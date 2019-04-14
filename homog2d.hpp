@@ -182,10 +182,6 @@ Thus some assert can be triggered elsewhere
 		_isNormalized = true;
 	}
 
-/*	template<typename LP>
-	void
-	applyTo( std::vector<Root<LP>>& ) const;
-	*/
 	template<typename T>
 	void
 	applyTo( T& ) const;
@@ -218,14 +214,9 @@ Thus some assert can be triggered elsewhere
 	void inverse()
 	{
 		Homogr adjugate = p_adjugate();
-//		std::cout << "adj=\n" << adjugate << "\n";
-//		std::cout << "AVANT DET:\n"  << *this << "\n";
-
 		double det = p_det();
-
 		if( std::fabs(det) <= std::numeric_limits<double>::epsilon() )
 			std::runtime_error( "matrix is not invertible" );
-//		std::cout << "det=" << det << "\n";
 		*this = adjugate / det;
 		normalize();
 	}
@@ -234,7 +225,6 @@ Thus some assert can be triggered elsewhere
 	{
 		if( std::fabs(v) <= std::numeric_limits<double>::epsilon() )
 			std::runtime_error( "unable to divide by " + std::to_string(v) );
-//	std::cout <<"DIV by " << v << "\n";
 #if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -317,16 +307,9 @@ See https://en.wikipedia.org/wiki/Determinant
 */
 	double p_det()
 	{
-//		std::cout << "compute det:\n";
 		double det = _data[0][0] * p_det2x2( {2,2, 2,3, 3,2, 3,3} );
-//		std::cout << "det1="<<     p_det2x2( {2,2, 2,3, 3,2, 3,3} ) << "\n";
-
 		det       -= _data[0][1] * p_det2x2( {2,1, 2,3, 3,1, 3,3} );
-//		std::cout << "det2="<<     p_det2x2( {2,1, 2,3, 3,1, 3,3} ) << "\n";
-
 		det       += _data[0][2] * p_det2x2( {2,1, 2,2, 3,1, 3,2} );
-//		std::cout << "det3="<<     p_det2x2( {2,1, 2,2, 3,1, 3,2} ) << "\n";
-
 		return det;
 	}
 	double p_det2x2( std::vector<int> v )
@@ -339,7 +322,6 @@ See https://en.wikipedia.org/wiki/Determinant
 		);
 		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
 		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
-//		std::cout << "p_det2x2: a=" << _data[v[0]][v[1]] << " b=" << _data[v[6]][v[7]] << " c= " << _data[v[2]][v[3]] << " d=" << _data[v[4]][v[5]] << '\n';
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
@@ -392,7 +374,7 @@ enum PointStyle
 	PS_PLUS,   ///< "+" symbol
 	PS_TIMES,  ///< "times" symbol
 	PS_STAR,   ///< "*" symbol
-	PS_DIAM   ///< diamond
+	PS_DIAM    ///< diamond
 };
 /// Draw parameters for Opencv binding, see Root::drawCvMat()
 struct CvDrawParams
