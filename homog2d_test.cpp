@@ -37,7 +37,7 @@ run with "make test"
 #include <list>
 
 #define DIFFERENCE_IS_NULL(a,b) \
-	( ( std::fabs((a)-(b)) < std::numeric_limits<double>::epsilon() ) ? true : false )
+	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
 
 using namespace homog2d;
 
@@ -243,24 +243,52 @@ TEST_CASE( "test matrix", "[testH]" )
 TEST_CASE( "matrix inversion", "[testH3]" )
 {
 	Homogr H;
-	Homogr HR=H;
-	HR.inverse();
-	CHECK( HR == H );
+	{
+		Homogr HR=H;
+		HR.inverse();
+		CHECK( HR == H );
+		HR.transpose();
+		CHECK( HR == H );
+	}
 
+	{ // sample inversion
 // checked with https://ncalculators.com/matrix/inverse-matrix.htm
-	H = std::vector<std::vector<double>>{
-		{ 1, -1,  2 },
-		{ 4,  0,  6 },
-		{ 5,  1, -1 }
-	};
-	H.inverse();
+		H = std::vector<std::vector<double>>{
+			{ 1, -1,  2 },
+			{ 4,  0,  6 },
+			{ 5,  1, -1 }
+		};
+		Homogr H2 = H;
+		H.inverse();
+		Homogr HR = std::vector<std::vector<double>>{
+			{   6, - 1,  6 },
+			{ -34,  11, -2 },
+			{ - 4,   6, -4 }
+		};
+		CHECK( HR == H );
 
-	HR = std::vector<std::vector<double>>{
-		{   6, - 1,  6 },
-		{ -34,  11, -2 },
-		{ - 4,   6, -4 }
-	};
-	CHECK( HR == H );
+		H.transpose();
+		H2.inverse().transpose();
+		CHECK( H == H2 );
+	}
+
+	{
+		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
+		Line2d d1( 5, 6 ); // line from (0,0) to (5,6)
+		Point2d pt1( 5, 6);  // point is on line
+
+		std::cout << "d1=" << d1 << " pt1=" << pt1 << "\n";
+		std::cout << std::scientific << d1.distToPoint( pt1 ) << "\n";
+
+		CHECK( d1.distToPoint( pt1 ) < 1E-10 );
+
+		Point2d pt2 = H * pt1; // move the point with H
+		Homogr H2 = H;
+		H2.inverse().transpose();
+		Line2d d2 = H2 * d1; // move the line with H^{-T}
+
+		std::cout << "d=" << d2.distToPoint( pt2 ) << "\n";
+	}
 }
 
 TEST_CASE( "matrix chained operations", "[testH2]" )

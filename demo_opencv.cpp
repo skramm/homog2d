@@ -146,7 +146,7 @@ void initPts()
 
 void demo2()
 {
-	std::cout << "Demo 2: Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
+	std::cout << "Demo 2: Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r, quit:ESC\n";
 	char key = 0;
 	Homogr H;
 	double angle = 0.;
@@ -195,6 +195,19 @@ void demo2()
 	}
 }
 
+int demo3()
+{
+	std::cout << "Demo3\n";
+	Line2d li(200,100);
+	g_img = cv::Scalar(255,255,255);
+	li.drawCvMat( g_img );
+
+	Line2d li2 = li.getOrthogonalLine( GC_X, 200 );
+	li2.drawCvMat( g_img );
+	cv::imshow( g_wndname, g_img );
+	char key = cv::waitKey(0);
+}
+
 int main()
 {
 	cv::namedWindow( g_wndname );
@@ -203,5 +216,6 @@ int main()
 	cv::destroyAllWindows(); // to disable the mouse callback
 	cv::namedWindow( g_wndname );
 	demo2();
+	demo3();
 }
 

@@ -84,6 +84,12 @@ Homogr h; // unit transformation
 h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
 ```
 
+- This works with inversion and transpose too:
+```
+h.inverse().transpose(); // first, invert, second, transpose
+```
+
+
 - You can access individual values of the matrix:
 ```
 h.setValue( 0, 0, 3.14 );

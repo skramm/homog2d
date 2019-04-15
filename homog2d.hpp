@@ -56,6 +56,12 @@ class Homogr
 	template<typename LP>
 	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
 
+	template<typename T1, typename T2>
+	friend Root<T1> product( const Homogr& h, const Root<T2>& in );
+
+	template<typename LP>
+	friend class Root;
+
 	public:
 	/// Default constructor, initialize to unit transformation
 	Homogr()
@@ -123,12 +129,13 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Sets the matrix as a translation \c tx,ty
 	template<typename T>
-	void setTranslation( T tx, T ty )
+	Homogr& setTranslation( T tx, T ty )
 	{
 		clear();
 		_data[0][2] = tx;
 		_data[1][2] = ty;
 		_isNormalized = true;
+		return *this;
 	}
 	/// Adds a rotation with an angle \c theta (radians) to the matrix
 	template<typename T>
@@ -142,13 +149,14 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Sets the matrix as a rotation with an angle \c theta (radians)
 	template<typename T>
-	void setRotation( T theta )
+	Homogr& setRotation( T theta )
 	{
 		clear();
 		_data[0][0] = _data[1][1] = std::cos(theta);
 		_data[1][0] = std::sin(theta);
 		_data[0][1] = -_data[1][0];
 		_isNormalized = true;
+		return *this;
 	}
 	/// Adds the same scale factor to the matrix
 	template<typename T>
@@ -168,18 +176,19 @@ Thus some assert can be triggered elsewhere
 	}
 	/// Sets the matrix as a scaling transformation (same on two axis)
 	template<typename T>
-	void setScale( T k )
+	Homogr& setScale( T k )
 	{
-		setScale( k, k );
+		return setScale( k, k );
 	}
 	/// Sets the matrix as a scaling transformation
 	template<typename T>
-	void setScale( T kx, T ky )
+	Homogr& setScale( T kx, T ky )
 	{
 		clear();
 		_data[0][0] = kx;
 		_data[1][1] = ky;
 		_isNormalized = true;
+		return *this;
 	}
 
 	template<typename T>
@@ -202,16 +211,18 @@ Thus some assert can be triggered elsewhere
 		_isNormalized = true;
 	}
 /// Transpose matrix
-	void transpose()
+	Homogr& transpose()
 	{
 		Homogr out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				out._data[i][j] = _data[j][i];
+				if( i != j )
+					out._data[i][j] = _data[j][i];
 		*this = out;
+		return *this;
 	}
 /// Inverse matrix \todo UNTESTED YET !
-	void inverse()
+	Homogr& inverse()
 	{
 		Homogr adjugate = p_adjugate();
 		double det = p_det();
@@ -219,6 +230,7 @@ Thus some assert can be triggered elsewhere
 			std::runtime_error( "matrix is not invertible" );
 		*this = adjugate / det;
 		normalize();
+		return *this;
 	}
 /// Divide all elements by scalar
 	Homogr& operator / (double v)
@@ -410,7 +422,7 @@ struct CvDrawParams
 };
 #endif
 
-/// Used in Line2d::getValue()
+/// Used in Line2d::getValue() and getOrthogonalLine()
 enum En_GivenCoord { GC_X, GC_Y };
 
 /// Used in Line2d::addOffset
@@ -454,6 +466,8 @@ class Root
 	Root();
 
 	double getValue( En_GivenCoord gc, double other ) const;
+	Root<LP> getOrthogonalLine( En_GivenCoord gc, double other ) const;
+
 	template<typename T>
 	void   addOffset( En_OffsetDir dir, T v );
 	double getX() const;
@@ -540,6 +554,75 @@ Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
 		return ( -_v[0] * other - _v[2] ) / _v[1];
 	else
 		return ( -_v[1] * other - _v[2] ) / _v[0];
+}
+
+namespace detail {
+/// private product function, [3x3] x [3x1]
+template<typename T1, typename T2>
+Root<T1>
+product( const Homogr& h, const Root<T2>& in )
+{
+	Root<T1> out;
+	for( int i=0; i<3; i++ )
+	{
+		out._v[i] = 0.;
+		for( int j=0; j<3; j++ )
+			out._v[i] += h._data[i][j] * in._v[j];
+	}
+	return out;
+}
+} // namespace detail
+
+/// Returns an orthogonal line, at gc=other (WIP !!!)
+/**
+We are computing the line d2 such as \f$ d1 \times d2 = pt \f$
+
+Steps:
+-# Transform d1 into a skew-symmetric matrix:
+\f$
+A = \left[ d1 \right]_\times
+\f$
+
+-# Transform the vectorial product into a matrix product:
+\f$ A \cdot d2 = pt \f$
+
+-# Thus: \f$ d2= A^{-1} \cdot pt\f$
+*/
+template<>
+Root<IsLine>
+Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
+{
+	Homogr h;
+	for( int i=0; i<3; i++ )
+		h._data[i][i] = 0.;
+
+	h._data[0][1] = -_v[2];
+	h._data[1][0] =  _v[2];
+
+	h._data[0][2] =  _v[1];
+	h._data[2][0] = -_v[1];
+
+	h._data[1][2] = -_v[0];
+	h._data[2][1] =  _v[0];
+
+	try
+	{
+		h.inverse();
+	}
+	catch( const std::exception err )
+	{
+		std::cerr << "Unable to invert skew-symmetric matrix\n";
+		throw std::runtime_error( "getOrthogonalLine(): failure" );
+	}
+	auto other_val = getValue( gc, val );
+
+	Root<IsPoint> pt( other_val, val ) ;
+	if( gc == GC_X )
+		pt.set( val, other_val );
+
+	Root<IsLine> out = detail::product<IsLine>( h, pt );
+	out.P_normalizeLine();
+	return out;
 }
 
 /// Default comparison operator, used for Lines
@@ -643,7 +726,6 @@ Root<LP>::Root()
 	_v[0] = 0.;
 	_v[1] = 0.;
 	_v[2] = 1.;
-//	std::cout << "C1:" << *this << "\n";
 }
 
 /// Default constructor, specialization for lines, build vertical line at x=0
@@ -653,7 +735,6 @@ Root<IsLine>::Root()
 	_v[0] = 1.;
 	_v[1] = 0.;
 	_v[2] = 0.;
-//	std::cout << "C2:" << *this << "\n";;
 }
 
 /// generic 2 arg constructor implementation
@@ -661,7 +742,6 @@ template<typename LP>
 template<typename T>
 Root<LP>::Root( const T& v0, const T& v1 )
 {
-//	std::cout << "C3:" << *this << "\n";
 	assert(0);
 }
 
@@ -673,7 +753,6 @@ Root<IsPoint>::Root( const T& v0, const T& v1 )
 	_v[0] = v0;
 	_v[1] = v1;
 	_v[2] = 1.;
-//	std::cout << "C4:" << *this << "\n";
 }
 
 
@@ -684,7 +763,6 @@ Root<IsLine>::Root( const T& dx, const T& dy )
 {
 	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
 	P_normalizeLine();
-//	std::cout << "C5:" << *this << "\n";
 }
 
 /// constructor of a point from two lines (specialization)
@@ -693,7 +771,6 @@ template<>
 Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
 {
 	*this = detail::crossProduct<IsPoint>( v1, v2 );
-//	std::cout << "C6:" << *this << "\n";
 }
 
 /// Constructor of a line from two points (specialization)
@@ -703,7 +780,6 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 {
 	*this = detail::crossProduct<IsLine>( v1, v2 );
 	P_normalizeLine();
-//	std::cout << "C7:" << *this << "\n";
 }
 
 
@@ -722,7 +798,10 @@ template<>
 double
 Root<IsLine>::distToPoint( const Root<IsPoint>& pt ) const
 {
-	return std::fabs( (_v[0] * pt.getX() + _v[1] * pt.getY() + _v[2]) / std::hypot( _v[0], _v[1] ) );
+/*	std::cout << std::scientific << "distToPoint: h=" << std::hypot( _v[0], _v[1] )
+		<<" x=" << pt.getX() << " y=" << pt.getY()
+		<<  "\n p1=" << _v[0] * pt.getX()  << " p2=" << _v[1] * pt.getY() <<  " p3=" << _v[2] << '\n';
+*/	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
 }
 
 //------------------------------------------------------------------
@@ -753,21 +832,16 @@ Root<LP>
 operator * ( const Homogr& h, const Root<LP>& in )
 {
 	Root<LP> out;
+	return detail::product( h, in );
+/*
 	out._v[2] = 0.;
 	for( int i=0; i<3; i++ )
 		for( int j=0; j<3; j++ )
 			out._v[i] += h._data[i][j] * in._v[j];
-	return out;
+	return out;*/
 }
 //------------------------------------------------------------------
 /// Apply homography to a vector of points or lines. Free function, templated by point or line
-/*template<typename LP>
-void
-Homogr::applyTo( std::vector<Root<LP>>& vin ) const
-{
-	for( auto& elem: vin )
-		elem = *this * elem;
-}*/
 template<typename T>
 void
 Homogr::applyTo( T& vin ) const
