@@ -107,7 +107,7 @@ Thus some assert can be triggered elsewhere
 		_data[r][c] = v;
 		_isNormalized = false;
 	}
-	double getValue( size_t r, size_t c )
+	double getValue( size_t r, size_t c ) const
 	{
 		return _data[r][c];
 	}
@@ -166,7 +166,7 @@ Thus some assert can be triggered elsewhere
 		normalize();
 		return *this;
 	}
-	/// Sets the matrix as a scaling transformation
+	/// Sets the matrix as a scaling transformation (same on two axis)
 	template<typename T>
 	void setScale( T k )
 	{

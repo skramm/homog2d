@@ -6,7 +6,7 @@ using (internally) homogeneous coordinates.
 
 - Language: C++11
 - Home: https://github.com/skramm/homog2d
-- Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include"" it in your source file.
+- Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file.
 - Status: beta
 - Author: S. Kramm
 - Licence: LGPL v3

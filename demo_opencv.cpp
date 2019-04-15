@@ -25,7 +25,7 @@
 
 /**
 \file demo_opencv.cpp
-\brief demo of interfacing with Opencv (PRELIMINAR)
+\brief demo of interfacing with Opencv
 */
 
 #define HOMOG2D_USE_OPENCV
@@ -40,16 +40,15 @@ std::string g_wndname = "homog2d demo";
 cv::Mat g_img;
 int g_width = 600;
 int g_height = 500;
-int g_selected = -1;
 homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
-void drawLines()
+void drawLines( int selected )
 {
 	g_img = cv::Scalar(255,255,255);
 	for( int i=0; i<4; i++ )
 	{
-		if( g_selected == i )
+		if( selected == i )
 			g_pt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
 		else
 			g_pt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
@@ -66,9 +65,9 @@ void drawLines()
 	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
 }
 
-void draw1()
+void draw1( int selected )
 {
-	drawLines();
+	drawLines( selected );
 
 	Line2d l( g_pt[0], g_pt[2] );
 	Line2d la_V( l );
@@ -84,24 +83,33 @@ void draw1()
 /// Mouse callback
 void mouse_CB( int event, int x, int y, int flags, void* param )
 {
-	static int c;
-	std::cout << "count:" << c++ << '\n';
-	draw1();
+	static int selected=-1;
+	draw1( selected );
 	g_pt_mouse.set( x, y );
-	g_selected = -1;
-	Point2d pt( g_pt_mouse );
-	for( int i=0; i<4; i++ )
-		if( pt.distToPoint( g_pt[i]) < 10 )
-		{
-			g_pt[i] = pt;
-			g_selected = i;
-			break;
-		}
+	switch( event )
+	{
+		case CV_EVENT_LBUTTONUP:
+			selected = -1;
+		break;
+
+		case CV_EVENT_LBUTTONDOWN:
+			for( int i=0; i<4; i++ )
+				if( g_pt_mouse.distToPoint( g_pt[i]) < 10 )
+					selected = i;
+		break;
+
+		case CV_EVENT_MOUSEMOVE:
+			if( selected != -1 )
+				g_pt[selected] = g_pt_mouse;
+		break;
+
+		default: break;
+	}
 }
 
 int demo1()
 {
-	std::cout << "Demo 1 !\n";
+	std::cout << "Demo 1: click on points and move them\n";
 	cv::setMouseCallback( g_wndname, mouse_CB );
 
 	int n=5;
@@ -111,7 +119,7 @@ int demo1()
 	g_pt[3].set( g_width*(n-1)/n, g_height/2 );
 
 	g_img.create( g_height, g_width, CV_8UC3 );
-	draw1();
+	draw1(-1);
 	char key = cv::waitKey(0);
 }
 
@@ -123,15 +131,22 @@ void applyH( const Homogr& H )
 
 void draw2()
 {
-	drawLines();
+	drawLines(-1);
 	cv::imshow( g_wndname, g_img );
+}
+void initPts()
+{
+	int a=50;
+	int b=150;
+	g_pt[0].set( a, a );
+	g_pt[1].set( b, b );
+	g_pt[2].set( b, a );
+	g_pt[3].set( a, b );
 }
 
 void demo2()
 {
-	std::cout << "Demo 2 !\n";
-//	cv::setMouseCallback( g_wndname, mouse_CB );
-//	cv::namedWindow( g_wndname );
+	std::cout << "Demo 2: Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 	char key = 0;
 	Homogr H;
 	double angle = 0.;
@@ -142,12 +157,8 @@ void demo2()
 	double ty = 0;
 	double trans_delta = 20;
 	double K = M_PI/180.;
-	g_pt[0].set( 50, 50);
-	g_pt[1].set( 150, 150);
-	g_pt[2].set( 150, 50);
-	g_pt[3].set( 50, 150);
+	initPts();
 	draw2();
-	std::cout << "Hit a key: scale:[op], angle:[lm], translation:[gh,yb]\n";
 	while( key != 27 ) // ESC
 	{
 		bool change = true;
@@ -173,13 +184,12 @@ void demo2()
 		}
 		if( change )
 		{
-			std::cout << "angle=" << angle << " scale=" << scale << "\n";
-			H.setRotation( angle*K );
-			H.addTranslation( tx, ty );
-			H.addScale( scale );
-			std::cout << H << '\n';
-			for( int i=0; i<4; i++ )
-				g_pt[i] = H * g_pt[i];
+			H.clear();
+//			std::cout << "angle=" << angle << " scale=" << scale << "\n";
+			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
+//			std::cout << H << '\n';
+			initPts();
+			H.applyTo(g_pt);
 			draw2();
 		}
 	}

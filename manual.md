@@ -61,12 +61,12 @@ The first one starts from the identity transformation and applies the requested 
 The second form adds the requested transformation to the matrix.
 
 - First example:
-
 ```
 Homogr h; // unit transformation
 h.setTranslation(3,4);
 Point2d pt1(1,2);
 Point2d pt2 = h * pt1; // pt2 is now (4,6)
+h.clear; // reset to unit transformation
 ```
 
 - You can build some complex transformation by multiplying these:
@@ -78,7 +78,7 @@ Homogr h3a = h1*h2; // first, rotation, then translation
 Homogr h3b = h2*h1; // first, rotation, then translation
 ```
 
-- But you can also used "chained syntax":
+- But you can also used "chained" syntax:
 ```
 Homogr h; // unit transformation
 h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
