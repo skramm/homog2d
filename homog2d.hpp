@@ -49,6 +49,13 @@ namespace homog2d {
 template<typename LP>
 class Root;
 
+class Homogr;
+
+namespace detail {
+	template<typename T1, typename T2>
+	Root<T1> product( const Homogr& h, const Root<T2>& in );
+	}
+
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
 class Homogr
@@ -57,7 +64,7 @@ class Homogr
 	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
 
 	template<typename T1, typename T2>
-	friend Root<T1> product( const Homogr& h, const Root<T2>& in );
+	friend Root<T1> detail::product( const Homogr& h, const Root<T2>& in );
 
 	template<typename LP>
 	friend class Root;
@@ -199,11 +206,16 @@ Thus some assert can be triggered elsewhere
 	void normalize() const
 	{
 		auto eps = std::numeric_limits<double>::epsilon();
-
-		if( std::fabs(_data[2][2]) <= eps ) // if [2][2] is null, then we use [2][1]
-			p_divideBy( 2, 1 );
-		else
+//		std::cout << "normalize():\n" << *this << "\n";
+		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
 			p_divideBy( 2, 2 );
+		else
+		{
+			if( std::fabs(_data[2][1]) > eps )
+				p_divideBy( 2, 1 );
+			else
+				p_divideBy( 2, 0 );
+		}
 		if( std::signbit(_data[2][2]) )
 			for( auto& li: _data )
 				for( auto& e: li )
@@ -221,22 +233,33 @@ Thus some assert can be triggered elsewhere
 		*this = out;
 		return *this;
 	}
-/// Inverse matrix \todo UNTESTED YET !
+
+/// Inverse matrix
 	Homogr& inverse()
 	{
 		Homogr adjugate = p_adjugate();
 		double det = p_det();
-		if( std::fabs(det) <= std::numeric_limits<double>::epsilon() )
-			std::runtime_error( "matrix is not invertible" );
+
+		if( std::abs(det) <= std::numeric_limits<double>::epsilon() )
+			throw std::runtime_error( "matrix is not invertible" );
+
+//std::cout.precision(std::numeric_limits<double>::max_digits10);
+
+//		std::cout << std::scientific << "eps=" << std::numeric_limits<double>::epsilon() << "\n";
+//		std::cout << std::scientific << "det=" << det << " mat=\n" << *this << "\n adjug=\n" << adjugate << "\n";
+
 		*this = adjugate / det;
+
+//		std::cout << "AFTER DIV:\n" << *this << "\n";
 		normalize();
 		return *this;
 	}
+
 /// Divide all elements by scalar
 	Homogr& operator / (double v)
 	{
 		if( std::fabs(v) <= std::numeric_limits<double>::epsilon() )
-			std::runtime_error( "unable to divide by " + std::to_string(v) );
+			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -309,9 +332,9 @@ Thus some assert can be triggered elsewhere
 	void p_divideBy( size_t r, size_t c ) const
 	{
 		assert( std::fabs( _data[r][c] ) > std::numeric_limits<double>::epsilon() );
-			for( auto& li: _data )
-				for( auto& e: li )
-					e /= _data[r][c];
+		for( auto& li: _data )
+			for( auto& e: li )
+				e /= _data[r][c];
 	}
 /// Return determinant of matrix
 /**
@@ -530,6 +553,26 @@ Root<IsPoint>::set( double x, double y )
 	_v[2] = 1.;
 }
 
+//------------------------------------------------------------------
+/// Default operator << for lines
+template<typename LP>
+std::ostream&
+operator << ( std::ostream& f, const Root<LP>& r )
+{
+	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+	return f;
+}
+
+/// Specialization of operator << for points
+template<>
+std::ostream&
+operator << ( std::ostream& f, const Root<IsPoint>& r )
+{
+	f << '[' << r.getX() << ',' << r.getY() << "] ";
+	return f;
+}
+
+//------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0
 template<>
 void Root<IsLine>::P_normalizeLine()
@@ -545,6 +588,7 @@ void Root<IsLine>::P_normalizeLine()
 			_v[i] = -_v[i];
 }
 
+//------------------------------------------------------------------
 /// Specialization for lines (no implementation for points)
 template<>
 double
@@ -556,6 +600,7 @@ Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
 		return ( -_v[1] * other - _v[2] ) / _v[0];
 }
 
+//------------------------------------------------------------------
 namespace detail {
 /// private product function, [3x3] x [3x1]
 template<typename T1, typename T2>
@@ -573,6 +618,7 @@ product( const Homogr& h, const Root<T2>& in )
 }
 } // namespace detail
 
+//------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other (WIP !!!)
 /**
 We are computing the line d2 such as \f$ d1 \times d2 = pt \f$
@@ -605,6 +651,7 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 	h._data[1][2] = -_v[0];
 	h._data[2][1] =  _v[0];
 
+	std::cout << "h=" << h << "\n";
 	try
 	{
 		h.inverse();
@@ -619,7 +666,7 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 	Root<IsPoint> pt( other_val, val ) ;
 	if( gc == GC_X )
 		pt.set( val, other_val );
-
+	std::cout << "pt=" << pt << "\n";
 	Root<IsLine> out = detail::product<IsLine>( h, pt );
 	out.P_normalizeLine();
 	return out;
@@ -651,24 +698,6 @@ Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
 	if( std::fabs( getY() - other.getY() ) > eps )
 		return false;
 	return true;
-}
-
-/// Default operator << for lines
-template<typename LP>
-std::ostream&
-operator << ( std::ostream& f, const Root<LP>& r )
-{
-	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
-	return f;
-}
-
-/// Specialization of operator << for points
-template<>
-std::ostream&
-operator << ( std::ostream& f, const Root<IsPoint>& r )
-{
-	f << '[' << r.getX() << ',' << r.getY() << "] ";
-	return f;
 }
 
 /// Inner implementation details
@@ -832,7 +861,7 @@ Root<LP>
 operator * ( const Homogr& h, const Root<LP>& in )
 {
 	Root<LP> out;
-	return detail::product( h, in );
+	return detail::product<LP>( h, in );
 /*
 	out._v[2] = 0.;
 	for( int i=0; i<3; i++ )

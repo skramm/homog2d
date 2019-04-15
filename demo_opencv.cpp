@@ -197,12 +197,13 @@ void demo2()
 
 int demo3()
 {
-	std::cout << "Demo3\n";
+	std::cout << "Demo 3\n";
 	Line2d li(200,100);
 	g_img = cv::Scalar(255,255,255);
 	li.drawCvMat( g_img );
 
 	Line2d li2 = li.getOrthogonalLine( GC_X, 200 );
+	std::cout << "li2=" << li2 << "\n";
 	li2.drawCvMat( g_img );
 	cv::imshow( g_wndname, g_img );
 	char key = cv::waitKey(0);
