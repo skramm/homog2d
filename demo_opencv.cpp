@@ -76,8 +76,6 @@ void draw1( int selected )
 
 	l.addOffset( OD_Horiz, 25);
 	l.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
-
-	cv::imshow( g_wndname, g_img );
 }
 
 /// Mouse callback
@@ -99,12 +97,19 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
+		{
 			if( selected != -1 )
 				g_pt[selected] = g_pt_mouse;
+			Line2d l_mouse = g_pt_mouse * Point2d();
+			Line2d l_mouse2= l_mouse.getOrthogonalLine( GC_X, 100 );
+			l_mouse.drawCvMat( g_img );
+			l_mouse2.drawCvMat( g_img );
+		}
 		break;
 
 		default: break;
 	}
+	cv::imshow( g_wndname, g_img );
 }
 
 int demo1()
@@ -120,6 +125,8 @@ int demo1()
 
 	g_img.create( g_height, g_width, CV_8UC3 );
 	draw1(-1);
+	cv::imshow( g_wndname, g_img );
+
 	char key = cv::waitKey(0);
 }
 
@@ -195,25 +202,6 @@ void demo2()
 	}
 }
 
-int demo3()
-{
-	std::cout << "Demo 3\n";
-	Line2d li(200,180);
-	g_img = cv::Scalar(255,255,255);
-	if( !li.drawCvMat( g_img ) )
-		std::cout << "li1 not in image !\n";
-
-std::cout << "li1=" << li << "\n";
-
-	Line2d li2 = li.getOrthogonalLine( GC_X, 200 );
-	std::cout << "li2=" << li2 << "\n";
-	if( !li2.drawCvMat( g_img, CvDrawParams().setColor(255,20,20) ) )
-		std::cout << "li2 not in image !\n";
-
-	cv::imshow( g_wndname, g_img );
-	char key = cv::waitKey(0);
-}
-
 int main()
 {
 	cv::namedWindow( g_wndname );
@@ -222,6 +210,5 @@ int main()
 	cv::destroyAllWindows(); // to disable the mouse callback
 	cv::namedWindow( g_wndname );
 	demo2();
-	demo3();
 }
 

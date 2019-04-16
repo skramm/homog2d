@@ -35,6 +35,7 @@ See https://github.com/skramm/homog2d
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <set>
 #include <vector>
 #include <iomanip>
 #include <cassert>
@@ -642,68 +643,17 @@ product( const Homogr& h, const Root<T2>& in )
 } // namespace detail
 
 //------------------------------------------------------------------
-/// Returns an orthogonal line, at gc=other (WIP !!!)
-/**
-We are computing the line d2 such as \f$ d1 \times d2 = pt \f$
-
-Steps:
--# Transform d1 into a skew-symmetric matrix:
-\f$
-A = \left[ d1 \right]_\times
-\f$
-
--# Transform the vectorial product into a matrix product:
-\f$ A \cdot d2 = pt \f$
-
--# Thus: \f$ d2= A^{-1} \cdot pt\f$
-*/
+/// Returns an orthogonal line, at gc=other
 template<>
 Root<IsLine>
 Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 {
-#if 0
-	Homogr h;
-	for( int i=0; i<3; i++ )
-		h._data[i][i] = 0.;
-
-	h._data[0][1] = -_v[2];
-	h._data[1][0] =  _v[2];
-
-	h._data[0][2] =  _v[1];
-	h._data[2][0] = -_v[1];
-
-	h._data[1][2] = -_v[0];
-	h._data[2][1] =  _v[0];
-
-	std::cout << "h=" << h << "\n";
-	try
-	{
-		h.inverse();
-	}
-	catch( const std::exception err )
-	{
-		std::cerr << "Unable to invert skew-symmetric matrix\n";
-		throw std::runtime_error( "getOrthogonalLine(): failure" );
-	}
-	auto other_val = getValue( gc, val );
-
-	Root<IsPoint> pt( other_val, val ) ;
-	if( gc == GC_X )
-		pt.set( val, other_val );
-	std::cout << "pt=" << pt << "\n";
-	Root<IsLine> out = detail::product<IsLine>( h, pt );
-#endif
-
-//	Set( -bb, aa, bb * pt.GetXf() - aa * pt.GetYf() );
-
 	Root<IsLine> out;
 	auto other_val = getValue( gc, val );
 
 	Root<IsPoint> pt( other_val, val ) ;
 	if( gc == GC_X )
 		pt.set( val, other_val );
-
-	std::cout << "point on line:" << pt << "\n";
 
 	out._v[0] = -_v[1];
 	out._v[1] =  _v[0];
@@ -966,7 +916,8 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 	l[1] = Root<IsLine>(      p01, p11 );
 	l[2] = Root<IsLine>(           p11, p10 );
 	l[3] = Root<IsLine>(                p10, p00 );
-	std::vector<Root<IsPoint>> v;
+
+	std::vector<cv::Point2d> vec;
 	for( int i=0; i<4; i++ )
 	{
 		Root<IsPoint> pt;
@@ -976,22 +927,39 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 		}
 		catch( const std::exception& err )
 		{
-			okFlag = false;
+			okFlag = false; // lines are parallel
+//			std::cout << "i=" << i << ": parallel lines\n";
 		}
 		if( okFlag )
-			if( pt.getX()>=0 && pt.getX()<=mat.cols )
-				if( pt.getY()>=0 && pt.getY()<=mat.rows )
-					v.push_back( pt );
+		{
+//			std::cout << "pt intersection=" << pt << "\n";
+			if( pt.getX() >= 0. && pt.getX() <= static_cast<double>(mat.cols) )
+				if( pt.getY() >= 0. && pt.getY() <= static_cast<double>(mat.rows) )
+					vec.push_back( pt.getCvPtd() );
+		}
 	}
 
-/*	if( v.size()>2 )
+#if 0
 	{
-		for( int i=0; i<v.size(); i++ )
-			std::cout << "i=" << i << " pt=" << v[i] << '\n';
-	}*/
-	if( v.size()>1 )
+		std::cout << "found " << vec.size() << " pts:\n";
+		for( int i=0; i<vec.size(); i++ )
+			std::cout << "i=" << i << " pt=" << vec[i] << '\n';
+	}
+#endif
+
+	if( vec.size() > 1 )
 	{
-		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), dp._color, dp._lineThickness, dp._lineType );
+		std::vector<cv::Point2d> vec2( 1, vec[0] );
+		for( int i=1; i<vec.size(); i++ )
+		{
+			if(
+				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] )
+				== std::end( vec2 )
+			)
+				vec2.push_back( vec[i] );
+		}
+
+		cv::line( mat, vec[0], vec[1], dp._color, dp._lineThickness, dp._lineType );
 		return true;
 	}
 	return false;
