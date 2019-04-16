@@ -513,7 +513,7 @@ class Root
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-	void drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() );
+	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() );
 	cv::Point2d getCvPtd() const;
 	cv::Point2f getCvPtf() const;
 #endif
@@ -601,6 +601,29 @@ Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
 }
 
 //------------------------------------------------------------------
+///////////////////////////////////////////
+// DEFAULT CONSTRUCTORS
+///////////////////////////////////////////
+
+/// Default constructor, generic function, used for points
+template<typename LP>
+Root<LP>::Root()
+{
+	_v[0] = 0.;
+	_v[1] = 0.;
+	_v[2] = 1.;
+}
+
+/// Default constructor, specialization for lines, build vertical line at x=0
+template<>
+Root<IsLine>::Root()
+{
+	_v[0] = 1.;
+	_v[1] = 0.;
+	_v[2] = 0.;
+}
+
+//------------------------------------------------------------------
 namespace detail {
 /// private product function, [3x3] x [3x1]
 template<typename T1, typename T2>
@@ -638,6 +661,7 @@ template<>
 Root<IsLine>
 Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 {
+#if 0
 	Homogr h;
 	for( int i=0; i<3; i++ )
 		h._data[i][i] = 0.;
@@ -668,10 +692,27 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 		pt.set( val, other_val );
 	std::cout << "pt=" << pt << "\n";
 	Root<IsLine> out = detail::product<IsLine>( h, pt );
+#endif
+
+//	Set( -bb, aa, bb * pt.GetXf() - aa * pt.GetYf() );
+
+	Root<IsLine> out;
+	auto other_val = getValue( gc, val );
+
+	Root<IsPoint> pt( other_val, val ) ;
+	if( gc == GC_X )
+		pt.set( val, other_val );
+
+	std::cout << "point on line:" << pt << "\n";
+
+	out._v[0] = -_v[1];
+	out._v[1] =  _v[0];
+	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
 	out.P_normalizeLine();
 	return out;
 }
 
+//------------------------------------------------------------------
 /// Default comparison operator, used for Lines
 template<typename LP>
 bool
@@ -700,6 +741,7 @@ Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
 	return true;
 }
 
+//------------------------------------------------------------------
 /// Inner implementation details
 namespace detail
 {
@@ -718,16 +760,18 @@ namespace detail
 	}
 }
 
+//------------------------------------------------------------------
+/// Product of two points is a line
 Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 {
 	auto line = detail::crossProduct<IsLine>(lhs, rhs);
-//	std::cout << "LINE BEFORE NORMALIZE:" << line << '\n';
 	line.P_normalizeLine();
-//	std::cout << "LINE AFTER NORMALIZE:" << line << '\n';
 	return line;
 }
 
+//------------------------------------------------------------------
+/// Product of two lines is a point
 Root<IsPoint>
 operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 {
@@ -744,10 +788,11 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 }
 
 
+//------------------------------------------------------------------
 ///////////////////////////////////////////
 // CONSTRUCTORS
 ///////////////////////////////////////////
-
+/*
 /// Default constructor, generic function, used for points
 template<typename LP>
 Root<LP>::Root()
@@ -765,7 +810,7 @@ Root<IsLine>::Root()
 	_v[1] = 0.;
 	_v[2] = 0.;
 }
-
+*/
 /// generic 2 arg constructor implementation
 template<typename LP>
 template<typename T>
@@ -783,7 +828,6 @@ Root<IsPoint>::Root( const T& v0, const T& v1 )
 	_v[1] = v1;
 	_v[2] = 1.;
 }
-
 
 /// constructor of a line from two values (vector dx/dy). (specialization)
 template<>
@@ -810,7 +854,6 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 	*this = detail::crossProduct<IsLine>( v1, v2 );
 	P_normalizeLine();
 }
-
 
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. Specialization
@@ -900,6 +943,8 @@ Root<IsPoint>::getCvPtf() const
 //------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for lines.
 /**
+Returns false if line is not in image.
+
 Steps:
  -# builds the 4 corner points of the image
  -# build the 4 corresponding lines (borders of the image)
@@ -907,7 +952,7 @@ Steps:
  -# draw a line between these 2 points
 */
 template<>
-void
+bool
 Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
 	assert( mat.rows > 2 );
@@ -945,7 +990,11 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 			std::cout << "i=" << i << " pt=" << v[i] << '\n';
 	}*/
 	if( v.size()>1 )
+	{
 		cv::line( mat, v[0].getCvPtd(),  v[1].getCvPtd(), dp._color, dp._lineThickness, dp._lineType );
+		return true;
+	}
+	return false;
 }
 
 //------------------------------------------------------------------
@@ -984,7 +1033,7 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 		cv::line( mat, vpt[0], vpt[1], dp._color );
 		cv::line( mat, vpt[2], vpt[3], dp._color );
 	}
-	else
+	else // draw 4 diagonal lines
 	{
 		cv::line( mat, vpt[0], vpt[2], dp._color );
 		cv::line( mat, vpt[2], vpt[1], dp._color );
@@ -994,11 +1043,17 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 }
 } // namespace detail
 //------------------------------------------------------------------
-/// Draw line on Cv::Mat. Specialization for points
+/// Draw line on Cv::Mat. Specialization for points.
+/// Returns false if point not in image
 template<>
-void
+bool
 Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
+	if( getX()<0 || getX()>=mat.cols )
+		return false;
+	if( getY()<0 || getY()>=mat.rows )
+		return false;
+
 	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
 	switch( dp._ptStyle )
 	{
@@ -1021,6 +1076,7 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 
 		default: assert(0);
 	}
+	return true;
 }
 
 //------------------------------------------------------------------

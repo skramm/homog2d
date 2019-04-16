@@ -25,3 +25,5 @@ demo: demo_opencv demo_check
 demo_opencv: demo_opencv.cpp homog2d.hpp
 	$(CXX) -std=c++11 -o demo_opencv demo_opencv.cpp `pkg-config --libs opencv`
 
+clean:
+	-rm -r html/*

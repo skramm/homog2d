@@ -198,13 +198,18 @@ void demo2()
 int demo3()
 {
 	std::cout << "Demo 3\n";
-	Line2d li(200,100);
+	Line2d li(200,180);
 	g_img = cv::Scalar(255,255,255);
-	li.drawCvMat( g_img );
+	if( !li.drawCvMat( g_img ) )
+		std::cout << "li1 not in image !\n";
+
+std::cout << "li1=" << li << "\n";
 
 	Line2d li2 = li.getOrthogonalLine( GC_X, 200 );
 	std::cout << "li2=" << li2 << "\n";
-	li2.drawCvMat( g_img );
+	if( !li2.drawCvMat( g_img, CvDrawParams().setColor(255,20,20) ) )
+		std::cout << "li2 not in image !\n";
+
 	cv::imshow( g_wndname, g_img );
 	char key = cv::waitKey(0);
 }
