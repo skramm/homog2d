@@ -98,6 +98,22 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lh2*lB == Point2d(0.,2.) );
 	}
 
+	{ // test of getOrthogonal()
+		Line2d lV; // vertical line at x=0
+
+// get orthogonal line at y=100
+		Line2d li2 = lV.getOrthogonalLine( GC_Y, 100 );
+
+		Line2d lH2(1,0);                // build horizontal line
+		lH2.addOffset( OD_Vert, 100 );  // add vertical offset
+		CHECK( li2 == lH2 );
+
+		Line2d lH(1,0);                // build horizontal line
+		Line2d li3 = lH.getOrthogonalLine( GC_X, 100 );
+		Line2d lV2;
+		lV2.addOffset( OD_Horiz, 100 );  // add horizontal offset
+		CHECK( li3 == lV2 );
+	}
 }
 
 TEST_CASE( "dist2points", "[test2]" )
@@ -141,6 +157,19 @@ TEST_CASE( "offset test", "[test3]" )
 
 		h.addOffset( OD_Vert, 1 );
 		CHECK( v*h == Point2d(1,1) ); // intersection is (1,0)
+	}
+	{
+		Line2d liV;
+		Line2d liV2 = liV;
+		liV.addOffset( OD_Vert, 1 ); // adding vertical offset to vertical line does nothing
+		CHECK( liV == liV2 );
+
+		Line2d liH;
+		Line2d liH2 = liH;
+		std::cout << "liH2=" << liH2 << "\n";
+		liH.addOffset( OD_Horiz, 1 ); // adding vertical offset to vertical line does nothing
+		std::cout << "liH=" << liH << "\n";
+		CHECK( liH == liH2 );
 	}
 }
 

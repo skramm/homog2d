@@ -132,7 +132,7 @@ Thus some assert can be triggered elsewhere
 		Homogr out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
-		normalize();
+//		normalize();
 		return *this;
 	}
 	/// Sets the matrix as a translation \c tx,ty
@@ -152,7 +152,7 @@ Thus some assert can be triggered elsewhere
 		Homogr out;
 		out.setRotation( theta );
 		*this = out * *this;
-		normalize();
+//		normalize();
 		return *this;
 	}
 	/// Sets the matrix as a rotation with an angle \c theta (radians)
@@ -179,7 +179,7 @@ Thus some assert can be triggered elsewhere
 		Homogr out;
 		out.setScale( kx, ky );
 		*this = out * *this;
-		normalize();
+//		normalize();
 		return *this;
 	}
 	/// Sets the matrix as a scaling transformation (same on two axis)
@@ -244,14 +244,8 @@ Thus some assert can be triggered elsewhere
 		if( std::abs(det) <= std::numeric_limits<double>::epsilon() )
 			throw std::runtime_error( "matrix is not invertible" );
 
-//std::cout.precision(std::numeric_limits<double>::max_digits10);
-
-//		std::cout << std::scientific << "eps=" << std::numeric_limits<double>::epsilon() << "\n";
-//		std::cout << std::scientific << "det=" << det << " mat=\n" << *this << "\n adjug=\n" << adjugate << "\n";
-
 		*this = adjugate / det;
 
-//		std::cout << "AFTER DIV:\n" << *this << "\n";
 		normalize();
 		return *this;
 	}
@@ -404,6 +398,7 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 #ifdef HOMOG2D_USE_OPENCV
+//------------------------------------------------------------------
 /// Point drawing style
 enum PointStyle
 {
@@ -412,6 +407,7 @@ enum PointStyle
 	PS_STAR,   ///< "*" symbol
 	PS_DIAM    ///< diamond
 };
+//------------------------------------------------------------------
 /// Draw parameters for Opencv binding, see Root::drawCvMat()
 struct CvDrawParams
 {
@@ -445,6 +441,7 @@ struct CvDrawParams
 	}
 };
 #endif
+//------------------------------------------------------------------
 
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum En_GivenCoord { GC_X, GC_Y };
@@ -544,7 +541,7 @@ Root<IsPoint>::getY() const
 	return _v[1]/_v[2];
 }
 
-/// specialization for points (undefined for lines
+/// specialization for points (undefined for lines)
 template<>
 void
 Root<IsPoint>::set( double x, double y )
@@ -579,14 +576,20 @@ template<>
 void Root<IsLine>::P_normalizeLine()
 {
 	auto sq = std::hypot( _v[0], _v[1] );
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( sq <= eps )
+	if( sq <= std::numeric_limits<double>::epsilon() )
 		throw std::runtime_error( "unable to normalize line" );
 	for( int i=0; i<3; i++ )
 		_v[i] /= sq;
 	if( std::signbit(_v[0]) ) //a allways >0
 		for( int i=0; i<3; i++ )
 			_v[i] = -_v[i];
+
+	if( _v[0] == 0. ) // then, change sign so that b>0
+		if( std::signbit(_v[1]) )
+		{
+			_v[1] = - _v[1];
+			_v[2] = - _v[2];
+		}
 }
 
 //------------------------------------------------------------------
