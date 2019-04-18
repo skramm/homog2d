@@ -127,13 +127,7 @@ int demo1()
 	draw1(-1);
 	cv::imshow( g_wndname, g_img );
 
-	char key = cv::waitKey(0);
-}
-
-void applyH( const Homogr& H )
-{
-	for( int i=0; i<4; i++ )
-		g_pt[i] = H * g_pt[i];
+	cv::waitKey(0);
 }
 
 void draw2()
@@ -172,10 +166,8 @@ void demo2()
 		switch( key = cv::waitKey(0) )
 		{
 			case 'r': // reset
-				angle = 0.;
 				scale = 1.;
-				tx = 0;
-				ty = 0;
+				angle = tx = ty = 0.;
 			break;
 			case 'm': angle += angle_delta; break;
 			case 'l': angle -= angle_delta; break;
@@ -192,14 +184,48 @@ void demo2()
 		if( change )
 		{
 			H.clear();
-//			std::cout << "angle=" << angle << " scale=" << scale << "\n";
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
-//			std::cout << H << '\n';
 			initPts();
 			H.applyTo(g_pt);
 			draw2();
 		}
 	}
+}
+
+void demo3()
+{
+	Line2d li;
+
+	Line2d lV;
+	lV.addOffset( OD_Horiz, 100.);
+	Line2d lH(1,0);
+	lH.addOffset( OD_Vert, 100.);
+
+	g_img = cv::Scalar(255,255,255);
+	lV.drawCvMat( g_img, CvDrawParams().setColor( 250,  50, 50).setThickness(2) );
+	lH.drawCvMat( g_img, CvDrawParams().setColor( 250,  50, 50).setThickness(2) );
+
+	CvDrawParams dp;
+	dp.setColor( 0,  0, 250).setThickness(3);
+	dp.setDefault();
+
+	li = lV;
+	li.addOffset( OD_Horiz, 50 );
+	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,250,0) );
+	li = lV;
+	li.addOffset( OD_Horiz, -50 );
+	li.drawCvMat( g_img, CvDrawParams().setColor( 100,250,0) );
+
+/*	li = lH;
+	li.addOffset( OD_Vert, 50 );
+	li.drawCvMat( g_img, CvDrawParams().setColor( 100,0,250) );
+	li = lH;
+	li.addOffset( OD_Vert, -50 );
+	li.drawCvMat( g_img, CvDrawParams().setColor( 100,0,250) );
+*/
+	cv::imshow( g_wndname, g_img );
+	char key = cv::waitKey(0);
+
 }
 
 int main()
@@ -210,5 +236,7 @@ int main()
 	cv::destroyAllWindows(); // to disable the mouse callback
 	cv::namedWindow( g_wndname );
 	demo2();
+
+	demo3();
 }
 

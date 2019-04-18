@@ -148,8 +148,20 @@ li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor( r,g,b) 
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
+The drawing parameters default values can be changed anytime with a call to `setDefault()`,
+and values will be retained, unless explicitely changed, as showed in the example below;
+
+```
+	CvDrawParams dp; // default line thickness is 1
+	dp.setColor( 0,  0, 250).setThickness(3);
+	dp.setDefault();
+	line.drawCvMat( some_img ); // use default settings
+	line.drawCvMat( some_img. CvDrawParams.setColor( 0,0,0) ); // warning, line thickness=3 !
+```
+
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
+
 
 ## Build options
 <a name="options"></a>

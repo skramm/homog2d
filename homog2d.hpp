@@ -407,36 +407,58 @@ enum PointStyle
 	PS_STAR,   ///< "*" symbol
 	PS_DIAM    ///< diamond
 };
+
 //------------------------------------------------------------------
 /// Draw parameters for Opencv binding, see Root::drawCvMat()
 struct CvDrawParams
 {
-	cv::Scalar _color         = cv::Scalar(128,128,128);
-	int        _lineThickness = 1;
-	int        _lineType      = cv::LINE_AA; // or cv::LINE_8
-	int        _ptDelta       = 8; // pixels, used for drawing points
-	PointStyle _ptStyle       = PS_PLUS;
+/// Inner struct, holds the values. Needed so we can assign a default value as static member
+	struct Dp_values
+	{
+		cv::Scalar _color         = cv::Scalar(128,128,128);
+		int        _lineThickness = 1;
+		int        _lineType      = cv::LINE_AA; // or cv::LINE_8
+		int        _ptDelta       = 8; // pixels, used for drawing points
+		PointStyle _ptStyle       = PS_PLUS;
+	};
+	Dp_values _dpValues;
 
+	private:
+	static Dp_values& P_getDefault()
+	{
+		static Dp_values s_defValue;
+		return s_defValue;
+	}
+
+	public:
+	CvDrawParams()
+	{
+		_dpValues = P_getDefault();
+	}
+	void setDefault()
+	{
+		P_getDefault() = this->_dpValues;
+	}
 	CvDrawParams& setPointStyle( PointStyle ps )
 	{
-		_ptStyle = ps;
+		_dpValues._ptStyle = ps;
 		return *this;
 	}
 	CvDrawParams& setPointSize( int ps )
 	{
 		assert( ps>1 );
-		_ptDelta = ps;
+		_dpValues._ptDelta = ps;
 		return *this;
 	}
 	CvDrawParams& setThickness( int t )
 	{
 		assert( t>0 );
-		_lineThickness = t;
+		_dpValues._lineThickness = t;
 		return *this;
 	}
 	CvDrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
 	{
-		_color = cv::Scalar(b,g,r);
+		_dpValues._color = cv::Scalar(b,g,r);
 		return *this;
 	}
 };
@@ -962,7 +984,7 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 				vec2.push_back( vec[i] );
 		}
 
-		cv::line( mat, vec[0], vec[1], dp._color, dp._lineThickness, dp._lineType );
+		cv::line( mat, vec[0], vec[1], dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 		return true;
 	}
 	return false;
@@ -974,7 +996,7 @@ namespace detail {
 void
 drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
 {
-	auto delta  = dp._ptDelta;
+	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
 	switch( ps )
 	{
@@ -1001,15 +1023,15 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 	}
 	if( !drawDiag )
 	{
-		cv::line( mat, vpt[0], vpt[1], dp._color );
-		cv::line( mat, vpt[2], vpt[3], dp._color );
+		cv::line( mat, vpt[0], vpt[1], dp._dpValues._color );
+		cv::line( mat, vpt[2], vpt[3], dp._dpValues._color );
 	}
 	else // draw 4 diagonal lines
 	{
-		cv::line( mat, vpt[0], vpt[2], dp._color );
-		cv::line( mat, vpt[2], vpt[1], dp._color );
-		cv::line( mat, vpt[1], vpt[3], dp._color );
-		cv::line( mat, vpt[0], vpt[3], dp._color );
+		cv::line( mat, vpt[0], vpt[2], dp._dpValues._color );
+		cv::line( mat, vpt[2], vpt[1], dp._dpValues._color );
+		cv::line( mat, vpt[1], vpt[3], dp._dpValues._color );
+		cv::line( mat, vpt[0], vpt[3], dp._dpValues._color );
 	}
 }
 } // namespace detail
@@ -1026,7 +1048,7 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 		return false;
 
 	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
-	switch( dp._ptStyle )
+	switch( dp._dpValues._ptStyle )
 	{
 		case PS_PLUS:   // "+" symbol
 			detail::drawPt( mat, PS_PLUS,  vpt, dp );

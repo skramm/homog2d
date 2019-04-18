@@ -167,7 +167,7 @@ TEST_CASE( "offset test", "[test3]" )
 		Line2d liH;
 		Line2d liH2 = liH;
 		std::cout << "liH2=" << liH2 << "\n";
-		liH.addOffset( OD_Horiz, 1 ); // adding vertical offset to vertical line does nothing
+		liH.addOffset( OD_Horiz, 1 ); // adding horizontal offset to horizontal line does nothing
 		std::cout << "liH=" << liH << "\n";
 		CHECK( liH == liH2 );
 	}
