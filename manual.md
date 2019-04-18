@@ -159,6 +159,12 @@ and values will be retained, unless explicitely changed, as showed in the exampl
 	line.drawCvMat( some_img. CvDrawParams.setColor( 0,0,0) ); // warning, line thickness=3 !
 ```
 
+You can at any time return to the "factory" settings with a call to a static function:
+```
+	CvDrawParams::resetDefault();
+```
+
+
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 

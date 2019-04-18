@@ -439,6 +439,10 @@ struct CvDrawParams
 	{
 		P_getDefault() = this->_dpValues;
 	}
+	static void resetDefault()
+	{
+		P_getDefault() = Dp_values();
+	}
 	CvDrawParams& setPointStyle( PointStyle ps )
 	{
 		_dpValues._ptStyle = ps;

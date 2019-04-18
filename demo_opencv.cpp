@@ -202,27 +202,29 @@ void demo3()
 	lH.addOffset( OD_Vert, 100.);
 
 	g_img = cv::Scalar(255,255,255);
-	lV.drawCvMat( g_img, CvDrawParams().setColor( 250,  50, 50).setThickness(2) );
-	lH.drawCvMat( g_img, CvDrawParams().setColor( 250,  50, 50).setThickness(2) );
+	lV.drawCvMat( g_img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
+	lH.drawCvMat( g_img, CvDrawParams().setColor(  50, 50, 250).setThickness(2) );
 
 	CvDrawParams dp;
-	dp.setColor( 0,  0, 250).setThickness(3);
+	dp.setColor( 0, 250, 0 );
 	dp.setDefault();
 
 	li = lV;
 	li.addOffset( OD_Horiz, 50 );
-	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,250,0) );
+	li.drawCvMat( g_img ); // use default draw parameters
 	li = lV;
 	li.addOffset( OD_Horiz, -50 );
 	li.drawCvMat( g_img, CvDrawParams().setColor( 100,250,0) );
 
-/*	li = lH;
+	CvDrawParams::resetDefault();
+
+	li = lH;
 	li.addOffset( OD_Vert, 50 );
-	li.drawCvMat( g_img, CvDrawParams().setColor( 100,0,250) );
+	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 	li = lH;
 	li.addOffset( OD_Vert, -50 );
-	li.drawCvMat( g_img, CvDrawParams().setColor( 100,0,250) );
-*/
+	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,0,250) );
+
 	cv::imshow( g_wndname, g_img );
 	char key = cv::waitKey(0);
 
