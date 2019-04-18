@@ -732,7 +732,7 @@ namespace detail
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-		for ( int i=0; i<3; i++)
+//		for ( int i=0; i<3; i++)
 //			std::cout << "v[" << i << "]=" << res._v[i] << " ";
 //		std::cout  << '\n';
 		return res;
@@ -979,7 +979,7 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 	if( vec.size() > 1 )
 	{
 		std::vector<cv::Point2d> vec2( 1, vec[0] );
-		for( int i=1; i<vec.size(); i++ )
+		for( size_t i=1; i<vec.size(); i++ )
 		{
 			if(
 				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] )

@@ -1,14 +1,16 @@
 .PHONY: doc test install demo
 
+CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+
 test: homog2d_test demo_check
 	./homog2d_test
 
 
 demo_check: demo_check.cpp homog2d.hpp
-	$(CXX) -std=c++11 -o demo_check demo_check.cpp
+	$(CXX) $(CFLAGS) -o demo_check demo_check.cpp
 
 homog2d_test: homog2d_test.cpp homog2d.hpp
-	$(CXX) -std=c++11 -o homog2d_test homog2d_test.cpp
+	$(CXX) $(CFLAGS) -o homog2d_test homog2d_test.cpp
 
 doc: html/index.html
 	@echo "done !"
@@ -23,7 +25,7 @@ demo: demo_opencv demo_check
 	./demo_opencv
 
 demo_opencv: demo_opencv.cpp homog2d.hpp
-	$(CXX) -std=c++11 -o demo_opencv demo_opencv.cpp `pkg-config --libs opencv`
+	$(CXX) $(CFLAGS) -o demo_opencv demo_opencv.cpp `pkg-config --libs opencv`
 
 clean:
 	-rm -r html/*

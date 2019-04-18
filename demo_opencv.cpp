@@ -79,7 +79,7 @@ void draw1( int selected )
 }
 
 /// Mouse callback
-void mouse_CB( int event, int x, int y, int flags, void* param )
+void mouse_CB( int event, int x, int y, int /* flags */, void* /*param*/ )
 {
 	static int selected=-1;
 	draw1( selected );
@@ -112,7 +112,7 @@ void mouse_CB( int event, int x, int y, int flags, void* param )
 	cv::imshow( g_wndname, g_img );
 }
 
-int demo1()
+void demo1()
 {
 	std::cout << "Demo 1: click on points and move them\n";
 	cv::setMouseCallback( g_wndname, mouse_CB );
@@ -226,8 +226,7 @@ void demo3()
 	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 
 	cv::imshow( g_wndname, g_img );
-	char key = cv::waitKey(0);
-
+	cv::waitKey(0);
 }
 
 int main()
