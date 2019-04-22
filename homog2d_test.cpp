@@ -58,6 +58,7 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
 		Line2d  lB = ptB1 * ptB2;
+		CHECK( lB.getValue( GC_X, 1 ) == 1. );
 	}
 
 	{
@@ -164,7 +165,7 @@ TEST_CASE( "offset test", "[test3]" )
 		liV.addOffset( OD_Vert, 1 ); // adding vertical offset to vertical line does nothing
 		CHECK( liV == liV2 );
 
-		Line2d liH;
+		Line2d liH(1,0);
 		Line2d liH2 = liH;
 		std::cout << "liH2=" << liH2 << "\n";
 		liH.addOffset( OD_Horiz, 1 ); // adding horizontal offset to horizontal line does nothing
@@ -185,21 +186,6 @@ TEST_CASE( "exceptions", "[testE]" )
 	CHECK_THROWS( p1*p2); // same points can't define a line
 }
 
-TEST_CASE( "manual code", "[testM]" )
-{
-	Point2d pt1;       // 0,0
-	Point2d pt2(3,4);
-	Line2d li1; // vertical line at x=0
-	Line2d li2( pt1, pt2 ); // from two points:
-	Point2d pt3(li1,li2);
-	{
-		Homogr h1; // unit transformation
-		h1.setTranslation(3,4);
-		Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
-		Homogr h3a = h1*h2; // first, rotation, then translation
-		Homogr h3b = h2*h1; // first, rotation, then translation
-	}
-}
 
 TEST_CASE( "test matrix", "[testH]" )
 {
