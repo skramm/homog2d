@@ -481,6 +481,17 @@ struct IsLine
 struct IsPoint
 {
 };
+
+// forward declaration of class
+template<typename T> class Root;
+
+// predeclaration of function
+//template<typename T1,typename T2>
+//Root<T1> operator * ( const Root<T2>& lhs, const Root<T2>& rhs );
+//template<typename T>
+//Root<IsLine> operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs );
+
+
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
 /**
@@ -492,11 +503,9 @@ template<typename LP>
 class Root
 {
 	friend class Homogr;
-//	friend Root operator * ( const Homogr&, const Root& );
 
-	template<typename T>
+	friend Root<IsLine> operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs );
 	friend Root<IsPoint> crossProduct( const Root<IsLine>&, const Root<IsLine>& );
-	template<typename T>
 	friend Root<IsLine> crossProduct( const Root<IsPoint>&, const Root<IsPoint>& );
 
 	private:
@@ -528,8 +537,6 @@ class Root
 	{
 		return !(*this == other);
 	}
-	template<typename T>
-	Root<T> operator * ( const Root<LP>& );
 
 // friend functions and operators
 	template<class T>
@@ -545,9 +552,8 @@ class Root
 //	private:
 	double _v[3];
 
-// PRIVATE FUNCTIONS
+	private:                   // PRIVATE FUNCTIONS
 	void P_normalizeLine();
-
 };
 
 //------------------------------------------------------------------
@@ -740,17 +746,18 @@ namespace detail
 }
 
 //------------------------------------------------------------------
-/// Product of two points is a line
+/// Product of two points is a line (free function)
 Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 {
-	auto line = detail::crossProduct<IsLine>(lhs, rhs);
+//	auto line = detail::crossProduct<IsLine>(lhs, rhs);
+	Root<IsLine> line = detail::crossProduct<IsLine>(lhs, rhs);
 	line.P_normalizeLine();
 	return line;
 }
 
 //------------------------------------------------------------------
-/// Product of two lines is a point
+/// Product of two lines is a point (free function)
 Root<IsPoint>
 operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 {
