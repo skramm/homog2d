@@ -23,7 +23,6 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename=".travis.yml" />
-		<Unit filename="LICENSE" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
 		<Unit filename="demo_check.cpp" />

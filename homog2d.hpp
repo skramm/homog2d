@@ -55,7 +55,7 @@ class Homogr;
 namespace detail {
 	template<typename T1, typename T2>
 	Root<T1> product( const Homogr& h, const Root<T2>& in );
-	}
+}
 
 //------------------------------------------------------------------
 /// A 2D homography (3x3 matrix)
@@ -483,30 +483,33 @@ struct IsPoint
 };
 
 // forward declaration of class
-template<typename T> class Root;
+//template<typename T> class Root;
 
-// predeclaration of function
-//template<typename T1,typename T2>
-//Root<T1> operator * ( const Root<T2>& lhs, const Root<T2>& rhs );
-//template<typename T>
-//Root<IsLine> operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs );
+// forward declaration of two template instanciation
+namespace detail {
 
+template<typename T1,typename T2>
+Root<T1> crossProduct( const Root<T2>&, const Root<T2>& );
+
+}
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
 /**
 \todo template root type
 \todo put back the data as private (needs some tweaks with friend functions)
-
 */
+
 template<typename LP>
 class Root
 {
 	friend class Homogr;
 
-	friend Root<IsLine> operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs );
-	friend Root<IsPoint> crossProduct( const Root<IsLine>&, const Root<IsLine>& );
-	friend Root<IsLine> crossProduct( const Root<IsPoint>&, const Root<IsPoint>& );
+	friend Root<IsLine>  operator * (  const Root<IsPoint>&, const Root<IsPoint>& );
+	friend Root<IsPoint> operator * (  const Root<IsLine>&,  const Root<IsLine>& );
+
+template<typename T1,typename T2>
+friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 
 	private:
 	Root( double a, double b, double c )
@@ -549,7 +552,7 @@ class Root
 	cv::Point2f getCvPtf() const;
 #endif
 
-//	private:
+//	private: // TEMP
 	double _v[3];
 
 	private:                   // PRIVATE FUNCTIONS
@@ -750,7 +753,6 @@ namespace detail
 Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 {
-//	auto line = detail::crossProduct<IsLine>(lhs, rhs);
 	Root<IsLine> line = detail::crossProduct<IsLine>(lhs, rhs);
 	line.P_normalizeLine();
 	return line;
@@ -890,13 +892,18 @@ Root<LP>
 operator * ( const Homogr& h, const Root<LP>& in )
 {
 	Root<LP> out;
+#if 0
 	return detail::product<LP>( h, in );
-/*
-	out._v[2] = 0.;
+#else
+
 	for( int i=0; i<3; i++ )
+	{
+		out._v[i] = 0.;
 		for( int j=0; j<3; j++ )
 			out._v[i] += h._data[i][j] * in._v[j];
-	return out;*/
+	}
+	return out;
+#endif
 }
 //------------------------------------------------------------------
 /// Apply homography to a vector of points or lines. Free function, templated by point or line
