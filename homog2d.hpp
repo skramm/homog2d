@@ -47,25 +47,31 @@ See https://github.com/skramm/homog2d
 
 namespace homog2d {
 
+// forward declaration
 template<typename LP>
 class Root;
 
-class Homogr;
-
-namespace detail {
-	template<typename T1, typename T2>
-	Root<T1> product( const Homogr& h, const Root<T2>& in );
-}
-
 //------------------------------------------------------------------
-/// A 2D homography (3x3 matrix)
+/// A 2D homography, defining a planar transformation
+/**
+To define an affine or rigid transformation, you can use:
+- setRotation()
+- setTranslation()
+- setScale()
+
+To add an affine or rigid transformation to the current one, you can use:
+- addRotation()
+- addTranslation()
+- addScale()
+
+To return to unit transformation, use clear()
+
+Implemented as a 3x3 matrix
+ */
 class Homogr
 {
 	template<typename LP>
 	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
-
-	template<typename T1, typename T2>
-	friend Root<T1> detail::product( const Homogr& h, const Root<T2>& in );
 
 	template<typename LP>
 	friend class Root;
@@ -89,13 +95,15 @@ class Homogr
 - no checking is done on validity of matrix as an homography.
 Thus some assert can be triggered elsewhere
 */
-
 	template<typename T>
 	Homogr( const std::vector<std::vector<T>>& in )
 	{
-		assert( in.size() == 3 );
+		if( in.size() != 3 )
+			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
 		for( auto li: in )
-			assert( li.size() == 3 );
+			if( li.size() != 3 )
+				throw std::runtime_error( "Invalid column size for input: " + std::to_string(li.size()) );
+
 		p_fillWith( in );
 	}
 	template<typename T>
@@ -104,6 +112,7 @@ Thus some assert can be triggered elsewhere
 		p_fillWith( in );
 	}
 
+/// Initialize to unit transformation
 	void clear()
 	{
 		for( auto& li: _data )
@@ -114,18 +123,23 @@ Thus some assert can be triggered elsewhere
 		_data[2][2] = 1.;
 		_isNormalized = true;
 	}
-	/// Setter \warning No normalization is done, as this can be done
-	/// several times to store values, we therefore must not normalize in between
-	void setValue( size_t r, size_t c, double v )
+/// Setter \warning No normalization is done, as this can be done
+/// several times to store values, we therefore must not normalize in between
+	void setValue(
+		size_t r, ///< row
+		size_t c, ///< col
+		double v  ///< value
+	)
 	{
 		_data[r][c] = v;
 		_isNormalized = false;
 	}
+/// Getter
 	double getValue( size_t r, size_t c ) const
 	{
 		return _data[r][c];
 	}
-	/// Adds a translation \c tx,ty to the matrix
+/// Adds a translation \c tx,ty to the matrix
 	template<typename T>
 	Homogr& addTranslation( T tx, T ty )
 	{
@@ -135,7 +149,7 @@ Thus some assert can be triggered elsewhere
 //		normalize();
 		return *this;
 	}
-	/// Sets the matrix as a translation \c tx,ty
+/// Sets the matrix as a translation \c tx,ty
 	template<typename T>
 	Homogr& setTranslation( T tx, T ty )
 	{
@@ -145,7 +159,7 @@ Thus some assert can be triggered elsewhere
 		_isNormalized = true;
 		return *this;
 	}
-	/// Adds a rotation with an angle \c theta (radians) to the matrix
+/// Adds a rotation with an angle \c theta (radians) to the matrix
 	template<typename T>
 	Homogr& addRotation( T theta )
 	{
@@ -155,7 +169,7 @@ Thus some assert can be triggered elsewhere
 //		normalize();
 		return *this;
 	}
-	/// Sets the matrix as a rotation with an angle \c theta (radians)
+/// Sets the matrix as a rotation with an angle \c theta (radians)
 	template<typename T>
 	Homogr& setRotation( T theta )
 	{
@@ -166,13 +180,13 @@ Thus some assert can be triggered elsewhere
 		_isNormalized = true;
 		return *this;
 	}
-	/// Adds the same scale factor to the matrix
+/// Adds the same scale factor to the matrix
 	template<typename T>
 	Homogr& addScale( T k )
 	{
 		return this->addScale( k, k );
 	}
-	/// Adds a scale factor to the matrix
+/// Adds a scale factor to the matrix
 	template<typename T>
 	Homogr& addScale( T kx, T ky )
 	{
@@ -182,13 +196,13 @@ Thus some assert can be triggered elsewhere
 //		normalize();
 		return *this;
 	}
-	/// Sets the matrix as a scaling transformation (same on two axis)
+/// Sets the matrix as a scaling transformation (same on two axis)
 	template<typename T>
 	Homogr& setScale( T k )
 	{
 		return setScale( k, k );
 	}
-	/// Sets the matrix as a scaling transformation
+/// Sets the matrix as a scaling transformation
 	template<typename T>
 	Homogr& setScale( T kx, T ky )
 	{
@@ -207,7 +221,7 @@ Thus some assert can be triggered elsewhere
 	void normalize() const
 	{
 		auto eps = std::numeric_limits<double>::epsilon();
-//		std::cout << "normalize():\n" << *this << "\n";
+
 		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
 			p_divideBy( 2, 2 );
 		else
@@ -234,7 +248,6 @@ Thus some assert can be triggered elsewhere
 		*this = out;
 		return *this;
 	}
-
 /// Inverse matrix
 	Homogr& inverse()
 	{
@@ -424,7 +437,7 @@ struct CvDrawParams
 	Dp_values _dpValues;
 
 	private:
-	static Dp_values& P_getDefault()
+	static Dp_values& p_getDefault()
 	{
 		static Dp_values s_defValue;
 		return s_defValue;
@@ -433,15 +446,15 @@ struct CvDrawParams
 	public:
 	CvDrawParams()
 	{
-		_dpValues = P_getDefault();
+		_dpValues = p_getDefault();
 	}
 	void setDefault()
 	{
-		P_getDefault() = this->_dpValues;
+		p_getDefault() = this->_dpValues;
 	}
 	static void resetDefault()
 	{
-		P_getDefault() = Dp_values();
+		p_getDefault() = Dp_values();
 	}
 	CvDrawParams& setPointStyle( PointStyle ps )
 	{
@@ -497,7 +510,6 @@ Root<T1> crossProduct( const Root<T2>&, const Root<T2>& );
 /// Base class, will be instanciated as a Point or a Line
 /**
 \todo template root type
-\todo put back the data as private (needs some tweaks with friend functions)
 */
 
 template<typename LP>
@@ -507,6 +519,9 @@ class Root
 
 	friend Root<IsLine>  operator * (  const Root<IsPoint>&, const Root<IsPoint>& );
 	friend Root<IsPoint> operator * (  const Root<IsLine>&,  const Root<IsLine>& );
+
+	template<typename T>
+	friend Root<T> operator * ( const Homogr& h, const Root<T>& in );
 
 template<typename T1,typename T2>
 friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
@@ -552,11 +567,14 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	cv::Point2f getCvPtf() const;
 #endif
 
-//	private: // TEMP
+	private:
 	double _v[3];
 
-	private:                   // PRIVATE FUNCTIONS
-	void P_normalizeLine();
+//////////////////////////
+//   PRIVATE FUNCTIONS  //
+//////////////////////////
+
+	void p_normalizeLine();
 };
 
 //------------------------------------------------------------------
@@ -608,7 +626,7 @@ operator << ( std::ostream& f, const Root<IsPoint>& r )
 //------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0
 template<>
-void Root<IsLine>::P_normalizeLine()
+void Root<IsLine>::p_normalizeLine()
 {
 	auto sq = std::hypot( _v[0], _v[1] );
 	if( sq <= std::numeric_limits<double>::epsilon() )
@@ -663,24 +681,6 @@ Root<IsLine>::Root()
 }
 
 //------------------------------------------------------------------
-namespace detail {
-/// private product function, [3x3] x [3x1]
-template<typename T1, typename T2>
-Root<T1>
-product( const Homogr& h, const Root<T2>& in )
-{
-	Root<T1> out;
-	for( int i=0; i<3; i++ )
-	{
-		out._v[i] = 0.;
-		for( int j=0; j<3; j++ )
-			out._v[i] += h._data[i][j] * in._v[j];
-	}
-	return out;
-}
-} // namespace detail
-
-//------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other
 template<>
 Root<IsLine>
@@ -696,7 +696,7 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 	out._v[0] = -_v[1];
 	out._v[1] =  _v[0];
 	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
-	out.P_normalizeLine();
+	out.p_normalizeLine();
 	return out;
 }
 
@@ -754,7 +754,7 @@ Root<IsLine>
 operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 {
 	Root<IsLine> line = detail::crossProduct<IsLine>(lhs, rhs);
-	line.P_normalizeLine();
+	line.p_normalizeLine();
 	return line;
 }
 
@@ -823,7 +823,7 @@ template<typename T>
 Root<IsLine>::Root( const T& dx, const T& dy )
 {
 	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
-	P_normalizeLine();
+	p_normalizeLine();
 }
 
 /// constructor of a point from two lines (specialization)
@@ -840,7 +840,7 @@ template<>
 Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 {
 	*this = detail::crossProduct<IsLine>( v1, v2 );
-	P_normalizeLine();
+	p_normalizeLine();
 }
 
 //------------------------------------------------------------------
@@ -882,7 +882,7 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 		_v[2] = _v[2] - v*_v[1];
 	else
 		_v[2] = _v[2] - v*_v[0];
-	P_normalizeLine();
+	p_normalizeLine();
 }
 
 //------------------------------------------------------------------
@@ -892,18 +892,13 @@ Root<LP>
 operator * ( const Homogr& h, const Root<LP>& in )
 {
 	Root<LP> out;
-#if 0
-	return detail::product<LP>( h, in );
-#else
-
 	for( int i=0; i<3; i++ )
 	{
-		out._v[i] = 0.;
-		for( int j=0; j<3; j++ )
-			out._v[i] += h._data[i][j] * in._v[j];
+		out._v[i]  = h._data[i][0] * in._v[0];
+		out._v[i] += h._data[i][1] * in._v[1];
+		out._v[i] += h._data[i][2] * in._v[2];
 	}
 	return out;
-#endif
 }
 //------------------------------------------------------------------
 /// Apply homography to a vector of points or lines. Free function, templated by point or line

@@ -255,6 +255,7 @@ TEST_CASE( "test matrix", "[testH]" )
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
 }
+
 TEST_CASE( "matrix inversion", "[testH3]" )
 {
 	Homogr H;
@@ -286,9 +287,28 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 		H2.inverse().transpose();
 		CHECK( H == H2 );
 	}
+}
 
+double computeDistTransformedLined( Homogr H )
+{
+	Line2d line1( 5, 6 ); // line from (0,0) to (5,6)
+	Point2d pt1( 5, 6);  // point is on line
+
+	Point2d pt2 = H * pt1; // move the point with H
+
+//	Homogr H2 = H;
+	H.inverse().transpose();
+
+	Line2d line2 = H * line1; // move the line with H^{-T}
+
+	return line2.distToPoint( pt2 );
+//	std::cout << "d=" << d2.distToPoint( pt2 ) << "\n";
+}
+
+
+TEST_CASE( "line transformation", "[testH3]" )
+{
 	{
-		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
 		Line2d d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d pt1( 5, 6);  // point is on line
 
@@ -296,14 +316,25 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 		std::cout << std::scientific << d1.distToPoint( pt1 ) << "\n";
 
 		CHECK( d1.distToPoint( pt1 ) < 1E-10 );
-
-		Point2d pt2 = H * pt1; // move the point with H
-		Homogr H2 = H;
-		H2.inverse().transpose();
-		Line2d d2 = H2 * d1; // move the line with H^{-T}
-
-		std::cout << "d=" << d2.distToPoint( pt2 ) << "\n";
 	}
+	Homogr H;
+	{
+		H.setTranslation(4,5);
+		std::cout << "translation: d=" << computeDistTransformedLined( H ) << "\n";
+	}
+	{
+		H.setRotation( 22.*M_PI/180. );
+		std::cout << "rotation: d=" << computeDistTransformedLined( H ) << "\n";
+	}
+	{
+		H.setScale(0.4, 4.2);
+		std::cout << "Scale: d=" << computeDistTransformedLined( H ) << "\n";
+	}
+	{
+		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
+		std::cout << "d=" << computeDistTransformedLined( H ) << "\n";
+	}
+
 }
 
 TEST_CASE( "matrix chained operations", "[testH2]" )
