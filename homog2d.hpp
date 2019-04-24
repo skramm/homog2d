@@ -243,8 +243,7 @@ Thus some assert can be triggered elsewhere
 		Homogr out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				if( i != j )
-					out._data[i][j] = _data[j][i];
+				out._data[i][j] = _data[j][i];
 		*this = out;
 		return *this;
 	}

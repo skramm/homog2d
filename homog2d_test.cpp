@@ -274,7 +274,19 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 			{ 4,  0,  6 },
 			{ 5,  1, -1 }
 		};
-		Homogr H2 = H;
+
+		Homogr H2;
+
+		H2 = H;        // transposing twice = original matrix
+		H2.transpose();
+		H2.transpose();
+		CHECK( H == H2 );
+
+		H2 = H;        // transposing twice = original matrix
+		H2.transpose().transpose();
+		CHECK( H == H2 );
+
+		H2 = H;
 		H.inverse();
 		Homogr HR = std::vector<std::vector<double>>{
 			{   6, - 1,  6 },
