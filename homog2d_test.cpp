@@ -36,8 +36,13 @@ run with "make test"
 
 #include <list>
 
+#define IS_ALMOST_ZERO(a) \
+	( ( std::fabs(a) > std::numeric_limits<double>::epsilon() ) ? true : false )
+
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
+
+double g_epsilon = std::numeric_limits<double>::epsilon()*10.;
 
 using namespace homog2d;
 
@@ -286,6 +291,15 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 		H2.transpose().transpose();
 		CHECK( H == H2 );
 
+		H2 = H;        // inverting twice = original matrix
+		H2.inverse();
+		H2.inverse();
+		CHECK( H == H2 );
+
+		H2 = H;        // inverting twice = original matrix
+		H2.inverse().inverse();
+		CHECK( H == H2 );
+
 		H2 = H;
 		H.inverse();
 		Homogr HR = std::vector<std::vector<double>>{
@@ -301,6 +315,9 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 	}
 }
 
+/// Computation of the line passed through H^{-T} and computation of
+/// the distance between the resulting line and the transformed point.
+/// Should be 0, always.
 double computeDistTransformedLined( Homogr H )
 {
 	Line2d line1( 5, 6 ); // line from (0,0) to (5,6)
@@ -308,45 +325,54 @@ double computeDistTransformedLined( Homogr H )
 
 	Point2d pt2 = H * pt1; // move the point with H
 
-//	Homogr H2 = H;
 	H.inverse().transpose();
 
 	Line2d line2 = H * line1; // move the line with H^{-T}
 
-	return line2.distToPoint( pt2 );
-//	std::cout << "d=" << d2.distToPoint( pt2 ) << "\n";
+	return line2.distToPoint( pt2 ); // should be 0 !
 }
 
+// from https://stackoverflow.com/a/55868408/193789
+std::string FullPrecision( double d )
+{
+    auto s = std::ostringstream{};
+    s << std::setprecision( std::numeric_limits<double>::max_digits10 ) << d;
+    return s.str();
+}
 
 TEST_CASE( "line transformation", "[testH3]" )
 {
 	{
 		Line2d d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d pt1( 5, 6);  // point is on line
-
-		std::cout << "d1=" << d1 << " pt1=" << pt1 << "\n";
-		std::cout << std::scientific << d1.distToPoint( pt1 ) << "\n";
-
-		CHECK( d1.distToPoint( pt1 ) < 1E-10 );
+		CHECK( d1.distToPoint( pt1 ) <= g_epsilon  );
 	}
+
 	Homogr H;
 	{
 		H.setTranslation(4,5);
-		std::cout << "translation: d=" << computeDistTransformedLined( H ) << "\n";
+		auto d = computeDistTransformedLined( H );
+		INFO( FullPrecision(d) );
+		CHECK( d <= g_epsilon );
 	}
 	{
 		H.setRotation( 22.*M_PI/180. );
-		std::cout << "rotation: d=" << computeDistTransformedLined( H ) << "\n";
+		auto d = computeDistTransformedLined( H );
+		INFO( FullPrecision(d) );
+		CHECK( d <= g_epsilon );
 	}
 	{
 		H.setScale(0.4, 4.2);
-		std::cout << "Scale: d=" << computeDistTransformedLined( H ) << "\n";
+		auto d = computeDistTransformedLined( H );
+		INFO( FullPrecision(d) );
+		CHECK( d <= g_epsilon );
 	}
 	{
 		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
-		std::cout << "d=" << computeDistTransformedLined( H ) << "\n";
+		auto d = computeDistTransformedLined( H );
+		INFO( FullPrecision(d) );
+		CHECK( d <= g_epsilon );
 	}
-
 }
 
 TEST_CASE( "matrix chained operations", "[testH2]" )

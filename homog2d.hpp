@@ -577,7 +577,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 };
 
 //------------------------------------------------------------------
-/// specialization for points (undefined for lines
+/// specialization for points (undefined for lines)
 template<>
 double
 Root<IsPoint>::getX() const
@@ -585,7 +585,7 @@ Root<IsPoint>::getX() const
 	return _v[0]/_v[2];
 }
 
-/// specialization for points (undefined for lines
+/// specialization for points (undefined for lines)
 template<>
 double
 Root<IsPoint>::getY() const
@@ -779,25 +779,7 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 ///////////////////////////////////////////
 // CONSTRUCTORS
 ///////////////////////////////////////////
-/*
-/// Default constructor, generic function, used for points
-template<typename LP>
-Root<LP>::Root()
-{
-	_v[0] = 0.;
-	_v[1] = 0.;
-	_v[2] = 1.;
-}
 
-/// Default constructor, specialization for lines, build vertical line at x=0
-template<>
-Root<IsLine>::Root()
-{
-	_v[0] = 1.;
-	_v[1] = 0.;
-	_v[2] = 0.;
-}
-*/
 /// generic 2 arg constructor implementation
 template<typename LP>
 template<typename T>
