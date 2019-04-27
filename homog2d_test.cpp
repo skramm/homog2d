@@ -183,12 +183,12 @@ TEST_CASE( "exceptions", "[testE]" )
 {
 	Line2d v1,v2; // 2 identical vertical lines
 
-	CHECK_THROWS( v1*v2);
+	CHECK_THROWS( v1*v2 );
 	v2.addOffset( OD_Horiz, 1 );
-	CHECK_THROWS( v1*v2); // still no intersection (they never cross)
+	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
 
 	Point2d p1,p2;
-	CHECK_THROWS( p1*p2); // same points can't define a line
+	CHECK_THROWS( p1*p2 ); // same points can't define a line
 }
 
 
@@ -381,4 +381,26 @@ TEST_CASE( "matrix chained operations", "[testH2]" )
 	H1.addTranslation(4,5).addRotation( 1 ).addScale( 5,6);
 	H2.addRotation( 1 ).addTranslation(4,5).addScale( 5,6);
 	CHECK( H1 != H2 );
+}
+
+TEST_CASE( "rectangle intersection", "[test_RI]" )
+{
+	Line2d li(1,1); // diagonal line going through (0,0)
+
+	Point2d pt1, pt2; // 0,0
+	CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
+
+	pt2.set(1,1);
+	RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+	CHECK( ri() == true );
+	CHECK( ri.ptA == pt1 );
+	CHECK( ri.ptB == pt2 );
+
+	pt1.set( 5,0 );
+	pt2.set( 6,1 );
+	ri = li.intersectsRectangle( pt1, pt2 );
+	CHECK( ri() == false );
+
+	li = Point2d() * Point2d(0,1); // vertical line through (0,0)
+
 }

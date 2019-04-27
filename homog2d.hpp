@@ -548,6 +548,24 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	void   set( double x, double y );
 	double distToPoint( const Root<IsPoint>& pt ) const;
 
+/// Sub-type, holds result of rectangle intersection, see intersectsRectangle()
+	template<typename T>
+	struct RectIntersect_
+	{
+		public:
+		bool operator()() const
+		{
+			return _doesIntersect;
+		}
+		Root<T> ptA;
+		Root<T> ptB;
+
+//		private:
+		bool _doesIntersect = false;
+	};
+
+	RectIntersect_<IsPoint> intersectsRectangle( const Root<IsPoint>& pt1, const Root<IsPoint>& pt2 ) const;
+
 // operators
 	bool operator == ( const Root<LP>& other ) const;
 	bool operator != ( const Root<LP>& other ) const
@@ -556,7 +574,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	}
 
 // friend functions and operators
-	template<class T>
+	template<typename T>
 	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
 
 // optional stuff
@@ -866,6 +884,74 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 	p_normalizeLine();
 }
 
+
+//------------------------------------------------------------------
+/// Checks for intersection with flat rectangle defined by the two points p00 and p11
+/**
+Pre-conditions: points are different (throws if not)
+*/
+template<>
+Root<IsLine>::RectIntersect_<IsPoint>
+Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p00, const Root<IsPoint>& p11 ) const
+{
+	if( p00 == p11 )
+		throw std::runtime_error( "error: points are identical, do not define a rectangle" );
+
+	assert( p00.getX() < p11.getX() );
+	assert( p00.getY() < p11.getY() );
+
+	Root<IsPoint> p01( p11.getX(), p00.getY() );
+	Root<IsPoint> p10( p00.getX(), p11.getY() );
+
+	Root<IsLine> l[4];
+	l[0] = Root<IsLine>( p00, p01 );
+	l[1] = Root<IsLine>(      p01, p11 );
+	l[2] = Root<IsLine>(           p11, p10 );
+	l[3] = Root<IsLine>(                p10, p00 );
+
+	std::vector<Root<IsPoint>> vec;
+	for( int i=0; i<4; i++ )
+	{
+		Root<IsPoint> pt;
+		bool okFlag(true);
+		try{
+			pt = *this * l[i];
+		}
+		catch( const std::exception& )
+		{
+			okFlag = false; // lines are parallel
+		}
+		if( okFlag )
+		{
+			if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+				if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+					vec.push_back( pt );
+		}
+	}
+
+	Root<IsLine>::RectIntersect_<IsPoint> out;
+	if( vec.size() > 1 )
+	{
+		std::vector<Root<IsPoint>> vec2( 1, vec[0] );
+		for( size_t i=1; i<vec.size(); i++ )
+		{
+			if(
+				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] )
+				== std::end( vec2 )
+			)
+				vec2.push_back( vec[i] );
+		}
+		assert( vec2.size() > 1 );
+		out._doesIntersect = true;
+		out.ptA = vec2[0];
+		out.ptB = vec2[1];
+	}
+
+	return out;
+}
+
+typedef Root<IsLine>::RectIntersect_<IsPoint> RectIntersect;
+
 //------------------------------------------------------------------
 /// Apply homography to a point or line. Free function, templated by point or line
 template<typename LP>
@@ -919,6 +1005,8 @@ Steps:
  -# build the 4 corresponding lines (borders of the image)
  -# find the intersection points between the line and these 4 lines. Should find 2
  -# draw a line between these 2 points
+
+ \todo replace code here by a call to intersectsRectangle()
 */
 template<>
 bool
