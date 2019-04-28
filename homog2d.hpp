@@ -953,19 +953,13 @@ Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p0, const Root<IsPoint>&
 				vec2.push_back( vec[i] );                                 // then, add the point
 		}
 
-/*		if( vec2.size() < 2 )
-		{
-			std::cout << "vec.size()=" << vec.size() << " vec2.size()=" << vec2.size() << "\n";
-			std::cout <<std::scientific << "p0=" <<vec[0] << " p1=" << vec[1] << "\n";
-		}*/
-		if( vec2.size() > 1 )                           // not sure this makes any sense...
+		if( vec2.size() > 1 )
 		{
 			out._doesIntersect = true;
 			out.ptA = vec2[0];
 			out.ptB = vec2[1];
 		}
 	}
-
 	return out;
 }
 
@@ -1024,8 +1018,6 @@ Steps:
  -# build the 4 corresponding lines (borders of the image)
  -# find the intersection points between the line and these 4 lines. Should find 2
  -# draw a line between these 2 points
-
- \todo replace code here by a call to intersectsRectangle()
 */
 template<>
 bool
@@ -1033,7 +1025,6 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
 	assert( mat.rows > 2 );
 	assert( mat.cols > 2 );
-#if 1
 
 	Root<IsPoint> pt1; // 0,0
 	Root<IsPoint> pt2( mat.cols-1, mat.rows-1 );
@@ -1046,65 +1037,6 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 		return true;
 	}
 	return false;
-
-#else
-	Root<IsPoint> p00(0,        0);
-	Root<IsPoint> p01(0,        mat.rows);
-	Root<IsPoint> p10(mat.cols, 0);
-	Root<IsPoint> p11(mat.cols, mat.rows  );
-	Root<IsLine> l[4];
-	l[0] = Root<IsLine>( p00, p01 );
-	l[1] = Root<IsLine>(      p01, p11 );
-	l[2] = Root<IsLine>(           p11, p10 );
-	l[3] = Root<IsLine>(                p10, p00 );
-
-	std::vector<cv::Point2d> vec;
-	for( int i=0; i<4; i++ )
-	{
-		Root<IsPoint> pt;
-		bool okFlag(true);
-		try{
-			pt = *this * l[i];
-		}
-		catch( const std::exception& err )
-		{
-			okFlag = false; // lines are parallel
-//			std::cout << "i=" << i << ": parallel lines\n";
-		}
-		if( okFlag )
-		{
-//			std::cout << "pt intersection=" << pt << "\n";
-			if( pt.getX() >= 0. && pt.getX() <= static_cast<double>(mat.cols) )
-				if( pt.getY() >= 0. && pt.getY() <= static_cast<double>(mat.rows) )
-					vec.push_back( pt.getCvPtd() );
-		}
-	}
-
-#if 0
-	{
-		std::cout << "found " << vec.size() << " pts:\n";
-		for( int i=0; i<vec.size(); i++ )
-			std::cout << "i=" << i << " pt=" << vec[i] << '\n';
-	}
-#endif
-
-	if( vec.size() > 1 )
-	{
-		std::vector<cv::Point2d> vec2( 1, vec[0] );
-		for( size_t i=1; i<vec.size(); i++ )
-		{
-			if(
-				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] )
-				== std::end( vec2 )
-			)
-				vec2.push_back( vec[i] );
-		}
-
-		cv::line( mat, vec[0], vec[1], dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
-		return true;
-	}
-	return false;
-#endif
 }
 
 //------------------------------------------------------------------
