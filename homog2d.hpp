@@ -552,6 +552,9 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	template<typename T>
 	struct RectIntersect_
 	{
+		template<typename U>
+		friend class Root;
+
 		public:
 		bool operator()() const
 		{
@@ -566,7 +569,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 		Root<T> ptA;
 		Root<T> ptB;
 
-//		private:
+		private:
 		bool _doesIntersect = false;
 	};
 

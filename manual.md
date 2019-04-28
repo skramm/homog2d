@@ -4,6 +4,7 @@ Home page: https://github.com/skramm/homog2d
 
 - [Lines and points](#basic)
 - [2D transformation (aka homographies)](#matrix)
+- [Intersection of lines with rectangles](#rect)
 - [Bindings](#bind)
 - [Build options](#options)
 - [Technical details](#tech)
@@ -111,6 +112,28 @@ h.inverse();
 h.transpose();
 ```
 
+## Intersection of lines with flat rectangles
+<a name="rect"></a>
+
+You can compute the intersection of a line with a flat rectangle defined by two points with the
+`intersectsRectangle()` member function.
+It will return a `RectIntersect` object that holds the intersection points.
+
+Usage:
+
+```
+Line2d li; // some line
+Point2d pt1(1,1);
+Point2d pt2(8,8);
+RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+if( ri() )  // means the line does intersect the rectangle
+{           // defined by (1,1)-(8,1)-(8,8)-(1,8)
+	Point2d intersect_pt1 = ri.ptA;
+	Point2d intersect_pt2 = ri.ptB;
+}
+```
+
+
 ## Bindings with other libraries
 <a name="bind"></a>
 
@@ -190,4 +213,3 @@ behavior differs due to some policy-based design.
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1
-
