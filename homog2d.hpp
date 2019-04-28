@@ -557,6 +557,12 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 		{
 			return _doesIntersect;
 		}
+		RectIntersect_()
+		{}
+		RectIntersect_( const Root<T>& p1, const Root<T>& p2 ) : ptA(p1), ptB(p2)
+		{
+			_doesIntersect = true;
+		}
 		Root<T> ptA;
 		Root<T> ptB;
 
@@ -910,22 +916,28 @@ Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p00, const Root<IsPoint>
 	l[3] = Root<IsLine>(                p10, p00 );
 
 	std::vector<Root<IsPoint>> vec;
-	for( int i=0; i<4; i++ )
+	for( int i=0; i<4; i++ )         // compare with each of the 4 lines
 	{
-		Root<IsPoint> pt;
-		bool okFlag(true);
-		try{
-			pt = *this * l[i];
-		}
-		catch( const std::exception& )
+		if( *this == l[i] )          // if same line, then we are done: return the two points
+			return Root<IsLine>::RectIntersect_<IsPoint>( p00, p11 );
+		else
 		{
-			okFlag = false; // lines are parallel
-		}
-		if( okFlag )
-		{
-			if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
-				if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
-					vec.push_back( pt );
+			Root<IsPoint> pt;
+			bool okFlag(true);
+			try{
+				pt = *this * l[i];
+			}
+			catch( const std::exception& )
+			{
+				okFlag = false; // lines are parallel
+				std::cout << "i=" << i << " parallel\n";
+			}
+			if( okFlag )
+			{
+				if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+					if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+						vec.push_back( pt );
+			}
 		}
 	}
 

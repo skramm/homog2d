@@ -385,22 +385,36 @@ TEST_CASE( "matrix chained operations", "[testH2]" )
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
-	Line2d li(1,1); // diagonal line going through (0,0)
+	{
+		Line2d li(1,1); // diagonal line going through (0,0)
 
-	Point2d pt1, pt2; // 0,0
-	CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
+		Point2d pt1, pt2; // 0,0
+		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
 
-	pt2.set(1,1);
-	RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
-	CHECK( ri() == true );
-	CHECK( ri.ptA == pt1 );
-	CHECK( ri.ptB == pt2 );
+		pt2.set(1,1);
+		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.ptA == pt1 );
+		CHECK( ri.ptB == pt2 );
 
-	pt1.set( 5,0 );
-	pt2.set( 6,1 );
-	ri = li.intersectsRectangle( pt1, pt2 );
-	CHECK( ri() == false );
+		pt1.set( 5,0 );
+		pt2.set( 6,1 );
+		ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == false );
+	}
+	{
+		Point2d pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
-	li = Point2d() * Point2d(0,1); // vertical line through (0,0)
+		Line2d li = Point2d() * Point2d(0,1); // vertical line through (0,0)
+		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.ptA == pt1 );
+		CHECK( ri.ptB == pt2 );
 
+		li = Point2d() * Point2d(1,0); // horizontal line through (0,0)
+		ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.ptA == pt1 );
+		CHECK( ri.ptB == pt2 );
+	}
 }
