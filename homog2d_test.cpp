@@ -391,6 +391,9 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		Point2d pt1, pt2; // 0,0
 		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
 
+		pt2.set(0,4);
+		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // still fails: x coordinate is identical => unable
+
 		pt2.set(1,1);
 		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
@@ -411,7 +414,19 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		CHECK( ri.ptA == pt1 );
 		CHECK( ri.ptB == pt2 );
 
-		li = Point2d() * Point2d(1,0); // horizontal line through (0,0)
+		li = Point2d(1,0) * Point2d(1,1);     // vertical line through (1,0)
+		ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.ptA == pt1 );
+		CHECK( ri.ptB == pt2 );
+
+		li = Point2d() * Point2d(1,0);        // horizontal line through (0,0)
+		ri = li.intersectsRectangle( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.ptA == pt1 );
+		CHECK( ri.ptB == pt2 );
+
+		li = Point2d(0,1) * Point2d(1,1);     // horizontal line through (0,1)
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
 		CHECK( ri.ptA == pt1 );

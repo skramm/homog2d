@@ -898,13 +898,13 @@ Pre-conditions: points are different (throws if not)
 */
 template<>
 Root<IsLine>::RectIntersect_<IsPoint>
-Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p00, const Root<IsPoint>& p11 ) const
+Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p0, const Root<IsPoint>& p1 ) const
 {
-	if( p00 == p11 )
-		throw std::runtime_error( "error: points are identical, do not define a rectangle" );
+	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
+		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 
-	assert( p00.getX() < p11.getX() );
-	assert( p00.getY() < p11.getY() );
+	Root<IsPoint> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<IsPoint> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 
 	Root<IsPoint> p01( p11.getX(), p00.getY() );
 	Root<IsPoint> p10( p00.getX(), p11.getY() );
@@ -930,7 +930,6 @@ Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p00, const Root<IsPoint>
 			catch( const std::exception& )
 			{
 				okFlag = false; // lines are parallel
-				std::cout << "i=" << i << " parallel\n";
 			}
 			if( okFlag )
 			{
@@ -942,21 +941,29 @@ Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p00, const Root<IsPoint>
 	}
 
 	Root<IsLine>::RectIntersect_<IsPoint> out;
-	if( vec.size() > 1 )
+	if( vec.size() > 1 )                                // if more than one point was found, then
 	{
-		std::vector<Root<IsPoint>> vec2( 1, vec[0] );
-		for( size_t i=1; i<vec.size(); i++ )
+		std::vector<Root<IsPoint>> vec2( 1, vec[0] );   // build a second vector, holding the first found point as first element
+		for( size_t i=1; i<vec.size(); i++ )            // and add the other points, only once
 		{
 			if(
-				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] )
+				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] ) // if not already stored,
 				== std::end( vec2 )
 			)
-				vec2.push_back( vec[i] );
+				vec2.push_back( vec[i] );                                 // then, add the point
 		}
-		assert( vec2.size() > 1 );
-		out._doesIntersect = true;
-		out.ptA = vec2[0];
-		out.ptB = vec2[1];
+
+/*		if( vec2.size() < 2 )
+		{
+			std::cout << "vec.size()=" << vec.size() << " vec2.size()=" << vec2.size() << "\n";
+			std::cout <<std::scientific << "p0=" <<vec[0] << " p1=" << vec[1] << "\n";
+		}*/
+		if( vec2.size() > 1 )                           // not sure this makes any sense...
+		{
+			out._doesIntersect = true;
+			out.ptA = vec2[0];
+			out.ptB = vec2[1];
+		}
 	}
 
 	return out;
@@ -1026,6 +1033,21 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 {
 	assert( mat.rows > 2 );
 	assert( mat.cols > 2 );
+#if 1
+
+	Root<IsPoint> pt1; // 0,0
+	Root<IsPoint> pt2( mat.cols-1, mat.rows-1 );
+    RectIntersect ri = this->intersectsRectangle( pt1,  pt2 );
+    if( ri() )
+    {
+		cv::Point2d ptcv1 = ri.ptA.getCvPtd();
+		cv::Point2d ptcv2 = ri.ptB.getCvPtd();
+		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
+		return true;
+	}
+	return false;
+
+#else
 	Root<IsPoint> p00(0,        0);
 	Root<IsPoint> p01(0,        mat.rows);
 	Root<IsPoint> p10(mat.cols, 0);
@@ -1082,6 +1104,7 @@ Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 		return true;
 	}
 	return false;
+#endif
 }
 
 //------------------------------------------------------------------
