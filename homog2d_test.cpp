@@ -64,6 +64,7 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d ptB2(2,0);
 		Line2d  lB = ptB1 * ptB2;
 		CHECK( lB.getValue( GC_X, 1 ) == 1. );
+		CHECK( lB.getPoint(GC_X, 1) == Point2d(1,1) );
 	}
 
 	{
@@ -119,6 +120,13 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d lV2;
 		lV2.addOffset( OD_Horiz, 100 );  // add horizontal offset
 		CHECK( li3 == lV2 );
+	}
+	{
+		Line2d li(4,2);
+		CHECK( li.getValue( GC_X, 2 ) == 1 );
+		CHECK( li.getValue( GC_Y, 1 ) == 2 );
+		CHECK( li.getPoint( GC_X, 2 ) == Point2d(2,1) );
+		CHECK( li.getPoint( GC_Y, 1 ) == Point2d(2,1) );
 	}
 }
 

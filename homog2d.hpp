@@ -539,6 +539,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	Root();
 
 	double getValue( En_GivenCoord gc, double other ) const;
+	Root<IsPoint> getPoint( En_GivenCoord gc, double other ) const;
 	Root<LP> getOrthogonalLine( En_GivenCoord gc, double other ) const;
 
 	template<typename T>
@@ -683,6 +684,16 @@ Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
 		return ( -_v[1] * other - _v[2] ) / _v[0];
 }
 
+//------------------------------------------------------------------
+template<>
+Root<IsPoint>
+Root<IsLine>::getPoint( En_GivenCoord gc, double other ) const
+{
+	auto coord = getValue( gc, other );
+	if( gc == GC_X )
+		return Root<IsPoint>( other, coord );
+	return Root<IsPoint>( coord, other );
+}
 //------------------------------------------------------------------
 ///////////////////////////////////////////
 // DEFAULT CONSTRUCTORS

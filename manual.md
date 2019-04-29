@@ -51,6 +51,38 @@ li1.addOffset( OD_Horiz, 5 ); // horizontal offset
 li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
 
+### Get point lying on line
+
+To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value.
+For example, if you build the line going through (0,0)-(4,2) with:
+
+```
+Line2d li(4,2);
+```
+You can compute the coordinate of y for x=2 with:
+```
+auto y = li.getValue( GC_X, 2 );
+```
+of get the coordinate of x for y=1 with:
+```
+auto x = li.getValue( GC_Y, 1 );
+```
+
+You can also get directly the point with:
+```
+Point2d pt2 = li.getPoint( GC_X, 2 );
+```
+
+The values `GC_Y`,`GC_Y` are just a two-values `enum`.
+
+### Orthogonal line
+
+You can compute a line orthogonal to another one at a given coordinate, using the above enum.
+For example, this:
+```
+Line2d li2 = li.getOrthogonalLine( li , GC_X, 2 );
+```
+will compute the orthogonal line at `x=2`.
 
 ## Homographies
 <a name="matrix"></a>
