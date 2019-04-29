@@ -217,6 +217,11 @@ Thus some assert can be triggered elsewhere
 	void
 	applyTo( T& ) const;
 
+#ifdef HOMOG2D_USE_OPENCV
+	template<typename T>
+	void getMatrix( cv::Mat_<T>&, int type=CV_64F ) const;
+#endif
+
 /// Normalisation
 	void normalize() const
 	{
@@ -995,7 +1000,7 @@ operator * ( const Homogr& h, const Root<LP>& in )
 	return out;
 }
 //------------------------------------------------------------------
-/// Apply homography to a vector of points or lines. Free function, templated by point or line
+/// Apply homography to a vector/array/list of points or lines. Free function, templated by point or line
 template<typename T>
 void
 Homogr::applyTo( T& vin ) const
@@ -1005,6 +1010,7 @@ Homogr::applyTo( T& vin ) const
 }
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
+/// Return floating-point coordinates Opencv 2D point (with rounding)
 template<>
 cv::Point2d
 Root<IsPoint>::getCvPtd() const
@@ -1015,11 +1021,30 @@ Root<IsPoint>::getCvPtd() const
 	);
 }
 
+/// Return integer coordinates Opencv 2D point
 template<>
 cv::Point2f
 Root<IsPoint>::getCvPtf() const
 {
 	return cv::Point2f( getX(),getY() );
+}
+
+//------------------------------------------------------------------
+/// Get Opencv cv::Mat from homography (so you can use it to process an image within Opencv)
+/**
+The result is fetched using reference to avoid issues with Opencv copy operator
+
+User can pass a type as second argument: CV_32F for \c float, CV_64F for \c double (default)
+*/
+template<typename T>
+void
+Homogr::getMatrix<double>( cv::Mat_<T>& mat, int type ) const
+{
+	assert( type == CV_64F || type == CV_32F );
+	mat.create( 3, 3, type ); // default:CV_64F
+	size_t i = 0;
+	for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
+		*it = _data[i/3][i%3];
 }
 
 //------------------------------------------------------------------

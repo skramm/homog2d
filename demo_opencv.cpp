@@ -231,6 +231,7 @@ void demo3()
 
 int main()
 {
+	std::cout << "Installed OpenCV version : " << CV_VERSION << '\n';
 	cv::namedWindow( g_wndname );
 	demo1();
 
