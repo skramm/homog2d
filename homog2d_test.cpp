@@ -59,6 +59,8 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d lA1 = ptA1 * ptA2;
 		Line2d lA2 = ptA2 * ptA1;
 		CHECK( lA1 == lA2 );
+		CHECK( lA1.getAngle(lA2) == 0. );
+		CHECK( lA2.getAngle(lA1) == 0. );
 
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
@@ -110,10 +112,16 @@ TEST_CASE( "test1", "[test1]" )
 
 // get orthogonal line at y=100
 		Line2d li2 = lV.getOrthogonalLine( GC_Y, 100 );
+		CHECK( li2.getAngle( lV ) == M_PI/2. );
+
+//		CHECK( getAngle( li2,lV ) == M_PI/2. ); \TODO
 
 		Line2d lH2(1,0);                // build horizontal line
+		Line2d lH3 = lH2;
+
 		lH2.addOffset( OD_Vert, 100 );  // add vertical offset
 		CHECK( li2 == lH2 );
+		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d lH(1,0);                // build horizontal line
 		Line2d li3 = lH.getOrthogonalLine( GC_X, 100 );
@@ -389,6 +397,16 @@ TEST_CASE( "matrix chained operations", "[testH2]" )
 	H1.addTranslation(4,5).addRotation( 1 ).addScale( 5,6);
 	H2.addRotation( 1 ).addTranslation(4,5).addScale( 5,6);
 	CHECK( H1 != H2 );
+}
+
+TEST_CASE( "getAngle", "[test_angle]" )
+{
+	Line2d lid(1,1); // diagonal line going through (0,0)
+	Line2d lih(1,0); // horizontal line
+	Line2d liv;     // vertical line
+	CHECK( lih.getAngle(lid) == M_PI/4. );
+	CHECK( liv.getAngle(lid) == M_PI/4. );
+	CHECK( liv.getAngle(lih) == M_PI/2. );
 }
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )

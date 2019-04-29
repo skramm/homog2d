@@ -548,6 +548,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	double getY() const;
 	void   set( double x, double y );
 	double distToPoint( const Root<IsPoint>& pt ) const;
+	double getAngle( const Root<IsLine>& ) const;
 
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle()
 	template<typename T>
@@ -904,7 +905,19 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 	p_normalizeLine();
 }
 
-
+//------------------------------------------------------------------
+/// Returns the angle (in Rad) between the line and another one.
+/**
+Will return a value in the range [0,M_PI/2]
+*/
+template<>
+double
+Root<IsLine>::getAngle( const Root<IsLine>& li ) const
+{
+	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
+	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
+	return std::acos( std::abs(res) );
+}
 //------------------------------------------------------------------
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11
 /**
