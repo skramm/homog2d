@@ -581,6 +581,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	};
 
 	RectIntersect_<IsPoint> intersectsRectangle( const Root<IsPoint>& pt1, const Root<IsPoint>& pt2 ) const;
+	bool isInsideRectangle( const Root<IsPoint>& p0, const Root<IsPoint>& p1 ) const;
 
 // operators
 	bool operator == ( const Root<LP>& other ) const;
@@ -932,6 +933,46 @@ getAngle( const Root<IsLine>& li1, const Root<IsLine>& li2 )
 	return li1.getAngle( li2 );
 }
 //------------------------------------------------------------------
+namespace detail {
+/// Private free function, get top-left and bottom-right points from two arbitrary points
+inline
+std::pair<Root<IsPoint>,Root<IsPoint>>
+getCorrectPoints( const Root<IsPoint>& p0, const Root<IsPoint>& p1 )
+{
+	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
+		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
+
+	Root<IsPoint> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<IsPoint> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+	return std::make_pair( p00, p11 );
+}
+
+//------------------------------------------------------------------
+/// Private free function, returns true if point \c pt is inside the rectangle defined by (p00,p11)
+inline
+bool
+ptIsInside( const Root<IsPoint>& pt, const Root<IsPoint>& p00, const Root<IsPoint>& p11 )
+{
+	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+			return true;
+	return false;
+}
+
+} // namespace detail end
+
+//------------------------------------------------------------------
+/// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
+template<>
+bool
+Root<IsPoint>::isInsideRectangle( const Root<IsPoint>& p0, const Root<IsPoint>& p1 ) const
+{
+	auto pair_pts = detail::getCorrectPoints( p0, p1 );
+	const auto& p00 = pair_pts.first;
+	const auto& p11 = pair_pts.second;
+	return detail::ptIsInside( *this, p00, p11 );
+}
+//------------------------------------------------------------------
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11
 /**
 Pre-conditions: points are different (throws if not)
@@ -940,11 +981,17 @@ template<>
 Root<IsLine>::RectIntersect_<IsPoint>
 Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p0, const Root<IsPoint>& p1 ) const
 {
+#if 1
+	auto pair_pts = detail::getCorrectPoints( p0, p1 );
+	const auto& p00 = pair_pts.first;
+	const auto& p11 = pair_pts.second;
+#else
 	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 
 	Root<IsPoint> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
 	Root<IsPoint> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+#endif
 
 	Root<IsPoint> p01( p11.getX(), p00.getY() );
 	Root<IsPoint> p10( p00.getX(), p11.getY() );
@@ -973,8 +1020,12 @@ Root<IsLine>::intersectsRectangle( const Root<IsPoint>& p0, const Root<IsPoint>&
 			}
 			if( okFlag )
 			{
+#if 1
+				if( detail::ptIsInside( pt, p00, p11 ) )
+#else
 				if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
 					if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+#endif
 						vec.push_back( pt );
 			}
 		}

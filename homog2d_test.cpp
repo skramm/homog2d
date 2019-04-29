@@ -414,6 +414,22 @@ TEST_CASE( "getAngle", "[test_angle]" )
 	CHECK( getAngle(lih,liv) == M_PI/2. );
 }
 
+TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
+{
+	Point2d pt1(2,10);
+	Point2d pt2(10,2);
+
+	Point2d pt; // (0,0)
+	CHECK( pt.isInsideRectangle( pt1, pt2 ) == false );
+	pt.set(5,5);
+	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+
+	pt.set(10,5);                                         // on the edge
+	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+	pt.set(5,10);
+	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+}
+
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
 	{

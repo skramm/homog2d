@@ -4,7 +4,7 @@ Home page: https://github.com/skramm/homog2d
 
 - [Lines and points](#basic)
 - [2D transformation (aka homographies)](#matrix)
-- [Intersection of lines with rectangles](#rect)
+- [Handling flat rectangles](#rect)
 - [Bindings](#bind)
 - [Build options](#options)
 - [Technical details](#tech)
@@ -34,7 +34,7 @@ Point2d pt3( li1, li2 );
 Line2d  li3( pt1, pt2 );
 ```
 
-- Get line from two points, and point from two lines:
+- Get a line from two points, and a point from two lines:
 ```
 pt1 = li1 * li2;
 li1 = pt1 * pt2;
@@ -150,7 +150,9 @@ h.inverse();
 h.transpose();
 ```
 
-## Intersection of lines with flat rectangles
+## Handling flat rectangles
+
+### Intersection of lines with flat rectangles
 <a name="rect"></a>
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
@@ -171,6 +173,12 @@ if( ri() )  // means the line does intersect the rectangle
 }
 ```
 
+### Points and rectangles
+
+You can quickly check if a points lies within a rectangle defined by two points `p1`,`p2` with:
+```
+bool b = pt.isInsideRectangle( p1, p2 );
+```
 
 ## Bindings with other libraries
 <a name="bind"></a>
