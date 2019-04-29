@@ -919,6 +919,14 @@ Root<IsLine>::getAngle( const Root<IsLine>& li ) const
 	return std::acos( std::abs(res) );
 }
 //------------------------------------------------------------------
+/// Free function, returns the angle (in Rad) between two lines.
+inline
+double
+getAngle( const Root<IsLine>& li1, const Root<IsLine>& li2 )
+{
+	return li1.getAngle( li2 );
+}
+//------------------------------------------------------------------
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11
 /**
 Pre-conditions: points are different (throws if not)

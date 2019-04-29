@@ -61,6 +61,7 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lA1 == lA2 );
 		CHECK( lA1.getAngle(lA2) == 0. );
 		CHECK( lA2.getAngle(lA1) == 0. );
+		CHECK( getAngle(lA1,lA2) == 0. );
 
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
@@ -407,6 +408,10 @@ TEST_CASE( "getAngle", "[test_angle]" )
 	CHECK( lih.getAngle(lid) == M_PI/4. );
 	CHECK( liv.getAngle(lid) == M_PI/4. );
 	CHECK( liv.getAngle(lih) == M_PI/2. );
+
+	CHECK( getAngle(lih,lid) == M_PI/4. );
+	CHECK( getAngle(liv,lid) == M_PI/4. );
+	CHECK( getAngle(lih,liv) == M_PI/2. );
 }
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )

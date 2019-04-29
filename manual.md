@@ -84,9 +84,10 @@ Line2d li2 = li.getOrthogonalLine( li , GC_X, 2 );
 ```
 will compute the orthogonal line at `x=2`.
 
-You can compute the angle in Radians between two lines with:
+You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```
 auto angle = li2.getAngle( li1 );
+auto angle = getAngle( li1, li2 );
 ```
 
 ## Homographies
