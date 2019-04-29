@@ -75,7 +75,7 @@ Point2d pt2 = li.getPoint( GC_X, 2 );
 
 The values `GC_Y`,`GC_Y` are just a two-values `enum`.
 
-### Orthogonal line
+### Orthogonal line and angles
 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
@@ -83,6 +83,12 @@ For example, this:
 Line2d li2 = li.getOrthogonalLine( li , GC_X, 2 );
 ```
 will compute the orthogonal line at `x=2`.
+
+You can compute the angle in Radians between two lines, either with a member function or with a free function:
+```
+auto angle = li2.getAngle( li1 );
+auto angle = getAngle( li1, li2 );
+```
 
 ## Homographies
 <a name="matrix"></a>
