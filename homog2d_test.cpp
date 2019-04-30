@@ -32,7 +32,6 @@ run with "make test"
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
-#define HOMOG2D_USE_OPENCV
 #include "homog2d.hpp"
 
 #include <list>
@@ -246,7 +245,6 @@ TEST_CASE( "test matrix", "[testH]" )
 		m2c[2][2] = 1.;
 		Homogr H2c(m2c);
 	}
-
 	{
 		Homogr H;
 		Point2d pt1(1,1);
@@ -433,6 +431,7 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
+	SECTION( "with diagonal line" );
 	{
 		Line2d li(1,1); // diagonal line going through (0,0)
 
@@ -453,6 +452,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == false );
 	}
+	SECTION( "with H/V line" );
 	{
 		Point2d pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
@@ -487,6 +487,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
 	cv::Mat mat_32 = cv::Mat::eye(3, 3, CV_32F);
+	SECTION( "getFrom()" )
 	{
 		cv::Mat mat(3,4, CV_32F );
 		Homogr H, H2;
@@ -500,10 +501,12 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK_NOTHROW( H.getFrom( mat_32 ) );
 		CHECK( H == H2 );
 	}
+	SECTION( "default copyTo()" )
 	{
 		Homogr H;
 		cv::Mat mat;
-		H.copyTo( mat );
+		CHECK_THROWS( H.copyTo( mat, 111 ) );
+		CHECK_NOTHROW( H.copyTo( mat ) );
 		CHECK( (
 			(mat.at<double>(0,0) == 1.0)
 			&& (mat.at<double>(0,1) == 0.0)
@@ -512,6 +515,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_64F );
 	}
+	SECTION( "copyTo() with CV_64F" )
 	{
 		Homogr H;
 		cv::Mat mat;
@@ -524,6 +528,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_64F );
 	}
+	SECTION( "copyTo() with CV_32F" )
 	{
 		Homogr H;
 		cv::Mat mat;

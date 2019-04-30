@@ -1102,7 +1102,7 @@ Root<IsPoint>::getCvPtf() const
 }
 
 //------------------------------------------------------------------
-/// Copy matrix to Opencv cv::Mat (
+/// Copy matrix to Opencv \c cv::Mat
 /**
 The output matrix is passed by reference to avoid issues with Opencv copy operator, and is allocated here.
 
@@ -1111,7 +1111,8 @@ User can pass a type as second argument: CV_32F for \c float, CV_64F for \c doub
 void
 Homogr::copyTo( cv::Mat& mat, int type ) const
 {
-	assert( type == CV_64F || type == CV_32F );
+	if( type != CV_64F && type != CV_32F )
+		throw std::runtime_error( "invalid matrix type" );
 	mat.create( 3, 3, type ); // default:CV_64F
 	size_t i=0;
 	switch( type )
@@ -1128,7 +1129,7 @@ Homogr::copyTo( cv::Mat& mat, int type ) const
 	}
 }
 //------------------------------------------------------------------
-/// Get homography from Opencv cv::Mat
+/// Get homography from Opencv \c cv::Mat
 void
 Homogr::getFrom( const cv::Mat& mat ) const
 {
