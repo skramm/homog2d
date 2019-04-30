@@ -218,8 +218,8 @@ Thus some assert can be triggered elsewhere
 	applyTo( T& ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-	template<typename T>
-	void getMatrix( cv::Mat_<T>&, int type=CV_64F ) const;
+	void getFrom( const cv::Mat& ) const;
+	void copyTo( cv::Mat&, int type=CV_64F ) const;
 #endif
 
 /// Normalisation
@@ -1102,23 +1102,55 @@ Root<IsPoint>::getCvPtf() const
 }
 
 //------------------------------------------------------------------
-/// Get Opencv cv::Mat from homography (so you can use it to process an image within Opencv)
+/// Copy matrix to Opencv cv::Mat (
 /**
-The result is fetched using reference to avoid issues with Opencv copy operator
+The output matrix is passed by reference to avoid issues with Opencv copy operator, and is allocated here.
 
 User can pass a type as second argument: CV_32F for \c float, CV_64F for \c double (default)
 */
-template<typename T>
 void
-Homogr::getMatrix<double>( cv::Mat_<T>& mat, int type ) const
+Homogr::copyTo( cv::Mat& mat, int type ) const
 {
 	assert( type == CV_64F || type == CV_32F );
 	mat.create( 3, 3, type ); // default:CV_64F
-	size_t i = 0;
-	for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
-		*it = _data[i/3][i%3];
+	size_t i=0;
+	switch( type )
+	{
+		case CV_64F:
+			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
+				*it = _data[i/3][i%3];
+		case CV_32F:
+			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
+				*it = _data[i/3][i%3];
+		default: assert(0);
+	}
 }
+//------------------------------------------------------------------
+/// Get homography from Opencv cv::Mat
+void
+Homogr::getFrom( const cv::Mat& mat ) const
+{
+	if( mat.rows != 0 || mat.cols != 3 )
+		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
+	if( mat.channels() != 1 )
+		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
 
+	auto type = mat.type();
+	if( type != CV_64F && type != CV_32F )
+		throw std::runtime_error( "invalid matrix type" );
+
+	size_t i=0;
+	switch( type )
+	{
+		case CV_64F:
+			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
+				_data[i/3][i%3] = *it;
+		case CV_32F:
+			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
+				_data[i/3][i%3] = *it;
+		default: assert(0);
+	}
+}
 //------------------------------------------------------------------
 /// Draw line on Cv::Mat. Specialization for lines.
 /**
