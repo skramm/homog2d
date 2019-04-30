@@ -1119,9 +1119,11 @@ Homogr::copyTo( cv::Mat& mat, int type ) const
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
 				*it = _data[i/3][i%3];
+			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
 				*it = _data[i/3][i%3];
+			break;
 		default: assert(0);
 	}
 }
@@ -1130,7 +1132,7 @@ Homogr::copyTo( cv::Mat& mat, int type ) const
 void
 Homogr::getFrom( const cv::Mat& mat ) const
 {
-	if( mat.rows != 0 || mat.cols != 3 )
+	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
 		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
@@ -1145,9 +1147,11 @@ Homogr::getFrom( const cv::Mat& mat ) const
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
 				_data[i/3][i%3] = *it;
+			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
 				_data[i/3][i%3] = *it;
+			break;
 		default: assert(0);
 	}
 }

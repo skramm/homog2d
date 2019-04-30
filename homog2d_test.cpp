@@ -32,6 +32,7 @@ run with "make test"
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
+#define HOMOG2D_USE_OPENCV
 #include "homog2d.hpp"
 
 #include <list>
@@ -480,3 +481,61 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		CHECK( ri.ptB == pt2 );
 	}
 }
+
+#ifdef HOMOG2D_USE_OPENCV
+TEST_CASE( "Opencv binding", "[test_opencv]" )
+{
+	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
+	cv::Mat mat_32 = cv::Mat::eye(3, 3, CV_32F);
+	{
+		cv::Mat mat(3,4, CV_32F );
+		Homogr H, H2;
+		CHECK_THROWS( H.getFrom( mat ) ); // invalid size
+		mat.create( 3,3, CV_8U );
+		CHECK_THROWS( H.getFrom( mat ) ); // invalid type
+
+		CHECK_NOTHROW( H.getFrom( mat_64 ) );
+		CHECK( H == H2 );
+
+		CHECK_NOTHROW( H.getFrom( mat_32 ) );
+		CHECK( H == H2 );
+	}
+	{
+		Homogr H;
+		cv::Mat mat;
+		H.copyTo( mat );
+		CHECK( (
+			(mat.at<double>(0,0) == 1.0)
+			&& (mat.at<double>(0,1) == 0.0)
+			&& (mat.at<double>(0,2) == 0.0)
+		) );
+		CHECK( mat.channels() == 1 );
+		CHECK( mat.type() == CV_64F );
+	}
+	{
+		Homogr H;
+		cv::Mat mat;
+		H.copyTo( mat, CV_64F );
+		CHECK( (
+			(mat.at<double>(0,0) == 1.0)
+			&& (mat.at<double>(0,1) == 0.0)
+			&& (mat.at<double>(0,2) == 0.0)
+		) );
+		CHECK( mat.channels() == 1 );
+		CHECK( mat.type() == CV_64F );
+	}
+	{
+		Homogr H;
+		cv::Mat mat;
+		H.copyTo( mat, CV_32F );
+		CHECK( (
+			(mat.at<float>(0,0) == 1.0)
+			&& (mat.at<float>(0,1) == 0.0)
+			&& (mat.at<float>(0,2) == 0.0)
+		) );
+		CHECK( mat.channels() == 1 );
+		CHECK( mat.type() == CV_32F );
+	}
+}
+#endif
+

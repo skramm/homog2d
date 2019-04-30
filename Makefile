@@ -10,7 +10,7 @@ demo_check: demo_check.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -o demo_check demo_check.cpp
 
 homog2d_test: homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -o homog2d_test homog2d_test.cpp
+	$(CXX) $(CFLAGS) -o homog2d_test homog2d_test.cpp `pkg-config --libs opencv`
 
 doc: html/index.html
 	@echo "done !"
