@@ -203,11 +203,11 @@ You can then write this:
 ```C++
 Point2d pt;
 ...
-cv::Point2d ptcv1 = pt.getCvPtd();
-cv::Point2f ptcv2 = pt.getCvPtf()
+cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
+cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
 ```
 
-You can also directly draw points and lines on an image (cv::Mat):
+You can also directly draw points and lines on an image (`cv::Mat`):
 ```C++
 Point2d pt( ... );
 Line2d li( ... );
@@ -234,7 +234,7 @@ and values will be retained, unless explicitely changed, as showed in the exampl
 	dp.setColor( 0,  0, 250).setThickness(3);
 	dp.setDefault();
 	line.drawCvMat( some_img ); // use default settings
-	line.drawCvMat( some_img. CvDrawParams.setColor( 0,0,0) ); // warning, line thickness=3 !
+	line.drawCvMat( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
