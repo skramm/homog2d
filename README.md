@@ -1,5 +1,8 @@
 # homog2d
 
+Current test status:
+[![Build Status](https://travis-ci.com/skramm/homog2d.svg?branch=master)](https://travis-ci.com/skramm/homog2d)
+
 A small single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D transformations),
 using (internally) homogeneous coordinates.
@@ -27,6 +30,4 @@ Rationale:
 - No dependency
 - Modern C++ policy-based design
 
-Current tests status:
-[![Build Status](https://travis-ci.com/skramm/homog2d.svg?branch=master)](https://travis-ci.com/skramm/homog2d)
 
