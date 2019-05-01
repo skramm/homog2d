@@ -3,11 +3,11 @@
 Home page: https://github.com/skramm/homog2d
 
 1. [Lines and points](#basic)
-- [2D transformation (aka homographies)](#matrix)
-- [Handling flat rectangles](#rect)
-- [Bindings](#bind)
-- [Build options](#options)
-- [Technical details](#tech)
+1. [2D transformation (aka homographies)](#matrix)
+1. [Handling flat rectangles](#rect)
+1. [Bindings](#bind)
+1. [Build options](#options)
+1. [Technical details](#tech)
 
 ## 1 - General
 
