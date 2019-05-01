@@ -431,7 +431,7 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
-	SECTION( "with diagonal line" );
+	SECTION( "with diagonal line" )
 	{
 		Line2d li(1,1); // diagonal line going through (0,0)
 
@@ -452,7 +452,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == false );
 	}
-	SECTION( "with H/V line" );
+	SECTION( "with H/V line" )
 	{
 		Point2d pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 

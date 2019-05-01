@@ -67,24 +67,27 @@ To add an affine or rigid transformation to the current one, you can use:
 To return to unit transformation, use clear()
 
 Implemented as a 3x3 matrix
+
+Templated by Floating-Point Type (FPT)
  */
-class Homogr
+template<typename FPT>
+class Homogr_
 {
 	template<typename LP>
-	friend Root<LP> operator * ( const Homogr& h, const Root<LP>& in );
+	friend Root<LP> operator * ( const Homogr_<FPT>& h, const Root<LP>& in );
 
 	template<typename LP>
 	friend class Root;
 
 	public:
 	/// Default constructor, initialize to unit transformation
-	Homogr()
+	Homogr_()
 	{
 		clear();
 	}
 	/// Build a rotation transformation of \c val radians
 	template<typename T>
-	Homogr( T val )
+	Homogr_( T val )
 	{
 		setRotation( val );
 	}
@@ -96,7 +99,7 @@ class Homogr
 Thus some assert can be triggered elsewhere
 */
 	template<typename T>
-	Homogr( const std::vector<std::vector<T>>& in )
+	Homogr_( const std::vector<std::vector<T>>& in )
 	{
 		if( in.size() != 3 )
 			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
@@ -107,7 +110,7 @@ Thus some assert can be triggered elsewhere
 		p_fillWith( in );
 	}
 	template<typename T>
-	Homogr( const std::array<std::array<T,3>,3>& in )
+	Homogr_( const std::array<std::array<T,3>,3>& in )
 	{
 		p_fillWith( in );
 	}
@@ -141,9 +144,9 @@ Thus some assert can be triggered elsewhere
 	}
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
-	Homogr& addTranslation( T tx, T ty )
+	Homogr_& addTranslation( T tx, T ty )
 	{
-		Homogr out;
+		Homogr_ out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
 //		normalize();
@@ -151,7 +154,7 @@ Thus some assert can be triggered elsewhere
 	}
 /// Sets the matrix as a translation \c tx,ty
 	template<typename T>
-	Homogr& setTranslation( T tx, T ty )
+	Homogr_& setTranslation( T tx, T ty )
 	{
 		clear();
 		_data[0][2] = tx;
@@ -161,9 +164,9 @@ Thus some assert can be triggered elsewhere
 	}
 /// Adds a rotation with an angle \c theta (radians) to the matrix
 	template<typename T>
-	Homogr& addRotation( T theta )
+	Homogr_& addRotation( T theta )
 	{
-		Homogr out;
+		Homogr_ out;
 		out.setRotation( theta );
 		*this = out * *this;
 //		normalize();
@@ -171,7 +174,7 @@ Thus some assert can be triggered elsewhere
 	}
 /// Sets the matrix as a rotation with an angle \c theta (radians)
 	template<typename T>
-	Homogr& setRotation( T theta )
+	Homogr_& setRotation( T theta )
 	{
 		clear();
 		_data[0][0] = _data[1][1] = std::cos(theta);
@@ -182,15 +185,15 @@ Thus some assert can be triggered elsewhere
 	}
 /// Adds the same scale factor to the matrix
 	template<typename T>
-	Homogr& addScale( T k )
+	Homogr_& addScale( T k )
 	{
 		return this->addScale( k, k );
 	}
 /// Adds a scale factor to the matrix
 	template<typename T>
-	Homogr& addScale( T kx, T ky )
+	Homogr_& addScale( T kx, T ky )
 	{
-		Homogr out;
+		Homogr_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
 //		normalize();
@@ -198,13 +201,13 @@ Thus some assert can be triggered elsewhere
 	}
 /// Sets the matrix as a scaling transformation (same on two axis)
 	template<typename T>
-	Homogr& setScale( T k )
+	Homogr_& setScale( T k )
 	{
 		return setScale( k, k );
 	}
 /// Sets the matrix as a scaling transformation
 	template<typename T>
-	Homogr& setScale( T kx, T ky )
+	Homogr_& setScale( T kx, T ky )
 	{
 		clear();
 		_data[0][0] = kx;
@@ -243,9 +246,9 @@ Thus some assert can be triggered elsewhere
 		_isNormalized = true;
 	}
 /// Transpose matrix
-	Homogr& transpose()
+	Homogr_& transpose()
 	{
-		Homogr out;
+		Homogr_ out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				out._data[i][j] = _data[j][i];
@@ -253,9 +256,9 @@ Thus some assert can be triggered elsewhere
 		return *this;
 	}
 /// Inverse matrix
-	Homogr& inverse()
+	Homogr_& inverse()
 	{
-		Homogr adjugate = p_adjugate();
+		Homogr_ adjugate = p_adjugate();
 		double det = p_det();
 
 		if( std::abs(det) <= std::numeric_limits<double>::epsilon() )
@@ -268,7 +271,7 @@ Thus some assert can be triggered elsewhere
 	}
 
 /// Divide all elements by scalar
-	Homogr& operator / (double v)
+	Homogr_& operator / (double v)
 	{
 		if( std::fabs(v) <= std::numeric_limits<double>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
@@ -282,7 +285,7 @@ Thus some assert can be triggered elsewhere
 #endif
 	}
 /// Multiply all elements by scalar
-	Homogr& operator * (double v)
+	Homogr_& operator * (double v)
 	{
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -291,9 +294,9 @@ Thus some assert can be triggered elsewhere
 	}
 
 /// Matrix multiplication
-	friend Homogr operator * ( const Homogr& h1, const Homogr& h2 )
+	friend Homogr_ operator * ( const Homogr_& h1, const Homogr_& h2 )
 	{
-		Homogr out;
+		Homogr_ out;
 		out.p_zero();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -303,7 +306,7 @@ Thus some assert can be triggered elsewhere
 	}
 
 /// Comparison operator. Does normalization if required
-	bool operator == ( const Homogr& h ) const
+	bool operator == ( const Homogr_& h ) const
 	{
 		if( !_isNormalized )
 			normalize();
@@ -318,7 +321,7 @@ Thus some assert can be triggered elsewhere
 		return true;
 	}
 /// Comparison operator. Does normalization if required
-	bool operator != ( const Homogr& h ) const
+	bool operator != ( const Homogr_& h ) const
 	{
 		return !(*this == h);
 	}
@@ -375,9 +378,9 @@ See https://en.wikipedia.org/wiki/Determinant
 /**
 \todo Decrement each index so we can remove the need for std::transform()
 */
-	Homogr p_adjugate()
+	Homogr_ p_adjugate()
 	{
-		Homogr out;
+		Homogr_ out;
 
 		out.setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 3,3} ) );
 		out.setValue( 0, 1, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
@@ -398,10 +401,10 @@ See https://en.wikipedia.org/wiki/Determinant
 //      DATA SECTION    //
 //////////////////////////
 	private:
-	mutable std::array<std::array<double,3>,3> _data;
+	mutable std::array<std::array<FPT,3>,3> _data;
 	mutable bool _isNormalized = false;
 
-	friend std::ostream& operator << ( std::ostream& f, const Homogr& h )
+	friend std::ostream& operator << ( std::ostream& f, const Homogr_& h )
 	{
 		for( const auto& li: h._data )
 		{
@@ -499,9 +502,6 @@ struct IsPoint
 {
 };
 
-// forward declaration of class
-//template<typename T> class Root;
-
 // forward declaration of two template instanciation
 namespace detail {
 
@@ -519,13 +519,14 @@ Root<T1> crossProduct( const Root<T2>&, const Root<T2>& );
 template<typename LP>
 class Root
 {
-	friend class Homogr;
+	template<typename FPT>
+	friend class Homogr_;
 
-	friend Root<IsLine>  operator * (  const Root<IsPoint>&, const Root<IsPoint>& );
-	friend Root<IsPoint> operator * (  const Root<IsLine>&,  const Root<IsLine>& );
+	friend Root<IsLine>  operator * ( const Root<IsPoint>&, const Root<IsPoint>& );
+	friend Root<IsPoint> operator * ( const Root<IsLine>&,  const Root<IsLine>& );
 
-	template<typename T>
-	friend Root<T> operator * ( const Homogr& h, const Root<T>& in );
+	template<typename T,typename FPT>
+	friend Root<T> operator * ( const Homogr_<FPT>& h, const Root<T>& in );
 
 template<typename T1,typename T2>
 friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
@@ -1058,9 +1059,9 @@ typedef Root<IsLine>::RectIntersect_<IsPoint> RectIntersect;
 
 //------------------------------------------------------------------
 /// Apply homography to a point or line. Free function, templated by point or line
-template<typename LP>
+template<typename LP,typename FPT>
 Root<LP>
-operator * ( const Homogr& h, const Root<LP>& in )
+operator * ( const Homogr_<FPT>& h, const Root<LP>& in )
 {
 	Root<LP> out;
 	for( int i=0; i<3; i++ )
@@ -1073,9 +1074,10 @@ operator * ( const Homogr& h, const Root<LP>& in )
 }
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list of points or lines. Free function, templated by point or line
+template<typename FPT>
 template<typename T>
 void
-Homogr::applyTo( T& vin ) const
+Homogr_<FPT>::applyTo( T& vin ) const
 {
 	for( auto& elem: vin )
 		elem = *this * elem;
@@ -1109,7 +1111,7 @@ The output matrix is passed by reference to avoid issues with Opencv copy operat
 User can pass a type as second argument: CV_32F for \c float, CV_64F for \c double (default)
 */
 void
-Homogr::copyTo( cv::Mat& mat, int type ) const
+Homogr_::copyTo( cv::Mat& mat, int type ) const
 {
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
@@ -1131,7 +1133,7 @@ Homogr::copyTo( cv::Mat& mat, int type ) const
 //------------------------------------------------------------------
 /// Get homography from Opencv \c cv::Mat
 void
-Homogr::getFrom( const cv::Mat& mat ) const
+Homogr_::getFrom( const cv::Mat& mat ) const
 {
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
@@ -1275,6 +1277,7 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 
 typedef Root<IsLine> Line2d;
 typedef Root<IsPoint> Point2d;
+typedef Homogr_<double> Homogr;
 
 } // namespace homog2d end
 
