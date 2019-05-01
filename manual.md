@@ -2,20 +2,21 @@
 
 Home page: https://github.com/skramm/homog2d
 
+1. [Introduction](#intro)
 1. [Lines and points](#basic)
 1. [2D transformation (aka homographies)](#matrix)
-1. [Handling flat rectangles](#rect)
+1. [Flat rectangle intersection](#rect)
 1. [Bindings](#bind)
-1. [Build options](#options)
 1. [Technical details](#tech)
 
-## 1 - General
+## 1 - Introduction
+<a name="intro"></a>
 
 All the code is in the namespace `homog2d`, so either add `using namespace homog2d`, either use it as a prefix on each type.
 
-This library provides 3 data types: `Line2d`, `Point2d` and  `Homogr`, this latter one implementing a planar transformation through a 3x3 matrix.
+This library provides 3 data types: `Line2d`, `Point2d` and  `Homogr`, this latter one implementing a planar (2D) transformation, implemented as a 3x3 matrix.
 
-## 2 - 2D lines and points
+## 2 - lines and points
 <a name="basic"></a>
 
 - Create a 2D point:
@@ -92,7 +93,7 @@ auto angle = li2.getAngle( li1 );
 auto angle = getAngle( li1, li2 );
 ```
 
-## 2 - Homographies
+## 3 - Homographies
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography").
@@ -153,7 +154,7 @@ h.inverse();
 h.transpose();
 ```
 
-## 3 - Handling flat rectangles
+## 4 - Flat rectangle intersection
 
 ### Intersection of lines with flat rectangles
 <a name="rect"></a>
@@ -188,7 +189,7 @@ bool b = pt.isInsideRectangle( p1, p2 );
 ```
 Again, the two points can be any of the four corners of the rectangle.
 
-## 4 - Bindings with other libraries
+## 5 - Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -245,7 +246,7 @@ You can at any time return to the "factory" settings with a call to a static fun
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-## 5 - Technical details
+## 6 - Technical details
 <a name="tech"></a>
 
 - The library is fully templated, the two types `Point2d` and `Line2d` are actually the same class,
