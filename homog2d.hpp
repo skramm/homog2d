@@ -74,10 +74,10 @@ template<typename FPT>
 class Homogr_
 {
 	template<typename LP>
-	friend Root<LP> operator * ( const Homogr_<FPT>& h, const Root<LP>& in );
-
-	template<typename LP>
 	friend class Root;
+
+	template<typename T,typename U>
+	friend Root<T> operator * ( const Homogr_<U>& h, const Root<T>& in );
 
 	public:
 	/// Default constructor, initialize to unit transformation
@@ -128,10 +128,11 @@ Thus some assert can be triggered elsewhere
 	}
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
+	template<typename T>
 	void setValue(
 		size_t r, ///< row
 		size_t c, ///< col
-		double v  ///< value
+		T      v  ///< value
 	)
 	{
 		_data[r][c] = v;
@@ -271,9 +272,10 @@ Thus some assert can be triggered elsewhere
 	}
 
 /// Divide all elements by scalar
-	Homogr_& operator / (double v)
+	template<typename T>
+	Homogr_& operator / (T v)
 	{
-		if( std::fabs(v) <= std::numeric_limits<double>::epsilon() )
+		if( std::abs(v) <= std::numeric_limits<double>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
 		for( int i=0; i<3; i++ )
@@ -284,7 +286,8 @@ Thus some assert can be triggered elsewhere
 		return *this * (1.0/v);
 #endif
 	}
-/// Multiply all elements by scalar
+/// Multiply all elements by scalar (can't be templated by arg type because it would conflict with operator * for Homogr and line/point
+//	template<typename T>
 	Homogr_& operator * (double v)
 	{
 		for( int i=0; i<3; i++ )
@@ -525,11 +528,11 @@ class Root
 	friend Root<IsLine>  operator * ( const Root<IsPoint>&, const Root<IsPoint>& );
 	friend Root<IsPoint> operator * ( const Root<IsLine>&,  const Root<IsLine>& );
 
-	template<typename T,typename FPT>
-	friend Root<T> operator * ( const Homogr_<FPT>& h, const Root<T>& in );
+	template<typename T,typename U>
+	friend Root<T> operator * ( const Homogr_<U>& h, const Root<T>& in );
 
-template<typename T1,typename T2>
-friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
+	template<typename T1,typename T2>
+	friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 
 	private:
 	Root( double a, double b, double c )
@@ -1110,8 +1113,9 @@ The output matrix is passed by reference to avoid issues with Opencv copy operat
 
 User can pass a type as second argument: CV_32F for \c float, CV_64F for \c double (default)
 */
+template<typename FPT>
 void
-Homogr_::copyTo( cv::Mat& mat, int type ) const
+Homogr_<FPT>::copyTo( cv::Mat& mat, int type ) const
 {
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
@@ -1132,8 +1136,9 @@ Homogr_::copyTo( cv::Mat& mat, int type ) const
 }
 //------------------------------------------------------------------
 /// Get homography from Opencv \c cv::Mat
+template<typename FPT>
 void
-Homogr_::getFrom( const cv::Mat& mat ) const
+Homogr_<FPT>::getFrom( const cv::Mat& mat ) const
 {
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
@@ -1277,7 +1282,11 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 
 typedef Root<IsLine> Line2d;
 typedef Root<IsPoint> Point2d;
+
+/// Default data type is double
 typedef Homogr_<double> Homogr;
+//typedef Homogr_<double> HomogrD;
+//typedef Homogr_<float>  HomogrF;
 
 } // namespace homog2d end
 

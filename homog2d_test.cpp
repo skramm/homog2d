@@ -246,10 +246,12 @@ TEST_CASE( "test matrix", "[testH]" )
 		Homogr H2c(m2c);
 	}
 	{
-		Homogr H;
+		Homogr_<double> H;
 		Point2d pt1(1,1);
 		H.setTranslation( 3., 2. );
+
 		Point2d pt2 = H * pt1;
+
 		CHECK( pt2.getX() == 4. );
 		CHECK( pt2.getY() == 3. );
 
