@@ -48,7 +48,7 @@ See https://github.com/skramm/homog2d
 namespace homog2d {
 
 // forward declaration
-template<typename LP>
+template<typename LP,typename FPT>
 class Root;
 
 //------------------------------------------------------------------
@@ -76,8 +76,8 @@ class Homogr_
 	template<typename LP>
 	friend class Root;
 
-	template<typename T,typename U>
-	friend Root<T> operator * ( const Homogr_<U>& h, const Root<T>& in );
+	template<typename T,typename U,typename V>
+	friend Root<T,V> operator * ( const Homogr_<U>& h, const Root<T,V>& in );
 
 	public:
 	/// Default constructor, initialize to unit transformation
@@ -286,8 +286,10 @@ Thus some assert can be triggered elsewhere
 		return *this * (1.0/v);
 #endif
 	}
-/// Multiply all elements by scalar (can't be templated by arg type because it would conflict with operator * for Homogr and line/point
-//	template<typename T>
+/// Multiply all elements by scalar
+/**
+Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
+*/
 	Homogr_& operator * (double v)
 	{
 		for( int i=0; i<3; i++ )
@@ -505,34 +507,42 @@ struct IsPoint
 {
 };
 
-// forward declaration of two template instanciation
+// forward declaration of template instanciation
 namespace detail {
 
-template<typename T1,typename T2>
-Root<T1> crossProduct( const Root<T2>&, const Root<T2>& );
+template<typename T1,typename T2,typename T3>
+Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 }
 
+//------------------------------------------------------------------
+namespace detail {
+
+/// Helper class, used as a trick to allow partial specialization of member functions
+template <typename>
+struct RootHelper {};
+
+} // namespace detail
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
 /**
 \todo template root type
 */
 
-template<typename LP>
+template<typename LP,typename FPT>
 class Root
 {
-	template<typename FPT>
+	template<typename U>
 	friend class Homogr_;
 
-	friend Root<IsLine>  operator * ( const Root<IsPoint>&, const Root<IsPoint>& );
-	friend Root<IsPoint> operator * ( const Root<IsLine>&,  const Root<IsLine>& );
+	friend Root<IsLine,FPT>  operator * ( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& );
+	friend Root<IsPoint,FPT> operator * ( const Root<IsLine,FPT>&,  const Root<IsLine,FPT>& );
 
-	template<typename T,typename U>
-	friend Root<T> operator * ( const Homogr_<U>& h, const Root<T>& in );
+	template<typename T,typename U,typename V>
+	friend Root<T,V> operator * ( const Homogr_<U>& h, const Root<T,V>& in );
 
-	template<typename T1,typename T2>
-	friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
+	template<typename T1,typename T2,typename T3>
+	friend Root<T1,T3> detail::crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 	private:
 	Root( double a, double b, double c )
@@ -547,23 +557,43 @@ class Root
 	template<typename T> Root( const T&, const T&);
 	Root();
 
-	double getValue( En_GivenCoord gc, double other ) const;
-	Root<IsPoint> getPoint( En_GivenCoord gc, double other ) const;
-	Root<LP> getOrthogonalLine( En_GivenCoord gc, double other ) const;
+	double            getValue( En_GivenCoord gc, double other ) const;
+	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const;
+	Root<LP,FPT>      getOrthogonalLine( En_GivenCoord gc, double other ) const;
 
 	template<typename T>
 	void   addOffset( En_OffsetDir dir, T v );
-	double getX() const;
-	double getY() const;
-	void   set( double x, double y );
-	double distToPoint( const Root<IsPoint>& pt ) const;
-	double getAngle( const Root<IsLine>& ) const;
 
-/// Sub-type, holds result of rectangle intersection, see intersectsRectangle()
+	double getX() const { return impl_getX( detail::RootHelper<LP>() ); }
+	double getY() const { return impl_getY( detail::RootHelper<LP>() ); }
+	void   set( double x, double y ) { impl_set( x, y, detail::RootHelper<LP>() ); }
+
+	double distToPoint( const Root<IsPoint,FPT>& pt ) const;
+	double getAngle( const Root<IsLine,FPT>& ) const;
+
+	private:
+		double impl_getX( detail::RootHelper<IsPoint>& )
+		{
+			return _v[0]/_v[2];
+		}
+		double impl_getY( detail::RootHelper<IsPoint>& )
+		{
+			return _v[1]/_v[2];
+		}
+		void impl_set( double x, double y, detail::RootHelper<IsPoint>& )
+		{
+			_v[0] = x;
+			_v[1] = y;
+			_v[2] = 1.;
+		}
+
+	public:
+/// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
+/// Only defined for Point2d
 	template<typename T>
 	struct RectIntersect_
 	{
-		template<typename U>
+		template<typename U,typename V>
 		friend class Root;
 
 		public:
@@ -573,30 +603,30 @@ class Root
 		}
 		RectIntersect_()
 		{}
-		RectIntersect_( const Root<T>& p1, const Root<T>& p2 ) : ptA(p1), ptB(p2)
+		RectIntersect_( const Root<T,FPT>& p1, const Root<T,FPT>& p2 ) : ptA(p1), ptB(p2)
 		{
 			_doesIntersect = true;
 		}
-		Root<T> ptA;
-		Root<T> ptB;
+		Root<T,FPT> ptA;
+		Root<T,FPT> ptB;
 
 		private:
 		bool _doesIntersect = false;
 	};
 
-	RectIntersect_<IsPoint> intersectsRectangle( const Root<IsPoint>& pt1, const Root<IsPoint>& pt2 ) const;
-	bool isInsideRectangle( const Root<IsPoint>& p0, const Root<IsPoint>& p1 ) const;
+	RectIntersect_<IsPoint> intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
+	bool isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const;
 
 // operators
-	bool operator == ( const Root<LP>& other ) const;
-	bool operator != ( const Root<LP>& other ) const
+	bool operator == ( const Root<LP,FPT>& other ) const;
+	bool operator != ( const Root<LP,FPT>& other ) const
 	{
 		return !(*this == other);
 	}
 
 // friend functions and operators
 	template<typename T>
-	friend std::ostream& operator << ( std::ostream& f, const Root<T>& r );
+	friend std::ostream& operator << ( std::ostream& f, const Root<T,FPT>& r );
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
@@ -606,7 +636,7 @@ class Root
 #endif
 
 	private:
-	double _v[3];
+	FPT _v[3];
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -616,6 +646,7 @@ class Root
 };
 
 //------------------------------------------------------------------
+/*
 /// specialization for points (undefined for lines)
 template<>
 double
@@ -623,7 +654,6 @@ Root<IsPoint>::getX() const
 {
 	return _v[0]/_v[2];
 }
-
 /// specialization for points (undefined for lines)
 template<>
 double
@@ -631,7 +661,6 @@ Root<IsPoint>::getY() const
 {
 	return _v[1]/_v[2];
 }
-
 /// specialization for points (undefined for lines)
 template<>
 void
@@ -641,6 +670,7 @@ Root<IsPoint>::set( double x, double y )
 	_v[1] = y;
 	_v[2] = 1.;
 }
+*/
 
 //------------------------------------------------------------------
 /// Default operator << for lines
@@ -782,8 +812,8 @@ Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
 namespace detail
 {
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	template<typename Out, typename In>
-	Root<Out> crossProduct( const Root<In>& r1, const Root<In>& r2 )
+	template<typename Out, typename In,typename FPT>
+	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
 	{
 		Root<Out> res;
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
