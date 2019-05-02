@@ -535,8 +535,11 @@ class Root
 	template<typename U>
 	friend class Homogr_;
 
-	friend Root<IsLine,FPT>  operator * ( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& );
-	friend Root<IsPoint,FPT> operator * ( const Root<IsLine,FPT>&,  const Root<IsLine,FPT>& );
+//	friend Root<IsLine,FPT>  operator * ( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& );
+//	friend Root<IsPoint,FPT> operator * ( const Root<IsLine,FPT>&,  const Root<IsLine,FPT>& );
+
+	template<typename T,typename U,typename V>
+	friend Root<T,V> operator * ( const Root<U,V>&,  const Root<U,V>& );
 
 	template<typename T,typename U,typename V>
 	friend Root<T,V> operator * ( const Homogr_<U>& h, const Root<T,V>& in );
@@ -565,14 +568,23 @@ class Root
 	}
 
 	template<typename T>
-	void   addOffset( En_OffsetDir dir, T v );
+	void addOffset( En_OffsetDir dir, T v )
+	{
+		impl_addOffset( dir, v, detail::RootHelper<LP>() );
+	}
 
 	double getX() const              { return impl_getX( detail::RootHelper<LP>() ); }
 	double getY() const              { return impl_getY( detail::RootHelper<LP>() ); }
 	void   set( double x, double y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-	double distToPoint( const Root<IsPoint,FPT>& pt ) const;
-	double getAngle( const Root<IsLine,FPT>& ) const;
+	double distToPoint( const Root<IsPoint,FPT>& pt ) const
+	{
+		return impl_distToPoint( pt, detail::RootHelper<LP>() );
+	}
+	double getAngle( const Root<IsLine,FPT>& li ) const
+	{
+		return impl_getAngle( li, detail::RootHelper<LP>() );
+	}
 
 	private:
 		double impl_getX( detail::RootHelper<IsPoint>& )
@@ -590,7 +602,13 @@ class Root
 			_v[2] = 1.;
 		}
 
-		double        impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
+		void   impl_addOffset( En_OffsetDir dir, T v, const detail::RootHelper<IsLine>& ) const;
+		double impl_distToPoint( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
+		double impl_distToPoint( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
+
+		double impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
+
+		double impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 
 	public:
@@ -624,7 +642,10 @@ class Root
 	bool isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const;
 
 // operators
-	bool operator == ( const Root<LP,FPT>& other ) const;
+	bool operator == ( const Root<LP,FPT>& other ) const
+	{
+		return impl_op_equal( other, detail::RootHelper<LP>() );
+	}
 	bool operator != ( const Root<LP,FPT>& other ) const
 	{
 		return !(*this == other);
@@ -637,8 +658,8 @@ class Root
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
 	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() );
-	cv::Point2d getCvPtd() const;
-	cv::Point2f getCvPtf() const;
+	cv::Point2d getCvPtd() const { return impl_getCvPtd( detail::RootHelper<LP>() ); }
+	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
 #endif
 
 	private:
@@ -652,6 +673,12 @@ class Root
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
 
 	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, detail::RootHelper<IsLine>& ) const;
+
+	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
+	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
+
+	cv::Point2f impl_getCvPtf( const detail::RootHelper<IsPoint>& ) const;
+	cv::Point2d impl_getCvPtd( const detail::RootHelper<IsPoint>& ) const;
 
 /// Called by default constructor, overload for lines
 	void impl_init( const detail::RootHelper<IsLine>& )
@@ -816,14 +843,20 @@ template<typename LP,typename FPT>
 double
 Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
 {
-	return 0;
+	if( gc == GC_X )
+		return ( -_v[0] * other - _v[2] ) / _v[1];
+	else
+		return ( -_v[1] * other - _v[2] ) / _v[0];
 }
 
 template<typename LP,typename FPT>
 Root<IsPoint,FPT>
 Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
 {
-	return Root<IsPoint,FPT>();
+	auto coord = impl_getCoord( gc, other );
+	if( gc == GC_X )
+		return Root<IsPoint,FPT>( other, coord );
+	return Root<IsPoint,FPT>( coord, other );
 }
 
 //------------------------------------------------------------------
@@ -871,18 +904,17 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 #endif
 //------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other
-
 template<typename LP,typename FPT>
 Root<IsLine,FPT>
 Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, detail::RootHelper<IsLine>& ) const
 {
-	Root<IsLine,FPT> out;
-	auto other_val = impl_getValue( gc, val, detail::RootHelper<IsLine>() );
+	auto other_val = impl_getCoord( gc, val, detail::RootHelper<IsLine>() );
 
-	Root<IsPoint> pt( other_val, val ) ;
+	Root<IsPoint,FPT> pt( other_val, val ) ;
 	if( gc == GC_X )
 		pt.set( val, other_val );
 
+	Root<IsLine,FPT> out;
 	out._v[0] = -_v[1];
 	out._v[1] =  _v[0];
 	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
@@ -893,17 +925,16 @@ Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, detail::Root
 
 //------------------------------------------------------------------
 /// Default comparison operator, used for Lines
-template<typename LP>
+
+#if 0
+template<typename LP,typename FPT>
 bool
-Root<LP>::operator == ( const Root<LP>& other ) const
+Root<LP,FPT>::operator == ( const Root<LP,FPT>& other ) const
 {
 	auto eps = std::numeric_limits<double>::epsilon();
 	for( int i=0; i<3; i++ )
 		if( std::fabs( _v[i] - other._v[i] ) > eps )
-		{
-//			std::cout << "v1=" << _v[i] << " v2=" << other._v[i] << "\n";
 			return false;
-		}
 	return true;
 }
 
@@ -911,6 +942,30 @@ Root<LP>::operator == ( const Root<LP>& other ) const
 template<>
 bool
 Root<IsPoint>::operator == ( const Root<IsPoint>& other ) const
+{
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( std::fabs( getX() - other.getX() ) > eps )
+		return false;
+	if( std::fabs( getY() - other.getY() ) > eps )
+		return false;
+	return true;
+}
+#endif // 0
+
+template<typename LP,typename FPT>
+bool
+Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<IsLine>& ) const
+{
+	auto eps = std::numeric_limits<double>::epsilon();
+	for( int i=0; i<3; i++ )
+		if( std::fabs( _v[i] - other._v[i] ) > eps )
+			return false;
+	return true;
+}
+
+template<typename LP,typename FPT>
+bool
+Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<IsPoint>& ) const
 {
 	auto eps = std::numeric_limits<double>::epsilon();
 	if( std::fabs( getX() - other.getX() ) > eps )
@@ -928,7 +983,7 @@ namespace detail
 	template<typename Out, typename In,typename FPT>
 	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
 	{
-		Root<Out> res;
+		Root<Out,FPT> res;
 		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
@@ -939,10 +994,11 @@ namespace detail
 	}
 }
 
+#if 0
 //------------------------------------------------------------------
 /// Product of two points is a line (free function)
-Root<IsLine>
-operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
+Root<IsLine,FPT>
+operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
 {
 	Root<IsLine> line = detail::crossProduct<IsLine>(lhs, rhs);
 	line.p_normalizeLine();
@@ -951,8 +1007,8 @@ operator * ( const Root<IsPoint>& lhs, const Root<IsPoint>& rhs )
 
 //------------------------------------------------------------------
 /// Product of two lines is a point (free function)
-Root<IsPoint>
-operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
+Root<IsPoint,FPT>
+operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
 {
 	auto pt = detail::crossProduct<IsPoint>(lhs, rhs);
 	auto eps = std::numeric_limits<double>::epsilon();
@@ -965,7 +1021,40 @@ operator * ( const Root<IsLine>& lhs, const Root<IsLine>& rhs )
 	}
 	return pt;
 }
+#endif
 
+/// free function template, overload for Points
+template<typename LP,typename FPT>
+bool
+impl_op_product( const Root<LP,FPT>& lhs, const Root<LP,FPT>& rhs, const detail::RootHelper<IsPoint>& )
+{
+	Root<IsLine, FPT> line = detail::crossProduct<IsLine,FPT>(lhs, rhs);
+	line.p_normalizeLine();
+	return line;
+}
+/// free function template, overload for Lines
+template<typename LP,typename FPT>
+bool
+impl_op_product( const Root<LP,FPT>& lhs, const Root<LP,FPT>& rhs, const detail::RootHelper<IsLine>& )
+{
+	auto pt = detail::crossProduct<IsPoint,FPT>(lhs, rhs);
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( std::fabs(pt._v[2]) <= eps )
+	{
+		std::ostringstream lh,lr;
+		lh << lhs;
+		lr << rhs;
+		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
+	}
+	return pt;
+}
+
+/// free function template
+template<typename T,typename U,typename V>
+Root<T,V> operator * ( const Root<U,V>& lhs, const Root<U,V>& rhs )
+{
+	return impl_op_product( lhs, rhs, const detail::RootHelper<T>() );
+}
 
 //------------------------------------------------------------------
 ///////////////////////////////////////////
@@ -999,6 +1088,7 @@ Root<IsLine>::Root( const T& dx, const T& dy )
 	p_normalizeLine();
 }
 
+
 /// constructor of a point from two lines (specialization)
 template<>
 template<>
@@ -1016,6 +1106,7 @@ Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
 	p_normalizeLine();
 }
 
+#if 0
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. Specialization
 /**
@@ -1045,11 +1136,42 @@ Root<IsPoint>::distToPoint( const Root<IsPoint>& pt ) const
 {
 	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
 }
+#endif
 
+/// overload for point to point distance
+template<typename LP, typename FPT>
+double
+Root<LP,FPT>::impl_distToPoint( const Root<LP,FPT>& pt, const detail::RootHelper<IsPoint>& ) const
+{
+	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
+}
+/// overload for line to point distance
+template<typename LP, typename FPT>
+double
+Root<LP,FPT>::impl_distToPoint( const Root<LP,FPT>& pt, const detail::RootHelper<IsLine>& ) const
+{
+	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
+}
+
+#if 0
 /// Add offset (vertical or horizontal) to line (implementation for lines)
 template<>
 template<typename T>
 void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
+{
+	if( dir == OD_Vert )
+		_v[2] = _v[2] - v*_v[1];
+	else
+		_v[2] = _v[2] - v*_v[0];
+	p_normalizeLine();
+}
+#endif
+
+/// overload for lines, undefined for points
+template<typename T>
+template<typename LP, typename FPT>
+void
+Root<LP,FPT>::impl_addOffset( En_OffsetDir dir, T v, const detail::RootHelper<IsLine>& ) const
 {
 	if( dir == OD_Vert )
 		_v[2] = _v[2] - v*_v[1];
@@ -1062,7 +1184,10 @@ void Root<IsLine>::addOffset( En_OffsetDir dir, T v )
 /// Returns the angle (in Rad) between the line and another one.
 /**
 Will return a value in the range [0,M_PI/2]
+
+\todo add implementation of free function with partial specialization trick
 */
+#if 0
 template<>
 double
 Root<IsLine>::getAngle( const Root<IsLine>& li ) const
@@ -1079,18 +1204,29 @@ getAngle( const Root<IsLine>& li1, const Root<IsLine>& li2 )
 {
 	return li1.getAngle( li2 );
 }
+#endif
+template<typename LP, typename FPT>
+double
+Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<IsLine>& ) const
+{
+	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
+	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
+	return std::acos( std::abs(res) );
+}
+
 //------------------------------------------------------------------
 namespace detail {
 /// Private free function, get top-left and bottom-right points from two arbitrary points
-inline
-std::pair<Root<IsPoint>,Root<IsPoint>>
-getCorrectPoints( const Root<IsPoint>& p0, const Root<IsPoint>& p1 )
+template<typename FPT>
+//inline
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+getCorrectPoints( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 )
 {
 	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 
-	Root<IsPoint> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
-	Root<IsPoint> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+	Root<IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
 }
 
@@ -1231,6 +1367,7 @@ Homogr_<FPT>::applyTo( T& vin ) const
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 /// Return floating-point coordinates Opencv 2D point (with rounding)
+#if 0
 template<>
 cv::Point2d
 Root<IsPoint>::getCvPtd() const
@@ -1245,6 +1382,25 @@ Root<IsPoint>::getCvPtd() const
 template<>
 cv::Point2f
 Root<IsPoint>::getCvPtf() const
+{
+	return cv::Point2f( getX(),getY() );
+}
+#endif
+
+template<typename LP, typename FPT>
+cv::Point2d
+Root<LP,FPT>::impl_getCvPtd( const detail::RootHelper<IsPoint>& ) const
+{
+	return cv::Point2d(
+		static_cast<int>(std::round(getX())),
+		static_cast<int>(std::round(getY()))
+	);
+}
+
+/// Return integer coordinates Opencv 2D point
+template<typename LP, typename FPT>
+cv::Point2f
+Root<LP,FPT>::impl_getCvPtf( const detail::RootHelper<IsPoint>& ) const
 {
 	return cv::Point2f( getX(),getY() );
 }

@@ -275,3 +275,24 @@ You can do that in the makefile or just add a `#define` on top of your program,
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 
 (TO BE EXPANDED)
+
+
+### Inner details
+
+To be able to templatize all the code on the root numerical data type (float, double), we implement some trick.
+Indeed, as the Root class is already templatized on the type (Point or Line),
+it would require a partial template specialization to define each member function (or free function),
+which C++ does not allow.
+
+Thus, the trick here is to call a "sub" private function (each prefixed with `impl_`) that gets overloaded
+by the datatype.
+To achieve this overlading, each of these functions receives as additional argument an object of type RootHelper,
+templated by the numerical type.
+In the definition of the function, this additional argument is ignored,
+it is there just so that the compiler can select the correct overload,
+in a similar way of what happens with templates.
+
+Thus, we can write the two implementations as two 'impl_' function, that are still templated by the numerical data type.
+
+This is a perfect example of mixing template specializations with overloading function,
+these two situations must not be confused.
