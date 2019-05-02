@@ -56,7 +56,8 @@ li1.addOffset( OD_Vert, 5 ); // vertical offset
 
 ### Get point lying on line
 
-To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value.
+To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
+`En_GivenCoord`.
 For example, if you build the line going through (0,0)-(4,2) with:
 
 ```C++

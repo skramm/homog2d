@@ -555,18 +555,21 @@ class Root
 	public:
 
 	template<typename T> Root( const T&, const T&);
-	Root();
+	Root() { impl_init( detail::RootHelper<LP>() ); }
 
-	double            getValue( En_GivenCoord gc, double other ) const;
-	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const;
-	Root<LP,FPT>      getOrthogonalLine( En_GivenCoord gc, double other ) const;
+	double            getCoord( En_GivenCoord gc, double other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
+	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const { return impl_getPoint( gc, other, detail::RootHelper<LP>() ); }
+	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, double other ) const
+	{
+		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
+	}
 
 	template<typename T>
 	void   addOffset( En_OffsetDir dir, T v );
 
-	double getX() const { return impl_getX( detail::RootHelper<LP>() ); }
-	double getY() const { return impl_getY( detail::RootHelper<LP>() ); }
-	void   set( double x, double y ) { impl_set( x, y, detail::RootHelper<LP>() ); }
+	double getX() const              { return impl_getX( detail::RootHelper<LP>() ); }
+	double getY() const              { return impl_getY( detail::RootHelper<LP>() ); }
+	void   set( double x, double y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
 	double distToPoint( const Root<IsPoint,FPT>& pt ) const;
 	double getAngle( const Root<IsLine,FPT>& ) const;
@@ -586,6 +589,9 @@ class Root
 			_v[1] = y;
 			_v[2] = 1.;
 		}
+
+		double        impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
+		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 
 	public:
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
@@ -642,7 +648,25 @@ class Root
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 
-	void p_normalizeLine();
+	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
+	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
+
+	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, detail::RootHelper<IsLine>& ) const;
+
+/// Called by default constructor, overload for lines
+	void impl_init( const detail::RootHelper<IsLine>& )
+	{
+		_v[0] = 1.;
+		_v[1] = 0.;
+		_v[2] = 0.;
+	}
+/// Called by default constructor, overload for points
+	void impl_init( const detail::RootHelper<IsPoint>& )
+	{
+		_v[0] = 0.;
+		_v[1] = 0.;
+		_v[2] = 1.;
+	}
 };
 
 //------------------------------------------------------------------
@@ -673,6 +697,8 @@ Root<IsPoint>::set( double x, double y )
 */
 
 //------------------------------------------------------------------
+
+#if 0
 /// Default operator << for lines
 template<typename LP>
 std::ostream&
@@ -690,8 +716,34 @@ operator << ( std::ostream& f, const Root<IsPoint>& r )
 	f << '[' << r.getX() << ',' << r.getY() << "] ";
 	return f;
 }
+#endif
+
+/// overload for points
+template<typename LP,typename FPT>
+void
+stream_impl( std::ostream& f, const Root<LP,FPT>& r, detail::RootHelper<IsPoint>() )
+{
+	f << '[' << r.getX() << ',' << r.getY() << "] ";
+}
+
+/// overload for lines
+template<typename LP,typename FPT>
+void
+stream_impl( std::ostream& f, const Root<LP,FPT>& r, detail::RootHelper<IsLine>() )
+{
+	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+}
+
+template<typename LP,typename FPT>
+std::ostream&
+operator << ( std::ostream& f, const Root<LP,FPT>& r )
+{
+	stream_impl( f, r, detail::RootHelper<LP>() );
+	return f;
+}
 
 //------------------------------------------------------------------
+#if 0
 /// Normalize to unit length, and make sure \c a is always >0
 template<>
 void Root<IsLine>::p_normalizeLine()
@@ -712,12 +764,35 @@ void Root<IsLine>::p_normalizeLine()
 			_v[2] = - _v[2];
 		}
 }
+#endif
+
+template<typename LP,typename FPT>
+void
+Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<IsLine>& ) const
+{
+	auto sq = std::hypot( _v[0], _v[1] );
+	if( sq <= std::numeric_limits<double>::epsilon() )
+		throw std::runtime_error( "unable to normalize line" );
+	for( int i=0; i<3; i++ )
+		_v[i] /= sq;
+	if( std::signbit(_v[0]) ) //a allways >0
+		for( int i=0; i<3; i++ )
+			_v[i] = -_v[i];
+
+	if( _v[0] == 0. ) // then, change sign so that b>0
+		if( std::signbit(_v[1]) )
+		{
+			_v[1] = - _v[1];
+			_v[2] = - _v[2];
+		}
+}
 
 //------------------------------------------------------------------
+#if 0
 /// Specialization for lines (no implementation for points)
 template<>
 double
-Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
+Root<IsLine>::getCoord( En_GivenCoord gc, double other ) const
 {
 	if( gc == GC_X )
 		return ( -_v[0] * other - _v[2] ) / _v[1];
@@ -735,14 +810,31 @@ Root<IsLine>::getPoint( En_GivenCoord gc, double other ) const
 		return Root<IsPoint>( other, coord );
 	return Root<IsPoint>( coord, other );
 }
+#endif
+
+template<typename LP,typename FPT>
+double
+Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
+{
+	return 0;
+}
+
+template<typename LP,typename FPT>
+Root<IsPoint,FPT>
+Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
+{
+	return Root<IsPoint,FPT>();
+}
+
 //------------------------------------------------------------------
 ///////////////////////////////////////////
 // DEFAULT CONSTRUCTORS
 ///////////////////////////////////////////
 
+#if 0
 /// Default constructor, generic function, used for points
-template<typename LP>
-Root<LP>::Root()
+template<typename LP,typename FPT>
+Root<LP,FPT>::Root()
 {
 	_v[0] = 0.;
 	_v[1] = 0.;
@@ -757,7 +849,6 @@ Root<IsLine>::Root()
 	_v[1] = 0.;
 	_v[2] = 0.;
 }
-
 //------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other
 template<>
@@ -777,6 +868,28 @@ Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 	out.p_normalizeLine();
 	return out;
 }
+#endif
+//------------------------------------------------------------------
+/// Returns an orthogonal line, at gc=other
+
+template<typename LP,typename FPT>
+Root<IsLine,FPT>
+Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, detail::RootHelper<IsLine>& ) const
+{
+	Root<IsLine,FPT> out;
+	auto other_val = impl_getValue( gc, val, detail::RootHelper<IsLine>() );
+
+	Root<IsPoint> pt( other_val, val ) ;
+	if( gc == GC_X )
+		pt.set( val, other_val );
+
+	out._v[0] = -_v[1];
+	out._v[1] =  _v[0];
+	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
+	out.p_normalizeLine();
+	return out;
+}
+
 
 //------------------------------------------------------------------
 /// Default comparison operator, used for Lines
