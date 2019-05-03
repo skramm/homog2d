@@ -65,11 +65,11 @@ Line2d li(4,2);
 ```
 You can compute the coordinate of y for x=2 with:
 ```C++
-auto y = li.getValue( GC_X, 2 );
+auto y = li.getCoord( GC_X, 2 );
 ```
 of get the coordinate of x for y=1 with:
 ```C++
-auto x = li.getValue( GC_Y, 1 );
+auto x = li.getCoord( GC_Y, 1 );
 ```
 
 You can also get directly the point with:
@@ -279,18 +279,19 @@ You can do that in the makefile or just add a `#define` on top of your program,
 
 ### Inner details
 
-To be able to templatize all the code on the root numerical data type (float, double), we implement some trick.
-Indeed, as the Root class is already templatized on the type (Point or Line),
-it would require a partial template specialization to define each member function (or free function),
-which C++ does not allow.
+To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
+As the Root class is already templatized on the type (Point or Line),
+it would require a partial template specialization to define the behavior of each member function (or free function),
+depending on the basic type (Line or Point) and still templatized on the numerical type.
+C++ does not allow this |-(.
 
-Thus, the trick here is to call a "sub" private function (each prefixed with `impl_`) that gets overloaded
-by the datatype.
-To achieve this overlading, each of these functions receives as additional argument an object of type RootHelper,
+Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
+by the datatype (point or line).
+To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type RootHelper,
 templated by the numerical type.
 In the definition of the function, this additional argument is ignored,
-it is there just so that the compiler can select the correct overload,
-in a similar way of what happens with templates.
+it is there just so that the compiler can select the correct overload
+(in a similar way of what happens with templates).
 
 Thus, we can write the two implementations as two 'impl_' function, that are still templated by the numerical data type.
 
