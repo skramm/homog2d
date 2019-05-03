@@ -66,7 +66,7 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
 		Line2d  lB = ptB1 * ptB2;
-		CHECK( lB.getValue( GC_X, 1 ) == 1. );
+		CHECK( lB.getCoord( GC_X, 1 ) == 1. );
 		CHECK( lB.getPoint(GC_X, 1) == Point2d(1,1) );
 	}
 
@@ -132,8 +132,8 @@ TEST_CASE( "test1", "[test1]" )
 	}
 	{
 		Line2d li(4,2);
-		CHECK( li.getValue( GC_X, 2 ) == 1 );
-		CHECK( li.getValue( GC_Y, 1 ) == 2 );
+		CHECK( li.getCoord( GC_X, 2 ) == 1 );
+		CHECK( li.getCoord( GC_Y, 1 ) == 2 );
 		CHECK( li.getPoint( GC_X, 2 ) == Point2d(2,1) );
 		CHECK( li.getPoint( GC_Y, 1 ) == Point2d(2,1) );
 	}
@@ -148,11 +148,11 @@ TEST_CASE( "dist2points", "[test2]" )
 	auto d2 = li.distToPoint( Point2d(4,2) );
 	CHECK( d2 == 0. );
 
-	CHECK( li.getValue( GC_X, 0. ) == 0. );
-	CHECK( li.getValue( GC_X, 2. ) == 1. );
+	CHECK( li.getCoord( GC_X, 0. ) == 0. );
+	CHECK( li.getCoord( GC_X, 2. ) == 1. );
 
-	CHECK( li.getValue( GC_Y, 0. ) == 0. );
-	CHECK( li.getValue( GC_Y, 1. ) == 2. );
+	CHECK( li.getCoord( GC_Y, 0. ) == 0. );
+	CHECK( li.getCoord( GC_Y, 1. ) == 2. );
 
 	Point2d p1( 3,3);
 	Point2d p2( 4,4);

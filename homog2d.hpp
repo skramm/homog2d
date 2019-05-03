@@ -543,7 +543,7 @@ friend Root<T1> detail::crossProduct( const Root<T2>&, const Root<T2>& );
 	template<typename T> Root( const T&, const T&);
 	Root();
 
-	double getValue( En_GivenCoord gc, double other ) const;
+	double getCoord( En_GivenCoord gc, double other ) const;
 	Root<IsPoint> getPoint( En_GivenCoord gc, double other ) const;
 	Root<LP> getOrthogonalLine( En_GivenCoord gc, double other ) const;
 
@@ -683,7 +683,7 @@ void Root<IsLine>::p_normalizeLine()
 /// Specialization for lines (no implementation for points)
 template<>
 double
-Root<IsLine>::getValue( En_GivenCoord gc, double other ) const
+Root<IsLine>::getCoord( En_GivenCoord gc, double other ) const
 {
 	if( gc == GC_X )
 		return ( -_v[0] * other - _v[2] ) / _v[1];
@@ -696,7 +696,7 @@ template<>
 Root<IsPoint>
 Root<IsLine>::getPoint( En_GivenCoord gc, double other ) const
 {
-	auto coord = getValue( gc, other );
+	auto coord = getCoord( gc, other );
 	if( gc == GC_X )
 		return Root<IsPoint>( other, coord );
 	return Root<IsPoint>( coord, other );
@@ -731,7 +731,7 @@ Root<IsLine>
 Root<IsLine>::getOrthogonalLine( En_GivenCoord gc, double val ) const
 {
 	Root<IsLine> out;
-	auto other_val = getValue( gc, val );
+	auto other_val = getCoord( gc, val );
 
 	Root<IsPoint> pt( other_val, val ) ;
 	if( gc == GC_X )
