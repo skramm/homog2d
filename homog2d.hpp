@@ -522,22 +522,6 @@ namespace detail {
 	template<typename>
 	struct RootHelper {};
 
-/// Traits class, see https://stackoverflow.com/a/55653498/193789
-	template<typename>
-	struct RootTraits;
-
-	template<>
-	struct RootTraits<IsPoint>
-	{
-		using other_type = IsLine;
-	};
-
-	template<>
-	struct RootTraits<IsLine>
-	{
-		using other_type = IsPoint;
-	};
-
 } // namespace detail
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
@@ -583,7 +567,7 @@ class Root
 	template<typename T>
 	Root( const T& v1, const T& v2 )
 	{
-		impl_init( v1, v2, detail::RootHelper<LP>() );
+		impl_init_2( v1, v2, detail::RootHelper<LP>() );
 	}
 	Root()
 	{
@@ -672,9 +656,6 @@ class Root
 	};
 
 	RectIntersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
-/*	{
-		return impl_intersectsRectangle( pt1, pt2 );
-	}*/
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
 	{
@@ -692,10 +673,6 @@ class Root
 	{
 		return !(*this == other);
 	}
-
-// see https://stackoverflow.com/a/55653498/193789
-//	using Product_t = Root<typename detail::RootTraits<LP>::other_type,FPT>;
-//	Product_t operator * ( const Root<LP,FPT>& rhs ) const;
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
@@ -747,13 +724,14 @@ class Root
 		_v[2] = 1.;
 	}
 	template<typename T>
-	void impl_init( const T& v1, const T& v2, const detail::RootHelper<IsPoint>& );
+	void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsPoint>& );
 	template<typename T>
-	void impl_init( const T& v1, const T& v2, const detail::RootHelper<IsLine>& );
+	void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsLine>& );
 };
 
 //------------------------------------------------------------------
 /// overload for points
+/// \todo now member function so we can use the object itself, but need to keep the second parameter so the compiler can select the correct overload
 template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<IsPoint,FPT>& r ) const
@@ -769,7 +747,7 @@ Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<IsLine,FPT>& r ) const
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 }
 
-/// Stream operator, free function
+/// Stream operator, free function, call member function pseudo operator
 template<typename LP,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const Root<LP,FPT>& r )
@@ -1021,14 +999,14 @@ operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
 template<typename LP, typename FPT>
 template<typename T>
 void
-Root<LP,FPT>::impl_init( const T& v1, const T& v2, const detail::RootHelper<IsPoint>& )
+Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsPoint>& )
 {
 }
 
 template<typename LP, typename FPT>
 template<typename T>
 void
-Root<LP,FPT>::impl_init( const T& v1, const T& v2, const detail::RootHelper<IsLine>& )
+Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsLine>& )
 {
 }
 
