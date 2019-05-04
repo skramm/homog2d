@@ -550,17 +550,25 @@ class Root
 	template<typename U>
 	friend class Homogr_;
 
-//	friend Root<IsLine,FPT>  operator * ( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& );
-//	friend Root<IsPoint,FPT> operator * ( const Root<IsLine,FPT>&,  const Root<IsLine,FPT>& );
-
 	template<typename T,typename U,typename V>
-	friend Root<T,V> operator * ( const Root<U,V>&, const Root<U,V>& );
+	friend Root<T,V>
+	operator * ( const Homogr_<U>&, const Root<T,V>& );
 
-	template<typename T,typename U,typename V>
-	friend Root<T,V> operator * ( const Homogr_<U>& h, const Root<T,V>& in );
+	template<typename T>
+	friend Root<IsPoint,T>
+	operator * ( const Root<IsLine,T>&, const Root<IsLine,T>& );
+
+	template<typename T>
+	friend Root<IsLine,T>
+	operator * ( const Root<IsPoint,T>&, const Root<IsPoint,T>& );
 
 	template<typename T1,typename T2,typename T3>
-	friend Root<T1,T3> detail::crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
+	friend Root<T1,T3>
+	detail::crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
+
+	template<typename U,typename V>
+	friend std::ostream&
+	operator << ( std::ostream& f, const Root<U,V>& r );
 
 	private:
 	Root( double a, double b, double c )
@@ -634,6 +642,9 @@ class Root
 		double impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 
+		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
+		void impl_op_stream( std::ostream&, const Root<IsLine,FPT>& ) const;
+
 	public:
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
 /// Only defined for Point2d
@@ -683,12 +694,8 @@ class Root
 	}
 
 // see https://stackoverflow.com/a/55653498/193789
-	using Product_t = Root<typename detail::RootTraits<LP>::other_type,FPT>;
-	Product_t operator * ( const Root<LP,FPT>& rhs ) const;
-
-// friend functions and operators
-	template<typename T>
-	friend std::ostream& operator << ( std::ostream& f, const Root<T,FPT>& r );
+//	using Product_t = Root<typename detail::RootTraits<LP>::other_type,FPT>;
+//	Product_t operator * ( const Root<LP,FPT>& rhs ) const;
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
@@ -717,8 +724,8 @@ class Root
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 
-	Root<IsPoint,FPT> impl_op_product( const Root<IsLine,FPT>&  lhs, const Root<IsLine,FPT>&  rhs ) const;
-	Root<IsLine,FPT>  impl_op_product( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs ) const;
+	Root<IsPoint,FPT> impl_op_product( const Root<IsLine,FPT>& , const Root<IsLine,FPT>& , const detail::RootHelper<IsPoint>& ) const;
+	Root<IsLine,FPT>  impl_op_product( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsLine>&  ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
 	cv::Point2f impl_getCvPtf( const detail::RootHelper<IsPoint>& ) const;
@@ -749,7 +756,7 @@ class Root
 /// overload for points
 template<typename LP,typename FPT>
 void
-stream_impl( std::ostream& f, const Root<LP,FPT>& r, detail::RootHelper<IsPoint>() )
+Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<IsPoint,FPT>& r ) const
 {
 	f << '[' << r.getX() << ',' << r.getY() << "] ";
 }
@@ -757,16 +764,17 @@ stream_impl( std::ostream& f, const Root<LP,FPT>& r, detail::RootHelper<IsPoint>
 /// overload for lines
 template<typename LP,typename FPT>
 void
-stream_impl( std::ostream& f, const Root<LP,FPT>& r, detail::RootHelper<IsLine>() )
+Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<IsLine,FPT>& r ) const
 {
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 }
 
+/// Stream operator, free function
 template<typename LP,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const Root<LP,FPT>& r )
 {
-	stream_impl( f, r, detail::RootHelper<LP>() );
+	r.impl_op_stream( f, r );
 	return f;
 }
 
@@ -935,12 +943,12 @@ operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
 	}
 	return pt;
 }
-#endif
+
 
 /// member function template, overload for Points, return a line
 template<typename LP,typename FPT>
 Root<IsLine,FPT>
-Root<LP,FPT>::impl_op_product( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs ) const
+Root<LP,FPT>::impl_op_product( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs, const detail::RootHelper<IsLine>& ) const
 {
 	Root<IsLine, FPT> line = detail::crossProduct<IsLine,IsPoint,FPT>(lhs, rhs);
 	line.p_normalizeLine();
@@ -949,7 +957,7 @@ Root<LP,FPT>::impl_op_product( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,
 /// member function template, overload for Lines
 template<typename LP,typename FPT>
 Root<IsPoint,FPT>
-Root<LP,FPT>::impl_op_product( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs ) const
+Root<LP,FPT>::impl_op_product( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs, const detail::RootHelper<IsPoint>& ) const
 {
 	auto pt = detail::crossProduct<IsPoint,IsLine,FPT>(lhs, rhs);
 	auto eps = std::numeric_limits<double>::epsilon();
@@ -963,13 +971,46 @@ Root<LP,FPT>::impl_op_product( const Root<IsLine,FPT>& lhs, const Root<IsLine,FP
 	return pt;
 }
 
+
 /// member function template
-template<typename LP,typename FPT>
-typename Root<LP,FPT>::Product_t
-Root<LP,FPT>::operator * ( const Root<LP,FPT>& rhs ) const
+template<typename In,typename Out,typename FPT>
+//typename Root<LP,FPT>::Product_t
+//Root<LP,FPT>::
+Root<Out,FPT>&
+operator * ( const Root<In,FPT>& lhs, const Root<In,FPT>& rhs ) const
 {
-	return impl_op_product( *this, rhs /*, detail::RootHelper<LP>() */);
+	return impl_op_product( lhs, rhs ); //, detail::RootHelper<typename Root<LP,FPT>::Product_t>() );
 }
+
+#endif
+
+template<typename FPT>
+Root<IsPoint,FPT>
+operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
+{
+	auto pt = detail::crossProduct<IsPoint,IsLine,FPT>(lhs, rhs);
+	auto eps = std::numeric_limits<double>::epsilon();
+	if( std::fabs(pt._v[2]) <= eps )
+	{
+		std::ostringstream lh,lr;
+		lh << lhs;
+		lr << rhs;
+		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
+	}
+	return pt;
+}
+
+template<typename FPT>
+Root<IsLine,FPT>
+operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
+{
+	Root<IsLine, FPT> line = detail::crossProduct<IsLine,IsPoint,FPT>(lhs, rhs);
+	line.p_normalizeLine();
+	return line;
+}
+
+
+
 
 //------------------------------------------------------------------
 ///////////////////////////////////////////
