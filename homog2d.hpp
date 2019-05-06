@@ -96,7 +96,7 @@ class Homogr_
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
 - no checking is done on validity of matrix as an homography.
-Thus some assert can be triggered elsewhere
+Thus some assert can get triggered elsewhere.
 */
 	template<typename T>
 	Homogr_( const std::vector<std::vector<T>>& in )
@@ -246,6 +246,7 @@ Thus some assert can be triggered elsewhere
 					e = -e;
 		_isNormalized = true;
 	}
+
 /// Transpose matrix
 	Homogr_& transpose()
 	{
@@ -256,6 +257,7 @@ Thus some assert can be triggered elsewhere
 		*this = out;
 		return *this;
 	}
+
 /// Inverse matrix
 	Homogr_& inverse()
 	{
@@ -522,17 +524,6 @@ namespace detail {
 	template<typename>
 	struct RootHelper {};
 
-	template<typename U,typename V>
-	struct InitHelperClass
-	{
-		// generic
-		std::pair<U,U> initHelper( V v1, V v2 ) const
-		{
-//			return std::make_pair<
-		}
-	};
-// class specialization for
-
 } // namespace detail
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
@@ -699,7 +690,10 @@ class Root
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() );
+	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	{
+		return impl_drawCvMat( mat, dp, detail::RootHelper<LP>() );
+	}
 	cv::Point2d getCvPtd() const { return impl_getCvPtd( detail::RootHelper<LP>() ); }
 	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
 #endif
@@ -730,6 +724,8 @@ class Root
 #ifdef HOMOG2D_USE_OPENCV
 	cv::Point2f impl_getCvPtf( const detail::RootHelper<IsPoint>& ) const;
 	cv::Point2d impl_getCvPtd( const detail::RootHelper<IsPoint>& ) const;
+	bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<IsPoint>& );
+	bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<IsLine>& );
 #endif
 
 /// Called by default constructor, overload for lines
@@ -1234,36 +1230,6 @@ Homogr_<FPT>::getFrom( const cv::Mat& mat ) const
 		default: assert(0);
 	}
 }
-//------------------------------------------------------------------
-/// Draw line on Cv::Mat. Specialization for lines.
-/**
-Returns false if line is not in image.
-
-Steps:
- -# builds the 4 corner points of the image
- -# build the 4 corresponding lines (borders of the image)
- -# find the intersection points between the line and these 4 lines. Should find 2
- -# draw a line between these 2 points
-*/
-template<>
-bool
-Root<IsLine>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
-{
-	assert( mat.rows > 2 );
-	assert( mat.cols > 2 );
-
-	Root<IsPoint> pt1; // 0,0
-	Root<IsPoint> pt2( mat.cols-1, mat.rows-1 );
-    RectIntersect ri = this->intersectsRectangle( pt1,  pt2 );
-    if( ri() )
-    {
-		cv::Point2d ptcv1 = ri.ptA.getCvPtd();
-		cv::Point2d ptcv2 = ri.ptB.getCvPtd();
-		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
-		return true;
-	}
-	return false;
-}
 
 //------------------------------------------------------------------
 namespace detail {
@@ -1311,11 +1277,11 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 }
 } // namespace detail
 //------------------------------------------------------------------
-/// Draw line on Cv::Mat. Specialization for points.
+/// Draw Point on Cv::Mat. Overload for points.
 /// Returns false if point not in image
-template<>
+template<typename LP, typename FPT>
 bool
-Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
+Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<IsPoint>& /* dummy */ )
 {
 	if( getX()<0 || getX()>=mat.cols )
 		return false;
@@ -1346,17 +1312,54 @@ Root<IsPoint>::drawCvMat( cv::Mat& mat, CvDrawParams dp )
 	}
 	return true;
 }
+//------------------------------------------------------------------
+/// Draw line on Cv::Mat. Overload for lines.
+/**
+Returns false if line is not in image.
+
+Steps:
+ -# builds the 4 corner points of the image
+ -# build the 4 corresponding lines (borders of the image)
+ -# find the intersection points between the line and these 4 lines. Should find 2
+ -# draw a line between these 2 points
+*/
+template<typename LP, typename FPT>
+bool
+Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<IsLine>& /* dummy */ )
+{
+	assert( mat.rows > 2 );
+	assert( mat.cols > 2 );
+
+	Root<IsPoint,FPT> pt1; // 0,0
+	Root<IsPoint,FPT> pt2( mat.cols-1, mat.rows-1 );
+    RectIntersect ri = this->intersectsRectangle( pt1,  pt2 );
+    if( ri() )
+    {
+		cv::Point2d ptcv1 = ri.ptA.getCvPtd();
+		cv::Point2d ptcv2 = ri.ptB.getCvPtd();
+		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
+		return true;
+	}
+	return false;
+}
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
 
+/// Default line type, uses \c double as numerical type
 typedef Root<IsLine,double>  Line2d;
+
+/// Default point type, uses \c double as numerical type
 typedef Root<IsPoint,double> Point2d;
 
-/// Default data type is double
-typedef Homogr_<double> Homogr;
+/// Default homography (3x3 matrix) type, uses \c double as numerical type
+//typedef Homogr_<double> Homogr;
+using Homogr = Homogr_<double>;
+
 typedef Homogr_<double> HomogrD;
+
+/// Homography (3x3 matrix) type using \c float as numerical type
 typedef Homogr_<float>  HomogrF;
 
 template<typename T>

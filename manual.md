@@ -282,7 +282,7 @@ You can do that in the makefile or just add a `#define` on top of your program,
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
 As the Root class is already templatized on the type (Point or Line),
 it would require a partial template specialization to define the behavior of each member function (or free function),
-depending on the basic type (Line or Point) and still templatized on the numerical type.
+depending on the basic type (Line or Point), and still templatize on the numerical type.
 C++ does not allow this |-(.
 
 Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
