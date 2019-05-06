@@ -522,6 +522,17 @@ namespace detail {
 	template<typename>
 	struct RootHelper {};
 
+	template<typename U,typename V>
+	struct InitHelperClass
+	{
+		// generic
+		std::pair<U,U> initHelper( V v1, V v2 ) const
+		{
+//			return std::make_pair<
+		}
+	};
+// class specialization for
+
 } // namespace detail
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point or a Line
@@ -564,11 +575,23 @@ class Root
 
 	public:
 
+	Root( const Root<IsLine,FPT>& v1, const Root<IsLine,FPT>& v2 )
+	{
+		*this = detail::crossProduct<IsPoint>( v1, v2 );
+	}
+
+	Root( const Root<IsPoint,FPT>& v1, const Root<IsPoint,FPT>& v2 )
+	{
+		*this = detail::crossProduct<IsLine>( v1, v2 );
+		p_normalizeLine();
+	}
+
 	template<typename T>
 	Root( const T& v1, const T& v2 )
 	{
 		impl_init_2( v1, v2, detail::RootHelper<LP>() );
 	}
+
 	Root()
 	{
 		impl_init( detail::RootHelper<LP>() );
@@ -682,7 +705,7 @@ class Root
 #endif
 
 	private:
-	FPT _v[3];
+	FPT _v[3]; ///< data
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -747,7 +770,7 @@ Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<IsLine,FPT>& r ) const
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 }
 
-/// Stream operator, free function, call member function pseudo operator
+/// Stream operator, free function, call member function pseudo operator impl_op_stream()
 template<typename LP,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const Root<LP,FPT>& r )
@@ -805,30 +828,6 @@ Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootH
 	return Root<IsPoint,FPT>( coord, other );
 }
 
-//------------------------------------------------------------------
-///////////////////////////////////////////
-// DEFAULT CONSTRUCTORS
-///////////////////////////////////////////
-
-#if 0
-/// Default constructor, generic function, used for points
-template<typename LP,typename FPT>
-Root<LP,FPT>::Root()
-{
-	_v[0] = 0.;
-	_v[1] = 0.;
-	_v[2] = 1.;
-}
-
-/// Default constructor, specialization for lines, build vertical line at x=0
-template<>
-Root<IsLine>::Root()
-{
-	_v[0] = 1.;
-	_v[1] = 0.;
-	_v[2] = 0.;
-}
-#endif
 //------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other
 template<typename LP,typename FPT>
@@ -894,74 +893,7 @@ namespace detail
 	}
 }
 
-#if 0
-//------------------------------------------------------------------
-/// Product of two points is a line (free function)
-Root<IsLine,FPT>
-operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
-{
-	Root<IsLine> line = detail::crossProduct<IsLine>(lhs, rhs);
-	line.p_normalizeLine();
-	return line;
-}
-
-//------------------------------------------------------------------
-/// Product of two lines is a point (free function)
-Root<IsPoint,FPT>
-operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
-{
-	auto pt = detail::crossProduct<IsPoint>(lhs, rhs);
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( std::fabs(pt._v[2]) <= eps )
-	{
-		std::ostringstream lh,lr;
-		lh << lhs;
-		lr << rhs;
-		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
-	}
-	return pt;
-}
-
-
-/// member function template, overload for Points, return a line
-template<typename LP,typename FPT>
-Root<IsLine,FPT>
-Root<LP,FPT>::impl_op_product( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs, const detail::RootHelper<IsLine>& ) const
-{
-	Root<IsLine, FPT> line = detail::crossProduct<IsLine,IsPoint,FPT>(lhs, rhs);
-	line.p_normalizeLine();
-	return line;
-}
-/// member function template, overload for Lines
-template<typename LP,typename FPT>
-Root<IsPoint,FPT>
-Root<LP,FPT>::impl_op_product( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs, const detail::RootHelper<IsPoint>& ) const
-{
-	auto pt = detail::crossProduct<IsPoint,IsLine,FPT>(lhs, rhs);
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( std::fabs(pt._v[2]) <= eps )
-	{
-		std::ostringstream lh,lr;
-		lh << lhs;
-		lr << rhs;
-		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
-	}
-	return pt;
-}
-
-
-/// member function template
-template<typename In,typename Out,typename FPT>
-//typename Root<LP,FPT>::Product_t
-//Root<LP,FPT>::
-Root<Out,FPT>&
-operator * ( const Root<In,FPT>& lhs, const Root<In,FPT>& rhs ) const
-{
-	return impl_op_product( lhs, rhs ); //, detail::RootHelper<typename Root<LP,FPT>::Product_t>() );
-}
-
-#endif
-
+/// free function template, product of two lines
 template<typename FPT>
 Root<IsPoint,FPT>
 operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
@@ -978,6 +910,7 @@ operator * ( const Root<IsLine,FPT>& lhs, const Root<IsLine,FPT>& rhs )
 	return pt;
 }
 
+/// free function template, product of two points
 template<typename FPT>
 Root<IsLine,FPT>
 operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
@@ -986,77 +919,34 @@ operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
 	line.p_normalizeLine();
 	return line;
 }
-
-
-
 
 //------------------------------------------------------------------
 ///////////////////////////////////////////
 // CONSTRUCTORS
 ///////////////////////////////////////////
 
-
+/// Points overload: generic init from two args
 template<typename LP, typename FPT>
 template<typename T>
 void
 Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsPoint>& )
 {
+	_v[0] = v1;
+	_v[1] = v2;
+	_v[2] = 1.;
 }
 
+/// Lines overload: generic init from two args
 template<typename LP, typename FPT>
 template<typename T>
 void
 Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsLine>& )
 {
-}
-
-
-#if 0
-/// generic 2 arg constructor implementation
-template<typename LP>
-template<typename T>
-Root<LP>::Root( const T& v0, const T& v1 )
-{
-	assert(0);
-}
-
-/// constructor of a point from two values (specialization)
-template<>
-template<typename T>
-Root<IsPoint>::Root( const T& v0, const T& v1 )
-{
-	_v[0] = v0;
-	_v[1] = v1;
-	_v[2] = 1.;
-}
-
-/// constructor of a line from two values (vector dx/dy). (specialization)
-template<>
-template<typename T>
-Root<IsLine>::Root( const T& dx, const T& dy )
-{
-	*this = detail::crossProduct<IsLine>( Root<IsPoint>(), Root<IsPoint>( dx, dy ) );
+	Root<IsPoint,FPT> pt1;                // 0,0
+	Root<IsPoint,FPT> pt2(v1,v2);
+	*this = detail::crossProduct<IsLine>( pt1, pt2 );
 	p_normalizeLine();
 }
-
-
-/// constructor of a point from two lines (specialization)
-template<>
-template<>
-Root<IsPoint>::Root( const Root<IsLine>& v1, const Root<IsLine>& v2 )
-{
-	*this = detail::crossProduct<IsPoint>( v1, v2 );
-}
-
-/// Constructor of a line from two points (specialization)
-template<>
-template<>
-Root<IsLine>::Root( const Root<IsPoint>& v1, const Root<IsPoint>& v2 )
-{
-	*this = detail::crossProduct<IsLine>( v1, v2 );
-	p_normalizeLine();
-}
-#endif
 
 /// overload for point to point distance
 template<typename LP, typename FPT>
@@ -1097,8 +987,6 @@ Root<LP,FPT>::impl_addOffset( En_OffsetDir dir, T v, const detail::RootHelper<Is
 	p_normalizeLine();
 }
 
-
-//#if 0
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
@@ -1107,7 +995,6 @@ getAngle( const Root<IsLine,FPT>& li1, const Root<IsLine,FPT>& li2 )
 {
 	return li1.getAngle( li2 );
 }
-//#endif
 
 //------------------------------------------------------------------
 /// Returns the angle (in Rad) between the line and another one.
@@ -1469,8 +1356,8 @@ typedef Root<IsPoint,double> Point2d;
 
 /// Default data type is double
 typedef Homogr_<double> Homogr;
-//typedef Homogr_<double> HomogrD;
-//typedef Homogr_<float>  HomogrF;
+typedef Homogr_<double> HomogrD;
+typedef Homogr_<float>  HomogrF;
 
 template<typename T>
 using RectIntersect_ = typename Root<IsLine,T>::RectIntersect;
