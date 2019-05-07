@@ -84,14 +84,14 @@ The values `GC_Y`,`GC_Y` are just a two-values `enum`.
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-Line2d li2 = li.getOrthogonalLine( li , GC_X, 2 );
+Line2d li2 = li.getOrthogonalLine( GC_X, 2 );
 ```
 will compute the orthogonal line at `x=2`.
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
-auto angle = li2.getAngle( li1 );
-auto angle = getAngle( li1, li2 );
+auto angle1 = li2.getAngle( li1 );
+auto angle2 = getAngle( li1, li2 );
 ```
 
 ## 3 - Homographies
@@ -127,12 +127,6 @@ Homogr h; // unit transformation
 h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
 ```
 
-- This works with inversion and transpose too:
-```C++
-h.inverse().transpose(); // first, invert, second, transpose
-```
-
-
 - You can access individual values of the matrix (read or write).
 This is needed if you want to set up some specific transformation (shearing, perspective, whatever):
 ```C++
@@ -153,6 +147,7 @@ This actually works with any other container on whom one can iterate, such as `s
 ```C++
 h.inverse();
 h.transpose();
+h.inverse().transpose(); // first, invert, second, transpose
 ```
 
 ## 4 - Flat rectangle intersection
@@ -196,7 +191,8 @@ Again, the two points can be any of the four corners of the rectangle.
 Import from other types is pretty much straight forward.
 For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
 For homographies, you can import directly from
-`std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`
+`std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`.
+For the first case, it is mandatory that the all 4 vectors size is 3 (the 3 embedded ones and the global one).
 
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
 This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time.
@@ -231,16 +227,16 @@ The drawing parameters default values can be changed anytime with a call to `set
 and values will be retained, unless explicitely changed, as showed in the example below;
 
 ```C++
-	CvDrawParams dp; // default line thickness is 1
-	dp.setColor( 0,  0, 250).setThickness(3);
-	dp.setDefault();
-	line.drawCvMat( some_img ); // use default settings
-	line.drawCvMat( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+CvDrawParams dp; // default line thickness is 1
+dp.setColor( 0,  0, 250).setThickness(3);
+dp.setDefault();
+line.drawCvMat( some_img ); // use default settings
+line.drawCvMat( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
 ```C++
-	CvDrawParams::resetDefault();
+CvDrawParams::resetDefault();
 ```
 
 
