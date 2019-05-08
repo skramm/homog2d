@@ -526,10 +526,7 @@ namespace detail {
 
 } // namespace detail
 //------------------------------------------------------------------
-/// Base class, will be instanciated as a Point or a Line
-/**
-\todo template root type
-*/
+/// Base class, will be instanciated as a Point2d or a Line2d
 template<typename LP,typename FPT>
 class Root
 {
@@ -1348,19 +1345,34 @@ Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail
 
 
 /// Default line type, uses \c double as numerical type
-typedef Root<IsLine,double>  Line2d;
+using Line2d = Root<IsLine,double>;
 
 /// Default point type, uses \c double as numerical type
-typedef Root<IsPoint,double> Point2d;
+using Point2d = Root<IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
-//typedef Homogr_<double> Homogr;
 using Homogr = Homogr_<double>;
 
-typedef Homogr_<double> HomogrD;
+// float types
+using Line2dF  = Root<IsLine,float>;
+using Point2dF = Root<IsPoint,float>;
+using HomogrF  = Homogr_<float>;
 
-/// Homography (3x3 matrix) type using \c float as numerical type
-typedef Homogr_<float>  HomogrF;
+// double types
+using Line2dD  = Root<IsLine,double>;
+using Point2dD = Root<IsPoint,double>;
+using HomogrD  = Homogr_<double>;
+
+// long double types
+using Line2dL  = Root<IsLine,long double>;
+using Point2dL = Root<IsPoint,long double>;
+using HomogrL  = Homogr_<long double>;
+
+
+template<typename T>
+using Point2d_ = Root<IsPoint,T>;
+template<typename T>
+using Line2d_  = Root<IsLine,T>;
 
 template<typename T>
 using RectIntersect_ = typename Root<IsLine,T>::RectIntersect;

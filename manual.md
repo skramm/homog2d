@@ -7,6 +7,7 @@ Home page: https://github.com/skramm/homog2d
 1. [2D transformation (aka homographies)](#matrix)
 1. [Flat rectangle intersection](#rect)
 1. [Bindings](#bind)
+1. [Numerical data types](#numdt)
 1. [Technical details](#tech)
 
 ## 1 - Introduction
@@ -247,7 +248,26 @@ You can at any time return to the "factory" settings with a call to a static fun
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-## 6 - Technical details
+## 6 - Numerical data types
+<a name="numdt"></a>
+
+The library is fully templated, the user has the ability to select for each type either
+`float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
+
+The default datatype used for `Point2d`, `Line2d` or `Homogr` is `double`.
+The other types can be selected by an additional suffix letter added after the type:
+
+`F` for `float`, `D` for `double` and `L` for `long double`.
+
+For example: `Point2dF`, `Line2dF` or `HomogrF` are float types.
+
+If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`, which are templated types:
+
+```
+Point2d_<float> pt; // this is fine
+```
+
+## 7 - Technical details
 <a name="tech"></a>
 
 - The library is fully templated, the two types `Point2d` and `Line2d` are actually the same class,

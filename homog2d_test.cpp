@@ -46,6 +46,29 @@ double g_epsilon = std::numeric_limits<double>::epsilon()*10.;
 
 using namespace homog2d;
 
+TEST_CASE( "types testing", "[testtypes]" )
+{
+	Point2dF ptF;
+	Point2dD ptD;
+	Point2dL ptL;
+
+	Line2dF liF;
+	Line2dD liD;
+	Line2dL liL;
+
+	HomogrF HF;
+	HomogrD HD;
+	HomogrL HL;
+
+	Point2d_<float> pt2F1;
+	Point2d_<double> pt2F2;
+	Point2d_<long double> pt2F3;
+
+	CHECK( sizeof(Point2dF) == 12 );
+	CHECK( sizeof(Point2dD) == 24 );
+	CHECK( sizeof(Point2dL) == 48 );
+}
+
 TEST_CASE( "test1", "[test1]" )
 {
 	Point2d ptA1; // 0,0
