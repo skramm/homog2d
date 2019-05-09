@@ -17,17 +17,17 @@ test: homog2d_test demo_check
 	./homog2d_test
 
 
-demo_check: demo_check.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -o demo_check demo_check.cpp
+demo_check: misc/demo_check.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -o demo_check misc/demo_check.cpp
 
-homog2d_test: homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -o homog2d_test homog2d_test.cpp $(LDFLAGS)
+homog2d_test: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -o homog2d_test misc/homog2d_test.cpp $(LDFLAGS)
 
 doc: html/index.html
 	@echo "done !"
 
-html/index.html: homog2d_test.cpp homog2d.hpp doxyfile
-	doxygen doxyfile
+html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile
+	doxygen misc/doxyfile
 
 install:
 	cp homog2d.hpp /usr/local/include
@@ -36,8 +36,8 @@ demo: demo_opencv demo_check
 	./demo_opencv
 
 # this target REQUIRES Opencv, no will attempt to build even when USE_OPENCV not given
-demo_opencv: demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -o demo_opencv demo_opencv.cpp `pkg-config --libs opencv`
+demo_opencv: misc/demo_opencv.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -o demo_opencv misc/demo_opencv.cpp `pkg-config --libs opencv`
 
 clean:
 	-rm -r html/*

@@ -3,12 +3,14 @@
 Home page: https://github.com/skramm/homog2d
 
 1. [Introduction](#intro)
-1. [Lines and points](#basic)
-1. [2D transformation (aka homographies)](#matrix)
-1. [Flat rectangle intersection](#rect)
-1. [Bindings](#bind)
-1. [Numerical data types](#numdt)
-1. [Technical details](#tech)
+2. [Lines and points](#basic)
+3. [2D transformation (aka homographies)](#matrix)
+4. [Flat rectangle intersection](#rect)
+5. [Bindings](#bind)
+6. [Numerical data types](#numdt)
+7. [Technical details](#tech)
+8. [History](#history)
+
 
 ## 1 - Introduction
 <a name="intro"></a>
@@ -270,12 +272,12 @@ Point2d_<float> pt; // this is fine
 ## 7 - Technical details
 <a name="tech"></a>
 
-- The library is fully templated, the two types `Point2d` and `Line2d` are actually the same class,
-behavior differs due to some policy-based design.
+- The two types `Point2d` and `Line2d` are actually the same class,
+behavior differs due to some policy-based design (see below).
 - Points are stored as non-normalized values, any computation will keep the resulting values.
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
-- Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1
+- Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
 
 ### Testing
 
@@ -313,7 +315,16 @@ In the definition of the function, this additional argument is ignored,
 it is there just so that the compiler can select the correct overload
 (in a similar way of what happens with templates).
 
-Thus, we can write the two implementations as two 'impl_' function, that are still templated by the numerical data type.
+Thus, we can write the two implementations (for points and for lines) as two 'impl_' function, that are still templated by the numerical data type.
 
 This is a perfect example of mixing template specializations with overloading function,
 these two situations must not be confused.
+
+## 8 - History
+<a name="history"></a>
+
+See [here](https://github.com/skramm/homog2d/releases).
+
+- [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
+- [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
+
