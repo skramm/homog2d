@@ -3,11 +3,14 @@
 Home page: https://github.com/skramm/homog2d
 
 1. [Introduction](#intro)
-1. [Lines and points](#basic)
-1. [2D transformation (aka homographies)](#matrix)
-1. [Flat rectangle intersection](#rect)
-1. [Bindings](#bind)
-1. [Technical details](#tech)
+2. [Lines and points](#basic)
+3. [2D transformation (aka homographies)](#matrix)
+4. [Flat rectangle intersection](#rect)
+5. [Bindings](#bind)
+6. [Numerical data types](#numdt)
+7. [Technical details](#tech)
+8. [History](#history)
+
 
 ## 1 - Introduction
 <a name="intro"></a>
@@ -243,15 +246,34 @@ CvDrawParams::resetDefault();
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-## 6 - Technical details
+## 6 - Numerical data types
+<a name="numdt"></a>
+
+The library is fully templated, the user has the ability to select for each type either
+`float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
+
+The default datatype used for `Point2d`, `Line2d` or `Homogr` is `double`.
+The other types can be selected by an additional suffix letter added after the type:
+
+`F` for `float`, `D` for `double` and `L` for `long double`.
+
+For example: `Point2dF`, `Line2dF` or `HomogrF` are float types.
+
+If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`, which are templated types:
+
+```
+Point2d_<float> pt; // this is fine
+```
+
+## 7 - Technical details
 <a name="tech"></a>
 
-- The library is fully templated, the two types `Point2d` and `Line2d` are actually the same class,
-behavior differs due to some policy-based design.
+- The two types `Point2d` and `Line2d` are actually the same class,
+behavior differs due to some policy-based design (see below).
 - Points are stored as non-normalized values, any computation will keep the resulting values.
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
-- Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1
+- Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
 
 ### Testing
 
@@ -271,3 +293,34 @@ You can do that in the makefile or just add a `#define` on top of your program,
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 
 (TO BE EXPANDED)
+
+
+### Inner details
+
+To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
+As the Root class is already templatized on the type (Point or Line),
+it would require a partial template specialization to define the behavior of each member function (or free function),
+depending on the basic type (Line or Point), and still templatize on the numerical type.
+C++ does not allow this |-(.
+
+Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
+by the datatype (point or line).
+To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type RootHelper,
+templated by the numerical type.
+In the definition of the function, this additional argument is ignored,
+it is there just so that the compiler can select the correct overload
+(in a similar way of what happens with templates).
+
+Thus, we can write the two implementations (for points and for lines) as two 'impl_' function, that are still templated by the numerical data type.
+
+This is a perfect example of mixing template specializations with overloading function,
+these two situations must not be confused.
+
+## 8 - History
+<a name="history"></a>
+
+See [here](https://github.com/skramm/homog2d/releases).
+
+- [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
+- [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
+

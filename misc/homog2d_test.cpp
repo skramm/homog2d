@@ -32,7 +32,7 @@ run with "make test"
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
-#include "homog2d.hpp"
+#include "../homog2d.hpp"
 
 #include <list>
 
@@ -45,6 +45,29 @@ run with "make test"
 double g_epsilon = std::numeric_limits<double>::epsilon()*10.;
 
 using namespace homog2d;
+
+TEST_CASE( "types testing", "[testtypes]" )
+{
+	Point2dF ptF;
+	Point2dD ptD;
+	Point2dL ptL;
+
+	Line2dF liF;
+	Line2dD liD;
+	Line2dL liL;
+
+	HomogrF HF;
+	HomogrD HD;
+	HomogrL HL;
+
+	Point2d_<float> pt2F1;
+	Point2d_<double> pt2F2;
+	Point2d_<long double> pt2F3;
+
+	CHECK( sizeof(Point2dF) == 12 );
+	CHECK( sizeof(Point2dD) == 24 );
+	CHECK( sizeof(Point2dL) == 48 );
+}
 
 TEST_CASE( "test1", "[test1]" )
 {
@@ -246,10 +269,12 @@ TEST_CASE( "test matrix", "[testH]" )
 		Homogr H2c(m2c);
 	}
 	{
-		Homogr H;
+		Homogr_<double> H;
 		Point2d pt1(1,1);
 		H.setTranslation( 3., 2. );
+
 		Point2d pt2 = H * pt1;
+
 		CHECK( pt2.getX() == 4. );
 		CHECK( pt2.getY() == 3. );
 
