@@ -364,27 +364,13 @@ See https://en.wikipedia.org/wiki/Determinant
 */
 	double p_det()
 	{
-#if 0
-		double det = _data[0][0] * p_det2x2( {2,2, 2,3, 3,2, 3,3} );
-		det       -= _data[0][1] * p_det2x2( {2,1, 2,3, 3,1, 3,3} );
-		det       += _data[0][2] * p_det2x2( {2,1, 2,2, 3,1, 3,2} );
-#else
 		double det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		det       -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
 		det       += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
-#endif
 		return det;
 	}
 	double p_det2x2( std::vector<int> v )
 	{
-#if 0
-		std::transform(
-			std::begin(v),
-			std::end(v),
-			std::begin(v),
-			[](int& a){ return a-1;} // lambda
-		);
-#endif
 		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
 		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
 		return det;
@@ -396,19 +382,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	Homogr_ p_adjugate()
 	{
 		Homogr_ out;
-#if 0
-		out.setValue( 0, 0,  p_det2x2( {2,2, 2,3, 3,2, 3,3} ) );
-		out.setValue( 0, 1, -p_det2x2( {1,2, 1,3, 3,2, 3,3} ) );
-		out.setValue( 0, 2,  p_det2x2( {1,2, 1,3, 2,2, 2,3} ) );
 
-		out.setValue( 1, 0, -p_det2x2( {2,1, 2,3, 3,1, 3,3} ) );
-		out.setValue( 1, 1,  p_det2x2( {1,1, 1,3, 3,1, 3,3} ) );
-		out.setValue( 1, 2, -p_det2x2( {1,1, 1,3, 2,1, 2,3} ) );
-
-		out.setValue( 2, 0,  p_det2x2( {2,1, 2,2, 3,1, 3,2} ) );
-		out.setValue( 2, 1, -p_det2x2( {1,1, 1,2, 3,1, 3,2} ) );
-		out.setValue( 2, 2,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
-#else
 		out.setValue( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 		out.setValue( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
 		out.setValue( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
@@ -420,7 +394,7 @@ See https://en.wikipedia.org/wiki/Determinant
 		out.setValue( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
 		out.setValue( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
 		out.setValue( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
-#endif
+
 		return out;
 	}
 
