@@ -376,9 +376,6 @@ See https://en.wikipedia.org/wiki/Determinant
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-/**
-\todo Decrement each index so we can remove the need for std::transform()
-*/
 	Homogr_ p_adjugate()
 	{
 		Homogr_ out;
@@ -662,6 +659,8 @@ class Root
 
 	RectIntersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
 
+	RectIntersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
+
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
 	{
 		return impl_isInsideRectangle( pt1, pt2 /*, detail::RootHelper<LP>()*/ );
@@ -700,6 +699,9 @@ class Root
 
 	Root<LP,FPT>::RectIntersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const;
+
+	Root<LP,FPT>::RectIntersect
+	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& /*, detail::RootHelper<IsPoint>& */ ) const;
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
@@ -1040,12 +1042,64 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<Is
 	const auto& p11 = pair_pts.second;
 	return detail::ptIsInside( *this, p00, p11 );
 }
+
+//------------------------------------------------------------------
+/// Intersection of line and circle
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::RectIntersect
+Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, double radius ) const
+{
+	return impl_intersectsCircle( pt, radius, detail::RootHelper<IsLine>() );
+}
+
+//------------------------------------------------------------------
+/// Intersection of line and circle: implementation
+/// \todo WIP !!!
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::RectIntersect
+Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, const detail::RootHelper<IsLine>& /* dummy */ ) const
+{
+	RectIntersect out;
+
+	const double& a = _v[0]; // just to lighten a bit...
+	const double& b = _v[1];
+	const double& c = _v[2];
+
+// step 1: translate to origin
+	double cp = pt.getX() * a + pt.getY() * b + c;
+
+// step 2: compute distance	between center (origin) and middle point
+	double a2b2 = a * a + b * b;
+	double d0 = cp / std::sqrt( a2b2 );
+	double d2 = r*r - d0*d0;
+
+// step 3: compute coordinates of middle point B
+	double xb = - b * c / a2b2;
+	double yb = - a * c / a2b2;
+
+// step 4: compute coordinates of intersection points, with center at (0,0)
+	double m = std::sqrt( d2 / a2b2 );
+	double x1 = xb + m*b;
+	double x2 = xb - m*b;
+	double y1 = yb - m*a;
+	double y2 = yb + m*a;
+
+// last step: translate back
+	out.ptA.x = x1 - pt.getX();
+	out.ptB.x = x2 - pt.getX();
+
+	out.ptA.y = y1 - pt.getY();
+	out.ptB.y = y2 - pt.getY();
+
+	return out;
+}
 //------------------------------------------------------------------
 /// \todo is this additional layer really necessary here ?
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::RectIntersect
-Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
+Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
 {
+#if 0
 	return impl_intersectsRectangle( pt1, pt2 );
 }
 
@@ -1057,6 +1111,7 @@ template<typename LP, typename FPT>
 typename Root<LP,FPT>::RectIntersect
 Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
 {
+#endif
 	auto pair_pts = detail::getCorrectPoints( p0, p1 );
 	const auto& p00 = pair_pts.first;
 	const auto& p11 = pair_pts.second;
