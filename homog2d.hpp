@@ -698,7 +698,9 @@ class Root
 	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
 
 	Root<LP,FPT>::RectIntersect
-	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const;
+	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const;
+	Root<LP,FPT>::RectIntersect
+	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const;
 
 	Root<LP,FPT>::RectIntersect
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
@@ -1094,24 +1096,37 @@ Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, cons
 	return out;
 }
 //------------------------------------------------------------------
-/// \todo is this additional layer really necessary here ?
-template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
-Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
-{
-#if 0
-	return impl_intersectsRectangle( pt1, pt2 );
-}
-
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11
 /**
 Pre-conditions: points are different (throws if not)
 */
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::RectIntersect
-Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
+Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
 {
-#endif
+	return impl_intersectsRectangle( p0, p1, detail::RootHelper<LP>() );
+}
+
+namespace detail {
+template<typename T>
+struct AlwaysFalse {
+    enum { value = false };
+};
+} // namespace detail
+
+/// Overload used when attempting to use that on a point
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::RectIntersect
+Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
+}
+
+/// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::RectIntersect
+Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const
+{
 	auto pair_pts = detail::getCorrectPoints( p0, p1 );
 	const auto& p00 = pair_pts.first;
 	const auto& p11 = pair_pts.second;

@@ -461,6 +461,10 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		Line2d li(1,1); // diagonal line going through (0,0)
 
 		Point2d pt1, pt2; // 0,0
+
+//		Point2d pt3;                              // THIS WOULD GENERATE A COMPILE-TIME ERROR
+//		pt3.intersectsRectangle( pt1, pt2 );
+
 		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
 
 		pt2.set(0,4);
