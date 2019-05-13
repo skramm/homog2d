@@ -454,6 +454,14 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
 }
 
+TEST_CASE( "circle intersection", "[test_Circle]" )
+{
+	Line2d li(1,1); // diagonal line going through (0,0)
+	Point2d pt;
+	auto ri = li.intersectsCircle( pt, 0.5 );
+	CHECK( ri() == true );
+}
+
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
 	SECTION( "with diagonal line" )
@@ -473,8 +481,9 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		pt2.set(1,1);
 		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
-		CHECK( ri.ptA == pt1 );
-		CHECK( ri.ptB == pt2 );
+		auto sol = ri.get();
+		CHECK( sol.first  == pt1 );
+		CHECK( sol.second == pt2 );
 
 		pt1.set( 5,0 );
 		pt2.set( 6,1 );
@@ -488,26 +497,26 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		Line2d li = Point2d() * Point2d(0,1); // vertical line through (0,0)
 		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
-		CHECK( ri.ptA == pt1 );
-		CHECK( ri.ptB == pt2 );
+		CHECK( ri.get().first  == pt1 );
+		CHECK( ri.get().second == pt2 );
 
 		li = Point2d(1,0) * Point2d(1,1);     // vertical line through (1,0)
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
-		CHECK( ri.ptA == pt1 );
-		CHECK( ri.ptB == pt2 );
+		CHECK( ri.get().first  == pt1 );
+		CHECK( ri.get().second == pt2 );
 
 		li = Point2d() * Point2d(1,0);        // horizontal line through (0,0)
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
-		CHECK( ri.ptA == pt1 );
-		CHECK( ri.ptB == pt2 );
+		CHECK( ri.get().first  == pt1 );
+		CHECK( ri.get().second == pt2 );
 
 		li = Point2d(0,1) * Point2d(1,1);     // horizontal line through (0,1)
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
-		CHECK( ri.ptA == pt1 );
-		CHECK( ri.ptB == pt2 );
+		CHECK( ri.get().first  == pt1 );
+		CHECK( ri.get().second == pt2 );
 	}
 }
 

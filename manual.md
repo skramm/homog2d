@@ -171,8 +171,8 @@ Point2d pt2(8,8);
 RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
 if( ri() )  // means the line does intersect the rectangle
 {           // defined by (1,1)-(8,1)-(8,8)-(1,8)
-	Point2d intersect_pt1 = ri.ptA;
-	Point2d intersect_pt2 = ri.ptB;
+	Point2d intersect_pt1 = ri.get().first;
+	Point2d intersect_pt2 = ri.get().second;
 }
 ```
 
@@ -323,4 +323,8 @@ See [here](https://github.com/skramm/homog2d/releases).
 
 - [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
+
+- next release:
+- intersection with rectangles:
+ the intersection points must be fetched with get(): this function will return a std::pair holding the two intersection points.
 

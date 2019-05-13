@@ -43,6 +43,8 @@ int g_height = 500;
 homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
+Line2d g_li;
+
 void drawLines( int selected )
 {
 	g_img = cv::Scalar(255,255,255);
@@ -78,8 +80,8 @@ void draw1( int selected )
 	l.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
 }
 
-/// Mouse callback
-void mouse_CB( int event, int x, int y, int /* flags */, void* /*param*/ )
+/// Mouse callback for demo1
+void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 {
 	static int selected=-1;
 	draw1( selected );
@@ -115,7 +117,7 @@ void mouse_CB( int event, int x, int y, int /* flags */, void* /*param*/ )
 void demo1()
 {
 	std::cout << "Demo 1: click on points and move them\n";
-	cv::setMouseCallback( g_wndname, mouse_CB );
+	cv::setMouseCallback( g_wndname, mouse_CB_1 );
 
 	int n=5;
 	g_pt[0].set( g_width/2,       g_height/n );
@@ -194,6 +196,8 @@ void demo2()
 
 void demo3()
 {
+	std::cout << "Demo 3:\n";
+
 	Line2d li;
 
 	Line2d lV;
@@ -229,6 +233,48 @@ void demo3()
 	cv::waitKey(0);
 }
 
+void drawLine_4()
+{
+	g_img = cv::Scalar(255,255,255);
+	g_li = Point2d() * Point2d(200,100);
+	g_li.drawCvMat( g_img );
+}
+
+/// Mouse callback for demo4
+void mouse_CB_4( int event, int x, int y, int /* flags */, void* /*param*/ )
+{
+	drawLine_4();
+
+	int rad = 50;
+	g_pt_mouse.set( x, y );
+	cv::circle( g_img, g_pt_mouse.getCvPtd(), rad, cv::Scalar(50,100,150) );
+	g_pt_mouse.drawCvMat( g_img, CvDrawParams().setColor(250,50,20) );
+	RectIntersect ri = g_li.intersectsCircle( g_pt_mouse, rad );
+	if( ri() )
+	{
+		auto inter = ri.get();
+		std::cout << "INTER, pt=" << inter.first << ", " << inter.second << "\n";
+		inter.first.drawCvMat( g_img );
+		inter.second.drawCvMat( g_img );
+	}
+	else
+		std::cout << "NO INTER\n";
+
+	cv::imshow( g_wndname, g_img );
+}
+
+void demo4()
+{
+	std::cout << "Demo 4:\n";
+	drawLine_4();
+
+	cv::setMouseCallback( g_wndname, mouse_CB_4 );
+
+	cv::imshow( g_wndname, g_img );
+	cv::waitKey(0);
+
+}
+
 int main()
 {
 	std::cout << "Installed OpenCV version : " << CV_VERSION << '\n';
@@ -240,5 +286,7 @@ int main()
 	demo2();
 
 	demo3();
+	demo4();
+	std::cout << "Demo end\n";
 }
 

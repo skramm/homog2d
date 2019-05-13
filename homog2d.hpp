@@ -650,10 +650,13 @@ class Root
 		{
 			_doesIntersect = true;
 		}
+		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> get() const
+		{
+			return std::make_pair( ptA, ptB );
+		}
+		private:
 		Root<IsPoint,FPT> ptA;
 		Root<IsPoint,FPT> ptB;
-
-		private:
 		bool _doesIntersect = false;
 	};
 
@@ -1072,12 +1075,20 @@ Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, cons
 
 // step 2: compute distance	between center (origin) and middle point
 	double a2b2 = a * a + b * b;
-	double d0 = cp / std::sqrt( a2b2 );
+	double d0 = std::abs(cp) / std::sqrt( a2b2 );
+	if( r < d0 )                            // if less than radius,
+	{
+//		std::cout << "No intersection!, r=" << r << " d0=" << d0 << "\n";
+		return out;                         // no intersection
+	}
+//	else
+//		std::cout << "intersection!, r=" << r << " d0=" << d0 << "\n";
+
 	double d2 = r*r - d0*d0;
 
 // step 3: compute coordinates of middle point B
-	double xb = - b * c / a2b2;
-	double yb = - a * c / a2b2;
+	double xb = - b * cp / a2b2;
+	double yb = - a * cp / a2b2;
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
 	double m = std::sqrt( d2 / a2b2 );
@@ -1087,12 +1098,9 @@ Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, cons
 	double y2 = yb + m*a;
 
 // last step: translate back
-	out.ptA.x = x1 - pt.getX();
-	out.ptB.x = x2 - pt.getX();
-
-	out.ptA.y = y1 - pt.getY();
-	out.ptB.y = y2 - pt.getY();
-
+	out.ptA.set( x1 + pt.getX(), y1 + pt.getY() );
+	out.ptB.set( x2 + pt.getX(), y2 + pt.getY() );
+	out._doesIntersect = true;
 	return out;
 }
 //------------------------------------------------------------------
