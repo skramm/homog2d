@@ -443,6 +443,9 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	Point2d pt1(2,10);
 	Point2d pt2(10,2);
 
+	Line2d li;
+	li.isInsideRectangle( pt1, pt2 );
+
 	Point2d pt; // (0,0)
 	CHECK( pt.isInsideRectangle( pt1, pt2 ) == false );
 	pt.set(5,5);

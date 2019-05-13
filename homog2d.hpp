@@ -634,6 +634,7 @@ class Root
 	public:
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
 /// Only defined for Point2d
+/// \todo change name (as this will be used also for line-circle intersection)
 	struct RectIntersect
 	{
 		template<typename U,typename V>
