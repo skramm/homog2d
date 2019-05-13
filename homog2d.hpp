@@ -668,7 +668,7 @@ class Root
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
 	{
-		return impl_isInsideRectangle( pt1, pt2 /*, detail::RootHelper<LP>()*/ );
+		return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
 	}
 
 //////////////////////////
@@ -694,7 +694,7 @@ class Root
 #endif
 
 	private:
-	FPT _v[3]; ///< data
+	FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -710,11 +710,9 @@ class Root
 	Root<LP,FPT>::RectIntersect
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
 
-	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>& /*, detail::RootHelper<IsPoint>& */ ) const;
+	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
-
 	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const;
-
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 
@@ -1042,7 +1040,7 @@ ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Roo
 /// \todo check if we can skip/remove the last argument ? Can't the compiler deduce correct overload from the 2 first arguments ?
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 /*, detail::RootHelper<IsPoint>& */ ) const
+Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const
 {
 	auto pair_pts = detail::getCorrectPoints( p0, p1 );
 	const auto& p00 = pair_pts.first;
