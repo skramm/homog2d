@@ -44,6 +44,7 @@ homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
 Line2d g_li;
+int g_radius = 50; // for demo4()
 
 void drawLines( int selected )
 {
@@ -245,17 +246,18 @@ void mouse_CB_4( int event, int x, int y, int /* flags */, void* /*param*/ )
 {
 	drawLine_4();
 
-	int rad = 50;
 	g_pt_mouse.set( x, y );
-	cv::circle( g_img, g_pt_mouse.getCvPtd(), rad, cv::Scalar(50,100,150) );
+	cv::circle( g_img, g_pt_mouse.getCvPtd(), g_radius, cv::Scalar(50,100,150) );
 	g_pt_mouse.drawCvMat( g_img, CvDrawParams().setColor(250,50,20) );
-	RectIntersect ri = g_li.intersectsCircle( g_pt_mouse, rad );
+	RectIntersect ri = g_li.intersectsCircle( g_pt_mouse, g_radius );
 	if( ri() )
 	{
 		auto inter = ri.get();
 		std::cout << "INTER, pt=" << inter.first << ", " << inter.second << "\n";
 		inter.first.drawCvMat( g_img );
 		inter.second.drawCvMat( g_img );
+
+		ri._tempB.drawCvMat( g_img, CvDrawParams().setColor(20,50,250) );
 	}
 	else
 		std::cout << "NO INTER\n";
@@ -265,14 +267,32 @@ void mouse_CB_4( int event, int x, int y, int /* flags */, void* /*param*/ )
 
 void demo4()
 {
-	std::cout << "Demo 4:\n";
+	std::cout << "Demo 4: move circle over line, hit [lm] to change circle radius\n";
 	drawLine_4();
 
 	cv::setMouseCallback( g_wndname, mouse_CB_4 );
 
-	cv::imshow( g_wndname, g_img );
-	cv::waitKey(0);
+	char key=0;
+	while( key != 27 ) // ESC
+	{
+		bool change = true;
+		switch( key = cv::waitKey(0) )
+		{
+			case 'r': // reset
+				g_radius = 50;
+			break;
+			case 'l':
+				g_radius += 10;
+			break;
+			case 'm':
+				g_radius -= 10;
+			break;
+			default: break;
+		}
+		std::cout << "radius=" << g_radius << '\n';
 
+		cv::imshow( g_wndname, g_img );
+	}
 }
 
 int main()

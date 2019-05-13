@@ -654,6 +654,7 @@ class Root
 		{
 			return std::make_pair( ptA, ptB );
 		}
+		Root<IsPoint,FPT> _tempB;
 		private:
 		Root<IsPoint,FPT> ptA;
 		Root<IsPoint,FPT> ptB;
@@ -1062,7 +1063,11 @@ Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, double radius ) con
 /// \todo WIP !!!
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::RectIntersect
-Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, const detail::RootHelper<IsLine>& /* dummy */ ) const
+Root<LP,FPT>::impl_intersectsCircle(
+	const Root<IsPoint,FPT>& pt,   ///< circle origin
+	double                   r,    ///< radius
+	const detail::RootHelper<IsLine>& /* dummy */   ///< dummy arg
+) const
 {
 	RectIntersect out;
 
@@ -1077,24 +1082,21 @@ Root<LP,FPT>::impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double r, cons
 	double a2b2 = a * a + b * b;
 	double d0 = std::abs(cp) / std::sqrt( a2b2 );
 	if( r < d0 )                            // if less than radius,
-	{
-//		std::cout << "No intersection!, r=" << r << " d0=" << d0 << "\n";
 		return out;                         // no intersection
-	}
-//	else
-//		std::cout << "intersection!, r=" << r << " d0=" << d0 << "\n";
 
 	double d2 = r*r - d0*d0;
 
 // step 3: compute coordinates of middle point B
 	double xb = - b * cp / a2b2;
 	double yb = - a * cp / a2b2;
+	out._tempB = Root<IsPoint,FPT>( xb + pt.getX(), yb + pt.getY() );
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
-	double m = std::sqrt( d2 / a2b2 );
+	double m  = std::sqrt( d2 / a2b2 );
 	double x1 = xb + m*b;
-	double x2 = xb - m*b;
 	double y1 = yb - m*a;
+
+	double x2 = xb - m*b;
 	double y2 = yb + m*a;
 
 // last step: translate back
