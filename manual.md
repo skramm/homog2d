@@ -5,7 +5,7 @@ Home page: https://github.com/skramm/homog2d
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
 3. [2D transformation (aka homographies)](#matrix)
-4. [Flat rectangle intersection](#rect)
+4. [Intersection with rectangles and circles](#inter)
 5. [Bindings](#bind)
 6. [Numerical data types](#numdt)
 7. [Technical details](#tech)
@@ -154,9 +154,9 @@ h.inverse().transpose(); // first, invert, second, transpose
 ```
 
 ## 4 - Computation of intersection points
+<a name="inter"></a>
 
 ### Intersection of lines with flat rectangles
-<a name="rect"></a>
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
 `intersectsRectangle()` member function.
@@ -169,8 +169,8 @@ Line2d li( ..., ... ); // some line
 Point2d pt1(1,1);
 Point2d pt2(8,8);
 auto ri = li.intersectsRectangle( pt1, pt2 );
-if( ri() )  // means the line does intersect the rectangle
-{           // defined by (1,1)-(8,1)-(8,8)-(1,8)
+if( ri() )  // means the line does intersect the rectangle defined by (1,1)-(8,1)-(8,8)-(1,8)
+{
 	Point2d intersect_pt1 = ri.get().first;
 	Point2d intersect_pt2 = ri.get().second;
 }
@@ -180,11 +180,11 @@ You don't have to give the bottom-right, top-left corners of the rectangle, the 
 In the example above, you could have as well give the points (1,8)-(8,1), the result would have been the same.
 The only requirement is that no coordinate must be the same in the two points.
 
-### Intersection of lines with circles
+### Intersection of a line with a circle
 
-You can compute theses using the following code:
+For a line `li`, you can compute the intersection points wit a circle having a radius `rad` and located at `pt` with the following code:
 ```C++
-auto ri = g_li[i].intersectsCircle( pt /* circle center */, radius );
+auto ri = li.intersectsCircle( pt, rad );
 if( ri() )   // means the line intersects the circle
 {
 	auto inter = ri.get();
@@ -340,8 +340,8 @@ See [here](https://github.com/skramm/homog2d/releases).
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
 
 - release XX:
- - added `intersectsCircle()`, to get intersection with circles
- - intersection data structure name changed, now `Intersect`
- - the intersection points are now private, they must be fetched with get(): this function will return a `std::pair` holding the two intersection points.
+  - added `intersectsCircle()`, to get intersection with circles
+  - intersection data structure name changed, now `Intersect`
+  - the intersection points are now private, they must be fetched with get(): this function will return a `std::pair` holding the two intersection points.
 
 
