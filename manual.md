@@ -331,12 +331,12 @@ The two implementations (for points and for lines) are written as two `impl_` pr
 ## 8 - History
 <a name="history"></a>
 
-See [here](https://github.com/skramm/homog2d/releases).
+See [Release page](https://github.com/skramm/homog2d/releases).
 
 - [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
 
-- release XX:
+- current master branch:
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
   - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
