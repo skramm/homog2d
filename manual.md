@@ -326,10 +326,7 @@ In the definition of the function, this additional argument is ignored,
 it is there just so that the compiler can select the correct overload
 (in a similar way of what happens with templates).
 
-Thus, we can write the two implementations (for points and for lines) as two 'impl_' function, that are still templated by the numerical data type.
-
-This is a perfect example of mixing template specializations with overloading function,
-these two situations must not be confused.
+The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
 
 ## 8 - History
 <a name="history"></a>
@@ -342,6 +339,6 @@ See [here](https://github.com/skramm/homog2d/releases).
 - release XX:
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
-  - the intersection points are now private, they must be fetched with get(): this function will return a `std::pair` holding the two intersection points.
+  - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
 
 

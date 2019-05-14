@@ -516,7 +516,6 @@ namespace detail {
 	struct RootHelper {};
 
 } // namespace detail
-using LineType = detail::RootHelper<IsLine>;
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point2d or a Line2d
@@ -664,7 +663,6 @@ class Root
 	};
 
 	Intersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
-
 	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
@@ -712,7 +710,7 @@ class Root
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
-	void impl_normalizeLine( const LineType& ) const;
+	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
 	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
@@ -1038,7 +1036,6 @@ ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Roo
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
-/// \todo check if we can skip/remove the last argument ? Can't the compiler deduce correct overload from the 2 first arguments ?
 template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const
