@@ -43,9 +43,8 @@ int g_height = 500;
 homog2d::Point2d g_pt[4];
 homog2d::Point2d g_pt_mouse;
 
-std::array<Line2d,3> g_li;
-
-int g_radius = 50; // for demo4()
+std::array<Line2d,3> g_li; // for demo4()
+int g_radius = 80;         // for demo4()
 
 void drawLines( int selected )
 {
@@ -238,12 +237,12 @@ void demo3()
 void drawLine_4()
 {
 	g_img = cv::Scalar(255,255,255);
-	for( int i=0; i<g_li.size(); i++ )
+	for( size_t i=0; i<g_li.size(); i++ )
 		g_li[i].drawCvMat( g_img );
 }
 
 /// Mouse callback for demo4
-void mouse_CB_4( int event, int x, int y, int /* flags */, void* /*param*/ )
+void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/ )
 {
 	drawLine_4();
 
@@ -251,20 +250,16 @@ void mouse_CB_4( int event, int x, int y, int /* flags */, void* /*param*/ )
 	cv::circle( g_img, g_pt_mouse.getCvPtd(), g_radius, cv::Scalar(50,100,150) );
 	g_pt_mouse.drawCvMat( g_img, CvDrawParams().setColor(250,50,20) );
 
-	for( int i=0; i<g_li.size(); i++ )
+	for( size_t i=0; i<g_li.size(); i++ )
 	{
-		RectIntersect ri = g_li[i].intersectsCircle( g_pt_mouse, g_radius );
+		auto ri = g_li[i].intersectsCircle( g_pt_mouse, g_radius );
 		if( ri() )
 		{
 			auto inter = ri.get();
-			std::cout << "INTER, pt=" << inter.first << ", " << inter.second << "\n";
-			inter.first.drawCvMat( g_img );
-			inter.second.drawCvMat( g_img );
-
-			ri._tempB.drawCvMat( g_img, CvDrawParams().setColor(20,50,250) );
+			inter.first.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
+			inter.second.drawCvMat( g_img, CvDrawParams().setColor(250, 0, 0) );
 		}
 	}
-
 	cv::imshow( g_wndname, g_img );
 }
 
@@ -279,17 +274,15 @@ void demo4()
 	drawLine_4();
 	cv::imshow( g_wndname, g_img );
 
-
 	cv::setMouseCallback( g_wndname, mouse_CB_4 );
 
 	char key=0;
 	while( key != 27 ) // ESC
 	{
-		bool change = true;
 		switch( key = cv::waitKey(0) )
 		{
 			case 'r': // reset
-				g_radius = 50;
+				g_radius = 80;
 			break;
 			case 'l':
 				g_radius += 10;
@@ -300,7 +293,6 @@ void demo4()
 			default: break;
 		}
 		std::cout << "radius=" << g_radius << '\n';
-
 		cv::imshow( g_wndname, g_img );
 	}
 }

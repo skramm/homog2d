@@ -153,14 +153,14 @@ h.transpose();
 h.inverse().transpose(); // first, invert, second, transpose
 ```
 
-## 4 - Flat rectangle intersection
+## 4 - Computation of intersection points
 
 ### Intersection of lines with flat rectangles
 <a name="rect"></a>
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
 `intersectsRectangle()` member function.
-It will return a `RectIntersect` object that holds the intersection points.
+It will return a `Intersect` object that holds the intersection points.
 
 Usage:
 
@@ -168,7 +168,7 @@ Usage:
 Line2d li( ..., ... ); // some line
 Point2d pt1(1,1);
 Point2d pt2(8,8);
-RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+auto ri = li.intersectsRectangle( pt1, pt2 );
 if( ri() )  // means the line does intersect the rectangle
 {           // defined by (1,1)-(8,1)-(8,8)-(1,8)
 	Point2d intersect_pt1 = ri.get().first;
@@ -179,6 +179,21 @@ if( ri() )  // means the line does intersect the rectangle
 You don't have to give the bottom-right, top-left corners of the rectangle, the function checks and automatically computes these two points.
 In the example above, you could have as well give the points (1,8)-(8,1), the result would have been the same.
 The only requirement is that no coordinate must be the same in the two points.
+
+### Intersection of lines with circles
+
+You can compute theses using the following code:
+```C++
+auto ri = g_li[i].intersectsCircle( pt /* circle center */, radius );
+if( ri() )   // means the line intersects the circle
+{
+	auto inter = ri.get();
+	Point2d intersect_pt1 = inter.first;
+	Point2d intersect_pt2 = inter.second;
+}
+```
+
+Also see the provided demo for a runnable example.
 
 ### Points and rectangles
 
@@ -324,7 +339,9 @@ See [here](https://github.com/skramm/homog2d/releases).
 - [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
 
-- next release:
-- intersection with rectangles:
- the intersection points must be fetched with get(): this function will return a std::pair holding the two intersection points.
+- release XX:
+ - added `intersectsCircle()`, to get intersection with circles
+ - intersection data structure name changed, now `Intersect`
+ - the intersection points are now private, they must be fetched with get(): this function will return a `std::pair` holding the two intersection points.
+
 

@@ -482,7 +482,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // still fails: x coordinate is identical => unable
 
 		pt2.set(1,1);
-		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+		Intersect ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
 		auto sol = ri.get();
 		CHECK( sol.first  == pt1 );
@@ -498,7 +498,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		Point2d pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
 		Line2d li = Point2d() * Point2d(0,1); // vertical line through (0,0)
-		RectIntersect ri = li.intersectsRectangle( pt1, pt2 );
+		Intersect ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );

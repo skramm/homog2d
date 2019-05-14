@@ -516,6 +516,8 @@ namespace detail {
 	struct RootHelper {};
 
 } // namespace detail
+using LineType = detail::RootHelper<IsLine>;
+
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point2d or a Line2d
 template<typename LP,typename FPT>
@@ -635,7 +637,7 @@ class Root
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
 /// Only defined for Point2d
 /// \todo change name (as this will be used also for line-circle intersection)
-	struct RectIntersect
+	struct Intersect
 	{
 		template<typename U,typename V>
 		friend class Root;
@@ -645,9 +647,9 @@ class Root
 		{
 			return _doesIntersect;
 		}
-		RectIntersect()
+		Intersect()
 		{}
-		RectIntersect( const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p2 ) : ptA(p1), ptB(p2)
+		Intersect( const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p2 ) : ptA(p1), ptB(p2)
 		{
 			_doesIntersect = true;
 		}
@@ -655,16 +657,15 @@ class Root
 		{
 			return std::make_pair( ptA, ptB );
 		}
-		Root<IsPoint,FPT> _tempB;
 		private:
 		Root<IsPoint,FPT> ptA;
 		Root<IsPoint,FPT> ptB;
 		bool _doesIntersect = false;
 	};
 
-	RectIntersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
+	Intersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
 
-	RectIntersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
+	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
 	{
@@ -702,16 +703,16 @@ class Root
 
 	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
 
-	Root<LP,FPT>::RectIntersect
+	Root<LP,FPT>::Intersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const;
-	Root<LP,FPT>::RectIntersect
+	Root<LP,FPT>::Intersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const;
 
-	Root<LP,FPT>::RectIntersect
+	Root<LP,FPT>::Intersect
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
-	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
+	void impl_normalizeLine( const LineType& ) const;
 	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
@@ -1051,7 +1052,7 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<Is
 //------------------------------------------------------------------
 /// Intersection of line and circle
 template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
+typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, double radius ) const
 {
 	return impl_intersectsCircle( pt, radius, detail::RootHelper<IsLine>() );
@@ -1059,16 +1060,16 @@ Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, double radius ) con
 
 //------------------------------------------------------------------
 /// Intersection of line and circle: implementation
-/// \todo WIP !!!
+/// For computatuion details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
 template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
+typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsCircle(
 	const Root<IsPoint,FPT>& pt,   ///< circle origin
 	double                   r,    ///< radius
-	const detail::RootHelper<IsLine>& /* dummy */   ///< dummy arg
+	const detail::RootHelper<IsLine>&   ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
-	RectIntersect out;
+	Intersect out;
 
 	const double& a = _v[0]; // just to lighten a bit...
 	const double& b = _v[1];
@@ -1086,9 +1087,8 @@ Root<LP,FPT>::impl_intersectsCircle(
 	double d2 = r*r - d0*d0;
 
 // step 3: compute coordinates of middle point B
-	double xb = - b * cp / a2b2;
-	double yb = - a * cp / a2b2;
-	out._tempB = Root<IsPoint,FPT>( xb + pt.getX(), yb + pt.getY() );
+	double xb = - a * cp / a2b2;
+	double yb = - b * cp / a2b2;
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
 	double m  = std::sqrt( d2 / a2b2 );
@@ -1110,7 +1110,7 @@ Root<LP,FPT>::impl_intersectsCircle(
 Pre-conditions: points are different (throws if not)
 */
 template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
+typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
 {
 	return impl_intersectsRectangle( p0, p1, detail::RootHelper<LP>() );
@@ -1125,7 +1125,7 @@ struct AlwaysFalse {
 
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
+typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
@@ -1133,7 +1133,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
 template<typename LP, typename FPT>
-typename Root<LP,FPT>::RectIntersect
+typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const
 {
 	auto pair_pts = detail::getCorrectPoints( p0, p1 );
@@ -1153,8 +1153,8 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 	for( int i=0; i<4; i++ )         // compare with each of the 4 lines
 	{
 		if( *this == l[i] )          // if same line, then we are done: return the two points
-			return typename Root<IsLine,FPT>::RectIntersect( p00, p11 );
-//			return Root<IsLine,FPT>::RectIntersect_<IsPoint>( p00, p11 );
+			return typename Root<IsLine,FPT>::Intersect( p00, p11 );
+//			return Root<IsLine,FPT>::Intersect_<IsPoint>( p00, p11 );
 		else
 		{
 			Root<IsPoint,FPT> pt;
@@ -1174,7 +1174,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 		}
 	}
 
-	typename Root<LP,FPT>::RectIntersect out;
+	typename Root<LP,FPT>::Intersect out;
 	if( vec.size() > 1 )                                // if more than one point was found, then
 	{
 		std::vector<Root<IsPoint,FPT>> vec2( 1, vec[0] );   // build a second vector, holding the first found point as first element
@@ -1402,7 +1402,7 @@ Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail
 
 	Root<IsPoint,FPT> pt1; // 0,0
 	Root<IsPoint,FPT> pt2( mat.cols-1, mat.rows-1 );
-    RectIntersect ri = this->intersectsRectangle( pt1,  pt2 );
+    Intersect ri = this->intersectsRectangle( pt1,  pt2 );
     if( ri() )
     {
 		cv::Point2d ptcv1 = ri.ptA.getCvPtd();
@@ -1448,9 +1448,9 @@ template<typename T>
 using Line2d_  = Root<IsLine,T>;
 
 template<typename T>
-using RectIntersect_ = typename Root<IsLine,T>::RectIntersect;
+using Intersect_ = typename Root<IsLine,T>::Intersect;
 
-using RectIntersect = RectIntersect_<double>;
+using Intersect = Intersect_<double>;
 
 } // namespace homog2d end
 
