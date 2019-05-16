@@ -8,12 +8,13 @@ install:
 
 script: make test
 
-deploy:
-  provider: pages
-  verbose: true
-  local_dir: docs
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-  keep_history: false
-  on:
-    branch: master
+# SOMETHING WRONG HERE...
+#deploy:
+#  provider: pages
+#  verbose: true
+#  local_dir: docs
+#  skip_cleanup: true
+#  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+#  keep_history: false
+#  on:
+#    branch: master
