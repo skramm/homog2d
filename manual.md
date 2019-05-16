@@ -195,6 +195,10 @@ if( ri() )   // means the line intersects the circle
 
 Also see the provided demo for a runnable example.
 
+
+For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
+
+
 ### Points and rectangles
 
 You can quickly check if a points lies within a rectangle defined by two points `p1`,`p2` with:
@@ -256,7 +260,6 @@ You can at any time return to the "factory" settings with a call to a static fun
 ```C++
 CvDrawParams::resetDefault();
 ```
-
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).

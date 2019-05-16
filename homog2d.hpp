@@ -1032,6 +1032,20 @@ ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Roo
 	return false;
 }
 
+/// helper function, swap the points so that ptA.x <= ptB.x, and if equal, sorts on y
+template<typename FPT>
+void
+fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
+{
+	if( ptA.getX() > ptB.getX() )
+		std::swap( ptA, ptB );
+	else
+		if( ptA.getX() == ptB.getX() )
+			if( ptA.getY() > ptB.getY() )
+				std::swap( ptA, ptB );
+}
+
+
 } // namespace detail end
 
 //------------------------------------------------------------------
@@ -1099,6 +1113,8 @@ Root<LP,FPT>::impl_intersectsCircle(
 	out.ptA.set( x1 + pt.getX(), y1 + pt.getY() );
 	out.ptB.set( x2 + pt.getX(), y2 + pt.getY() );
 	out._doesIntersect = true;
+
+	detail::fix_order( out.ptA, out.ptB );
 	return out;
 }
 //------------------------------------------------------------------
@@ -1190,6 +1206,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 			out.ptA = vec2[0];
 			out.ptB = vec2[1];
 		}
+		detail::fix_order( out.ptA, out.ptB );
 	}
 	return out;
 }

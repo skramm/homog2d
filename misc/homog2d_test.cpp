@@ -459,11 +459,24 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 
 TEST_CASE( "circle intersection", "[test_Circle]" )
 {
-	Line2d li(1,1); // diagonal line going through (0,0)
+	Line2d lid(1,1); // diagonal line going through (0,0)
+	Line2d liv(0,1); // vertical line going through (0,0)
+	Line2d lih(1,0); // horizontal line going through (0,0)
 	Point2d pt;
-	auto ri = li.intersectsCircle( pt, 0.5 );
+	auto ri = lid.intersectsCircle( pt, 0.5 );
 	CHECK( ri() == true );
+
+	auto rih = lih.intersectsCircle( pt, 1.0 );
+	CHECK( rih() == true );
+	CHECK( rih.get().first  == Point2d(-1,0) );
+	CHECK( rih.get().second == Point2d(+1,0) );
+
+	auto riv = liv.intersectsCircle( pt, 1.0 );
+	CHECK( riv() == true );
+	CHECK( riv.get().first  == Point2d(0,-1) );
+	CHECK( riv.get().second == Point2d(0,+1) );
 }
+
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
