@@ -26,7 +26,7 @@ homog2d_test: misc/homog2d_test.cpp homog2d.hpp
 doc: html/index.html
 	@echo "done !"
 
-html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile
+html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md manual.md
 	doxygen misc/doxyfile
 
 install:

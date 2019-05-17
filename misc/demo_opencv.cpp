@@ -258,6 +258,12 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 			auto inter = ri.get();
 			inter.first.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
 			inter.second.drawCvMat( g_img, CvDrawParams().setColor(250, 0, 0) );
+			if( i == 1)   // if vertical line
+			{
+				Line2d li_para = g_li[i].getParallelLine( inter.second );
+				std::cout << "li para=" <<li_para << " pt= " << inter.second << "\n";
+				li_para.drawCvMat( g_img, CvDrawParams().setColor(100, 100, 0) );
+			}
 		}
 	}
 	cv::imshow( g_wndname, g_img );
@@ -267,9 +273,9 @@ void demo4()
 {
 	std::cout << "Demo 4: move circle over line, hit [lm] to change circle radius\n";
 
-	g_li[0] = Point2d() * Point2d(200,100);
-	g_li[1] = Point2d(200,0) * Point2d(200,200);
-	g_li[2] = Point2d(0,200) * Point2d(200,200);
+	g_li[0] = Point2d() * Point2d(200,100);        // diagonal line
+	g_li[1] = Point2d(200,0) * Point2d(200,200);   // vertical line
+	g_li[2] = Point2d(0,200) * Point2d(200,200);   // horizontal line
 
 	drawLine_4();
 	cv::imshow( g_wndname, g_img );

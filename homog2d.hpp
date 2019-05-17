@@ -579,11 +579,22 @@ class Root
 
 	FPT               getCoord( En_GivenCoord gc, FPT other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
 	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, FPT other ) const { return impl_getPoint( gc, other, detail::RootHelper<LP>() ); }
-
-	Root<IsLine,FPT> getOrthogonalLine( En_GivenCoord gc, FPT other ) const
+	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, FPT other ) const
 	{
 		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
 	}
+
+/// Returns a line parallel to the one it is called on, with \c pt lying on it
+	Root<IsLine,FPT>  getParallelLine( const Root<IsPoint,FPT>& pt ) const
+	{
+		return impl_getParallelLine( pt, detail::RootHelper<LP>() );
+	}
+
+	std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> getPoints( En_GivenCoord gc, FPT coord, FPT dist ) const
+	{
+		return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
+	}
+
 
 	template<typename T>
 	void addOffset( En_OffsetDir dir, T v )
@@ -628,8 +639,8 @@ class Root
 		double impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 
 		double impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
-
 		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
+		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<IsLine,FPT>& ) const;
@@ -665,7 +676,7 @@ class Root
 	};
 
 	Intersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
-	Intersect intersectsRectangle2( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2, FPT dist ) const;
+	Intersect intersectsRectangle2( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2, const Root<IsPoint,FPT>& pt3 ) const;
 	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
@@ -704,22 +715,35 @@ class Root
 
 	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
 
+	Root<IsLine,FPT> p_getOrthogonalLine( const Root<IsPoint,FPT>& pt ) const
+	{
+		Root<IsLine,FPT> out;
+		out._v[0] = -_v[1];
+		out._v[1] =  _v[0];
+		out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
+		out.p_normalizeLine();
+		return out;
+	}
+
 	Root<LP,FPT>::Intersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const;
 	Root<LP,FPT>::Intersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const;
 
 	Root<LP,FPT>::Intersect
-	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsLine>& ) const;
+	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p3, const detail::RootHelper<IsLine>& ) const;
 	Root<LP,FPT>::Intersect
-	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsPoint>& ) const;
+	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p3, const detail::RootHelper<IsPoint>& ) const;
 
 	Root<LP,FPT>::Intersect
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
-	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const;
+
+	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const;
+	Root<IsLine,FPT> impl_getParallelLine( const Root<IsPoint,FPT>&,    const detail::RootHelper<IsLine>& ) const;
+
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 
@@ -752,6 +776,48 @@ class Root
 	template<typename T>
 	void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<IsLine>& );
 };
+
+//------------------------------------------------------------------
+namespace detail {
+/// Private free function, get top-left and bottom-right points from two arbitrary points
+template<typename FPT>
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+getCorrectPoints( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 )
+{
+	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
+		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
+
+	Root<IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+	return std::make_pair( p00, p11 );
+}
+
+//------------------------------------------------------------------
+/// Private free function, returns true if point \c pt is inside the rectangle defined by (p00,p11)
+template<typename FPT>
+bool
+ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Root<IsPoint,FPT>& p11 )
+{
+	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+			return true;
+	return false;
+}
+
+/// Private free function, swap the points so that ptA.x <= ptB.x, and if equal, sorts on y
+template<typename FPT>
+void
+fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
+{
+	if( ptA.getX() > ptB.getX() )
+		std::swap( ptA, ptB );
+	else
+		if( ptA.getX() == ptB.getX() )
+			if( ptA.getY() > ptB.getY() )
+				std::swap( ptA, ptB );
+}
+
+} // namespace detail end
 
 //------------------------------------------------------------------
 /// overload for points
@@ -811,7 +877,7 @@ Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<IsLine>& ) const
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
 double
-Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
+Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const
 {
 	if( gc == GC_X )
 		return ( -_v[0] * other - _v[2] ) / _v[1];
@@ -821,7 +887,7 @@ Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootH
 
 template<typename LP,typename FPT>
 Root<IsPoint,FPT>
-Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& dummy ) const
+Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& dummy ) const
 {
 	auto coord = impl_getCoord( gc, other, dummy );
 	if( gc == GC_X )
@@ -830,10 +896,31 @@ Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootH
 }
 
 //------------------------------------------------------------------
+/// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
+template<typename LP,typename FPT>
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const
+{
+	auto pt = impl_getPoint( gc, coord, detail::RootHelper<IsLine>() );
+	auto coeff = dist / std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] );
+
+	Root<IsPoint,FPT> pt1(
+        pt.getX() -  _v[1] * coeff,
+        pt.getY() +  _v[0] * coeff
+	);
+	Root<IsPoint,FPT> pt2(
+        pt.getX() +  _v[1] * coeff,
+        pt.getY() -  _v[0] * coeff
+	);
+	detail::fix_order( pt1, pt2 );
+	return std::make_pair( pt1, pt2 );
+}
+
+//------------------------------------------------------------------
 /// Returns an orthogonal line, at gc=other
 template<typename LP,typename FPT>
 Root<IsLine,FPT>
-Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const
+Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const
 {
 	auto other_val = impl_getCoord( gc, val, detail::RootHelper<IsLine>() );
 
@@ -841,14 +928,27 @@ Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail
 	if( gc == GC_X )
 		pt.set( val, other_val );
 
-	Root<IsLine,FPT> out;
+/*	Root<IsLine,FPT> out;
 	out._v[0] = -_v[1];
 	out._v[1] =  _v[0];
 	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
 	out.p_normalizeLine();
-	return out;
+	return out;*/
+	return p_getOrthogonalLine( pt );
+
 }
 
+
+//------------------------------------------------------------------
+template<typename LP,typename FPT>
+Root<IsLine,FPT>
+Root<LP,FPT>::impl_getParallelLine( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>& ) const
+{
+	Root<IsLine,FPT> out = *this;
+	out._v[2] = std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] )  -_v[0] * pt.getX() - _v[1] * pt.getY();
+	out.p_normalizeLine();
+	return out;
+}
 
 //------------------------------------------------------------------
 /// Comparison operator, used for lines
@@ -1014,49 +1114,6 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<Is
 }
 
 //------------------------------------------------------------------
-namespace detail {
-/// Private free function, get top-left and bottom-right points from two arbitrary points
-template<typename FPT>
-std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
-getCorrectPoints( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 )
-{
-	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
-		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
-
-	Root<IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
-	Root<IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
-	return std::make_pair( p00, p11 );
-}
-
-//------------------------------------------------------------------
-/// Private free function, returns true if point \c pt is inside the rectangle defined by (p00,p11)
-template<typename FPT>
-bool
-ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Root<IsPoint,FPT>& p11 )
-{
-	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
-		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
-			return true;
-	return false;
-}
-
-/// helper function, swap the points so that ptA.x <= ptB.x, and if equal, sorts on y
-template<typename FPT>
-void
-fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
-{
-	if( ptA.getX() > ptB.getX() )
-		std::swap( ptA, ptB );
-	else
-		if( ptA.getX() == ptB.getX() )
-			if( ptA.getY() > ptB.getY() )
-				std::swap( ptA, ptB );
-}
-
-
-} // namespace detail end
-
-//------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
 template<typename LP, typename FPT>
 bool
@@ -1137,19 +1194,12 @@ Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoi
 	return impl_intersectsRectangle( p0, p1, detail::RootHelper<LP>() );
 }
 
-/// Checks for intersection with arbitrary rectangle
-/**
-A rectangle will be defined by
-- the line going from \c p0 to \c p1,
-- the two orthogonal lines \c l0 and \c l1 at these points,
-- a third point \c p3 located at a distance \c dist from \c p0
-- the line parallel to main line, perpendicular to line \c l0, going through \c p3.
-*/
+/// Checks for intersection with arbitrary rectangle defined by the three points
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist ) const
+Root<LP,FPT>::intersectsRectangle2( const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p2, const Root<IsPoint,FPT>& p3 ) const
 {
-	return impl_intersectsRectangle2( p0, p1, dist, detail::RootHelper<LP>() );
+	return impl_intersectsRectangle2( p1, p2, p3, detail::RootHelper<LP>() );
 }
 
 namespace detail {
@@ -1170,39 +1220,25 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsPoint>& ) const
+Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle2() on a point" );
 }
 
-/// Checks for intersection with arbitrary rectangle defined by the two points \c p0 and \c p1: implementation
+/// Checks for intersection with arbitrary rectangle defined by the three points: implementation
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsLine>& ) const
+Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const Root<IsPoint,FPT>& p2, const detail::RootHelper<IsLine>& ) const
 {
-	detail::fix_order( p0, p1 );
+// check: make sure line p0-p1 is orthogonal to p0-p2
 
-	Root<IsLine,FPT> main_line( p0, p1 ); // compute support line
+	Root<IsLine,FPT> li_A( p0, p1 );
+	Root<IsLine,FPT> li_B( p0, p2 );
 
-// compute the two orthogonal lines
-
-	double dx = std::abs( p0.getX() - p1.getX() ); // first, find the largest difference
-	double dy = std::abs( p0.getY() - p1.getY() );
-
-	Root<IsLine,FPT> line_A, line_B;
-	if( dx > dy )
-	{
-		line_A = main_line.getOrthogonalLine( GC_X, p0.getX() );
-		line_B = main_line.getOrthogonalLine( GC_X, p1.getX() );
-	}
-	else
-	{
-		line_A = main_line.getOrthogonalLine( GC_Y, p0.getY() );
-		line_B = main_line.getOrthogonalLine( GC_Y, p1.getY() );
-	}
-
-
+	Root<IsLine,FPT> li_C = li_B.getParallelLine( p2 );
+	Root<IsLine,FPT> li_D = li_A.getParallelLine( p1 );
 }
+
 /// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1: implementation
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
