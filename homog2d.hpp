@@ -577,9 +577,10 @@ class Root
 		impl_init( detail::RootHelper<LP>() );
 	}
 
-	double            getCoord( En_GivenCoord gc, double other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
-	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const { return impl_getPoint( gc, other, detail::RootHelper<LP>() ); }
-	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, double other ) const
+	FPT               getCoord( En_GivenCoord gc, FPT other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
+	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, FPT other ) const { return impl_getPoint( gc, other, detail::RootHelper<LP>() ); }
+
+	Root<IsLine,FPT> getOrthogonalLine( En_GivenCoord gc, FPT other ) const
 	{
 		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
 	}
@@ -626,8 +627,9 @@ class Root
 
 		double impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 
-		double impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
-		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
+		double impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
+
+		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<IsLine,FPT>& ) const;
@@ -663,6 +665,7 @@ class Root
 	};
 
 	Intersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
+	Intersect intersectsRectangle2( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2, FPT dist ) const;
 	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
@@ -705,6 +708,11 @@ class Root
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const;
 	Root<LP,FPT>::Intersect
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const;
+
+	Root<LP,FPT>::Intersect
+	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsLine>& ) const;
+	Root<LP,FPT>::Intersect
+	impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsPoint>& ) const;
 
 	Root<LP,FPT>::Intersect
 	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
@@ -1118,7 +1126,7 @@ Root<LP,FPT>::impl_intersectsCircle(
 	return out;
 }
 //------------------------------------------------------------------
-/// Checks for intersection with flat rectangle defined by the two points p00 and p11
+/// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1
 /**
 Pre-conditions: points are different (throws if not)
 */
@@ -1127,6 +1135,21 @@ typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 ) const
 {
 	return impl_intersectsRectangle( p0, p1, detail::RootHelper<LP>() );
+}
+
+/// Checks for intersection with arbitrary rectangle
+/**
+A rectangle will be defined by
+- the line going from \c p0 to \c p1,
+- the two orthogonal lines \c l0 and \c l1 at these points,
+- a third point \c p3 located at a distance \c dist from \c p0
+- the line parallel to main line, perpendicular to line \c l0, going through \c p3.
+*/
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::Intersect
+Root<LP,FPT>::intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist ) const
+{
+	return impl_intersectsRectangle2( p0, p1, dist, detail::RootHelper<LP>() );
 }
 
 namespace detail {
@@ -1144,7 +1167,43 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
 }
 
-/// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
+/// Overload used when attempting to use that on a point
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::Intersect
+Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle2() on a point" );
+}
+
+/// Checks for intersection with arbitrary rectangle defined by the two points \c p0 and \c p1: implementation
+template<typename LP, typename FPT>
+typename Root<LP,FPT>::Intersect
+Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, FPT dist, const detail::RootHelper<IsLine>& ) const
+{
+	detail::fix_order( p0, p1 );
+
+	Root<IsLine,FPT> main_line( p0, p1 ); // compute support line
+
+// compute the two orthogonal lines
+
+	double dx = std::abs( p0.getX() - p1.getX() ); // first, find the largest difference
+	double dy = std::abs( p0.getY() - p1.getY() );
+
+	Root<IsLine,FPT> line_A, line_B;
+	if( dx > dy )
+	{
+		line_A = main_line.getOrthogonalLine( GC_X, p0.getX() );
+		line_B = main_line.getOrthogonalLine( GC_X, p1.getX() );
+	}
+	else
+	{
+		line_A = main_line.getOrthogonalLine( GC_Y, p0.getY() );
+		line_B = main_line.getOrthogonalLine( GC_Y, p1.getY() );
+	}
+
+
+}
+/// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1: implementation
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsLine>& ) const
@@ -1167,7 +1226,6 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 	{
 		if( *this == l[i] )          // if same line, then we are done: return the two points
 			return typename Root<IsLine,FPT>::Intersect( p00, p11 );
-//			return Root<IsLine,FPT>::Intersect_<IsPoint>( p00, p11 );
 		else
 		{
 			Root<IsPoint,FPT> pt;
