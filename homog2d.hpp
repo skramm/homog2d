@@ -578,7 +578,14 @@ class Root
 	}
 
 	double            getCoord( En_GivenCoord gc, double other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
-	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const { return impl_getPoint( gc, other, detail::RootHelper<LP>() ); }
+	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const
+	{
+		return impl_getPoint( gc, other, detail::RootHelper<LP>() );
+	}
+	std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> getPoints( En_GivenCoord gc, FPT coord, FPT dist ) const
+	{
+		return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
+	}
 	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, double other ) const
 	{
 		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
@@ -628,6 +635,7 @@ class Root
 
 		double impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
 		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
+		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<IsLine,FPT>& ) const;
@@ -819,6 +827,27 @@ Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootH
 	if( gc == GC_X )
 		return Root<IsPoint,FPT>( other, coord );
 	return Root<IsPoint,FPT>( coord, other );
+}
+
+//------------------------------------------------------------------
+/// returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
+template<typename LP,typename FPT>
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const
+{
+	auto pt = impl_getPoint( gc, coord, detail::RootHelper<IsLine>() );
+	auto sqa2b2 = std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] );
+	auto coeff = dist / sqa2b2;
+
+	Root<IsPoint,FPT> pt1(
+        pt.getX() -  _v[1] * coeff,
+        pt.getY() +  _v[0] * coeff
+	);
+	Root<IsPoint,FPT> pt2(
+        pt.getX() +  _v[1] * coeff,
+        pt.getY() -  _v[0] * coeff
+	);
+	return std::make_pair( pt1, pt2 );
 }
 
 //------------------------------------------------------------------
