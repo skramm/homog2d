@@ -260,7 +260,7 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 			inter.second.drawCvMat( g_img, CvDrawParams().setColor(250, 0, 0) );
 			if( i == 1)   // if vertical line
 			{
-				Line2d li_para = g_li[i].getParallelLine( inter.second );
+				Line2d li_para = g_li[0].getParallelLine( inter.second );
 				std::cout << "li para=" <<li_para << " pt= " << inter.second << "\n";
 				li_para.drawCvMat( g_img, CvDrawParams().setColor(100, 100, 0) );
 			}

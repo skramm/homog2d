@@ -935,9 +935,7 @@ Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::R
 	out.p_normalizeLine();
 	return out;*/
 	return p_getOrthogonalLine( pt );
-
 }
-
 
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
@@ -945,7 +943,7 @@ Root<IsLine,FPT>
 Root<LP,FPT>::impl_getParallelLine( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>& ) const
 {
 	Root<IsLine,FPT> out = *this;
-	out._v[2] = std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] )  -_v[0] * pt.getX() - _v[1] * pt.getY();
+	out._v[2] = -_v[0] * pt.getX() - _v[1] * pt.getY();
 	out.p_normalizeLine();
 	return out;
 }
