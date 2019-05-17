@@ -57,7 +57,7 @@ li1.addOffset( OD_Horiz, 5 ); // horizontal offset
 li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
 
-### Get point lying on line
+### Get point(s) lying on line
 
 To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
 `En_GivenCoord`.
@@ -81,6 +81,23 @@ Point2d pt2 = li.getPoint( GC_X, 2 );
 ```
 
 The values `GC_Y`,`GC_Y` are just a two-values `enum`.
+
+### Points at equal distance from a point on line
+<a name="paedfapol"></a>
+
+You can compute the two points that are lying on a line and at a given distance from a point.
+
+![fig](misc/fig1.png)
+
+The "middle" point must be given as either its x or y coordinate [(1)](#fn1).
+```C++
+Line2d li( ..., ... ); // some line
+auto ppts = li.getPoints( GC_X, coord, dist );
+Point2d p1 = ppts.first;
+Point2d p2 = ppts.second;
+```
+
+Upon return, the "first" point will hold the one with smallest 'x' coordinates, or the smallest 'y' coordinates if x coordinates are equal.
 
 ### Orthogonal line and angles
 
@@ -343,5 +360,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
   - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
+  - added `getPoints()`
 
+### Footnotes
 
+[(1)](#paedfapol)
+<a name="fn1"></a> The rationale behind this interface is that if we had choosen to pass a point as argument, no guarantee would have been given that the point is effectively lying on the line.
+With this function signature, the function can compute the point itself.
