@@ -424,6 +424,40 @@ TEST_CASE( "matrix chained operations", "[testH2]" )
 	CHECK( H1 != H2 );
 }
 
+TEST_CASE( "getPoints", "[test_points]" )
+{
+	Line2d liV; // vertical line
+	auto pp = liV.getPoints( GC_Y, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
+	CHECK( pp.first  == Point2d(0,-2) );
+	CHECK( pp.second == Point2d(0,+2) );
+
+	pp = liV.getPoints( GC_Y, 3.0, 2.0 ); // get points at a distance 2 from (0,3)
+	CHECK( pp.first  == Point2d(0,+1) );
+	CHECK( pp.second == Point2d(0,+5) );
+
+	Line2d liH(1,0); // horizontal line
+	pp = liH.getPoints( GC_X, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
+	CHECK( pp.first  == Point2d(-2,0) );
+	CHECK( pp.second == Point2d(+2,0) );
+
+	pp = liH.getPoints( GC_X, 3.0, 2.0 ); // get points at a distance 2 from (3,0)
+	CHECK( pp.first  == Point2d(+1,0) );
+	CHECK( pp.second == Point2d(+5,0) );
+
+	Line2d li( 1, 1 );                   // line with slope [1,1] starting from (0,0)
+	auto k = 1.0 / std::sqrt(2.);
+	pp = li.getPoints( GC_X, 5.0, 1.0 ); // get points at a distance 1 from (5,0)
+	CHECK( pp.first  == Point2d( 5-k, 5-k ) );
+	CHECK( pp.second == Point2d( 5+k, 5+k ) );
+
+
+	li = Point2d(3,1) * Point2d(4,2); // line with slope [1,1] starting from (3,1)
+
+	pp = li.getPoints( GC_X, 5.0, 1.0 ); // get points at a distance 2 from (3,0)
+	CHECK( pp.first  == Point2d( 5-k, 3-k ) );
+	CHECK( pp.second == Point2d( 5+k, 3+k ) );
+}
+
 TEST_CASE( "getAngle", "[test_angle]" )
 {
 	Line2d lid(1,1); // diagonal line going through (0,0)

@@ -754,6 +754,48 @@ class Root
 };
 
 //------------------------------------------------------------------
+namespace detail {
+/// Private free function, get top-left and bottom-right points from two arbitrary points
+template<typename FPT>
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+getCorrectPoints( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 )
+{
+	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
+		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
+
+	Root<IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+	return std::make_pair( p00, p11 );
+}
+
+//------------------------------------------------------------------
+/// Private free function, returns true if point \c pt is inside the rectangle defined by (p00,p11)
+template<typename FPT>
+bool
+ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Root<IsPoint,FPT>& p11 )
+{
+	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+			return true;
+	return false;
+}
+
+/// Private free function, swap the points so that ptA.x <= ptB.x, and if equal, sorts on y
+template<typename FPT>
+void
+fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
+{
+	if( ptA.getX() > ptB.getX() )
+		std::swap( ptA, ptB );
+	else
+		if( ptA.getX() == ptB.getX() )
+			if( ptA.getY() > ptB.getY() )
+				std::swap( ptA, ptB );
+}
+
+} // namespace detail end
+
+//------------------------------------------------------------------
 /// overload for points
 /// \todo now member function so we can use the object itself, but need to keep the second parameter so the compiler can select the correct overload
 template<typename LP,typename FPT>
@@ -830,14 +872,13 @@ Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootH
 }
 
 //------------------------------------------------------------------
-/// returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
+/// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
 Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const
 {
 	auto pt = impl_getPoint( gc, coord, detail::RootHelper<IsLine>() );
-	auto sqa2b2 = std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] );
-	auto coeff = dist / sqa2b2;
+	auto coeff = dist / std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] );
 
 	Root<IsPoint,FPT> pt1(
         pt.getX() -  _v[1] * coeff,
@@ -847,6 +888,7 @@ Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detai
         pt.getX() +  _v[1] * coeff,
         pt.getY() -  _v[0] * coeff
 	);
+	detail::fix_order( pt1, pt2 );
 	return std::make_pair( pt1, pt2 );
 }
 
@@ -1033,49 +1075,6 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<Is
 	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
 	return std::acos( std::abs(res) );
 }
-
-//------------------------------------------------------------------
-namespace detail {
-/// Private free function, get top-left and bottom-right points from two arbitrary points
-template<typename FPT>
-std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
-getCorrectPoints( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1 )
-{
-	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
-		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
-
-	Root<IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
-	Root<IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
-	return std::make_pair( p00, p11 );
-}
-
-//------------------------------------------------------------------
-/// Private free function, returns true if point \c pt is inside the rectangle defined by (p00,p11)
-template<typename FPT>
-bool
-ptIsInside( const Root<IsPoint,FPT>& pt, const Root<IsPoint,FPT>& p00, const Root<IsPoint,FPT>& p11 )
-{
-	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
-		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
-			return true;
-	return false;
-}
-
-/// helper function, swap the points so that ptA.x <= ptB.x, and if equal, sorts on y
-template<typename FPT>
-void
-fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
-{
-	if( ptA.getX() > ptB.getX() )
-		std::swap( ptA, ptB );
-	else
-		if( ptA.getX() == ptB.getX() )
-			if( ptA.getY() > ptB.getY() )
-				std::swap( ptA, ptB );
-}
-
-
-} // namespace detail end
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
