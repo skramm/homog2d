@@ -715,6 +715,7 @@ class Root
 
 	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
 
+/// Returns orthogonal line at \c pt. Private because that is the only way we have the guarantee that pt in lying on line.
 	Root<IsLine,FPT> p_getOrthogonalLine( const Root<IsPoint,FPT>& pt ) const
 	{
 		Root<IsLine,FPT> out;
@@ -1235,6 +1236,61 @@ Root<LP,FPT>::impl_intersectsRectangle2( const Root<IsPoint,FPT>& p0, const Root
 
 	Root<IsLine,FPT> li_C = li_B.getParallelLine( p2 );
 	Root<IsLine,FPT> li_D = li_A.getParallelLine( p1 );
+
+#if 1 // TEMP
+	Root<IsLine,FPT> l[4];
+	l[0] = li_A;
+	l[1] = li_B;
+	l[2] = li_C;
+	l[3] = li_D;
+
+	std::vector<Root<IsPoint,FPT>> vec;
+	for( int i=0; i<4; i++ )         // compare with each of the 4 lines
+	{
+		if( *this == l[i] )          // if same line, then we are done: return the two points
+			return typename Root<IsLine,FPT>::Intersect( p0, p1 );
+		else
+		{
+			Root<IsPoint,FPT> pt;
+			bool okFlag(true);
+			try{
+				pt = *this * l[i];
+			}
+			catch( const std::exception& )
+			{
+				okFlag = false; // lines are parallel
+			}
+			if( okFlag )
+			{
+				if( detail::ptIsInside( pt, p0, p1 ) )
+					vec.push_back( pt );
+			}
+		}
+	}
+
+	typename Root<LP,FPT>::Intersect out;
+	if( vec.size() > 1 )                                // if more than one point was found, then
+	{
+		std::vector<Root<IsPoint,FPT>> vec2( 1, vec[0] );   // build a second vector, holding the first found point as first element
+		for( size_t i=1; i<vec.size(); i++ )            // and add the other points, only once
+		{
+			if(
+				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] ) // if not already stored,
+				== std::end( vec2 )
+			)
+				vec2.push_back( vec[i] );                                 // then, add the point
+		}
+
+		if( vec2.size() > 1 )
+		{
+			out._doesIntersect = true;
+			out.ptA = vec2[0];
+			out.ptB = vec2[1];
+		}
+		detail::fix_order( out.ptA, out.ptB );
+	}
+	return out;
+#endif // TEMP
 }
 
 /// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1: implementation

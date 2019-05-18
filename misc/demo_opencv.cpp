@@ -107,6 +107,13 @@ void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 			Line2d l_mouse2= l_mouse.getOrthogonalLine( GC_X, 100 );
 			l_mouse.drawCvMat( g_img );
 			l_mouse2.drawCvMat( g_img );
+			auto it = l_mouse.intersectsRectangle2( g_pt[0], g_pt[1], g_pt[2] );
+			if( it() )
+			{
+				auto ppts = it.get();
+				ppts.first.drawCvMat( g_img );
+				ppts.second.drawCvMat( g_img );
+			}
 		}
 		break;
 
@@ -303,6 +310,46 @@ void demo4()
 	}
 }
 
+/// Mouse callback for demo5
+void mouse_CB_5( int /* event */, int x, int y, int /* flags */, void* /*param*/ )
+{
+//	drawLine_4();
+
+	g_img = cv::Scalar(255,255,255);
+	g_pt_mouse.set( x, y );
+//	Line2d li.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
+
+	g_pt_mouse.drawCvMat( g_img, CvDrawParams().setColor(250,50,20) );
+	Line2d li( g_pt_mouse );
+	li.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
+
+/*	for( size_t i=0; i<g_li.size(); i++ )
+	{
+		auto ri = g_li[i].intersectsCircle( g_pt_mouse, g_radius );
+		if( ri() )
+		{
+			auto inter = ri.get();
+			inter.first.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
+			inter.second.drawCvMat( g_img, CvDrawParams().setColor(250, 0, 0) );
+			if( i == 1)   // if vertical line
+			{
+				Line2d li_para = g_li[0].getParallelLine( inter.second );
+				std::cout << "li para=" <<li_para << " pt= " << inter.second << "\n";
+				li_para.drawCvMat( g_img, CvDrawParams().setColor(100, 100, 0) );
+			}
+		}
+	}*/
+	cv::imshow( g_wndname, g_img );
+}
+
+void demo5()
+{
+	std::cout << "Demo 5:\n"; // move circle over line, hit [lm] to change circle radius\n";
+	cv::setMouseCallback( g_wndname, mouse_CB_5 );
+
+
+}
+
 int main()
 {
 	std::cout << "Installed OpenCV version : " << CV_VERSION << '\n';
@@ -315,6 +362,7 @@ int main()
 
 	demo3();
 	demo4();
+	demo5();
 	std::cout << "Demo end\n";
 }
 
