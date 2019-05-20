@@ -91,7 +91,7 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d lA1 = ptA1 * ptA2;
 		Line2d lA2 = ptA2 * ptA1;
 
-auto dist = lA1.distTo( lA2 );   //
+// auto dist = lA1.distTo( lA2 );   // THIS WOULD BREAK THE BUILD (can't compute distance between two lines)
 
 		CHECK( lA1 == lA2 );
 		CHECK( lA1.getAngle(lA2) == 0. );
