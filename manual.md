@@ -51,11 +51,20 @@ So if you code attempts to do so, this will trigger a
 [std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
 exception.
 
-- Add some offset to a line
+- Add some offset to a line:
 ```C++
 li1.addOffset( OD_Horiz, 5 ); // horizontal offset
 li1.addOffset( OD_Vert, 5 ); // vertical offset
 ```
+
+- Compute distances from line to point or from point to point:
+```C++
+Line2d li; // some line
+Point2d pt1, pt2; // some points
+auto dist1 = li1.distToPoint( pt1 );
+auto dist1 = pt2.distToPoint( pt1 );
+```
+
 
 ### Get point(s) lying on line
 
@@ -356,11 +365,12 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
 
-- current master branch:
+- current master branch API changes:
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
   - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
   - added `getPoints()`
+  - added single argument constructors
 
 ### Footnotes
 
