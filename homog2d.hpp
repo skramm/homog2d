@@ -566,6 +566,50 @@ class Root
 		p_normalizeLine();
 	}
 
+/// Constructor with single arg of type "Line"
+/**
+This will call one of the two overloads of \c impl_init_1_Line(), depending on type of object
+*/
+/// Build a line passing through (0,0) and \c pt
+	Root( const Root<IsLine,FPT>& li )
+	{
+		impl_init_1_Line( li, detail::RootHelper<LP>() );
+	}
+
+/// Constructor with single arg of type "Point"
+/**
+This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object
+*/
+	Root( const Root<IsPoint,FPT>& pt )
+	{
+		impl_init_1_Point( pt, detail::RootHelper<LP>() );
+	}
+
+	private:
+/// Arg is a point, object is a point
+	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsPoint>&  )
+	{
+		*this = pt;
+	}
+/// Arg is a point, object is a line
+	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>&  )
+	{
+		*this = detail::crossProduct<IsLine>( pt, Root<IsPoint,FPT>() );
+		p_normalizeLine();
+	}
+
+/// Arg is a line, object is a point
+	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsPoint>&  )
+	{
+		assert(0);
+	}
+/// Arg is a line, object is a line
+	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsLine>&  )
+	{
+		*this = li;
+	}
+
+	public:
 	template<typename T>
 	Root( const T& v1, const T& v2 )
 	{
@@ -989,7 +1033,7 @@ operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
 // CONSTRUCTORS
 ///////////////////////////////////////////
 
-/// Points overload: generic init from two args
+/// Points overload: generic init from two numeric args
 template<typename LP, typename FPT>
 template<typename T>
 void
@@ -1000,7 +1044,7 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<Is
 	_v[2] = 1.;
 }
 
-/// Lines overload: generic init from two args
+/// Lines overload: generic init from two numeric args
 template<typename LP, typename FPT>
 template<typename T>
 void

@@ -78,6 +78,12 @@ TEST_CASE( "test1", "[test1]" )
 	CHECK( ptA2.getX() == 2. );
 	CHECK( ptA2.getY() == 2. );
 
+	{ // build line from one point, other one will be (0,0)
+		Line2d lA1( ptA2 );
+		CHECK( lA1.distToPoint( ptA1 ) == 0 );
+		CHECK( lA1.distToPoint( ptA2 ) == 0 );
+	}
+
 	{ // build line from two points
 		Line2d lA1 = ptA1 * ptA2;
 		Line2d lA2 = ptA2 * ptA1;
