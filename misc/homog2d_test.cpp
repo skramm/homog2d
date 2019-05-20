@@ -80,13 +80,19 @@ TEST_CASE( "test1", "[test1]" )
 
 	{ // build line from one point, other one will be (0,0)
 		Line2d lA1( ptA2 );
-		CHECK( lA1.distToPoint( ptA1 ) == 0 );
-		CHECK( lA1.distToPoint( ptA2 ) == 0 );
+		CHECK( lA1.distTo( ptA1 ) == 0 );
+		CHECK( lA1.distTo( ptA2 ) == 0 );
+
+		CHECK( ptA1.distTo( lA1 ) == 0 );
+		CHECK( ptA2.distTo( lA1 ) == 0 );
 	}
 
 	{ // build line from two points
 		Line2d lA1 = ptA1 * ptA2;
 		Line2d lA2 = ptA2 * ptA1;
+
+auto dist = lA1.distTo( lA2 );   //
+
 		CHECK( lA1 == lA2 );
 		CHECK( lA1.getAngle(lA2) == 0. );
 		CHECK( lA2.getAngle(lA1) == 0. );
@@ -171,10 +177,10 @@ TEST_CASE( "test1", "[test1]" )
 TEST_CASE( "dist2points", "[test2]" )
 {
 	Line2d li(2,1);
-	auto d = li.distToPoint( Point2d() );
+	auto d = li.distTo( Point2d() );
 	CHECK( d == 0. );
 
-	auto d2 = li.distToPoint( Point2d(4,2) );
+	auto d2 = li.distTo( Point2d(4,2) );
 	CHECK( d2 == 0. );
 
 	CHECK( li.getCoord( GC_X, 0. ) == 0. );
@@ -185,13 +191,13 @@ TEST_CASE( "dist2points", "[test2]" )
 
 	Point2d p1( 3,3);
 	Point2d p2( 4,4);
-	CHECK( p1.distToPoint( p2 ) == std::sqrt(2) );
+	CHECK( p1.distTo( p2 ) == std::sqrt(2) );
 }
 
 TEST_CASE( "offset test", "[test3]" )
 {
 	Line2d lA( Point2d(0,0), Point2d(2,2) );
-	CHECK( lA.distToPoint( Point2d(1.,1.) ) == 0. );
+	CHECK( lA.distTo( Point2d(1.,1.) ) == 0. );
 
 	Line2d lB = lA;
 	lA.addOffset( OD_Vert, 2. );
@@ -376,7 +382,7 @@ double computeDistTransformedLined( Homogr H )
 
 	Line2d line2 = H * line1; // move the line with H^{-T}
 
-	return line2.distToPoint( pt2 ); // should be 0 !
+	return line2.distTo( pt2 ); // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789
@@ -392,7 +398,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 	{
 		Line2d d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d pt1( 5, 6);  // point is on line
-		CHECK( d1.distToPoint( pt1 ) <= g_epsilon  );
+		CHECK( d1.distTo( pt1 ) <= g_epsilon  );
 	}
 
 	Homogr H;

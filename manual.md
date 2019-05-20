@@ -59,10 +59,15 @@ li1.addOffset( OD_Vert, 5 ); // vertical offset
 
 - Compute distances from line to point or from point to point:
 ```C++
-Line2d li; // some line
+Line2d li;        // some line
 Point2d pt1, pt2; // some points
-auto dist1 = li1.distToPoint( pt1 );
-auto dist1 = pt2.distToPoint( pt1 );
+auto dist1 = li1.distTo( pt1 );   // distance from line to point
+auto dist2 = pt2.distTo( pt1 );   // distance from point to point
+auto dist3 = pt1.distTo( li1 );   // but this is fine too
+auto dist3 = pt1.distTo( pt2 );   //
+
+Line2d li2;
+// auto dist = li.distTo( li2 );   //
 ```
 
 
@@ -371,6 +376,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
   - added `getPoints()`
   - added single argument constructors
+  - renamed `distToPoints()` member function: now `distTo()`, and be used with lines as argument.
 
 ### Footnotes
 
