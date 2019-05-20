@@ -95,7 +95,7 @@ void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 
 		case CV_EVENT_LBUTTONDOWN:
 			for( int i=0; i<4; i++ )
-				if( g_pt_mouse.distToPoint( g_pt[i]) < 10 )
+				if( g_pt_mouse.distTo( g_pt[i]) < 10 )
 					selected = i;
 		break;
 

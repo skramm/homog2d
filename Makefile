@@ -35,6 +35,10 @@ install:
 demo: demo_opencv
 	./demo_opencv
 
+diff:
+	git diff | colordiff | aha > diff.html
+	xdg-open diff.html
+
 # this target REQUIRES Opencv, no will attempt to build even when USE_OPENCV not given
 demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -I. -o demo_opencv misc/demo_opencv.cpp `pkg-config --libs opencv`

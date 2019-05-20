@@ -566,6 +566,50 @@ class Root
 		p_normalizeLine();
 	}
 
+/// Constructor with single arg of type "Line"
+/**
+This will call one of the two overloads of \c impl_init_1_Line(), depending on type of object
+*/
+/// Build a line passing through (0,0) and \c pt
+	Root( const Root<IsLine,FPT>& li )
+	{
+		impl_init_1_Line( li, detail::RootHelper<LP>() );
+	}
+
+/// Constructor with single arg of type "Point"
+/**
+This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object
+*/
+	Root( const Root<IsPoint,FPT>& pt )
+	{
+		impl_init_1_Point( pt, detail::RootHelper<LP>() );
+	}
+
+	private:
+/// Arg is a point, object is a point
+	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsPoint>&  )
+	{
+		*this = pt;
+	}
+/// Arg is a point, object is a line
+	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>&  )
+	{
+		*this = detail::crossProduct<IsLine>( pt, Root<IsPoint,FPT>() );
+		p_normalizeLine();
+	}
+
+/// Arg is a line, object is a point
+	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsPoint>&  )
+	{
+		assert(0);
+	}
+/// Arg is a line, object is a line
+	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsLine>&  )
+	{
+		*this = li;
+	}
+
+	public:
 	template<typename T>
 	Root( const T& v1, const T& v2 )
 	{
@@ -606,10 +650,15 @@ class Root
 	double getY() const              { return impl_getY( detail::RootHelper<LP>() ); }
 	void   set( double x, double y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-	double distToPoint( const Root<IsPoint,FPT>& pt ) const
+	double distTo( const Root<IsPoint,FPT>& pt ) const
 	{
 		return impl_distToPoint( pt, detail::RootHelper<LP>() );
 	}
+	double distTo( const Root<IsLine,FPT>& li ) const
+	{
+		return impl_distToLine( li, detail::RootHelper<LP>() );
+	}
+
 	double getAngle( const Root<IsLine,FPT>& li ) const
 	{
 		return impl_getAngle( li, detail::RootHelper<LP>() );
@@ -635,6 +684,8 @@ class Root
 
 		double impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 		double impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsLine>&  ) const;
+		double impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsPoint>& ) const;
+		double impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsLine>&  ) const;
 
 		double impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 
@@ -779,6 +830,7 @@ class Root
 };
 
 //------------------------------------------------------------------
+/// This namespace holds some private stuff
 namespace detail {
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 template<typename FPT>
@@ -817,6 +869,13 @@ fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
 			if( ptA.getY() > ptB.getY() )
 				std::swap( ptA, ptB );
 }
+
+/// A trick used in static_assert, to it abort only if function is instanciated
+template<typename T>
+struct AlwaysFalse {
+    enum { value = false };
+};
+
 
 } // namespace detail end
 
@@ -1025,7 +1084,7 @@ operator * ( const Root<IsPoint,FPT>& lhs, const Root<IsPoint,FPT>& rhs )
 // CONSTRUCTORS
 ///////////////////////////////////////////
 
-/// Points overload: generic init from two args
+/// Points overload: generic init from two numeric args
 template<typename LP, typename FPT>
 template<typename T>
 void
@@ -1036,7 +1095,7 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<Is
 	_v[2] = 1.;
 }
 
-/// Lines overload: generic init from two args
+/// Lines overload: generic init from two numeric args
 template<typename LP, typename FPT>
 template<typename T>
 void
@@ -1066,13 +1125,31 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 </pre>
 \todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
 */
-
 template<typename LP, typename FPT>
 double
 Root<LP,FPT>::impl_distToPoint( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>& ) const
 {
 	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
 }
+
+/// overload for line to point distance
+template<typename LP, typename FPT>
+double
+Root<LP,FPT>::impl_distToLine( const Root<IsLine,FPT>& li, const detail::RootHelper<IsPoint>& ) const
+{
+//	return li.impl_distToPoint( *this, detail::RootHelper<IsLine>() );
+	return li.distTo( *this );
+}
+
+/// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
+template<typename LP, typename FPT>
+double
+Root<LP,FPT>::impl_distToLine( const Root<IsLine,FPT>&, const detail::RootHelper<IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
+	return 0.;    // to avoid warning message on build
+}
+
 
 /// overload for lines, undefined for points
 template<typename LP, typename FPT>
@@ -1200,13 +1277,6 @@ Root<LP,FPT>::intersectsRectangle2( const Root<IsPoint,FPT>& p1, const Root<IsPo
 {
 	return impl_intersectsRectangle2( p1, p2, p3, detail::RootHelper<LP>() );
 }
-
-namespace detail {
-template<typename T>
-struct AlwaysFalse {
-    enum { value = false };
-};
-} // namespace detail
 
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
