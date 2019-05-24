@@ -104,9 +104,7 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lB.getCoord( GC_X, 1 ) == 1. );
 		CHECK( lB.getPoint(GC_X, 1) == Point2d(1,1) );
 	}
-
 	{
-
 // build point from two diagonal lines
 		Line2d lA( Point2d(0,0), Point2d(2,2) );
 		Line2d lB( Point2d(0,2), Point2d(2,0) );
@@ -150,7 +148,7 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d li2 = lV.getOrthogonalLine( GC_Y, 100 );
 		CHECK( li2.getAngle( lV ) == M_PI/2. );
 
-//		CHECK( getAngle( li2,lV ) == M_PI/2. ); \TODO
+		CHECK( getAngle( li2,lV ) == M_PI/2. );
 
 		Line2d lH2(1,0);                // build horizontal line
 		Line2d lH3 = lH2;
@@ -172,6 +170,36 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( li.getPoint( GC_X, 2 ) == Point2d(2,1) );
 		CHECK( li.getPoint( GC_Y, 1 ) == Point2d(2,1) );
 	}
+}
+
+TEST_CASE( "test parallel", "[test_para]" )
+{
+	SECTION( "Vertical line at x=0" )
+	{
+		Line2d l1; // vertical line
+
+		Line2d l2 = l1.getParallelLine( Point2d(1,1) );
+		CHECK_THROWS( l1 * l2 ); // two parallel lines never cross
+		CHECK( l2.distTo( Point2d(0,0) ) == 1. );
+		CHECK( l2.distTo( Point2d(0,2) ) == 1. );
+
+		Line2d l3 = l1.getParallelLine( Point2d(0,0) );
+		CHECK( l3.distTo( Point2d(0,0) ) == 0. );
+		CHECK( l3.distTo( Point2d(0,2) ) == 0. );
+	}
+/*	SECTION( "Vertical line at x=1" )
+	{
+		Line2d l1( Point2d(1,0), Point2d(1,10) ); // vertical line at x=1
+
+		Line2d l2 = l1.getParallelLine( Point2d(1,1) );
+		CHECK_THROWS( l1 * l2 ); // two parallel lines never cross
+		CHECK( l2.distTo( Point2d(0,0) ) == 1. );
+		CHECK( l2.distTo( Point2d(0,2) ) == 1. );
+
+		Line2d l3 = l1.getParallelLine( Point2d(0,0) );
+		CHECK( l3.distTo( Point2d(0,0) ) == 1. );
+		CHECK( l3.distTo( Point2d(0,2) ) == 1. );
+	}*/
 }
 
 TEST_CASE( "dist2points", "[test2]" )

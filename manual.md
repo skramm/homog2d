@@ -70,7 +70,6 @@ Line2d li2;
 // auto dist = li.distTo( li2 );   //
 ```
 
-
 ### Get point(s) lying on line
 
 To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
@@ -113,7 +112,7 @@ Point2d p2 = ppts.second;
 
 Upon return, the "first" point will hold the one with smallest 'x' coordinates, or the smallest 'y' coordinates if x coordinates are equal.
 
-### Orthogonal line and angles
+### Orthogonal and parallel lines, angles between two lines
 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
@@ -121,6 +120,16 @@ For example, this:
 Line2d li2 = li.getOrthogonalLine( GC_X, 2 );
 ```
 will compute the orthogonal line at `x=2`.
+
+
+You can get a line parallel to another one with the member function `getParallelLine()`.
+This function takes as argument a point that the line will intersect.
+
+```C++
+Line2d li; // some line
+Point2d pt; // some point
+Line2d li2 = li.getParallelLine( pt ); // pt will be lying on li2
+```
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++

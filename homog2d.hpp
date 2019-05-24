@@ -653,14 +653,25 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		return impl_getPoint( gc, other, detail::RootHelper<LP>() );
 	}
+
+/// Returns a pair of points that are lying on line ad distance \c dist from a point defined by one of its coordinates.
 	std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> getPoints( En_GivenCoord gc, FPT coord, FPT dist ) const
 	{
 		return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
 	}
-	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, FPT other ) const
+
+/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
+	Root<IsLine,FPT> getOrthogonalLine( En_GivenCoord gc, FPT other ) const
 	{
 		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
 	}
+
+/// Returns an parallel line to the one it is called on, with \c pt lying on it.
+	Root<IsLine,FPT> getParallelLine( const Root<IsPoint,FPT>& pt ) const
+	{
+		return impl_getParallelLine( pt, detail::RootHelper<LP>() );
+	}
+
 
 	template<typename T>
 	void addOffset( En_OffsetDir dir, T v )
@@ -713,7 +724,9 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		FPT impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
 		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
+
 		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const;
+		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsPoint>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<IsLine,FPT>& ) const;
@@ -812,7 +825,12 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
+
 	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const;
+	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsPoint>& ) const;
+	Root<IsLine,FPT> impl_getParallelLine( const Root<IsPoint,FPT>&,    const detail::RootHelper<IsLine>& ) const;
+	Root<IsLine,FPT> impl_getParallelLine( const Root<IsPoint,FPT>&,    const detail::RootHelper<IsPoint>& ) const;
+
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 
@@ -967,6 +985,15 @@ Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelp
 }
 
 //------------------------------------------------------------------
+/// ILLEGAL INSTANCIATION
+template<typename LP,typename FPT>
+std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
+Root<LP,FPT>::impl_getPoints( En_GivenCoord, FPT, FPT, const detail::RootHelper<IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
+}
+
+//------------------------------------------------------------------
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>>
@@ -988,7 +1015,15 @@ Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detai
 }
 
 //------------------------------------------------------------------
-/// Returns an orthogonal line, at gc=other
+/// Illegal instanciation
+template<typename LP,typename FPT>
+Root<IsLine,FPT>
+Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord, FPT, const detail::RootHelper<IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
+}
+
+/// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Root<IsLine,FPT>
 Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const
@@ -1007,6 +1042,25 @@ Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::R
 	return out;
 }
 
+//------------------------------------------------------------------
+/// Illegal instanciation
+template<typename LP,typename FPT>
+Root<IsLine,FPT>
+Root<LP,FPT>::impl_getParallelLine( const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLine() on a point" );
+}
+
+/// Returns an parallel line, implementation of getParallelLine().
+template<typename LP,typename FPT>
+Root<IsLine,FPT>
+Root<LP,FPT>::impl_getParallelLine( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>& ) const
+{
+	Root<IsLine,FPT> out = *this;
+	out._v[2] = -_v[0] * pt.getX() - _v[1] * pt.getY();
+	out.p_normalizeLine();
+	return out;
+}
 
 //------------------------------------------------------------------
 /// Comparison operator, used for lines
