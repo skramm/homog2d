@@ -182,10 +182,12 @@ TEST_CASE( "test parallel", "[test_para]" )
 		CHECK_THROWS( l1 * l2 ); // two parallel lines never cross
 		CHECK( l2.distTo( Point2d(0,0) ) == 1. );
 		CHECK( l2.distTo( Point2d(0,2) ) == 1. );
+		CHECK( getAngle(l2,l1) == 0. );
 
 		Line2d l3 = l1.getParallelLine( Point2d(0,0) );
 		CHECK( l3.distTo( Point2d(0,0) ) == 0. );
 		CHECK( l3.distTo( Point2d(0,2) ) == 0. );
+		CHECK( getAngle(l3,l1) == 0. );
 	}
 /*	SECTION( "Vertical line at x=1" )
 	{
