@@ -62,12 +62,11 @@ li1.addOffset( OD_Vert, 5 ); // vertical offset
 Line2d li;        // some line
 Point2d pt1, pt2; // some points
 auto dist1 = li1.distTo( pt1 );   // distance from line to point
+auto dist2 = pt1.distTo( li1 );   // but you can do this too
 auto dist2 = pt2.distTo( pt1 );   // distance from point to point
-auto dist3 = pt1.distTo( li1 );   // but this is fine too
-auto dist3 = pt1.distTo( pt2 );   //
 
 Line2d li2;
-// auto dist = li.distTo( li2 );   //
+// auto dist = li.distTo( li2 );   // this does not build !
 ```
 
 ### Get point(s) lying on line
