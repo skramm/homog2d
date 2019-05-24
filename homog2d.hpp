@@ -179,7 +179,7 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = false;
 	}
 /// Getter
-	double getValue( size_t r, size_t c ) const
+	FPT getValue( size_t r, size_t c ) const
 	{
 		return _data[r][c];
 	}
@@ -332,7 +332,7 @@ Thus some assert can get triggered elsewhere.
 /**
 Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
 */
-	Homogr_& operator * (double v)
+	Homogr_& operator * (FPT v)
 	{
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -648,8 +648,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init( detail::RootHelper<LP>() );
 	}
 
-	double            getCoord( En_GivenCoord gc, double other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
-	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, double other ) const
+	FPT               getCoord( En_GivenCoord gc, FPT other ) const { return impl_getCoord( gc, other, detail::RootHelper<LP>() ); }
+	Root<IsPoint,FPT> getPoint( En_GivenCoord gc, FPT other ) const
 	{
 		return impl_getPoint( gc, other, detail::RootHelper<LP>() );
 	}
@@ -657,7 +657,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
 	}
-	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, double other ) const
+	Root<IsLine,FPT>  getOrthogonalLine( En_GivenCoord gc, FPT other ) const
 	{
 		return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
 	}
@@ -668,34 +668,34 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_addOffset( dir, v, detail::RootHelper<LP>() );
 	}
 
-	double getX() const              { return impl_getX( detail::RootHelper<LP>() ); }
-	double getY() const              { return impl_getY( detail::RootHelper<LP>() ); }
-	void   set( double x, double y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
+	FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
+	FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
+	void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-	double distTo( const Root<IsPoint,FPT>& pt ) const
+	FPT distTo( const Root<IsPoint,FPT>& pt ) const
 	{
 		return impl_distToPoint( pt, detail::RootHelper<LP>() );
 	}
-	double distTo( const Root<IsLine,FPT>& li ) const
+	FPT distTo( const Root<IsLine,FPT>& li ) const
 	{
 		return impl_distToLine( li, detail::RootHelper<LP>() );
 	}
 
-	double getAngle( const Root<IsLine,FPT>& li ) const
+	FPT getAngle( const Root<IsLine,FPT>& li ) const
 	{
 		return impl_getAngle( li, detail::RootHelper<LP>() );
 	}
 
 	private:
-		double impl_getX( const detail::RootHelper<IsPoint>& /* dummy */ ) const
+		FPT impl_getX( const detail::RootHelper<IsPoint>& /* dummy */ ) const
 		{
 			return _v[0]/_v[2];
 		}
-		double impl_getY( const detail::RootHelper<IsPoint>& /* dummy */ ) const
+		FPT impl_getY( const detail::RootHelper<IsPoint>& /* dummy */ ) const
 		{
 			return _v[1]/_v[2];
 		}
-		void impl_set( double x, double y, const detail::RootHelper<IsPoint>& /* dummy */ )
+		void impl_set( FPT x, FPT y, const detail::RootHelper<IsPoint>& /* dummy */ )
 		{
 			_v[0] = x;
 			_v[1] = y;
@@ -704,15 +704,15 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		void   impl_addOffset( En_OffsetDir dir, T v, const detail::RootHelper<IsLine>& );
 
-		double impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
-		double impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsLine>&  ) const;
-		double impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsPoint>& ) const;
-		double impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsLine>&  ) const;
+		FPT impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
+		FPT impl_distToPoint( const Root<IsPoint,FPT>&, const detail::RootHelper<IsLine>&  ) const;
+		FPT impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsPoint>& ) const;
+		FPT impl_distToLine(  const Root<IsLine,FPT>&,  const detail::RootHelper<IsLine>&  ) const;
 
-		double impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
+		FPT impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 
-		double impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
-		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const;
+		FPT impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
+		Root<IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const;
 		std::pair<Root<IsPoint,FPT>,Root<IsPoint,FPT>> impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<IsLine>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<IsPoint,FPT>& ) const;
@@ -749,7 +749,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	};
 
 	Intersect intersectsRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const;
-	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, double radius ) const;
+	Intersect intersectsCircle( const Root<IsPoint,FPT>& pt0, FPT radius ) const;
 
 	bool isInsideRectangle( const Root<IsPoint,FPT>& pt1, const Root<IsPoint,FPT>& pt2 ) const
 	{
@@ -808,11 +808,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<IsPoint,FPT>& p1, const detail::RootHelper<IsPoint>& ) const;
 
 	Root<LP,FPT>::Intersect
-	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, double radius, const detail::RootHelper<IsLine>& ) const;
+	impl_intersectsCircle( const Root<IsPoint,FPT>& pt, FPT radius, const detail::RootHelper<IsLine>& ) const;
 
 	bool impl_isInsideRectangle( const Root<IsPoint,FPT>&, const Root<IsPoint,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 	void impl_normalizeLine( const detail::RootHelper<IsLine>& ) const;
-	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const;
+	Root<IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsLine>& ) const;
 	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<IsPoint>& ) const;
 
@@ -947,8 +947,8 @@ Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<IsLine>& ) const
 
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
-double
-Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& ) const
+FPT
+Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& ) const
 {
 	if( gc == GC_X )
 		return ( -_v[0] * other - _v[2] ) / _v[1];
@@ -958,7 +958,7 @@ Root<LP,FPT>::impl_getCoord( En_GivenCoord gc, double other, const detail::RootH
 
 template<typename LP,typename FPT>
 Root<IsPoint,FPT>
-Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, double other, const detail::RootHelper<IsLine>& dummy ) const
+Root<LP,FPT>::impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<IsLine>& dummy ) const
 {
 	auto coord = impl_getCoord( gc, other, dummy );
 	if( gc == GC_X )
@@ -991,7 +991,7 @@ Root<LP,FPT>::impl_getPoints( En_GivenCoord gc, FPT coord, FPT dist, const detai
 /// Returns an orthogonal line, at gc=other
 template<typename LP,typename FPT>
 Root<IsLine,FPT>
-Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, double val, const detail::RootHelper<IsLine>& ) const
+Root<LP,FPT>::impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<IsLine>& ) const
 {
 	auto other_val = impl_getCoord( gc, val, detail::RootHelper<IsLine>() );
 
@@ -1109,7 +1109,7 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<Is
 
 /// overload for point to point distance
 template<typename LP, typename FPT>
-double
+FPT
 Root<LP,FPT>::impl_distToPoint( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsPoint>& ) const
 {
 	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
@@ -1126,7 +1126,7 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 \todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
 */
 template<typename LP, typename FPT>
-double
+FPT
 Root<LP,FPT>::impl_distToPoint( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>& ) const
 {
 	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
@@ -1134,7 +1134,7 @@ Root<LP,FPT>::impl_distToPoint( const Root<IsPoint,FPT>& pt, const detail::RootH
 
 /// overload for line to point distance
 template<typename LP, typename FPT>
-double
+FPT
 Root<LP,FPT>::impl_distToLine( const Root<IsLine,FPT>& li, const detail::RootHelper<IsPoint>& ) const
 {
 //	return li.impl_distToPoint( *this, detail::RootHelper<IsLine>() );
@@ -1143,7 +1143,7 @@ Root<LP,FPT>::impl_distToLine( const Root<IsLine,FPT>& li, const detail::RootHel
 
 /// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
 template<typename LP, typename FPT>
-double
+FPT
 Root<LP,FPT>::impl_distToLine( const Root<IsLine,FPT>&, const detail::RootHelper<IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
@@ -1167,7 +1167,7 @@ Root<LP,FPT>::impl_addOffset( En_OffsetDir dir, T v, const detail::RootHelper<Is
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
-double
+FPT
 getAngle( const Root<IsLine,FPT>& li1, const Root<IsLine,FPT>& li2 )
 {
 	return li1.getAngle( li2 );
@@ -1181,7 +1181,7 @@ Will return a value in the range [0,M_PI/2]
 \todo add implementation of free function with partial specialization trick
 */
 template<typename LP, typename FPT>
-double
+FPT
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<IsLine>& ) const
 {
 	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
@@ -1205,7 +1205,7 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<IsPoint,FPT>& p0, const Root<Is
 /// Intersection of line and circle
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, double radius ) const
+Root<LP,FPT>::intersectsCircle( const Root<IsPoint,FPT>& pt, FPT radius ) const
 {
 	return impl_intersectsCircle( pt, radius, detail::RootHelper<IsLine>() );
 }
@@ -1217,15 +1217,15 @@ template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsCircle(
 	const Root<IsPoint,FPT>& pt,   ///< circle origin
-	double                   r,    ///< radius
+	FPT                      r,    ///< radius
 	const detail::RootHelper<IsLine>&   ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
 	Intersect out;
 
-	const double& a = _v[0]; // just to lighten a bit...
-	const double& b = _v[1];
-	const double& c = _v[2];
+	const FPT& a = _v[0]; // just to lighten a bit...
+	const FPT& b = _v[1];
+	const FPT& c = _v[2];
 
 // step 1: translate to origin
 	double cp = pt.getX() * a + pt.getY() * b + c;
@@ -1259,7 +1259,7 @@ Root<LP,FPT>::impl_intersectsCircle(
 	return out;
 }
 //------------------------------------------------------------------
-/// Checks for intersection with flat rectangle defined by the two points p00 and p11
+/// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1
 /**
 Pre-conditions: points are different (throws if not)
 */
