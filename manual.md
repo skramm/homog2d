@@ -167,7 +167,19 @@ This is needed if you want to set up some specific transformation (shearing, per
 h.setValue( 0, 0, 3.14 );
 auto v = h.getValue( 0, 0 ); // 3.14
 ```
-However, when using `setValue()`, no guarantee is given that the result will be a valid matrix!
+
+To fill the matrix with arbitrary values, the best is to build it from a "vector of vectors", as in the example below:
+```C++
+std::vector<std::vector<float>> m = {
+	{ 1,  0,  2 },
+	{ 0,  1, -1 },
+	{ 0,  0,  1 }
+};
+Homogr F = m;
+```
+
+You can also use `std::array` if needed.
+
 
 - You can apply the homography to a set of points or lines:
 ```C++

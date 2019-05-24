@@ -47,6 +47,45 @@ See https://github.com/skramm/homog2d
 
 namespace homog2d {
 
+struct IsLine
+{
+};
+struct IsPoint
+{
+};
+
+
+namespace detail {
+
+/// Helper class, used as a trick to allow partial specialization of member functions
+	template<typename>
+	struct RootHelper {};
+
+    template<typename>
+    struct MyClassTraits;
+
+    template<>
+    struct MyClassTraits<IsPoint>
+    {
+        using OtherType = IsLine;
+    };
+
+    template<>
+    struct MyClassTraits<IsLine>
+    {
+        using OtherType = IsPoint;
+    };
+
+	/// A trick used in static_assert, to it abort only if function is instanciated
+	template<typename T>
+	struct AlwaysFalse {
+		enum { value = false };
+	};
+
+
+} // namespace detail
+
+
 // forward declaration
 template<typename LP,typename FPT>
 class Root;
@@ -85,13 +124,14 @@ class Homogr_
 	{
 		clear();
 	}
+#if 0
 	/// Build a rotation transformation of \c val radians
 	template<typename T>
 	Homogr_( T val )
 	{
 		setRotation( val );
 	}
-
+#endif
 /// Constructor, used to fill with another "vector of vector" matrix (or std::array)
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
@@ -493,13 +533,6 @@ enum En_GivenCoord { GC_X, GC_Y };
 /// Used in Line2d::addOffset
 enum En_OffsetDir{ OD_Vert, OD_Horiz };
 
-struct IsLine
-{
-};
-struct IsPoint
-{
-};
-
 // forward declaration of template instanciation
 namespace detail {
 
@@ -507,15 +540,6 @@ template<typename T1,typename T2,typename T3>
 Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 }
-
-//------------------------------------------------------------------
-namespace detail {
-
-/// Helper class, used as a trick to allow partial specialization of member functions
-	template<typename>
-	struct RootHelper {};
-
-} // namespace detail
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a Point2d or a Line2d
@@ -589,23 +613,26 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 /// Arg is a point, object is a point
 	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsPoint>&  )
 	{
+//		std::cout << __FUNCTION__ << "(): pp\n";
 		*this = pt;
 	}
 /// Arg is a point, object is a line
 	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>&  )
 	{
+//		std::cout << __FUNCTION__ << "(): pl\n";
 		*this = detail::crossProduct<IsLine>( pt, Root<IsPoint,FPT>() );
 		p_normalizeLine();
 	}
 
-/// Arg is a line, object is a point
+/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
 	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsPoint>&  )
 	{
-		assert(0);
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 	}
 /// Arg is a line, object is a line
 	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsLine>&  )
 	{
+//		std::cout << __FUNCTION__ << "(): ll\n";
 		*this = li;
 	}
 
@@ -751,12 +778,27 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
 #endif
 
+/*	static void doLineNormalization( bool value )
+	{
+		p_getNormalizeFlag() = value;
+	}*/
+
+//////////////////////////
+//      DATA SECTION    //
+//////////////////////////
+
 	private:
 	FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
+	private:
+/*	static bool& p_getNormalizeFlag()
+	{
+		static bool s_normalizeLines;
+		return s_normalizeLines;
+	}*/
 
 	void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
 
@@ -845,13 +887,6 @@ fix_order( Root<IsPoint,FPT>& ptA, Root<IsPoint,FPT>& ptB )
 				std::swap( ptA, ptB );
 }
 
-/// A trick used in static_assert, to it abort only if function is instanciated
-template<typename T>
-struct AlwaysFalse {
-    enum { value = false };
-};
-
-
 } // namespace detail end
 
 //------------------------------------------------------------------
@@ -887,6 +922,9 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<IsLine>& ) const
 {
+//	if( !p_getNormalizeFlag() )
+//		return;
+
 	auto sq = std::hypot( _v[0], _v[1] );
 	if( sq <= std::numeric_limits<double>::epsilon() )
 		throw std::runtime_error( "unable to normalize line" );
@@ -894,9 +932,7 @@ Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<IsLine>& ) const
 		//_v[i] /= sq;
 		const_cast<Root<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
 
-
-
-	if( std::signbit(_v[0]) ) //a allways >0
+	if( std::signbit(_v[0]) ) // a always >0
 		for( int i=0; i<3; i++ )
 //			_v[i] = -_v[i];
 			const_cast<Root<LP,FPT>*>(this)->_v[i] = -_v[i];
@@ -1322,10 +1358,12 @@ operator * ( const Homogr_<U>& h, const Root<T,V>& in )
 		out._v[i] += h._data[i][1] * in._v[1];
 		out._v[i] += h._data[i][2] * in._v[2];
 	}
+//	std::cout << "product:" << out._v[0] << " " << out._v[1] << " " << out._v[2] << "\n";
 	return out;
 }
+
 //------------------------------------------------------------------
-/// Apply homography to a vector/array/list of points or lines. Free function, templated by point or line
+/// Apply homography to a vector/array/list (type T) of points or lines.
 template<typename FPT>
 template<typename T>
 void
@@ -1334,6 +1372,7 @@ Homogr_<FPT>::applyTo( T& vin ) const
 	for( auto& elem: vin )
 		elem = *this * elem;
 }
+
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 /// Return floating-point coordinates Opencv 2D point (with rounding)
