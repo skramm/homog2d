@@ -397,6 +397,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getPoints()`
   - added single argument constructors
   - renamed `distToPoints()` member function: now `distTo()`, and be used with lines as argument.
+  - added `getParallelLine()`
 
 ### Footnotes
 
