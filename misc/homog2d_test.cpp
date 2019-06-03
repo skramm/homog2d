@@ -273,8 +273,13 @@ TEST_CASE( "exceptions", "[testE]" )
 	CHECK_THROWS( p1*p2 ); // same points can't define a line
 }
 
+TEST_CASE( "test Matrix", "[testM]" )
+{
+	Matrix m;
+}
 
-TEST_CASE( "test matrix", "[testH]" )
+
+TEST_CASE( "test Homogr", "[testH]" )
 {
 	{
 		Homogr H1,H2;
@@ -311,7 +316,8 @@ TEST_CASE( "test matrix", "[testH]" )
 		Homogr H2c(m2c);
 	}
 	{
-		Homogr_<double> H;
+//		Homogr_<double> H;
+		Homogr H;
 		Point2d pt1(1,1);
 		H.setTranslation( 3., 2. );
 

@@ -54,12 +54,35 @@ struct IsPoint
 {
 };
 
+struct IsHomogr
+{
+};
+struct IsMatrix
+{
+};
+
 
 namespace detail {
 
 /// Helper class, used as a trick to allow partial specialization of member functions
 	template<typename>
 	struct RootHelper {};
+
+	template<typename T1>
+	struct HelperMat {};
+
+	template<>
+	struct HelperMat<IsHomogr>
+	{
+		using Type = IsMatrix;
+	};
+
+	template<>
+	struct HelperMat<IsMatrix>
+	{
+		using Type = IsHomogr;
+	};
+
 
     template<typename>
     struct MyClassTraits;
@@ -109,21 +132,48 @@ Implemented as a 3x3 matrix
 
 Templated by Floating-Point Type (FPT)
  */
-template<typename FPT>
+template<typename M,typename FPT>
 class Homogr_
 {
 	template<typename T1,typename T2>
 	friend class Root;
 
-	template<typename T,typename U,typename V>
-	friend Root<T,V> operator * ( const Homogr_<U>& h, const Root<T,V>& in );
+	template<typename T,typename U,typename V,typename W>
+	friend Root<T,V> operator * ( const Homogr_<W,U>& h, const Root<T,V>& in );
 
 	public:
 	/// Default constructor, initialize to unit transformation
 	Homogr_()
 	{
-		clear();
+		init();
 	}
+	void init()
+	{
+		impl_Homogr_init0( detail::RootHelper<M>() );
+	}
+
+	private:
+/// Initialize to empty
+	void impl_Homogr_init0( const detail::RootHelper<IsMatrix>& )
+	{
+		for( auto& li: _data )
+		for( auto& elem: li )
+			elem = 0.;
+	}
+
+/// Initialize to unit transformation
+	void impl_Homogr_init0( const detail::RootHelper<IsHomogr>& )
+	{
+		for( auto& li: _data )
+			for( auto& elem: li )
+				elem = 0.;
+		_data[0][0] = 1.;
+		_data[1][1] = 1.;
+		_data[2][2] = 1.;
+		_isNormalized = true;
+	}
+	public:
+
 #if 0
 	/// Build a rotation transformation of \c val radians
 	template<typename T>
@@ -154,7 +204,7 @@ Thus some assert can get triggered elsewhere.
 	{
 		p_fillWith( in );
 	}
-
+/*
 /// Initialize to unit transformation
 	void clear()
 	{
@@ -166,6 +216,7 @@ Thus some assert can get triggered elsewhere.
 		_data[2][2] = 1.;
 		_isNormalized = true;
 	}
+*/
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -197,7 +248,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Homogr_& setTranslation( T tx, T ty )
 	{
-		clear();
+		init();
 		_data[0][2] = tx;
 		_data[1][2] = ty;
 		_isNormalized = true;
@@ -217,7 +268,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Homogr_& setRotation( T theta )
 	{
-		clear();
+		init();
 		_data[0][0] = _data[1][1] = std::cos(theta);
 		_data[1][0] = std::sin(theta);
 		_data[0][1] = -_data[1][0];
@@ -250,7 +301,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Homogr_& setScale( T kx, T ky )
 	{
-		clear();
+		init();
 		_data[0][0] = kx;
 		_data[1][1] = ky;
 		_isNormalized = true;
@@ -546,12 +597,12 @@ Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 template<typename LP,typename FPT>
 class Root
 {
-	template<typename U>
+	template<typename U,typename V>
 	friend class Homogr_;
 
-	template<typename T,typename U,typename V>
+	template<typename T,typename U,typename V,typename W>
 	friend Root<T,V>
-	operator * ( const Homogr_<U>&, const Root<T,V>& );
+	operator * ( const Homogr_<W,U>&, const Root<T,V>& );
 
 	template<typename T>
 	friend Root<IsPoint,T>
@@ -1401,9 +1452,9 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 
 //------------------------------------------------------------------
 /// Apply homography to a point or line. Free function, templated by point or line
-template<typename T,typename U,typename V>
+template<typename T,typename U,typename V,typename W>
 Root<T,V>
-operator * ( const Homogr_<U>& h, const Root<T,V>& in )
+operator * ( const Homogr_<W,U>& h, const Root<T,V>& in )
 {
 	Root<T,V> out;
 	for( int i=0; i<3; i++ )
@@ -1418,10 +1469,10 @@ operator * ( const Homogr_<U>& h, const Root<T,V>& in )
 
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list (type T) of points or lines.
-template<typename FPT>
+template<typename W,typename FPT>
 template<typename T>
 void
-Homogr_<FPT>::applyTo( T& vin ) const
+Homogr_<W,FPT>::applyTo( T& vin ) const
 {
 	for( auto& elem: vin )
 		elem = *this * elem;
@@ -1455,9 +1506,9 @@ The output matrix is passed by reference to avoid issues with Opencv copy operat
 
 User can pass a type as second argument: CV_32F for \c float, CV_64F for \c double (default)
 */
-template<typename FPT>
+template<typename W,typename FPT>
 void
-Homogr_<FPT>::copyTo( cv::Mat& mat, int type ) const
+Homogr_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
@@ -1478,9 +1529,9 @@ Homogr_<FPT>::copyTo( cv::Mat& mat, int type ) const
 }
 //------------------------------------------------------------------
 /// Get homography from Opencv \c cv::Mat
-template<typename FPT>
+template<typename W,typename FPT>
 void
-Homogr_<FPT>::getFrom( const cv::Mat& mat ) const
+Homogr_<W,FPT>::getFrom( const cv::Mat& mat ) const
 {
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
@@ -1629,22 +1680,22 @@ using Line2d = Root<IsLine,double>;
 using Point2d = Root<IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
-using Homogr = Homogr_<double>;
+using Homogr = Homogr_<IsHomogr,double>;
 
 // float types
 using Line2dF  = Root<IsLine,float>;
 using Point2dF = Root<IsPoint,float>;
-using HomogrF  = Homogr_<float>;
+using HomogrF  = Homogr_<IsHomogr,float>;
 
 // double types
 using Line2dD  = Root<IsLine,double>;
 using Point2dD = Root<IsPoint,double>;
-using HomogrD  = Homogr_<double>;
+using HomogrD  = Homogr_<IsHomogr,double>;
 
 // long double types
 using Line2dL  = Root<IsLine,long double>;
 using Point2dL = Root<IsPoint,long double>;
-using HomogrL  = Homogr_<long double>;
+using HomogrL  = Homogr_<IsHomogr,long double>;
 
 
 template<typename T>

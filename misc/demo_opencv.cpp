@@ -186,7 +186,7 @@ void demo2()
 		}
 		if( change )
 		{
-			H.clear();
+			H.init();
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			initPts();
 			H.applyTo(g_pt);
