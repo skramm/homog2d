@@ -275,7 +275,7 @@ TEST_CASE( "exceptions", "[testE]" )
 
 TEST_CASE( "test Matrix", "[testM]" )
 {
-	Matrix m;
+	Hmatrix m;
 }
 
 
@@ -316,7 +316,6 @@ TEST_CASE( "test Homogr", "[testH]" )
 		Homogr H2c(m2c);
 	}
 	{
-//		Homogr_<double> H;
 		Homogr H;
 		Point2d pt1(1,1);
 		H.setTranslation( 3., 2. );

@@ -45,6 +45,13 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/imgproc.hpp"
 #endif
 
+
+#define HOMOG2D_CHECK_ROW_COL \
+	if( r > 3 ) \
+		throw std::runtime_error( "Error: invalid row value: r=" + std::to_string(r) ); \
+	if( c > 3 ) \
+		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
+
 namespace homog2d {
 
 struct IsLine
@@ -99,7 +106,7 @@ namespace detail {
         using OtherType = IsPoint;
     };
 
-	/// A trick used in static_assert, to it abort only if function is instanciated
+	/// A trick used in static_assert, so it aborts only if function is instanciated
 	template<typename T>
 	struct AlwaysFalse {
 		enum { value = false };
@@ -130,43 +137,44 @@ To return to unit transformation, use clear()
 
 Implemented as a 3x3 matrix
 
-Templated by Floating-Point Type (FPT)
+Templated by Floating-Point Type (FPT) and by type M (IsMatrix or IsHomogr)
  */
 template<typename M,typename FPT>
-class Homogr_
+class Hmatrix_
 {
 	template<typename T1,typename T2>
 	friend class Root;
 
 	template<typename T,typename U,typename V,typename W>
-	friend Root<T,V> operator * ( const Homogr_<W,U>& h, const Root<T,V>& in );
+	friend Root<T,V> operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in );
 
 	public:
 	/// Default constructor, initialize to unit transformation
-	Homogr_()
+	Hmatrix_()
 	{
 		init();
 	}
 	void init()
 	{
-		impl_Homogr_init0( detail::RootHelper<M>() );
+		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
 	private:
-/// Initialize to empty
-	void impl_Homogr_init0( const detail::RootHelper<IsMatrix>& )
+/// Implementation for matrices: Initialize to empty
+	void impl_mat_init0( const detail::RootHelper<IsMatrix>& )
 	{
 		for( auto& li: _data )
 		for( auto& elem: li )
 			elem = 0.;
 	}
 
-/// Initialize to unit transformation
-	void impl_Homogr_init0( const detail::RootHelper<IsHomogr>& )
+/// Implementation for homographies: initialize to unit transformation
+	void impl_mat_init0( const detail::RootHelper<IsHomogr>& )
 	{
-		for( auto& li: _data )
+		impl_mat_init0( detail::RootHelper<IsMatrix>() ); // call other overload
+/*		for( auto& li: _data )
 			for( auto& elem: li )
-				elem = 0.;
+				elem = 0.; */
 		_data[0][0] = 1.;
 		_data[1][1] = 1.;
 		_data[2][2] = 1.;
@@ -174,14 +182,6 @@ class Homogr_
 	}
 	public:
 
-#if 0
-	/// Build a rotation transformation of \c val radians
-	template<typename T>
-	Homogr_( T val )
-	{
-		setRotation( val );
-	}
-#endif
 /// Constructor, used to fill with another "vector of vector" matrix (or std::array)
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
@@ -189,7 +189,7 @@ class Homogr_
 Thus some assert can get triggered elsewhere.
 */
 	template<typename T>
-	Homogr_( const std::vector<std::vector<T>>& in )
+	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
 		if( in.size() != 3 )
 			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
@@ -200,7 +200,7 @@ Thus some assert can get triggered elsewhere.
 		p_fillWith( in );
 	}
 	template<typename T>
-	Homogr_( const std::array<std::array<T,3>,3>& in )
+	Hmatrix_( const std::array<std::array<T,3>,3>& in )
 	{
 		p_fillWith( in );
 	}
@@ -226,19 +226,25 @@ Thus some assert can get triggered elsewhere.
 		T      v  ///< value
 	)
 	{
+		#ifdef HOMOG2D_SAFE_MODE
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
 		_data[r][c] = v;
 		_isNormalized = false;
 	}
 /// Getter
 	FPT getValue( size_t r, size_t c ) const
 	{
+		#ifdef HOMOG2D_SAFE_MODE
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
 		return _data[r][c];
 	}
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
-	Homogr_& addTranslation( T tx, T ty )
+	Hmatrix_& addTranslation( T tx, T ty )
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
 //		normalize();
@@ -246,7 +252,7 @@ Thus some assert can get triggered elsewhere.
 	}
 /// Sets the matrix as a translation \c tx,ty
 	template<typename T>
-	Homogr_& setTranslation( T tx, T ty )
+	Hmatrix_& setTranslation( T tx, T ty )
 	{
 		init();
 		_data[0][2] = tx;
@@ -256,9 +262,9 @@ Thus some assert can get triggered elsewhere.
 	}
 /// Adds a rotation with an angle \c theta (radians) to the matrix
 	template<typename T>
-	Homogr_& addRotation( T theta )
+	Hmatrix_& addRotation( T theta )
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 		out.setRotation( theta );
 		*this = out * *this;
 //		normalize();
@@ -266,7 +272,7 @@ Thus some assert can get triggered elsewhere.
 	}
 /// Sets the matrix as a rotation with an angle \c theta (radians)
 	template<typename T>
-	Homogr_& setRotation( T theta )
+	Hmatrix_& setRotation( T theta )
 	{
 		init();
 		_data[0][0] = _data[1][1] = std::cos(theta);
@@ -277,15 +283,15 @@ Thus some assert can get triggered elsewhere.
 	}
 /// Adds the same scale factor to the matrix
 	template<typename T>
-	Homogr_& addScale( T k )
+	Hmatrix_& addScale( T k )
 	{
 		return this->addScale( k, k );
 	}
 /// Adds a scale factor to the matrix
 	template<typename T>
-	Homogr_& addScale( T kx, T ky )
+	Hmatrix_& addScale( T kx, T ky )
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
 //		normalize();
@@ -293,13 +299,13 @@ Thus some assert can get triggered elsewhere.
 	}
 /// Sets the matrix as a scaling transformation (same on two axis)
 	template<typename T>
-	Homogr_& setScale( T k )
+	Hmatrix_& setScale( T k )
 	{
 		return setScale( k, k );
 	}
 /// Sets the matrix as a scaling transformation
 	template<typename T>
-	Homogr_& setScale( T kx, T ky )
+	Hmatrix_& setScale( T kx, T ky )
 	{
 		init();
 		_data[0][0] = kx;
@@ -339,9 +345,9 @@ Thus some assert can get triggered elsewhere.
 	}
 
 /// Transpose matrix
-	Homogr_& transpose()
+	Hmatrix_& transpose()
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				out._data[i][j] = _data[j][i];
@@ -350,9 +356,9 @@ Thus some assert can get triggered elsewhere.
 	}
 
 /// Inverse matrix
-	Homogr_& inverse()
+	Hmatrix_& inverse()
 	{
-		Homogr_ adjugate = p_adjugate();
+		Hmatrix_ adjugate = p_adjugate();
 		double det = p_det();
 
 		if( std::abs(det) <= std::numeric_limits<double>::epsilon() )
@@ -366,7 +372,7 @@ Thus some assert can get triggered elsewhere.
 
 /// Divide all elements by scalar
 	template<typename T>
-	Homogr_& operator / (T v)
+	Hmatrix_& operator / (T v)
 	{
 		if( std::abs(v) <= std::numeric_limits<double>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
@@ -383,7 +389,7 @@ Thus some assert can get triggered elsewhere.
 /**
 Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
 */
-	Homogr_& operator * (FPT v)
+	Hmatrix_& operator * (FPT v)
 	{
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -392,9 +398,9 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	}
 
 /// Matrix multiplication
-	friend Homogr_ operator * ( const Homogr_& h1, const Homogr_& h2 )
+	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 		out.p_zero();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -404,7 +410,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	}
 
 /// Comparison operator. Does normalization if required
-	bool operator == ( const Homogr_& h ) const
+	bool operator == ( const Hmatrix_& h ) const
 	{
 		if( !_isNormalized )
 			normalize();
@@ -419,7 +425,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		return true;
 	}
 /// Comparison operator. Does normalization if required
-	bool operator != ( const Homogr_& h ) const
+	bool operator != ( const Hmatrix_& h ) const
 	{
 		return !(*this == h);
 	}
@@ -467,9 +473,9 @@ See https://en.wikipedia.org/wiki/Determinant
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	Homogr_ p_adjugate()
+	Hmatrix_ p_adjugate()
 	{
-		Homogr_ out;
+		Hmatrix_ out;
 
 		out.setValue( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 		out.setValue( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
@@ -493,7 +499,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	mutable std::array<std::array<FPT,3>,3> _data;
 	mutable bool _isNormalized = false;
 
-	friend std::ostream& operator << ( std::ostream& f, const Homogr_& h )
+	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
 		for( const auto& li: h._data )
 		{
@@ -598,11 +604,11 @@ template<typename LP,typename FPT>
 class Root
 {
 	template<typename U,typename V>
-	friend class Homogr_;
+	friend class Hmatrix_;
 
 	template<typename T,typename U,typename V,typename W>
 	friend Root<T,V>
-	operator * ( const Homogr_<W,U>&, const Root<T,V>& );
+	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
 
 	template<typename T>
 	friend Root<IsPoint,T>
@@ -1454,7 +1460,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 /// Apply homography to a point or line. Free function, templated by point or line
 template<typename T,typename U,typename V,typename W>
 Root<T,V>
-operator * ( const Homogr_<W,U>& h, const Root<T,V>& in )
+operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in )
 {
 	Root<T,V> out;
 	for( int i=0; i<3; i++ )
@@ -1472,7 +1478,7 @@ operator * ( const Homogr_<W,U>& h, const Root<T,V>& in )
 template<typename W,typename FPT>
 template<typename T>
 void
-Homogr_<W,FPT>::applyTo( T& vin ) const
+Hmatrix_<W,FPT>::applyTo( T& vin ) const
 {
 	for( auto& elem: vin )
 		elem = *this * elem;
@@ -1508,7 +1514,7 @@ User can pass a type as second argument: CV_32F for \c float, CV_64F for \c doub
 */
 template<typename W,typename FPT>
 void
-Homogr_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
+Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
@@ -1531,7 +1537,7 @@ Homogr_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 /// Get homography from Opencv \c cv::Mat
 template<typename W,typename FPT>
 void
-Homogr_<W,FPT>::getFrom( const cv::Mat& mat ) const
+Hmatrix_<W,FPT>::getFrom( const cv::Mat& mat ) const
 {
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
@@ -1680,22 +1686,23 @@ using Line2d = Root<IsLine,double>;
 using Point2d = Root<IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
-using Homogr = Homogr_<IsHomogr,double>;
+using Homogr = Hmatrix_<IsHomogr,double>;
+using Hmatrix = Hmatrix_<IsMatrix,double>;
 
 // float types
 using Line2dF  = Root<IsLine,float>;
 using Point2dF = Root<IsPoint,float>;
-using HomogrF  = Homogr_<IsHomogr,float>;
+using HomogrF  = Hmatrix_<IsHomogr,float>;
 
 // double types
 using Line2dD  = Root<IsLine,double>;
 using Point2dD = Root<IsPoint,double>;
-using HomogrD  = Homogr_<IsHomogr,double>;
+using HomogrD  = Hmatrix_<IsHomogr,double>;
 
 // long double types
 using Line2dL  = Root<IsLine,long double>;
 using Point2dL = Root<IsPoint,long double>;
-using HomogrL  = Homogr_<IsHomogr,long double>;
+using HomogrL  = Hmatrix_<IsHomogr,long double>;
 
 
 template<typename T>
