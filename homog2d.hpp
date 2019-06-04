@@ -92,16 +92,16 @@ namespace detail {
 
 
     template<typename>
-    struct MyClassTraits;
+    struct HelperPL;
 
     template<>
-    struct MyClassTraits<IsPoint>
+    struct HelperPL<IsPoint>
     {
         using OtherType = IsLine;
     };
 
     template<>
-    struct MyClassTraits<IsLine>
+    struct HelperPL<IsLine>
     {
         using OtherType = IsPoint;
     };
@@ -145,9 +145,29 @@ class Hmatrix_
 	template<typename T1,typename T2>
 	friend class Root;
 
+#if 0
 	template<typename T,typename U,typename V,typename W>
 	friend Root<T,V> operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in );
+#else
+// T: Type of Root: Point or Line
+// V: numerical type of Point or Line
+// U: numerical type of matrix
+	template<typename T,typename U,typename V>
+	friend Root<typename detail::HelperPL<T>::OtherType,V> operator * ( const Hmatrix_<IsMatrix,U>& h, const Root<T,V>& in );
 
+	template<typename T,typename U,typename V>
+	friend Root<T,V> operator * ( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in );
+
+	/// \bug this frien declaration seems to b e ignored !!!
+template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+friend void
+product(
+	Root<T1,FPT1>&          out,
+	const Hmatrix_<U,FPT2>& h,
+	const Root<T2,FPT1>&    in
+);
+
+#endif
 	public:
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
@@ -1458,6 +1478,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 
 //------------------------------------------------------------------
 /// Apply homography to a point or line. Free function, templated by point or line
+#if 0
 template<typename T,typename U,typename V,typename W>
 Root<T,V>
 operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in )
@@ -1473,6 +1494,47 @@ operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in )
 	return out;
 }
 
+#else
+namespace detail {
+
+template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+void
+product(
+	Root<T1,FPT1>&          out,
+	const Hmatrix_<U,FPT2>& h,
+	const Root<T2,FPT1>&    in
+)
+{
+	for( int i=0; i<3; i++ )
+	{
+		out._v[i]  = h._data[i][0] * in._v[0];
+		out._v[i] += h._data[i][1] * in._v[1];
+		out._v[i] += h._data[i][2] * in._v[2];
+	}
+}
+
+} // namespace detail
+
+
+template<typename T,typename U,typename V>
+Root<typename detail::HelperPL<T>::OtherType,V>
+operator * ( const Hmatrix_<IsMatrix,U>& h, const Root<T,V>& in )
+{
+	Root<typename detail::HelperPL<T>::OtherType,V> out;
+	detail::product( out, h, in );
+	return out;
+}
+
+template<typename T,typename U,typename V>
+Root<T,V>
+operator *
+( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in )
+{
+	Root<T,V> out;
+	detail::product( out, h, in );
+	return out;
+}
+#endif
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list (type T) of points or lines.
 template<typename W,typename FPT>
