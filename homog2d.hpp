@@ -71,25 +71,27 @@ struct IsMatrix
 
 namespace detail {
 
-/// Helper class, used as a trick to allow partial specialization of member functions
+	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename>
 	struct RootHelper {};
 
+#if 0
+	/// Helper class for Matrix type
 	template<typename T1>
 	struct HelperMat {};
 
 	template<>
 	struct HelperMat<IsHomogr>
 	{
-		using Type = IsMatrix;
+		using M_OtherType = IsMatrix;
 	};
 
 	template<>
 	struct HelperMat<IsMatrix>
 	{
-		using Type = IsHomogr;
+		using M_OtherType = IsHomogr;
 	};
-
+#endif
 
     template<typename>
     struct HelperPL;
@@ -150,7 +152,7 @@ To add an affine or rigid transformation to the current one, you can use:
 - addTranslation()
 - addScale()
 
-To return to unit transformation, use clear()
+To return to unit transformation, use init()
 
 Implemented as a 3x3 matrix
 
@@ -162,29 +164,9 @@ class Hmatrix_
 	template<typename T1,typename T2>
 	friend class Root;
 
-#if 0
-	template<typename T,typename U,typename V,typename W>
-	friend Root<T,V> operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in );
-#else
-// T: Type of Root: Point or Line
-// V: numerical type of Point or Line
-// U: numerical type of matrix
-	template<typename T,typename U,typename V>
-	friend Root<typename detail::HelperPL<T>::OtherType,V> operator * ( const Hmatrix_<IsMatrix,U>& h, const Root<T,V>& in );
+	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
 
-	template<typename T,typename U,typename V>
-	friend Root<T,V> operator * ( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in );
-
-	/// \bug this friend declaration seems to be ignored !!!
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
-friend void
-detail::product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
-);
-
-#endif
 	public:
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
@@ -241,19 +223,7 @@ Thus some assert can get triggered elsewhere.
 	{
 		p_fillWith( in );
 	}
-/*
-/// Initialize to unit transformation
-	void clear()
-	{
-		for( auto& li: _data )
-			for( auto& elem: li )
-				elem = 0.;
-		_data[0][0] = 1.;
-		_data[1][1] = 1.;
-		_data[2][2] = 1.;
-		_isNormalized = true;
-	}
-*/
+
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -643,9 +613,9 @@ class Root
 	template<typename U,typename V>
 	friend class Hmatrix_;
 
-	template<typename T,typename U,typename V,typename W>
-	friend Root<T,V>
-	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
+//	template<typename T,typename U,typename V,typename W>
+//	friend Root<T,V>
+//	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
 
 	template<typename T>
 	friend Root<IsPoint,T>
@@ -663,13 +633,8 @@ class Root
 	friend std::ostream&
 	operator << ( std::ostream& f, const Root<U,V>& r );
 
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
-friend void
-detail::product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
-);
+	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
 
 	private:
 	Root( double a, double b, double c )
@@ -712,13 +677,13 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	}
 
 	private:
-/// Arg is a point, object is a point
+/// Arg is a point, object is a point => copy constructor
 	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsPoint>&  )
 	{
 //		std::cout << __FUNCTION__ << "(): pp\n";
 		*this = pt;
 	}
-/// Arg is a point, object is a line
+/// Arg is a point, object is a line:we build the line passing though (0,0) ant the given point
 	void impl_init_1_Point( const Root<IsPoint,FPT>& pt, const detail::RootHelper<IsLine>&  )
 	{
 //		std::cout << __FUNCTION__ << "(): pl\n";
@@ -731,7 +696,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 	}
-/// Arg is a line, object is a line
+/// Arg is a line, object is a line => copy constructor
 	void impl_init_1_Line( const Root<IsLine,FPT>& li, const detail::RootHelper<IsLine>&  )
 	{
 //		std::cout << __FUNCTION__ << "(): ll\n";
@@ -1502,26 +1467,9 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<IsPoint,FPT>& p0, const Root<
 }
 
 //------------------------------------------------------------------
-/// Apply homography to a point or line. Free function, templated by point or line
-#if 0
-template<typename T,typename U,typename V,typename W>
-Root<T,V>
-operator * ( const Hmatrix_<W,U>& h, const Root<T,V>& in )
-{
-	Root<T,V> out;
-	for( int i=0; i<3; i++ )
-	{
-		out._v[i]  = h._data[i][0] * in._v[0];
-		out._v[i] += h._data[i][1] * in._v[1];
-		out._v[i] += h._data[i][2] * in._v[2];
-	}
-//	std::cout << "product:" << out._v[0] << " " << out._v[1] << " " << out._v[2] << "\n";
-	return out;
-}
-
-#else
 namespace detail {
 
+/// Implementation of product 3x3 by 3x1
 template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 void
 product(
@@ -1540,7 +1488,7 @@ product(
 
 } // namespace detail
 
-
+/// Apply Hmatrix to a point or line. Free function, templated by point or line
 template<typename T,typename U,typename V>
 Root<typename detail::HelperPL<T>::OtherType,V>
 operator * ( const Hmatrix_<IsMatrix,U>& h, const Root<T,V>& in )
@@ -1550,16 +1498,16 @@ operator * ( const Hmatrix_<IsMatrix,U>& h, const Root<T,V>& in )
 	return out;
 }
 
+/// Apply homography to a point or line. Free function, templated by point or line
 template<typename T,typename U,typename V>
 Root<T,V>
-operator *
-( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in )
+operator * ( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in )
 {
 	Root<T,V> out;
 	detail::product( out, h, in );
 	return out;
 }
-#endif
+
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list (type T) of points or lines.
 template<typename W,typename FPT>
@@ -1765,7 +1713,6 @@ Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
-
 /// Default line type, uses \c double as numerical type
 using Line2d = Root<IsLine,double>;
 
@@ -1774,6 +1721,8 @@ using Point2d = Root<IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
 using Homogr = Hmatrix_<IsHomogr,double>;
+
+/// Defaul homogeneous matrix, uses \c double as numerical type
 using Hmatrix = Hmatrix_<IsMatrix,double>;
 
 // float types

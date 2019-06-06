@@ -273,9 +273,14 @@ TEST_CASE( "exceptions", "[testE]" )
 	CHECK_THROWS( p1*p2 ); // same points can't define a line
 }
 
+/**
+\todo Define a reasonable default value for Hmatrix (0's are probably not, not homogeneous)
+*/
 TEST_CASE( "test Matrix", "[testM]" )
 {
 	Hmatrix m;
+	Point2d p1;
+	Line2d p2 = m*p1;
 }
 
 

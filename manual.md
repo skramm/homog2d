@@ -277,7 +277,7 @@ cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
 cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
 ```
 
-You can also directly draw points and lines on an image (`cv::Mat`):
+You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++
 Point2d pt( ... );
 Line2d li( ... );
@@ -397,6 +397,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getPoints()`
   - added single argument constructors
   - renamed `distToPoints()` member function: now `distTo()`, and be used with lines as argument.
+  - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
+  - renamed `clear()` to `init()` for matrices
 
 ### Footnotes
 
