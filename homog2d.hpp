@@ -112,13 +112,30 @@ namespace detail {
 		enum { value = false };
 	};
 
-
 } // namespace detail
 
 
 // forward declaration
 template<typename LP,typename FPT>
 class Root;
+
+// forward declaration
+template<typename LP,typename FPT>
+class Hmatrix_;
+
+
+namespace detail {
+
+// forward declaration of function
+template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+void
+product(
+	Root<T1,FPT1>&          out,
+	const Hmatrix_<U,FPT2>& h,
+	const Root<T2,FPT1>&    in
+);
+
+} // namespace detail
 
 //------------------------------------------------------------------
 /// A 2D homography, defining a planar transformation
@@ -158,10 +175,10 @@ class Hmatrix_
 	template<typename T,typename U,typename V>
 	friend Root<T,V> operator * ( const Hmatrix_<IsHomogr,U>& h, const Root<T,V>& in );
 
-	/// \bug this frien declaration seems to b e ignored !!!
+	/// \bug this friend declaration seems to be ignored !!!
 template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 friend void
-product(
+detail::product(
 	Root<T1,FPT1>&          out,
 	const Hmatrix_<U,FPT2>& h,
 	const Root<T2,FPT1>&    in
@@ -645,6 +662,14 @@ class Root
 	template<typename U,typename V>
 	friend std::ostream&
 	operator << ( std::ostream& f, const Root<U,V>& r );
+
+template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+friend void
+detail::product(
+	Root<T1,FPT1>&          out,
+	const Hmatrix_<U,FPT2>& h,
+	const Root<T2,FPT1>&    in
+);
 
 	private:
 	Root( double a, double b, double c )
