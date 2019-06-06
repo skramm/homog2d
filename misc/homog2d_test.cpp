@@ -280,7 +280,8 @@ TEST_CASE( "test Matrix", "[testM]" )
 {
 	Hmatrix m;
 	Point2d p1;
-	Line2d p2 = m*p1;
+	Line2d l1 = m*p1;
+	Point2d p2 = m*l1;
 }
 
 
