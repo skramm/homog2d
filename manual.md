@@ -125,9 +125,9 @@ You can get a line parallel to another one with the member function `getParallel
 This function takes as argument a point that the line will intersect.
 
 ```C++
-Line2d li; // some line
+Line2d li1; // some line
 Point2d pt; // some point
-Line2d li2 = li.getParallelLine( pt ); // pt will be lying on li2
+Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is parallel to li1
 ```
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
@@ -233,7 +233,7 @@ The only requirement is that no coordinate must be the same in the two points.
 
 ### Intersection of a line with a circle
 
-For a line `li`, you can compute the intersection points wit a circle having a radius `rad` and located at `pt` with the following code:
+For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
 ```C++
 auto ri = li.intersectsCircle( pt, rad );
 if( ri() )   // means the line intersects the circle
@@ -265,7 +265,8 @@ Import from other types is pretty much straight forward.
 For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
 For homographies, you can import directly from
 `std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`.
-For the first case, it is mandatory that the all 4 vectors size is 3 (the 3 embedded ones and the global one).
+
+For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
 This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time.
@@ -361,8 +362,6 @@ You can do that in the makefile or just add a `#define` on top of your program,
 
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 
-(TO BE EXPANDED)
-
 
 ### Inner details
 
@@ -393,10 +392,11 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch API changes:
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
-  - the intersection points are now private, they must be fetched with `get()`: this `Intersect` member function will return a `std::pair` holding the two intersection points.
+  - the intersection points are now private, they must be fetched with `get()`:
+  this `Intersect` member function will return a `std::pair` holding the two intersection points.
   - added `getPoints()`
   - added single argument constructors
-  - renamed `distToPoints()` member function: now `distTo()`, and be used with lines as argument.
+  - renamed `distToPoints()` member function: now `distTo()`, and can be used with lines as argument.
   - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
   - renamed `clear()` to `init()` for matrices
 

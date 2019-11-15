@@ -16,12 +16,17 @@ endif
 test: homog2d_test demo_check
 	./homog2d_test
 
+# compute code coverage (EXPERIMENTAL !)
+cov:
+	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
 
-demo_check: misc/demo_check.cpp homog2d.hpp
+demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
-homog2d_test: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -o homog2d_test misc/homog2d_test.cpp $(LDFLAGS)
+# 2019-11-15: added options for code coverage with gcov
+homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
+#	$(CXX) $(CFLAGS) -o homog2d_test misc/homog2d_test.cpp $(LDFLAGS)
+	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test misc/homog2d_test.cpp $(LDFLAGS)
 
 doc: html/index.html
 	@echo "done !"
@@ -47,3 +52,4 @@ clean:
 	-rm -r html/*
 	-rm homog2d_test
 	-rm demo_opencv
+	-rm *.gcov
