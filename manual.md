@@ -252,7 +252,7 @@ For both of these functions, the returned pair of intersection points will alway
 
 ### Points and rectangles
 
-You can quickly check if a points lies within a rectangle defined by two points `p1`,`p2` with:
+You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
 ```C++
 bool b = pt.isInsideRectangle( p1, p2 );
 ```
@@ -392,7 +392,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
 - [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
 
-- current master branch API changes:
+- [v2.1](https://github.com/skramm/homog2d/releases/tag/v2.1), released on 2020-04-27.
   - added `intersectsCircle()`, to get intersection with circles
   - intersection data structure name changed, now `Intersect`
   - the intersection points are now private, they must be fetched with `get()`:
