@@ -344,6 +344,8 @@ behavior differs due to some policy-based design (see below).
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
+The concept of "null" value is technically subject to discussions, here we use the value provided by standard library:
+[std::numeric_limits<double>::epsilon()](https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon);
 
 ### Testing
 
@@ -361,6 +363,7 @@ You can do that in the makefile or just add a `#define` on top of your program,
 **before** the `#include "homog2d"`
 
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
+- `HOMOG2D_SAFE_MODE`: this will enable some additional checks in the API. Runtime issues will make functions throw a `std::runtime_error`.
 
 
 ### Inner details
@@ -375,7 +378,7 @@ Thus, the trick here is to call in each function a "sub" private function (prefi
 by the datatype (point or line).
 To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type RootHelper,
 templated by the numerical type.
-In the definition of the function, this additional argument is ignored,
+In the definition of the function, this additional argument value is ignored,
 it is there just so that the compiler can select the correct overload
 (in a similar way of what happens with templates).
 

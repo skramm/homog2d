@@ -1,3 +1,28 @@
+/**************************************************************************
+
+    This file is part of the C++ library "homog2d", dedicated to
+    handle 2D lines and points, see https://github.com/skramm/homog2d
+
+    Author & Copyright 2019 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr, or http://www.litislab.eu/
+
+    Licence: LGPL v3
+
+    This library is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+	See included lgpl.txt and gpl.txt files.
+
+**************************************************************************/
+
 /**
 \file demo_check.cpp
 \brief Build with test, just there to make sure all required headers are included in header

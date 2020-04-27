@@ -48,6 +48,7 @@ using namespace homog2d;
 
 TEST_CASE( "types testing", "[testtypes]" )
 {
+	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
 	Point2dF ptF;
 	Point2dD ptD;
 	Point2dL ptL;
