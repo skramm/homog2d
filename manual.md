@@ -19,7 +19,7 @@ All the code is in the namespace `homog2d`, so either add `using namespace homog
 
 This library provides 3 data types: `Line2d`, `Point2d` and  `Homogr`, this latter one implementing a planar (2D) transformation, implemented as a 3x3 matrix.
 
-## 2 - lines and points
+## 2 - Lines and points
 <a name="basic"></a>
 
 - Create a 2D point:
@@ -402,6 +402,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `distToPoints()` member function: now `distTo()`, and can be used with lines as argument.
   - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
   - renamed `clear()` to `init()` for matrices
+  - added `getParallelLine()`
+
 
 ### Footnotes
 
