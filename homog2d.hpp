@@ -890,7 +890,7 @@ class Root
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 	private:
-		void p_normalizeLine() const { impl_normalizeLine(  detail::RootHelper<LP>() ); }
+		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
 
 		Root<LP,FPT>::Intersect
 		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const;

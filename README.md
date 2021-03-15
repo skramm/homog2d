@@ -30,6 +30,9 @@ Reference: once downloaded, enter `make doc` (requires Doxygen).
 Rationale:
 - Usage simplicity (see manual)
 - No dependency
-- Modern C++ policy-based design
+- Modern C++, using policy-based design and tag dispatching
+- Direct bindings with [OpenCv](https://opencv.org/) (optional)
 
+Related libraries:
+ - [Wykobi](http://www.wykobi.com/), has much more features but maybe harder to dive in.
 

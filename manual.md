@@ -47,7 +47,7 @@ li1 = pt1 * pt2;
 ```
 
 Beware, two parallel lines will never cross, and two identical points do not define a line.
-So if you code attempts to do so, this will trigger a
+So if your code attempts to do so, this will trigger a
 [std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
 exception.
 
@@ -104,7 +104,7 @@ You can compute the two points that are lying on a line and at a given distance 
 The "middle" point must be given as either its x or y coordinate [(1)](#fn1).
 ```C++
 Line2d li( ..., ... ); // some line
-auto ppts = li.getPoints( GC_X, coord, dist );
+auto ppts = li.getPoints( GC_X, coord, dist ); // returns a std::pair
 Point2d p1 = ppts.first;
 Point2d p2 = ppts.second;
 ```
@@ -118,7 +118,7 @@ For example, this:
 ```C++
 Line2d li2 = li.getOrthogonalLine( GC_X, 2 );
 ```
-will compute the orthogonal line at `x=2`.
+will build `li2` so that it is orthogonal to `li` at `x=2`.
 
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
@@ -140,9 +140,9 @@ auto angle2 = getAngle( li1, li2 );
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography").
-The three basic transformations (rotation, translation, scaling) are available directly through provided member functions.
+The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
-The first one starts from the identity transformation and applies the requested one.
+The first one starts from the identity transformation and builds the requested one.
 The second form adds the requested transformation to the matrix.
 
 - First example:
@@ -228,7 +228,7 @@ if( ri() )  // means the line does intersect the rectangle defined by (1,1)-(8,1
 ```
 
 You don't have to give the bottom-right, top-left corners of the rectangle, the function checks and automatically computes these two points.
-In the example above, you could have as well give the points (1,8)-(8,1), the result would have been the same.
+In the example above, you could have as well given the points (1,8)-(8,1), the result would have been the same.
 The only requirement is that no coordinate must be the same in the two points.
 
 ### Intersection of a line with a circle
@@ -238,7 +238,7 @@ For a line `li`, you can compute the intersection points with a circle having a 
 auto ri = li.intersectsCircle( pt, rad );
 if( ri() )   // means the line intersects the circle
 {
-	auto inter = ri.get();
+	auto inter = ri.get(); // returns a std::pair
 	Point2d intersect_pt1 = inter.first;
 	Point2d intersect_pt2 = inter.second;
 }
@@ -269,7 +269,7 @@ For homographies, you can import directly from
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
-This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time.
+This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
 You can then write this:
 ```C++
 Point2d pt;
@@ -293,7 +293,7 @@ For points, this will just draw a small cross: 2 H/V lines.
 These two functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor( r,g,b) );
+li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -303,7 +303,7 @@ and values will be retained, unless explicitely changed, as showed in the exampl
 ```C++
 CvDrawParams dp; // default line thickness is 1
 dp.setColor( 0,  0, 250).setThickness(3);
-dp.setDefault();
+dp.setDefault(); // default is now blue, with thickness=3
 line.drawCvMat( some_img ); // use default settings
 line.drawCvMat( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
