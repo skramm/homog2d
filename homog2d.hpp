@@ -47,9 +47,9 @@ See https://github.com/skramm/homog2d
 
 
 #define HOMOG2D_CHECK_ROW_COL \
-	if( r > 3 ) \
+	if( r > 2 ) \
 		throw std::runtime_error( "Error: invalid row value: r=" + std::to_string(r) ); \
-	if( c > 3 ) \
+	if( c > 2 ) \
 		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
 
 namespace homog2d {
@@ -57,19 +57,10 @@ namespace homog2d {
 /// Holds the types needed for policy based design
 namespace type {
 
-struct IsLine
-{
-};
-struct IsPoint
-{
-};
-
-struct IsHomogr
-{
-};
-struct IsMatrix
-{
-};
+struct IsLine   {};
+struct IsPoint  {};
+struct IsHomogr {};
+struct IsMatrix {};
 
 } // namespace detail end
 
@@ -178,9 +169,26 @@ class Hmatrix_
 	{
 		init();
 	}
+
 	void init()
 	{
 		impl_mat_init0( detail::RootHelper<M>() );
+	}
+
+	template<typename T>
+	Hmatrix_( T val )
+	{
+		static_assert( std::is_floating_point<T>::value, "Homography constructor, type must be floating point" );
+		init();
+		setRotation( val );
+	}
+
+	template<typename T>
+	Hmatrix_( T tx, T ty )
+	{
+		static_assert( std::is_floating_point<T>::value, "Homography constructor, type must be floating point" );
+		init();
+		setTranslation( tx, ty );
 	}
 
 	private:

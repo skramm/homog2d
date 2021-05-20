@@ -219,6 +219,17 @@ h.transpose();
 h.inverse().transpose(); // first, invert, second, transpose
 ```
 
+Three constructors are provided:
+* one without arguments, that initializes the matrix to a unit transformation
+* one with one floating point argument, that produces a rotation matrix of the given angle value
+* one with two floating point argument, that produces a translation matrix
+
+```C++
+Homogr Hr( 1. ); // rotation matrix of 1 radian
+Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
+```
+
+
 ## 4 - Computation of intersection points
 <a name="inter"></a>
 
@@ -418,6 +429,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
   - renamed `clear()` to `init()` for matrices
   - added `getParallelLine()`
+
+- [next-release]:
+ - added 2 constructors to `Homogr`
+
 
 
 ### Footnotes

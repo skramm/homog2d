@@ -255,9 +255,9 @@ TEST_CASE( "offset test", "[test3]" )
 
 		Line2d liH(1,0);
 		Line2d liH2 = liH;
-		std::cout << "liH2=" << liH2 << "\n";
+//		std::cout << "liH2=" << liH2 << "\n";
 		liH.addOffset( OD_Horiz, 1 ); // adding horizontal offset to horizontal line does nothing
-		std::cout << "liH=" << liH << "\n";
+//		std::cout << "liH=" << liH << "\n";
 		CHECK( liH == liH2 );
 	}
 }
@@ -285,12 +285,31 @@ TEST_CASE( "test Matrix", "[testM]" )
 	Point2d p2 = m*l1;
 }
 
+TEST_CASE( "Homogr constructors", "[testHC]" )
+{
+	{
+		auto angle = 0.5;
+		Homogr H0,H1( angle ); // set rotation with constructor
+		H0.setRotation( angle );
+//		std::cout << "H0:\n" << H0;
+//		std::cout << "H1:\n" << H1;
+		Line2d li1;
+		Line2d li2 = H0 * li1;
+		auto angle2 = getAngle( li1, li2 );
+		CHECK( DIFFERENCE_IS_NULL(angle2, angle) );
+		std::cout << std::setprecision( std::numeric_limits<double>::digits10 ) << std::scientific << "angle2=" << angle2 << " angle=" << angle << "\n";
+	}
+	{
+		Homogr H0( 4. , 7. );
+		CHECK( H0.getValue( 0, 2 ) == 4. );
+		CHECK( H0.getValue( 1, 2 ) == 7. );
+	}
+}
 
 TEST_CASE( "test Homogr", "[testH]" )
 {
 	{
 		Homogr H1,H2;
-		std::cout << H1 << "\n";
 		Homogr H = H1*H2;
 		CHECK( H == H1 );
 	}
