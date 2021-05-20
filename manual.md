@@ -151,7 +151,14 @@ Homogr h; // unit transformation
 h.setTranslation(3,4);
 Point2d pt1(1,2);
 Point2d pt2 = h * pt1; // pt2 is now (4,6)
-h.clear; // reset to unit transformation
+h.init(); // reset to unit transformation
+```
+
+You can create a rotation or a scale transformation with one of these:
+```C++
+Homogr h;
+h.setRotation( 3.14 ); // angle of PI radians
+h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale factor to 2., and vertical to 3.
 ```
 
 - You can build some complex transformation by multiplying these:
@@ -163,6 +170,14 @@ Homogr h3a = h1*h2; // first, rotation, then translation
 Homogr h3b = h2*h1; // first, rotation, then translation
 ```
 
+Or by calling dedicated member functions:
+```C++
+Homogr h;
+h.addRotation( 3.14 );       // angle of PI radians (would be identical with "set")
+h.addScale( 2., 3. );        // add scaling transformation
+h.addTranslation( 0., 4. );  // add translation
+```
+
 - But you can also used "chained" syntax:
 ```C++
 Homogr h; // unit transformation
@@ -172,7 +187,7 @@ h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
 - You can access individual values of the matrix (read or write).
 This is needed if you want to set up some specific transformation (shearing, perspective, whatever):
 ```C++
-h.setValue( 0, 0, 3.14 );
+h.setValue( 0, 0, 3.14 );  // sets value at first line, first col
 auto v = h.getValue( 0, 0 ); // 3.14
 ```
 
