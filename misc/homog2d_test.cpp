@@ -297,7 +297,7 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 		Line2d li2 = H0 * li1;
 		auto angle2 = getAngle( li1, li2 );
 		CHECK( DIFFERENCE_IS_NULL(angle2, angle) );
-		std::cout << std::setprecision( std::numeric_limits<double>::digits10 ) << std::scientific << "angle2=" << angle2 << " angle=" << angle << "\n";
+//		std::cout << std::setprecision( std::numeric_limits<double>::digits10 ) << std::scientific << "angle2=" << angle2 << " angle=" << angle << "\n";
 	}
 	{
 		Homogr H0( 4. , 7. );
@@ -562,6 +562,11 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
 	pt.set(5,10);
 	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+
+	CHECK( Point2d( 2, 2).isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( Point2d( 2,10).isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( Point2d(10, 2).isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( Point2d(10,10).isInsideRectangle( pt1, pt2 ) == true );
 }
 
 TEST_CASE( "circle intersection", "[test_Circle]" )

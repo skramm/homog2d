@@ -167,7 +167,7 @@ Homogr h; // unit transformation
 h.setTranslation(3,4);
 Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
 Homogr h3a = h1*h2; // first, rotation, then translation
-Homogr h3b = h2*h1; // first, rotation, then translation
+Homogr h3b = h2*h1; // first, translation, then rotation
 ```
 
 Or by calling dedicated member functions:
@@ -178,7 +178,7 @@ h.addScale( 2., 3. );        // add scaling transformation
 h.addTranslation( 0., 4. );  // add translation
 ```
 
-- But you can also used "chained" syntax:
+- But you can also used "chained" syntax (thanks to the reference return type!):
 ```C++
 Homogr h; // unit transformation
 h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
@@ -220,9 +220,9 @@ h.inverse().transpose(); // first, invert, second, transpose
 ```
 
 Three constructors are provided:
-* one without arguments, that initializes the matrix to a unit transformation
-* one with one floating point argument, that produces a rotation matrix of the given angle value
-* one with two floating point argument, that produces a translation matrix
+* one without arguments, that initializes the matrix to a unit transformation;
+* one with **one** floating point argument, that produces a rotation matrix of the given angle value;
+* one with **two** floating point arguments, that produces a translation matrix with the given values.
 
 ```C++
 Homogr Hr( 1. ); // rotation matrix of 1 radian
@@ -283,6 +283,9 @@ You can quickly check if a points lies within a flat rectangle defined by two po
 bool b = pt.isInsideRectangle( p1, p2 );
 ```
 Again, the two points can be any of the four corners of the rectangle.
+
+This function will return for all points lying on edges of the rectangle.
+
 
 ## 5 - Bindings with other libraries
 <a name="bind"></a>
