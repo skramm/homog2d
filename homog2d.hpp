@@ -949,6 +949,76 @@ class Root
 		void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsLine>& );
 };
 
+
+//------------------------------------------------------------------
+template<typename FPT>
+class Segment
+{
+	private:
+		Root<type::IsPoint,FPT> _ptS1, _ptS2;
+
+/// sub type,
+	struct SIntersect
+	{
+//		template<typename U,typename V>		friend class Root;
+
+		public:
+			bool operator()() const
+			{
+				return _doesIntersect;
+			}
+			SIntersect()
+			{}
+			SIntersect( const Root<type::IsPoint,FPT>& pti ) : _ptIntersect(pti)
+			{
+				_doesIntersect = true;
+			}
+/*			std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+			get() const
+			{
+				return std::make_pair( ptA, ptB );
+			}*/
+		private:
+			Root<type::IsPoint,FPT> _ptIntersect;
+			bool _doesIntersect = false;
+	};
+
+	public:
+		Segment() = delete;
+		Segment( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
+			_ptS1(p1), _ptS2(p2)
+		{}
+
+/// Get length
+		FPT length() const
+		{
+			return _ptS1.distTo( _ptS2 );
+		}
+/// Returns the points
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+		get() const
+		{
+			if( _ptS1.getX() < _ptS2.getX() )
+				return std::make_pair( _ptS1, _ptS2 );
+			else
+				return std::make_pair( _ptS2, _ptS1 );
+		}
+/// Returns suporting line
+		Root<type::IsLine,FPT> getLine() const
+		{
+			return _ptS1 * _ptS2;
+		}
+		SIntersect intersects( const Segment<FPT>& ) const;
+};
+
+template<typename FPT>
+typename Segment<FPT>::SIntersect
+Segment<FPT>::intersects( const Segment<FPT>& ) const
+{
+	typename Segment<FPT>::SIntersect out;
+	return out;
+}
+
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
 namespace detail {
