@@ -969,76 +969,6 @@ double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0
 
 
 //------------------------------------------------------------------
-template<typename FPT>
-class Segment
-{
-	private:
-		Root<type::IsPoint,FPT> _ptS1, _ptS2;
-
-/// sub type,
-	struct SIntersect
-	{
-//		template<typename U,typename V>		friend class Root;
-
-		public:
-			bool operator()() const
-			{
-				return _doesIntersect;
-			}
-			SIntersect()
-			{}
-			SIntersect( const Root<type::IsPoint,FPT>& pti ) : _ptIntersect(pti)
-			{
-				_doesIntersect = true;
-			}
-/*			std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-			get() const
-			{
-				return std::make_pair( ptA, ptB );
-			}*/
-		private:
-			Root<type::IsPoint,FPT> _ptIntersect;
-			bool _doesIntersect = false;
-	};
-
-	public:
-		Segment() = delete;
-		Segment( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
-			_ptS1(p1), _ptS2(p2)
-		{}
-
-/// Get length
-		FPT length() const
-		{
-			return _ptS1.distTo( _ptS2 );
-		}
-/// Returns the points
-		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-		get() const
-		{
-			if( _ptS1.getX() < _ptS2.getX() )
-				return std::make_pair( _ptS1, _ptS2 );
-			else
-				return std::make_pair( _ptS2, _ptS1 );
-		}
-/// Returns suporting line
-		Root<type::IsLine,FPT> getLine() const
-		{
-			return _ptS1 * _ptS2;
-		}
-		SIntersect intersects( const Segment<FPT>& ) const;
-};
-
-template<typename FPT>
-typename Segment<FPT>::SIntersect
-Segment<FPT>::intersects( const Segment<FPT>& ) const
-{
-	typename Segment<FPT>::SIntersect out;
-	return out;
-}
-
-
-//------------------------------------------------------------------
 /// This namespace holds some private stuff
 namespace detail {
 
@@ -1081,6 +1011,119 @@ fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
 }
 
 } // namespace detail end
+
+
+//------------------------------------------------------------------
+template<typename FPT>
+class Segment
+{
+	private:
+		Root<type::IsPoint,FPT> _ptS1, _ptS2;
+
+/// sub type,
+	struct SIntersect
+	{
+		template<typename U>
+		friend class Segment;
+
+		public:
+			bool operator()() const
+			{
+				return _doesIntersect;
+			}
+			SIntersect()
+			{}
+			SIntersect( const Root<type::IsPoint,FPT>& pti ) : _ptIntersect(pti)
+			{
+				_doesIntersect = true;
+			}
+			Root<type::IsPoint,FPT>
+			get() const
+			{
+				return _ptIntersect;
+			}
+		private:
+			Root<type::IsPoint,FPT> _ptIntersect;
+			bool _doesIntersect = false;
+	};
+
+	public:
+		Segment() = delete;
+		Segment( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
+			_ptS1(p1), _ptS2(p2)
+		{
+			detail::fix_order( _ptS1, _ptS2 );
+		}
+
+/// Get length
+		FPT length() const
+		{
+			return _ptS1.distTo( _ptS2 );
+		}
+
+/// Returns the points.
+/** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
+the one with smallest y-coordinate will be returned first */
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+		get() const
+		{
+#if 1
+			return std::make_pair( _ptS1, _ptS2 );
+#else                                                 // not needed, because points are already stored ordered in constructor
+			if( _ptS1.getX() < _ptS2.getX() )
+				return std::make_pair( _ptS1, _ptS2 );
+			else
+				if( fabs( _ptS1.getX() - _ptS2.getX() ) < numeric_limits<FPT>::epsilon )
+				{
+					if( _ptS1.getY() <= _ptS2.getY() )
+						return std::make_pair( _ptS1, _ptS2 );
+					else
+						return std::make_pair( _ptS2, _ptS1 );
+				}
+#endif
+		}
+
+/// Returns supporting line
+		Root<type::IsLine,FPT> getLine() const
+		{
+			return _ptS1 * _ptS2;
+		}
+		SIntersect intersects( const Segment<FPT>& ) const;
+};
+
+//------------------------------------------------------------------
+/// Computes intersection between 2 segments
+/**
+Algorithm:<br>
+We check if the intersection point lies in between the range of both segments, both on x and on y
+*/
+template<typename FPT>
+typename Segment<FPT>::SIntersect
+Segment<FPT>::intersects( const Segment<FPT>& s2 ) const
+{
+	typename Segment<FPT>::SIntersect out;
+	auto l1 = getLine();
+	auto l2 = s2.getLine();
+	if( l1.isParallelTo( l2 ) )
+		return out;
+	out._ptIntersect = l1 * l2;   // intersection point
+
+	const auto& pi   = out._ptIntersect;
+	const auto& ptA1 = this->get().first;
+	const auto& ptA2 = this->get().second;
+	const auto& ptB1 = s2.get().first;
+	const auto& ptB2 = s2.get().second;
+	if( pi.getX() >= ptA1.getX() )
+		if( pi.getY() >= ptA1.getY() )
+			if( pi.getX() <= ptA2.getX() )
+				if( pi.getY() <= ptA2.getY() )
+					if( pi.getX() >= ptB1.getX() )
+						if( pi.getY() >= ptB1.getY() )
+							if( pi.getX() <= ptB2.getX() )
+								if( pi.getY() <= ptB2.getY() )
+									out._doesIntersect = true;
+	return out;
+}
 
 //------------------------------------------------------------------
 /// overload for points
