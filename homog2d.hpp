@@ -40,6 +40,7 @@ See https://github.com/skramm/homog2d
 #include <iomanip>
 #include <cassert>
 #include <sstream>
+#include <type_traits>
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -764,7 +765,6 @@ class Root
 			return impl_getParallelLine( pt, detail::RootHelper<LP>() );
 		}
 
-
 		template<typename T>
 		void
 		addOffset( En_OffsetDir dir, T v )
@@ -784,11 +784,19 @@ class Root
 		{
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
-
+		bool isParallelTo( const Root<type::IsLine,FPT>& li ) const
+		{
+			return impl_isParallelTo( li, detail::RootHelper<LP>() );
+		}
 		FPT getAngle( const Root<type::IsLine,FPT>& li ) const
 		{
 			return impl_getAngle( li, detail::RootHelper<LP>() );
 		}
+// TODO: how can I implement this build failure with a static assert ?
+/*		FPT getAngle( const Root<type::IsPoint,FPT>& ) const
+		{
+			static_assert( std::false_type::value, "cannot get angle of a point" );
+		}*/
 
 	private:
 		FPT impl_getX( const detail::RootHelper<type::IsPoint>& /* dummy */ ) const
@@ -815,7 +823,8 @@ class Root
 		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
 		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
-		FPT impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
 
 		FPT impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
@@ -887,12 +896,16 @@ class Root
 	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
 #endif
 
+	static double& nullAngleValue() { return _zeroAngleValue; }
+
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 
 	private:
 		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
+
+		static double _zeroAngleValue; /// Used in isParallel();
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -948,6 +961,11 @@ class Root
 		template<typename T>
 		void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsLine>& );
 };
+
+
+/// Used in isParallel()
+template<typename LP,typename FPT>
+double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 
 //------------------------------------------------------------------
@@ -1018,6 +1036,7 @@ Segment<FPT>::intersects( const Segment<FPT>& ) const
 	typename Segment<FPT>::SIntersect out;
 	return out;
 }
+
 
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
@@ -1377,6 +1396,15 @@ FPT
 getAngle( const Root<type::IsLine,FPT>& li1, const Root<type::IsLine,FPT>& li2 )
 {
 	return li1.getAngle( li2 );
+}
+
+template<typename LP, typename FPT>
+bool
+Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
+{
+	if( getAngle(li) < Root::_zeroAngleValue )
+		return true;
+	return false;
 }
 
 //------------------------------------------------------------------
