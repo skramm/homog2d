@@ -372,16 +372,18 @@ Point2d_<float> pt; // this is fine
 ```
 
 
-For the tests on null values and comparisons, some compromises had to be done.
+For the tests on null values and floating-point comparisons, some compromises had to be done.
 
-- When checking for parallel lines (see `isParallelTo()`), the "null" angle value has a default value, that you can print with:
+- When checking for parallel lines (see `isParallelTo()`), the "null" angle value has a default value of one thousand of a radian (0.001 rad).
+You can print the current value with:
 ```C++
 cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
 ```
-It can be changed any time with
-`
-setDefaultNullAngle( ... some value ... );
-`
+It can be changed any time with the same function, for example:
+```C++
+Line2d::nullAngleValue() = 0.01;
+```
+
 
 ## 7 - Technical details
 <a name="tech"></a>

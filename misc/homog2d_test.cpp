@@ -175,14 +175,35 @@ TEST_CASE( "test1", "[test1]" )
 
 TEST_CASE( "test parallel", "[test_para]" )
 {
+	SECTION( "Checking angle" )
+	{
+		Line2d l1; // vertical line
+		Line2d l2a( Point2d(0,0),Point2d(1,1) );
+		CHECK( getAngle( l1, l2a ) == M_PI/4. );
+
+		Line2d l2b( Point2d(3,0),Point2d(4,1) );
+		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+	}
+
 	SECTION( "Checking parallel lines" )
 	{
 		std::cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
 		Line2d l1; // vertical line
-		Line2d l2a(Point2d(1.,0.), Point2d(1.0001,1000.) ); // almost vertical line
-		CHECK( l1.isParallelTo(l2a) == true );
-		Line2d l2b(Point2d(1.,0.), Point2d(1.0001,10.) ); // almost vertical line
-		CHECK( l1.isParallelTo(l2b) == false );
+		{
+			Line2d l2a(Point2d(1.,0.), Point2d(1.001,1.) ); // almost vertical line
+			CHECK( l1.isParallelTo(l2a) == true );
+
+			Line2d l2b(Point2d(1.,0.), Point2d(1.002,1.) ); // almost vertical line
+			CHECK( l1.isParallelTo(l2b) == false );
+		}
+		Line2d::nullAngleValue() = 0.01;
+		{
+			Line2d l2a(Point2d(1.,0.), Point2d(1.01,1.) ); // almost vertical line
+			CHECK( l1.isParallelTo(l2a) == true );
+
+			Line2d l2b(Point2d(1.,0.), Point2d(1.02,1.) ); // almost vertical line
+			CHECK( l1.isParallelTo(l2b) == false );
+		}
 	}
 	SECTION( "Vertical line at x=0" )
 	{

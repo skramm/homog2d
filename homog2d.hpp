@@ -896,7 +896,7 @@ class Root
 	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
 #endif
 
-	static double nullAngleValue() { return _zeroAngleValue; }
+	static double& nullAngleValue() { return _zeroAngleValue; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -965,7 +965,7 @@ class Root
 
 /// Used in isParallel()
 template<typename LP,typename FPT>
-double Root<LP,FPT>::_zeroAngleValue = 0.0001; // radians
+double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
