@@ -49,7 +49,14 @@ li1 = pt1 * pt2;
 Beware, two parallel lines will never cross, and two identical points do not define a line.
 So if your code attempts to do so, this will trigger a
 [std::runtime_error](https://en.cppreference.com/w/cpp/error/runtime_error)
-exception.
+exception.<br>
+If you are unsure, you can check first:
+```C++
+if( li1.isParallelTo(li2) )
+	cout << "Lines are parallel !\n";
+```
+For the numerical considerations on this test (that actually computes the angle between the two lines),
+check below, section [Numerical data types](#numdt).
 
 - Add some offset to a line:
 ```C++
@@ -360,9 +367,21 @@ For example: `Point2dF`, `Line2dF` or `HomogrF` are float types.
 
 If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`, which are templated types:
 
-```
+```C++
 Point2d_<float> pt; // this is fine
 ```
+
+
+For the tests on null values and comparisons, some compromises had to be done.
+
+- When checking for parallel lines (see `isParallelTo()`), the "null" angle value has a default value, that you can print with:
+```C++
+cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
+```
+It can be changed any time with
+`
+setDefaultNullAngle( ... some value ... );
+`
 
 ## 7 - Technical details
 <a name="tech"></a>
@@ -435,6 +454,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - [next-release]:
  - added 2 constructors to `Homogr`
+ - added `isParallelTo()
 
 
 

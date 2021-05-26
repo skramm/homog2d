@@ -175,6 +175,15 @@ TEST_CASE( "test1", "[test1]" )
 
 TEST_CASE( "test parallel", "[test_para]" )
 {
+	SECTION( "Checking parallel lines" )
+	{
+		std::cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
+		Line2d l1; // vertical line
+		Line2d l2a(Point2d(1.,0.), Point2d(1.0001,1000.) ); // almost vertical line
+		CHECK( l1.isParallelTo(l2a) == true );
+		Line2d l2b(Point2d(1.,0.), Point2d(1.0001,10.) ); // almost vertical line
+		CHECK( l1.isParallelTo(l2b) == false );
+	}
 	SECTION( "Vertical line at x=0" )
 	{
 		Line2d l1; // vertical line
