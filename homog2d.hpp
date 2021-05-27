@@ -888,7 +888,7 @@ class Root
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
 		return impl_drawCvMat( mat, dp, detail::RootHelper<LP>() );
 	}
@@ -938,8 +938,8 @@ class Root
 #ifdef HOMOG2D_USE_OPENCV
 		cv::Point2f impl_getCvPtf( const detail::RootHelper<type::IsPoint>& ) const;
 		cv::Point2d impl_getCvPtd( const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& );
-		bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsLine>& );
+		bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_drawCvMat( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsLine>& )  const;
 #endif
 
 		/// Called by default constructor, overload for lines
@@ -1062,6 +1062,12 @@ class Segment_
 		{
 			detail::fix_order( _ptS1, _ptS2 );
 		}
+		void set( const Root<type::IsPoint,FPT>& p1, const Root<type::IsPoint,FPT>& p2 )
+		{
+			_ptS1 = p1;
+			_ptS2 = p2;
+			detail::fix_order( _ptS1, _ptS2 );
+		}
 
 /// Get length
 		FPT length() const
@@ -1111,7 +1117,7 @@ the one with smallest y-coordinate will be returned first */
 		SIntersect intersects( const Segment_<FPT>& ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	void drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
 	{
 		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 	}
@@ -1830,7 +1836,7 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 /// Returns false if point not in image
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& /* dummy */ )
+Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& /* dummy */ )  const
 {
 	if( getX()<0 || getX()>=mat.cols )
 		return false;
@@ -1874,7 +1880,7 @@ Steps:
 */
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& /* dummy */ )
+Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& /* dummy */ ) const
 {
 	assert( mat.rows > 2 );
 	assert( mat.cols > 2 );
