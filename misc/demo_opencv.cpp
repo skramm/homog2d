@@ -108,6 +108,8 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 	static int selected=-1;
 	g_data.setMousePos(x,y);
 	action();
+//	cv::imshow( g_wndname, g_img );
+
 	switch( event )
 	{
 		case CV_EVENT_LBUTTONUP:
@@ -135,7 +137,27 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 
 void action_1()
 {
-	drawLines( g_data.selected );
+//	drawLines( g_data.selected );
+
+	for( int i=0; i<g_data.nbPts(); i++ )
+	{
+		if( g_data.selected == i )
+			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
+		else
+			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
+	}
+
+	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
+	Line2d lB( g_data.vpt[0], g_data.vpt[3] );
+	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
+	Line2d lD( g_data.vpt[1], g_data.vpt[3] );
+
+	lA.drawCvMat( g_img, CvDrawParams().setColor(   0,  50, 150) );
+	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
+	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
+	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
+
+
 
 	Line2d l( g_data.vpt[0], g_data.vpt[2] );
 	Line2d la_V( l );
@@ -399,14 +421,25 @@ void demo5()
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
+	std::vector<std::function<void()>> v_demo{
+		demo1,
+		demo2,
+		demo3,
+		demo4,
+		demo5
+	};
+	cv::namedWindow( g_wndname );
+
 	if( argc > 1 )
 	{
 		int d = std::atoi( argv[1] );
+		assert( d>0 && d<=v_demo.size() );
 		std:: cout << " - calling demo " << d << "\n";
+		v_demo[d-1]();
+		return 0;
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n"
 		<< " - installed OpenCV version : " << CV_VERSION << '\n';
-	cv::namedWindow( g_wndname );
 	demo1();
 
 	cv::destroyAllWindows(); // to disable the mouse callback

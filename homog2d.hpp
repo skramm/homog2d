@@ -1062,6 +1062,7 @@ class Segment_
 		{
 			detail::fix_order( _ptS1, _ptS2 );
 		}
+/// Setter
 		void set( const Root<type::IsPoint,FPT>& p1, const Root<type::IsPoint,FPT>& p2 )
 		{
 			_ptS1 = p1;
@@ -1074,6 +1075,7 @@ class Segment_
 		{
 			return _ptS1.distTo( _ptS2 );
 		}
+/// Comparison operator
 		bool operator == ( const Segment_& s2 ) const
 		{
 			if( _ptS1 != s2._ptS1 )
@@ -1086,7 +1088,12 @@ class Segment_
 		{
 			return !(*this == s2);
 		}
-
+		template<typename U>
+		friend std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
+		{
+			f << seg._ptS1 << "-" << seg._ptS2;
+			return f;
+		}
 /// Returns the points.
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
@@ -1146,6 +1153,7 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 	const auto& ptA2 = this->get().second;
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
+	std::cout << "s1=" << *this << " s2=" << s2 << " pi=" << pi << '\n';
 	if( pi.getX() >= ptA1.getX() )
 		if( pi.getY() >= ptA1.getY() )
 			if( pi.getX() <= ptA2.getX() )
