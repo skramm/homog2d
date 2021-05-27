@@ -682,6 +682,11 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{
+		Segment<double> s1( Point2d(0,0), Point2d(2,2) );
+		Segment<double> s2( Point2d(2,2), Point2d(0,0) );
+		CHECK( s1 == s2 );
+	}
+	{
 		Segment<double> s1( Point2d(0,0), Point2d(3,4) );
 		CHECK( s1.length() == 5 );
 
@@ -695,7 +700,7 @@ TEST_CASE( "Segment", "[seg1]" )
 	}
 	{
 		Segment<double> s1( Point2d(0,0), Point2d(2,2) );
-		Segment<double> s2( Point2d(2,2), Point2d(0,0) );
+		Segment<double> s2( Point2d(2,0), Point2d(0,2) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
 		CHECK( si.get() == Point2d(1,1) );

@@ -1014,17 +1014,22 @@ fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
 
 
 //------------------------------------------------------------------
+/// A line segment, define by two points
+/**
+- Storage: "smallest" point is always stored as first element (see constructor)
+*/
 template<typename FPT>
-class Segment
+class Segment_
 {
 	private:
 		Root<type::IsPoint,FPT> _ptS1, _ptS2;
 
-/// sub type,
+	public:
+/// sub type, holds intersection between two segments
 	struct SIntersect
 	{
 		template<typename U>
-		friend class Segment;
+		friend class Segment_;
 
 		public:
 			bool operator()() const
@@ -1048,8 +1053,11 @@ class Segment
 	};
 
 	public:
-		Segment() = delete;
-		Segment( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
+/// Default constructor initializes to (0,0)--(1,1)
+		Segment_():_ptS2(1.,1.)
+		{}
+/// Contructor 2: build segment from two points
+		Segment_( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
 			_ptS1(p1), _ptS2(p2)
 		{
 			detail::fix_order( _ptS1, _ptS2 );
@@ -1059,6 +1067,18 @@ class Segment
 		FPT length() const
 		{
 			return _ptS1.distTo( _ptS2 );
+		}
+		bool operator == ( const Segment_& s2 ) const
+		{
+			if( _ptS1 != s2._ptS1 )
+				return false;
+			if( _ptS2 != s2._ptS2 )
+				return false;
+			return true;
+		}
+		bool operator != ( const Segment_& s2 ) const
+		{
+			return !(*this == s2);
 		}
 
 /// Returns the points.
@@ -1088,7 +1108,14 @@ the one with smallest y-coordinate will be returned first */
 		{
 			return _ptS1 * _ptS2;
 		}
-		SIntersect intersects( const Segment<FPT>& ) const;
+		SIntersect intersects( const Segment_<FPT>& ) const;
+
+#ifdef HOMOG2D_USE_OPENCV
+	bool drawCvMat( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	{
+		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
+	}
+#endif
 };
 
 //------------------------------------------------------------------
@@ -1098,10 +1125,10 @@ Algorithm:<br>
 We check if the intersection point lies in between the range of both segments, both on x and on y
 */
 template<typename FPT>
-typename Segment<FPT>::SIntersect
-Segment<FPT>::intersects( const Segment<FPT>& s2 ) const
+typename Segment_<FPT>::SIntersect
+Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 {
-	typename Segment<FPT>::SIntersect out;
+	typename Segment_<FPT>::SIntersect out;
 	auto l1 = getLine();
 	auto l2 = s2.getLine();
 	if( l1.isParallelTo( l2 ) )
@@ -1866,6 +1893,18 @@ Root<LP,FPT>::impl_drawCvMat( cv::Mat& mat, const CvDrawParams& dp, const detail
 }
 
 //------------------------------------------------------------------
+/// Free function, draws a set of points or lines
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<typename T>
+void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
+{
+	for( const auto& elem: cont )
+		elem.drawCvMat( mat, dp );
+}
+
+//------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
 /// Default line type, uses \c double as numerical type
@@ -1879,6 +1918,8 @@ using Homogr = Hmatrix_<type::IsHomogr,double>;
 
 /// Default homogeneous matrix, uses \c double as numerical type
 using Hmatrix = Hmatrix_<type::IsMatrix,double>;
+
+using Segment = Segment_<double>;
 
 // float types
 using Line2dF  = Root<type::IsLine,float>;

@@ -40,27 +40,33 @@ std::string g_wndname = "homog2d demo";
 cv::Mat g_img;
 int g_width = 600;
 int g_height = 500;
-homog2d::Point2d g_pt[4];
+//homog2d::Point2d g_pt[4];
+std::vector<Point2d> g_vpt(4);
 homog2d::Point2d g_pt_mouse;
 
 std::array<Line2d,3> g_li; // for demo4()
 int g_radius = 80;         // for demo4()
 
-void drawLines( int selected )
+void clearImage()
 {
 	g_img = cv::Scalar(255,255,255);
+}
+
+void drawLines( int selected )
+{
+	clearImage();
 	for( int i=0; i<4; i++ )
 	{
 		if( selected == i )
-			g_pt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
+			g_vpt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
 		else
-			g_pt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
+			g_vpt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
 
-	Line2d lA( g_pt[0], g_pt[2] );
-	Line2d lB( g_pt[0], g_pt[3] );
-	Line2d lC( g_pt[1], g_pt[2] );
-	Line2d lD( g_pt[1], g_pt[3] );
+	Line2d lA( g_vpt[0], g_vpt[2] );
+	Line2d lB( g_vpt[0], g_vpt[3] );
+	Line2d lC( g_vpt[1], g_vpt[2] );
+	Line2d lD( g_vpt[1], g_vpt[3] );
 
 	lA.drawCvMat( g_img, CvDrawParams().setColor(   0,  50, 150) );
 	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
@@ -72,7 +78,7 @@ void draw1( int selected )
 {
 	drawLines( selected );
 
-	Line2d l( g_pt[0], g_pt[2] );
+	Line2d l( g_vpt[0], g_vpt[2] );
 	Line2d la_V( l );
 	la_V.addOffset( OD_Vert, 25);
 	la_V.drawCvMat( g_img, CvDrawParams().setColor(250,0,250) );
@@ -95,14 +101,14 @@ void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 
 		case CV_EVENT_LBUTTONDOWN:
 			for( int i=0; i<4; i++ )
-				if( g_pt_mouse.distTo( g_pt[i]) < 10 )
+				if( g_pt_mouse.distTo( g_vpt[i]) < 10 )
 					selected = i;
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
 		{
 			if( selected != -1 )
-				g_pt[selected] = g_pt_mouse;
+				g_vpt[selected] = g_pt_mouse;
 			Line2d l_mouse = g_pt_mouse * Point2d();
 			Line2d l_mouse2= l_mouse.getOrthogonalLine( GC_X, 100 );
 			l_mouse.drawCvMat( g_img );
@@ -121,10 +127,10 @@ void demo1()
 	cv::setMouseCallback( g_wndname, mouse_CB_1 );
 
 	int n=5;
-	g_pt[0].set( g_width/2,       g_height/n );
-	g_pt[1].set( g_width/2,       g_height*(n-1)/n );
-	g_pt[2].set( g_width/n,       g_height/2 );
-	g_pt[3].set( g_width*(n-1)/n, g_height/2 );
+	g_vpt[0].set( g_width/2,       g_height/n );
+	g_vpt[1].set( g_width/2,       g_height*(n-1)/n );
+	g_vpt[2].set( g_width/n,       g_height/2 );
+	g_vpt[3].set( g_width*(n-1)/n, g_height/2 );
 
 	g_img.create( g_height, g_width, CV_8UC3 );
 	draw1(-1);
@@ -132,7 +138,7 @@ void demo1()
 
 	cv::waitKey(0);
 }
-
+//------------------------------------------------------------------
 void draw2()
 {
 	drawLines(-1);
@@ -142,10 +148,10 @@ void initPts()
 {
 	int a=50;
 	int b=150;
-	g_pt[0].set( a, a );
-	g_pt[1].set( b, b );
-	g_pt[2].set( b, a );
-	g_pt[3].set( a, b );
+	g_vpt[0].set( a, a );
+	g_vpt[1].set( b, b );
+	g_vpt[2].set( b, a );
+	g_vpt[3].set( a, b );
 }
 
 void demo2()
@@ -189,12 +195,12 @@ void demo2()
 			H.init();
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			initPts();
-			H.applyTo(g_pt);
+			H.applyTo(g_vpt);
 			draw2();
 		}
 	}
 }
-
+//------------------------------------------------------------------
 void demo3()
 {
 	std::cout << "Demo 3:\n";
@@ -206,7 +212,7 @@ void demo3()
 	Line2d lH(1,0);
 	lH.addOffset( OD_Vert, 100.);
 
-	g_img = cv::Scalar(255,255,255);
+	clearImage();
 	lV.drawCvMat( g_img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
 	lH.drawCvMat( g_img, CvDrawParams().setColor(  50, 50, 250).setThickness(2) );
 
@@ -233,10 +239,10 @@ void demo3()
 	cv::imshow( g_wndname, g_img );
 	cv::waitKey(0);
 }
-
+//------------------------------------------------------------------
 void drawLine_4()
 {
-	g_img = cv::Scalar(255,255,255);
+	clearImage();
 	for( size_t i=0; i<g_li.size(); i++ )
 		g_li[i].drawCvMat( g_img );
 }
@@ -297,9 +303,36 @@ void demo4()
 	}
 }
 
+//------------------------------------------------------------------
+/// Mouse callback for demo5
+void mouse_CB_5( int /* event */, int x, int y, int /* flags */, void* /*param*/ )
+{
+
+}
+
+void demo5()
+{
+	std::cout << "Demo 5: Segments\n"; //move circle over line, hit [lm] to change circle radius\n";
+
+	g_vpt[0] = Point2d(100,200);
+	g_vpt[1] = Point2d(200,300);
+	g_vpt[2] = Point2d(100,100);
+	g_vpt[3] = Point2d(300,150);
+	Segment s1( g_vpt[0], g_vpt[1] );
+	Segment s2( g_vpt[2], g_vpt[3] );
+
+	clearImage();
+	s1.drawCvMat( g_img, CvDrawParams().setColor( 0,0,250) );
+	s2.drawCvMat( g_img, CvDrawParams().setColor( 250,0,0) );
+	cv::imshow( g_wndname, g_img );
+	cv::setMouseCallback( g_wndname, mouse_CB_5 );
+	cv::waitKey(0);
+}
+
 int main()
 {
-	std::cout << "Installed OpenCV version : " << CV_VERSION << '\n';
+	std::cout << "To switch to next demo, hit [ESC]\n"
+		<< "Installed OpenCV version : " << CV_VERSION << '\n';
 	cv::namedWindow( g_wndname );
 	demo1();
 
@@ -309,6 +342,7 @@ int main()
 
 	demo3();
 	demo4();
+	demo5();
 	std::cout << "Demo end\n";
 }
 
