@@ -1132,6 +1132,20 @@ the one with smallest y-coordinate will be returned first */
 };
 
 //------------------------------------------------------------------
+namespace detail {
+
+template<typename T>
+bool
+isBetween( T v, T v1, T v2 )
+{
+	if( v >= std::min( v1, v2 ) )
+		if( v <= std::max( v1, v2 ) )
+			return true;
+	return false;
+}
+} // namespace detail
+
+//------------------------------------------------------------------
 /// Computes intersection between 2 segments
 /**
 Algorithm:<br>
@@ -1153,21 +1167,18 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 	const auto& ptA2 = this->get().second;
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
-	std::cout << "s1=" << *this << " s2=" << s2 << " pi=" << pi << '\n';
-	if( pi.getX() >= ptA1.getX() )
-		if( pi.getY() >= ptA1.getY() )
-			if( pi.getX() <= ptA2.getX() )
-				if( pi.getY() <= ptA2.getY() )
-					if( pi.getX() >= ptB1.getX() )
-						if( pi.getY() >= ptB1.getY() )
-							if( pi.getX() <= ptB2.getX() )
-								if( pi.getY() <= ptB2.getY() )
-									out._doesIntersect = true;
+//	std::cout << "s1=" << *this << " s2=" << s2 << " pi=" << pi << '\n';
+
+	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
+		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
+			if( detail::isBetween( pi.getX(), ptB1.getX(), ptB2.getX() ) )
+				if( detail::isBetween( pi.getY(), ptB1.getY(), ptB2.getY() ) )
+					out._doesIntersect = true;
 	return out;
 }
 
 //------------------------------------------------------------------
-/// overload for points
+/// Overload for points
 /// \todo now member function so we can use the object itself, but need to keep the second parameter so the compiler can select the correct overload
 template<typename LP,typename FPT>
 void
@@ -1176,7 +1187,7 @@ Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsPoint,FPT>& r 
 	f << '[' << r.getX() << ',' << r.getY() << "] ";
 }
 
-/// overload for lines
+/// Overload for lines
 template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsLine,FPT>& r ) const

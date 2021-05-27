@@ -123,11 +123,9 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
-		{
 			if( selected != -1 )
 				g_data.vpt[selected] = g_data.pt_mouse;
 			actionM();
-		}
 		break;
 
 		default: break;
@@ -137,9 +135,9 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 
 void action_1()
 {
-//	drawLines( g_data.selected );
+	drawLines( g_data.selected );
 
-	for( int i=0; i<g_data.nbPts(); i++ )
+/*	for( int i=0; i<g_data.nbPts(); i++ )
 	{
 		if( g_data.selected == i )
 			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
@@ -156,8 +154,7 @@ void action_1()
 	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
 	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
 	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
-
-
+*/
 
 	Line2d l( g_data.vpt[0], g_data.vpt[2] );
 	Line2d la_V( l );
@@ -384,7 +381,7 @@ void action_5()
 void action_5M()
 {
 	auto inters = g_data.s1.intersects( g_data.s2 );
-	if( inters() )
+	if( inters() ) //&& g_data.selected != -1 )
 	{
 		auto pti = inters.get();
 		pti.drawCvMat( g_img );
@@ -433,22 +430,19 @@ int main( int argc, const char** argv )
 	if( argc > 1 )
 	{
 		int d = std::atoi( argv[1] );
-		assert( d>0 && d<=v_demo.size() );
+		assert( d>0 && d<=(int)v_demo.size() );
 		std:: cout << " - calling demo " << d << "\n";
 		v_demo[d-1]();
 		return 0;
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n"
 		<< " - installed OpenCV version : " << CV_VERSION << '\n';
-	demo1();
-
-	cv::destroyAllWindows(); // to disable the mouse callback
-	cv::namedWindow( g_wndname );
-	demo2();
-
-	demo3();
-	demo4();
-	demo5();
+	for( size_t i=0; i<v_demo.size(); i++ )
+	{
+		cv::destroyAllWindows(); // to disable the mouse callback
+		cv::namedWindow( g_wndname );
+		v_demo[i]();
+	}
 	std::cout << "Demo end\n";
 }
 
