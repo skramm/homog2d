@@ -25,17 +25,16 @@
 		<Unit filename="../.travis.yml" />
 		<Unit filename="../Makefile" />
 		<Unit filename="../README.md" />
+		<Unit filename="../homog2d.hpp" />
+		<Unit filename="../manual.md" />
+		<Unit filename="LICENCE" />
 		<Unit filename="demo_check.cpp" />
 		<Unit filename="demo_opencv.cpp" />
 		<Unit filename="doxyfile" />
-		<Unit filename="../homog2d.hpp" />
+		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
-		<Unit filename="../manual.md" />
 		<Extensions>
-			<envvars />
-			<code_completion />
 			<lib_finder disable_auto="1" />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

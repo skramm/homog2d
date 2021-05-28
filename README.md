@@ -14,7 +14,7 @@ using (internally) homogeneous coordinates.
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file.
 - Status: beta
 - Author: S. Kramm
-- Licence: LGPL v3
+- Licence: MPLv2
 - Dependencies: none, other than standard library
 
 A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).

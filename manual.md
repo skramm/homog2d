@@ -4,12 +4,13 @@ Home page: https://github.com/skramm/homog2d
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
-3. [2D transformation (aka homographies)](#matrix)
-4. [Intersection with rectangles and circles](#inter)
-5. [Bindings](#bind)
-6. [Numerical data types](#numdt)
-7. [Technical details](#tech)
-8. [History](#history)
+3. [Segments](#segments)
+4. [2D transformation (aka homographies)](#matrix)
+5. [Intersection with rectangles and circles](#inter)
+6. [Bindings](#bind)
+7. [Numerical data types](#numdt)
+8. [Technical details](#tech)
+9. [History](#history)
 
 
 ## 1 - Introduction
@@ -151,19 +152,17 @@ bool it_is = l1.isParallelTo( l2 );
 ```
 
 ## 3 - Segments
+<a name="segments"></a>
 
 A segment is implemented internally as a pair of points.
 Usage is straightforward:
-
-
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
 Segment s2; // default value
 std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
-auto pt
 ```
-
+You can get the pair of points (as an `std::pair`) with `get()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
 Segment s1( Point2d(100,100), Point2d(10,10) );
@@ -270,7 +269,7 @@ h.applyTo( v_pts );
 This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
 
-- Three constructors are provided:
+Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
 * one with **two** floating point arguments, that produces a translation matrix with the given values.
@@ -501,12 +500,15 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `clear()` to `init()` for matrices
   - added `getParallelLine()`
 
-- [next-release]:
+- [next-release]: (current master branch)
  - added 2 constructors to `Homogr`
  - added `isParallelTo()`
  - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
- - added `Segment` type
- - Licence will change to MIT
+ - added `Segment` type and associated
+ - Licence change to MPLv2
+
+- planned:
+ - segment intersection features
 
 
 ### Footnotes
