@@ -51,7 +51,7 @@ diff:
 
 # this target REQUIRES Opencv, no will attempt to build even when USE_OPENCV not given
 demo_opencv: misc/demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -I. -o demo_opencv misc/demo_opencv.cpp `pkg-config --libs opencv`
+	$(CXX) $(CFLAGS) -I. -o demo_opencv $< `pkg-config --libs opencv`
 
 clean:
 	-rm -r html/*

@@ -41,10 +41,21 @@ struct Data
 	Segment s1,s2;
 	int selected = -1;
 	Point2d pt_mouse;
+	double angle = 20.;
 	Data()
 	{
 		vpt.resize(4);
+		reset();
+
 	}
+	void reset()
+	{
+		vpt[0] = Point2d(100,200);
+		vpt[1] = Point2d(200,300);
+		vpt[2] = Point2d(150,50);
+		vpt[3] = Point2d(300,250);
+	}
+
 	void setMousePos(int x, int y)
 	{
 		pt_mouse.set(x,y);
@@ -52,6 +63,11 @@ struct Data
 	int nbPts() const
 	{
 		return (int)vpt.size();
+	}
+	void moveSelectedPoint()
+	{
+		if( selected != -1 )
+			vpt.at(selected) = pt_mouse;
 	}
 };
 
@@ -68,7 +84,7 @@ void clearImage()
 
 void drawLines( int selected )
 {
-	clearImage();
+//	clearImage();
 	for( int i=0; i<g_data.nbPts(); i++ )
 	{
 		if( selected == i )
@@ -76,7 +92,6 @@ void drawLines( int selected )
 		else
 			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
-std::cout << "DRAW POINTS DONE\n";
 	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
 	Line2d lB( g_data.vpt[0], g_data.vpt[3] );
 	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
@@ -96,7 +111,7 @@ std::cout << "DRAW POINTS DONE\n";
 void
 checkSelected( int event, int x, int y, std::function<void()> action, std::function<void()> actionM )
 {
-	clearImage();
+//	clearImage();
 	g_data.setMousePos(x,y);
 	action();
 //	cv::imshow( g_wndname, g_img );
@@ -126,6 +141,7 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 
 void action_1()
 {
+	clearImage();
 	drawLines( g_data.selected );
 
 /*	for( int i=0; i<g_data.nbPts(); i++ )
@@ -164,13 +180,13 @@ void action_1M()
 	l_mouse2.draw( g_img );
 }
 
-/// Mouse callback for demo1
+/// Mouse callback for demo_1
 void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 {
 	checkSelected( event, x, y, action_1, action_1M );
 }
 
-void demo1( int nd )
+void demo_1( int nd )
 {
 	std::cout << "Demo " << nd << ": click on points and move them\n";
 	cv::setMouseCallback( g_wndname, mouse_CB_1 );
@@ -189,7 +205,7 @@ void demo1( int nd )
 		std::exit(0);
 }
 //------------------------------------------------------------------
-void draw2()
+void draw_2()
 {
 	drawLines(-1);
 	cv::imshow( g_wndname, g_img );
@@ -204,7 +220,7 @@ void initPts()
 	g_data.vpt[3].set( a, b );
 }
 
-void demo2( int n )
+void demo_2( int n )
 {
 	std::cout << "Demo " << n << ": Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 	char key = 0;
@@ -218,7 +234,7 @@ void demo2( int n )
 	double trans_delta = 20;
 	double K = M_PI/180.;
 	initPts();
-	draw2();
+	draw_2();
 	while( key != 32 ) // SPC
 	{
 		bool change = true;
@@ -247,14 +263,14 @@ void demo2( int n )
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			initPts();
 			H.applyTo(g_data.vpt);
-			draw2();
+			draw_2();
 		}
 	}
 }
 //------------------------------------------------------------------
-void demo3( int n )
+void demo_3( int n )
 {
-	std::cout << "Demo " << n << ": ????????????\n";
+	std::cout << "Demo " << n << ": offset and drawing parameters demo (check code)n";
 
 	Line2d li;
 
@@ -293,7 +309,6 @@ void demo3( int n )
 //------------------------------------------------------------------
 void drawLine_4()
 {
-	clearImage();
 	for( size_t i=0; i<g_li.size(); i++ )
 		g_li[i].draw( g_img );
 }
@@ -301,6 +316,7 @@ void drawLine_4()
 /// Mouse callback for demo4
 void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/ )
 {
+	clearImage();
 	drawLine_4();
 
 	g_data.pt_mouse.set( x, y );
@@ -320,7 +336,7 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 	cv::imshow( g_wndname, g_img );
 }
 
-void demo4( int n )
+void demo_4( int n )
 {
 	std::cout << "Demo " << n << ": move circle over line, hit [lm] to change circle radius\n";
 
@@ -328,6 +344,7 @@ void demo4( int n )
 	g_li[1] = Point2d(200,0) * Point2d(200,200);
 	g_li[2] = Point2d(0,200) * Point2d(200,200);
 
+	clearImage();
 	drawLine_4();
 	cv::imshow( g_wndname, g_img );
 
@@ -358,6 +375,7 @@ void demo4( int n )
 //------------------------------------------------------------------
 void action_5()
 {
+	clearImage();
 	g_data.s1.set( g_data.vpt[0], g_data.vpt[1] );
 	g_data.s2.set( g_data.vpt[2], g_data.vpt[3] );
 
@@ -390,7 +408,7 @@ void mouse_CB_5( int event, int x, int y, int /* flags */, void* /*param*/ )
 }
 
 
-void demo5( int n )
+void demo_5( int n )
 {
 	std::cout << "Demo " << n << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
@@ -407,54 +425,79 @@ void demo5( int n )
 }
 
 //------------------------------------------------------------------
-void demo_line_homog(int n)
+void action_6()
 {
-	std::cout << "Demo " << n << ": apply homography to lines and segments\n";
 	clearImage();
-	Homogr H(20.*M_PI/180); // translation
-	Line2d l1( Point2d(10,30), Point2d(350,220) );
+	double K = M_PI / 180.;
+
+	Homogr H( g_data.angle * K );
 	H.transpose();
+	Line2d l1( g_data.vpt[0], g_data.vpt[1] );
 	Line2d l2 = H*l1;
+
 	l1.draw( g_img, CvDrawParams().setColor( 250,0,0) );
 	l2.draw( g_img, CvDrawParams().setColor( 0,250,0) );
 
-	Segment s1( Point2d(100,220), Point2d(50,70) );
+	Segment s1( g_data.vpt[2], g_data.vpt[3] );
 	Segment s2 = H*s1;
 	s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
 	s2.draw( g_img, CvDrawParams().setColor( 250,250,0) );
+	s1.get().first.draw( g_img, CvDrawParams().selectPoint() );
+	s1.get().second.draw( g_img, CvDrawParams().selectPoint() );
+}
 
+void action_6M()
+{
+	g_data.moveSelectedPoint();
+
+}
+/// Mouse callback for demo_6
+void mouse_CB_6( int event, int x, int y, int /* flags */, void* /*param*/ )
+{
+	checkSelected( event, x, y, action_6, action_6M );
+}
+
+void demo_6(int n)
+{
+	std::cout << "Demo " << n << ": apply homography to lines and segments\n Hit [lm] to change angle, "
+		<< "and select points of blue segment with mouse\n";
+
+	cv::setMouseCallback( g_wndname, mouse_CB_6 );
+
+	double angle_delta = 5.; // degrees
+
+	action_6();
 	cv::imshow( g_wndname, g_img );
 
 	char key=0;
 	while( key != 32 ) // SPC
 	{
+		bool d = false;
 		switch( key = cv::waitKey(0) )
 		{
-/*			case 'r': // reset
-				g_radius = 80;
-			break;
-			case 'l':
-				g_radius += 10;
-			break;
-			case 'm':
-				g_radius -= 10;
-			break;*/
+			case 'm': g_data.angle += angle_delta; d = true; break;
+			case 'l': g_data.angle -= angle_delta; d = true; break;
+
 			case 27: std::exit(0);
 			default: break;
 		}
-		cv::imshow( g_wndname, g_img );
+		if( d )
+		{
+			action_6();
+			cv::imshow( g_wndname, g_img );
+		}
 	}
 }
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
 	std::vector<std::function<void(int)>> v_demo{
-		demo_line_homog,
-		demo1,
-		demo2,
-		demo3,
-		demo4,
-		demo5
+		demo_6,
+		demo_1,
+		demo_2,
+		demo_3,
+		demo_4,
+		demo_5
 	};
 	cv::namedWindow( g_wndname );
 	g_img.create( g_height, g_width, CV_8UC3 );
