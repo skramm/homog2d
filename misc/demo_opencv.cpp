@@ -207,6 +207,7 @@ void demo_1( int nd )
 //------------------------------------------------------------------
 void draw_2()
 {
+	clearImage();
 	drawLines(-1);
 	cv::imshow( g_wndname, g_img );
 }
@@ -270,7 +271,7 @@ void demo_2( int n )
 //------------------------------------------------------------------
 void demo_3( int n )
 {
-	std::cout << "Demo " << n << ": offset and drawing parameters demo (check code)n";
+	std::cout << "Demo " << n << ": offset and drawing parameters demo (check code)\n";
 
 	Line2d li;
 
