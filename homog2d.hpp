@@ -805,21 +805,19 @@ class Root
 		{
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
-		bool isParallelTo( const Root<type::IsLine,FPT>& li ) const
+
+		template<typename T>
+		bool isParallelTo( const Root<T,FPT>& li ) const
 		{
-			return impl_isParallelTo( li, detail::RootHelper<LP>() );
+			return impl_isParallelTo( li, detail::RootHelper<T>() );
 		}
 		template<typename T>
 		bool isParallelTo( const Segment_<T>& seg ) const;
 
-		FPT getAngle( const Root<type::IsLine,FPT>& li ) const
+		template<typename T>
+		FPT getAngle( const Root<T,FPT>& other ) const
 		{
-			return impl_getAngle( li, detail::RootHelper<LP>() );
-		}
-		FPT getAngle( const Root<type::IsPoint,FPT>& ) const
-		{
-			static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
-			return 0.; // to avoid a warning
+			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
 		template<typename T>
 		FPT getAngle( const Segment_<T>& seg ) const;
@@ -850,6 +848,7 @@ class Root
 		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
 		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
@@ -900,6 +899,13 @@ class Root
 	{
 		return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
 	}
+	template<typename T>
+	bool isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius ) const
+	{
+		static_assert( std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, "Radius type needs to be arithmetic" );
+		return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
+	}
+
 
 //////////////////////////
 //       OPERATORS      //
@@ -949,6 +955,13 @@ class Root
 		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, FPT radius, const detail::RootHelper<type::IsLine>& ) const;
 
 		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+
+		template<typename T>
+		bool impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename T>
+		bool impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T radius, const detail::RootHelper<type::IsPoint>& ) const;
+
 		void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
 		Root<type::IsLine,FPT> impl_getOrthogonalLine( En_GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const;
@@ -1554,9 +1567,8 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute IsParallel using a point" );
-	return false;    // to avoid warning message on build
-
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot use IsParallel() with a point" );
+	return false;    // to avoid a warning message on build
 }
 
 //------------------------------------------------------------------
@@ -1575,6 +1587,14 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 	return std::acos( std::abs(res) );
 }
 
+template<typename LP, typename FPT>
+FPT
+Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
+	return 0.; // to avoid a warning
+}
+
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
@@ -1586,6 +1606,32 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const R
 	const auto& p00 = pair_pts.first;
 	const auto& p11 = pair_pts.second;
 	return detail::ptIsInside( *this, p00, p11 );
+}
+template<typename LP, typename FPT>
+bool
+Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideRectangle() with a line" );
+	return false; // to avoid a warning
+}
+
+template<typename LP, typename FPT>
+template<typename T>
+bool
+Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius, const detail::RootHelper<type::IsPoint>& ) const
+{
+	if( distTo( center ) <= radius )
+		return true;
+	return false;
+}
+
+template<typename LP, typename FPT>
+template<typename T>
+bool
+Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideCircle() with a line" );
+	return false; // to avoid a warning
 }
 
 //------------------------------------------------------------------
@@ -1599,7 +1645,7 @@ Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, FPT radius ) 
 
 //------------------------------------------------------------------
 /// Intersection of line and circle: implementation
-/// For computatuion details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
+/// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
 template<typename LP, typename FPT>
 typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsCircle(

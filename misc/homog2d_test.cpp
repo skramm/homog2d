@@ -196,6 +196,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 			Line2d l2b(Point2d(1.,0.), Point2d(1.02,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
+		//l1.isParallelTo( Point2d() ); // NO BUILD
 	}
 	SECTION( "Vertical line at x=0" )
 	{
@@ -565,6 +566,8 @@ TEST_CASE( "getAngle", "[test_angle]" )
 	CHECK( getAngle(lih,lid) == M_PI/4. );
 	CHECK( getAngle(liv,lid) == M_PI/4. );
 	CHECK( getAngle(lih,liv) == M_PI/2. );
+//	liv.getAngle( Point2d() );          // NO BUILD
+//	getAngle( liv, Point2d() );         // NO BUILD
 }
 
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
