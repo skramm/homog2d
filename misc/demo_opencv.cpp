@@ -80,9 +80,9 @@ void drawLines( int selected )
 	for( int i=0; i<g_data.nbPts(); i++ )
 	{
 		if( selected == i )
-			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
+			g_data.vpt[i].draw( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
 		else
-			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
+			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
 
 	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
@@ -90,10 +90,10 @@ void drawLines( int selected )
 	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
 	Line2d lD( g_data.vpt[1], g_data.vpt[3] );
 
-	lA.drawCvMat( g_img, CvDrawParams().setColor(   0,  50, 150) );
-	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
-	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
-	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
+	lA.draw( g_img, CvDrawParams().setColor(   0,  50, 150) );
+	lB.draw( g_img, CvDrawParams().setColor( 150,  50,   0) );
+	lC.draw( g_img, CvDrawParams().setColor(  50, 150,   0) );
+	lD.draw( g_img, CvDrawParams().setColor( 150,   0,  50) );
 }
 
 
@@ -140,9 +140,9 @@ void action_1()
 /*	for( int i=0; i<g_data.nbPts(); i++ )
 	{
 		if( g_data.selected == i )
-			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
+			g_data.vpt[i].draw( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
 		else
-			g_data.vpt[i].drawCvMat( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
+			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
 
 	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
@@ -150,27 +150,27 @@ void action_1()
 	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
 	Line2d lD( g_data.vpt[1], g_data.vpt[3] );
 
-	lA.drawCvMat( g_img, CvDrawParams().setColor(   0,  50, 150) );
-	lB.drawCvMat( g_img, CvDrawParams().setColor( 150,  50,   0) );
-	lC.drawCvMat( g_img, CvDrawParams().setColor(  50, 150,   0) );
-	lD.drawCvMat( g_img, CvDrawParams().setColor( 150,   0,  50) );
+	lA.draw( g_img, CvDrawParams().setColor(   0,  50, 150) );
+	lB.draw( g_img, CvDrawParams().setColor( 150,  50,   0) );
+	lC.draw( g_img, CvDrawParams().setColor(  50, 150,   0) );
+	lD.draw( g_img, CvDrawParams().setColor( 150,   0,  50) );
 */
 
 	Line2d l( g_data.vpt[0], g_data.vpt[2] );
 	Line2d la_V( l );
 	la_V.addOffset( OD_Vert, 60 );
-	la_V.drawCvMat( g_img, CvDrawParams().setColor(250,0,250) );
+	la_V.draw( g_img, CvDrawParams().setColor(250,0,250) );
 
 	l.addOffset( OD_Horiz, 60 );
-	l.drawCvMat( g_img, CvDrawParams().setColor(250,250,0) );
+	l.draw( g_img, CvDrawParams().setColor(250,250,0) );
 }
 
 void action_1M()
 {
 	Line2d l_mouse = g_data.pt_mouse * Point2d();
 	Line2d l_mouse2= l_mouse.getOrthogonalLine( GC_X, 100 );
-	l_mouse.drawCvMat( g_img );
-	l_mouse2.drawCvMat( g_img );
+	l_mouse.draw( g_img );
+	l_mouse2.draw( g_img );
 }
 
 /// Mouse callback for demo1
@@ -273,8 +273,8 @@ void demo3()
 	lH.addOffset( OD_Vert, 100.);
 
 	clearImage();
-	lV.drawCvMat( g_img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
-	lH.drawCvMat( g_img, CvDrawParams().setColor(  50, 50, 250).setThickness(2) );
+	lV.draw( g_img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
+	lH.draw( g_img, CvDrawParams().setColor(  50, 50, 250).setThickness(2) );
 
 	CvDrawParams dp;
 	dp.setColor( 0, 250, 0 );
@@ -282,19 +282,19 @@ void demo3()
 
 	li = lV;
 	li.addOffset( OD_Horiz, 50 );
-	li.drawCvMat( g_img ); // use default draw parameters
+	li.draw( g_img ); // use default draw parameters
 	li = lV;
 	li.addOffset( OD_Horiz, -50 );
-	li.drawCvMat( g_img, CvDrawParams().setColor( 100,250,0) );
+	li.draw( g_img, CvDrawParams().setColor( 100,250,0) );
 
 	CvDrawParams::resetDefault();
 
 	li = lH;
 	li.addOffset( OD_Vert, 50 );
-	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,0,250) );
+	li.draw( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 	li = lH;
 	li.addOffset( OD_Vert, -50 );
-	li.drawCvMat( g_img ); //, CvDrawParams().setColor( 100,0,250) );
+	li.draw( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 
 	cv::imshow( g_wndname, g_img );
 	cv::waitKey(0);
@@ -304,7 +304,7 @@ void drawLine_4()
 {
 	clearImage();
 	for( size_t i=0; i<g_li.size(); i++ )
-		g_li[i].drawCvMat( g_img );
+		g_li[i].draw( g_img );
 }
 
 /// Mouse callback for demo4
@@ -314,7 +314,7 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 
 	g_data.pt_mouse.set( x, y );
 	cv::circle( g_img, g_data.pt_mouse.getCvPtd(), g_radius, cv::Scalar(50,100,150) );
-	g_data.pt_mouse.drawCvMat( g_img, CvDrawParams().setColor(250,50,20) );
+	g_data.pt_mouse.draw( g_img, CvDrawParams().setColor(250,50,20) );
 
 	for( size_t i=0; i<g_li.size(); i++ )
 	{
@@ -322,8 +322,8 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 		if( ri() )
 		{
 			auto inter = ri.get();
-			inter.first.drawCvMat( g_img,  CvDrawParams().setColor(250, 0, 0) );
-			inter.second.drawCvMat( g_img, CvDrawParams().setColor(250, 0, 0) );
+			inter.first.draw( g_img,  CvDrawParams().setColor(250, 0, 0) );
+			inter.second.draw( g_img, CvDrawParams().setColor(250, 0, 0) );
 		}
 	}
 	cv::imshow( g_wndname, g_img );
@@ -370,10 +370,10 @@ void action_5()
 	g_data.s1.set( g_data.vpt[0], g_data.vpt[1] );
 	g_data.s2.set( g_data.vpt[2], g_data.vpt[3] );
 
-	g_data.s1.drawCvMat( g_img, CvDrawParams().setColor( 0,0,250).setThickness(2) );
-	g_data.s2.drawCvMat( g_img, CvDrawParams().setColor( 250,0,0).setThickness(2) );
-	g_data.s1.getLine().drawCvMat( g_img, CvDrawParams().setColor( 100,100,100) );
-	g_data.s2.getLine().drawCvMat( g_img, CvDrawParams().setColor( 100,100,100) );
+	g_data.s1.draw( g_img, CvDrawParams().setColor( 0,0,250).setThickness(2) );
+	g_data.s2.draw( g_img, CvDrawParams().setColor( 250,0,0).setThickness(2) );
+	g_data.s1.getLine().draw( g_img, CvDrawParams().setColor( 100,100,100) );
+	g_data.s2.getLine().draw( g_img, CvDrawParams().setColor( 100,100,100) );
 	draw( g_img, g_data.vpt );
 }
 
@@ -383,12 +383,12 @@ void action_5M()
 	if( inters() ) //&& g_data.selected != -1 )
 	{
 		auto pti = inters.get();
-		pti.drawCvMat( g_img );
+		pti.draw( g_img );
 		Line2d l1 = g_data.s1.getLine().getOrthogonalLine( GC_X,  pti.getX() );
-		l1.drawCvMat( g_img, CvDrawParams().setColor( 0,0,100) );
+		l1.draw( g_img, CvDrawParams().setColor( 0,0,100) );
 
 		Line2d l2 = g_data.s2.getLine().getOrthogonalLine( GC_X,  pti.getX() );
-		l2.drawCvMat( g_img, CvDrawParams().setColor( 100,0,0) );
+		l2.draw( g_img, CvDrawParams().setColor( 100,0,0) );
 	}
 }
 
@@ -423,13 +423,13 @@ void demo_line_homog()
 	Line2d l1( Point2d(10,30), Point2d(350,220) );
 	H.transpose();
 	Line2d l2 = H*l1;
-	l1.drawCvMat( g_img, CvDrawParams().setColor( 250,0,0) );
-	l2.drawCvMat( g_img, CvDrawParams().setColor( 0,250,0) );
+	l1.draw( g_img, CvDrawParams().setColor( 250,0,0) );
+	l2.draw( g_img, CvDrawParams().setColor( 0,250,0) );
 
 	Segment s1( Point2d(100,220), Point2d(50,70) );
 
 //	Segment s2 = H*s1;
-	s1.drawCvMat( g_img, CvDrawParams().setColor( 0,0,250) );
+	s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
 //	s2.draw( g_img, CvDrawParams().setColor( 250,250,0) );
 
 	cv::imshow( g_wndname, g_img );

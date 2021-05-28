@@ -318,8 +318,8 @@ You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++
 Point2d pt( ... );
 Line2d li( ... );
-li.drawCvMat( mat );
-pt.drawCvMat( mat );
+li.draw( mat );
+pt.draw( mat );
 ```
 
 Please note that for lines, this will draw a line spanning the whole image, as opposed to
@@ -329,7 +329,7 @@ For points, this will just draw a small cross: 2 H/V lines.
 These two functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.drawCvMat( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
+li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -340,8 +340,8 @@ and values will be retained, unless explicitely changed, as showed in the exampl
 CvDrawParams dp; // default line thickness is 1
 dp.setColor( 0,  0, 250).setThickness(3);
 dp.setDefault(); // default is now blue, with thickness=3
-line.drawCvMat( some_img ); // use default settings
-line.drawCvMat( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+line.draw( some_img ); // use default settings
+line.draw( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
@@ -457,6 +457,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [next-release]:
  - added 2 constructors to `Homogr`
  - added `isParallelTo()
+ - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
 
 
 
