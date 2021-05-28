@@ -53,6 +53,10 @@ See https://github.com/skramm/homog2d
 	if( c > 2 ) \
 		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
 
+
+#define HOMOG2D_CHECK_IS_NUMBER(T) \
+	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type must be numerical" )
+
 namespace homog2d {
 
 /// Holds the types needed for policy based design
@@ -176,24 +180,26 @@ class Hmatrix_
 		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
+/// Build homography and set it to a rotation matrix of angle \c val
 	template<typename T>
 	Hmatrix_( T val )
 	{
-		static_assert( std::is_floating_point<T>::value, "Homography constructor, type must be floating point" );
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
 		setRotation( val );
 	}
 
+/// Build homography and set it to a translation matrix ( see Hmatrix_( T ) )
 	template<typename T>
 	Hmatrix_( T tx, T ty )
 	{
-		static_assert( std::is_floating_point<T>::value, "Homography constructor, type must be floating point" );
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
 		setTranslation( tx, ty );
 	}
 
 	private:
-/// Implementation for matrices: Initialize to empty
+/// Implementation for matrices: initialize to empty
 	void impl_mat_init0( const detail::RootHelper<type::IsMatrix>& )
 	{
 		for( auto& li: _data )
@@ -224,6 +230,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
 			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
 		for( auto li: in )
@@ -235,6 +242,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_( const std::array<std::array<T,3>,3>& in )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		p_fillWith( in );
 	}
 
@@ -265,6 +273,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& addTranslation( T tx, T ty )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		Hmatrix_ out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
@@ -275,6 +284,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& setTranslation( T tx, T ty )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
 		_data[0][2] = tx;
 		_data[1][2] = ty;
@@ -285,6 +295,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& addRotation( T theta )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		Hmatrix_ out;
 		out.setRotation( theta );
 		*this = out * *this;
@@ -295,6 +306,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& setRotation( T theta )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
 		_data[0][0] = _data[1][1] = std::cos(theta);
 		_data[1][0] = std::sin(theta);
@@ -306,12 +318,14 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& addScale( T k )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		return this->addScale( k, k );
 	}
 /// Adds a scale factor to the matrix
 	template<typename T>
 	Hmatrix_& addScale( T kx, T ky )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
@@ -322,12 +336,14 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& setScale( T k )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		return setScale( k, k );
 	}
 /// Sets the matrix as a scaling transformation
 	template<typename T>
 	Hmatrix_& setScale( T kx, T ky )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
 		_data[0][0] = kx;
 		_data[1][1] = ky;
@@ -395,6 +411,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& operator / (T v)
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( std::abs(v) <= std::numeric_limits<double>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
@@ -724,6 +741,7 @@ class Root
 		template<typename T>
 		Root( const T& v1, const T& v2 )
 		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
 			impl_init_2( v1, v2, detail::RootHelper<LP>() );
 		}
 
@@ -769,6 +787,7 @@ class Root
 		void
 		addOffset( En_OffsetDir dir, T v )
 		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
 			impl_addOffset( dir, v, detail::RootHelper<LP>() );
 		}
 
@@ -1038,10 +1057,10 @@ class Segment_
 			}
 			SIntersect()
 			{}
-			SIntersect( const Root<type::IsPoint,FPT>& pti ) : _ptIntersect(pti)
+/*			explicit SIntersect( const Root<type::IsPoint,FPT>& pti ) : _ptIntersect(pti)
 			{
 				_doesIntersect = true;
-			}
+			}*/
 			Root<type::IsPoint,FPT>
 			get() const
 			{
@@ -1053,8 +1072,8 @@ class Segment_
 	};
 
 	public:
-/// Default constructor initializes to (0,0)--(1,1)
-		Segment_():_ptS2(1.,1.)
+/// Default constructor: initializes segment to (0,0)--(1,1)
+		Segment_(): _ptS2(1.,1.)
 		{}
 /// Contructor 2: build segment from two points
 		Segment_( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
@@ -1094,26 +1113,13 @@ class Segment_
 			f << seg._ptS1 << "-" << seg._ptS2;
 			return f;
 		}
-/// Returns the points.
+/// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 		get() const
 		{
-#if 1
 			return std::make_pair( _ptS1, _ptS2 );
-#else                                                 // not needed, because points are already stored ordered in constructor
-			if( _ptS1.getX() < _ptS2.getX() )
-				return std::make_pair( _ptS1, _ptS2 );
-			else
-				if( fabs( _ptS1.getX() - _ptS2.getX() ) < numeric_limits<FPT>::epsilon )
-				{
-					if( _ptS1.getY() <= _ptS2.getY() )
-						return std::make_pair( _ptS1, _ptS2 );
-					else
-						return std::make_pair( _ptS2, _ptS1 );
-				}
-#endif
 		}
 
 /// Returns supporting line
@@ -1134,6 +1140,7 @@ the one with smallest y-coordinate will be returned first */
 //------------------------------------------------------------------
 namespace detail {
 
+/// Helper function
 template<typename T>
 bool
 isBetween( T v, T v1, T v2 )
@@ -1179,7 +1186,6 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 
 //------------------------------------------------------------------
 /// Overload for points
-/// \todo now member function so we can use the object itself, but need to keep the second parameter so the compiler can select the correct overload
 template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsPoint,FPT>& r ) const
@@ -1372,7 +1378,7 @@ namespace detail
 	}
 }
 
-/// free function template, product of two lines
+/// Free function template, product of two lines
 template<typename FPT>
 Root<type::IsPoint,FPT>
 operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rhs )
@@ -1389,7 +1395,7 @@ operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rh
 	return pt;
 }
 
-/// free function template, product of two points
+/// Free function template, product of two points
 template<typename FPT>
 Root<type::IsLine,FPT>
 operator * ( const Root<type::IsPoint,FPT>& lhs, const Root<type::IsPoint,FPT>& rhs )

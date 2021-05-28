@@ -190,7 +190,6 @@ void demo1()
 	g_data.vpt[2].set( g_width/n,       g_height/2 );
 	g_data.vpt[3].set( g_width*(n-1)/n, g_height/2 );
 
-	g_img.create( g_height, g_width, CV_8UC3 );
 	action_1();
 	cv::imshow( g_wndname, g_img );
 
@@ -402,7 +401,8 @@ void mouse_CB_5( int event, int x, int y, int /* flags */, void* /*param*/ )
 
 void demo5()
 {
-	std::cout << "Demo 5: Segments\n";
+	std::cout << "Demo 5: intersection of segments\n Select a point and move it around. "
+		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
 
 	g_data.vpt[0] = Point2d(100,200);
 	g_data.vpt[1] = Point2d(200,300);
@@ -416,9 +416,49 @@ void demo5()
 }
 
 //------------------------------------------------------------------
+void demo_line_homog()
+{
+	clearImage();
+	Homogr H(20.*M_PI/180); // translation
+	Line2d l1( Point2d(10,30), Point2d(350,220) );
+	H.transpose();
+	Line2d l2 = H*l1;
+	l1.drawCvMat( g_img, CvDrawParams().setColor( 250,0,0) );
+	l2.drawCvMat( g_img, CvDrawParams().setColor( 0,250,0) );
+
+	Segment s1( Point2d(100,220), Point2d(50,70) );
+
+//	Segment s2 = H*s1;
+	s1.drawCvMat( g_img, CvDrawParams().setColor( 0,0,250) );
+//	s2.draw( g_img, CvDrawParams().setColor( 250,250,0) );
+
+	cv::imshow( g_wndname, g_img );
+
+	char key=0;
+	while( key != 32 ) // SPC
+	{
+		switch( key = cv::waitKey(0) )
+		{
+/*			case 'r': // reset
+				g_radius = 80;
+			break;
+			case 'l':
+				g_radius += 10;
+			break;
+			case 'm':
+				g_radius -= 10;
+			break;*/
+			case 27: std::exit(0);
+			default: break;
+		}
+		cv::imshow( g_wndname, g_img );
+	}
+}
+//------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
 	std::vector<std::function<void()>> v_demo{
+		demo_line_homog,
 		demo1,
 		demo2,
 		demo3,
@@ -426,6 +466,7 @@ int main( int argc, const char** argv )
 		demo5
 	};
 	cv::namedWindow( g_wndname );
+	g_img.create( g_height, g_width, CV_8UC3 );
 
 	if( argc > 1 )
 	{

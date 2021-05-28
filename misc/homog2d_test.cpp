@@ -682,15 +682,15 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{
-		Segment<double> s1( Point2d(0,0), Point2d(2,2) );
-		Segment<double> s2( Point2d(2,2), Point2d(0,0) );
+		Segment s1( Point2d(0,0), Point2d(2,2) );
+		Segment s2( Point2d(2,2), Point2d(0,0) );
 		CHECK( s1 == s2 );
 	}
 	{
-		Segment<double> s1( Point2d(0,0), Point2d(3,4) );
+		Segment s1( Point2d(0,0), Point2d(3,4) );
 		CHECK( s1.length() == 5 );
 
-		Segment<double> s2( Point2d(9,9), Point2d(8,8) );
+		Segment s2( Point2d(9,9), Point2d(8,8) );
 		auto pts = s2.get();
 		CHECK( pts.first  == Point2d(8,8) );
 		CHECK( pts.second == Point2d(9,9) );
@@ -699,8 +699,8 @@ TEST_CASE( "Segment", "[seg1]" )
 		CHECK( si() == false );
 	}
 	{
-		Segment<double> s1( Point2d(0,0), Point2d(2,2) );
-		Segment<double> s2( Point2d(2,0), Point2d(0,2) );
+		Segment s1( Point2d(0,0), Point2d(2,2) );
+		Segment s2( Point2d(2,0), Point2d(0,2) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
 		CHECK( si.get() == Point2d(1,1) );
