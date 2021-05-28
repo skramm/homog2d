@@ -126,6 +126,10 @@ class Root;
 template<typename LP,typename FPT>
 class Hmatrix_;
 
+// forward declaration
+template<typename FPT>
+class Segment_;
+
 
 namespace detail {
 
@@ -807,15 +811,20 @@ class Root
 		{
 			return impl_isParallelTo( li, detail::RootHelper<LP>() );
 		}
+		template<typename T>
+		bool isParallelTo( const Segment_<T>& seg ) const;
+
 		FPT getAngle( const Root<type::IsLine,FPT>& li ) const
 		{
 			return impl_getAngle( li, detail::RootHelper<LP>() );
 		}
-// TODO: how can I implement this build failure with a static assert ?
-/*		FPT getAngle( const Root<type::IsPoint,FPT>& ) const
+		FPT getAngle( const Root<type::IsPoint,FPT>& ) const
 		{
-			static_assert( std::false_type::value, "cannot get angle of a point" );
-		}*/
+			static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
+			return 0.; // to avoid a warning
+		}
+		template<typename T>
+		FPT getAngle( const Segment_<T>& seg ) const;
 
 	private:
 		FPT impl_getX( const detail::RootHelper<type::IsPoint>& /* dummy */ ) const
@@ -842,8 +851,9 @@ class Root
 		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
 		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
-		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
-		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		FPT impl_getCoord( En_GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsPoint,FPT> impl_getPoint( En_GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
@@ -1094,6 +1104,11 @@ class Segment_
 		{
 			return _ptS1.distTo( _ptS2 );
 		}
+		template<typename U>
+		FPT getAngle( const U& other ) const
+		{
+			return other.getAngle( this->getLine() );
+		}
 /// Comparison operator
 		bool operator == ( const Segment_& s2 ) const
 		{
@@ -1129,6 +1144,16 @@ the one with smallest y-coordinate will be returned first */
 		}
 		SIntersect intersects( const Segment_<FPT>& ) const;
 
+		template<typename T>
+		bool isParallelTo( const T& other ) const
+		{
+			static_assert(
+				std::is_same<T,Segment_<FPT>>::value ||
+				std::is_same<T,Root<type::IsLine,FPT>>::value,
+				"type needs to be a segment or a line" );
+			return getLine().isParallelTo( other );
+		}
+
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
 	{
@@ -1136,6 +1161,26 @@ the one with smallest y-coordinate will be returned first */
 	}
 #endif
 };
+
+//------------------------------------------------------------------
+/// Implementation of line::isParallelTo( Segment )
+template<typename LP,typename FPT>
+template<typename T>
+bool
+Root<LP,FPT>::isParallelTo( const Segment_<T>& seg ) const
+{
+	return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
+}
+
+/// Implementation of line::getAngle()
+template<typename LP,typename FPT>
+template<typename T>
+FPT
+Root<LP,FPT>::getAngle( const Segment_<T>& seg ) const
+{
+	return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
+}
+
 
 //------------------------------------------------------------------
 namespace detail {
@@ -1507,6 +1552,14 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelpe
 		return true;
 	return false;
 }
+template<typename LP, typename FPT>
+bool
+Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute IsParallel using a point" );
+	return false;    // to avoid warning message on build
+
+}
 
 //------------------------------------------------------------------
 /// Returns the angle (in Rad) between the line and another one.
@@ -1523,6 +1576,7 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
 	return std::acos( std::abs(res) );
 }
+
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)

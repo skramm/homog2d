@@ -17,7 +17,8 @@ Home page: https://github.com/skramm/homog2d
 
 All the code is in the namespace `homog2d`, so either add `using namespace homog2d`, either use it as a prefix on each type.
 
-This library provides 3 data types: `Line2d`, `Point2d` and  `Homogr`, this latter one implementing a planar (2D) transformation, implemented as a 3x3 matrix.
+This library provides several data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
+It is implemented as a homogeneous 3x3 matrix.
 
 ## 2 - Lines and points
 <a name="basic"></a>
@@ -143,7 +144,44 @@ auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 );
 ```
 
-## 3 - Homographies
+You can check if a line is parallel to another line:
+```C++
+Line2d l1,l2; // some lines
+bool it_is = l1.isParallelTo( l2 );
+```
+
+## 3 - Segments
+
+A segment is implemented internally as a pair of points.
+Usage is straightforward:
+
+
+```C++
+Segment s1( Point2d(12,34), Point2d(45,67) );
+Segment s2; // default value
+std::cout << s2;  // prints "(0,0) - (1,1)"
+s2.set( Point2d(12,34), Point2d(45,67) );
+auto pt
+```
+
+Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
+```C++
+Segment s1( Point2d(100,100), Point2d(10,10) );
+auto pair= s1.get();
+std::cout << pair.first; // will print (10,10)
+```
+
+Many operations available with lines can apply to segments too:
+```C++
+Segment s1( Point2d(12,34), Point2d(45,67) );
+Line2d l1 = s1.getLine();  // get supporting line
+bool b1 = l1.isParallelTo( s1 );
+bool b2 = s1.isParallelTo( l1 );  // also works
+auto a1 = l1.getAngle( s1 );
+auto a2 = s1.getAngle( l1 );
+```
+
+## 4 - Homographies
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography").
@@ -207,9 +245,21 @@ std::vector<std::vector<float>> m = {
 };
 Homogr F = m;
 ```
-
 You can also use `std::array` if needed.
 
+- You can compute the inverse and/or the transpose of the matrix:
+```C++
+h.inverse();
+h.transpose();
+h.inverse().transpose(); // first, invert, second, transpose
+```
+
+- Once you have set up your matrix, you can apply it to points (or lines), using the `*` operator:
+```C++
+Homogr F; // set up some transformation
+Point2d p1;
+Point2d p2 = H * p1;
+```
 
 - You can apply the homography to a set of points or lines:
 ```C++
@@ -219,14 +269,8 @@ h.applyTo( v_pts );
 ```
 This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
-- You can compute the inverse and/or the transpose of the matrix:
-```C++
-h.inverse();
-h.transpose();
-h.inverse().transpose(); // first, invert, second, transpose
-```
 
-Three constructors are provided:
+- Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
 * one with **two** floating point arguments, that produces a translation matrix with the given values.
@@ -237,7 +281,7 @@ Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
 
-## 4 - Computation of intersection points
+## 5 - Computation of intersection points
 <a name="inter"></a>
 
 ### Intersection of lines with flat rectangles
@@ -294,7 +338,7 @@ Again, the two points can be any of the four corners of the rectangle.
 This function will return for all points lying on edges of the rectangle.
 
 
-## 5 - Bindings with other libraries
+## 6 - Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -352,8 +396,10 @@ CvDrawParams::resetDefault();
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-## 6 - Numerical data types
+## 7 - Numerical data types
 <a name="numdt"></a>
+
+### Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -371,6 +417,7 @@ If you prefer the classical template notation, it is also available by using `Po
 Point2d_<float> pt; // this is fine
 ```
 
+### Numerical issues
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
 
@@ -385,7 +432,7 @@ Line2d::nullAngleValue() = 0.01;
 ```
 
 
-## 7 - Technical details
+## 8 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually the same class,
@@ -434,7 +481,7 @@ it is there just so that the compiler can select the correct overload
 
 The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
 
-## 8 - History
+## 9 - History
 <a name="history"></a>
 
 See [Release page](https://github.com/skramm/homog2d/releases).
@@ -456,9 +503,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - [next-release]:
  - added 2 constructors to `Homogr`
- - added `isParallelTo()
+ - added `isParallelTo()`
  - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
-
+ - added `Segment` type
+ - Licence will change to MIT
 
 
 ### Footnotes
