@@ -1721,6 +1721,17 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	return out;
 }
 
+/// Apply homography to a segment
+template<typename FPT1,typename FPT2>
+Segment_<FPT1>
+operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT1>& seg )
+{
+	const auto& pts = seg.get();
+	Root<type::IsPoint,FPT1> pt1 = h * pts.first;
+	Root<type::IsPoint,FPT1> pt2 = h * pts.second;
+	return Segment_<FPT1>( pt1, pt2 );
+
+}
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list (type T) of points or lines.
 template<typename W,typename FPT>

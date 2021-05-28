@@ -179,9 +179,9 @@ void mouse_CB_1( int event, int x, int y, int /* flags */, void* /*param*/ )
 	checkSelected( event, x, y, action_1, action_1M );
 }
 
-void demo1()
+void demo1( int nd )
 {
-	std::cout << "Demo 1: click on points and move them\n";
+	std::cout << "Demo " << nd << ": click on points and move them\n";
 	cv::setMouseCallback( g_wndname, mouse_CB_1 );
 
 	int n=5;
@@ -213,9 +213,9 @@ void initPts()
 	g_data.vpt[3].set( a, b );
 }
 
-void demo2()
+void demo2( int n )
 {
-	std::cout << "Demo 2: Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
+	std::cout << "Demo " << n << ": Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 	char key = 0;
 	Homogr H;
 	double angle = 0.;
@@ -261,9 +261,9 @@ void demo2()
 	}
 }
 //------------------------------------------------------------------
-void demo3()
+void demo3( int n )
 {
-	std::cout << "Demo 3:\n";
+	std::cout << "Demo " << n << ": ????????????\n";
 
 	Line2d li;
 
@@ -329,9 +329,9 @@ void mouse_CB_4( int /* event */, int x, int y, int /* flags */, void* /*param*/
 	cv::imshow( g_wndname, g_img );
 }
 
-void demo4()
+void demo4( int n )
 {
-	std::cout << "Demo 4: move circle over line, hit [lm] to change circle radius\n";
+	std::cout << "Demo " << n << ": move circle over line, hit [lm] to change circle radius\n";
 
 	g_li[0] = Point2d() * Point2d(200,100);
 	g_li[1] = Point2d(200,0) * Point2d(200,200);
@@ -399,9 +399,9 @@ void mouse_CB_5( int event, int x, int y, int /* flags */, void* /*param*/ )
 }
 
 
-void demo5()
+void demo5( int n )
 {
-	std::cout << "Demo 5: intersection of segments\n Select a point and move it around. "
+	std::cout << "Demo " << n << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
 
 	g_data.vpt[0] = Point2d(100,200);
@@ -416,8 +416,9 @@ void demo5()
 }
 
 //------------------------------------------------------------------
-void demo_line_homog()
+void demo_line_homog(int n)
 {
+	std::cout << "Demo " << n << ": apply homography to lines and segments\n";
 	clearImage();
 	Homogr H(20.*M_PI/180); // translation
 	Line2d l1( Point2d(10,30), Point2d(350,220) );
@@ -427,10 +428,9 @@ void demo_line_homog()
 	l2.draw( g_img, CvDrawParams().setColor( 0,250,0) );
 
 	Segment s1( Point2d(100,220), Point2d(50,70) );
-
-//	Segment s2 = H*s1;
+	Segment s2 = H*s1;
 	s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
-//	s2.draw( g_img, CvDrawParams().setColor( 250,250,0) );
+	s2.draw( g_img, CvDrawParams().setColor( 250,250,0) );
 
 	cv::imshow( g_wndname, g_img );
 
@@ -457,7 +457,7 @@ void demo_line_homog()
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
-	std::vector<std::function<void()>> v_demo{
+	std::vector<std::function<void(int)>> v_demo{
 		demo_line_homog,
 		demo1,
 		demo2,
@@ -473,7 +473,7 @@ int main( int argc, const char** argv )
 		int d = std::atoi( argv[1] );
 		assert( d>0 && d<=(int)v_demo.size() );
 		std:: cout << " - calling demo " << d << "\n";
-		v_demo[d-1]();
+		v_demo[d-1](d);
 		return 0;
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n"
@@ -482,7 +482,7 @@ int main( int argc, const char** argv )
 	{
 		cv::destroyAllWindows(); // to disable the mouse callback
 		cv::namedWindow( g_wndname );
-		v_demo[i]();
+		v_demo[i](i+1);
 	}
 	std::cout << "Demo end\n";
 }
