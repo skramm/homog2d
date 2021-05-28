@@ -21,7 +21,7 @@ A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
 When installed, run `make` (or `make test`).
 
 To install on your machine, copy `homog2d.hpp` somewhere, or `sudo make install`.
-This will copy in `/usr/local/include`.
+This will copy that file in `/usr/local/include`.
 
 Usage: see [manual](manual.md)
 

@@ -76,7 +76,6 @@ void drawLines( int selected )
 		else
 			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
-std::cout << "DRAW POINTS DONE\n";
 	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
 	Line2d lB( g_data.vpt[0], g_data.vpt[3] );
 	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
