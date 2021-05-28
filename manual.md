@@ -501,14 +501,14 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getParallelLine()`
 
 - [next-release]: (current master branch)
- - added 2 constructors to `Homogr`
- - added `isParallelTo()`
- - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
- - added `Segment` type and associated
- - Licence change to MPLv2
+  - added 2 constructors to `Homogr`
+  - added `isParallelTo()`
+  - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
+  - added `Segment` type and associated code
+  - Licence change to MPLv2
 
 - planned:
- - segment intersection features
+  - segment intersection features
 
 
 ### Footnotes

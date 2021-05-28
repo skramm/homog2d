@@ -72,11 +72,11 @@ void drawLines( int selected )
 	for( int i=0; i<g_data.nbPts(); i++ )
 	{
 		if( selected == i )
-			g_data.vpt[i].draw( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
+			g_data.vpt[i].draw( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i).selectPoint() );
 		else
 			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
 	}
-
+std::cout << "DRAW POINTS DONE\n";
 	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
 	Line2d lB( g_data.vpt[0], g_data.vpt[3] );
 	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
@@ -97,7 +97,6 @@ void
 checkSelected( int event, int x, int y, std::function<void()> action, std::function<void()> actionM )
 {
 	clearImage();
-	static int selected=-1;
 	g_data.setMousePos(x,y);
 	action();
 //	cv::imshow( g_wndname, g_img );
@@ -105,18 +104,18 @@ checkSelected( int event, int x, int y, std::function<void()> action, std::funct
 	switch( event )
 	{
 		case CV_EVENT_LBUTTONUP:
-			selected = -1;
+			g_data.selected = -1;
 		break;
 
 		case CV_EVENT_LBUTTONDOWN:
 			for( int i=0; i<g_data.nbPts(); i++ )
 				if( g_data.pt_mouse.distTo( g_data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					selected = i;
+					g_data.selected = i;
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
-			if( selected != -1 )
-				g_data.vpt[selected] = g_data.pt_mouse;
+			if( g_data.selected != -1 )
+				g_data.vpt[g_data.selected] = g_data.pt_mouse;
 			actionM();
 		break;
 

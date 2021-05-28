@@ -569,6 +569,7 @@ struct CvDrawParams
 		int        _lineType      = cv::LINE_AA; // or cv::LINE_8
 		int        _ptDelta       = 8; // pixels, used for drawing points
 		PointStyle _ptStyle       = PS_PLUS;
+		bool       _enhancePoint  = false;   // to draw selected points
 	};
 	Dp_values _dpValues;
 
@@ -612,6 +613,11 @@ struct CvDrawParams
 	CvDrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
 	{
 		_dpValues._color = cv::Scalar(b,g,r);
+		return *this;
+	}
+	CvDrawParams& selectPoint()
+	{
+		_dpValues._enhancePoint = true;
 		return *this;
 	}
 };
@@ -1901,15 +1907,15 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 	}
 	if( !drawDiag )
 	{
-		cv::line( mat, vpt[0], vpt[1], dp._dpValues._color );
-		cv::line( mat, vpt[2], vpt[3], dp._dpValues._color );
+		cv::line( mat, vpt[0], vpt[1], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[2], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
 	}
 	else // draw 4 diagonal lines
 	{
-		cv::line( mat, vpt[0], vpt[2], dp._dpValues._color );
-		cv::line( mat, vpt[2], vpt[1], dp._dpValues._color );
-		cv::line( mat, vpt[1], vpt[3], dp._dpValues._color );
-		cv::line( mat, vpt[0], vpt[3], dp._dpValues._color );
+		cv::line( mat, vpt[0], vpt[2], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[2], vpt[1], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[1], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[0], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
 	}
 }
 } // namespace detail
