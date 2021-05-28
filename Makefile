@@ -20,6 +20,11 @@ test: homog2d_test demo_check
 cov:
 	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
 
+check:
+	cppcheck . --enable=all --std=c++11 2>cppcheck.log
+	xdg-open cppcheck.log
+
+
 demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
