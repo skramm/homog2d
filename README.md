@@ -3,7 +3,7 @@
 Current test status:
 [![Build Status](https://travis-ci.com/skramm/homog2d.svg?branch=master)](https://travis-ci.com/skramm/homog2d)
 
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![License: LGPL v3](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 
 A small single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D transformations),
