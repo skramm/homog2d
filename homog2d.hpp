@@ -153,7 +153,7 @@ To return to unit transformation, use init()
 
 Implemented as a 3x3 matrix
 
-Templated by Floating-Point Type (FPT) and by type M (IsMatrix or IsHomogr)
+Templated by Floating-Point Type (FPT) and by type M (type::IsMatrix or type::IsHomogr)
  */
 template<typename M,typename FPT>
 class Hmatrix_
@@ -701,6 +701,8 @@ class Root
 
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
 		{
+			if( v1.isParallelTo(v2) )
+				std::runtime_error( "unable to build point from these two lines, are parallel" );
 			*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 		}
 
@@ -908,7 +910,8 @@ class Root
 	};
 
 	Intersect intersectsRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const;
-	Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, FPT radius ) const;
+	template<typename T>
+	Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const;
 
 	bool isInsideRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
 	{
@@ -945,6 +948,8 @@ class Root
 #endif
 
 	static double& nullAngleValue() { return _zeroAngleValue; }
+	static double& nullDeterValue() { return _zeroDeterminantValue; }
+	static double& nullDistance()   { return _zeroDistance; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -953,7 +958,9 @@ class Root
 	private:
 		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-		static double _zeroAngleValue; /// Used in isParallel();
+		static double _zeroAngleValue;       /// Used in isParallel();
+		static double _zeroDeterminantValue; /// Used in matrix inversion
+		static double _zeroDistance;         /// Used to define points as identical
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -966,8 +973,13 @@ class Root
 		Root<LP,FPT>::Intersect
 		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const;
 
+		template<typename T>
 		Root<LP,FPT>::Intersect
-		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, FPT radius, const detail::RootHelper<type::IsLine>& ) const;
+		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename T>
+		Root<LP,FPT>::Intersect
+		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
+
 
 		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -1018,9 +1030,17 @@ class Root
 };
 
 
-/// Used in isParallel()
+/// Instanciation of static variable
 template<typename LP,typename FPT>
 double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
+
+/// Instanciation of static variable
+template<typename LP,typename FPT>
+double Root<LP,FPT>::_zeroDeterminantValue = 1E-20;
+
+/// Instanciation of static variable
+template<typename LP,typename FPT>
+double Root<LP,FPT>::_zeroDistance = 1E-15;
 
 
 //------------------------------------------------------------------
@@ -1652,25 +1672,40 @@ Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>& center, T radi
 //------------------------------------------------------------------
 /// Intersection of line and circle
 template<typename LP, typename FPT>
+template<typename T>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, FPT radius ) const
+Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius ) const
 {
 	return impl_intersectsCircle( pt, radius, detail::RootHelper<type::IsLine>() );
 }
 
 //------------------------------------------------------------------
-/// Intersection of line and circle: implementation
-/// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
+/// Intersection of line and circle: implementation for points
 template<typename LP, typename FPT>
+template<typename T>
 typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsCircle(
 	const Root<type::IsPoint,FPT>& pt,       ///< circle origin
-	FPT                            r,        ///< radius
+	T                              r,        ///< radius
+	const detail::RootHelper<type::IsPoint>&  ///< dummy arg
+) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
+}
+//------------------------------------------------------------------
+/// Intersection of line and circle: implementation
+/// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
+template<typename LP, typename FPT>
+template<typename T>
+typename Root<LP,FPT>::Intersect
+Root<LP,FPT>::impl_intersectsCircle(
+	const Root<type::IsPoint,FPT>& pt,       ///< circle origin
+	T                              r,        ///< radius
 	const detail::RootHelper<type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
 	Intersect out;
-
+	HOMOG2D_CHECK_IS_NUMBER(T);
 	const FPT& a = _v[0]; // just to lighten a bit...
 	const FPT& b = _v[1];
 	const FPT& c = _v[2];
@@ -1889,7 +1924,7 @@ void
 Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
 	if( type != CV_64F && type != CV_32F )
-		throw std::runtime_error( "invalid matrix type" );
+		throw std::runtime_error( "invalid OpenCv matrix type" );
 	mat.create( 3, 3, type ); // default:CV_64F
 	size_t i=0;
 	switch( type )
@@ -2009,7 +2044,7 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 			detail::drawPt( mat, PS_PLUS,  vpt, dp, true );
 		break;
 
-		case PS_TIMES:      ///< "times" symbol
+		case PS_TIMES:      // "times" symbol
 			detail::drawPt( mat, PS_TIMES, vpt, dp );
 		break;
 

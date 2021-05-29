@@ -53,7 +53,7 @@ LOOKUP_CACHE_SIZE      = 0
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_PACKAGE        = NO
-EXTRACT_STATIC         = NO
+EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = YES
 EXTRACT_LOCAL_METHODS  = NO
 EXTRACT_ANON_NSPACES   = NO
@@ -261,7 +261,7 @@ PERLMOD_MAKEVAR_PREFIX =
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
 #---------------------------------------------------------------------------
-ENABLE_PREPROCESSING   = YES
+ENABLE_PREPROCESSING   = NO
 MACRO_EXPANSION        = NO
 EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
