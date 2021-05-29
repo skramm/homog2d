@@ -357,6 +357,15 @@ cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
 cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
 ```
 
+This is also available as free functions:
+```C++
+Point2d pt;
+...
+cv::Point2d ptcv1 = getCvPtd(pt); // integer coordinates (with rounding)
+cv::Point2f ptcv2 = getCvPtf(pt); // floating-point coordinates
+```
+
+
 This also enable conversions between matrices types.
 You can build it using a provided cv::Mat:
 ```C++

@@ -1045,6 +1045,24 @@ double Root<LP,FPT>::_zeroDeterminantValue = 1E-20;
 template<typename LP,typename FPT>
 double Root<LP,FPT>::_zeroDistance = 1E-15;
 
+#ifdef HOMOG2D_USE_OPENCV
+/// Free function to return an OpenCv integer point
+template<typename FPT>
+cv::Point2d
+getCvPtd( const Root<type::IsPoint,FPT>& pt )
+{
+	return pt.getCvPtd();
+}
+
+/// Free function to return an OpenCv floating-point point
+template<typename FPT>
+cv::Point2f
+getCvPtf( const Root<type::IsPoint,FPT>& pt )
+{
+	return pt.getCvPtf();
+}
+#endif
+
 
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
@@ -1973,8 +1991,9 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
 		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
-
+#endif
 	auto type = mat.type();
+#ifdef HOMOG2D_SAFE_MODE
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
 #endif

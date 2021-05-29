@@ -716,22 +716,6 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
 	cv::Mat mat_32 = cv::Mat::eye(3, 3, CV_32F);
-#if 0
-	SECTION( "getFrom()" )
-	{
-		cv::Mat mat(3,4, CV_32F );
-		Homogr H, H2;
-		CHECK_THROWS( H.getFrom( mat ) ); // invalid size
-		mat.create( 3,3, CV_8U );
-		CHECK_THROWS( H.getFrom( mat ) ); // invalid type
-
-		CHECK_NOTHROW( H.getFrom( mat_64 ) );
-		CHECK( H == H2 );
-
-		CHECK_NOTHROW( H.getFrom( mat_32 ) );
-		CHECK( H == H2 );
-	}
-#else
 	SECTION( "assignement operator()" )
 	{
 		cv::Mat cvmat = cv::Mat::ones(3,3, CV_32F );
@@ -761,7 +745,6 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( H.get(1,0) == 0.);
 		CHECK( H.get(0,1) == 0.);
 	}
-#endif
 	SECTION( "default copyTo()" )
 	{
 		Homogr H;
@@ -801,6 +784,22 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		) );
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_32F );
+	}
+	SECTION( "Copy to OpenCv points" )
+	{
+		Point2d pt(1.,2.);
+		cv::Point2d cvpt1 = getCvPtd( Point2d(1,1) ) ;
+		CHECK( cvpt1.x == 1. && cvpt1.y == 2. );
+		cv::Point2f cvpt2 = getCvPtf( Point2d(1,1) ) ;
+		CHECK( cvpt2.x == 1. && cvpt2.y == 2. );
+		cv::Point2d cvpt3 = pt.getCvPtd() ;
+		CHECK( cvpt3.x == 1. && cvpt3.y == 2. );
+		cv::Point2f cvpt4 = pt.getCvPtf() ;
+		CHECK( cvpt4.x == 1. && cvpt4.y == 2. );
+	}
+	SECTION( "Fetch from OpenCv points" )
+	{
+
 	}
 }
 #endif
