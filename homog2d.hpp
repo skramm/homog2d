@@ -686,16 +686,18 @@ class Root
 	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
 
-	private:
+/*	private:
 		Root( double a, double b, double c )
 		{
 			_v[0] = a;
 			_v[1] = b;
 			_v[2] = c;
-		}
+		}*/
 
 	public:
 
+
+/// Constructor: build a point from two lines
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
 		{
 #ifdef HOMOG2D_SAFE_MODE
@@ -705,6 +707,7 @@ class Root
 			*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 		}
 
+/// Constructor: build a line from two points
 		Root( const Root<type::IsPoint,FPT>& v1, const Root<type::IsPoint,FPT>& v2 )
 		{
 #ifdef HOMOG2D_SAFE_MODE
@@ -715,23 +718,32 @@ class Root
 			p_normalizeLine();
 		}
 
-		/// Constructor with single arg of type "Line"
-		/**
-		This will call one of the two overloads of \c impl_init_1_Line(), depending on type of object
-		*/
-		/// Build a line passing through (0,0) and \c pt
+/// Constructor: build a line passing through (0,0) and \c pt
+/** This will call one of the two overloads of \c impl_init_1_Line(), depending on type of object */
 		Root( const Root<type::IsLine,FPT>& li )
 		{
 			impl_init_1_Line( li, detail::RootHelper<LP>() );
 		}
 
-		/// Constructor with single arg of type "Point"
-		/**
-		This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object
-		*/
+/// Constructor with single arg of type "Point"
+/** This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object */
 		Root( const Root<type::IsPoint,FPT>& pt )
 		{
 			impl_init_1_Point( pt, detail::RootHelper<LP>() );
+		}
+
+/// Constructor: build from two numerical values, depends on the type
+		template<typename T>
+		Root( const T& v1, const T& v2 )
+		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
+			impl_init_2( v1, v2, detail::RootHelper<LP>() );
+		}
+
+/// Default constructor, depends on the type
+		Root()
+		{
+			impl_init( detail::RootHelper<LP>() );
 		}
 
 	private:
@@ -740,7 +752,7 @@ class Root
 		{
 			*this = pt;
 		}
-		/// Arg is a point, object is a line:we build the line passing though (0,0) ant the given point
+		/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
 		void impl_init_1_Point( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsLine>&  )
 		{
 			*this = detail::crossProduct<type::IsLine>( pt, Root<type::IsPoint,FPT>() );
@@ -755,23 +767,10 @@ class Root
 		/// Arg is a line, object is a line => copy constructor
 		void impl_init_1_Line( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsLine>&  )
 		{
-	//		std::cout << __FUNCTION__ << "(): ll\n";
 			*this = li;
 		}
 
 	public:
-		template<typename T>
-		Root( const T& v1, const T& v2 )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			impl_init_2( v1, v2, detail::RootHelper<LP>() );
-		}
-
-		Root()
-		{
-			impl_init( detail::RootHelper<LP>() );
-		}
-
 		FPT
 		getCoord( En_GivenCoord gc, FPT other ) const
 		{
@@ -912,42 +911,57 @@ class Root
 			bool _doesIntersect = false;
 	};
 
-	Intersect intersectsRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const;
-	template<typename T>
-	Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const;
+	public:
+		Intersect intersectsRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const;
+		template<typename T>
+		Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const;
 
-	bool isInsideRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
-	{
-		return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
-	}
-	template<typename T>
-	bool isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius ) const
-	{
-		static_assert( std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, "Radius type needs to be arithmetic" );
-		return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
-	}
-
+		bool isInsideRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
+		{
+			return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
+		}
+		template<typename T>
+		bool isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius ) const
+		{
+			static_assert( std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, "Radius type needs to be arithmetic" );
+			return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
+		}
 
 //////////////////////////
 //       OPERATORS      //
 //////////////////////////
-	bool operator == ( const Root<LP,FPT>& other ) const
-	{
-		return impl_op_equal( other, detail::RootHelper<LP>() );
-	}
-	bool operator != ( const Root<LP,FPT>& other ) const
-	{
-		return !(*this == other);
-	}
+		bool operator == ( const Root<LP,FPT>& other ) const
+		{
+			return impl_op_equal( other, detail::RootHelper<LP>() );
+		}
+		bool operator != ( const Root<LP,FPT>& other ) const
+		{
+			return !(*this == other);
+		}
 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-	bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
-	{
-		return impl_draw( mat, dp, detail::RootHelper<LP>() );
-	}
-	cv::Point2d getCvPtd() const { return impl_getCvPtd( detail::RootHelper<LP>() ); }
-	cv::Point2f getCvPtf() const { return impl_getCvPtf( detail::RootHelper<LP>() ); }
+
+/// Constructor: build line from two OpenCv points
+/*		template<typename T>
+		Root( const cv::Point2d& p1, const cv::Point2d& p2 )
+		{
+			impl_init_2( v1, v2, detail::RootHelper<LP>() );
+		}*/
+
+		bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+		{
+			return impl_draw( mat, dp, detail::RootHelper<LP>() );
+		}
+		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
+		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
+		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
+
+		template<typename T>
+		Root( cv::Point_<T> pt )
+		{
+			impl_init_opencv( pt, detail::RootHelper<LP>() );
+		}
 #endif
 
 	static double& nullAngleValue() { return _zeroAngleValue; }
@@ -970,6 +984,7 @@ class Root
 //////////////////////////
 	private:
 		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
+
 
 		Root<LP,FPT>::Intersect
 		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const;
@@ -1006,8 +1021,20 @@ class Root
 		Root<type::IsLine,FPT>  impl_op_product( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-		cv::Point2f impl_getCvPtf( const detail::RootHelper<type::IsPoint>& ) const;
-		cv::Point2d impl_getCvPtd( const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename OPENCVT>
+		OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
+
+		template<typename T>
+		void impl_init_opencv( T pt, const detail::RootHelper<type::IsPoint>& )
+		{
+			impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
+		}
+		template<typename T>
+		void impl_init_opencv( T pt, const detail::RootHelper<type::IsLine>& )
+		{
+			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
+		}
+
 		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsLine>& )  const;
 #endif
@@ -1046,20 +1073,26 @@ template<typename LP,typename FPT>
 double Root<LP,FPT>::_zeroDistance = 1E-15;
 
 #ifdef HOMOG2D_USE_OPENCV
-/// Free function to return an OpenCv integer point
+/// Free function to return an OpenCv point
 template<typename FPT>
 cv::Point2d
 getCvPtd( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPtd();
 }
-
-/// Free function to return an OpenCv floating-point point
+/// Free function to return an OpenCv point
 template<typename FPT>
 cv::Point2f
 getCvPtf( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPtf();
+}
+/// Free function to return an OpenCv point
+template<typename FPT>
+cv::Point2i
+getCvPti( const Root<type::IsPoint,FPT>& pt )
+{
+	return pt.getCvPti();
 }
 #endif
 
@@ -1931,24 +1964,15 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
-/// Return floating-point coordinates Opencv 2D point (with rounding)
+/// Return Opencv 2D point
 template<typename LP, typename FPT>
-cv::Point2d
-Root<LP,FPT>::impl_getCvPtd( const detail::RootHelper<type::IsPoint>& ) const
+template<typename OPENCVT>
+OPENCVT
+Root<LP,FPT>::impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const
 {
-	return cv::Point2d(
-		static_cast<int>(std::round(getX())),
-		static_cast<int>(std::round(getY()))
-	);
+	return OPENCVT( getX(),getY() );
 }
 
-/// Return integer coordinates Opencv 2D point
-template<typename LP, typename FPT>
-cv::Point2f
-Root<LP,FPT>::impl_getCvPtf( const detail::RootHelper<type::IsPoint>& ) const
-{
-	return cv::Point2f( getX(),getY() );
-}
 
 //------------------------------------------------------------------
 /// Copy matrix to Opencv \c cv::Mat

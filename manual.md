@@ -353,17 +353,28 @@ You can then write this:
 ```C++
 Point2d pt;
 ...
-cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
-cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
+cv::Point2d ptcv1 = pt.getCvPtd(); // double coordinates
+cv::Point2f ptcv2 = pt.getCvPtf(); // float coordinates
+cv::Point2f ptcv3 = pt.getCvPti(); // integer coordinates
 ```
 
 This is also available as free functions:
 ```C++
 Point2d pt;
 ...
-cv::Point2d ptcv1 = getCvPtd(pt); // integer coordinates (with rounding)
-cv::Point2f ptcv2 = getCvPtf(pt); // floating-point coordinates
+cv::Point2d ptcv1 = getCvPtd(pt);
+cv::Point2f ptcv2 = getCvPtf(pt);
+cv::Point2f ptcv3 = getCvPti(pt);
 ```
+
+Reverse operation as simple as this:
+```C++
+
+cv::Point2d ptcv(4,5);
+Point2d pt1(ptcv);      // using constructor
+Point2d pt2 = ptcv;     // or assignment operator
+```
+(works the same for `cv::Point2f` and `cv::Point2i`)
 
 
 This also enable conversions between matrices types.

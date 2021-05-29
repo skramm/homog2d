@@ -788,19 +788,50 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 	SECTION( "Copy to OpenCv points" )
 	{
 		Point2d pt(1.,2.);
-		cv::Point2d cvpt1 = getCvPtd( Point2d(1,1) ) ;
-		CHECK( cvpt1.x == 1. && cvpt1.y == 2. );
-		cv::Point2f cvpt2 = getCvPtf( Point2d(1,1) ) ;
-		CHECK( cvpt2.x == 1. && cvpt2.y == 2. );
-		cv::Point2d cvpt3 = pt.getCvPtd() ;
-		CHECK( cvpt3.x == 1. && cvpt3.y == 2. );
-		cv::Point2f cvpt4 = pt.getCvPtf() ;
-		CHECK( cvpt4.x == 1. && cvpt4.y == 2. );
+		{
+			cv::Point2d cvpt1 = getCvPtd( pt );
+			CHECK( (cvpt1.x == 1. && cvpt1.y == 2.) );
+			cv::Point2f cvpt2 = getCvPtf( pt );
+			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
+			cv::Point2i cvpt3 = getCvPti( pt );           // integer point
+			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
+		}
+		{
+			cv::Point2d cvpt1 = pt.getCvPtd() ;
+			CHECK( (cvpt1.x == 1. && cvpt1.y == 2.) );
+			cv::Point2f cvpt2 = pt.getCvPtf() ;
+			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
+			cv::Point2i cvpt3 = pt.getCvPti() ;          // integer point
+			CHECK( (cvpt3.x == 1  && cvpt3.y == 2 ) );
+		}
 	}
 	SECTION( "Fetch from OpenCv points" )
 	{
-
+		cv::Point2d ptd(1,2);
+		cv::Point2f ptf(1,2);
+		cv::Point2f pti(1,2);
+		{                            // test of constructor
+			Point2d p1(ptd);
+			CHECK(( p1.getX() == 1. && p1.getY() == 2. ));
+			Point2d p2(ptf);
+			CHECK(( p2.getX() == 1. && p2.getY() == 2. ));
+			Point2d p3(pti);
+			CHECK(( p3.getX() == 1. && p3.getY() == 2. ));
+		}
+		{                            // test of assignment operator
+			Point2d p1 = ptd;
+			CHECK(( p1.getX() == 1 && p1.getY() == 2. ));
+			Point2d p2 = ptf;
+			CHECK(( p2.getX() == 1 && p2.getY() == 2. ));
+			Point2d p3 = pti;
+			CHECK(( p3.getX() == 1 && p3.getY() == 2. ));
+		}
 	}
+	SECTION( "Build line using OpenCv points" )
+	{
+//		Line2d l( cv::Point2d(100,200), cv::Point2d(10,20) );
+	}
+
 }
 #endif
 
