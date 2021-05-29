@@ -217,7 +217,7 @@ class Hmatrix_
 	}
 	public:
 
-/// Constructor, used to fill with another "vector of vector" matrix (or std::array)
+/// Constructor, used to fill with a vector of vectors matrix
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
 - no checking is done on validity of matrix as an homography.
@@ -235,6 +235,8 @@ Thus some assert can get triggered elsewhere.
 
 		p_fillWith( in );
 	}
+
+/// Constructor, used to fill with a std::array
 	template<typename T>
 	Hmatrix_( const std::array<std::array<T,3>,3>& in )
 	{
@@ -242,10 +244,19 @@ Thus some assert can get triggered elsewhere.
 		p_fillWith( in );
 	}
 
+#ifdef HOMOG2D_USE_OPENCV
+/// Constructor used to initialise with a cv::Mat, call the assignment operator
+	Hmatrix_( const cv::Mat& mat )
+	{
+		*this = mat;
+	}
+
+#endif
+
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
-	void setValue(
+	void set(
 		size_t r, ///< row
 		size_t c, ///< col
 		T      v  ///< value
@@ -258,7 +269,7 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = false;
 	}
 /// Getter
-	FPT getValue( size_t r, size_t c ) const
+	FPT get( size_t r, size_t c ) const
 	{
 		#ifdef HOMOG2D_SAFE_MODE
 			HOMOG2D_CHECK_ROW_COL;
@@ -352,8 +363,12 @@ Thus some assert can get triggered elsewhere.
 	applyTo( T& ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-	void getFrom( const cv::Mat& ) const;
 	void copyTo( cv::Mat&, int type=CV_64F ) const;
+#if 0
+	void getFrom( const cv::Mat& ) const;
+#else
+	Hmatrix_& operator = ( const cv::Mat& );
+#endif
 #endif
 
 /// Normalisation
@@ -511,17 +526,17 @@ See https://en.wikipedia.org/wiki/Determinant
 	{
 		Hmatrix_ out;
 
-		out.setValue( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
-		out.setValue( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
-		out.setValue( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
+		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
+		out.set( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
+		out.set( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
 
-		out.setValue( 1, 0, -p_det2x2( {1,0, 1,2, 2,0, 2,2} ) );
-		out.setValue( 1, 1,  p_det2x2( {0,0, 0,2, 2,0, 2,2} ) );
-		out.setValue( 1, 2, -p_det2x2( {0,0, 0,2, 1,0, 1,2} ) );
+		out.set( 1, 0, -p_det2x2( {1,0, 1,2, 2,0, 2,2} ) );
+		out.set( 1, 1,  p_det2x2( {0,0, 0,2, 2,0, 2,2} ) );
+		out.set( 1, 2, -p_det2x2( {0,0, 0,2, 1,0, 1,2} ) );
 
-		out.setValue( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
-		out.setValue( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
-		out.setValue( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
+		out.set( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
+		out.set( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
+		out.set( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
 
 		return out;
 	}
@@ -1893,8 +1908,8 @@ Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 //------------------------------------------------------------------
 /// Get homography from Opencv \c cv::Mat
 template<typename W,typename FPT>
-void
-Hmatrix_<W,FPT>::getFrom( const cv::Mat& mat ) const
+Hmatrix_<W,FPT>&
+Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 {
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
@@ -1918,6 +1933,7 @@ Hmatrix_<W,FPT>::getFrom( const cv::Mat& mat ) const
 			break;
 		default: assert(0);
 	}
+	return *this;
 }
 
 //------------------------------------------------------------------

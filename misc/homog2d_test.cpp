@@ -324,8 +324,8 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 	}
 	{
 		Homogr H0( 4. , 7. );
-		CHECK( H0.getValue( 0, 2 ) == 4. );
-		CHECK( H0.getValue( 1, 2 ) == 7. );
+		CHECK( H0.get( 0, 2 ) == 4. );
+		CHECK( H0.get( 1, 2 ) == 7. );
 	}
 }
 
@@ -716,6 +716,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
 	cv::Mat mat_32 = cv::Mat::eye(3, 3, CV_32F);
+#if 0
 	SECTION( "getFrom()" )
 	{
 		cv::Mat mat(3,4, CV_32F );
@@ -730,6 +731,37 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK_NOTHROW( H.getFrom( mat_32 ) );
 		CHECK( H == H2 );
 	}
+#else
+	SECTION( "assignement operator()" )
+	{
+		cv::Mat cvmat = cv::Mat::ones(3,3, CV_32F );
+		Homogr H;
+		H = cvmat;
+		CHECK( H.get(0,0) == 1.);
+		CHECK( H.get(1,1) == 1.);
+		CHECK( H.get(1,0) == 1.);
+		CHECK( H.get(0,1) == 1.);
+
+		cv::Mat cvmat2 = cv::Mat::ones(3,3, CV_32F );
+		Homogr H2 = cvmat;
+		CHECK( H2.get(0,0) == 1.);
+		CHECK( H2.get(1,1) == 1.);
+		CHECK( H2.get(1,0) == 1.);
+		CHECK( H2.get(0,1) == 1.);
+
+		H = mat_64;
+		CHECK( H.get(0,0) == 1.);
+		CHECK( H.get(1,1) == 1.);
+		CHECK( H.get(1,0) == 0.);
+		CHECK( H.get(0,1) == 0.);
+
+		H = mat_32;
+		CHECK( H.get(0,0) == 1.);
+		CHECK( H.get(1,1) == 1.);
+		CHECK( H.get(1,0) == 0.);
+		CHECK( H.get(0,1) == 0.);
+	}
+#endif
 	SECTION( "default copyTo()" )
 	{
 		Homogr H;

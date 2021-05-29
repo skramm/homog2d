@@ -191,7 +191,7 @@ The second form adds the requested transformation to the matrix.
 
 - First example:
 ```C++
-Homogr h; // unit transformation
+Homogr h; // unit transformation ("eye" matrix)
 h.setTranslation(3,4);
 Point2d pt1(1,2);
 Point2d pt2 = h * pt1; // pt2 is now (4,6)
@@ -231,8 +231,8 @@ h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
 - You can access individual values of the matrix (read or write).
 This is needed if you want to set up some specific transformation (shearing, perspective, whatever):
 ```C++
-h.setValue( 0, 0, 3.14 );  // sets value at first line, first col
-auto v = h.getValue( 0, 0 ); // 3.14
+h.set( 0, 0, 3.14 );  // sets value at first line, first col
+auto v = h.get( 0, 0 ); // 3.14
 ```
 
 To fill the matrix with arbitrary values, the best is to build it from a "vector of vectors", as in the example below:
@@ -357,7 +357,14 @@ cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
 cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
 ```
 
-This also enable conversions between matrices types:
+This also enable conversions between matrices types.
+You can build it using a provided cv::Mat:
+```C++
+cv::Mat m;   // needs to be 3x3, floating point type (either CV_32F or CV_64F)
+... // fill m
+Homog H = m;  // call of dedicated constructor
+H = m;        // or call assignment operator
+```
 
 
 
@@ -514,8 +521,12 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [next-release]: (current master branch)
   - added 2 constructors to `Homogr`
   - added `isParallelTo()`
-  - API change: renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
+  - API change:
+    - renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
+    - matrics: renamed `setValue()` to `set()` and `getValue()` to `get()`
+    - for OpenCv matrices, replaced `getFrom()` by assignment operator
   - added `Segment` type and associated code
+
   - Licence change to MPLv2
 
 - planned:

@@ -13,7 +13,7 @@ ifeq ($(USE_OPENCV),Y)
 endif
 
 
-test: homog2d_test demo_check
+test: homog2d_test #demo_check
 	./homog2d_test
 
 # compute code coverage (EXPERIMENTAL !)
