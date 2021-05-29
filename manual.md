@@ -347,6 +347,8 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
+### Data conversion from/to Opencv
+
 For export, additional functions are provided to interface with [Opencv](https://opencv.org).
 This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
 You can then write this:
@@ -388,7 +390,7 @@ H = m;        // or call assignment operator
 
 
 
-### Drawing functions
+### Drawing functions using OpenCv
 
 You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++
@@ -457,6 +459,14 @@ Point2d_<float> pt; // this is fine
 ### Numerical issues
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
+As you may know, the concept of "equal floating point values" is very tricky.
+In this library, this can hurt in several ways:
+ - creating a line from two points will fail if the points are equal,
+ - similarly, computing a point at the intersection of two lines will fail if the lines are parallel.
+
+This library will ensure these conditions, and will throw an exception (of type `std::runtime_error`) if that kind of thing happens.
+The thresholds have default values.
+They are implemented as static values, that can be changed any time.
 
 - When checking for parallel lines (see `isParallelTo()`), the "null" angle value has a default value of one thousand of a radian (0.001 rad).
 You can print the current value with:
@@ -467,6 +477,12 @@ It can be changed any time with the same function, for example:
 ```C++
 Line2d::nullAngleValue() = 0.01;
 ```
+This is checked for when computing an intersection point.
+
+- When attempting to compute a line out of two points, the library will throw if the distance between the two points is less than `Point2d::nullDistance()`.
+That same function can be used to change (or print) the current value.
+
+- When attempting to compute the inverse of a matrix, if the determinant is less than `Homogr::nullDeterValue()`, the inversion code will throw.
 
 
 ## 8 - Technical details
@@ -478,8 +494,6 @@ behavior differs due to some policy-based design (see below).
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
-The concept of "null" value is technically subject to discussions, here we use the value provided by standard library:
-[std::numeric_limits<double>::epsilon()](https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon);
 
 ### Testing
 
@@ -517,6 +531,8 @@ it is there just so that the compiler can select the correct overload
 (in a similar way of what happens with templates).
 
 The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
+If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
+the implementation of that type only holds a `static_assert`, to that can be catched at build time.
 
 ## 9 - History
 <a name="history"></a>

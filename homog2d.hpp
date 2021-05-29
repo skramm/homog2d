@@ -406,7 +406,7 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ adjugate = p_adjugate();
 		auto det = p_det();
 
-		if( std::abs(det) <= Root<M,FPT>::nullDeterValue() )
+		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
 		*this = adjugate / det;
@@ -475,6 +475,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	{
 		return !(*this == h);
 	}
+	static double& nullDeterValue() { return _zeroDeterminantValue; }
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -556,7 +557,10 @@ See https://en.wikipedia.org/wiki/Determinant
 		}
 		return f;
 	}
+	static double _zeroDeterminantValue; /// Used in matrix inversion
 };
+
+
 
 #ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
@@ -965,7 +969,6 @@ class Root
 #endif
 
 	static double& nullAngleValue() { return _zeroAngleValue; }
-	static double& nullDeterValue() { return _zeroDeterminantValue; }
 	static double& nullDistance()   { return _zeroDistance; }
 
 //////////////////////////
@@ -976,7 +979,6 @@ class Root
 		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
 		static double _zeroAngleValue;       /// Used in isParallel();
-		static double _zeroDeterminantValue; /// Used in matrix inversion
 		static double _zeroDistance;         /// Used to define points as identical
 
 //////////////////////////
@@ -1066,28 +1068,28 @@ double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-double Root<LP,FPT>::_zeroDeterminantValue = 1E-20;
+double Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
 double Root<LP,FPT>::_zeroDistance = 1E-15;
 
 #ifdef HOMOG2D_USE_OPENCV
-/// Free function to return an OpenCv point
+/// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
 getCvPtd( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPtd();
 }
-/// Free function to return an OpenCv point
+/// Free function to return an OpenCv point (float)
 template<typename FPT>
 cv::Point2f
 getCvPtf( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPtf();
 }
-/// Free function to return an OpenCv point
+/// Free function to return an OpenCv point (integer)
 template<typename FPT>
 cv::Point2i
 getCvPti( const Root<type::IsPoint,FPT>& pt )
@@ -1497,17 +1499,10 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
-#if 0
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( std::fabs( getX() - other.getX() ) > eps )
-		return false;
-	if( std::fabs( getY() - other.getY() ) > eps )
-		return false;
-#endif
 	auto dist = this->distTo( other );
-	if( dist > nullDistance() )
-		return false;
-	return true;
+	if( dist < nullDistance() )
+		return true;
+	return false;
 }
 
 //------------------------------------------------------------------

@@ -385,10 +385,13 @@ void action_5()
 	g_data.s1.getLine().draw( g_img, CvDrawParams().setColor( 100,100,100) );
 	g_data.s2.getLine().draw( g_img, CvDrawParams().setColor( 100,100,100) );
 	draw( g_img, g_data.vpt );
+	cv::imshow( g_wndname, g_img );
 }
 
 void action_5M()
 {
+	if( g_data.selected != -1 )
+		g_data.vpt[g_data.selected].draw( g_img, CvDrawParams().selectPoint() );
 	auto inters = g_data.s1.intersects( g_data.s2 );
 	if( inters() ) //&& g_data.selected != -1 )
 	{
@@ -400,6 +403,7 @@ void action_5M()
 		Line2d l2 = g_data.s2.getLine().getOrthogonalLine( GC_X,  pti.getX() );
 		l2.draw( g_img, CvDrawParams().setColor( 100,0,0) );
 	}
+	cv::imshow( g_wndname, g_img );
 }
 
 /// Mouse callback for demo5
@@ -493,12 +497,12 @@ void demo_6(int n)
 int main( int argc, const char** argv )
 {
 	std::vector<std::function<void(int)>> v_demo{
-		demo_6,
 		demo_1,
 		demo_2,
 		demo_3,
 		demo_4,
-		demo_5
+		demo_5,
+		demo_6
 	};
 	cv::namedWindow( g_wndname );
 	g_img.create( g_height, g_width, CV_8UC3 );
