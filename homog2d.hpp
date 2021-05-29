@@ -226,13 +226,14 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
+#ifdef HOMOG2D_SAFE_MODE
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
 			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
 		for( auto li: in )
 			if( li.size() != 3 )
 				throw std::runtime_error( "Invalid column size for input: " + std::to_string(li.size()) );
-
+#endif
 		p_fillWith( in );
 	}
 
@@ -364,11 +365,7 @@ Thus some assert can get triggered elsewhere.
 
 #ifdef HOMOG2D_USE_OPENCV
 	void copyTo( cv::Mat&, int type=CV_64F ) const;
-#if 0
-	void getFrom( const cv::Mat& ) const;
-#else
 	Hmatrix_& operator = ( const cv::Mat& );
-#endif
 #endif
 
 /// Normalisation
@@ -407,9 +404,9 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& inverse()
 	{
 		Hmatrix_ adjugate = p_adjugate();
-		double det = p_det();
+		auto det = p_det();
 
-		if( std::abs(det) <= std::numeric_limits<double>::epsilon() )
+		if( std::abs(det) <= Root<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
 		*this = adjugate / det;
@@ -701,13 +698,19 @@ class Root
 
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
 		{
+#ifdef HOMOG2D_SAFE_MODE
 			if( v1.isParallelTo(v2) )
 				std::runtime_error( "unable to build point from these two lines, are parallel" );
+#endif
 			*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 		}
 
 		Root( const Root<type::IsPoint,FPT>& v1, const Root<type::IsPoint,FPT>& v2 )
 		{
+#ifdef HOMOG2D_SAFE_MODE
+			if( v1 == v2 )
+				std::runtime_error( "unable to build line from these two points, are the same" );
+#endif
 			*this = detail::crossProduct<type::IsLine>( v1, v2 );
 			p_normalizeLine();
 		}
@@ -1048,6 +1051,7 @@ double Root<LP,FPT>::_zeroDistance = 1E-15;
 namespace detail {
 
 /// Private free function, get top-left and bottom-right points from two arbitrary points
+/// \todo Fix floating point issue (comparison), add some threshold
 template<typename FPT>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 )
@@ -1442,18 +1446,23 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
+#if 0
 	auto eps = std::numeric_limits<double>::epsilon();
 	if( std::fabs( getX() - other.getX() ) > eps )
 		return false;
 	if( std::fabs( getY() - other.getY() ) > eps )
+		return false;
+#endif
+	auto dist = this->distTo( other );
+	if( dist > nullDistance() )
 		return false;
 	return true;
 }
 
 //------------------------------------------------------------------
 /// Inner implementation details
-namespace detail
-{
+namespace detail {
+
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 	template<typename Out, typename In,typename FPT>
 	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
@@ -1467,14 +1476,20 @@ namespace detail
 //		std::cout  << '\n';
 		return res;
 	}
-}
+} // namespace detail
 
-/// Free function template, product of two lines
+/// Free function template, product of two lines, returns a point
 template<typename FPT>
 Root<type::IsPoint,FPT>
 operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rhs )
 {
+#ifdef HOMOG2D_SAFE_MODE
+	if( lhs.isParallelTo(rhs) )
+		throw std::runtime_error( "lines are parallel, unable to compute product" );
+#endif
+
 	auto pt = detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
+#if 0
 	auto eps = std::numeric_limits<double>::epsilon();
 	if( std::fabs(pt._v[2]) <= eps )
 	{
@@ -1483,14 +1498,19 @@ operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rh
 		lr << rhs;
 		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
 	}
+#endif
 	return pt;
 }
 
-/// Free function template, product of two points
+/// Free function template, product of two points, returns a line
 template<typename FPT>
 Root<type::IsLine,FPT>
 operator * ( const Root<type::IsPoint,FPT>& lhs, const Root<type::IsPoint,FPT>& rhs )
 {
+#ifdef HOMOG2D_SAFE_MODE
+	if( lhs == rhs )
+		throw std::runtime_error( "points are identical, unable to compute product" );
+#endif
 	Root<type::IsLine, FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
 	line.p_normalizeLine();
 	return line;
@@ -1923,8 +1943,10 @@ template<typename W,typename FPT>
 void
 Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
+#ifdef HOMOG2D_SAFE_MODE
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid OpenCv matrix type" );
+#endif
 	mat.create( 3, 3, type ); // default:CV_64F
 	size_t i=0;
 	switch( type )
@@ -1946,6 +1968,7 @@ template<typename W,typename FPT>
 Hmatrix_<W,FPT>&
 Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 {
+#ifdef HOMOG2D_SAFE_MODE
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
@@ -1954,7 +1977,7 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 	auto type = mat.type();
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
-
+#endif
 	size_t i=0;
 	switch( type )
 	{
