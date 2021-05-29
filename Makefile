@@ -34,7 +34,7 @@ homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test misc/homog2d_test.cpp $(LDFLAGS)
 
 doc: html/index.html
-	@echo "done !"
+	xdg-open html/index.html
 
 html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md manual.md
 	doxygen misc/doxyfile

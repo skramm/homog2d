@@ -2059,23 +2059,26 @@ using Homogr = Hmatrix_<type::IsHomogr,double>;
 /// Default homogeneous matrix, uses \c double as numerical type
 using Hmatrix = Hmatrix_<type::IsMatrix,double>;
 
+/// Default segment type
 using Segment = Segment_<double>;
 
 // float types
 using Line2dF  = Root<type::IsLine,float>;
 using Point2dF = Root<type::IsPoint,float>;
 using HomogrF  = Hmatrix_<type::IsHomogr,float>;
+using SegmentF = Segment_<float>;
 
 // double types
 using Line2dD  = Root<type::IsLine,double>;
 using Point2dD = Root<type::IsPoint,double>;
 using HomogrD  = Hmatrix_<type::IsHomogr,double>;
+using SegmentD = Segment_<double>;
 
 // long double types
 using Line2dL  = Root<type::IsLine,long double>;
 using Point2dL = Root<type::IsPoint,long double>;
 using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
-
+using SegmentL = Segment_<long double>;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;

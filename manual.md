@@ -202,7 +202,7 @@ You can create a rotation or a scale transformation with one of these:
 ```C++
 Homogr h;
 h.setRotation( 3.14 ); // angle of PI radians
-h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale factor to 2., and vertical to 3.
+h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale factor to 2. and vertical to 3.
 ```
 
 - You can build some complex transformation by multiplying these:
@@ -222,7 +222,7 @@ h.addScale( 2., 3. );        // add scaling transformation
 h.addTranslation( 0., 4. );  // add translation
 ```
 
-- But you can also used "chained" syntax (thanks to the reference return type!):
+- But you can also used "chained" syntax:
 ```C++
 Homogr h; // unit transformation
 h.addTranslation(3,4).addRotation( 45. * M_PI / 180.).addTranslation(-3,-4);
@@ -357,6 +357,12 @@ cv::Point2d ptcv1 = pt.getCvPtd(); // integer coordinates (with rounding)
 cv::Point2f ptcv2 = pt.getCvPtf(); // floating-point coordinates
 ```
 
+This also enable conversions between matrices types:
+
+
+
+### Drawing functions
+
 You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++
 Point2d pt( ... );
@@ -365,11 +371,7 @@ li.draw( mat );
 pt.draw( mat );
 ```
 
-Please note that for lines, this will draw a line spanning the whole image, as opposed to
-the Opencv function `cv::line()` that actually draws a **segment** only.
-For points, this will just draw a small cross: 2 H/V lines.
-
-These two functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+These drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
 li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
@@ -392,8 +394,17 @@ You can at any time return to the "factory" settings with a call to a static fun
 CvDrawParams::resetDefault();
 ```
 
+You can also draw line segments with the Segment type. It also supports the drawing parameter:
+```C++
+Segment s1( Point2d(100,100),  Point2d(300,200) );
+s1.draw( some_img );                                 // using default style
+Segment s2( Point2d(300,100),  Point2d(100,200) );
+s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
+```
+
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
+
 
 ## 7 - Numerical data types
 <a name="numdt"></a>
