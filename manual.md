@@ -349,8 +349,8 @@ For the first case, it is mandatory that all the vectors sizes are equal to 3 (t
 
 ### Data conversion from/to Opencv
 
-For export, additional functions are provided to interface with [Opencv](https://opencv.org).
-This is enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
+Optional functions are provided to interface with [Opencv](https://opencv.org).
+These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
 You can then write this:
 ```C++
 Point2d pt;
@@ -378,9 +378,16 @@ Point2d pt2 = ptcv;     // or assignment operator
 ```
 (works the same for `cv::Point2f` and `cv::Point2i`)
 
+Similarly, you can build a line using Opencv points:
+```C++
+cv::Point2d ptcv(4,5);
+Line2d l1( ptcv );                     // line going trough (0,0) and (4,5)
+Line2d l2( ptcv, cv::Point2d(8,9) );   // line going trough (4,5) and (8,9)
+```
 
-This also enable conversions between matrices types.
-You can build it using a provided cv::Mat:
+
+This also enables conversions between matrices types.
+You can build a homography using a provided `cv::Mat`:
 ```C++
 cv::Mat m;   // needs to be 3x3, floating point type (either CV_32F or CV_64F)
 ... // fill m
@@ -532,7 +539,7 @@ it is there just so that the compiler can select the correct overload
 
 The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
-the implementation of that type only holds a `static_assert`, to that can be catched at build time.
+the implementation of that type only holds a `static_assert`, so that can be catched at build time.
 
 ## 9 - History
 <a name="history"></a>

@@ -19,6 +19,9 @@
 \file homog2d.hpp
 \brief single header file, implements some 2D homogeneous stuff.
 See https://github.com/skramm/homog2d
+
+\todo Fix comparison of Line2d (operator ==)
+
 */
 
 #ifndef HG_HOMOG2D_HPP
@@ -368,10 +371,10 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& operator = ( const cv::Mat& );
 #endif
 
-/// Normalisation
+/// Matrix normalisation
 	void normalize() const
 	{
-		auto eps = std::numeric_limits<FPT>::epsilon();
+		auto eps = std::numeric_limits<FPT>::epsilon()*10;
 
 		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
 			p_divideBy( 2, 2 );
@@ -655,7 +658,7 @@ Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 }
 
 //------------------------------------------------------------------
-/// Base class, will be instanciated as a Point2d or a Line2d
+/// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
 Parameters:
 - LP: Line or Point
@@ -968,8 +971,9 @@ class Root
 		}
 #endif
 
-	static double& nullAngleValue() { return _zeroAngleValue; }
-	static double& nullDistance()   { return _zeroDistance; }
+	static double& nullAngleValue()  { return _zeroAngleValue; }
+	static double& nullDistance()    { return _zeroDistance; }
+	static double& nullOffsetValue() { return _zeroOffset; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -980,6 +984,7 @@ class Root
 
 		static double _zeroAngleValue;       /// Used in isParallel();
 		static double _zeroDistance;         /// Used to define points as identical
+		static double _zeroOffset;           /// Used to compare lines
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1034,7 +1039,9 @@ class Root
 		template<typename T>
 		void impl_init_opencv( T pt, const detail::RootHelper<type::IsLine>& )
 		{
-			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
+			Root<type::IsPoint,FPT> p(pt);
+			impl_init_1_Point( p, detail::RootHelper<type::IsLine>() );
+//			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
 		}
 
 		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1064,15 +1071,19 @@ class Root
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-double Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
+FPT Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-double Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
+FPT Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-double Root<LP,FPT>::_zeroDistance = 1E-15;
+FPT Root<LP,FPT>::_zeroDistance = 1E-15;
+
+template<typename LP,typename FPT>
+FPT _zeroOffset = 1E-15;
+
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Free function to return an OpenCv point (double)
@@ -1130,6 +1141,7 @@ ptIsInside( const Root<type::IsPoint,FPT>& pt, const Root<type::IsPoint,FPT>& p0
 }
 
 /// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
+/// \todo checkout the floating-point comparison: is that really safe?
 template<typename FPT>
 void
 fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
@@ -1484,16 +1496,23 @@ Root<LP,FPT>::impl_getParallelLine( const Root<type::IsPoint,FPT>& pt, const det
 
 //------------------------------------------------------------------
 /// Comparison operator, used for lines
+/**
+Definition used: two lines will be equal:
+- if they are not parallel
+AND
+- if their offset (3 third value) is less than nullOffsetValue()
+*/
 template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto eps = std::numeric_limits<double>::epsilon();
-	for( int i=0; i<3; i++ )
-		if( std::fabs( _v[i] - other._v[i] ) > eps )
-			return false;
+	if( !this->isParallelTo( other ) )
+		return false;
+	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
+		return false;
 	return true;
 }
+
 /// Comparison operator, used for points
 template<typename LP,typename FPT>
 bool

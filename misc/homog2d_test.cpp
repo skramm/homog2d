@@ -829,7 +829,9 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 	}
 	SECTION( "Build line using OpenCv points" )
 	{
-//		Line2d l( cv::Point2d(100,200), cv::Point2d(10,20) );
+		Line2d lia( cv::Point2d(100,200) );
+		Line2d lib( Point2d(100,200) );
+		CHECK( lia == lib );
 	}
 
 }
