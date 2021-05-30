@@ -478,7 +478,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	{
 		return !(*this == h);
 	}
-	static double& nullDeterValue() { return _zeroDeterminantValue; }
+	static FPT& nullDeterValue() { return _zeroDeterminantValue; }
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -560,7 +560,7 @@ See https://en.wikipedia.org/wiki/Determinant
 		}
 		return f;
 	}
-	static double _zeroDeterminantValue; /// Used in matrix inversion
+	static FPT _zeroDeterminantValue; /// Used in matrix inversion
 };
 
 
@@ -971,9 +971,9 @@ class Root
 		}
 #endif
 
-	static double& nullAngleValue()  { return _zeroAngleValue; }
-	static double& nullDistance()    { return _zeroDistance; }
-	static double& nullOffsetValue() { return _zeroOffset; }
+	static FPT& nullAngleValue()  { return _zeroAngleValue; }
+	static FPT& nullDistance()    { return _zeroDistance; }
+	static FPT& nullOffsetValue() { return _zeroOffset; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -982,9 +982,9 @@ class Root
 	private:
 		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-		static double _zeroAngleValue;       /// Used in isParallel();
-		static double _zeroDistance;         /// Used to define points as identical
-		static double _zeroOffset;           /// Used to compare lines
+		static FPT _zeroAngleValue;       /// Used in isParallel();
+		static FPT _zeroDistance;         /// Used to define points as identical
+		static FPT _zeroOffset;           /// Used to compare lines
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1082,7 +1082,7 @@ template<typename LP,typename FPT>
 FPT Root<LP,FPT>::_zeroDistance = 1E-15;
 
 template<typename LP,typename FPT>
-FPT _zeroOffset = 1E-15;
+FPT Root<LP,FPT>::_zeroOffset = 1E-15;
 
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1506,10 +1506,22 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
+//	std::cerr << __FUNCTION__ << "():\n-" << *this << "\n-" << other << "\n";
 	if( !this->isParallelTo( other ) )
+	{
+//		std::cerr <<" IS NOT PARALLEL\n";
 		return false;
+	}
+
+/*	std::cerr <<"-diff="
+		<< std::setprecision(std::numeric_limits<double>::digits10 + 1)
+		<< std::fabs( _v[2] - other._v[2] ) << "\n";
+*/
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
+	{
+//		std::cerr << "c HIGHER than " << nullOffsetValue() << '\n';
 		return false;
+	}
 	return true;
 }
 
@@ -1679,7 +1691,10 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	if( getAngle(li) < Root::_zeroAngleValue )
+auto a = getAngle(li);
+//	std::cerr << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
+	if( a < Root::nullAngleValue() )
+//	if( getAngle(li) < Root::nullAngleValue() )
 		return true;
 	return false;
 }
@@ -1695,15 +1710,16 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelpe
 /// Returns the angle (in Rad) between the line and another one.
 /**
 Will return a value in the range [0,M_PI/2]
-
-\todo add implementation of free function with partial specialization trick
 */
 template<typename LP, typename FPT>
 FPT
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
-	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
+	auto res = _v[0] * li._v[0] + _v[1] * li._v[1];
+
+//	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
+	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
+//	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(std::numeric_limits<double>::digits10 + 1) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
 	return std::acos( std::abs(res) );
 }
 
