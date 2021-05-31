@@ -57,13 +57,20 @@ If you are unsure, you can check first:
 if( li1.isParallelTo(li2) )
 	cout << "Lines are parallel !\n";
 ```
-For the numerical considerations on this test (that actually computes the angle between the two lines),
+
+For points, it is as easy as:
+```C++
+if( pt1 == pt2  )
+	cout << "Points are identical !\n";
+```
+
+For the numerical considerations on this,
 check below, section [Numerical data types](#numdt).
 
 - Add some offset to a line:
 ```C++
-li1.addOffset( OD_Horiz, 5 ); // horizontal offset
-li1.addOffset( OD_Vert, 5 ); // vertical offset
+li1.addOffset( LineOffset::horiz, 5 ); // horizontal offset
+li1.addOffset( LineOffset::vert, 5 ); // vertical offset
 ```
 
 - Compute distances from line to point or from point to point:
@@ -81,7 +88,7 @@ Line2d li2;
 ### Get point(s) lying on line
 
 To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
-`En_GivenCoord`.
+`GivenCoord`.
 For example, if you build the line going through (0,0)-(4,2) with:
 
 ```C++
@@ -89,19 +96,19 @@ Line2d li(4,2);
 ```
 You can compute the coordinate of y for x=2 with:
 ```C++
-auto y = li.getCoord( GC_X, 2 );
+auto y = li.getCoord( GivenCoord::X, 2 );
 ```
 of get the coordinate of x for y=1 with:
 ```C++
-auto x = li.getCoord( GC_Y, 1 );
+auto x = li.getCoord( GivenCoord::Y, 1 );
 ```
 
 You can also get directly the point with:
 ```C++
-Point2d pt2 = li.getPoint( GC_X, 2 );
+Point2d pt2 = li.getPoint( GivenCoord::X, 2 );
 ```
 
-The values `GC_Y`,`GC_Y` are just a two-values `enum`.
+The values `GivenCoord::Y`,`GivenCoord::Y` are just a two-values `enum`.
 
 ### Points at equal distance from a point on line
 <a name="paedfapol"></a>
@@ -113,7 +120,7 @@ You can compute the two points that are lying on a line and at a given distance 
 The "middle" point must be given as either its x or y coordinate [(1)](#fn1).
 ```C++
 Line2d li( ..., ... ); // some line
-auto ppts = li.getPoints( GC_X, coord, dist ); // returns a std::pair
+auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
 Point2d p1 = ppts.first;
 Point2d p2 = ppts.second;
 ```
@@ -125,7 +132,7 @@ Upon return, the "first" point will hold the one with smallest 'x' coordinates, 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-Line2d li2 = li.getOrthogonalLine( GC_X, 2 );
+Line2d li2 = li.getOrthogonalLine( GivenCoord::X, 2 );
 ```
 will build `li2` so that it is orthogonal to `li` at `x=2`.
 
@@ -568,8 +575,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
     - renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
     - matrics: renamed `setValue()` to `set()` and `getValue()` to `get()`
     - for OpenCv matrices, replaced `getFrom()` by assignment operator
+    - replaced enums `En_OffsetDir` and `En_GivenCoord` with class enums `LineOffset` and `GivenCoord`
   - added `Segment` type and associated code
-
   - Licence change to MPLv2
 
 - planned:

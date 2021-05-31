@@ -94,8 +94,8 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d ptB1(0,2);
 		Point2d ptB2(2,0);
 		Line2d  lB = ptB1 * ptB2;
-		CHECK( lB.getCoord( GC_X, 1 ) == 1. );
-		CHECK( lB.getPoint(GC_X, 1) == Point2d(1,1) );
+		CHECK( lB.getCoord( GivenCoord::X, 1 ) == 1. );
+		CHECK( lB.getPoint(GivenCoord::X, 1) == Point2d(1,1) );
 	}
 	{
 // build point from two diagonal lines
@@ -138,7 +138,7 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d lV; // vertical line at x=0
 
 // get orthogonal line at y=100
-		Line2d li2 = lV.getOrthogonalLine( GC_Y, 100 );
+		Line2d li2 = lV.getOrthogonalLine( GivenCoord::Y, 100 );
 		CHECK( li2.getAngle( lV ) == M_PI/2. );
 
 		CHECK( getAngle( li2,lV ) == M_PI/2. );
@@ -146,22 +146,22 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d lH2(1,0);                // build horizontal line
 		Line2d lH3 = lH2;
 
-		lH2.addOffset( OD_Vert, 100 );  // add vertical offset
+		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
 		CHECK( li2 == lH2 );
 		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d lH(1,0);                // build horizontal line
-		Line2d li3 = lH.getOrthogonalLine( GC_X, 100 );
+		Line2d li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
 		Line2d lV2;
-		lV2.addOffset( OD_Horiz, 100 );  // add horizontal offset
+		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
 		CHECK( li3 == lV2 );
 	}
 	{
 		Line2d li(4,2);
-		CHECK( li.getCoord( GC_X, 2 ) == 1 );
-		CHECK( li.getCoord( GC_Y, 1 ) == 2 );
-		CHECK( li.getPoint( GC_X, 2 ) == Point2d(2,1) );
-		CHECK( li.getPoint( GC_Y, 1 ) == Point2d(2,1) );
+		CHECK( li.getCoord( GivenCoord::X, 2 ) == 1 );
+		CHECK( li.getCoord( GivenCoord::Y, 1 ) == 2 );
+		CHECK( li.getPoint( GivenCoord::X, 2 ) == Point2d(2,1) );
+		CHECK( li.getPoint( GivenCoord::Y, 1 ) == Point2d(2,1) );
 	}
 }
 
@@ -237,11 +237,11 @@ TEST_CASE( "dist2points", "[test2]" )
 	auto d2 = li.distTo( Point2d(4,2) );
 	CHECK( d2 == 0. );
 
-	CHECK( li.getCoord( GC_X, 0. ) == 0. );
-	CHECK( li.getCoord( GC_X, 2. ) == 1. );
+	CHECK( li.getCoord( GivenCoord::X, 0. ) == 0. );
+	CHECK( li.getCoord( GivenCoord::X, 2. ) == 1. );
 
-	CHECK( li.getCoord( GC_Y, 0. ) == 0. );
-	CHECK( li.getCoord( GC_Y, 1. ) == 2. );
+	CHECK( li.getCoord( GivenCoord::Y, 0. ) == 0. );
+	CHECK( li.getCoord( GivenCoord::Y, 1. ) == 2. );
 
 	Point2d p1( 3,3);
 	Point2d p2( 4,4);
@@ -254,31 +254,31 @@ TEST_CASE( "offset test", "[test3]" )
 	CHECK( lA.distTo( Point2d(1.,1.) ) == 0. );
 
 	Line2d lB = lA;
-	lA.addOffset( OD_Vert, 2. );
+	lA.addOffset( LineOffset::vert, 2. );
 	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
-	lB.addOffset( OD_Horiz, 2. );
+	lB.addOffset( LineOffset::horiz, 2. );
 	CHECK( lB == Line2d( Point2d(2,0), Point2d(4,2) ) );
 	{
 		Line2d v;
 		Line2d h(1,0);
 		CHECK( v*h == Point2d() );    // intersection is (0,0)
 
-		v.addOffset( OD_Horiz, 1 );
+		v.addOffset( LineOffset::horiz, 1 );
 		CHECK( v*h == Point2d(1,0) ); // intersection is (1,0)
 
-		h.addOffset( OD_Vert, 1 );
+		h.addOffset( LineOffset::vert, 1 );
 		CHECK( v*h == Point2d(1,1) ); // intersection is (1,0)
 	}
 	{
 		Line2d liV;
 		Line2d liV2 = liV;
-		liV.addOffset( OD_Vert, 1 ); // adding vertical offset to vertical line does nothing
+		liV.addOffset( LineOffset::vert, 1 ); // adding vertical offset to vertical line does nothing
 		CHECK( liV == liV2 );
 
 		Line2d liH(1,0);
 		Line2d liH2 = liH;
 //		std::cout << "liH2=" << liH2 << "\n";
-		liH.addOffset( OD_Horiz, 1 ); // adding horizontal offset to horizontal line does nothing
+		liH.addOffset( LineOffset::horiz, 1 ); // adding horizontal offset to horizontal line does nothing
 //		std::cout << "liH=" << liH << "\n";
 		CHECK( liH == liH2 );
 	}
@@ -289,7 +289,7 @@ TEST_CASE( "exceptions", "[testE]" )
 	Line2d v1,v2; // 2 identical vertical lines
 
 	CHECK_THROWS( v1*v2 );
-	v2.addOffset( OD_Horiz, 1 );
+	v2.addOffset( LineOffset::horiz, 1 );
 	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
 
 	Point2d p1,p2;
@@ -522,33 +522,33 @@ TEST_CASE( "matrix chained operations", "[testH2]" )
 TEST_CASE( "getPoints", "[test_points]" )
 {
 	Line2d liV; // vertical line
-	auto pp = liV.getPoints( GC_Y, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
+	auto pp = liV.getPoints( GivenCoord::Y, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
 	CHECK( pp.first  == Point2d(0,-2) );
 	CHECK( pp.second == Point2d(0,+2) );
 
-	pp = liV.getPoints( GC_Y, 3.0, 2.0 ); // get points at a distance 2 from (0,3)
+	pp = liV.getPoints( GivenCoord::Y, 3.0, 2.0 ); // get points at a distance 2 from (0,3)
 	CHECK( pp.first  == Point2d(0,+1) );
 	CHECK( pp.second == Point2d(0,+5) );
 
 	Line2d liH(1,0); // horizontal line
-	pp = liH.getPoints( GC_X, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
+	pp = liH.getPoints( GivenCoord::X, 0.0, 2.0 ); // get points at a distance 2 from (0,0)
 	CHECK( pp.first  == Point2d(-2,0) );
 	CHECK( pp.second == Point2d(+2,0) );
 
-	pp = liH.getPoints( GC_X, 3.0, 2.0 ); // get points at a distance 2 from (3,0)
+	pp = liH.getPoints( GivenCoord::X, 3.0, 2.0 ); // get points at a distance 2 from (3,0)
 	CHECK( pp.first  == Point2d(+1,0) );
 	CHECK( pp.second == Point2d(+5,0) );
 
 	Line2d li( 1, 1 );                   // line with slope [1,1] starting from (0,0)
 	auto k = 1.0 / std::sqrt(2.);
-	pp = li.getPoints( GC_X, 5.0, 1.0 ); // get points at a distance 1 from (5,0)
+	pp = li.getPoints( GivenCoord::X, 5.0, 1.0 ); // get points at a distance 1 from (5,0)
 	CHECK( pp.first  == Point2d( 5-k, 5-k ) );
 	CHECK( pp.second == Point2d( 5+k, 5+k ) );
 
 
 	li = Point2d(3,1) * Point2d(4,2); // line with slope [1,1] starting from (3,1)
 
-	pp = li.getPoints( GC_X, 5.0, 1.0 ); // get points at a distance 2 from (3,0)
+	pp = li.getPoints( GivenCoord::X, 5.0, 1.0 ); // get points at a distance 2 from (3,0)
 	CHECK( pp.first  == Point2d( 5-k, 3-k ) );
 	CHECK( pp.second == Point2d( 5+k, 3+k ) );
 }

@@ -165,17 +165,17 @@ void action_1()
 
 	Line2d l( g_data.vpt[0], g_data.vpt[2] );
 	Line2d la_V( l );
-	la_V.addOffset( OD_Vert, 60 );
+	la_V.addOffset( LineOffset::vert, 60 );
 	la_V.draw( g_img, CvDrawParams().setColor(250,0,250) );
 
-	l.addOffset( OD_Horiz, 60 );
+	l.addOffset( LineOffset::horiz, 60 );
 	l.draw( g_img, CvDrawParams().setColor(250,250,0) );
 }
 
 void action_1M()
 {
 	Line2d l_mouse = g_data.pt_mouse * Point2d();
-	Line2d l_mouse2= l_mouse.getOrthogonalLine( GC_X, 100 );
+	Line2d l_mouse2= l_mouse.getOrthogonalLine( GivenCoord::X, 100 );
 	l_mouse.draw( g_img );
 	l_mouse2.draw( g_img );
 }
@@ -276,9 +276,9 @@ void demo_3( int n )
 	Line2d li;
 
 	Line2d lV;
-	lV.addOffset( OD_Horiz, 100.);
+	lV.addOffset( LineOffset::horiz, 100.);
 	Line2d lH(1,0);
-	lH.addOffset( OD_Vert, 100.);
+	lH.addOffset( LineOffset::vert, 100.);
 
 	clearImage();
 	lV.draw( g_img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
@@ -289,19 +289,19 @@ void demo_3( int n )
 	dp.setDefault();
 
 	li = lV;
-	li.addOffset( OD_Horiz, 50 );
+	li.addOffset( LineOffset::horiz, 50 );
 	li.draw( g_img ); // use default draw parameters
 	li = lV;
-	li.addOffset( OD_Horiz, -50 );
+	li.addOffset( LineOffset::horiz, -50 );
 	li.draw( g_img, CvDrawParams().setColor( 100,250,0) );
 
 	CvDrawParams::resetDefault();
 
 	li = lH;
-	li.addOffset( OD_Vert, 50 );
+	li.addOffset( LineOffset::vert, 50 );
 	li.draw( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 	li = lH;
-	li.addOffset( OD_Vert, -50 );
+	li.addOffset( LineOffset::vert, -50 );
 	li.draw( g_img ); //, CvDrawParams().setColor( 100,0,250) );
 
 	cv::imshow( g_wndname, g_img );
@@ -397,10 +397,10 @@ void action_5M()
 	{
 		auto pti = inters.get();
 		pti.draw( g_img );
-		Line2d l1 = g_data.s1.getLine().getOrthogonalLine( GC_X,  pti.getX() );
+		Line2d l1 = g_data.s1.getLine().getOrthogonalLine( GivenCoord::X,  pti.getX() );
 		l1.draw( g_img, CvDrawParams().setColor( 0,0,100) );
 
-		Line2d l2 = g_data.s2.getLine().getOrthogonalLine( GC_X,  pti.getX() );
+		Line2d l2 = g_data.s2.getLine().getOrthogonalLine( GivenCoord::X,  pti.getX() );
 		l2.draw( g_img, CvDrawParams().setColor( 100,0,0) );
 	}
 	cv::imshow( g_wndname, g_img );
