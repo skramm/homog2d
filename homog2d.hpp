@@ -19,9 +19,6 @@
 \file homog2d.hpp
 \brief single header file, implements some 2D homogeneous stuff.
 See https://github.com/skramm/homog2d
-
-\todo Fix comparison of Line2d (operator ==)
-
 */
 
 #ifndef HG_HOMOG2D_HPP
@@ -647,7 +644,7 @@ struct CvDrawParams
 //enum En_GivenCoord { GC_X, GC_Y };
 enum class GivenCoord { X, Y };
 
-/// Used in Line2d::addOffset
+/// Used in Line2d::addOffset()
 //enum En_OffsetDir{ OD_Vert, OD_Horiz };
 enum class LineOffset { vert, horiz };
 
@@ -978,6 +975,7 @@ class Root
 	static FPT& nullAngleValue()  { return _zeroAngleValue; }
 	static FPT& nullDistance()    { return _zeroDistance; }
 	static FPT& nullOffsetValue() { return _zeroOffset; }
+	static FPT& nullOrthogDistance() { return _zeroOrthoDistance; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -988,6 +986,7 @@ class Root
 
 		static FPT _zeroAngleValue;       /// Used in isParallel();
 		static FPT _zeroDistance;         /// Used to define points as identical
+		static FPT _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
 		static FPT _zeroOffset;           /// Used to compare lines
 
 //////////////////////////
@@ -995,7 +994,6 @@ class Root
 //////////////////////////
 	private:
 		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
-
 
 		Root<LP,FPT>::Intersect
 		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const;
@@ -1085,6 +1083,10 @@ FPT Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 template<typename LP,typename FPT>
 FPT Root<LP,FPT>::_zeroDistance = 1E-15;
 
+/// Instanciation of static variable
+template<typename LP,typename FPT>
+FPT Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
+
 template<typename LP,typename FPT>
 FPT Root<LP,FPT>::_zeroOffset = 1E-15;
 
@@ -1119,12 +1121,14 @@ getCvPti( const Root<type::IsPoint,FPT>& pt )
 namespace detail {
 
 /// Private free function, get top-left and bottom-right points from two arbitrary points
-/// \todo Fix floating point issue (comparison), add some threshold
 template<typename FPT>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 )
 {
-	if( p0.getX() == p1.getX() || p0.getY() == p1.getY() )
+	if(
+		   fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		|| fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+	)
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 
 	Root<type::IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
@@ -1145,7 +1149,6 @@ ptIsInside( const Root<type::IsPoint,FPT>& pt, const Root<type::IsPoint,FPT>& p0
 }
 
 /// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
-/// \todo checkout the floating-point comparison: is that really safe?
 template<typename FPT>
 void
 fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
@@ -1162,7 +1165,7 @@ fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
 
 
 //------------------------------------------------------------------
-/// A line segment, define by two points
+/// A line segment, defined by two points
 /**
 - Storage: "smallest" point is always stored as first element (see constructor)
 */
@@ -1510,22 +1513,12 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
-//	std::cerr << __FUNCTION__ << "():\n-" << *this << "\n-" << other << "\n";
 	if( !this->isParallelTo( other ) )
-	{
-//		std::cerr <<" IS NOT PARALLEL\n";
 		return false;
-	}
 
-/*	std::cerr <<"-diff="
-		<< std::setprecision(std::numeric_limits<double>::digits10 + 1)
-		<< std::fabs( _v[2] - other._v[2] ) << "\n";
-*/
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
-	{
-//		std::cerr << "c HIGHER than " << nullOffsetValue() << '\n';
 		return false;
-	}
+
 	return true;
 }
 
@@ -1716,7 +1709,7 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelpe
 The returned value will be in the range <code> [0, M_PI/2] </code>
 
 If the lines \f$ (a_0,a_1,a_2) \f$ and \f$ (b_0,b_1,b_2) \f$ are correctly normalized (should be, but...)
-then the angle between them is \f$ acos( a_0*b_0 + a_1*b_1) \f$. <br>
+then the angle between them is \f$ \alpha = acos( a_0*b_0 + a_1*b_1) \f$. <br>
 However, in "some situations", even if the lines have been previously normalized (which is the case here)
 we can encounter numerical issues, so here we "reinforce the normalization and compute:
 \f[

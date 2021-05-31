@@ -21,9 +21,6 @@ testNC: homog2d_test_A #demo_check
 	@echo "Run tests without checking"
 	./homog2d_test_A
 
-test_NOCHECKING:
-	rm
-
 # compute code coverage (EXPERIMENTAL !)
 cov:
 	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
