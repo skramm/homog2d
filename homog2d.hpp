@@ -840,6 +840,8 @@ class Root
 		template<typename T>
 		bool isParallelTo( const Segment_<T>& seg ) const;
 
+/// Returns angle in rad. between the lines
+/** Please check out warning described in impl_getAngle() */
 		template<typename T>
 		FPT getAngle( const Root<T,FPT>& other ) const
 		{
@@ -1287,7 +1289,7 @@ Root<LP,FPT>::isParallelTo( const Segment_<T>& seg ) const
 	return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
 }
 
-/// Implementation of line::getAngle()
+/// Returns angle in rad. between the line and the segment \c seg
 template<typename LP,typename FPT>
 template<typename T>
 FPT
@@ -1707,20 +1709,44 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelpe
 }
 
 //------------------------------------------------------------------
-/// Returns the angle (in Rad) between the line and another one.
+/// Returns the angle (in rad.) between the line and the other one.
 /**
-Will return a value in the range [0,M_PI/2]
+The returned value will be in the range <code> [0, M_PI/2] </code>
+
+If the lines \f$ (a_0,a_1,a_2) \f$ and \f$ (b_0,b_1,b_2) \f$ are correctly normalized (should be, but...)
+then the angle between them is \f$ acos( a_0*b_0 + a_1*b_1) \f$. <br>
+However, in "some situations", even if the lines have been previously normalized (which is the case here)
+we can encounter numerical issues, so here we "reinforce the normalization and compute:
+\f[
+\alpha = acos \left(
+	\frac{a_0*b_0 + a_1*b_1} { \sqrt{ a_0*a_0 + a_1*a_1 } * \sqrt{ b_0*b_0 + b_1*b_1 } }
+\right)
+\f]
+In some situations, the value inside the parenthesis "may" be equal to \f$ 1+\epsilon \f$
+(typically, something like "1.0000000000123").
+This is out of bounds for the \f$ acos() \f$ function, that will then return "nan"
+(thus induce some failure further on). <br>
+To avoid this, a checking is done, and any value higher than 1 will be truncated.
+This is logged on \c std::cerr so that the user may take that into consideration.
+
+\todo more investigation needed ! : what are the exact situation that will lead to this event?
 */
 template<typename LP, typename FPT>
 FPT
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
 	auto res = _v[0] * li._v[0] + _v[1] * li._v[1];
-
-//	res /= std::sqrt( _v[0]*_v[0] + _v[1]*_v[1] ) * std::sqrt( li._v[0]*li._v[0] + li._v[1]*li._v[1] );
-	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
+	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
+//	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
+//	std::cerr << __FUNCTION__ << "(): a1*b1=" << _v[0]*_v[0] + _v[1]*_v[1] << " a2*b2=" << li._v[0]*li._v[0] + li._v[1]*li._v[1] << "\n";
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(std::numeric_limits<double>::digits10 + 1) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
-	return std::acos( std::abs(res) );
+	auto fres = std::abs(res);
+	if( fres > 1.0 )
+	{
+		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << " truncated to 1.0\n";
+		fres = 1.0;
+	}
+	return std::acos( fres );
 }
 
 template<typename LP, typename FPT>

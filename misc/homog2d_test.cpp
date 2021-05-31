@@ -256,8 +256,6 @@ TEST_CASE( "offset test", "[test3]" )
 	Line2d lB = lA;
 	lA.addOffset( OD_Vert, 2. );
 	CHECK( lA == Line2d( Point2d(0,2), Point2d(2,4) ) );
-std::cerr << "lA:" << lA << "\n";
-std::cerr << "lB:" << Line2d( Point2d(0,2), Point2d(2,4) ) << "\n";
 	lB.addOffset( OD_Horiz, 2. );
 	CHECK( lB == Line2d( Point2d(2,0), Point2d(4,2) ) );
 	{
