@@ -782,7 +782,6 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsLine>&  )
 		{
-			std::cerr << __FUNCTION__ << "():IsLine\n";
 			*this = detail::crossProduct<type::IsLine>( pt, Root<type::IsPoint,FPT>() );
 			p_normalizeLine();
 		}
