@@ -422,7 +422,7 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& operator / (T v)
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		if( std::abs(v) <= std::numeric_limits<double>::epsilon() )
+		if( std::abs(v) <= std::numeric_limits<FPT>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
 		for( int i=0; i<3; i++ )
@@ -465,7 +465,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		if( !h._isNormalized )
 			h.normalize();
 
-		auto eps = std::numeric_limits<double>::epsilon();
+		auto eps = std::numeric_limits<FPT>::epsilon();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs( _data[i][j] - h._data[i][j] ) >= eps )
@@ -499,7 +499,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	}
 	void p_divideBy( size_t r, size_t c ) const
 	{
-		assert( std::fabs( _data[r][c] ) > std::numeric_limits<double>::epsilon() );
+		assert( std::fabs( _data[r][c] ) > std::numeric_limits<FPT>::epsilon() );
 		for( auto& li: _data )
 			for( auto& e: li )
 				e /= _data[r][c];
@@ -824,11 +824,11 @@ class Root
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
 		void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-		FPT distTo( const Root<type::IsPoint,FPT>& pt ) const
+		double distTo( const Root<type::IsPoint,FPT>& pt ) const
 		{
 			return impl_distToPoint( pt, detail::RootHelper<LP>() );
 		}
-		FPT distTo( const Root<type::IsLine,FPT>& li ) const
+		double distTo( const Root<type::IsLine,FPT>& li ) const
 		{
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
@@ -844,12 +844,12 @@ class Root
 /// Returns angle in rad. between the lines
 /** Please check out warning described in impl_getAngle() */
 		template<typename T>
-		FPT getAngle( const Root<T,FPT>& other ) const
+		double getAngle( const Root<T,FPT>& other ) const
 		{
 			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
 		template<typename T>
-		FPT getAngle( const Segment_<T>& seg ) const;
+		double getAngle( const Segment_<T>& seg ) const;
 
 	private:
 		FPT impl_getX( const detail::RootHelper<type::IsPoint>& /* dummy */ ) const
@@ -871,15 +871,15 @@ class Root
 		void
 		impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& );
 
-		FPT impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		FPT impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
-		FPT impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
+		double impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		double impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		double impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
+		double impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
-		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		FPT  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		double  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		double  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool    impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool    impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsPoint,FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
@@ -1230,7 +1230,7 @@ class Segment_
 			return _ptS1.distTo( _ptS2 );
 		}
 		template<typename U>
-		FPT getAngle( const U& other ) const
+		double getAngle( const U& other ) const
 		{
 			return other.getAngle( this->getLine() );
 		}
@@ -1300,7 +1300,7 @@ Root<LP,FPT>::isParallelTo( const Segment_<T>& seg ) const
 /// Returns angle in rad. between the line and the segment \c seg
 template<typename LP,typename FPT>
 template<typename T>
-FPT
+double
 Root<LP,FPT>::getAngle( const Segment_<T>& seg ) const
 {
 	return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
@@ -1627,7 +1627,7 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<ty
 
 /// overload for point to point distance
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
 	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
@@ -1644,7 +1644,7 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 \todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
 */
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
@@ -1652,7 +1652,7 @@ Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail:
 
 /// overload for line to point distance
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
 //	return li.impl_distToPoint( *this, detail::RootHelper<type::IsLine>() );
@@ -1661,7 +1661,7 @@ Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>& li, const detail::R
 
 /// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
@@ -1685,7 +1685,7 @@ Root<LP,FPT>::impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
-FPT
+double
 getAngle( const Root<type::IsLine,FPT>& li1, const Root<type::IsLine,FPT>& li2 )
 {
 	return li1.getAngle( li2 );
@@ -1734,7 +1734,7 @@ This is logged on \c std::cerr so that the user may take that into consideration
 \todo more investigation needed ! : what are the exact situation that will lead to this event?
 */
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
 	auto res = _v[0] * li._v[0] + _v[1] * li._v[1];
@@ -1752,7 +1752,7 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 }
 
 template<typename LP, typename FPT>
-FPT
+double
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );

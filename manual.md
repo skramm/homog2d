@@ -468,6 +468,9 @@ If you prefer the classical template notation, it is also available by using `Po
 Point2d_<float> pt; // this is fine
 ```
 
+However, this only applies to **storage**.
+All the computation (distances, angles, ...) use `double` internally and will return a value of type `double`.
+
 ### Numerical issues
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
