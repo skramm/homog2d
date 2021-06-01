@@ -671,6 +671,10 @@ class Root
 	template<typename U,typename V>
 	friend class Hmatrix_;
 
+// This is needed so we can convert from, say, Point2d_<float> to Point2d_<double>
+	template<typename U,typename V>
+	friend class Root;
+
 //	template<typename T,typename U,typename V,typename W>
 //	friend Root<T,V>
 //	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
@@ -726,18 +730,23 @@ class Root
 			p_normalizeLine();
 		}
 
-/// Constructor: build a line passing through (0,0) and \c pt
-/** This will call one of the two overloads of \c impl_init_1_Line(), depending on type of object */
-		Root( const Root<type::IsLine,FPT>& li )
+/// Constructor: copy-constructor for lines
+		template<typename T>
+		Root( const Root<type::IsLine,T>& li )
 		{
-			impl_init_1_Line( li, detail::RootHelper<LP>() );
+			impl_init_1_Line<T>( li, detail::RootHelper<LP>() );
 		}
 
 /// Constructor with single arg of type "Point"
-/** This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object */
-		Root( const Root<type::IsPoint,FPT>& pt )
+/**
+This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object:
+- if type is a point, then it can be seen as a copy constructor
+- if type is a line, this will build a line from (0,0] to \c pt
+*/
+		template<typename T>
+		Root( const Root<type::IsPoint,T>& pt )
 		{
-			impl_init_1_Point( pt, detail::RootHelper<LP>() );
+			impl_init_1_Point<T>( pt, detail::RootHelper<LP>() );
 		}
 
 /// Constructor: build from two numerical values, depends on the type
@@ -755,27 +764,40 @@ class Root
 		}
 
 	private:
-		/// Arg is a point, object is a point => copy constructor
-		void impl_init_1_Point( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsPoint>&  )
+		template<typename T,typename U>
+		void p_copyFrom( const Root<T,U>& other )
 		{
-			*this = pt;
+			_v[0] = static_cast<FPT>(other._v[0]);
+			_v[1] = static_cast<FPT>(other._v[1]);
+			_v[2] = static_cast<FPT>(other._v[2]);
+		}
+		/// Arg is a point, object is a point => copy constructor
+		template<typename T>
+		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsPoint>&  )
+		{
+//			*this = pt;   // we can't use this because it implies calling the constructor to build a converted point from T to FPT, thus infinite loop
+			p_copyFrom( pt );
 		}
 		/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
-		void impl_init_1_Point( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsLine>&  )
+		template<typename T>
+		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsLine>&  )
 		{
+			std::cerr << __FUNCTION__ << "():IsLine\n";
 			*this = detail::crossProduct<type::IsLine>( pt, Root<type::IsPoint,FPT>() );
 			p_normalizeLine();
 		}
 
 		/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
-		void impl_init_1_Line( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsPoint>&  )
+		template<typename T>
+		void impl_init_1_Line( const Root<type::IsLine,T>& li, const detail::RootHelper<type::IsPoint>&  )
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 		}
 		/// Arg is a line, object is a line => copy constructor
-		void impl_init_1_Line( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsLine>&  )
+		template<typename T>
+		void impl_init_1_Line( const Root<type::IsLine,T>& li, const detail::RootHelper<type::IsLine>&  )
 		{
-			*this = li;
+			p_copyFrom( li );
 		}
 
 	public:
@@ -984,7 +1006,8 @@ class Root
 //////////////////////////
 
 	private:
-		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
+//		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
+		std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
 		static FPT _zeroAngleValue;       /// Used in isParallel();
 		static FPT _zeroDistance;         /// Used to define points as identical
@@ -1044,7 +1067,7 @@ class Root
 		void impl_init_opencv( T pt, const detail::RootHelper<type::IsLine>& )
 		{
 			Root<type::IsPoint,FPT> p(pt);
-			impl_init_1_Point( p, detail::RootHelper<type::IsLine>() );
+			impl_init_1_Point<T>( p, detail::RootHelper<type::IsLine>() );
 //			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
 		}
 

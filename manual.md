@@ -471,6 +471,15 @@ Point2d_<float> pt; // this is fine
 However, this only applies to **storage**.
 All the computation (distances, angles, ...) use `double` internally and will return a value of type `double`.
 
+It is of course possible to convert to/from an object templated by a different type:
+```C++
+Point2dD pt_double;
+Line2dL  li_long;
+Point2dF pt_float  = pt_double;
+Line2dD  li_double = li_long;
+```
+
+
 ### Numerical issues
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.

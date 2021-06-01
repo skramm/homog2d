@@ -43,25 +43,84 @@ using namespace homog2d;
 TEST_CASE( "types testing", "[testtypes]" )
 {
 	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
-	Point2dF ptF;
-	Point2dD ptD;
-	Point2dL ptL;
+	SECTION( "type size" )
+	{
+		Point2dF ptF;
+		Point2dD ptD;
+		Point2dL ptL;
 
-	Line2dF liF;
-	Line2dD liD;
-	Line2dL liL;
+		Line2dF liF;
+		Line2dD liD;
+		Line2dL liL;
 
-	HomogrF HF;
-	HomogrD HD;
-	HomogrL HL;
+		HomogrF HF;
+		HomogrD HD;
+		HomogrL HL;
 
-	Point2d_<float> pt2F1;
-	Point2d_<double> pt2F2;
-	Point2d_<long double> pt2F3;
+		Point2d_<float> pt2F1;
+		Point2d_<double> pt2F2;
+		Point2d_<long double> pt2F3;
 
-	CHECK( sizeof(Point2dF) == 12 );
-	CHECK( sizeof(Point2dD) == 24 );
-	CHECK( sizeof(Point2dL) == 48 );
+		CHECK( sizeof(Point2dF) == 12 );
+		CHECK( sizeof(Point2dD) == 24 );
+		CHECK( sizeof(Point2dL) == 48 );
+	}
+
+	Point2dD ptD0(1,1);
+	Point2dF ptF0(2,2);
+	Point2dL ptL0(3,3);
+
+	Line2dD li_D0(1,1);
+	Line2dF li_F0(2,2);
+	Line2dL li_L0(3,3);
+
+	SECTION( "numerical type conversions (assignment)" )
+	{
+		Point2dD ptD(4,4);
+		Point2dF ptF(5,5);
+		Point2dL ptL(6,6);
+
+		ptL = ptD0;
+		CHECK( ptL.getX() == 1. );
+		ptL = ptF0;
+		CHECK( ptL.getX() == 2. );
+
+		ptF = ptD0;
+		CHECK( ptF.getX() == 1. );
+		ptF = ptL0;
+		CHECK( ptF.getX() == 3. );
+
+		ptD = ptF0;
+		CHECK( ptD.getX() == 2. );
+		ptD = ptL0;
+		CHECK( ptD.getX() == 3. );
+	}
+	SECTION( "numerical type conversions (constructor)" )
+	{
+		Point2dL ptL1 = ptD0;
+		Point2dL ptL2 = ptF0;
+		CHECK( ptL1.getX() == 1. );
+		CHECK( ptL2.getX() == 2. );
+
+		Point2dF ptF1 = ptD0;
+		Point2dF ptF2 = ptL0;
+		CHECK( ptF1.getX() == 1. );
+		CHECK( ptF2.getX() == 3. );
+
+		Point2dD ptD1 = ptF0;
+		Point2dD ptD2 = ptL0;
+		CHECK( ptD1.getX() == 2. );
+		CHECK( ptD2.getX() == 3. );
+
+		Line2dD li_D1 = li_F0;
+		Line2dD li_L1 = li_F0;
+
+		Line2dD li_F2 = li_D0;
+		Line2dD li_L2 = li_D0;
+
+		Line2dD li_F3 = li_L0;
+		Line2dD li_D3 = li_L0;
+	}
 }
 
 TEST_CASE( "test1", "[test1]" )
@@ -547,7 +606,6 @@ TEST_CASE( "getPoints", "[test_points]" )
 	CHECK( pp.first  == Point2d_<NUMTYPE>( 5-k, 5-k ) );
 	CHECK( pp.second == Point2d_<NUMTYPE>( 5+k, 5+k ) );
 
-
 	li = Point2d_<NUMTYPE>(3,1) * Point2d_<NUMTYPE>(4,2); // line with slope [1,1] starting from (3,1)
 
 	pp = li.getPoints( GivenCoord::X, 5.0, 1.0 ); // get points at a distance 2 from (3,0)
@@ -789,7 +847,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 	{
 		Point2d_<NUMTYPE> pt(1.,2.);
 		{
-			cv::Point2d_<NUMTYPE> cvpt1 = getCvPtd( pt );
+			cv::Point2d cvpt1 = getCvPtd( pt );
 			CHECK( (cvpt1.x == 1. && cvpt1.y == 2.) );
 			cv::Point2f cvpt2 = getCvPtf( pt );
 			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
@@ -797,7 +855,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
 		}
 		{
-			cv::Point2d_<NUMTYPE> cvpt1 = pt.getCvPtd() ;
+			cv::Point2d cvpt1 = pt.getCvPtd() ;
 			CHECK( (cvpt1.x == 1. && cvpt1.y == 2.) );
 			cv::Point2f cvpt2 = pt.getCvPtf() ;
 			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
@@ -807,11 +865,11 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 	}
 	SECTION( "Fetch from OpenCv points" )
 	{
-		cv::Point2d_<NUMTYPE> ptd(1,2);
+		cv::Point2d ptd(1,2);
 		cv::Point2f ptf(1,2);
 		cv::Point2f pti(1,2);
 		{                            // test of constructor
-			Point2d_<NUMTYPE> p1(ptd);
+			Point2d p1(ptd);
 			CHECK(( p1.getX() == 1. && p1.getY() == 2. ));
 			Point2d_<NUMTYPE> p2(ptf);
 			CHECK(( p2.getX() == 1. && p2.getY() == 2. ));
@@ -819,7 +877,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK(( p3.getX() == 1. && p3.getY() == 2. ));
 		}
 		{                            // test of assignment operator
-			Point2d_<NUMTYPE> p1 = ptd;
+			Point2d p1 = ptd;
 			CHECK(( p1.getX() == 1 && p1.getY() == 2. ));
 			Point2d_<NUMTYPE> p2 = ptf;
 			CHECK(( p2.getX() == 1 && p2.getY() == 2. ));
