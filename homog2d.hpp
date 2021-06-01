@@ -34,6 +34,8 @@ See https://github.com/skramm/homog2d
 #include <sstream>
 #include <type_traits>
 
+#define HOMOG2D_VERSION 2.2
+
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
 #endif

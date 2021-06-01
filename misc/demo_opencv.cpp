@@ -496,6 +496,9 @@ void demo_6(int n)
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
+	std::cout << "homog2d graphical demo using Opencv"
+		<< "\n - homog version: " << HOMOG2D_VERSION
+		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 	std::vector<std::function<void(int)>> v_demo{
 		demo_1,
 		demo_2,
@@ -515,8 +518,7 @@ int main( int argc, const char** argv )
 		v_demo[d-1](d);
 		return 0;
 	}
-	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n"
-		<< " - installed OpenCV version : " << CV_VERSION << '\n';
+	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
 	{
 		cv::destroyAllWindows(); // to disable the mouse callback

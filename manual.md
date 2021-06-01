@@ -108,8 +108,6 @@ You can also get directly the point with:
 Point2d pt2 = li.getPoint( GivenCoord::X, 2 );
 ```
 
-The values `GivenCoord::Y`,`GivenCoord::Y` are just a two-values `enum`.
-
 ### Points at equal distance from a point on line
 <a name="paedfapol"></a>
 
@@ -286,7 +284,6 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-
 ## 5 - Computation of intersection points
 <a name="inter"></a>
 
@@ -448,6 +445,7 @@ s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
+In case you have some trouble building this program, please [read this](misc/opencv_notes.md).
 
 ## 7 - Numerical data types
 <a name="numdt"></a>
