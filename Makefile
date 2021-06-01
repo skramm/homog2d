@@ -15,6 +15,7 @@ endif
 
 test: homog2d_test #demo_check
 	@echo "Run tests"
+	./homog2d_test
 
 # compute code coverage (EXPERIMENTAL !)
 cov:
