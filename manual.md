@@ -577,7 +577,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `clear()` to `init()` for matrices
   - added `getParallelLine()`
 
-- [next-release]: (current master branch)
+- [v2.2](https://github.com/skramm/homog2d/releases/tag/v2.2)
   - added 2 constructors to `Homogr`
   - added `isParallelTo()`
   - API change:
