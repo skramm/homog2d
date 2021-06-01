@@ -226,7 +226,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
 			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
@@ -263,7 +263,7 @@ Thus some assert can get triggered elsewhere.
 		T      v  ///< value
 	)
 	{
-		#ifdef HOMOG2D_SAFE_MODE
+		#ifndef HOMOG2D_NOCHECKS
 			HOMOG2D_CHECK_ROW_COL;
 		#endif
 		_data[r][c] = v;
@@ -272,7 +272,7 @@ Thus some assert can get triggered elsewhere.
 /// Getter
 	FPT get( size_t r, size_t c ) const
 	{
-		#ifdef HOMOG2D_SAFE_MODE
+		#ifndef HOMOG2D_NOCHECKS
 			HOMOG2D_CHECK_ROW_COL;
 		#endif
 		return _data[r][c];
@@ -706,7 +706,7 @@ class Root
 /// Constructor: build a point from two lines
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
 		{
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 			if( v1.isParallelTo(v2) )
 				std::runtime_error( "unable to build point from these two lines, are parallel" );
 #endif
@@ -716,7 +716,7 @@ class Root
 /// Constructor: build a line from two points
 		Root( const Root<type::IsPoint,FPT>& v1, const Root<type::IsPoint,FPT>& v2 )
 		{
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 			if( v1 == v2 )
 				std::runtime_error( "unable to build line from these two points, are the same" );
 #endif
@@ -1125,12 +1125,13 @@ template<typename FPT>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 )
 {
+#ifndef HOMOG2D_NOCHECKS
 	if(
 		   fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
 		|| fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
 	)
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
-
+#endif
 	Root<type::IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
 	Root<type::IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
@@ -1379,6 +1380,10 @@ operator << ( std::ostream& f, const Root<LP,FPT>& r )
 
 //------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0
+/**
+\todo Checkout: in what situation will we be unable to normalize?
+Is the test below relevant? Clarify.
+*/
 template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const
@@ -1557,7 +1562,7 @@ template<typename FPT>
 Root<type::IsPoint,FPT>
 operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rhs )
 {
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 	if( lhs.isParallelTo(rhs) )
 		throw std::runtime_error( "lines are parallel, unable to compute product" );
 #endif
@@ -1581,7 +1586,7 @@ template<typename FPT>
 Root<type::IsLine,FPT>
 operator * ( const Root<type::IsPoint,FPT>& lhs, const Root<type::IsPoint,FPT>& rhs )
 {
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 	if( lhs == rhs )
 		throw std::runtime_error( "points are identical, unable to compute product" );
 #endif
@@ -2036,7 +2041,7 @@ template<typename W,typename FPT>
 void
 Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid OpenCv matrix type" );
 #endif
@@ -2061,14 +2066,14 @@ template<typename W,typename FPT>
 Hmatrix_<W,FPT>&
 Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 {
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
 		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
 #endif
 	auto type = mat.type();
-#ifdef HOMOG2D_SAFE_MODE
+#ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
 #endif

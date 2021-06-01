@@ -13,13 +13,8 @@ ifeq ($(USE_OPENCV),Y)
 endif
 
 
-test: homog2d_test_B #demo_check
-	@echo "Run tests with checking"
-	./homog2d_test_B
-
-testNC: homog2d_test_A #demo_check
-	@echo "Run tests without checking"
-	./homog2d_test_A
+test: homog2d_test #demo_check
+	@echo "Run tests"
 
 # compute code coverage (EXPERIMENTAL !)
 cov:
@@ -34,12 +29,9 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 # 2019-11-15: added options for code coverage with gcov
-homog2d_test_A: misc/homog2d_test.cpp homog2d.hpp Makefile
+homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
 #	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
-
-homog2d_test_B: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -DHOMOG2D_SAFE_MODE -O2 -o $@ $< $(LDFLAGS)
 
 doc: html/index.html
 	xdg-open html/index.html

@@ -525,8 +525,7 @@ You can do that in the makefile or just add a `#define` on top of your program,
 **before** the `#include "homog2d"`
 
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
-- `HOMOG2D_SAFE_MODE`: this will enable some additional checks in the API. Runtime issues will make functions throw a `std::runtime_error`.
-
+- `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
 
 ### Inner details
 
@@ -578,6 +577,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
     - replaced enums `En_OffsetDir` and `En_GivenCoord` with class enums `LineOffset` and `GivenCoord`
   - added `Segment` type and associated code
   - Licence change to MPLv2
+  - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
 
 - planned:
   - segment intersection features
