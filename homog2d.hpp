@@ -52,7 +52,9 @@ See https://github.com/skramm/homog2d
 	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type must be numerical" )
 
 /// Internal type used for numerical computations, possible	values: \c double, <code>long double</code>
-#define HOMOG2D_INUMTYPE double
+#ifndef HOMOG2D_INUMTYPE
+	#define HOMOG2D_INUMTYPE double
+#endif
 
 namespace homog2d {
 
@@ -912,7 +914,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsPoint>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<type::IsPoint,FPT>& ) const;
-		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>& ) const;
+		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>&  ) const;
 
 	public:
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
@@ -1385,7 +1387,7 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsPoint,FPT>& r ) const
 {
-	f << '[' << r.getX() << ',' << r.getY() << "] ";
+	f << "A" << '[' << std::setprecision(30) << r.getX() << ',' << r.getY() << "] ";
 }
 
 /// Overload for lines
@@ -1393,7 +1395,7 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsLine,FPT>& r ) const
 {
-	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+	f << "B" << '[' << std::setprecision(30) << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 }
 
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
@@ -1545,12 +1547,14 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
+	std::cout << __FUNCTION__ << "(IsLine):\n -this=" << *this << "\n -other=" << other <<"\n";
 	if( !this->isParallelTo( other ) )
 		return false;
 
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
 		return false;
 
+	std::cout << "=>TRUE\n";
 	return true;
 }
 
@@ -1559,9 +1563,16 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
+	std::cout << __FUNCTION__ << "(IsPoint):\n -this=" << *this << "\n -other=" << other <<"\n";
 	auto dist = this->distTo( other );
 	if( dist < nullDistance() )
-		return true;
+	{
+		std::cout << "=>TRUE\n";
+	return true;
+	}
+
+	std::cout << "=>FALSE\n";
+
 	return false;
 }
 
@@ -1570,7 +1581,7 @@ Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper
 namespace detail {
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	template<typename Out, typename In,typename FPT>
+	template<typename Out,typename In,typename FPT>
 	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
 	{
 		auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
@@ -1585,9 +1596,9 @@ namespace detail {
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
 */
 		Root<Out,FPT> res;
-		res._v[0] = static_cast<Out>( r1_b * r2_c  - r1_c * r2_b );
-		res._v[1] = static_cast<Out>( r1_c * r2_a  - r1_a * r2_c );
-		res._v[2] = static_cast<Out>( r1_a * r2_b  - r1_b * r2_a );
+		res._v[0] = static_cast<FPT>( r1_b * r2_c  - r1_c * r2_b );
+		res._v[1] = static_cast<FPT>( r1_c * r2_a  - r1_a * r2_c );
+		res._v[2] = static_cast<FPT>( r1_a * r2_b  - r1_b * r2_a );
 
 		return res;
 	}
@@ -1767,10 +1778,8 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 //	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
 	HOMOG2D_INUMTYPE l1a = _v[0];
 	HOMOG2D_INUMTYPE l1b = _v[1];
-	HOMOG2D_INUMTYPE l1c = _v[2];
 	HOMOG2D_INUMTYPE l2a = li._v[0];
 	HOMOG2D_INUMTYPE l2b = li._v[1];
-	HOMOG2D_INUMTYPE l2c = li._v[2];
 	HOMOG2D_INUMTYPE res = l1a * l2a + l1b * l2b;
 
 //	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
