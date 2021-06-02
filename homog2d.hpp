@@ -1057,17 +1057,18 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename OPENCVT>
 		OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
 
+/// Build point from Opencv point
 		template<typename T>
 		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsPoint>& )
 		{
 			impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
 		}
+/// Build line from Opencv point
 		template<typename T>
 		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsLine>& )
 		{
 			Root<type::IsPoint,FPT> p(pt);
-			impl_init_1_Point<T>( p, detail::RootHelper<type::IsLine>() );
-//			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
+			impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 		}
 
 		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1436,10 +1437,13 @@ template<typename LP,typename FPT>
 FPT
 Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const
 {
+	auto a = static_cast<HOMOG2D_INUMTYPE>( _v[0] );
+	auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
+//	auto c = static_cast<HOMOG2D_INUMTYPE>( _v[2] ); // useless, automatic conversion will take place
 	if( gc == GivenCoord::X )
-		return ( -_v[0] * other - _v[2] ) / _v[1];
+		return ( -a * other - _v[2] ) / b;
 	else
-		return ( -_v[1] * other - _v[2] ) / _v[0];
+		return ( -b * other - _v[2] ) / a;
 }
 
 template<typename LP,typename FPT>
@@ -1766,14 +1770,14 @@ double
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
 //	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
-	HOMOG2D_INUMTYPE l1a = _v[0];
-	HOMOG2D_INUMTYPE l1b = _v[1];
-	HOMOG2D_INUMTYPE l2a = li._v[0];
-	HOMOG2D_INUMTYPE l2b = li._v[1];
-	HOMOG2D_INUMTYPE res = l1a * l2a + l1b * l2b;
+	HOMOG2D_INUMTYPE l1_a = _v[0];
+	HOMOG2D_INUMTYPE l1_b = _v[1];
+	HOMOG2D_INUMTYPE l2_a = li._v[0];
+	HOMOG2D_INUMTYPE l2_b = li._v[1];
+	HOMOG2D_INUMTYPE res = l1_a * l2_a + l1_b * l2_b;
 
 //	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
-	res /= std::sqrt( (l1a*l1a + l1b*l1b) * (l2a*l2a + l2b*l2b) );
+	res /= std::sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
 //	std::cerr << __FUNCTION__ << "(): a1*b1=" << _v[0]*_v[0] + _v[1]*_v[1] << " a2*b2=" << li._v[0]*li._v[0] + li._v[1]*li._v[1] << "\n";
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(std::numeric_limits<double>::digits10 + 1) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
