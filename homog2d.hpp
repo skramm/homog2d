@@ -680,10 +680,6 @@ class Root
 	template<typename U,typename V>
 	friend class Root;
 
-//	template<typename T,typename U,typename V,typename W>
-//	friend Root<T,V>
-//	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
-
 	template<typename T>
 	friend Root<type::IsPoint,T>
 	operator * ( const Root<type::IsLine,T>&, const Root<type::IsLine,T>& );
@@ -712,7 +708,6 @@ class Root
 		}*/
 
 	public:
-
 
 /// Constructor: build a point from two lines
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
@@ -992,7 +987,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
 		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
 		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
-
+/// Constructor: build from a single OpenCv point.
 		template<typename T>
 		Root( cv::Point_<T> pt )
 		{
@@ -1063,12 +1058,12 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
 
 		template<typename T>
-		void impl_init_opencv( T pt, const detail::RootHelper<type::IsPoint>& )
+		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsPoint>& )
 		{
 			impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
 		}
 		template<typename T>
-		void impl_init_opencv( T pt, const detail::RootHelper<type::IsLine>& )
+		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsLine>& )
 		{
 			Root<type::IsPoint,FPT> p(pt);
 			impl_init_1_Point<T>( p, detail::RootHelper<type::IsLine>() );
@@ -1387,7 +1382,7 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsPoint,FPT>& r ) const
 {
-	f << "A" << '[' << std::setprecision(30) << r.getX() << ',' << r.getY() << "] ";
+	f << '[' << r.getX() << ',' << r.getY() << "] ";
 }
 
 /// Overload for lines
@@ -1395,7 +1390,7 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Root<type::IsLine,FPT>& r ) const
 {
-	f << "B" << '[' << std::setprecision(30) << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
 }
 
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
@@ -1547,14 +1542,14 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
-	std::cout << __FUNCTION__ << "(IsLine):\n -this=" << *this << "\n -other=" << other <<"\n";
+//	std::cout << __FUNCTION__ << "(IsLine):\n -this=" << *this << "\n -other=" << other <<"\n";
 	if( !this->isParallelTo( other ) )
 		return false;
 
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
 		return false;
 
-	std::cout << "=>TRUE\n";
+//	std::cout << "=>TRUE\n";
 	return true;
 }
 
@@ -1563,16 +1558,11 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
-	std::cout << __FUNCTION__ << "(IsPoint):\n -this=" << *this << "\n -other=" << other <<"\n";
+//	std::cout << __FUNCTION__ << "(IsPoint):\n -this=" << *this << "\n -other=" << other <<"\n";
 	auto dist = this->distTo( other );
+//	std::cout << "dist=" << dist << "\n";
 	if( dist < nullDistance() )
-	{
-		std::cout << "=>TRUE\n";
-	return true;
-	}
-
-	std::cout << "=>FALSE\n";
-
+		return true;
 	return false;
 }
 
@@ -1667,7 +1657,7 @@ Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail:
 	return static_cast<double>(
 		std::hypot(
 			static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
-			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() )
+			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
 		)
 	);
 }
