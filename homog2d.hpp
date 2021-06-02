@@ -51,6 +51,9 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type must be numerical" )
 
+/// Internal type used for numerical computations, possible	values: \c double, <code>long double</code>
+#define HOMOG2D_INUMTYPE double
+
 namespace homog2d {
 
 /// Holds the types needed for policy based design
@@ -1570,13 +1573,22 @@ namespace detail {
 	template<typename Out, typename In,typename FPT>
 	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
 	{
-		Root<Out,FPT> res;
-		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
+		auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
+		auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
+		auto r1_c = static_cast<HOMOG2D_INUMTYPE>(r1._v[2]);
+		auto r2_a = static_cast<HOMOG2D_INUMTYPE>(r2._v[0]);
+		auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
+		auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
+
+/*		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-//		for ( int i=0; i<3; i++)
-//			std::cout << "v[" << i << "]=" << res._v[i] << " ";
-//		std::cout  << '\n';
+*/
+		Root<Out,FPT> res;
+		res._v[0] = static_cast<Out>( r1_b * r2_c  - r1_c * r2_b );
+		res._v[1] = static_cast<Out>( r1_c * r2_a  - r1_a * r2_c );
+		res._v[2] = static_cast<Out>( r1_a * r2_b  - r1_b * r2_a );
+
 		return res;
 	}
 } // namespace detail
@@ -1591,18 +1603,7 @@ operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rh
 		throw std::runtime_error( "lines are parallel, unable to compute product" );
 #endif
 
-	auto pt = detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
-#if 0
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( std::fabs(pt._v[2]) <= eps )
-	{
-		std::ostringstream lh,lr;
-		lh << lhs;
-		lr << rhs;
-		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
-	}
-#endif
-	return pt;
+	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
 }
 
 /// Free function template, product of two points, returns a line
@@ -1647,12 +1648,17 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<ty
 	p_normalizeLine();
 }
 
-/// overload for point to point distance
+/// Overload for point to point distance
 template<typename LP, typename FPT>
 double
 Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
-	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
+	return static_cast<double>(
+		std::hypot(
+			static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
+			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() )
+		)
+	);
 }
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. overload for line to point distance.
@@ -1677,7 +1683,6 @@ template<typename LP, typename FPT>
 double
 Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
-//	return li.impl_distToPoint( *this, detail::RootHelper<type::IsLine>() );
 	return li.distTo( *this );
 }
 
@@ -1759,15 +1764,24 @@ template<typename LP, typename FPT>
 double
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto res = _v[0] * li._v[0] + _v[1] * li._v[1];
-	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
+//	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
+	HOMOG2D_INUMTYPE l1a = _v[0];
+	HOMOG2D_INUMTYPE l1b = _v[1];
+	HOMOG2D_INUMTYPE l1c = _v[2];
+	HOMOG2D_INUMTYPE l2a = li._v[0];
+	HOMOG2D_INUMTYPE l2b = li._v[1];
+	HOMOG2D_INUMTYPE l2c = li._v[2];
+	HOMOG2D_INUMTYPE res = l1a * l2a + l1b * l2b;
+
+//	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
+	res /= std::sqrt( (l1a*l1a + l1b*l1b) * (l2a*l2a + l2b*l2b) );
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
 //	std::cerr << __FUNCTION__ << "(): a1*b1=" << _v[0]*_v[0] + _v[1]*_v[1] << " a2*b2=" << li._v[0]*li._v[0] + li._v[1]*li._v[1] << "\n";
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(std::numeric_limits<double>::digits10 + 1) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
-	auto fres = std::abs(res);
+	HOMOG2D_INUMTYPE fres = std::abs(res);
 	if( fres > 1.0 )
 	{
-		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << " truncated to 1.0\n";
+		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << ", truncated to 1.0\n";
 		fres = 1.0;
 	}
 	return std::acos( fres );

@@ -160,12 +160,12 @@ TEST_CASE( "test1", "[test1]" )
 	}
 	{
 // build point from two diagonal lines
-		Line2d_<NUMTYPE> lA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-		Line2d_<NUMTYPE> lB( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,0) );
-		CHECK( Line2d_<NUMTYPE>() != lA );
+		Line2d_<NUMTYPE> liA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
+		Line2d_<NUMTYPE> liB( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,0) );
+		CHECK( Line2d_<NUMTYPE>() != liA );
 
-		auto mA1 = lA * lB;
-		auto mA2 = lB * lA;
+		auto mA1 = liA * liB;
+		auto mA2 = liB * liA;
 		CHECK( mA1 == Point2d_<NUMTYPE>(1.,1.) );
 		CHECK( mA2 == Point2d_<NUMTYPE>(1.,1.) );
 		CHECK( mA1 != Point2d_<NUMTYPE>() );
@@ -182,17 +182,17 @@ TEST_CASE( "test1", "[test1]" )
 
 		CHECK( lv2*lh2 == Point2d_<NUMTYPE>(2.,2.) );
 
-		CHECK( lv0*lA == Point2d_<NUMTYPE>() );
-		CHECK( lh0*lA == Point2d_<NUMTYPE>() );
+		CHECK( lv0*liA == Point2d_<NUMTYPE>() );
+		CHECK( lh0*liA == Point2d_<NUMTYPE>() );
 
-		CHECK( lv0*lB == Point2d_<NUMTYPE>(0,2) );
-		CHECK( lh0*lB == Point2d_<NUMTYPE>(2,0) );
+		CHECK( lv0*liB == Point2d_<NUMTYPE>(0,2) );
+		CHECK( lh0*liB == Point2d_<NUMTYPE>(2,0) );
 
-		CHECK( lv2*lA == Point2d_<NUMTYPE>(2.,2.) );
-		CHECK( lh2*lA == Point2d_<NUMTYPE>(2.,2.) );
+		CHECK( lv2*liA == Point2d_<NUMTYPE>(2.,2.) );
+		CHECK( lh2*liA == Point2d_<NUMTYPE>(2.,2.) );
 
-		CHECK( lv2*lB == Point2d_<NUMTYPE>(2.,0.) );
-		CHECK( lh2*lB == Point2d_<NUMTYPE>(0.,2.) );
+		CHECK( lv2*liB == Point2d_<NUMTYPE>(2.,0.) );
+		CHECK( lh2*liB == Point2d_<NUMTYPE>(0.,2.) );
 	}
 
 	{ // test of getOrthogonal()
@@ -230,11 +230,15 @@ TEST_CASE( "test parallel", "[test_para]" )
 {
 	SECTION( "Checking angle" )
 	{
-		Line2d_<NUMTYPE> l1; // vertical line
-		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) );
+		Line2d_<NUMTYPE> l1;                                                   // vertical line
+		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ); // 45° line, starting at (0,0)
 		CHECK( getAngle( l1, l2a ) == M_PI/4. );
 
-		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) );
+		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
+		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+		l2b.addOffset( LineOffset::horiz, 10. );
+		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+		l2b.addOffset( LineOffset::vert, 10. );
 		CHECK( getAngle( l1, l2b ) == M_PI/4. );
 	}
 
