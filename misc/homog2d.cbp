@@ -33,6 +33,7 @@
 		<Unit filename="doxyfile" />
 		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
+		<Unit filename="opencv_notes.md" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 			<code_completion />
