@@ -21,10 +21,14 @@
 run with "make test"
 */
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-#define NUMTYPE double
+/// Numerical type for object storage
+#ifndef NUMTYPE
+	#define NUMTYPE double
+#endif
 
 #include "../homog2d.hpp"
 
@@ -40,9 +44,29 @@ double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10.;
 
 using namespace homog2d;
 
+
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
+int main( int argc, char* argv[] )
+{
+	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type\n";
+	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
+
+  // global setup...
+	Catch::StringMaker<float>::precision = 25;
+	Catch::StringMaker<double>::precision = 25;
+//	Catch::StringMaker<long double>::precision = 25;
+
+	int result = Catch::Session().run( argc, argv );
+
+  // global clean-up...
+	return result;
+}
+
+
 TEST_CASE( "types testing", "[testtypes]" )
 {
-	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
 	SECTION( "type size" )
 	{
 		Point2dF ptF;
@@ -155,7 +179,9 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d_<NUMTYPE> ptB1(0,2);
 		Point2d_<NUMTYPE> ptB2(2,0);
 		Line2d_<NUMTYPE>  lB = ptB1 * ptB2;
-		CHECK( lB.getCoord( GivenCoord::X, 1 ) == 1. );
+
+		auto v1 = lB.getCoord( GivenCoord::X, 1 );
+		CHECK( v1 == 1. );
 		CHECK( lB.getPoint( GivenCoord::X, 1) == Point2d_<NUMTYPE>(1,1) );
 	}
 	{
@@ -232,10 +258,15 @@ TEST_CASE( "test parallel", "[test_para]" )
 	{
 		Line2d_<NUMTYPE> l1;                                                   // vertical line
 		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ); // 45° line, starting at (0,0)
-		CHECK( getAngle( l1, l2a ) == M_PI/4. );
+
+//		CHECK( getAngle( l1, l2a ) == M_PI/4. );
+		CHECK( getAngle( l1, l2a ) - M_PI/4. == 0. );
 
 		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
-		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+
+//		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+		CHECK( getAngle( l1, l2b ) - M_PI/4. == 0. );
+
 		l2b.addOffset( LineOffset::horiz, 10. );
 		CHECK( getAngle( l1, l2b ) == M_PI/4. );
 		l2b.addOffset( LineOffset::vert, 10. );

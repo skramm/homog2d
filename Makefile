@@ -17,6 +17,9 @@ test: homog2d_test #demo_check
 	@echo "Run tests"
 	./homog2d_test
 
+testall: homog2d_test_f homog2d_test_d homog2d_test_l
+	misc/test_all.sh
+
 # compute code coverage (EXPERIMENTAL !)
 cov:
 	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
@@ -33,6 +36,17 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
 #	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
+
+
 
 doc: html/index.html
 	xdg-open html/index.html
