@@ -44,7 +44,7 @@ homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
 
 homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
 
 
 

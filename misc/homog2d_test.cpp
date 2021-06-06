@@ -50,13 +50,13 @@ using namespace homog2d;
 
 int main( int argc, char* argv[] )
 {
-	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type\n";
+	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type, internal numerical type=" << XSTR(HOMOG2D_INUMTYPE) << '\n';
 	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
 
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
-//	Catch::StringMaker<long double>::precision = 25;
+	Catch::StringMaker<long double>::precision = 25;
 
 	int result = Catch::Session().run( argc, argv );
 
