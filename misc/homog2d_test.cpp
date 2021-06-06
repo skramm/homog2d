@@ -40,6 +40,8 @@ run with "make test"
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
 
+#define LOG(a) std::cout << " INFO: " << (a) << '\n';
+
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*20.;
 
 using namespace homog2d;
@@ -66,7 +68,7 @@ int main( int argc, char* argv[] )
 
 TEST_CASE( "types testing", "[testtypes]" )
 {
-	SECTION( "type size" )
+	INFO( "type size" )
 	{
 		Point2dF ptF;
 		Point2dD ptD;
@@ -97,7 +99,7 @@ TEST_CASE( "types testing", "[testtypes]" )
 	Line2dF li_F0(2,2);
 	Line2dL li_L0(3,3);
 
-	SECTION( "numerical type conversions (assignment)" )
+	INFO( "numerical type conversions (assignment)" )
 	{
 		Point2dD ptD(4,4);
 		Point2dF ptF(5,5);
@@ -118,7 +120,7 @@ TEST_CASE( "types testing", "[testtypes]" )
 		ptD = ptL0;
 		CHECK( ptD.getX() == 3. );
 	}
-	SECTION( "numerical type conversions (constructor)" )
+	INFO( "numerical type conversions (constructor)" )
 	{
 		Point2dL ptL1 = ptD0;
 		Point2dL ptL2 = ptF0;
@@ -274,7 +276,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 
 	INFO( "Checking parallel lines" )
 	{
-		std::cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
+		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
 		Line2d_<NUMTYPE> l1; // vertical line
 		{
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
@@ -283,12 +285,15 @@ TEST_CASE( "test parallel", "[test_para]" )
 			Line2d_<NUMTYPE> l2b(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.002,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
-		Line2d::nullAngleValue() = 0.01;
+		Line2d_<NUMTYPE>::nullAngleValue() = 0.01;
 		{
-			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.01,1.) ); // almost vertical line
+			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
+			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.005,1.) ); // almost vertical line
+			INFO( "angle=" << getAngle( l1,l2a) );
 			CHECK( l1.isParallelTo(l2a) == true );
 
 			Line2d_<NUMTYPE> l2b(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.02,1.) ); // almost vertical line
+			INFO( "angle=" << getAngle( l1,l2b) );
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
 		//l1.isParallelTo( Point2d() ); // NO BUILD
