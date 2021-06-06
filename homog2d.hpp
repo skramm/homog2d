@@ -1152,8 +1152,8 @@ getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FP
 {
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		   fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
-		|| fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		   std::fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
 	)
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 #endif
