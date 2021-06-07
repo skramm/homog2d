@@ -435,7 +435,7 @@ Thus some assert can get triggered elsewhere.
 				_data[i][j] /= v;
 		return *this;
 #else
-		return *this * (1.0/v);
+		return *this * (1.0L/v);
 #endif
 	}
 /// Multiply all elements by scalar
@@ -458,7 +458,9 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
+					out._data[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
 		return out;
 	}
 
@@ -473,7 +475,10 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		auto eps = std::numeric_limits<FPT>::epsilon();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				if( std::fabs( _data[i][j] - h._data[i][j] ) >= eps )
+				if( std::fabs(
+					static_cast<HOMOG2D_INUMTYPE>( _data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h._data[i][j] ) )
+					>= eps
+				)
 					return false;
 		return true;
 	}
@@ -522,8 +527,8 @@ See https://en.wikipedia.org/wiki/Determinant
 	}
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v )
 	{
-		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
-		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[6]][v[7]] );
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[4]][v[5]] );
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
@@ -1082,7 +1087,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			_v[1] = 0.;
 			_v[2] = 0.;
 		}
-		/// Called by default constructor, overload for points
+		/// Called by default constructor, overload for points. Initialize to (0,0)
 		void impl_init( const detail::RootHelper<type::IsPoint>& )
 		{
 			_v[0] = 0.;
@@ -1725,7 +1730,7 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-auto a = getAngle(li);
+	auto a = getAngle(li);
 //	std::cout << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
 	if( a < Root::nullAngleValue() )
 //	if( getAngle(li) < Root::nullAngleValue() )
@@ -1888,16 +1893,16 @@ Root<LP,FPT>::impl_intersectsCircle(
 	auto d2 = r*r - d0*d0;
 
 // step 3: compute coordinates of middle point B
-	double xb = - a * cp / a2b2;
-	double yb = - b * cp / a2b2;
+	auto xb = - a * cp / a2b2;
+	auto yb = - b * cp / a2b2;
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
-	double m  = std::sqrt( d2 / a2b2 );
-	double x1 = xb + m*b;
-	double y1 = yb - m*a;
+	auto m  = std::sqrt( d2 / a2b2 );
+	auto x1 = xb + m*b;
+	auto y1 = yb - m*a;
 
-	double x2 = xb - m*b;
-	double y2 = yb + m*a;
+	auto x2 = xb - m*b;
+	auto y2 = yb + m*a;
 
 // last step: translate back
 	out.ptA.set( x1 + pt.getX(), y1 + pt.getY() );

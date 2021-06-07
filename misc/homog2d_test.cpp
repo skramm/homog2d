@@ -42,7 +42,7 @@ run with "make test"
 
 #define LOG(a) std::cout << " INFO: " << (a) << '\n';
 
-double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*20.;
+double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*50.;
 
 using namespace homog2d;
 
@@ -580,7 +580,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 	{
 		Line2d_<NUMTYPE> d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
-		CHECK( d1.distTo( pt1 ) == Approx(0.) );
+		CHECK( d1.distTo( pt1 ) < g_epsilon );
 	}
 
 	Homogr H;
@@ -588,25 +588,25 @@ TEST_CASE( "line transformation", "[testH3]" )
 		H.setTranslation(4,5);
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d == Approx(0.) );
+		CHECK( d < g_epsilon );
 	}
 	{
 		H.setRotation( 22.*M_PI/180. );
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d == Approx(0.) );
+		CHECK( d < g_epsilon );
 	}
 	{
 		H.setScale(0.4, 4.2);
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d == Approx(0.) );
+		CHECK( d < g_epsilon );
 	}
 	{
 		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d == Approx(0.) );
+		CHECK( d < g_epsilon );
 	}
 }
 
