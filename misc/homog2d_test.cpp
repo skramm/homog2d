@@ -57,8 +57,8 @@ int main( int argc, char* argv[] )
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
-	Catch::StringMaker<long double>::precision = 25;
-
+//	Catch::StringMaker<long double>::precision = 25;
+//	std::cout << "aprox(0)=" << Approx(0.) << '\n';
 	int result = Catch::Session().run( argc, argv );
 
   // global clean-up...
@@ -227,9 +227,8 @@ TEST_CASE( "test1", "[test1]" )
 
 // get orthogonal line at y=100
 		Line2d_<NUMTYPE> li2 = lV.getOrthogonalLine( GivenCoord::Y, 100 );
-		CHECK( li2.getAngle( lV ) == M_PI/2. );
-
-		CHECK( getAngle( li2,lV ) == M_PI/2. );
+		CHECK( li2.getAngle( lV ) == Approx(M_PI/2.) );
+		CHECK( getAngle( li2,lV ) == Approx(M_PI/2.) );
 
 		Line2d_<NUMTYPE> lH2(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> lH3 = lH2;
@@ -476,8 +475,8 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.setRotation( M_PI/2. );
 		Point2d_<NUMTYPE> pt3 = H * pt1;
 
-		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
-		CHECK( pt3.getY() == 1. );
+		CHECK( pt3.getX() == Approx( -1. ) );
+		CHECK( pt3.getY() == Approx(  1. ) );
 	}
 	{
 		Homogr H;
@@ -581,7 +580,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 	{
 		Line2d_<NUMTYPE> d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
-		CHECK( d1.distTo( pt1 ) <= g_epsilon  );
+		CHECK( d1.distTo( pt1 ) == Approx(0.) );
 	}
 
 	Homogr H;
@@ -589,25 +588,25 @@ TEST_CASE( "line transformation", "[testH3]" )
 		H.setTranslation(4,5);
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		CHECK( d == Approx(0.) );
 	}
 	{
 		H.setRotation( 22.*M_PI/180. );
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		CHECK( d == Approx(0.) );
 	}
 	{
 		H.setScale(0.4, 4.2);
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		CHECK( d == Approx(0.) );
 	}
 	{
 		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
 		auto d = computeDistTransformedLined( H );
 		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		CHECK( d == Approx(0.) );
 	}
 }
 
