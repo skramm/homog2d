@@ -482,7 +482,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	{
 		return !(*this == h);
 	}
-	static FPT& nullDeterValue() { return _zeroDeterminantValue; }
+	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -564,7 +564,7 @@ See https://en.wikipedia.org/wiki/Determinant
 		}
 		return f;
 	}
-	static FPT _zeroDeterminantValue; /// Used in matrix inversion
+	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
 };
 
 
@@ -995,10 +995,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 #endif
 
-	static FPT& nullAngleValue()  { return _zeroAngleValue; }
-	static FPT& nullDistance()    { return _zeroDistance; }
-	static FPT& nullOffsetValue() { return _zeroOffset; }
-	static FPT& nullOrthogDistance() { return _zeroOrthoDistance; }
+	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
+	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
+	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
+	static HOMOG2D_INUMTYPE& nullOrthogDistance() { return _zeroOrthoDistance; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -1008,10 +1008,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 //		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 		std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-		static FPT _zeroAngleValue;       /// Used in isParallel();
-		static FPT _zeroDistance;         /// Used to define points as identical
-		static FPT _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
-		static FPT _zeroOffset;           /// Used to compare lines
+		static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
+		static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
+		static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
+		static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1098,22 +1098,22 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
+HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroDistance = 1E-15;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-15;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroOffset = 1E-15;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1152,8 +1152,8 @@ getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FP
 {
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		   fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
-		|| fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		   std::fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
 	)
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 #endif
@@ -1562,9 +1562,7 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
-//	std::cout << __FUNCTION__ << "(IsPoint):\n -this=" << *this << "\n -other=" << other <<"\n";
 	auto dist = this->distTo( other );
-//	std::cout << "dist=" << dist << "\n";
 	if( dist < nullDistance() )
 		return true;
 	return false;
@@ -1728,7 +1726,7 @@ bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
 auto a = getAngle(li);
-//	std::cerr << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
+//	std::cout << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
 	if( a < Root::nullAngleValue() )
 //	if( getAngle(li) < Root::nullAngleValue() )
 		return true;
