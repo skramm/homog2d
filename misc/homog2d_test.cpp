@@ -476,8 +476,8 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.setRotation( M_PI/2. );
 		Point2d_<NUMTYPE> pt3 = H * pt1;
 
-		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
-		CHECK( pt3.getY() == 1. );
+		CHECK( pt3.getX() == Approx( -1. ) );
+		CHECK( pt3.getY() == Approx(  1. ) );
 	}
 	{
 		Homogr H;
