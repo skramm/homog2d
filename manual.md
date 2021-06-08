@@ -257,6 +257,8 @@ h.inverse();
 h.transpose();
 h.inverse().transpose(); // first, invert, second, transpose
 ```
+(note: inversion is done by first computing its corresponding [adjugate matrix](https://en.wikipedia.org/wiki/Adjugate_matrix).)
+
 
 - Once you have set up your matrix, you can apply it to points (or lines), using the `*` operator:
 ```C++

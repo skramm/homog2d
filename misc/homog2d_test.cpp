@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019 Sebastien Kramm
+    Author & Copyright 2019-2021 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -40,7 +40,9 @@ run with "make test"
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
 
-#define LOG(a) std::cout << " INFO: " << (a) << '\n';
+//#define LOG(a) std::cout << " INFO: " << (a) << '\n';
+
+#define LOCALLOG(a) std::cout << " -" << a << '\n';
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*50.;
 
@@ -57,7 +59,7 @@ int main( int argc, char* argv[] )
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
-//	Catch::StringMaker<long double>::precision = 25;
+	Catch::StringMaker<long double>::precision = 25;
 //	std::cout << "aprox(0)=" << Approx(0.) << '\n';
 	int result = Catch::Session().run( argc, argv );
 
@@ -275,7 +277,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 
 	INFO( "Checking parallel lines" )
 	{
-		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
+//		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
 		Line2d_<NUMTYPE> l1; // vertical line
 		{
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
@@ -286,7 +288,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 		}
 		Line2d_<NUMTYPE>::nullAngleValue() = 0.01;
 		{
-			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
+//			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.005,1.) ); // almost vertical line
 			INFO( "angle=" << getAngle( l1,l2a) );
 			CHECK( l1.isParallelTo(l2a) == true );
@@ -553,25 +555,21 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 /// Computation of the line passed through H^{-T} and computation of
 /// the distance between the resulting line and the transformed point.
 /// Should be 0, always.
-double computeDistTransformedLined( Homogr H )
+long double
+computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
-	Line2d_<NUMTYPE> line1( 5, 6 ); // line from (0,0) to (5,6)
-	Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
-
+	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
 	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-
 	H.inverse().transpose();
-
 	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
-
 	return line2.distTo( pt2 ); // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789
-std::string FullPrecision( double d )
+std::string FullPrecision( long double d )
 {
     auto s = std::ostringstream{};
-    s << std::setprecision( std::numeric_limits<double>::max_digits10 ) << d;
+    s << std::scientific << std::setprecision( std::numeric_limits<long double>::max_digits10 ) << d;
     return s.str();
 }
 
@@ -582,30 +580,38 @@ TEST_CASE( "line transformation", "[testH3]" )
 		Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
 		CHECK( d1.distTo( pt1 ) < g_epsilon );
 	}
-
-	Homogr H;
+	Point2d_<NUMTYPE> pt( 5, 6);
+	Hmatrix_<type::IsHomogr,NUMTYPE> H;
 	{
 		H.setTranslation(4,5);
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4,5): d=" << FullPrecision(d) );
 		CHECK( d < g_epsilon );
+		H.setTranslation(4000,5);
+		auto d2 = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4000,5): d=" << FullPrecision(d2) );
+		CHECK( d2 < g_epsilon );
+		H.setTranslation(4,5000);
+		auto d3 = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4,5000): d=" << FullPrecision(d3) );
+		CHECK( d3 < g_epsilon );
 	}
 	{
 		H.setRotation( 22.*M_PI/180. );
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "rotation: d=" << FullPrecision(d) );
 		CHECK( d < g_epsilon );
 	}
 	{
 		H.setScale(0.4, 4.2);
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "scale: d=" << FullPrecision(d) );
 		CHECK( d < g_epsilon );
 	}
 	{
 		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "complex transformation: d=" << FullPrecision(d) );
 		CHECK( d < g_epsilon );
 	}
 }
@@ -613,6 +619,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 TEST_CASE( "matrix chained operations", "[testH2]" )
 {
 	Homogr H1,H2;
+	CHECK( H1 == H2 );
 	H1.addTranslation(4,5).addRotation( 1 ).addScale( 5,6);
 	H2.addRotation( 1 ).addTranslation(4,5).addScale( 5,6);
 	CHECK( H1 != H2 );
@@ -711,7 +718,6 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
 }
 
-
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
 	INFO( "with diagonal line" )
@@ -769,7 +775,6 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		CHECK( ri.get().second == pt2 );
 	}
 }
-
 
 TEST_CASE( "Segment", "[seg1]" )
 {
@@ -929,7 +934,6 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 //		Line2d_<NUMTYPE> lib( Point2d(100,200) );
 //		CHECK( lia == lib );
 	}
-
 }
 #endif
 
