@@ -26,7 +26,8 @@
 // additional Opencv header, needed for GUI stuff
 #include "opencv2/highgui.hpp"
 
-#define NUMTYPE double
+//#define NUMTYPE double
+#define NUMTYPE long double
 
 #include <functional>
 
@@ -43,7 +44,8 @@ struct Data
 	std::vector<Point2d_<NUMTYPE>> vpt;
 	Point2d_<NUMTYPE> pt; // projected point
 	int selected = -1;
-	Point2d pt_mouse;
+	Point2d_<NUMTYPE> pt_mouse;
+	long double max_dist = -25.;
 	double _tx = 0.;
 	double _ty = 0.;
 	double _sx = 1.;
@@ -113,6 +115,7 @@ struct Data
 		if( selected != -1 )
 			vpt.at(selected) = pt_mouse;
 	}
+	void process();
 	friend std::ostream& operator << ( std::ostream& f, const Data& );
 };
 
@@ -136,8 +139,6 @@ Data::computeDistTransformedLined()
 {
 	line1 = vpt[0] * vpt[1]; // line from pt1 to pt2
 	pt = H * vpt[0]; // move the point with H
-//	Point2d_<NUMTYPE> pt = H * vpt[0]; // move the point with H
-//	H.inverse().transpose();
 	line2 = HMT * line1; // move the line with H^{-T}
 	return line2.distTo( pt ); // should be 0 !
 }
@@ -154,6 +155,21 @@ void draw( Data& data )
 	data.vpt[1].draw( data.img, CvDrawParams().setColor( 0,  50, 250) );
 
 	cv::imshow( g_wndname, data.img );
+}
+
+void Data::process()
+{
+	auto d = computeDistTransformedLined();
+	if( d != 0 )
+		d = std::log10(d);
+	std::cout << "d=" << d
+		<<  " max=" << max_dist
+		<< " ratio to eps=" << max_dist / std::numeric_limits<NUMTYPE>::epsilon()
+		<< '\n';
+
+	if ( d != 0. && d > max_dist )
+		max_dist = d;
+	draw( *this );
 }
 
 
@@ -185,8 +201,9 @@ void mouse_CB( int event, int x, int y, int /* flags */, void* params )
 			if( p_data->selected != -1 )
 			{
 				p_data->vpt[p_data->selected] = p_data->pt_mouse;
-				auto d = p_data->computeDistTransformedLined();
-				std::cout << "d=" << (d==0. ? d : std::log10(d)) << '\n';
+				p_data->process();
+//				auto d = p_data->computeDistTransformedLined();
+//				std::cout << "d=" << (d==0. ? d : std::log10(d)) << '\n';
 			}
 		}
 		break;
@@ -204,7 +221,9 @@ int main( int argc, const char** argv )
 	cv::namedWindow( g_wndname );
 	data.img.create( g_height, g_width, CV_8UC3 );
 
-	draw( data );
+	data.computeH();
+	data.process();
+
 	cv::imshow( g_wndname, data.img );
 	cv::setMouseCallback( g_wndname, mouse_CB, &data );
 
@@ -228,7 +247,7 @@ int main( int argc, const char** argv )
 		if( changed )
 		{
 			data.computeH();
-//			process();
+			data.process();
 			std::cout << data << '\n';
 		}
 		cv::imshow( g_wndname, data.img );
