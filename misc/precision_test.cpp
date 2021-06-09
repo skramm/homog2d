@@ -20,16 +20,14 @@
 \brief precision evaluation, using Opencv
 */
 
-#define HOMOG2D_USE_OPENCV
+
 #include "homog2d.hpp"
 
-// additional Opencv header, needed for GUI stuff
-#include "opencv2/highgui.hpp"
 
 //#define NUMTYPE double
 #define NUMTYPE long double
-
-#include <functional>
+#include <random>
+//#include <functional>
 
 using namespace homog2d;
 
@@ -56,7 +54,7 @@ const char* getString( Order order )
 		default: assert(0);
 	}
 }
-
+/*
 struct Data
 {
 	cv::Mat img;
@@ -78,13 +76,7 @@ struct Data
 	Order order;
 	Line2d_<NUMTYPE> line1, line2; // source and projected lines
 
-	Hmatrix_<type::IsHomogr,NUMTYPE> H;
-	Hmatrix_<type::IsHomogr,NUMTYPE> HMT;
 
-/*	std::array<char,3> order;
-	order[0] = 'R';
-	order[1] = 'S';
-	order[2] = 'T';*/
 	long double computeDistTransformedLined();
 
 	void changeOrder()
@@ -181,19 +173,6 @@ Data::computeDistTransformedLined()
 	return line2.distTo( pt ); // should be 0 !
 }
 
-void draw( Data& data )
-{
-	data.img = cv::Scalar(255,255,255);
-
-	data.line1.draw( data.img, CvDrawParams().setColor(   0,  0, 250) );
-	data.line2.draw( data.img, CvDrawParams().setColor(   0,  250, 0) );
-	Segment seg( data.vpt[0], data.pt );
-	seg.draw( data.img, CvDrawParams().setColor( 50,  50, 50) );
-	data.vpt[0].draw( data.img, CvDrawParams().setColor( 250,  50, 0) );
-	data.vpt[1].draw( data.img, CvDrawParams().setColor( 0,  50, 250) );
-
-	cv::imshow( g_wndname, data.img );
-}
 
 void Data::process()
 {
@@ -209,85 +188,97 @@ void Data::process()
 		max_dist = d;
 	draw( *this );
 }
-
-
-/// Mouse callback function, checks if one of the points is selected.
-/**
-- If so, that point gets moved by the mouse
 */
-void mouse_CB( int event, int x, int y, int /* flags */, void* params )
+
+struct RandomData
 {
-	Data* p_data = reinterpret_cast<Data*>(params);
-	draw( *p_data );
-
-	p_data->setMousePos(x,y);
-
-	switch( event )
+	RandomData()
 	{
-		case CV_EVENT_LBUTTONUP:
-			p_data->selected = -1;
-		break;
+		std::srand( std::time(nullptr) );
 
-		case CV_EVENT_LBUTTONDOWN:
-			for( int i=0; i<2; i++ )
-				if( p_data->pt_mouse.distTo( p_data->vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					p_data->selected = i;
-		break;
-
-		case CV_EVENT_MOUSEMOVE:
-		{
-			if( p_data->selected != -1 )
-			{
-				p_data->vpt[p_data->selected] = p_data->pt_mouse;
-				p_data->process();
-//				auto d = p_data->computeDistTransformedLined();
-//				std::cout << "d=" << (d==0. ? d : std::log10(d)) << '\n';
-			}
-		}
-		break;
-
-		default: break;
 	}
-	cv::imshow( g_wndname, p_data->img );
-}
+
+	double getRandom( double min=0., double max=1. )
+	{
+		return ((double) std::rand() / (RAND_MAX+1)) * (max-min+1) + min;
+	}
+	double getRandomAngle()
+	{
+		return getRandom( 0., 359. );
+	}
+	double getRandomTranslation()
+	{
+		auto t= getRandom() * std::pow( 10., getRandom(1.,15. ) );
+		std::cout << "translation=" << t << '\n';
+		return t;
+	}
+	double getRandomScale()
+	{
+		auto t= std::pow( 2., getRandom(1.,15. ) );
+		std::cout << "scale=" << t << '\n';
+		return t;
+
+	}
+	Point2d_<NUMTYPE> getRandomPt()
+	{
+		Point2d_<NUMTYPE> pt;
+		return pt;
+	}
+
+
+};
+
+RandomData rd;
 
 
 //==================================================================
 int main( int argc, const char** argv )
 {
-	Data data;
-	cv::namedWindow( g_wndname );
-	data.img.create( g_height, g_width, CV_8UC3 );
+	int nbTransfo = 20;
+	int nbPts = 100;
 
-	data.computeH();
-	data.process();
 
-	cv::imshow( g_wndname, data.img );
-	cv::setMouseCallback( g_wndname, mouse_CB, &data );
 
-	char key=0;
-	while( key != 27 ) // SPC
+	for( int i=0; i<nbTransfo; i++ )
 	{
-		bool changed = true;
-		switch( key = cv::waitKey(0) )
-		{
-			case 'm': data.angle(1); break;
-			case 'l': data.angle(0); break;
+		auto angle = rd.getRandomAngle();
+		auto tx = rd.getRandomTranslation();
+		auto ty = rd.getRandomTranslation();
+		auto sx = rd.getRandomScale();
+		auto sy = rd.getRandomScale();
+		std::cout << i << ": angle=" << angle
+			<< " tx=" << tx << " ty=" << ty
+			<< " sx=" << sx << " sy=" << sy
+			<< '\n';
 
-			case 'o': data.scale(1); break;
-			case 'p': data.scale(0); break;
-
-			case 'g': data.translate(0); break;
-			case 'h': data.translate(1); break;
-			case ' ': data.changeOrder(); break;
-			default: changed = false; break;
-		}
-		if( changed )
+		for( int order=0; order<6; order++ )
 		{
-			data.computeH();
-			data.process();
-			std::cout << data << '\n';
+
+			Hmatrix_<type::IsHomogr,NUMTYPE> H,HMT;
+
+			auto str = getString( static_cast<Order>(order) );
+			for( int c=0; c<3; c++ )
+			switch( str[c] )
+			{
+				case 'R': H.addRotation( angle*M_PI/180. ); break;
+				case 'T': H.addTranslation( tx, ty );
+				case 'S': H.addScale( sx, sy );
+			}
+			HMT = H;
+			HMT.inverse().transpose();
+
+			for( int j=0; j<nbPts; j++ )
+			{
+				auto pt1 = rd.getRandomPt();
+				auto pt2 = rd.getRandomPt();
+				auto lA = pt1 * pt2;
+				auto pt = H * pt1;
+				auto lB = HMT * lA;
+				auto d = pt.distTo( lB );
+				if( d != 0)
+					d == std::log10( d );
+				std::cout << j << ":" << d << '\n';
+			}
 		}
-		cv::imshow( g_wndname, data.img );
 	}
 }

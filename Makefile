@@ -46,11 +46,17 @@ homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
 
-ptest: precision_test
-	./precision_test
+ptest1: precision_test1
+	./precision_test1
 
-precision_test: misc/precision_test_opencv.cpp
+ptest2: precision_test2
+	./precision_test2
+
+precision_test1: misc/precision_test_opencv.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+
+precision_test2: misc/precision_test.cpp
+	$(CXX) $(CFLAGS) -I. -o $@ $<
 
 
 doc: html/index.html
