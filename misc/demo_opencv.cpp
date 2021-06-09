@@ -499,9 +499,8 @@ int main( int argc, const char** argv )
 	std::cout << "float: " << std::numeric_limits<float>::digits10 << "\n";
 	std::cout << "double: " << std::numeric_limits<double>::digits10 << "\n";
 	std::cout << "long double:"  << std::numeric_limits<long double>::digits10 << "\n";
+#if 0
 {
-
-
 	float f = M_PI;
 	double d = M_PI;
 	long double l = M_PI;
@@ -520,6 +519,8 @@ int main( int argc, const char** argv )
 
 return 0;
 }
+#endif
+
 	std::cout << "homog2d graphical demo using Opencv"
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
