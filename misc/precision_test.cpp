@@ -25,15 +25,14 @@ Should be 0, always.
 
 We do this for multiple random transformation, in random order, and with multiple random points
 
-
 */
 
 
 #include "homog2d.hpp"
 
 
-//#define NUMTYPE double
-#define NUMTYPE long double
+#define NUMTYPE double
+//#define NUMTYPE long double
 #include <random>
 
 
@@ -83,16 +82,15 @@ struct RandomData
 	}
 	double getRandomScale()
 	{
-		auto t= std::pow( 2., getRandom(1.,15. ) );
+		auto t= std::pow( 2., getRandom(1.,10. ) );
 		std::cout << "scale=" << t << '\n';
 		return t;
-
 	}
 	Point2d_<NUMTYPE> getRandomPt()
 	{
 		Point2d_<NUMTYPE> pt(
-			getRandom() * std::pow( 10., getRandom(1.,15. ) ),
-			getRandom() * std::pow( 10., getRandom(1.,15. ) )
+			getRandom() * std::pow( 10., getRandom(0.,10. ) ),
+			getRandom() * std::pow( 10., getRandom(0.,10. ) )
 		);
 		return pt;
 	}
@@ -106,7 +104,7 @@ int main( int argc, const char** argv )
 	RandomData rd;
 
 	int nbTransfo = 5;
-	int nbPts = 8;
+	int nbPts = 20;
 
 /*	for( int i=0; i<30; i++ )
 		std::cout << rd.getRandom() << "\n";
@@ -131,28 +129,48 @@ int main( int argc, const char** argv )
 			auto str = getString( static_cast<Order>(order) );
 			std::cout << "order = " << str << '\n';
 			for( int c=0; c<3; c++ )
-			switch( str[c] )
-			{
-				case 'R': H.addRotation( angle*M_PI/180. ); break;
-				case 'T': H.addTranslation( tx, ty );
-				case 'S': H.addScale( sx, sy );
-			}
+				switch( str[c] )
+				{
+					case 'R': H.addRotation( angle*M_PI/180. ); break;
+					case 'T': H.addTranslation( tx, ty );
+					case 'S': H.addScale( sx, sy );
+				}
 //			std::cout << H << '\n';
 			Hmatrix_<type::IsHomogr,NUMTYPE> HMT = H;
 			HMT.inverse().transpose();
-
+			double dmin = 999.;
+			double dmax = 0.;
 			for( int j=0; j<nbPts; j++ )
 			{
 				auto pt1 = rd.getRandomPt();
 				auto pt2 = rd.getRandomPt();
 				auto lA = pt1 * pt2;
-				auto pt = H * pt1;
-				auto lB = HMT * lA;
+				auto pt = H * pt1;    // project point with H
+				auto lB = HMT * lA;   // project line with H^-T
 				auto d = pt.distTo( lB );
-				if( d != 0)
-					d == std::log10( d );
-//				std::cout << j << ":" << d << '\n';
+				auto dlog = d;
+//				if( d != 0. )
+//					dlog = std::log10(d);
+#if 0
+				std::cout << j
+//					<< std::fixed
+					<< std::scientific
+					<< std::setprecision(2)
+					<< ": pt1=" << pt1
+					<< ", pt2=" << pt2
+					<< " dist pts=" << pt1.distTo(pt2)
+					<< "=> dH=" << dlog
+					<< " ratio=" << pt1.distTo(pt2) / dlog
+					<< '\n';
+#endif
+				if( d != 0. )
+				{
+					dmax = std::max( d, dmax );
+					dmin = std::min( d, dmin );
+				}
+
 			}
+			std::cout << "dist: min=" << dmin <<  " max=" << dmax << '\n';
 		}
 	}
 }
