@@ -34,6 +34,8 @@ See https://github.com/skramm/homog2d
 #include <sstream>
 #include <type_traits>
 
+#include <Eigen/Dense>
+
 #define HOMOG2D_VERSION 2.2
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -417,6 +419,8 @@ Thus some assert can get triggered elsewhere.
 		return *this;
 	}
 
+	void buildFromPoints( const std::vector<const Root<type::IsPoint,FPT>>&, const std::vector<const Root<type::IsPoint,FPT>>& );
+
 /// Divide all elements by scalar
 	template<typename T>
 	Hmatrix_& operator / (T v)
@@ -562,6 +566,40 @@ See https://en.wikipedia.org/wiki/Determinant
 	static FPT _zeroDeterminantValue; /// Used in matrix inversion
 };
 
+//------------------------------------------------------------------
+/// Build Homography from 2 sets of 4 points
+/**
+Require Eigen,
+see https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+*/
+template<typename LP,typename FPT>
+void
+Hmatrix_<LP,FPT>::buildFromPoints(
+	const std::vector<const Root<type::IsPoint,FPT>>& vpt1, ///< source points
+	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
+)
+{
+	Eigen::Matrix3f A(8,8);
+	Eigen::Vector3f b;
+
+	for( int i=0; i<4; i++ )
+	{
+		auto x1 = vpt1[i].getX();
+		auto y1 = vpt1[i].getY();
+		auto x2 = vpt2[i].getX();
+		auto y2 = vpt2[i].getY();
+		b << x2, y2;
+		A(i*2,0) = A(i*2+1,3) = x1;
+		A(i*2,1) = A(i*2+1,4) = x2;
+		A(i*2,2) = A(i*2+1,5) = 1.;
+
+		A(i*2,6)   = - x1 * x2;
+		A(i*2,7)   = - y1 * x2;
+		A(i*2+1,6) = - x1 * y2;
+		A(i*2+1,7) = - y1 * y2;
+	}
+
+}
 
 
 #ifdef HOMOG2D_USE_OPENCV
