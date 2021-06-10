@@ -34,7 +34,9 @@ See https://github.com/skramm/homog2d
 #include <sstream>
 #include <type_traits>
 
-#include <Eigen/Dense>
+#ifdef HOMOG2D_USE_EIGEN
+	#include <Eigen/Dense>
+#endif
 
 #define HOMOG2D_VERSION 2.2
 
@@ -567,6 +569,8 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 //------------------------------------------------------------------
+#ifdef HOMOG2D_USE_EIGEN
+
 /// Build Homography from 2 sets of 4 points
 /**
 Require Eigen,
@@ -579,8 +583,8 @@ Hmatrix_<LP,FPT>::buildFromPoints(
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
-	Eigen::Matrix3f A(8,8);
-	Eigen::Vector3f b;
+	Eigen::MatrixXd A(8,8);
+	Eigen::VectorXf b;
 
 	for( int i=0; i<4; i++ )
 	{
@@ -599,8 +603,16 @@ Hmatrix_<LP,FPT>::buildFromPoints(
 		A(i*2+1,7) = - y1 * y2;
 	}
 
-}
+// once matrix is filled, we get the solution from X = A^-1 B
+	auto X = A.ldlt().solve(b);
 
+// fill H
+	for( int i=0; i<8; i++ )
+		_data[i/3][i%3] = X(i);
+	_data[2][2] = 1.;
+
+}
+#endif
 
 #ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------

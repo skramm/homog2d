@@ -12,6 +12,10 @@ ifeq ($(USE_OPENCV),Y)
 	LDFLAGS += `pkg-config --libs opencv`
 endif
 
+ifeq ($(USE_EIGEN),Y)
+	CFLAGS += -DHOMOG2D_USE_EIGEN
+endif
+
 
 test: homog2d_test #demo_check
 	@echo "Run tests"

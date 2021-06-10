@@ -494,6 +494,21 @@ void demo_6(int n)
 	}
 }
 //------------------------------------------------------------------
+void action_7()
+{
+}
+
+void action_7M()
+{
+
+}
+
+/// Demo of computing a homography from two sets of 4 points
+void demo_7( int n )
+{
+
+}
+//------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
 	std::cout << "homog2d graphical demo using Opencv"
