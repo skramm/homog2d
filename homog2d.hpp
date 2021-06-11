@@ -576,8 +576,8 @@ namespace detail {
 /**
  see https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
 */
-template<typename MT,typename FPT>
-Hmatrix_<MT,FPT>
+template<typename FPT>
+Hmatrix_<type::IsHomogr,FPT>
 buildFromPoints_Eigen(
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt1, ///< source points
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
@@ -622,8 +622,8 @@ buildFromPoints_Eigen(
 - WIP !!
 - see https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
 */
-template<typename MT,typename FPT>
-Hmatrix_<MT,FPT>
+template<typename FPT>
+Hmatrix_<type::IsHomogr,FPT>
 buildFromPoints_Opencv (
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt1, ///< source points
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
@@ -631,9 +631,13 @@ buildFromPoints_Opencv (
 {
 	auto src = getCvPtsd( vpt1 );
 	auto dst = getCvPtsd( vpt2 );
+	for( auto p1: src)
+		std::cout << "src: " << p1 << "\n";
+	for( auto p1: dst)
+		std::cout << "dst: " << p1 << "\n";
 	auto cvH = cv::getPerspectiveTransform( src, dst );
 //	Hmatrix_<type:IsHomogr,FPT> H = getMatFromOpencv( cvH );
-//	return H;
+	return cvH;
 }
 #endif
 
@@ -645,9 +649,9 @@ buildFromPoints_Opencv (
 /**
 Requires either Eigen or Opencv
 */
-template<typename LP,typename FPT>
+template<typename FPT>
 void
-Hmatrix_<LP,FPT>::buildFromPoints(
+Hmatrix_<type::IsHomogr,FPT>::buildFromPoints(
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt1,  ///< source points
 	const std::vector<const Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
 	int method
@@ -661,6 +665,7 @@ Hmatrix_<LP,FPT>::buildFromPoints(
 #endif
 	else
 #ifdef HOMOG2D_USE_OPENCV
+	std::cerr << "Use OPencv\n";
 		*this = detail::buildFromPoints_Opencv( vpt1, vpt2 );
 #else
 		static_assert( 0, "xxx");
@@ -718,6 +723,8 @@ struct CvDrawParams
 	}
 	CvDrawParams& setPointStyle( PointStyle ps )
 	{
+		if( (int)ps > (int)PS_DIAM )
+			throw std::runtime_error( "Error: invalid value for point style");
 		_dpValues._ptStyle = ps;
 		return *this;
 	}
@@ -1078,7 +1085,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 // optional stuff
 #ifdef HOMOG2D_USE_OPENCV
 
-/// Constructor: build line from two OpenCv points
+// Constructor: build line from two OpenCv points
 /*		template<typename T>
 		Root( const cv::Point2d& p1, const cv::Point2d& p2 )
 		{
@@ -2163,6 +2170,20 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 		elem = *this * elem;
 }
 
+//------------------------------------------------------------------
+/// Free function, returns  the set of four points defining a flat rectangle
+template<typename FPT>
+std::vector<Root<type::IsPoint,FPT>>
+getRectPts( Root<type::IsPoint,FPT> pt1, Root<type::IsPoint,FPT>& pt2 )
+{
+	auto pair_pts = detail::getCorrectPoints( pt1, pt2 );
+	std::vector<Root<type::IsPoint,FPT>> v(4);
+	v[0] = pt1;
+	v[1] = Root<type::IsPoint,FPT>( pt2.getX(), pt1.getY() );
+	v[2] = pt2;
+	v[3] = Root<type::IsPoint,FPT>( pt1.getX(), pt2.getY() );
+	return v;
+}
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 /// Return Opencv 2D point

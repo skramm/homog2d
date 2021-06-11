@@ -38,6 +38,7 @@ int g_height = 500;
 struct Data
 {
 	std::vector<Point2d> vpt;
+	std::vector<Point2d> vpt2;
 	Segment s1,s2;
 	int selected = -1;
 	Point2d pt_mouse;
@@ -106,7 +107,7 @@ void drawLines( int selected )
 
 /// Called by mouse callback functions, checks if one of the points is selected.
 /**
-- If so, that point gets moved by the mouse, and the function \c action is called
+- If so, that point gets moved by the mouse, and the function \c actionM is called
 */
 void
 checkSelected( int event, int x, int y, std::function<void()> action, std::function<void()> actionM )
@@ -498,18 +499,21 @@ void action_7()
 {
 	clearImage();
 
+	for( int i=0; i<4; i++ )
+	{
+		Segment s1( g_data.vpt[i], g_data.vpt[i==3?0:i+1] );
+		Segment s2( g_data.vpt2[i], g_data.vpt2[i==3?0:i+1] );
+		s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
+		s2.draw( g_img, CvDrawParams().setColor( 250,0,0) );
+
+		Segment( g_data.vpt[i], g_data.vpt2[i] ).draw( g_img );
+	}
+//	std::vector<Point2d> p_in(4);
+
 	Homogr H;
-
-	Segment s1( g_data.vpt[0], g_data.vpt[1] );
-	Segment s2( g_data.vpt[1], g_data.vpt[2] );
-	Segment s3( g_data.vpt[2], g_data.vpt[3] );
-	Segment s4( g_data.vpt[3], g_data.vpt[0] );
-
-	s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
-	s2.draw( g_img, CvDrawParams().setColor( 0,0,250) );
-	s3.draw( g_img, CvDrawParams().setColor( 0,0,250) );
-	s4.draw( g_img, CvDrawParams().setColor( 0,0,250) );
-
+	H.buildFromPoints( g_data.vpt, g_data.vpt2, 1 );
+	std::cout << H << '\n';
+	cv::imshow( g_wndname, g_img );
 
 }
 
@@ -525,24 +529,28 @@ void mouse_CB_7( int event, int x, int y, int /* flags */, void* /*param*/ )
 	checkSelected( event, x, y, action_7, action_7M );
 }
 
-
-
-
 /// Demo of computing a homography from two sets of 4 points
 void demo_7( int n )
 {
 	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n";
+	auto pa1 = Point2d(100,100);
+	auto pa2 = Point2d(400,300);
+	g_data.vpt = getRectPts( pa1, pa2 );
 
-	g_data.vpt.resize(8);
-	auto x1 = 150;
-	auto y1 = 150;
-//	auto y1 = 150;
-//	g_data.vpt[4].set()
-//	g_data.twoSquares
+	auto pb1 = Point2d(80,150);
+	auto pb2 = Point2d(450,350);
+	g_data.vpt2 = getRectPts( pb1, pb2 );
+
+//	g_data.vpt.resize(8);
+//	std::copy( vptrect_a.begin(), vptrect_a.end(), g_data.vpt.begin() );
+//	std::copy( vptrect_b.begin(), vptrect_b.end(), g_data.vpt.begin()+4 );
+//	for( auto pt: g_data.vpt )
+//		std::cout << "-pt=" << pt << '\n';
+
+	action_7();
 	cv::setMouseCallback( g_wndname, mouse_CB_7 );
-	cv::waitKey(0);
-
-
+	if( 27 == cv::waitKey(0) )
+		std::exit(0);
 }
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
