@@ -496,16 +496,52 @@ void demo_6(int n)
 //------------------------------------------------------------------
 void action_7()
 {
+	clearImage();
+
+	Homogr H;
+
+	Segment s1( g_data.vpt[0], g_data.vpt[1] );
+	Segment s2( g_data.vpt[1], g_data.vpt[2] );
+	Segment s3( g_data.vpt[2], g_data.vpt[3] );
+	Segment s4( g_data.vpt[3], g_data.vpt[0] );
+
+	s1.draw( g_img, CvDrawParams().setColor( 0,0,250) );
+	s2.draw( g_img, CvDrawParams().setColor( 0,0,250) );
+	s3.draw( g_img, CvDrawParams().setColor( 0,0,250) );
+	s4.draw( g_img, CvDrawParams().setColor( 0,0,250) );
+
+
 }
 
 void action_7M()
 {
+	g_data.moveSelectedPoint();
 
 }
+
+/// Mouse callback for demo_6
+void mouse_CB_7( int event, int x, int y, int /* flags */, void* /*param*/ )
+{
+	checkSelected( event, x, y, action_7, action_7M );
+}
+
+
+
 
 /// Demo of computing a homography from two sets of 4 points
 void demo_7( int n )
 {
+	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n";
+
+	g_data.vpt.resize(8);
+	auto x1 = 150;
+	auto y1 = 150;
+//	auto y1 = 150;
+//	g_data.vpt[4].set()
+//	g_data.twoSquares
+	cv::setMouseCallback( g_wndname, mouse_CB_7 );
+	cv::waitKey(0);
+
 
 }
 //------------------------------------------------------------------
@@ -515,6 +551,7 @@ int main( int argc, const char** argv )
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 	std::vector<std::function<void(int)>> v_demo{
+		demo_7,
 		demo_1,
 		demo_2,
 		demo_3,
