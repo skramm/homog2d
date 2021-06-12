@@ -510,10 +510,9 @@ void action_7()
 
 		Segment( g_data.vpt[i], g_data.vpt2[i] ).draw( g_img );
 	}
-//	std::vector<Point2d> p_in(4);
 
 	Homogr H;
-	H.buildFromPoints( g_data.vpt, g_data.vpt2, 1 );
+	H.buildFromPoints( g_data.vpt, g_data.vpt2, 0 );
 	std::cout << H << '\n';
 	cv::imshow( g_wndname, g_img );
 

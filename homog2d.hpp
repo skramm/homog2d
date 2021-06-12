@@ -607,10 +607,11 @@ buildFromPoints_Eigen(
 	auto X = A.ldlt().solve(b);
 
 // fill H
+	Hmatrix_<type::IsHomogr,FPT> H;
 	for( int i=0; i<8; i++ )
-		_data[i/3][i%3] = X(i);
-	_data[2][2] = 1.;
-
+		H.set(i/3,i%3, X(i) );
+	H.set(2, 2, 1.);
+	return H;
 }
 #endif
 
@@ -621,6 +622,9 @@ buildFromPoints_Eigen(
 /**
 - WIP !!
 - see https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
+
+\note With current Opencv installed on current machine, it seems that \c cv::getPerspectiveTransform()
+requires that the points are "CV_32F" (\c float), and NOT double.
 */
 template<typename FPT>
 Hmatrix_<type::IsHomogr,FPT>
@@ -629,14 +633,13 @@ buildFromPoints_Opencv (
 	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
-	auto src = getCvPtsd( vpt1 );
-	auto dst = getCvPtsd( vpt2 );
+	auto src = getCvPts( vpt1 ); //, CV_32F );
+	auto dst = getCvPts( vpt2 ); //, CV_32F );
 	for( auto p1: src)
 		std::cout << "src: " << p1 << "\n";
 	for( auto p1: dst)
 		std::cout << "dst: " << p1 << "\n";
 	auto cvH = cv::getPerspectiveTransform( src, dst );
-//	Hmatrix_<type:IsHomogr,FPT> H = getMatFromOpencv( cvH );
 	return cvH;
 }
 #endif
@@ -1257,7 +1260,7 @@ getCvPti( const Root<type::IsPoint,FPT>& pt )
 */
 template<typename FPT>
 std::vector<cv::Point2f>
-getCvPtsd( const std::vector<Root<type::IsPoint,FPT>>& vpt )
+getCvPts( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 {
 	std::vector<cv::Point2f> vout( vpt.size() );
 	std::cerr << __FUNCTION__ << "() size=" <<  vpt.size() << '\n';
@@ -2114,6 +2117,11 @@ Root<LP,FPT>::impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const
 namespace detail {
 
 /// Implementation of product 3x3 by 3x1
+/**
+- T1 and T2: IsLine or IsPoint
+
+\todo Add checking that T1 and T2 are opposite class
+*/
 template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 void
 product(
@@ -2124,9 +2132,10 @@ product(
 {
 	for( int i=0; i<3; i++ )
 	{
-		out._v[i]  = h._data[i][0] * in._v[0];
-		out._v[i] += h._data[i][1] * in._v[1];
-		out._v[i] += h._data[i][2] * in._v[2];
+		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._data[i][0]) * in._v[0];
+		sum      += h._data[i][1] * in._v[1];
+		sum      += h._data[i][2] * in._v[2];
+		out._v[i] = sum;
 	}
 }
 
@@ -2178,9 +2187,11 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 /// Free function, returns  the set of four points defining a flat rectangle
 template<typename FPT>
 std::vector<Root<type::IsPoint,FPT>>
-getRectPts( Root<type::IsPoint,FPT> pt1, Root<type::IsPoint,FPT>& pt2 )
+getRectPts( Root<type::IsPoint,FPT> ptA, Root<type::IsPoint,FPT>& ptB )
 {
-	auto pair_pts = detail::getCorrectPoints( pt1, pt2 );
+	auto pair_pts = detail::getCorrectPoints( ptA, ptB );
+	const auto& pt1 = pair_pts.first;
+	const auto& pt2 = pair_pts.second;
 	std::vector<Root<type::IsPoint,FPT>> v(4);
 	v[0] = pt1;
 	v[1] = Root<type::IsPoint,FPT>( pt2.getX(), pt1.getY() );
