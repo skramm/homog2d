@@ -21,6 +21,8 @@
 */
 
 #define HOMOG2D_USE_OPENCV
+#define HOMOG2D_USE_EIGEN
+
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff

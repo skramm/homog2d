@@ -421,7 +421,7 @@ Thus some assert can get triggered elsewhere.
 		return *this;
 	}
 
-	void buildFromPoints( const std::vector<const Root<type::IsPoint,FPT>>&, const std::vector<const Root<type::IsPoint,FPT>>&, int method=0 );
+	void buildFromPoints( const std::vector<Root<type::IsPoint,FPT>>&, const std::vector<Root<type::IsPoint,FPT>>&, int method=0 );
 
 /// Divide all elements by scalar
 	template<typename T>
@@ -579,8 +579,8 @@ namespace detail {
 template<typename FPT>
 Hmatrix_<type::IsHomogr,FPT>
 buildFromPoints_Eigen(
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt1, ///< source points
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
 	Eigen::MatrixXd A(8,8);
@@ -625,8 +625,8 @@ buildFromPoints_Eigen(
 template<typename FPT>
 Hmatrix_<type::IsHomogr,FPT>
 buildFromPoints_Opencv (
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt1, ///< source points
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt2  ///< destination points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
 	auto src = getCvPtsd( vpt1 );
@@ -649,11 +649,11 @@ buildFromPoints_Opencv (
 /**
 Requires either Eigen or Opencv
 */
-template<typename FPT>
+template<typename MT,typename FPT>
 void
-Hmatrix_<type::IsHomogr,FPT>::buildFromPoints(
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt1,  ///< source points
-	const std::vector<const Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
+Hmatrix_<MT,FPT>::buildFromPoints(
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1,  ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
 	int method
 )
 {
@@ -1256,13 +1256,17 @@ getCvPti( const Root<type::IsPoint,FPT>& pt )
 - find a way to template that (!!)
 */
 template<typename FPT>
-std::vector<cv::Point2d>
+std::vector<cv::Point2f>
 getCvPtsd( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 {
-	std::vector<cv::Point2d>& vout( vpt.size() );
+	std::vector<cv::Point2f> vout( vpt.size() );
+	std::cerr << __FUNCTION__ << "() size=" <<  vpt.size() << '\n';
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
-		*it++ = pt;
+	{
+		*it = getCvPtf(pt);
+		it++;
+	}
 	return vout;
 }
 #endif
