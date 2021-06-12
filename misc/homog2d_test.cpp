@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019 Sebastien Kramm
+    Author & Copyright 2019-2021 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -21,10 +21,14 @@
 run with "make test"
 */
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+//#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-#define NUMTYPE double
+/// Numerical type for object storage
+#ifndef NUMTYPE
+	#define NUMTYPE double
+#endif
 
 #include "../homog2d.hpp"
 
@@ -36,14 +40,37 @@ run with "make test"
 #define DIFFERENCE_IS_NULL(a,b) \
 	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
 
-double g_epsilon = std::numeric_limits<double>::epsilon()*10.;
+//#define LOG(a) std::cout << " INFO: " << (a) << '\n';
+
+#define LOCALLOG(a) std::cout << " -" << a << '\n';
+
+double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*50.;
 
 using namespace homog2d;
 
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
+int main( int argc, char* argv[] )
+{
+	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type, internal numerical type=" << XSTR(HOMOG2D_INUMTYPE) << '\n';
+	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
+
+  // global setup...
+	Catch::StringMaker<float>::precision = 25;
+	Catch::StringMaker<double>::precision = 25;
+	Catch::StringMaker<long double>::precision = 25;
+//	std::cout << "aprox(0)=" << Approx(0.) << '\n';
+	int result = Catch::Session().run( argc, argv );
+
+  // global clean-up...
+	return result;
+}
+
+
 TEST_CASE( "types testing", "[testtypes]" )
 {
-	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
-	SECTION( "type size" )
+	INFO( "type size" )
 	{
 		Point2dF ptF;
 		Point2dD ptD;
@@ -74,7 +101,7 @@ TEST_CASE( "types testing", "[testtypes]" )
 	Line2dF li_F0(2,2);
 	Line2dL li_L0(3,3);
 
-	SECTION( "numerical type conversions (assignment)" )
+	INFO( "numerical type conversions (assignment)" )
 	{
 		Point2dD ptD(4,4);
 		Point2dF ptF(5,5);
@@ -95,7 +122,7 @@ TEST_CASE( "types testing", "[testtypes]" )
 		ptD = ptL0;
 		CHECK( ptD.getX() == 3. );
 	}
-	SECTION( "numerical type conversions (constructor)" )
+	INFO( "numerical type conversions (constructor)" )
 	{
 		Point2dL ptL1 = ptD0;
 		Point2dL ptL2 = ptF0;
@@ -155,17 +182,19 @@ TEST_CASE( "test1", "[test1]" )
 		Point2d_<NUMTYPE> ptB1(0,2);
 		Point2d_<NUMTYPE> ptB2(2,0);
 		Line2d_<NUMTYPE>  lB = ptB1 * ptB2;
-		CHECK( lB.getCoord( GivenCoord::X, 1 ) == 1. );
+
+		auto v1 = lB.getCoord( GivenCoord::X, 1 );
+		CHECK( v1 == 1. );
 		CHECK( lB.getPoint( GivenCoord::X, 1) == Point2d_<NUMTYPE>(1,1) );
 	}
 	{
 // build point from two diagonal lines
-		Line2d_<NUMTYPE> lA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-		Line2d_<NUMTYPE> lB( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,0) );
-		CHECK( Line2d_<NUMTYPE>() != lA );
+		Line2d_<NUMTYPE> liA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
+		Line2d_<NUMTYPE> liB( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,0) );
+		CHECK( Line2d_<NUMTYPE>() != liA );
 
-		auto mA1 = lA * lB;
-		auto mA2 = lB * lA;
+		auto mA1 = liA * liB;
+		auto mA2 = liB * liA;
 		CHECK( mA1 == Point2d_<NUMTYPE>(1.,1.) );
 		CHECK( mA2 == Point2d_<NUMTYPE>(1.,1.) );
 		CHECK( mA1 != Point2d_<NUMTYPE>() );
@@ -182,17 +211,17 @@ TEST_CASE( "test1", "[test1]" )
 
 		CHECK( lv2*lh2 == Point2d_<NUMTYPE>(2.,2.) );
 
-		CHECK( lv0*lA == Point2d_<NUMTYPE>() );
-		CHECK( lh0*lA == Point2d_<NUMTYPE>() );
+		CHECK( lv0*liA == Point2d_<NUMTYPE>() );
+		CHECK( lh0*liA == Point2d_<NUMTYPE>() );
 
-		CHECK( lv0*lB == Point2d_<NUMTYPE>(0,2) );
-		CHECK( lh0*lB == Point2d_<NUMTYPE>(2,0) );
+		CHECK( lv0*liB == Point2d_<NUMTYPE>(0,2) );
+		CHECK( lh0*liB == Point2d_<NUMTYPE>(2,0) );
 
-		CHECK( lv2*lA == Point2d_<NUMTYPE>(2.,2.) );
-		CHECK( lh2*lA == Point2d_<NUMTYPE>(2.,2.) );
+		CHECK( lv2*liA == Point2d_<NUMTYPE>(2.,2.) );
+		CHECK( lh2*liA == Point2d_<NUMTYPE>(2.,2.) );
 
-		CHECK( lv2*lB == Point2d_<NUMTYPE>(2.,0.) );
-		CHECK( lh2*lB == Point2d_<NUMTYPE>(0.,2.) );
+		CHECK( lv2*liB == Point2d_<NUMTYPE>(2.,0.) );
+		CHECK( lh2*liB == Point2d_<NUMTYPE>(0.,2.) );
 	}
 
 	{ // test of getOrthogonal()
@@ -200,9 +229,8 @@ TEST_CASE( "test1", "[test1]" )
 
 // get orthogonal line at y=100
 		Line2d_<NUMTYPE> li2 = lV.getOrthogonalLine( GivenCoord::Y, 100 );
-		CHECK( li2.getAngle( lV ) == M_PI/2. );
-
-		CHECK( getAngle( li2,lV ) == M_PI/2. );
+		CHECK( li2.getAngle( lV ) == Approx(M_PI/2.) );
+		CHECK( getAngle( li2,lV ) == Approx(M_PI/2.) );
 
 		Line2d_<NUMTYPE> lH2(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> lH3 = lH2;
@@ -228,38 +256,50 @@ TEST_CASE( "test1", "[test1]" )
 
 TEST_CASE( "test parallel", "[test_para]" )
 {
-	SECTION( "Checking angle" )
+	INFO( "Checking angle" )
 	{
-		Line2d_<NUMTYPE> l1; // vertical line
-		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) );
-		CHECK( getAngle( l1, l2a ) == M_PI/4. );
+		Line2d_<NUMTYPE> l1;                                                   // vertical line
+		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ); // 45° line, starting at (0,0)
 
-		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) );
-		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+//		CHECK( getAngle( l1, l2a ) == M_PI/4. );
+		CHECK( getAngle( l1, l2a ) == Approx( M_PI/4. ) );
+
+		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
+
+//		CHECK( getAngle( l1, l2b ) == M_PI/4. );
+		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+
+		l2b.addOffset( LineOffset::horiz, 10. );
+		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+		l2b.addOffset( LineOffset::vert, 10. );
+		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 	}
 
-	SECTION( "Checking parallel lines" )
+	INFO( "Checking parallel lines" )
 	{
-		std::cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
+//		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
 		Line2d_<NUMTYPE> l1; // vertical line
 		{
-			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.001,1.) ); // almost vertical line
+			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2a) == true );
 
 			Line2d_<NUMTYPE> l2b(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.002,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
-		Line2d::nullAngleValue() = 0.01;
+		Line2d_<NUMTYPE>::nullAngleValue() = 0.01;
 		{
-			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.01,1.) ); // almost vertical line
+//			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
+			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.005,1.) ); // almost vertical line
+			INFO( "angle=" << getAngle( l1,l2a) );
 			CHECK( l1.isParallelTo(l2a) == true );
 
 			Line2d_<NUMTYPE> l2b(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.02,1.) ); // almost vertical line
+			INFO( "angle=" << getAngle( l1,l2b) );
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
 		//l1.isParallelTo( Point2d() ); // NO BUILD
 	}
-	SECTION( "Vertical line at x=0" )
+	INFO( "Vertical line at x=0" )
 	{
 		Line2d_<NUMTYPE> l1; // vertical line
 
@@ -379,7 +419,7 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 		Line2d_<NUMTYPE> li1;
 		Line2d_<NUMTYPE> li2 = H0 * li1;
 		auto angle2 = getAngle( li1, li2 );
-		CHECK( DIFFERENCE_IS_NULL(angle2, angle) );
+		CHECK( std::fabs(angle2 - angle) < Line2d::nullAngleValue() );
 //		std::cout << std::setprecision( std::numeric_limits<double>::digits10 ) << std::scientific << "angle2=" << angle2 << " angle=" << angle << "\n";
 	}
 	{
@@ -437,8 +477,8 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.setRotation( M_PI/2. );
 		Point2d_<NUMTYPE> pt3 = H * pt1;
 
-		CHECK( DIFFERENCE_IS_NULL( pt3.getX(), -1. ) );
-		CHECK( pt3.getY() == 1. );
+		CHECK( pt3.getX() == Approx( -1. ) );
+		CHECK( pt3.getY() == Approx(  1. ) );
 	}
 	{
 		Homogr H;
@@ -515,25 +555,21 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 /// Computation of the line passed through H^{-T} and computation of
 /// the distance between the resulting line and the transformed point.
 /// Should be 0, always.
-double computeDistTransformedLined( Homogr H )
+long double
+computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
-	Line2d_<NUMTYPE> line1( 5, 6 ); // line from (0,0) to (5,6)
-	Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
-
+	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
 	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-
 	H.inverse().transpose();
-
 	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
-
 	return line2.distTo( pt2 ); // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789
-std::string FullPrecision( double d )
+std::string FullPrecision( long double d )
 {
     auto s = std::ostringstream{};
-    s << std::setprecision( std::numeric_limits<double>::max_digits10 ) << d;
+    s << std::scientific << std::setprecision( std::numeric_limits<long double>::max_digits10 ) << d;
     return s.str();
 }
 
@@ -542,39 +578,48 @@ TEST_CASE( "line transformation", "[testH3]" )
 	{
 		Line2d_<NUMTYPE> d1( 5, 6 ); // line from (0,0) to (5,6)
 		Point2d_<NUMTYPE> pt1( 5, 6);  // point is on line
-		CHECK( d1.distTo( pt1 ) <= g_epsilon  );
+		CHECK( d1.distTo( pt1 ) < g_epsilon );
 	}
-
-	Homogr H;
+	Point2d_<NUMTYPE> pt( 5, 6);
+	Hmatrix_<type::IsHomogr,NUMTYPE> H;
 	{
 		H.setTranslation(4,5);
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4,5): d=" << FullPrecision(d) );
+		CHECK( d < g_epsilon );
+		H.setTranslation(4000,5);
+		auto d2 = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4000,5): d=" << FullPrecision(d2) );
+		CHECK( d2 < g_epsilon );
+		H.setTranslation(4,5000);
+		auto d3 = computeDistTransformedLined( H , pt );
+		LOCALLOG( "T(4,5000): d=" << FullPrecision(d3) );
+		CHECK( d3 < g_epsilon );
 	}
 	{
 		H.setRotation( 22.*M_PI/180. );
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "rotation: d=" << FullPrecision(d) );
+		CHECK( d < g_epsilon );
 	}
 	{
 		H.setScale(0.4, 4.2);
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "scale: d=" << FullPrecision(d) );
+		CHECK( d < g_epsilon );
 	}
 	{
 		H.setRotation( 1.456 ).addTranslation(4,5).addScale( 0.4, 1.2 ); // some random transformation
-		auto d = computeDistTransformedLined( H );
-		INFO( FullPrecision(d) );
-		CHECK( d <= g_epsilon );
+		auto d = computeDistTransformedLined( H , pt );
+		LOCALLOG( "complex transformation: d=" << FullPrecision(d) );
+		CHECK( d < g_epsilon );
 	}
 }
 
 TEST_CASE( "matrix chained operations", "[testH2]" )
 {
 	Homogr H1,H2;
+	CHECK( H1 == H2 );
 	H1.addTranslation(4,5).addRotation( 1 ).addScale( 5,6);
 	H2.addRotation( 1 ).addTranslation(4,5).addScale( 5,6);
 	CHECK( H1 != H2 );
@@ -618,13 +663,13 @@ TEST_CASE( "getAngle", "[test_angle]" )
 	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
 	Line2d_<NUMTYPE> lih(1,0); // horizontal line
 	Line2d_<NUMTYPE> liv;     // vertical line
-	CHECK( lih.getAngle(lid) == M_PI/4. );
-	CHECK( liv.getAngle(lid) == M_PI/4. );
-	CHECK( liv.getAngle(lih) == M_PI/2. );
+	CHECK( lih.getAngle(lid) == Approx(M_PI/4.) );
+	CHECK( liv.getAngle(lid) == Approx(M_PI/4.) );
+	CHECK( liv.getAngle(lih) == Approx(M_PI/2.) );
 
-	CHECK( getAngle(lih,lid) == M_PI/4. );
-	CHECK( getAngle(liv,lid) == M_PI/4. );
-	CHECK( getAngle(lih,liv) == M_PI/2. );
+	CHECK( getAngle(lih,lid) == Approx(M_PI/4.) );
+	CHECK( getAngle(liv,lid) == Approx(M_PI/4.) );
+	CHECK( getAngle(lih,liv) == Approx(M_PI/2.) );
 //	liv.getAngle( Point2d() );          // NO BUILD
 //	getAngle( liv, Point2d() );         // NO BUILD
 }
@@ -673,10 +718,9 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
 }
 
-
 TEST_CASE( "rectangle intersection", "[test_RI]" )
 {
-	SECTION( "with diagonal line" )
+	INFO( "with diagonal line" )
 	{
 		Line2d_<NUMTYPE> li(1,1); // diagonal line going through (0,0)
 
@@ -702,7 +746,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		ri = li.intersectsRectangle( pt1, pt2 );
 		CHECK( ri() == false );
 	}
-	SECTION( "with H/V line" )
+	INFO( "with H/V line" )
 	{
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
@@ -731,7 +775,6 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		CHECK( ri.get().second == pt2 );
 	}
 }
-
 
 TEST_CASE( "Segment", "[seg1]" )
 {
@@ -774,7 +817,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
 	cv::Mat mat_32 = cv::Mat::eye(3, 3, CV_32F);
-	SECTION( "assignement operator()" )
+	INFO( "assignment operator()" )
 	{
 		cv::Mat cvmat = cv::Mat::ones(3,3, CV_32F );
 		Homogr H;
@@ -803,7 +846,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( H.get(1,0) == 0.);
 		CHECK( H.get(0,1) == 0.);
 	}
-	SECTION( "default copyTo()" )
+	INFO( "default copyTo()" )
 	{
 		Homogr H;
 		cv::Mat mat;
@@ -817,7 +860,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_64F );
 	}
-	SECTION( "copyTo() with CV_64F" )
+	INFO( "copyTo() with CV_64F" )
 	{
 		Homogr H;
 		cv::Mat mat;
@@ -830,7 +873,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_64F );
 	}
-	SECTION( "copyTo() with CV_32F" )
+	INFO( "copyTo() with CV_32F" )
 	{
 		Homogr H;
 		cv::Mat mat;
@@ -843,7 +886,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		CHECK( mat.channels() == 1 );
 		CHECK( mat.type() == CV_32F );
 	}
-	SECTION( "Copy to OpenCv points" )
+	INFO( "Copy to OpenCv points" )
 	{
 		Point2d_<NUMTYPE> pt(1.,2.);
 		{
@@ -863,7 +906,7 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK( (cvpt3.x == 1  && cvpt3.y == 2 ) );
 		}
 	}
-	SECTION( "Fetch from OpenCv points" )
+	INFO( "Fetch from OpenCv points" )
 	{
 		cv::Point2d ptd(1,2);
 		cv::Point2f ptf(1,2);
@@ -885,13 +928,12 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK(( p3.getX() == 1 && p3.getY() == 2. ));
 		}
 	}
-	SECTION( "Build line using OpenCv points" )
+	INFO( "Build line using OpenCv points" )
 	{
 		Line2d_<NUMTYPE> lia( cv::Point2d(100,200) );
-		Line2d_<NUMTYPE> lib( Point2d(100,200) );
-		CHECK( lia == lib );
+//		Line2d_<NUMTYPE> lib( Point2d(100,200) );
+//		CHECK( lia == lib );
 	}
-
 }
 #endif
 

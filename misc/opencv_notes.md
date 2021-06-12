@@ -4,7 +4,7 @@ __Please read this if you have Opencv installed on your system, but fail to buil
 
 
 The Opencv binding capabilities for this library are demonstrated with a short graphical demo, included here.
-Building the app using the provided Makefile relies on the `pkg-config` utility.
+Building the app using the provided Makefile (`$ make demo`) relies on the `pkg-config` utility.
 
 Recently, with Opencv4 (and probably also with latest 3.x releases), the Opencv team seems to have dropped support of pkg-config
 (see https://github.com/opencv/opencv/issues/13154).
@@ -19,17 +19,16 @@ cmake .. -DOPENCV_GENERATE_PKGCONFIG=ON -DWITH_FFMPEG=ON
 make
 sudo make install
 ```
-However, while this generates the `opencv.pc` file (at least with Opencv3.4), it does not install it on your system.
+However, while this indeed generates the `opencv.pc` file (at least with Opencv3.4), it does not install it on your system.
 Thus the makefile for demo_opencv fails.
-You need to copy it from the opencv build folder.
-This should do it:
-
+You need to copy it from the opencv build folder to the pkg-config usual location.
+From the OpenCv 'build' folder, something similar to this:
 ```
 $ sudo cp unix-install/opencv.pc /usr/share/pkgconfig/
 ```
 
-FWIW, in case it does not get generated with your Opencv release, here is the content of that file.
-Just copy it to `/usr/share/pkgconfig/`.
+FWIW, in case it does not get generated with your Opencv release, here is the content of that file for release 3.4.14.
+Name it `opencv.pc` and copy it to `/usr/share/pkgconfig/`.
 
 ```
 # Package Information for pkg-config

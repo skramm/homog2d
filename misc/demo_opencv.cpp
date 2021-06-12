@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019 Sebastien Kramm
+    Author & Copyright 2019-2021 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -556,6 +556,31 @@ void demo_7( int n )
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
+	std::cout << "float: " << std::numeric_limits<float>::digits10 << "\n";
+	std::cout << "double: " << std::numeric_limits<double>::digits10 << "\n";
+	std::cout << "long double:"  << std::numeric_limits<long double>::digits10 << "\n";
+#if 0
+{
+	float f = M_PI;
+	double d = M_PI;
+	long double l = M_PI;
+	std::cout << "f=" << f << "\nd=" << d << "\nl=" << l << "\n";
+	for( int i=6; i<24; i=i+2)
+	{
+		std::cout << std::setprecision(i) << "- precision:" << i
+			<< ":\nf=" << f << "\nd=" << d << "\nl=" << l << "\n";
+	}
+
+	std::cout << "epsilon:\n-f=" << std::numeric_limits<float>::epsilon()
+<< "\n-d=" << std::numeric_limits<double>::epsilon()
+<< "\n-l=" << std::numeric_limits<long double>::epsilon()
+<< "\n";
+
+
+return 0;
+}
+#endif
+
 	std::cout << "homog2d graphical demo using Opencv"
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';

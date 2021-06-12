@@ -257,6 +257,8 @@ h.inverse();
 h.transpose();
 h.inverse().transpose(); // first, invert, second, transpose
 ```
+(note: inversion is done by first computing its corresponding [adjugate matrix](https://en.wikipedia.org/wiki/Adjugate_matrix).)
+
 
 - Once you have set up your matrix, you can apply it to points (or lines), using the `*` operator:
 ```C++
@@ -508,6 +510,10 @@ That same function can be used to change (or print) the current value.
 
 - When attempting to compute the inverse of a matrix, if the determinant is less than `Homogr::nullDeterValue()`, the inversion code will throw.
 
+### Computation types
+
+TODO:
+`HOMOG2D_INUMTYPE`
 
 ## 8 - Technical details
 <a name="tech"></a>
@@ -577,17 +583,20 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `clear()` to `init()` for matrices
   - added `getParallelLine()`
 
-- [v2.2](https://github.com/skramm/homog2d/releases/tag/v2.2)
+- [v2.2](https://github.com/skramm/homog2d/releases/tag/v2.2), released on 2021-06-01
   - added 2 constructors to `Homogr`
   - added `isParallelTo()`
   - API change:
     - renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
-    - matrics: renamed `setValue()` to `set()` and `getValue()` to `get()`
+    - matrices: renamed `setValue()` to `set()` and `getValue()` to `get()`
     - for OpenCv matrices, replaced `getFrom()` by assignment operator
     - replaced enums `En_OffsetDir` and `En_GivenCoord` with class enums `LineOffset` and `GivenCoord`
   - added `Segment` type and associated code
   - Licence change to MPLv2
   - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
+
+- current master branch
+  - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
 
 - planned:
   - segment intersection features

@@ -21,6 +21,9 @@ test: homog2d_test #demo_check
 	@echo "Run tests"
 	./homog2d_test
 
+testall: homog2d_test_f homog2d_test_d homog2d_test_l
+	misc/test_all.sh
+
 # compute code coverage (EXPERIMENTAL !)
 cov:
 	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
@@ -37,6 +40,28 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
 #	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
+
+homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
+	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
+
+ptest1: precision_test1
+	./precision_test1
+
+ptest2: precision_test2
+	./precision_test2
+
+precision_test1: misc/precision_test_opencv.cpp
+	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+
+precision_test2: misc/precision_test.cpp
+	$(CXX) $(CFLAGS) -I. -o $@ $<
+
 
 doc: html/index.html
 	xdg-open html/index.html
@@ -56,7 +81,7 @@ diff:
 
 # this target REQUIRES Opencv, no will attempt to build even when USE_OPENCV not given
 demo_opencv: misc/demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o demo_opencv $< `pkg-config --libs opencv`
+	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 demo_sdl2: misc/demo_sdl2.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags sdl2` -I. -o demo_sdl2 $< `pkg-config --libs sdl2`

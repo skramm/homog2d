@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019 Sebastien Kramm
+    Author & Copyright 2019-2021 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -54,6 +54,11 @@ See https://github.com/skramm/homog2d
 
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type must be numerical" )
+
+/// Internal type used for numerical computations, possible	values: \c double, <code>long double</code>
+#if !defined(HOMOG2D_INUMTYPE)
+	#define HOMOG2D_INUMTYPE double
+#endif
 
 namespace homog2d {
 
@@ -436,7 +441,7 @@ Thus some assert can get triggered elsewhere.
 				_data[i][j] /= v;
 		return *this;
 #else
-		return *this * (1.0/v);
+		return *this * (1.0L/v);
 #endif
 	}
 /// Multiply all elements by scalar
@@ -459,7 +464,9 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out._data[i][j] += h1._data[i][k] * h2._data[k][j];
+					out._data[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
 		return out;
 	}
 
@@ -474,7 +481,10 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		auto eps = std::numeric_limits<FPT>::epsilon();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				if( std::fabs( _data[i][j] - h._data[i][j] ) >= eps )
+				if( std::fabs(
+					static_cast<HOMOG2D_INUMTYPE>( _data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h._data[i][j] ) )
+					>= eps
+				)
 					return false;
 		return true;
 	}
@@ -483,7 +493,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 	{
 		return !(*this == h);
 	}
-	static FPT& nullDeterValue() { return _zeroDeterminantValue; }
+	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -514,17 +524,17 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 /**
 See https://en.wikipedia.org/wiki/Determinant
 */
-	double p_det()
+	HOMOG2D_INUMTYPE p_det()
 	{
-		double det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
-		det       -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
-		det       += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		auto det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		det     -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		det     += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
 		return det;
 	}
-	double p_det2x2( std::vector<int> v )
+	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v )
 	{
-		auto det = _data[v[0]][v[1]] * _data[v[6]][v[7]];
-		det -= _data[v[2]][v[3]] * _data[v[4]][v[5]];
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[6]][v[7]] );
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[4]][v[5]] );
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
@@ -565,7 +575,7 @@ See https://en.wikipedia.org/wiki/Determinant
 		}
 		return f;
 	}
-	static FPT _zeroDeterminantValue; /// Used in matrix inversion
+	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
 };
 
 //------------------------------------------------------------------
@@ -790,10 +800,6 @@ class Root
 	template<typename U,typename V>
 	friend class Root;
 
-//	template<typename T,typename U,typename V,typename W>
-//	friend Root<T,V>
-//	operator * ( const Hmatrix_<W,U>&, const Root<T,V>& );
-
 	template<typename T>
 	friend Root<type::IsPoint,T>
 	operator * ( const Root<type::IsLine,T>&, const Root<type::IsLine,T>& );
@@ -822,7 +828,6 @@ class Root
 		}*/
 
 	public:
-
 
 /// Constructor: build a point from two lines
 		Root( const Root<type::IsLine,FPT>& v1, const Root<type::IsLine,FPT>& v2 )
@@ -960,11 +965,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
 		void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-		double distTo( const Root<type::IsPoint,FPT>& pt ) const
+		HOMOG2D_INUMTYPE distTo( const Root<type::IsPoint,FPT>& pt ) const
 		{
 			return impl_distToPoint( pt, detail::RootHelper<LP>() );
 		}
-		double distTo( const Root<type::IsLine,FPT>& li ) const
+		HOMOG2D_INUMTYPE distTo( const Root<type::IsLine,FPT>& li ) const
 		{
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
@@ -980,12 +985,12 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 /// Returns angle in rad. between the lines
 /** Please check out warning described in impl_getAngle() */
 		template<typename T>
-		double getAngle( const Root<T,FPT>& other ) const
+		HOMOG2D_INUMTYPE getAngle( const Root<T,FPT>& other ) const
 		{
 			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
 		template<typename T>
-		double getAngle( const Segment_<T>& seg ) const;
+		HOMOG2D_INUMTYPE getAngle( const Segment_<T>& seg ) const;
 
 	private:
 		FPT impl_getX( const detail::RootHelper<type::IsPoint>& /* dummy */ ) const
@@ -1007,15 +1012,15 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		void
 		impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& );
 
-		double impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		double impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		double impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
-		double impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
+		HOMOG2D_INUMTYPE impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		HOMOG2D_INUMTYPE impl_distToPoint( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		HOMOG2D_INUMTYPE impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
+		HOMOG2D_INUMTYPE impl_distToLine(  const Root<type::IsLine,FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
-		double  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		double  impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool    impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		bool    impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsPoint,FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
@@ -1024,7 +1029,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsPoint>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<type::IsPoint,FPT>& ) const;
-		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>& ) const;
+		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>&  ) const;
 
 	public:
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
@@ -1102,7 +1107,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
 		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
 		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
-
+/// Constructor: build from a single OpenCv point.
 		template<typename T>
 		Root( cv::Point_<T> pt )
 		{
@@ -1110,10 +1115,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 #endif
 
-	static FPT& nullAngleValue()  { return _zeroAngleValue; }
-	static FPT& nullDistance()    { return _zeroDistance; }
-	static FPT& nullOffsetValue() { return _zeroOffset; }
-	static FPT& nullOrthogDistance() { return _zeroOrthoDistance; }
+	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
+	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
+	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
+	static HOMOG2D_INUMTYPE& nullOrthogDistance() { return _zeroOrthoDistance; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -1123,10 +1128,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 //		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 		std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-		static FPT _zeroAngleValue;       /// Used in isParallel();
-		static FPT _zeroDistance;         /// Used to define points as identical
-		static FPT _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
-		static FPT _zeroOffset;           /// Used to compare lines
+		static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
+		static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
+		static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
+		static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1172,17 +1177,18 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename OPENCVT>
 		OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
 
+/// Build point from Opencv point
 		template<typename T>
-		void impl_init_opencv( T pt, const detail::RootHelper<type::IsPoint>& )
+		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsPoint>& )
 		{
 			impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
 		}
+/// Build line from Opencv point
 		template<typename T>
-		void impl_init_opencv( T pt, const detail::RootHelper<type::IsLine>& )
+		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsLine>& )
 		{
 			Root<type::IsPoint,FPT> p(pt);
-			impl_init_1_Point<T>( p, detail::RootHelper<type::IsLine>() );
-//			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a line using an OpenCv point" );
+			impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 		}
 
 		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1196,7 +1202,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			_v[1] = 0.;
 			_v[2] = 0.;
 		}
-		/// Called by default constructor, overload for points
+		/// Called by default constructor, overload for points. Initialize to (0,0)
 		void impl_init( const detail::RootHelper<type::IsPoint>& )
 		{
 			_v[0] = 0.;
@@ -1212,22 +1218,22 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
+HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroDistance = 1E-15;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-15;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
 template<typename LP,typename FPT>
-FPT Root<LP,FPT>::_zeroOffset = 1E-15;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1286,8 +1292,8 @@ getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FP
 {
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		   fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
-		|| fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		   std::fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
 	)
 		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
 #endif
@@ -1387,7 +1393,7 @@ class Segment_
 			return _ptS1.distTo( _ptS2 );
 		}
 		template<typename U>
-		double getAngle( const U& other ) const
+		HOMOG2D_INUMTYPE getAngle( const U& other ) const
 		{
 			return other.getAngle( this->getLine() );
 		}
@@ -1457,7 +1463,7 @@ Root<LP,FPT>::isParallelTo( const Segment_<T>& seg ) const
 /// Returns angle in rad. between the line and the segment \c seg
 template<typename LP,typename FPT>
 template<typename T>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::getAngle( const Segment_<T>& seg ) const
 {
 	return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
@@ -1571,10 +1577,13 @@ template<typename LP,typename FPT>
 FPT
 Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const
 {
+	const auto a = static_cast<HOMOG2D_INUMTYPE>( _v[0] );
+	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
+//	auto c = static_cast<HOMOG2D_INUMTYPE>( _v[2] ); // useless, automatic conversion will take place
 	if( gc == GivenCoord::X )
-		return ( -_v[0] * other - _v[2] ) / _v[1];
+		return ( -a * other - _v[2] ) / b;
 	else
-		return ( -_v[1] * other - _v[2] ) / _v[0];
+		return ( -b * other - _v[2] ) / a;
 }
 
 template<typename LP,typename FPT>
@@ -1677,12 +1686,14 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
+//	std::cout << __FUNCTION__ << "(IsLine):\n -this=" << *this << "\n -other=" << other <<"\n";
 	if( !this->isParallelTo( other ) )
 		return false;
 
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
 		return false;
 
+//	std::cout << "=>TRUE\n";
 	return true;
 }
 
@@ -1702,16 +1713,25 @@ Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper
 namespace detail {
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	template<typename Out, typename In,typename FPT>
+	template<typename Out,typename In,typename FPT>
 	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
 	{
-		Root<Out,FPT> res;
-		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
+		auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
+		auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
+		auto r1_c = static_cast<HOMOG2D_INUMTYPE>(r1._v[2]);
+		auto r2_a = static_cast<HOMOG2D_INUMTYPE>(r2._v[0]);
+		auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
+		auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
+
+/*		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
 		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
 		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-//		for ( int i=0; i<3; i++)
-//			std::cout << "v[" << i << "]=" << res._v[i] << " ";
-//		std::cout  << '\n';
+*/
+		Root<Out,FPT> res;
+		res._v[0] = static_cast<FPT>( r1_b * r2_c  - r1_c * r2_b );
+		res._v[1] = static_cast<FPT>( r1_c * r2_a  - r1_a * r2_c );
+		res._v[2] = static_cast<FPT>( r1_a * r2_b  - r1_b * r2_a );
+
 		return res;
 	}
 } // namespace detail
@@ -1726,18 +1746,7 @@ operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rh
 		throw std::runtime_error( "lines are parallel, unable to compute product" );
 #endif
 
-	auto pt = detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
-#if 0
-	auto eps = std::numeric_limits<double>::epsilon();
-	if( std::fabs(pt._v[2]) <= eps )
-	{
-		std::ostringstream lh,lr;
-		lh << lhs;
-		lr << rhs;
-		throw std::runtime_error( "unable to compute point from two lines: lhs=" + lh.str() + "rhs=" + lr.str() );
-	}
-#endif
-	return pt;
+	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
 }
 
 /// Free function template, product of two points, returns a line
@@ -1782,12 +1791,17 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<ty
 	p_normalizeLine();
 }
 
-/// overload for point to point distance
+/// Overload for point to point distance
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
-	return std::hypot( getX() - pt.getX(), getY() - pt.getY() );
+	return static_cast<double>(
+		std::hypot(
+			static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
+			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
+		)
+	);
 }
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. overload for line to point distance.
@@ -1801,7 +1815,7 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 \todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
 */
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
@@ -1809,16 +1823,15 @@ Root<LP,FPT>::impl_distToPoint( const Root<type::IsPoint,FPT>& pt, const detail:
 
 /// overload for line to point distance
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
-//	return li.impl_distToPoint( *this, detail::RootHelper<type::IsLine>() );
 	return li.distTo( *this );
 }
 
 /// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_distToLine( const Root<type::IsLine,FPT>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
@@ -1842,7 +1855,7 @@ Root<LP,FPT>::impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
-double
+HOMOG2D_INUMTYPE
 getAngle( const Root<type::IsLine,FPT>& li1, const Root<type::IsLine,FPT>& li2 )
 {
 	return li1.getAngle( li2 );
@@ -1852,8 +1865,8 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-auto a = getAngle(li);
-//	std::cerr << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
+	auto a = getAngle(li);
+//	std::cout << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
 	if( a < Root::nullAngleValue() )
 //	if( getAngle(li) < Root::nullAngleValue() )
 		return true;
@@ -1891,25 +1904,32 @@ This is logged on \c std::cerr so that the user may take that into consideration
 \todo more investigation needed ! : what are the exact situation that will lead to this event?
 */
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto res = _v[0] * li._v[0] + _v[1] * li._v[1];
-	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
+//	double res = _v[0] * li._v[0] + _v[1] * li._v[1];
+	HOMOG2D_INUMTYPE l1_a = _v[0];
+	HOMOG2D_INUMTYPE l1_b = _v[1];
+	HOMOG2D_INUMTYPE l2_a = li._v[0];
+	HOMOG2D_INUMTYPE l2_b = li._v[1];
+	HOMOG2D_INUMTYPE res = l1_a * l2_a + l1_b * l2_b;
+
+//	res /= std::sqrt( (_v[0]*_v[0] + _v[1]*_v[1] ) * ( li._v[0]*li._v[0] + li._v[1]*li._v[1] ) );
+	res /= std::sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(25) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
 //	std::cerr << __FUNCTION__ << "(): a1*b1=" << _v[0]*_v[0] + _v[1]*_v[1] << " a2*b2=" << li._v[0]*li._v[0] + li._v[1]*li._v[1] << "\n";
 //	std::cerr << __FUNCTION__ << "(): res=" << std::setprecision(std::numeric_limits<double>::digits10 + 1) << res << " angle=" << std::acos( std::abs(res) ) << "\n";
-	auto fres = std::abs(res);
+	HOMOG2D_INUMTYPE fres = std::abs(res);
 	if( fres > 1.0 )
 	{
-		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << " truncated to 1.0\n";
+		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << ", truncated to 1.0\n";
 		fres = 1.0;
 	}
 	return std::acos( fres );
 }
 
 template<typename LP, typename FPT>
-double
+HOMOG2D_INUMTYPE
 Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
@@ -1992,32 +2012,32 @@ Root<LP,FPT>::impl_intersectsCircle(
 {
 	Intersect out;
 	HOMOG2D_CHECK_IS_NUMBER(T);
-	const FPT& a = _v[0]; // just to lighten a bit...
-	const FPT& b = _v[1];
-	const FPT& c = _v[2];
+	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(_v[0]); // just to lighten a bit...
+	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(_v[1]);
+	const HOMOG2D_INUMTYPE c = static_cast<HOMOG2D_INUMTYPE>(_v[2]);
 
 // step 1: translate to origin
-	double cp = pt.getX() * a + pt.getY() * b + c;
+	auto cp = pt.getX() * a + pt.getY() * b + c;
 
 // step 2: compute distance	between center (origin) and middle point
-	double a2b2 = a * a + b * b;
-	double d0 = std::abs(cp) / std::sqrt( a2b2 );
+	auto a2b2 = a * a + b * b;
+	auto d0 = std::abs(cp) / std::sqrt( a2b2 );
 	if( r < d0 )                            // if less than radius,
 		return out;                         // no intersection
 
-	double d2 = r*r - d0*d0;
+	auto d2 = r*r - d0*d0;
 
 // step 3: compute coordinates of middle point B
-	double xb = - a * cp / a2b2;
-	double yb = - b * cp / a2b2;
+	auto xb = - a * cp / a2b2;
+	auto yb = - b * cp / a2b2;
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
-	double m  = std::sqrt( d2 / a2b2 );
-	double x1 = xb + m*b;
-	double y1 = yb - m*a;
+	auto m  = std::sqrt( d2 / a2b2 );
+	auto x1 = xb + m*b;
+	auto y1 = yb - m*a;
 
-	double x2 = xb - m*b;
-	double y2 = yb + m*a;
+	auto x2 = xb - m*b;
+	auto y2 = yb + m*a;
 
 // last step: translate back
 	out.ptA.set( x1 + pt.getX(), y1 + pt.getY() );

@@ -2,11 +2,15 @@ dist: xenial
 language: cpp
 
 install:
- - wget https://github.com/catchorg/Catch2/releases/download/v2.7.0/catch.hpp
+ - wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp
  - mv catch.hpp misc/
  - ls
 
 script: make test
+
+branches:
+  only:
+  - master
 
 # SOMETHING WRONG HERE...
 #deploy:
