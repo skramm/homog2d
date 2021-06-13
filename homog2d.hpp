@@ -594,7 +594,7 @@ buildFromPoints_Eigen(
 )
 {
 	Eigen::MatrixXd A(8,8);
-	Eigen::VectorXf b;
+	Eigen::VectorXf b(8);
 
 	for( int i=0; i<4; i++ )
 	{
@@ -602,7 +602,10 @@ buildFromPoints_Eigen(
 		auto y1 = vpt1[i].getY();
 		auto x2 = vpt2[i].getX();
 		auto y2 = vpt2[i].getY();
-		b << x2, y2;
+
+		b(2*i)   = x2;
+		b(2*i+1) = y2;
+
 		A(i*2,0) = A(i*2+1,3) = x1;
 		A(i*2,1) = A(i*2+1,4) = x2;
 		A(i*2,2) = A(i*2+1,5) = 1.;
@@ -611,16 +614,26 @@ buildFromPoints_Eigen(
 		A(i*2,7)   = - y1 * x2;
 		A(i*2+1,6) = - x1 * y2;
 		A(i*2+1,7) = - y1 * y2;
+		std::cout << "b(i)" << b(i) << '\n';
+
 	}
 
 // once matrix is filled, we get the solution from X = A^-1 B
 	auto X = A.ldlt().solve(b);
+	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
 
 // fill H
 	Hmatrix_<type::IsHomogr,FPT> H;
+	std::cout << H << '\n';
+
 	for( int i=0; i<8; i++ )
-		H.set(i/3,i%3, X(i) );
+	{
+//		auto val = X(i);
+		auto val = 1.;
+		H.set( i/3, i%3, val );
+	}
 	H.set(2, 2, 1.);
+
 	return H;
 }
 #endif
@@ -671,19 +684,23 @@ Hmatrix_<MT,FPT>::buildFromPoints(
 )
 {
 	if( method == 0 )
+	{
 #ifdef HOMOG2D_USE_EIGEN
+		std::cerr << "H compute: using Eigen\n";
 		*this = detail::buildFromPoints_Eigen( vpt1, vpt2 );
 #else
-		assert( 0 );//, "xxx");
+		throw std::runtime_error( "Unable, build without Eigen support" );
 #endif
+	}
 	else
+	{
 #ifdef HOMOG2D_USE_OPENCV
-	std::cerr << "Use OPencv\n";
+		std::cerr << "H compute: using Opencv\n";
 		*this = detail::buildFromPoints_Opencv( vpt1, vpt2 );
 #else
-		static_assert( 0, "xxx");
+		throw std::runtime_error( "Unable, build without Opencv support" );
 #endif
-
+	}
 }
 
 
