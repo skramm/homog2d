@@ -554,7 +554,6 @@ void demo_6(int n)
 struct Param_7: public Data
 {
 	int hmethod = 0;
-	std::vector<Point2d> vpt2;
 	cv::Mat img2;
 
 	Param_7()
@@ -567,6 +566,11 @@ struct Param_7: public Data
 		cv::imshow( wndname, img );
 		cv::imshow( "win2",  img2 );
 	}
+	void clearImage()
+	{
+		img = cv::Scalar(255,255,255);
+		img2 = cv::Scalar(255,255,255);
+	}
 
 };
 
@@ -576,22 +580,39 @@ void action_7( void* param )
 
 	data.clearImage();
 
+	std::vector<Point2d> v1(4);
+	std::vector<Point2d> v2(4);
+	std::copy( data.vpt.begin(),   data.vpt.begin()+4, v1.begin() );
+	std::copy( data.vpt.begin()+4, data.vpt.end(),     v2.begin() );
 	for( int i=0; i<4; i++ )
 	{
-		Segment s1( data.vpt[i], data.vpt[i==3?0:i+1] );
-		Segment s2( data.vpt2[i], data.vpt2[i==3?0:i+1] );
+		Segment s1( v1[i], v1[i==3?0:i+1] );
+		Segment s2( v2[i], v2[i==3?0:i+1] );
 		s1.draw( data.img, CvDrawParams().setColor( 0,0,250) );
 		s2.draw( data.img, CvDrawParams().setColor( 250,0,0) );
 
-		Segment( data.vpt[i], data.vpt2[i] ).draw( data.img );
+		s1.draw( data.img2, CvDrawParams().setColor( 0,0,250) );
 
-		data.vpt[i].draw( data.img );
-		data.vpt2[i].draw( data.img );
+		Segment( v1[i], v2[i] ).draw( data.img );
+
+		v1[i].draw( data.img );
+		v2[i].draw( data.img );
 	}
 
 	Homogr H;
-	H.buildFromPoints( data.vpt, data.vpt2, data.hmethod );
+
+	H.buildFromPoints( v1, v2, data.hmethod );
 	std::cout << H << '\n';
+
+	std::vector<Point2d> vpt3;
+	for( int i=0; i<4; i++ )
+		vpt3.push_back( H * data.vpt[i] );
+
+	for( int i=0; i<4; i++ )
+	{
+		Segment s1( vpt3[i], vpt3[i==3?0:i+1] );
+		s1.draw( data.img2, CvDrawParams().setColor( 0,250,0) );
+	}
 	data.showImage();
 }
 
@@ -599,7 +620,6 @@ void action_7M( void* param )
 {
 	auto par = reinterpret_cast<Param_7*>(param);
 	par->moveSelectedPoint();
-
 }
 
 /// Mouse callback for demo_7
@@ -608,26 +628,27 @@ void mouse_CB_7( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_7, action_7M, param );
 }
 
+void demo_7_reset( Param_7& data )
+{
+	auto pa1 = Point2d(100,100);
+	auto pa2 = Point2d(400,300);
+	auto v1 = getRectPts( pa1, pa2 );
+
+	auto pb1 = Point2d(80,150);
+	auto pb2 = Point2d(450,350);
+	auto v2 = getRectPts( pb1, pb2 );
+	std::copy( v1.begin(), v1.end(), data.vpt.begin() );
+	std::copy( v2.begin(), v2.end(), data.vpt.begin()+4 );
+}
 
 /// Demo of computing a homography from two sets of 4 points
 void demo_7( int n )
 {
 	Param_7 data;
-
+	data.vpt.resize(8);
+	demo_7_reset(data);
 	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n";
-	auto pa1 = Point2d(100,100);
-	auto pa2 = Point2d(400,300);
-	data.vpt = getRectPts( pa1, pa2 );
 
-	auto pb1 = Point2d(80,150);
-	auto pb2 = Point2d(450,350);
-	data.vpt2 = getRectPts( pb1, pb2 );
-
-//	g_data.vpt.resize(8);
-//	std::copy( vptrect_a.begin(), vptrect_a.end(), g_data.vpt.begin() );
-//	std::copy( vptrect_b.begin(), vptrect_b.end(), g_data.vpt.begin()+4 );
-//	for( auto pt: g_data.vpt )
-//		std::cout << "-pt=" << pt << '\n';
 	cv::setMouseCallback( data.wndname, mouse_CB_7, &data );
 
 	action_7( &data );
@@ -642,6 +663,9 @@ void demo_7( int n )
 			case 'a':
 				data.hmethod = data.hmethod?0:1;
 				d = true;
+			break;
+			case 'r':
+				demo_7_reset(data);
 			break;
 
 			case 27: std::exit(0);

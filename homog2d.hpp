@@ -594,43 +594,46 @@ buildFromPoints_Eigen(
 )
 {
 	Eigen::MatrixXd A(8,8);
-	Eigen::VectorXf b(8);
+	Eigen::VectorXd b(8);
 
 	for( int i=0; i<4; i++ )
 	{
-		auto x1 = vpt1[i].getX();
-		auto y1 = vpt1[i].getY();
-		auto x2 = vpt2[i].getX();
-		auto y2 = vpt2[i].getY();
+		auto u1 = vpt1[i].getX();
+		auto v1 = vpt1[i].getY();
+		auto u2 = vpt2[i].getX();
+		auto v2 = vpt2[i].getY();
 
-		b(2*i)   = x2;
-		b(2*i+1) = y2;
+		b(2*i)   = u2;
+		b(2*i+1) = v2;
 
-		A(i*2,0) = A(i*2+1,3) = x1;
-		A(i*2,1) = A(i*2+1,4) = x2;
+		A(i*2,0) = A(i*2+1,3) = u1;
+		A(i*2,1) = A(i*2+1,4) = u2;
 		A(i*2,2) = A(i*2+1,5) = 1.;
 
-		A(i*2,6)   = - x1 * x2;
-		A(i*2,7)   = - y1 * x2;
-		A(i*2+1,6) = - x1 * y2;
-		A(i*2+1,7) = - y1 * y2;
-		std::cout << "b(i)" << b(i) << '\n';
-
+		A(i*2,6)   = - u1 * u2;
+		A(i*2,7)   = - v1 * u2;
+		A(i*2+1,6) = - u1 * v2;
+		A(i*2+1,7) = - v1 * v2;
+//		std::cout << "b(i)" << b(i) << '\n';
 	}
 
 // once matrix is filled, we get the solution from X = A^-1 B
-	auto X = A.ldlt().solve(b);
-	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
+//	auto X = A.ldlt().solve(b);
+	Eigen::VectorXd X = A.ldlt().solve(b);
+
+//	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
+//	std::cout << "X=" << X << "\n";
 
 // fill H
 	Hmatrix_<type::IsHomogr,FPT> H;
-	std::cout << H << '\n';
+//	std::cout << H << '\n';
 
 	for( int i=0; i<8; i++ )
 	{
-//		auto val = X(i);
-		auto val = 1.;
-		H.set( i/3, i%3, val );
+//		std::cerr << i << ": " << X(i)<< '\n';
+//		double val = X(i);
+//		auto val = 1.;
+		H.set( i/3, i%3, X(i) );
 	}
 	H.set(2, 2, 1.);
 
@@ -2197,6 +2200,24 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	detail::product( out, h, in );
 	return out;
 }
+
+#if 0
+/// Apply homography to a vector of point or line. Free function, templated by point or line
+template<typename T,typename U,typename V>
+std::vector<Root<T,V>>
+operator * ( const Hmatrix_<type::IsHomogr,U>& h, std::vector<const Root<T,V>>& vin )
+{
+	std::vector<Root<T,V>> vout( vin.size() );
+	auto it = std::begin( vout );
+	for( const auto& elem: vin )
+	{
+		detail::product( *it, h, elem );
+		it++;
+	}
+
+	return vout;
+}
+#endif
 
 /// Apply homography to a segment
 template<typename FPT1,typename FPT2>
