@@ -579,133 +579,6 @@ See https://en.wikipedia.org/wiki/Determinant
 };
 
 //------------------------------------------------------------------
-namespace detail {
-
-#ifdef HOMOG2D_USE_EIGEN
-///  Build Homography from 2 sets of 4 points, using Eigen
-/**
- see https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
-*/
-template<typename FPT>
-Hmatrix_<type::IsHomogr,FPT>
-buildFromPoints_Eigen(
-	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
-	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
-)
-{
-	Eigen::MatrixXd A(8,8);
-	Eigen::VectorXd b(8);
-
-	for( int i=0; i<4; i++ )
-	{
-		auto u1 = vpt1[i].getX();
-		auto v1 = vpt1[i].getY();
-		auto u2 = vpt2[i].getX();
-		auto v2 = vpt2[i].getY();
-
-		b(2*i)   = u2;
-		b(2*i+1) = v2;
-
-		A(i*2,0) = A(i*2+1,3) = u1;
-		A(i*2,1) = A(i*2+1,4) = u2;
-		A(i*2,2) = A(i*2+1,5) = 1.;
-
-		A(i*2,6)   = - u1 * u2;
-		A(i*2,7)   = - v1 * u2;
-		A(i*2+1,6) = - u1 * v2;
-		A(i*2+1,7) = - v1 * v2;
-//		std::cout << "b(i)" << b(i) << '\n';
-	}
-
-// once matrix is filled, we get the solution from X = A^-1 B
-//	auto X = A.ldlt().solve(b);
-	Eigen::VectorXd X = A.ldlt().solve(b);
-
-//	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
-//	std::cout << "X=" << X << "\n";
-
-// fill H
-	Hmatrix_<type::IsHomogr,FPT> H;
-//	std::cout << H << '\n';
-
-	for( int i=0; i<8; i++ )
-	{
-//		std::cerr << i << ": " << X(i)<< '\n';
-//		double val = X(i);
-//		auto val = 1.;
-		H.set( i/3, i%3, X(i) );
-	}
-	H.set(2, 2, 1.);
-
-	return H;
-}
-#endif
-
-//------------------------------------------------------------------
-#ifdef HOMOG2D_USE_OPENCV
-
-///  Build Homography from 2 sets of 4 points, using Opencv
-/**
-- WIP !!
-- see https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
-
-\note With current Opencv installed on current machine, it seems that \c cv::getPerspectiveTransform()
-requires that the points are "CV_32F" (\c float), and NOT double.
-*/
-template<typename FPT>
-Hmatrix_<type::IsHomogr,FPT>
-buildFromPoints_Opencv (
-	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
-	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
-)
-{
-	auto src = getCvPts( vpt1 ); //, CV_32F );
-	auto dst = getCvPts( vpt2 ); //, CV_32F );
-	for( auto p1: src)
-		std::cout << "src: " << p1 << "\n";
-	for( auto p1: dst)
-		std::cout << "dst: " << p1 << "\n";
-	auto cvH = cv::getPerspectiveTransform( src, dst );
-	return cvH;
-}
-#endif
-
-} // namespace detail
-
-
-//------------------------------------------------------------------
-/// Build Homography from 2 sets of 4 points
-/**
-Requires either Eigen or Opencv
-*/
-template<typename MT,typename FPT>
-void
-Hmatrix_<MT,FPT>::buildFromPoints(
-	const std::vector<Root<type::IsPoint,FPT>>& vpt1,  ///< source points
-	const std::vector<Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
-	int method
-)
-{
-	if( method == 0 )
-	{
-#ifdef HOMOG2D_USE_EIGEN
-		std::cerr << "H compute: using Eigen\n";
-		*this = detail::buildFromPoints_Eigen( vpt1, vpt2 );
-#else
-		throw std::runtime_error( "Unable, build without Eigen support" );
-#endif
-	}
-	else
-	{
-#ifdef HOMOG2D_USE_OPENCV
-		std::cerr << "H compute: using Opencv\n";
-		*this = detail::buildFromPoints_Opencv( vpt1, vpt2 );
-#else
-		throw std::runtime_error( "Unable, build without Opencv support" );
-#endif
-	}
-}
-
 
 #ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
@@ -1124,6 +997,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_draw( mat, dp, detail::RootHelper<LP>() );
 		}
+
+		template<typename RT>
+		RT getCvPt() const { return RT( getX(), getY() ); }
+
 		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
 		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
 		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
@@ -1257,6 +1134,27 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
 
 #ifdef HOMOG2D_USE_OPENCV
+/// Free function to return an OpenCv point
+/**
+- RT: return type
+- FPT: Floating Point Type
+
+User code needs to provide the requested type as template argument:
+\code
+auto p1 = getCvPt<cv::Point2di>( pt );
+auto p2 = getCvPt<cv::Point2df>( pt );
+auto p3 = getCvPt<cv::Point2dd>( pt );
+\endcode
+*/
+template<typename RT,typename FPT>
+RT
+getCvPt( const Root<type::IsPoint,FPT>& pt )
+{
+//	return pt.getCvPt();
+	return pt.getCvPt<RT>();
+}
+
+#if 0
 /// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
@@ -1278,22 +1176,29 @@ getCvPti( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPti();
 }
+#endif
 
-/// Free function, returns a vector of OpenCv point (double) from a vector of points
+/// Free function, returns a vector of OpenCv points from a vector of points
 /**
-- write for float and ldouble
-- find a way to template that (!!)
+- RT: return type
+- FPT: Floating Point Type
+
+User code needs to provide the requested type as template argument:
+\code
+auto v1 = getCvPts<cv::Point2di>( myvec );
+auto v2 = getCvPts<cv::Point2df>( myvec );
+auto v3 = getCvPts<cv::Point2dd>( myvec );
+\endcode
 */
-template<typename FPT>
-std::vector<cv::Point2f>
+template<typename RT,typename FPT>
+std::vector<RT>
 getCvPts( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 {
-	std::vector<cv::Point2f> vout( vpt.size() );
-//	std::cerr << __FUNCTION__ << "() size=" <<  vpt.size() << '\n';
+	std::vector<RT> vout( vpt.size() );
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
 	{
-		*it = getCvPtf(pt);
+		*it = getCvPt<RT>(pt);
 		it++;
 	}
 	return vout;
@@ -1347,7 +1252,130 @@ fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
 				std::swap( ptA, ptB );
 }
 
-} // namespace detail end
+
+#ifdef HOMOG2D_USE_EIGEN
+///  Build Homography from 2 sets of 4 points, using Eigen
+/**
+ see https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+*/
+template<typename FPT>
+Hmatrix_<type::IsHomogr,FPT>
+buildFromPoints_Eigen(
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
+)
+{
+	Eigen::MatrixXd A(8,8);
+	Eigen::VectorXd b(8);
+
+	for( int i=0; i<4; i++ )
+	{
+		auto u1 = vpt1[i].getX();
+		auto v1 = vpt1[i].getY();
+		auto u2 = vpt2[i].getX();
+		auto v2 = vpt2[i].getY();
+
+		b(2*i)   = u2;
+		b(2*i+1) = v2;
+
+		A(i*2,0) = A(i*2+1,3) = u1;
+		A(i*2,1) = A(i*2+1,4) = u2;
+		A(i*2,2) = A(i*2+1,5) = 1.;
+
+		A(i*2,6)   = - u1 * u2;
+		A(i*2,7)   = - v1 * u2;
+		A(i*2+1,6) = - u1 * v2;
+		A(i*2+1,7) = - v1 * v2;
+//		std::cout << "b(i)" << b(i) << '\n';
+	}
+
+// once matrix is filled, we get the solution from X = A^-1 B
+//	auto X = A.ldlt().solve(b);
+	Eigen::VectorXd X = A.ldlt().solve(b);
+
+//	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
+//	std::cout << "X=" << X << "\n";
+
+// fill H
+	Hmatrix_<type::IsHomogr,FPT> H;
+//	std::cout << H << '\n';
+
+	for( int i=0; i<8; i++ )
+	{
+//		std::cerr << i << ": " << X(i)<< '\n';
+//		double val = X(i);
+//		auto val = 1.;
+		H.set( i/3, i%3, X(i) );
+	}
+	H.set(2, 2, 1.);
+
+	return H;
+}
+#endif
+
+//------------------------------------------------------------------
+#ifdef HOMOG2D_USE_OPENCV
+///  Build Homography from 2 sets of 4 points, using Opencv
+/**
+- WIP !!
+- see https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
+
+\note With current Opencv installed on current machine, it seems that \c cv::getPerspectiveTransform()
+requires that the points are "CV_32F" (\c float), and NOT double.
+*/
+template<typename FPT>
+Hmatrix_<type::IsHomogr,FPT>
+buildFromPoints_Opencv (
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
+)
+{
+	auto src = getCvPts<cv::Point2f>( vpt1 ); //, CV_32F );
+	auto dst = getCvPts<cv::Point2f>( vpt2 ); //, CV_32F );
+	for( auto p1: src)
+		std::cout << "src: " << p1 << "\n";
+	for( auto p1: dst)
+		std::cout << "dst: " << p1 << "\n";
+	auto cvH = cv::getPerspectiveTransform( src, dst );
+	return cvH;
+}
+#endif
+
+} // namespace detail
+
+
+//------------------------------------------------------------------
+/// Build Homography from 2 sets of 4 points
+/**
+Requires either Eigen or Opencv
+*/
+template<typename MT,typename FPT>
+void
+Hmatrix_<MT,FPT>::buildFromPoints(
+	const std::vector<Root<type::IsPoint,FPT>>& vpt1,  ///< source points
+	const std::vector<Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
+	int method
+)
+{
+	if( method == 0 )
+	{
+#ifdef HOMOG2D_USE_EIGEN
+		std::cerr << "H compute: using Eigen\n";
+		*this = detail::buildFromPoints_Eigen( vpt1, vpt2 );
+#else
+		throw std::runtime_error( "Unable, build without Eigen support" );
+#endif
+	}
+	else
+	{
+#ifdef HOMOG2D_USE_OPENCV
+		std::cerr << "H compute: using Opencv\n";
+		*this = detail::buildFromPoints_Opencv( vpt1, vpt2 );
+#else
+		throw std::runtime_error( "Unable, build without Opencv support" );
+#endif
+	}
+}
 
 
 //------------------------------------------------------------------
