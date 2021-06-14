@@ -1004,6 +1004,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
 		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
 		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
+
 /// Constructor: build from a single OpenCv point.
 		template<typename T>
 		Root( cv::Point_<T> pt )
@@ -1150,11 +1151,10 @@ template<typename RT,typename FPT>
 RT
 getCvPt( const Root<type::IsPoint,FPT>& pt )
 {
-//	return pt.getCvPt();
-	return pt.getCvPt<RT>();
+	return pt.template getCvPt<RT>();
 }
 
-#if 0
+#if 1
 /// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
@@ -1203,7 +1203,7 @@ getCvPts( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 	}
 	return vout;
 }
-#endif
+#endif // HOMOG2D_USE_OPENCV
 
 
 //------------------------------------------------------------------
@@ -1291,7 +1291,9 @@ buildFromPoints_Eigen(
 
 // once matrix is filled, we get the solution from X = A^-1 B
 //	auto X = A.ldlt().solve(b);
-	Eigen::VectorXd X = A.ldlt().solve(b);
+//	Eigen::VectorXd X = A.ldlt().solve(b);
+	auto Am = A.inverse();
+	Eigen::VectorXd X = Am * b;
 
 //	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
 //	std::cout << "X=" << X << "\n";
@@ -1330,12 +1332,13 @@ buildFromPoints_Opencv (
 	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
-	auto src = getCvPts<cv::Point2f>( vpt1 ); //, CV_32F );
-	auto dst = getCvPts<cv::Point2f>( vpt2 ); //, CV_32F );
-	for( auto p1: src)
+	auto src = getCvPts<cv::Point2f>( vpt1 );
+	auto dst = getCvPts<cv::Point2f>( vpt2 );
+/*	for( auto p1: src)
 		std::cout << "src: " << p1 << "\n";
 	for( auto p1: dst)
 		std::cout << "dst: " << p1 << "\n";
+*/
 	auto cvH = cv::getPerspectiveTransform( src, dst );
 	return cvH;
 }
@@ -1357,6 +1360,9 @@ Hmatrix_<MT,FPT>::buildFromPoints(
 	int method
 )
 {
+	assert( vpt1.size() == 4 );
+	assert( vpt2.size() == 4 );
+
 	if( method == 0 )
 	{
 #ifdef HOMOG2D_USE_EIGEN
@@ -1376,7 +1382,6 @@ Hmatrix_<MT,FPT>::buildFromPoints(
 #endif
 	}
 }
-
 
 //------------------------------------------------------------------
 /// A line segment, defined by two points

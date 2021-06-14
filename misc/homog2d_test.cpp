@@ -34,12 +34,6 @@ run with "make test"
 
 #include <list>
 
-#define IS_ALMOST_ZERO(a) \
-	( ( std::fabs(a) > std::numeric_limits<double>::epsilon() ) ? true : false )
-
-#define DIFFERENCE_IS_NULL(a,b) \
-	( ( std::fabs((a)-(b)) <= std::numeric_limits<double>::epsilon() ) ? true : false )
-
 //#define LOG(a) std::cout << " INFO: " << (a) << '\n';
 
 #define LOCALLOG(a) std::cout << " -" << a << '\n';
@@ -60,7 +54,7 @@ int main( int argc, char* argv[] )
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
 	Catch::StringMaker<long double>::precision = 25;
-//	std::cout << "aprox(0)=" << Approx(0.) << '\n';
+
 	int result = Catch::Session().run( argc, argv );
 
   // global clean-up...
@@ -896,6 +890,10 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
 			cv::Point2i cvpt3 = getCvPti( pt );           // integer point
 			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
+
+			auto cvpt_1 = getCvPt<cv::Point2d>( pt );
+			auto cvpt_2 = getCvPt<cv::Point2f>( pt );
+			auto cvpt_3 = getCvPt<cv::Point2i>( pt );
 		}
 		{
 			cv::Point2d cvpt1 = pt.getCvPtd() ;
@@ -904,6 +902,10 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
 			cv::Point2i cvpt3 = pt.getCvPti() ;          // integer point
 			CHECK( (cvpt3.x == 1  && cvpt3.y == 2 ) );
+
+			auto cvpt_1 = pt.getCvPt<cv::Point2d>();
+			auto cvpt_2 = pt.getCvPt<cv::Point2f>();
+			auto cvpt_3 = pt.getCvPt<cv::Point2i>();
 		}
 	}
 	INFO( "Fetch from OpenCv points" )
