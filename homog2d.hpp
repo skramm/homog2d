@@ -38,7 +38,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.2
+#define HOMOG2D_VERSION 2.3
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -1289,7 +1289,7 @@ std::vector<cv::Point2f>
 getCvPts( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 {
 	std::vector<cv::Point2f> vout( vpt.size() );
-	std::cerr << __FUNCTION__ << "() size=" <<  vpt.size() << '\n';
+//	std::cerr << __FUNCTION__ << "() size=" <<  vpt.size() << '\n';
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
 	{

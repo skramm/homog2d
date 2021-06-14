@@ -32,21 +32,23 @@
 
 using namespace homog2d;
 
-
-
+/// General data struct used in demos
 struct Data
 {
-	static cv::Mat img;
-	static std::string wndname; // = "homog2d demo";
-	static int width; // = 600;
-	static int height; // = 500;
+	cv::Mat img;
+	int width = 700;
+	int height = 500;
 
-	int selected = -1;
-	Point2d pt_mouse;
-	std::vector<Point2d> vpt;
+	std::string win1;   ///< Window name (appears in title)
+	int selected = -1;  ///< Mouse selected point
+	Point2d pt_mouse;   ///< Mouse coordinates
+	std::vector<Point2d> vpt; ///< some points used in demo
 
-	Data()
+	Data( std::string wname ): win1(wname)
 	{
+		cv::destroyAllWindows();
+		cv::namedWindow( win1 );
+		img.create( height, width, CV_8UC3 );
 		vpt.resize(4);
 		reset();
 	}
@@ -62,6 +64,11 @@ struct Data
 	{
 		pt_mouse.set(x,y);
 	}
+	void setMouseCallback( cv::MouseCallback mouse_CB )
+	{
+		cv::setMouseCallback( win1, mouse_CB, this );
+	}
+
 	int nbPts() const
 	{
 		return (int)vpt.size();
@@ -72,7 +79,7 @@ struct Data
 	}
 	void showImage()
 	{
-		cv::imshow( wndname, img );
+		cv::imshow( win1, img );
 	}
 
 	void moveSelectedPoint()
@@ -102,13 +109,6 @@ struct Data
 	}
 
 };
-
-
-
-int         Data::width = 600;
-int         Data::height = 500;
-cv::Mat     Data::img;
-std::string Data::wndname = "homog2d demo";
 
 
 /// Called by mouse callback functions, checks if one of the points is selected.
@@ -148,34 +148,53 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, std::
 	data.showImage();
 }
 
-struct Param_1: public Data
-{
-};
+void action_1(  void* param );
+void action_1M( void* param );
+void action_C(  void* param );
+void action_CM( void* param );
+void action_5(  void* param );
+void action_5M( void* param );
+void action_6(  void* param );
+void action_6M( void* param );
+void action_H(  void* param );
+void action_HM( void* param );
 
+
+/// Mouse callback for demo_H
+void mouse_CB_H( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_H, action_HM, param );
+}
+
+/// Mouse callback for demo_1
+void mouse_CB_1( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_1, action_1M, param );
+}
+
+/// Mouse callback for demo_C
+void mouse_CB_C( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_C, action_CM, param );
+}
+/// Mouse callback for demo5
+void mouse_CB_5( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_5, action_5M, param );
+}
+
+/// Mouse callback for demo_6
+void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_6, action_6M, param );
+}
+
+//------------------------------------------------------------------
 void action_1( void* param )
 {
-	auto& data = *reinterpret_cast<Param_1*>(param);
+	auto& data = *reinterpret_cast<Data*>(param);
 //	clearImage();
 	data.drawLines();
-
-/*	for( int i=0; i<g_data.nbPts(); i++ )
-	{
-		if( g_data.selected == i )
-			g_data.vpt[i].draw( g_img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i) );
-		else
-			g_data.vpt[i].draw( g_img, CvDrawParams().setPointStyle((PointStyle)i) );
-	}
-
-	Line2d lA( g_data.vpt[0], g_data.vpt[2] );
-	Line2d lB( g_data.vpt[0], g_data.vpt[3] );
-	Line2d lC( g_data.vpt[1], g_data.vpt[2] );
-	Line2d lD( g_data.vpt[1], g_data.vpt[3] );
-
-	lA.draw( g_img, CvDrawParams().setColor(   0,  50, 150) );
-	lB.draw( g_img, CvDrawParams().setColor( 150,  50,   0) );
-	lC.draw( g_img, CvDrawParams().setColor(  50, 150,   0) );
-	lD.draw( g_img, CvDrawParams().setColor( 150,   0,  50) );
-*/
 
 	Line2d l( data.vpt[0], data.vpt[2] );
 	Line2d la_V( l );
@@ -188,7 +207,7 @@ void action_1( void* param )
 
 void action_1M( void* param )
 {
-	auto& data = *reinterpret_cast<Param_1*>(param);
+	auto& data = *reinterpret_cast<Data*>(param);
 
 	Line2d l_mouse  = data.pt_mouse * Point2d();
 	Line2d l_mouse2 = l_mouse.getOrthogonalLine( GivenCoord::X, 100 );
@@ -196,17 +215,14 @@ void action_1M( void* param )
 	l_mouse2.draw( data.img );
 }
 
-/// Mouse callback for demo_1
-void mouse_CB_1( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_1, action_1M, param );
-}
 
 void demo_1( int nd )
 {
-	Param_1 data;
+	Data data("lines");
 	std::cout << "Demo " << nd << ": click on points and move them\n";
-	cv::setMouseCallback( data.wndname, mouse_CB_1, &data );
+
+//	cv::setMouseCallback( data.wndname, mouse_CB_1, &data );
+	data.setMouseCallback( mouse_CB_1 );
 
 	int n=5;
 	data.vpt[0].set( data.width/2,       data.height/n );
@@ -223,8 +239,10 @@ void demo_1( int nd )
 		std::exit(0);
 }
 //------------------------------------------------------------------
-struct Param_2: public Data
+struct Param_B: public Data
 {
+	Param_B(std::string wname): Data(wname)
+	{}
 	void initPts()
 	{
 		int a=50;
@@ -236,9 +254,10 @@ struct Param_2: public Data
 	}
 };
 
-void demo_2( int n )
+/// Build H from R,T,S (no mouse)
+void demo_B( int n )
 {
-	Param_2 data;
+	Param_B data( "build_H" );
 	std::cout << "Demo " << n << ": Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 	char key = 0;
 	Homogr H;
@@ -280,6 +299,7 @@ void demo_2( int n )
 		}
 		if( change )
 		{
+			data.clearImage();
 			H.init();
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			data.initPts();
@@ -332,8 +352,11 @@ void demo_3( int n )
 }
 #endif
 //------------------------------------------------------------------
-struct Param_4: public Data
+struct Param_C: public Data
 {
+	Param_C(std::string wname): Data(wname)
+	{}
+
 	int radius = 80;
 	std::array<Line2d,3> li;
 	void drawLines()
@@ -343,13 +366,13 @@ struct Param_4: public Data
 	}
 };
 
-void action_4( void* param )
+void action_C( void* param )
 {
 }
 
-void action_4M( void* param )
+void action_CM( void* param )
 {
-	auto& data = *reinterpret_cast<Param_4*>(param);
+	auto& data = *reinterpret_cast<Param_C*>(param);
 
 	data.clearImage();
 	data.drawLines();
@@ -370,16 +393,11 @@ void action_4M( void* param )
 	data.showImage();
 }
 
-/// Mouse callback for demo_4
-void mouse_CB_4( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_4, action_4M, param );
-}
 
-void demo_4( int n )
+void demo_C( int n )
 {
 	std::cout << "Demo " << n << ": move circle over line, hit [lm] to change circle radius\n";
-	Param_4 data;
+	Param_C data("circle");
 
 	data.li[0] = Point2d() * Point2d(200,100);
 	data.li[1] = Point2d(200,0) * Point2d(200,200);
@@ -389,7 +407,7 @@ void demo_4( int n )
 	data.drawLines();
 	data.showImage();
 
-	cv::setMouseCallback( data.wndname, mouse_CB_4, &data );
+	data.setMouseCallback( mouse_CB_C );
 
 	char key=0;
 	while( key != 32 ) // SPC
@@ -416,8 +434,12 @@ void demo_4( int n )
 //------------------------------------------------------------------
 struct Param_5: Data
 {
+	Param_5(std::string wname): Data(wname)
+	{}
+
 	Segment seg1,seg2;
 };
+
 void action_5( void* param )
 {
 	auto& data = *reinterpret_cast<Param_5*>(param);
@@ -454,16 +476,11 @@ void action_5M( void* param )
 	data.showImage();
 }
 
-/// Mouse callback for demo5
-void mouse_CB_5( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_5, action_5M, param );
-}
 
 
 void demo_5( int n )
 {
-	Param_5 data;
+	Param_5 data( "segment_intersection" );
 	std::cout << "Demo " << n << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
 
@@ -473,7 +490,8 @@ void demo_5( int n )
 	data.vpt[3] = Point2d(300,250);
 
 	action_5( &data );
-	cv::setMouseCallback( data.wndname, mouse_CB_5, &data );
+	data.setMouseCallback( mouse_CB_5 );
+
 	if( 27 == cv::waitKey(0) )
 		std::exit(0);
 }
@@ -481,6 +499,9 @@ void demo_5( int n )
 //------------------------------------------------------------------
 struct Param_6 : Data
 {
+	Param_6(std::string wname): Data(wname)
+	{}
+
 	float angle = 20;
 };
 
@@ -509,23 +530,16 @@ void action_6( void* param )
 
 void action_6M( void* param )
 {
-	auto& data = *reinterpret_cast<Param_6*>(param);
-	data.moveSelectedPoint();
-
-}
-/// Mouse callback for demo_6
-void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_6, action_6M, param );
+//	auto& data = *reinterpret_cast<Param_6*>(param);
+//	data.moveSelectedPoint();
 }
 
 void demo_6(int n)
 {
 	std::cout << "Demo " << n << ": apply homography to lines and segments\n Hit [lm] to change angle, "
 		<< "and select points of blue segment with mouse\n";
-	Param_6 data;
-	cv::setMouseCallback( data.wndname, mouse_CB_6, &data );
-
+	Param_6 data( "homography_lines_seg" );
+	data.setMouseCallback( mouse_CB_6 );
 	double angle_delta = 5.; // degrees
 
 	action_6( &data );
@@ -551,32 +565,35 @@ void demo_6(int n)
 	}
 }
 //------------------------------------------------------------------
-struct Param_7: public Data
+/// This one has two windows
+struct Param_H: public Data
 {
 	int hmethod = 0;
 	cv::Mat img2;
+	std::string win2 = "Computed_projection";
 
-	Param_7()
+	Param_H(std::string wname): Data(wname)
 	{
-		cv::namedWindow( "win2" );
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, width, 50 );
 		img2.create( height, width, CV_8UC3 );
 	}
 	void showImage()
 	{
-		cv::imshow( wndname, img );
-		cv::imshow( "win2",  img2 );
+		cv::imshow( win1, img );
+		cv::imshow( win2, img2 );
 	}
 	void clearImage()
 	{
 		img = cv::Scalar(255,255,255);
 		img2 = cv::Scalar(255,255,255);
 	}
-
 };
 
-void action_7( void* param )
+
+void action_H( void* param )
 {
-	auto& data = *reinterpret_cast<Param_7*>(param);
+	auto& data = *reinterpret_cast<Param_H*>(param);
 
 	data.clearImage();
 
@@ -599,6 +616,9 @@ void action_7( void* param )
 		v2[i].draw( data.img );
 	}
 
+	cv::putText(  data.img, "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+	cv::putText(  data.img, "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
+
 	Homogr H;
 
 	H.buildFromPoints( v1, v2, data.hmethod );
@@ -616,19 +636,14 @@ void action_7( void* param )
 	data.showImage();
 }
 
-void action_7M( void* param )
+void action_HM( void* param )
 {
-	auto par = reinterpret_cast<Param_7*>(param);
-	par->moveSelectedPoint();
+//	auto par = reinterpret_cast<Param_H*>(param);
+//	par->moveSelectedPoint();
 }
 
-/// Mouse callback for demo_7
-void mouse_CB_7( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_7, action_7M, param );
-}
 
-void demo_7_reset( Param_7& data )
+void demo_H_reset( Param_H& data )
 {
 	auto pa1 = Point2d(100,100);
 	auto pa2 = Point2d(400,300);
@@ -642,16 +657,16 @@ void demo_7_reset( Param_7& data )
 }
 
 /// Demo of computing a homography from two sets of 4 points
-void demo_7( int n )
+void demo_H( int n )
 {
-	Param_7 data;
+	Param_H data( "compute_H" );
 	data.vpt.resize(8);
-	demo_7_reset(data);
+	demo_H_reset(data);
 	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n";
 
-	cv::setMouseCallback( data.wndname, mouse_CB_7, &data );
+	data.setMouseCallback( mouse_CB_H );
 
-	action_7( &data );
+	action_H( &data );
 
 	char key=0;
 	while( key != 32 ) // SPC
@@ -664,8 +679,9 @@ void demo_7( int n )
 				data.hmethod = data.hmethod?0:1;
 				d = true;
 			break;
+			case 'R':
 			case 'r':
-				demo_7_reset(data);
+				demo_H_reset(data);
 			break;
 
 			case 27: std::exit(0);
@@ -673,7 +689,7 @@ void demo_7( int n )
 		}
 		if( d )
 		{
-			action_7( &data );
+			action_H( &data );
 			data.showImage();
 		}
 	}
@@ -709,17 +725,16 @@ return 0;
 	std::cout << "homog2d graphical demo using Opencv"
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
+
 	std::vector<std::function<void(int)>> v_demo{
-		demo_7,
+		demo_H,
 		demo_1,
-		demo_2,
+		demo_B,
 //		demo_3,
-		demo_4,
+		demo_C,
 		demo_5,
 		demo_6
 	};
-	cv::namedWindow( Data::wndname );
-	Data::img.create( Data::height, Data::width, CV_8UC3 );
 
 	if( argc > 1 )
 	{
@@ -731,11 +746,8 @@ return 0;
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
-	{
-		cv::destroyAllWindows(); // to disable the mouse callback
-		cv::namedWindow( Data::wndname );
 		v_demo[i](i+1);
-	}
+
 	std::cout << "Demo end\n";
 }
 
