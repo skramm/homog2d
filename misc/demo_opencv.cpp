@@ -366,7 +366,7 @@ struct Param_C: public Data
 	}
 };
 
-void action_C( void* param )
+void action_C( void* /*param*/ )
 {
 }
 
@@ -528,10 +528,8 @@ void action_6( void* param )
 	s1.get().second.draw( data.img, CvDrawParams().selectPoint() );
 }
 
-void action_6M( void* param )
+void action_6M( void* /*param*/ )
 {
-//	auto& data = *reinterpret_cast<Param_6*>(param);
-//	data.moveSelectedPoint();
 }
 
 void demo_6(int n)
@@ -621,8 +619,18 @@ void action_H( void* param )
 
 	Homogr H;
 
-	H.buildFromPoints( v1, v2, data.hmethod );
-	std::cout << H << '\n';
+	if( data.hmethod == 0 )
+#if !defined(HOMOG2D_USE_EIGEN)
+	{
+		std::cerr << "Unable, build without Eigen support, see manual\n";
+		return;
+	}
+#else
+		;
+#endif
+
+	H.buildFrom4Points( v1, v2, data.hmethod );
+	std::cout << "Computed Homography:\n" << H << '\n';
 
 	std::vector<Point2d> vpt3;
 	for( int i=0; i<4; i++ )
@@ -636,12 +644,9 @@ void action_H( void* param )
 	data.showImage();
 }
 
-void action_HM( void* param )
+void action_HM( void* /*param*/ )
 {
-//	auto par = reinterpret_cast<Param_H*>(param);
-//	par->moveSelectedPoint();
 }
-
 
 void demo_H_reset( Param_H& data )
 {
@@ -662,7 +667,9 @@ void demo_H( int n )
 	Param_H data( "compute_H" );
 	data.vpt.resize(8);
 	demo_H_reset(data);
-	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n";
+	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n"
+		<< " - usage: move points with mouse in left window, right window will show source rectangle and computed projected rectangle (green)\n"
+		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
 
 	data.setMouseCallback( mouse_CB_H );
 
@@ -677,10 +684,12 @@ void demo_H( int n )
 			case 'A':
 			case 'a':
 				data.hmethod = data.hmethod?0:1;
+				std::cout << "-used library: " << (data.hmethod?"Opencv":"Eigen") << '\n';
 				d = true;
 			break;
 			case 'R':
 			case 'r':
+				d = true;
 				demo_H_reset(data);
 			break;
 

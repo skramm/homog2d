@@ -427,7 +427,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 {
 	{
 		Homogr H1,H2;
-		Homogr H = H1*H2;
+		auto H = H1*H2;
 		CHECK( H == H1 );
 	}
 	{
@@ -469,7 +469,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( pt2.getY() == 3. );
 
 		H.setRotation( M_PI/2. );
-		Point2d_<NUMTYPE> pt3 = H * pt1;
+		auto pt3 = H * pt1;
 
 		CHECK( pt3.getX() == Approx( -1. ) );
 		CHECK( pt3.getY() == Approx(  1. ) );
@@ -906,6 +906,15 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			auto cvpt_1 = pt.getCvPt<cv::Point2d>();
 			auto cvpt_2 = pt.getCvPt<cv::Point2f>();
 			auto cvpt_3 = pt.getCvPt<cv::Point2i>();
+		}
+		{
+			std::vector<Point2d> v{ Point2d(1,2), Point2d(5,6), Point2d(3,4) };
+			auto vcv1 = getCvPts<cv::Point2f>( v );
+			CHECK( vcv1.size() == 3 );
+			auto vcv2 = getCvPts<cv::Point2f>( v );
+			CHECK( vcv2.size() == 3 );
+			auto vcv3 = getCvPts<cv::Point2f>( v );
+			CHECK( vcv3.size() == 3 );
 		}
 	}
 	INFO( "Fetch from OpenCv points" )

@@ -426,7 +426,7 @@ Thus some assert can get triggered elsewhere.
 		return *this;
 	}
 
-	void buildFromPoints( const std::vector<Root<type::IsPoint,FPT>>&, const std::vector<Root<type::IsPoint,FPT>>&, int method=0 );
+	void buildFrom4Points( const std::vector<Root<type::IsPoint,FPT>>&, const std::vector<Root<type::IsPoint,FPT>>&, int method=0 );
 
 /// Divide all elements by scalar
 	template<typename T>
@@ -1023,7 +1023,6 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 //////////////////////////
 
 	private:
-//		FPT _v[3]; ///< data, uses the template parameter FPT (for "Floating Point Type")
 		std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
 		static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
@@ -1256,16 +1255,18 @@ fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
 #ifdef HOMOG2D_USE_EIGEN
 ///  Build Homography from 2 sets of 4 points, using Eigen
 /**
- see https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+see
+- https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
+- https://eigen.tuxfamily.org/dox/group__DenseMatrixManipulation__chapter.html
 */
 template<typename FPT>
 Hmatrix_<type::IsHomogr,FPT>
-buildFromPoints_Eigen(
+buildFrom4Points_Eigen(
 	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
 	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
-	Eigen::MatrixXd A(8,8);
+	Eigen::MatrixXd A = Eigen::MatrixXd::Zero(8,8);
 	Eigen::VectorXd b(8);
 
 	for( int i=0; i<4; i++ )
@@ -1279,36 +1280,28 @@ buildFromPoints_Eigen(
 		b(2*i+1) = v2;
 
 		A(i*2,0) = A(i*2+1,3) = u1;
-		A(i*2,1) = A(i*2+1,4) = u2;
+		A(i*2,1) = A(i*2+1,4) = v1;
 		A(i*2,2) = A(i*2+1,5) = 1.;
 
 		A(i*2,6)   = - u1 * u2;
 		A(i*2,7)   = - v1 * u2;
 		A(i*2+1,6) = - u1 * v2;
 		A(i*2+1,7) = - v1 * v2;
-//		std::cout << "b(i)" << b(i) << '\n';
 	}
 
-// once matrix is filled, we get the solution from X = A^-1 B
-//	auto X = A.ldlt().solve(b);
-//	Eigen::VectorXd X = A.ldlt().solve(b);
-	auto Am = A.inverse();
-	Eigen::VectorXd X = Am * b;
 
-//	std::cout << "X size: rows()=" << X.rows() << " cols()=" << X.cols() << " size()=" << X.size() << '\n';
-//	std::cout << "X=" << X << "\n";
+#if 0
+	Eigen::VectorXd X = A.ldlt().solve(b); // for some reason this does not work...
+#else
+	Eigen::MatrixXd Ai = A.inverse();
+	Eigen::VectorXd X = Ai * b;
+#endif
 
-// fill H
 	Hmatrix_<type::IsHomogr,FPT> H;
 //	std::cout << H << '\n';
 
 	for( int i=0; i<8; i++ )
-	{
-//		std::cerr << i << ": " << X(i)<< '\n';
-//		double val = X(i);
-//		auto val = 1.;
 		H.set( i/3, i%3, X(i) );
-	}
 	H.set(2, 2, 1.);
 
 	return H;
@@ -1319,7 +1312,6 @@ buildFromPoints_Eigen(
 #ifdef HOMOG2D_USE_OPENCV
 ///  Build Homography from 2 sets of 4 points, using Opencv
 /**
-- WIP !!
 - see https://docs.opencv.org/master/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
 
 \note With current Opencv installed on current machine, it seems that \c cv::getPerspectiveTransform()
@@ -1327,20 +1319,14 @@ requires that the points are "CV_32F" (\c float), and NOT double.
 */
 template<typename FPT>
 Hmatrix_<type::IsHomogr,FPT>
-buildFromPoints_Opencv (
+buildFrom4Points_Opencv (
 	const std::vector<Root<type::IsPoint,FPT>>& vpt1, ///< source points
 	const std::vector<Root<type::IsPoint,FPT>>& vpt2  ///< destination points
 )
 {
-	auto src = getCvPts<cv::Point2f>( vpt1 );
-	auto dst = getCvPts<cv::Point2f>( vpt2 );
-/*	for( auto p1: src)
-		std::cout << "src: " << p1 << "\n";
-	for( auto p1: dst)
-		std::cout << "dst: " << p1 << "\n";
-*/
-	auto cvH = cv::getPerspectiveTransform( src, dst );
-	return cvH;
+	const auto& src = getCvPts<cv::Point2f>( vpt1 );
+	const auto& dst = getCvPts<cv::Point2f>( vpt2 );
+	return cv::getPerspectiveTransform( src, dst );
 }
 #endif
 
@@ -1350,24 +1336,28 @@ buildFromPoints_Opencv (
 //------------------------------------------------------------------
 /// Build Homography from 2 sets of 4 points
 /**
-Requires either Eigen or Opencv
+- Requires either Eigen or Opencv
+- we build a 8x8 matrix A and a 8x1 vector B, and get the solution from X = A^-1 B
+- see this for details:
+https://skramm.lautre.net/files/misc/Kramm_compute_H_from_4pts.pdf
 */
 template<typename MT,typename FPT>
 void
-Hmatrix_<MT,FPT>::buildFromPoints(
+Hmatrix_<MT,FPT>::buildFrom4Points(
 	const std::vector<Root<type::IsPoint,FPT>>& vpt1,  ///< source points
 	const std::vector<Root<type::IsPoint,FPT>>& vpt2,  ///< destination points
-	int method
+	int method                                         ///< 0: Eigen, 1: Opencv
 )
 {
 	assert( vpt1.size() == 4 );
 	assert( vpt2.size() == 4 );
+	assert( method == 0 || method == 1 );
 
-	if( method == 0 )
+	if( method == 1 )
 	{
 #ifdef HOMOG2D_USE_EIGEN
-		std::cerr << "H compute: using Eigen\n";
-		*this = detail::buildFromPoints_Eigen( vpt1, vpt2 );
+//		std::cerr << "H compute: using Eigen\n";
+		*this = detail::buildFrom4Points_Eigen( vpt1, vpt2 );
 #else
 		throw std::runtime_error( "Unable, build without Eigen support" );
 #endif
@@ -1375,8 +1365,8 @@ Hmatrix_<MT,FPT>::buildFromPoints(
 	else
 	{
 #ifdef HOMOG2D_USE_OPENCV
-		std::cerr << "H compute: using Opencv\n";
-		*this = detail::buildFromPoints_Opencv( vpt1, vpt2 );
+//		std::cerr << "H compute: using Opencv\n";
+		*this = detail::buildFrom4Points_Opencv( vpt1, vpt2 );
 #else
 		throw std::runtime_error( "Unable, build without Opencv support" );
 #endif

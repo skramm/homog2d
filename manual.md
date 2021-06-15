@@ -188,13 +188,8 @@ auto a2 = s1.getAngle( l1 );
 ## 4 - Homographies
 <a name="matrix"></a>
 
-You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography").
-The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
-They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
-The first one starts from the identity transformation and builds the requested one.
-The second form adds the requested transformation to the matrix.
+You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`:
 
-- First example:
 ```C++
 Homogr h; // unit transformation ("eye" matrix)
 h.setTranslation(3,4);
@@ -203,7 +198,15 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-You can create a rotation or a scale transformation with one of these:
+
+### 4.1 - Setting up from a given planar transformation
+
+The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
+They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
+The first one starts from the identity transformation and builds the requested one.
+The second form adds the requested transformation to the matrix.
+
+- You can create a rotation or a scale transformation with one of these:
 ```C++
 Homogr h;
 h.setRotation( 3.14 ); // angle of PI radians
@@ -215,11 +218,11 @@ h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale fac
 Homogr h; // unit transformation
 h.setTranslation(3,4);
 Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
-Homogr h3a = h1*h2; // first, rotation, then translation
-Homogr h3b = h2*h1; // first, translation, then rotation
+auto h3a = h1*h2; // first, rotation, then translation
+auto h3b = h2*h1; // first, translation, then rotation
 ```
 
-Or by calling dedicated member functions:
+- Or by calling dedicated member functions:
 ```C++
 Homogr h;
 h.addRotation( 3.14 );       // angle of PI radians (would be identical with "set")
@@ -286,10 +289,34 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
+### 4.2 - Computing from 4 points
+
+You can also compute the transformation from two sets of 4 (non-colinear) points:
+
+```C++
+std::vector<Point2d> v1(4);
+std::vector<Point2d> v2(4);
+... // fill v1 and v2
+H.buildFrom4Points( v1, v2 );
+```
+
+However, this requires the solving of a linear system of 8 equations with 8 unknowns (i.e. computing the inverse of a 8x8 matrix).
+This task does not enter in the scope of this library, thus we rely on others ones to do this.
+The consequence is that this feature is **ONLY AVAILABLE** if one of the two options below are available on system at build time.
+
+The two options available are:
+- Opencv (https://opencv.org)
+- Eigen (https://eigen.tuxfamily.org/)
+
+The default is Opencv, thus it will fail to build if not installed on system (check out  [bindings](#bind) for more on this).
+
+The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
+
+
 ## 5 - Computation of intersection points
 <a name="inter"></a>
 
-### Intersection of lines with flat rectangles
+### 5.1 - Intersection of lines with flat rectangles
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
 `intersectsRectangle()` member function.
@@ -313,7 +340,7 @@ You don't have to give the bottom-right, top-left corners of the rectangle, the 
 In the example above, you could have as well given the points (1,8)-(8,1), the result would have been the same.
 The only requirement is that no coordinate must be the same in the two points.
 
-### Intersection of a line with a circle
+### 5.2 - Intersection of a line with a circle
 
 For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
 ```C++
@@ -332,7 +359,7 @@ Also see the provided demo for a runnable example.
 For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
 
 
-### Points and rectangles
+### 5.3 - Points and rectangles
 
 You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
 ```C++
@@ -597,6 +624,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - current master branch
   - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
+  - added `buildFrom4Points()` to Homography class
 
 - planned:
   - segment intersection features
