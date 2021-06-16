@@ -73,8 +73,11 @@ To get the euclidean coordinates of a point, two member functions are provided:
 auto x = pt.getX();
 auto y = pt.getY();
 ```
-
-
+To get the 3 components of a line as a homogeneous array, one may use:
+```C++
+auto v = line.get();
+std::cout << "[" << v[0] << ',' << v[1] << ',' << v[2] << "\";
+```
 
 - Add some offset to a line:
 ```C++
@@ -389,7 +392,7 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
-### Data conversion from/to Opencv
+### 6.1 - Data conversion from/to Opencv
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -399,7 +402,14 @@ Point2d pt;
 ...
 cv::Point2d ptcv1 = pt.getCvPtd(); // double coordinates
 cv::Point2f ptcv2 = pt.getCvPtf(); // float coordinates
-cv::Point2f ptcv3 = pt.getCvPti(); // integer coordinates
+cv::Point2i ptcv3 = pt.getCvPti(); // integer coordinates
+```
+
+Or use the templated version:
+```C++
+auto ptcv1 = pt.getCvPt<cv::Point2d>(); // double coordinates
+auto ptcv2 = pt.getCvPt<cv::Point2f>(); // float coordinates
+auto ptcv3 = pt.getCvPt<cv::Point2i>(); // integer coordinates
 ```
 
 This is also available as free functions:
@@ -408,7 +418,9 @@ Point2d pt;
 ...
 cv::Point2d ptcv1 = getCvPtd(pt);
 cv::Point2f ptcv2 = getCvPtf(pt);
-cv::Point2f ptcv3 = getCvPti(pt);
+cv::Point2i ptcv3 = getCvPti(pt);
+...
+auto ptcv3 = getCvPt<cv::Point2d>(pt); // templated version
 ```
 
 Reverse operation as simple as this:
@@ -438,8 +450,7 @@ H = m;        // or call assignment operator
 ```
 
 
-
-### Drawing functions using OpenCv
+### 6.2 - Drawing functions using OpenCv
 
 You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++

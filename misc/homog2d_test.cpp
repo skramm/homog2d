@@ -25,7 +25,7 @@ run with "make test"
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-/// Numerical type for object storage
+/// Numerical type for object storage. This is usually defined by makefile
 #ifndef NUMTYPE
 	#define NUMTYPE double
 #endif
@@ -34,11 +34,9 @@ run with "make test"
 
 #include <list>
 
-//#define LOG(a) std::cout << " INFO: " << (a) << '\n';
-
 #define LOCALLOG(a) std::cout << " -" << a << '\n';
 
-double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*50.;
+double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
 using namespace homog2d;
 
@@ -53,7 +51,9 @@ int main( int argc, char* argv[] )
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
-	Catch::StringMaker<long double>::precision = 25;
+
+// removed until PR merged into next release, see https://github.com/catchorg/Catch2/pull/2245
+//	Catch::StringMaker<long double>::precision = 25;
 
 	int result = Catch::Session().run( argc, argv );
 
@@ -134,19 +134,19 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( ptD2.getX() == 3. );
 
 /**
-The goal of theses is to make sure that the conversion does not
-trigger a build failure. The checking is ONLY there to avoid a warning/
-\todo once we switch to C++17, we can remove the checking and use:
+The goal of theses is to make sure that the conversion (float to double, ...)
+does not trigger a build failure. The checking is only there to avoid a warning/
+\todo Once we switch to C++17, we can remove the checking and use:
 https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 */
-		Line2dD li_D1 = li_F0; //CHECK( li_D1.get() == 2 );
-		Line2dD li_L1 = li_F0; //CHECK( li_L1.getX() == 2 );
+		Line2dD li_D1 = li_F0; CHECK( li_D1.get()[2] == 0. );
+		Line2dD li_L1 = li_F0; CHECK( li_L1.get()[2] == 0. );
 
-		Line2dD li_F2 = li_D0;
-		Line2dD li_L2 = li_D0;
+		Line2dD li_F2 = li_D0; CHECK( li_F2.get()[2] == 0. );
+		Line2dD li_L2 = li_D0; CHECK( li_L2.get()[2] == 0. );
 
-		Line2dD li_F3 = li_L0;
-		Line2dD li_D3 = li_L0;
+		Line2dD li_F3 = li_L0; CHECK( li_F3.get()[2] == 0. );
+		Line2dD li_D3 = li_L0; CHECK( li_D3.get()[2] == 0. );
 	}
 }
 
@@ -397,9 +397,6 @@ TEST_CASE( "exceptions", "[testE]" )
 	CHECK_THROWS( p1*p2 ); // same points can't define a line
 }
 
-/**
-\todo Define a reasonable default value for Hmatrix (0's are probably not, not homogeneous)
-*/
 TEST_CASE( "test Matrix", "[testM]" )
 {
 	Hmatrix m;
@@ -889,10 +886,10 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 	INFO( "Copy to OpenCv points" )
 	{
 		Point2d_<NUMTYPE> pt(1.,2.);
-		{
-			cv::Point2d cvpt1 = getCvPtd( pt );
+		{                              // free function
+			cv::Point2d cvpt1 = getCvPtd( pt );           // double
 			CHECK( (cvpt1.x == 1. && cvpt1.y == 2.) );
-			cv::Point2f cvpt2 = getCvPtf( pt );
+			cv::Point2f cvpt2 = getCvPtf( pt );           // float
 			CHECK( (cvpt2.x == 1. && cvpt2.y == 2.) );
 			cv::Point2i cvpt3 = getCvPti( pt );           // integer point
 			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
@@ -913,13 +910,14 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			auto cvpt_2 = pt.getCvPt<cv::Point2f>();
 			auto cvpt_3 = pt.getCvPt<cv::Point2i>();
 		}
-		{
+		{ // input: vector of "double" points
+		  // converted into "float" Opencv points
 			std::vector<Point2d> v{ Point2d(1,2), Point2d(5,6), Point2d(3,4) };
-			auto vcv1 = getCvPts<cv::Point2f>( v );
+			auto vcv1 = getCvPts<cv::Point2d>( v );
 			CHECK( vcv1.size() == 3 );
 			auto vcv2 = getCvPts<cv::Point2f>( v );
 			CHECK( vcv2.size() == 3 );
-			auto vcv3 = getCvPts<cv::Point2f>( v );
+			auto vcv3 = getCvPts<cv::Point2i>( v );
 			CHECK( vcv3.size() == 3 );
 		}
 	}

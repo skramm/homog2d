@@ -1175,7 +1175,6 @@ getCvPt( const Root<type::IsPoint,FPT>& pt )
 	return pt.template getCvPt<RT>();
 }
 
-#if 1
 /// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
@@ -1197,7 +1196,6 @@ getCvPti( const Root<type::IsPoint,FPT>& pt )
 {
 	return pt.getCvPti();
 }
-#endif
 
 /// Free function, returns a vector of OpenCv points from a vector of points
 /**

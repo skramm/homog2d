@@ -13,7 +13,7 @@ install:
  - mv catch.hpp misc/
  - ls
 
-script: make test
+script: make testall
 
 branches:
   only:
