@@ -2053,7 +2053,7 @@ Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius ) co
 template<typename LP, typename FPT>
 template<typename T>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsCircle( const Root<type::IsPoint,FPT>&, T, const detail::RootHelper<type::IsPoint>& )
+Root<LP,FPT>::impl_intersectsCircle( const Root<type::IsPoint,FPT>&, T, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
 }
