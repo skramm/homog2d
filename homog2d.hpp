@@ -792,14 +792,14 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 		/// Arg is a point, object is a point => copy constructor
 		template<typename T>
-		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsPoint>&  )
+		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsPoint>& )
 		{
 //			*this = pt;   // we can't use this because it implies calling the constructor to build a converted point from T to FPT, thus infinite loop
 			p_copyFrom( pt );
 		}
 		/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
 		template<typename T>
-		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsLine>&  )
+		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsLine>& )
 		{
 			*this = detail::crossProduct<type::IsLine>( pt, Root<type::IsPoint,FPT>() );
 			p_normalizeLine();
@@ -807,13 +807,13 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
 		template<typename T>
-		void impl_init_1_Line( const Root<type::IsLine,T>& li, const detail::RootHelper<type::IsPoint>&  )
+		void impl_init_1_Line( const Root<type::IsLine,T>&, const detail::RootHelper<type::IsPoint>& )
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 		}
 		/// Arg is a line, object is a line => copy constructor
 		template<typename T>
-		void impl_init_1_Line( const Root<type::IsLine,T>& li, const detail::RootHelper<type::IsLine>&  )
+		void impl_init_1_Line( const Root<type::IsLine,T>& li, const detail::RootHelper<type::IsLine>& )
 		{
 			p_copyFrom( li );
 		}
@@ -918,7 +918,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			_v[1] = y;
 			_v[2] = 1.;
 		}
-		void impl_set( FPT x, FPT y, const detail::RootHelper<type::IsLine>& /* dummy */ )
+		void impl_set( FPT, FPT, const detail::RootHelper<type::IsLine>& /* dummy */ )
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
@@ -1937,7 +1937,7 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelpe
 }
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot use IsParallel() with a point" );
 	return false;    // to avoid a warning message on build
@@ -1993,7 +1993,7 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 
 template<typename LP, typename FPT>
 HOMOG2D_INUMTYPE
-Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
 	return 0.; // to avoid a warning
@@ -2013,7 +2013,7 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const R
 }
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideRectangle() with a line" );
 	return false; // to avoid a warning
@@ -2032,7 +2032,7 @@ Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>& center, T radi
 template<typename LP, typename FPT>
 template<typename T>
 bool
-Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideCircle() with a line" );
 	return false; // to avoid a warning
@@ -2053,11 +2053,7 @@ Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius ) co
 template<typename LP, typename FPT>
 template<typename T>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsCircle(
-	const Root<type::IsPoint,FPT>& pt,       ///< circle origin
-	T                              r,        ///< radius
-	const detail::RootHelper<type::IsPoint>&  ///< dummy arg
-) const
+Root<LP,FPT>::impl_intersectsCircle( const Root<type::IsPoint,FPT>&, T, const detail::RootHelper<type::IsPoint>& )
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
 }
