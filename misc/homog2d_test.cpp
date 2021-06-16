@@ -133,8 +133,14 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( ptD1.getX() == 2. );
 		CHECK( ptD2.getX() == 3. );
 
-		Line2dD li_D1 = li_F0;
-		Line2dD li_L1 = li_F0;
+/**
+The goal of theses is to make sure that the conversion does not
+trigger a build failure. The checking is ONLY there to avoid a warning/
+\todo once we switch to C++17, we can remove the checking and use:
+https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
+*/
+		Line2dD li_D1 = li_F0; //CHECK( li_D1.get() == 2 );
+		Line2dD li_L1 = li_F0; //CHECK( li_L1.getX() == 2 );
 
 		Line2dD li_F2 = li_D0;
 		Line2dD li_L2 = li_D0;

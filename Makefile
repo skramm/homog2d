@@ -1,6 +1,7 @@
 .PHONY: doc test install demo
 
-
+#TOOL=$(CXX)
+TOOL=clang++
 CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 ifeq "$(USE_OPENCV)" ""
@@ -18,10 +19,11 @@ endif
 
 
 test: homog2d_test #demo_check
-	@echo "Run tests"
+	@echo "Make: run test, build using $(CXX)"
 	./homog2d_test
 
 testall: homog2d_test_f homog2d_test_d homog2d_test_l
+	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 
 # compute code coverage (EXPERIMENTAL !)
@@ -38,8 +40,7 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 
 # 2019-11-15: added options for code coverage with gcov
 homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
-#	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 
 homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)

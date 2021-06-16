@@ -24,10 +24,11 @@ It is implemented as a homogeneous 3x3 matrix.
 ## 2 - Lines and points
 <a name="basic"></a>
 
-- Create a 2D point:
+- Create or edit a 2D point:
 ```C++
 Point2d pt1;       // 0,0
 Point2d pt2(3,4);
+pt1.set( 5, 6 );
 ```
 
 - Create a 2D line:
@@ -63,9 +64,17 @@ For points, it is as easy as:
 if( pt1 == pt2  )
 	cout << "Points are identical !\n";
 ```
-
 For the numerical considerations on this,
 check below, section [Numerical data types](#numdt).
+
+
+To get the euclidean coordinates of a point, two member functions are provided:
+```C++
+auto x = pt.getX();
+auto y = pt.getY();
+```
+
+
 
 - Add some offset to a line:
 ```C++

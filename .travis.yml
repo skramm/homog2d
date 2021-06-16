@@ -1,5 +1,12 @@
-dist: xenial
+dist: bionic
 language: cpp
+
+before_install:
+  - lsb_release -a
+
+compiler:
+  - clang
+  - gcc
 
 install:
  - wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp

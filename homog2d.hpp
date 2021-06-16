@@ -592,7 +592,8 @@ enum PointStyle
 };
 
 //------------------------------------------------------------------
-/// Draw parameters for Opencv binding, see Root::draw()
+/// Draw parameters for Opencv binding, only available if HOMOG2D_USE_OPENCV defined,
+/// see Root::draw()
 struct CvDrawParams
 {
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
@@ -744,7 +745,12 @@ class Root
 		}
 
 /// Constructor: copy-constructor for lines
+/**
+\todo We should be able to declare this "explicit". This fails at present when attempting
+to convert a line (or point) from double to float, but I don't get why...
+*/
 		template<typename T>
+//		explicit
 		Root( const Root<type::IsLine,T>& li )
 		{
 			impl_init_1_Line<T>( li, detail::RootHelper<LP>() );
@@ -856,6 +862,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
+		std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
+
 		void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
 		HOMOG2D_INUMTYPE distTo( const Root<type::IsPoint,FPT>& pt ) const
@@ -894,11 +902,25 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return _v[1]/_v[2];
 		}
+
+		std::array<FPT,3> impl_get( const detail::RootHelper<type::IsPoint>& /* dummy */ ) const
+		{
+			static_assert( detail::AlwaysFalse<LP>::value, "illegal for points" );
+		}
+		std::array<FPT,3> impl_get( const detail::RootHelper<type::IsLine>& /* dummy */ ) const
+		{
+			return std::array<FPT,3> { _v[0], _v[1], _v[2] };
+		}
+
 		void impl_set( FPT x, FPT y, const detail::RootHelper<type::IsPoint>& /* dummy */ )
 		{
 			_v[0] = x;
 			_v[1] = y;
 			_v[2] = 1.;
+		}
+		void impl_set( FPT x, FPT y, const detail::RootHelper<type::IsLine>& /* dummy */ )
+		{
+			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
 
 		template<typename T>
