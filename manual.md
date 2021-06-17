@@ -301,7 +301,8 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 4.2 - Computing from 4 points
+### 4.2 - Computing from 2 sets of 4 points
+<a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
 
@@ -367,9 +368,7 @@ if( ri() )   // means the line intersects the circle
 
 Also see the provided demo for a runnable example.
 
-
 For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
-
 
 ### 5.3 - Points and rectangles
 
@@ -379,7 +378,7 @@ bool b = pt.isInsideRectangle( p1, p2 );
 ```
 Again, the two points can be any of the four corners of the rectangle.
 
-This function will return for all points lying on edges of the rectangle.
+This function will return `true` for all points lying on edges of the rectangle.
 
 
 ## 6 - Bindings with other libraries
@@ -392,7 +391,7 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
-### 6.1 - Data conversion from/to Opencv
+### 6.1 - Data conversion from/to Opencv data types
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -439,7 +438,6 @@ Line2d l1( ptcv );                     // line going trough (0,0) and (4,5)
 Line2d l2( ptcv, cv::Point2d(8,9) );   // line going trough (4,5) and (8,9)
 ```
 
-
 This also enables conversions between matrices types.
 You can build a homography using a provided `cv::Mat`:
 ```C++
@@ -448,7 +446,6 @@ cv::Mat m;   // needs to be 3x3, floating point type (either CV_32F or CV_64F)
 Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
-
 
 ### 6.2 - Drawing functions using OpenCv
 
@@ -471,10 +468,10 @@ The drawing parameters default values can be changed anytime with a call to `set
 and values will be retained, unless explicitely changed, as showed in the example below;
 
 ```C++
-CvDrawParams dp; // default line thickness is 1
-dp.setColor( 0,  0, 250).setThickness(3);
-dp.setDefault(); // default is now blue, with thickness=3
-line.draw( some_img ); // use default settings
+CvDrawParams dp;                                        // default line thickness is 1
+dp.setColor( 0,  0, 250 ).setThickness(3);
+dp.setDefault();                                        // default is now blue, with thickness=3
+line.draw( some_img );                                  // use default settings (blue,...)
 line.draw( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
@@ -518,7 +515,16 @@ Point2d_<float> pt; // this is fine
 ```
 
 However, this only applies to **storage**.
-All the computation (distances, angles, ...) use `double` internally and will return a value of type `double`.
+All the computation (distances, angles, ...) use (and return)
+the type defined by symbol `HOMOG2D_INUMTYPE`, that defaults to `double`.
+
+If you need extra precision (and if your compiler supports it), you may
+configure the library to use `long double` by adding this before the "include":
+```C++
+#define HOMOG2D_INUMTYPE long double
+```
+
+### Numerical type conversion
 
 It is of course possible to convert to/from an object templated by a different type:
 ```C++
@@ -537,11 +543,13 @@ In this library, this can hurt in several ways:
  - creating a line from two points will fail if the points are equal,
  - similarly, computing a point at the intersection of two lines will fail if the lines are parallel.
 
-This library will ensure these conditions, and will throw an exception (of type `std::runtime_error`) if that kind of thing happens.
+This library will ensure these conditions, and will throw an exception (of
+type `std::runtime_error`) if that kind of thing happens.
 The thresholds have default values.
-They are implemented as static values, that can be changed any time.
+They are implemented as static values, that user code can be changed any time.
 
-- When checking for parallel lines (see `isParallelTo()`), the "null" angle value has a default value of one thousand of a radian (0.001 rad).
+- When checking for parallel lines (see `isParallelTo()`), the "null" angle value
+has a default value of one thousand of a radian (0.001 rad).
 You can print the current value with:
 ```C++
 cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
@@ -552,15 +560,12 @@ Line2d::nullAngleValue() = 0.01;
 ```
 This is checked for when computing an intersection point.
 
-- When attempting to compute a line out of two points, the library will throw if the distance between the two points is less than `Point2d::nullDistance()`.
+- When attempting to compute a line out of two points, the library will throw if
+the distance between the two points is less than `Point2d::nullDistance()`.
 That same function can be used to change (or print) the current value.
 
-- When attempting to compute the inverse of a matrix, if the determinant is less than `Homogr::nullDeterValue()`, the inversion code will throw.
-
-### Computation types
-
-TODO:
-`HOMOG2D_INUMTYPE`
+- When attempting to compute the inverse of a matrix, if the determinant is less
+than `Homogr::nullDeterValue()`, the inversion code will throw.
 
 ## 8 - Technical details
 <a name="tech"></a>
@@ -574,11 +579,16 @@ Normalization is done for comparison but not saved.
 
 ### Testing
 
-A unit-test program is included, it is build and run with `make test`.
+A unit-test program is included, it is build and run with `$ make test`.
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
 make test USE_OPENCV=Y
 ```
+
+A second test target is included: `$ make testall`.
+It will run the test program 3 times, one for each numerical data type
+(`float`, `double`, and `long double`).
+
 
 ### Build options
 <a name="options"></a>
@@ -588,7 +598,10 @@ You can do that in the makefile or just add a `#define` on top of your program,
 **before** the `#include "homog2d"`
 
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
+- `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
+(see [here](#H_4points)).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
+If defined, program will very libely crash.
 
 ### Inner details
 
@@ -642,12 +655,12 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Licence change to MPLv2
   - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
 
-- next release v2.3 (current master branch):
+- Next release v2.3 (current master branch):
   - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
   - added `buildFrom4Points()` to Homography class
   - added templated conversion free functions and member function to Opencv point types
   - added full testing with all three arithmetic types (`make testall`)
-  - segment intersection features
+  - added segment type and associated features
   - demo code heavy refactoring (requires Opencv)
 
 
