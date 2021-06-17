@@ -1,9 +1,12 @@
+
+# bionic = Ubuntu 18.04
 dist: bionic
 language: cpp
 
 before_install:
   - lsb_release -a
 
+# build using these two compilers
 compiler:
   - clang
   - gcc
@@ -15,17 +18,7 @@ install:
 
 script: make testall
 
+# build useless on "dev" branches
 branches:
   only:
   - master
-
-# SOMETHING WRONG HERE...
-#deploy:
-#  provider: pages
-#  verbose: true
-#  local_dir: docs
-#  skip_cleanup: true
-#  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-#  keep_history: false
-#  on:
-#    branch: master

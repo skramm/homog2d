@@ -67,7 +67,7 @@ precision_test2: misc/precision_test.cpp
 doc: html/index.html
 	xdg-open html/index.html
 
-html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md manual.md
+html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
 	doxygen misc/doxyfile
 
 install:

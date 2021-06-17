@@ -57,6 +57,6 @@ When installed, run `$ make test` (or `$ make testall` for testing with all 3 nu
 - [Release history](docs/homog2d_history.md)
 
 
-** * **:
+(*):
 <a name="rm_fn"></a>
 Except for some additional features, see [manual](docs/homog2d_manual.md).

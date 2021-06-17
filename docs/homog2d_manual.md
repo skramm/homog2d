@@ -601,7 +601,7 @@ You can do that in the makefile or just add a `#define` on top of your program,
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
-If defined, program will very libely crash.
+If defined, program will very likely crash.
 
 ### Inner details
 
