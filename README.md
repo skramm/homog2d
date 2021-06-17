@@ -32,22 +32,31 @@ int main()
 }
 ```
 
-A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
-When installed, run `make` (or `make test`).
 
-To install on your machine, copy `homog2d.hpp` somewhere, or `sudo make install` after cloning repo.
+To install on your machine, copy file `homog2d.hpp` somewhere, or `sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.
 
-Usage: see [manual](manual.md)
 
-Reference: once downloaded, enter `make doc` (requires Doxygen).
+- Usage: see [full manual](docs/homog2d_manual.md)
 
-Rationale:
-- Usage simplicity (see manual)
-- No dependency
-- Modern C++, using policy-based design and tag dispatching
-- Direct bindings with [OpenCv](https://opencv.org/) (optional)
+- Reference: once downloaded, enter `make doc` (requires Doxygen).
 
-Related libraries:
- - [Wykobi](http://www.wykobi.com/), has much more features but maybe harder to dive in.
+- A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
+When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
+
+- Rationale:
+  - Usage simplicity (see manual)
+  - No dependency [(*)](#rm_fn)
+  - Modern C++, using policy-based design and tag dispatching
+  - Direct bindings with [OpenCv](https://opencv.org/) (optional)
+
+- Related libraries:
+  - [Wykobi](http://www.wykobi.com/), has much more features but maybe harder to dive in.
+
+- [Release history](docs/homog2d_history.md)
+
+
+** * **:
+<a name="rm_fn"></a>
+Except for some additional features, see [manual](docs/homog2d_manual.md).

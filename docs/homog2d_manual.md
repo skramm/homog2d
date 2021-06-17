@@ -586,8 +586,8 @@ make test USE_OPENCV=Y
 ```
 
 A second test target is included: `$ make testall`.
-It will run the test program 3 times, one for each numerical data type
-(`float`, `double`, and `long double`).
+It will build and run the test program 3 times, one for each numerical data
+type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYPE`.
 
 
 ### Build options
@@ -609,7 +609,7 @@ To be able to templatize all the code on the root numerical data type (float, do
 As the Root class is already templatized on the type (Point or Line),
 it would require a partial template specialization to define the behavior of each member function (or free function),
 depending on the basic type (Line or Point), and still templatize on the numerical type.
-C++ does not allow this |-(.
+C++ does not allow this.
 
 Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
 by the datatype (point or line).
@@ -622,48 +622,6 @@ it is there just so that the compiler can select the correct overload
 The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
 the implementation of that type only holds a `static_assert`, so that can be catched at build time.
-
-## 9 - History
-<a name="history"></a>
-
-See [Release page](https://github.com/skramm/homog2d/releases).
-
-- [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
-- [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
-
-- [v2.1](https://github.com/skramm/homog2d/releases/tag/v2.1), released on 2020-04-27.
-  - added `intersectsCircle()`, to get intersection with circles
-  - intersection data structure name changed, now `Intersect`
-  - the intersection points are now private, they must be fetched with `get()`:
-  this `Intersect` member function will return a `std::pair` holding the two intersection points.
-  - added `getPoints()`
-  - added single argument constructors
-  - renamed `distToPoints()` member function: now `distTo()`, and can be used with lines as argument.
-  - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
-  - renamed `clear()` to `init()` for matrices
-  - added `getParallelLine()`
-
-- [v2.2](https://github.com/skramm/homog2d/releases/tag/v2.2), released on 2021-06-01
-  - added 2 constructors to `Homogr`
-  - added `isParallelTo()`
-  - API change:
-    - renamed `drawCvMat()` to `draw()` (to make transition to other graphical backends easier)
-    - matrices: renamed `setValue()` to `set()` and `getValue()` to `get()`
-    - for OpenCv matrices, replaced `getFrom()` by assignment operator
-    - replaced enums `En_OffsetDir` and `En_GivenCoord` with class enums `LineOffset` and `GivenCoord`
-  - added `Segment` type and associated code
-  - Licence change to MPLv2
-  - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
-
-- Next release v2.3 (current master branch):
-  - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
-  - added `buildFrom4Points()` to Homography class
-  - added templated conversion free functions and member function to Opencv point types
-  - added full testing with all three arithmetic types (`make testall`)
-  - added segment type and associated features
-  - demo code heavy refactoring (requires Opencv)
-
-
 
 
 ### Footnotes
