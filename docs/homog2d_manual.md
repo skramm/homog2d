@@ -197,6 +197,13 @@ auto a1 = l1.getAngle( s1 );
 auto a2 = s1.getAngle( l1 );
 ```
 
+You can get the point lying in the middle of the segment with:
+```C++
+Segment s1( Point2d(1,2), Point2d(3,4) );
+auto p_middle = s1.getMiddlePoint();
+```
+
+
 ## 4 - Homographies
 <a name="matrix"></a>
 

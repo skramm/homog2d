@@ -776,6 +776,9 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{
+		CHECK_THROWS( Segment( Point2d_<NUMTYPE>(), Point2d_<NUMTYPE>() ) );
+	}
+	{
 		Segment_<NUMTYPE> s1( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
 		Segment_<NUMTYPE> s2( Point2d_<NUMTYPE>(2,2), Point2d_<NUMTYPE>(0,0) );
 		CHECK( s1 == s2 );
@@ -805,7 +808,11 @@ TEST_CASE( "Segment", "[seg1]" )
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
 		CHECK( si.get() == Point2d_<NUMTYPE>(1,1) );
+
+		auto pt = s1.getMiddlePoint();
+		CHECK( pt == Point2d_<NUMTYPE>(1,1) );
 	}
+
 }
 
 

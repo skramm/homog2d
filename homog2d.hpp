@@ -938,6 +938,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
+
 		Root<type::IsPoint,FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsLine>& ) const;
@@ -1440,6 +1441,10 @@ class Segment_
 		Segment_( Root<type::IsPoint,FPT> p1, Root<type::IsPoint,FPT> p2 ):
 			_ptS1(p1), _ptS2(p2)
 		{
+#ifndef HOMOG2D_NOCHECKS
+			if( p1 == p2 )
+				throw std::runtime_error( "failure, cannot build a segment with two identical points" );
+#endif
 			detail::fix_order( _ptS1, _ptS2 );
 		}
 /// Setter
@@ -1503,6 +1508,16 @@ the one with smallest y-coordinate will be returned first */
 				std::is_same<T,Root<type::IsLine,FPT>>::value,
 				"type needs to be a segment or a line" );
 			return getLine().isParallelTo( other );
+		}
+
+		/// Returns point that at middle distance between \c p1 and \c p2
+		Root<type::IsPoint,FPT>
+		getMiddlePoint() const
+		{
+			return Root<type::IsPoint,FPT>(
+				( _ptS1.getX() + _ptS2.getX() ) / 2.,
+				( _ptS1.getY() + _ptS2.getY() ) / 2.
+			);
 		}
 
 #ifdef HOMOG2D_USE_OPENCV

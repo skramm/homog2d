@@ -11,7 +11,7 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 
 - Language: C++11 (or later)
 - Home: https://github.com/skramm/homog2d
-- Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!.
+- Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
 - Author: S. Kramm
 - Licence: MPLv2
