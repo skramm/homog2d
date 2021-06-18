@@ -812,7 +812,13 @@ TEST_CASE( "Segment", "[seg1]" )
 		auto pt = s1.getMiddlePoint();
 		CHECK( pt == Point2d_<NUMTYPE>(1,1) );
 	}
-
+	{  // test that points on a line at equal distance from a point, when
+		// transformed in a segment, we get back as middle point the same one.
+		Line2d li(9,9);   // diagonal line (0,0) - (9,9)
+		auto ppts = li.getPoints( GivenCoord::X, 5, 1 );
+		Segment_<NUMTYPE> s1( ppts.first, ppts.second );
+		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
+	}
 }
 
 

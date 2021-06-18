@@ -28,14 +28,13 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Licence change to MPLv2
   - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
 
-- Next release v2.3 (current master branch):
+- [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
   - added `buildFrom4Points()` to Homography class
   - added templated conversion free functions and member function to Opencv point types
   - added full testing with all three arithmetic types (`make testall`)
   - added segment type and associated features
   - demo code heavy refactoring (requires Opencv)
-
 
 
 
