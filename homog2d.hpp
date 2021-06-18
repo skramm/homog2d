@@ -1529,6 +1529,56 @@ the one with smallest y-coordinate will be returned first */
 };
 
 //------------------------------------------------------------------
+/// Polyline
+template<typename FPT>
+class Polyline_
+{
+	private:
+		std::vector<Root<type::IsPoint,FPT>> _plinevec;
+		bool _isClosed = false;
+
+	public:
+		Polyline_()
+		{}
+		Polyline_( Root<type::IsPoint,FPT> pt )
+		{
+			_plinevec.push_back( pt );
+		}
+		/// Returns the number of points (not segments!)
+		size_t size() const { return _plinevec.size(); }
+		void add( Root<type::IsPoint,FPT> pt )
+		{
+#ifndef HOMOG2D_NOCHECKS
+			if( size() )
+				if( pt == _plinevec.back() )
+					throw std::runtime_error( "Error, cannot add a point identical to previous one" );
+#endif
+			_plinevec.push_back( pt );
+		}
+#ifdef HOMOG2D_USE_OPENCV
+
+		bool isClosed() const { return _isClosed; }
+
+		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+		{
+			if( size() < 2 ) // nothing to draw
+				return;
+
+			for( size_t i=0; i<size()-1; i++ )
+			{
+				const auto& pt1 = _plinevec[i];
+				const auto& pt2 = _plinevec[i+1];
+				Segment(pt1,pt2).draw( mat, dp );
+			}
+			if( size() < 3 ) // nothing to draw
+				return;
+			if( _isClosed )
+				Segment(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
+		}
+#endif
+};
+
+//------------------------------------------------------------------
 /// Implementation of line::isParallelTo( Segment )
 template<typename LP,typename FPT>
 template<typename T>

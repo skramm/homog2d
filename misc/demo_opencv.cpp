@@ -158,6 +158,8 @@ void action_6(  void* param );
 void action_6M( void* param );
 void action_H(  void* param );
 void action_HM( void* param );
+void action_PL(   void* param );
+void action_PL_M( void* param );
 
 
 /// Mouse callback for demo_H
@@ -187,6 +189,12 @@ void mouse_CB_5( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_6, action_6M, param );
+}
+
+/// Mouse callback for demo_PL
+void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_PL, action_PL_M, param );
 }
 
 //------------------------------------------------------------------
@@ -700,6 +708,27 @@ void demo_H( int n )
 	}
 }
 //------------------------------------------------------------------
+void action_PL( void* /*param*/ )
+{
+}
+void action_PL_M( void* /*param*/ )
+{
+}
+
+void demo_PL( int n )
+{
+	Data data( "Polyline_demo" );
+	data.vpt.resize(8);
+	std::cout << "Demo " << n << ": polyline\n";
+
+	data.setMouseCallback( mouse_CB_PL );
+
+	action_PL( &data );
+
+	if( 27 == cv::waitKey(0) )
+		std::exit(0);
+}
+//------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
 //	std::cout << "float: " << std::numeric_limits<float>::digits10 << "\n";
@@ -732,6 +761,7 @@ return 0;
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_PL,
 		demo_H,
 		demo_1,
 		demo_B,
