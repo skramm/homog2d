@@ -34,7 +34,6 @@
 		<Unit filename="doxyfile" />
 		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
-		<Unit filename="precision_test_opencv.cpp" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

@@ -73,7 +73,6 @@ struct Data
 	{
 		cv::setMouseCallback( win1, mouse_CB, this );
 	}
-
 	int nbPts() const
 	{
 		return (int)vpt.size();
@@ -85,12 +84,6 @@ struct Data
 	void showImage()
 	{
 		cv::imshow( win1, img );
-	}
-
-	void moveSelectedPoint()
-	{
-		if( selected != -1 )
-			vpt.at(selected) = pt_mouse;
 	}
 
 	void drawLines()
@@ -112,7 +105,6 @@ struct Data
 		lC.draw( img, CvDrawParams().setColor(  50, 150,   0) );
 		lD.draw( img, CvDrawParams().setColor( 150,   0,  50) );
 	}
-
 };
 
 
@@ -148,7 +140,10 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, std::
 
 		case CV_EVENT_MOUSEMOVE:
 			if( data.selected != -1 )
+			{
 				data.vpt[data.selected] = data.pt_mouse;
+				data.vpt[data.selected].draw( data.img, CvDrawParams().selectPoint() );
+			}
 			actionM( param );
 		break;
 
@@ -210,7 +205,6 @@ void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 void action_1( void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
-//	clearImage();
 	data.drawLines();
 
 	Line2d l( data.vpt[0], data.vpt[2] );
@@ -238,7 +232,6 @@ void demo_1( int nd )
 	Data data("lines");
 	std::cout << "Demo " << nd << ": click on points and move them\n";
 
-//	cv::setMouseCallback( data.wndname, mouse_CB_1, &data );
 	data.setMouseCallback( mouse_CB_1 );
 
 	int n=5;
@@ -747,31 +740,6 @@ void demo_PL( int n )
 //------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
-//	std::cout << "float: " << std::numeric_limits<float>::digits10 << "\n";
-//	std::cout << "double: " << std::numeric_limits<double>::digits10 << "\n";
-//	std::cout << "long double:"  << std::numeric_limits<long double>::digits10 << "\n";
-#if 0
-{
-	float f = M_PI;
-	double d = M_PI;
-	long double l = M_PI;
-	std::cout << "f=" << f << "\nd=" << d << "\nl=" << l << "\n";
-	for( int i=6; i<24; i=i+2)
-	{
-		std::cout << std::setprecision(i) << "- precision:" << i
-			<< ":\nf=" << f << "\nd=" << d << "\nl=" << l << "\n";
-	}
-
-	std::cout << "epsilon:\n-f=" << std::numeric_limits<float>::epsilon()
-<< "\n-d=" << std::numeric_limits<double>::epsilon()
-<< "\n-l=" << std::numeric_limits<long double>::epsilon()
-<< "\n";
-
-
-return 0;
-}
-#endif
-
 	std::cout << "homog2d graphical demo using Opencv"
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
