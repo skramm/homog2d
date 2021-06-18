@@ -81,7 +81,7 @@ struct Data
 	{
 		img = cv::Scalar(255,255,255);
 	}
-	void showImage()
+	void showImage() const
 	{
 		cv::imshow( win1, img );
 	}
@@ -164,6 +164,82 @@ void action_H(  void* param );
 void action_HM( void* param );
 void action_PL(   void* param );
 void action_PL_M( void* param );
+
+
+//------------------------------------------------------------------
+/// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
+struct KeyboardLoop
+{
+	using KbLoopAction = std::pair<char,std::function<void()>>;
+
+	private:
+	std::vector<KbLoopAction> _actions;
+	std::function<void()> _common = nullptr;
+
+	public:
+/// Add \c action when key \c key is hit
+	void addKeyAction( char key, const std::function<void()>& action )
+	{
+		auto it = std::find_if(
+			_actions.begin(),
+			_actions.end(),
+			[&]
+			( const std::pair<char,std::function<void()>>& elem )
+			{
+				return key == elem.first;
+			}
+		);
+		if( it != _actions.end() )
+			throw std::runtime_error( std::string("Error, key '") + key + "' already registered" );
+		_actions.push_back( std::make_pair( key, action ) );
+	}
+/// Add common \c action when a valid key is hit
+	void addCommonAction( const std::function<void()>& action )
+	{
+		_common = action;
+	}
+	void start( const Data& data )
+	{
+		std::cout <<"START " << __FUNCTION__ << "\n";
+		char key=0;
+		do
+		{
+			bool d = false;
+			key = cv::waitKey(0);
+			if( key == 27 )
+			{
+				std::cout << "ESC => terminate\n";
+				std::exit(0);
+			}
+			if( key == 32 )
+			{
+				std::cout << "SPC: switch to next\n";
+				return;
+			}
+			auto it = std::find_if(
+				_actions.begin(),
+				_actions.end(),
+				[&]
+				( const std::pair<char,std::function<void()>>& elem )
+				{
+					return key == elem.first;
+				}
+			);
+
+			if( it != _actions.end() )
+			{
+				std::cout << "Action !\n";
+				it->second();
+				if( _common )
+					_common();
+				data.showImage();
+			}
+//			else
+//				std::cout << "Unrecognized key\n";
+		}
+		while( key != 32 ); // SPC
+	}
+};
 
 
 /// Mouse callback for demo_H
@@ -269,8 +345,7 @@ void demo_B( int n )
 {
 	Param_B data( "build_H" );
 	std::cout << "Demo " << n << ": Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
-	char key = 0;
-	Homogr H;
+
 	double angle = 0.;
 	double angle_delta = 5.;
 	double scale = 1.;
@@ -285,39 +360,29 @@ void demo_B( int n )
 	data.drawLines();
 	data.showImage();
 
-	while( key != 32 ) // SPC
-	{
-		bool change = true;
-		switch( key = cv::waitKey(0) )
-		{
-			case 'r': // reset
-				scale = 1.;
-				angle = tx = ty = 0.;
-			break;
-			case 'm': angle += angle_delta; break;
-			case 'l': angle -= angle_delta; break;
-
-			case 'h': tx += trans_delta; break;
-			case 'g': tx -= trans_delta; break;
-			case 'b': ty += trans_delta; break;
-			case 'y': ty -= trans_delta; break;
-
-			case 'p': scale *= scale_delta; break;
-			case 'o': scale /= scale_delta; break;
-			case 27: std::exit(0);
-			default: change = false; break;
-		}
-		if( change )
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; } );
+	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; } );
+	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; } );
+	kbloop.addKeyAction( 'h', [&]{ tx += trans_delta; } );
+	kbloop.addKeyAction( 'g', [&]{ tx -= trans_delta; } );
+	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta; } );
+	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta; } );
+	kbloop.addKeyAction( 'p', [&]{ scale *= scale_delta; } );
+	kbloop.addKeyAction( 'o', [&]{ scale /= scale_delta; } );
+	kbloop.addCommonAction( [&]
 		{
 			data.clearImage();
-			H.init();
+			Homogr H;
 			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			data.initPts();
 			H.applyTo(data.vpt);
 			data.drawLines();
 			data.showImage();
 		}
-	}
+	);
+
+	kbloop.start( data );
 }
 //------------------------------------------------------------------
 #if 0
@@ -419,26 +484,11 @@ void demo_C( int n )
 
 	data.setMouseCallback( mouse_CB_C );
 
-	char key=0;
-	while( key != 32 ) // SPC
-	{
-		switch( key = cv::waitKey(0) )
-		{
-			case 'r': // reset
-				data.radius = 80;
-			break;
-			case 'l':
-				data.radius += 10;
-			break;
-			case 'm':
-				data.radius -= 10;
-			break;
-			case 27: std::exit(0);
-			default: break;
-		}
-		std::cout << "radius=" << data.radius << '\n';
-		data.showImage();
-	}
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'l', [&] { data.radius += 10; } );
+	kbloop.addKeyAction( 'm', [&] { data.radius -= 10; } );
+	kbloop.addKeyAction( 'r', [&] { data.radius = 80;  } );
+	kbloop.start( data );
 }
 
 //------------------------------------------------------------------
@@ -485,8 +535,6 @@ void action_5M( void* param )
 	}
 	data.showImage();
 }
-
-
 
 void demo_5( int n )
 {
@@ -553,24 +601,10 @@ void demo_6(int n)
 	action_6( &data );
 	data.showImage();
 
-	char key=0;
-	while( key != 32 ) // SPC
-	{
-		bool d = false;
-		switch( key = cv::waitKey(0) )
-		{
-			case 'm': data.angle += angle_delta; d = true; break;
-			case 'l': data.angle -= angle_delta; d = true; break;
-
-			case 27: std::exit(0);
-			default: break;
-		}
-		if( d )
-		{
-			action_6( &data );
-			data.showImage();
-		}
-	}
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'm', [&] { data.angle += angle_delta; } );
+	kbloop.addKeyAction( 'l', [&] { data.angle -= angle_delta; } );
+	kbloop.start( data );
 }
 //------------------------------------------------------------------
 /// This one has two windows
@@ -586,7 +620,7 @@ struct Param_H: public Data
 		cv::moveWindow( win2, width, 50 );
 		img2.create( height, width, CV_8UC3 );
 	}
-	void showImage()
+	void showImage() const
 	{
 		cv::imshow( win1, img );
 		cv::imshow( win2, img2 );
@@ -595,6 +629,18 @@ struct Param_H: public Data
 	{
 		img = cv::Scalar(255,255,255);
 		img2 = cv::Scalar(255,255,255);
+	}
+	void reset()
+	{
+		auto pa1 = Point2d(100,100);
+		auto pa2 = Point2d(400,300);
+		auto v1 = getRectPts( pa1, pa2 );
+
+		auto pb1 = Point2d(80,150);
+		auto pb2 = Point2d(450,350);
+		auto v2 = getRectPts( pb1, pb2 );
+		std::copy( v1.begin(), v1.end(), vpt.begin() );
+		std::copy( v2.begin(), v2.end(), vpt.begin()+4 );
 	}
 };
 
@@ -647,25 +693,13 @@ void action_HM( void* /*param*/ )
 {
 }
 
-void demo_H_reset( Param_H& data )
-{
-	auto pa1 = Point2d(100,100);
-	auto pa2 = Point2d(400,300);
-	auto v1 = getRectPts( pa1, pa2 );
-
-	auto pb1 = Point2d(80,150);
-	auto pb2 = Point2d(450,350);
-	auto v2 = getRectPts( pb1, pb2 );
-	std::copy( v1.begin(), v1.end(), data.vpt.begin() );
-	std::copy( v2.begin(), v2.end(), data.vpt.begin()+4 );
-}
 
 /// Demo of computing a homography from two sets of 4 points
 void demo_H( int n )
 {
 	Param_H data( "compute_H" );
 	data.vpt.resize(8);
-	demo_H_reset(data);
+	data.reset();
 	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n"
 		<< " - usage: move points with mouse in left window, right window will show source rectangle and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
@@ -674,16 +708,13 @@ void demo_H( int n )
 
 	action_H( &data );
 
-	char key=0;
-	while( key != 32 ) // SPC
-	{
-		bool d = false;
-		switch( key = cv::waitKey(0) )
+
+	KeyboardLoop kbloop;
+
+	kbloop.addKeyAction( 'r', [&] { data.reset(); } );
+	kbloop.addKeyAction( 'a', [&]
 		{
-			case 'A':
-			case 'a':
 				data.hmethod = data.hmethod?0:1;
-				std::cout << "-used library: " << (data.hmethod?"Opencv":"Eigen") << '\n';
 #if !defined(HOMOG2D_USE_EIGEN)
 				if( data.hmethod == 1 )
 				{
@@ -691,23 +722,9 @@ void demo_H( int n )
 					data.hmethod = 0;
 				}
 #endif
-				d = true;
-			break;
-			case 'R':
-			case 'r':
-				d = true;
-				demo_H_reset(data);
-			break;
-
-			case 27: std::exit(0);
-			default: break;
 		}
-		if( d )
-		{
-			action_H( &data );
-			data.showImage();
-		}
-	}
+	);
+	kbloop.start( data );
 }
 //------------------------------------------------------------------
 void action_PL( void* param )
@@ -745,8 +762,8 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
-		demo_PL,
 		demo_H,
+		demo_PL,
 		demo_1,
 		demo_B,
 //		demo_3,
