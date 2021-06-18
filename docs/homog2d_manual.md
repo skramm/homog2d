@@ -498,7 +498,7 @@ s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-In case you have some trouble building this program, please [read this](misc/opencv_notes.md).
+In case you have some trouble building this program, please [read this](docs/opencv_notes.md).
 
 ## 7 - Numerical data types
 <a name="numdt"></a>
@@ -620,7 +620,7 @@ C++ does not allow this.
 
 Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
 by the datatype (point or line).
-To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type RootHelper,
+To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type `RootHelper`,
 templated by the numerical type.
 In the definition of the function, this additional argument value is ignored,
 it is there just so that the compiler can select the correct overload

@@ -27,20 +27,17 @@
 		<Unit filename="../README.md" />
 		<Unit filename="../docs/homog2d_history.md" />
 		<Unit filename="../docs/homog2d_manual.md" />
+		<Unit filename="../docs/opencv_notes.md" />
 		<Unit filename="../homog2d.hpp" />
 		<Unit filename="demo_check.cpp" />
 		<Unit filename="demo_opencv.cpp" />
-		<Unit filename="demo_sdl2.cpp" />
 		<Unit filename="doxyfile" />
 		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
-		<Unit filename="opencv_notes.md" />
 		<Unit filename="precision_test_opencv.cpp" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

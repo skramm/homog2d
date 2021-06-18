@@ -1,4 +1,4 @@
-## homog2d Opencv binding usage
+## homog2d: Opencv binding usage
 
 __Please read this if you have Opencv installed on your system, but fail to build the Opencv binding demo.__
 
@@ -22,7 +22,7 @@ sudo make install
 However, while this indeed generates the `opencv.pc` file (at least with Opencv3.4), it does not install it on your system.
 Thus the makefile for demo_opencv fails.
 You need to copy it from the opencv build folder to the pkg-config usual location.
-From the OpenCv 'build' folder, something similar to this:
+From the OpenCv 'build' folder, something like this should be sufficient:
 ```
 $ sudo cp unix-install/opencv.pc /usr/share/pkgconfig/
 ```

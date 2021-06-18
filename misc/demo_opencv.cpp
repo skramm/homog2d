@@ -618,17 +618,6 @@ void action_H( void* param )
 	cv::putText(  data.img, "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
 
 	Homogr H;
-
-	if( data.hmethod == 0 )
-#if !defined(HOMOG2D_USE_EIGEN)
-	{
-		std::cerr << "Unable, build without Eigen support, see manual\n";
-		return;
-	}
-#else
-		;
-#endif
-
 	H.buildFrom4Points( v1, v2, data.hmethod );
 	std::cout << "Computed Homography:\n" << H << '\n';
 
@@ -685,6 +674,13 @@ void demo_H( int n )
 			case 'a':
 				data.hmethod = data.hmethod?0:1;
 				std::cout << "-used library: " << (data.hmethod?"Opencv":"Eigen") << '\n';
+#if !defined(HOMOG2D_USE_EIGEN)
+				if( data.hmethod == 1 )
+				{
+					std::cout << "Unable, build without Eigen support, see manual, switch to Opencv\n";
+					data.hmethod = 0;
+				}
+#endif
 				d = true;
 			break;
 			case 'R':
