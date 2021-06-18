@@ -1479,11 +1479,8 @@ class Segment_
 			return !(*this == s2);
 		}
 		template<typename U>
-		friend std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
-		{
-			f << seg._ptS1 << "-" << seg._ptS2;
-			return f;
-		}
+		friend std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg );
+
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
@@ -1527,6 +1524,14 @@ the one with smallest y-coordinate will be returned first */
 	}
 #endif
 };
+
+template<typename U>
+inline
+std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
+{
+	f << seg._ptS1 << "-" << seg._ptS2;
+	return f;
+}
 
 //------------------------------------------------------------------
 /// Implementation of line::isParallelTo( Segment )
