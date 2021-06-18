@@ -1479,11 +1479,8 @@ class Segment_
 			return !(*this == s2);
 		}
 		template<typename U>
-		friend std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
-		{
-			f << seg._ptS1 << "-" << seg._ptS2;
-			return f;
-		}
+		friend std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg );
+
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
@@ -1528,6 +1525,14 @@ the one with smallest y-coordinate will be returned first */
 #endif
 };
 
+template<typename U>
+inline
+std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
+{
+	f << seg._ptS1 << "-" << seg._ptS2;
+	return f;
+}
+
 //------------------------------------------------------------------
 /// Polyline
 template<typename FPT>
@@ -1546,6 +1551,7 @@ class Polyline_
 		}
 		/// Returns the number of points (not segments!)
 		size_t size() const { return _plinevec.size(); }
+
 		void add( Root<type::IsPoint,FPT> pt )
 		{
 #ifndef HOMOG2D_NOCHECKS
@@ -1557,6 +1563,17 @@ class Polyline_
 		}
 #ifdef HOMOG2D_USE_OPENCV
 
+		template<typename FPT2>
+		void setPoints( const std::vector<Root<type::IsPoint,FPT2>>& vec )
+		{
+			_plinevec.resize( vec.size() );
+			auto it = std::begin( _plinevec );
+			for( const auto& pt: vec )
+			{
+				*it = pt;
+				it++;
+			}
+		}
 		bool isClosed() const { return _isClosed; }
 
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
@@ -1568,12 +1585,12 @@ class Polyline_
 			{
 				const auto& pt1 = _plinevec[i];
 				const auto& pt2 = _plinevec[i+1];
-				Segment(pt1,pt2).draw( mat, dp );
+				Segment_<FPT>(pt1,pt2).draw( mat, dp );
 			}
 			if( size() < 3 ) // nothing to draw
 				return;
 			if( _isClosed )
-				Segment(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
+				Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
 		}
 #endif
 };

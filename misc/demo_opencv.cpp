@@ -43,6 +43,7 @@ struct Data
 	int selected = -1;  ///< Mouse selected point
 	Point2d pt_mouse;   ///< Mouse coordinates
 	std::vector<Point2d> vpt; ///< some points used in demo
+	bool leftClicAddPoint = false;
 
 	Data( std::string wname ): win1(wname)
 	{
@@ -63,6 +64,10 @@ struct Data
 	void setMousePos(int x, int y)
 	{
 		pt_mouse.set(x,y);
+	}
+	void addMousePoint()
+	{
+		vpt.push_back( pt_mouse );
 	}
 	void setMouseCallback( cv::MouseCallback mouse_CB )
 	{
@@ -132,9 +137,13 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, std::
 		break;
 
 		case CV_EVENT_LBUTTONDOWN:
+			data.selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data.pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
 					data.selected = i;
+			if( data.selected == -1 )
+				if( data.leftClicAddPoint )
+					data.addMousePoint();
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
@@ -708,9 +717,15 @@ void demo_H( int n )
 	}
 }
 //------------------------------------------------------------------
-void action_PL( void* /*param*/ )
+void action_PL( void* param )
 {
+	auto& data = *reinterpret_cast<Param_H*>(param);
+
+	Polyline_<float> pl;
+	pl.setPoints( data.vpt );
+	pl.draw( data.img );
 }
+
 void action_PL_M( void* /*param*/ )
 {
 }
@@ -718,8 +733,9 @@ void action_PL_M( void* /*param*/ )
 void demo_PL( int n )
 {
 	Data data( "Polyline_demo" );
-	data.vpt.resize(8);
+//	data.vpt.resize(8);
 	std::cout << "Demo " << n << ": polyline\n";
+	data.leftClicAddPoint=true;
 
 	data.setMouseCallback( mouse_CB_PL );
 
