@@ -21,7 +21,6 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_USE_EIGEN
 
 #include "homog2d.hpp"
 
@@ -170,7 +169,12 @@ void action_PL_M( void* param );
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
 struct KeyboardLoop
 {
-	using KbLoopAction = std::pair<char,std::function<void()>>;
+	struct KbLoopAction
+	{
+		char                  _key;
+		std::function<void()> _action;
+		std::string           _msg;
+	};
 
 	private:
 	std::vector<KbLoopAction> _actions;
@@ -178,20 +182,20 @@ struct KeyboardLoop
 
 	public:
 /// Add \c action when key \c key is hit
-	void addKeyAction( char key, const std::function<void()>& action )
+	void addKeyAction( char key, const std::function<void()>& action, std::string text=std::string() )
 	{
 		auto it = std::find_if(
 			_actions.begin(),
 			_actions.end(),
 			[&]
-			( const std::pair<char,std::function<void()>>& elem )
+			( const KbLoopAction& elem )
 			{
-				return key == elem.first;
+				return key == elem._key;
 			}
 		);
 		if( it != _actions.end() )
 			throw std::runtime_error( std::string("Error, key '") + key + "' already registered" );
-		_actions.push_back( std::make_pair( key, action ) );
+		_actions.push_back( KbLoopAction{ key, action, text } );
 	}
 /// Add common \c action when a valid key is hit
 	void addCommonAction( const std::function<void()>& action )
@@ -200,7 +204,6 @@ struct KeyboardLoop
 	}
 	void start( const Data& data )
 	{
-		std::cout <<"START " << __FUNCTION__ << "\n";
 		char key=0;
 		do
 		{
@@ -220,16 +223,20 @@ struct KeyboardLoop
 				_actions.begin(),
 				_actions.end(),
 				[&]
-				( const std::pair<char,std::function<void()>>& elem )
+				( const KbLoopAction& elem )
 				{
-					return key == elem.first;
+					return key == elem._key;
 				}
 			);
 
 			if( it != _actions.end() )
 			{
-				std::cout << "Action !\n";
-				it->second();
+				std::cout << "Action";
+				if( !it->_msg.empty() )
+					std::cout << ": " << it->_msg;
+				std::cout << '\n';
+
+				it->_action();
 				if( _common )
 					_common();
 				data.showImage();
@@ -362,14 +369,14 @@ void demo_B( int n )
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; } );
-	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; } );
-	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; } );
-	kbloop.addKeyAction( 'h', [&]{ tx += trans_delta; } );
-	kbloop.addKeyAction( 'g', [&]{ tx -= trans_delta; } );
-	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta; } );
-	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta; } );
-	kbloop.addKeyAction( 'p', [&]{ scale *= scale_delta; } );
-	kbloop.addKeyAction( 'o', [&]{ scale /= scale_delta; } );
+	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
+	kbloop.addKeyAction( 'h', [&]{ tx += trans_delta;    }, "increment tx" );
+	kbloop.addKeyAction( 'g', [&]{ tx -= trans_delta;    }, "decrement tx" );
+	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
+	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
+	kbloop.addKeyAction( 'p', [&]{ scale *= scale_delta; }, "increment scale" );
+	kbloop.addKeyAction( 'o', [&]{ scale /= scale_delta; }, "reduce scale" );
 	kbloop.addCommonAction( [&]
 		{
 			data.clearImage();
@@ -705,12 +712,9 @@ void demo_H( int n )
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
 
 	data.setMouseCallback( mouse_CB_H );
-
 	action_H( &data );
 
-
 	KeyboardLoop kbloop;
-
 	kbloop.addKeyAction( 'r', [&] { data.reset(); } );
 	kbloop.addKeyAction( 'a', [&]
 		{
@@ -727,13 +731,21 @@ void demo_H( int n )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
+struct Param_PL : Data
+{
+	Param_PL( std::string title ):Data(title)
+	{}
+	Polyline_<float> polyline;
+};
+
 void action_PL( void* param )
 {
-	auto& data = *reinterpret_cast<Param_H*>(param);
+	auto& data = *reinterpret_cast<Param_PL*>(param);
 
-	Polyline_<float> pl;
-	pl.setPoints( data.vpt );
-	pl.draw( data.img );
+	data.clearImage();
+	data.polyline.setPoints( data.vpt );
+	data.polyline.draw( data.img );
+	data.showImage();
 }
 
 void action_PL_M( void* /*param*/ )
@@ -742,14 +754,31 @@ void action_PL_M( void* /*param*/ )
 
 void demo_PL( int n )
 {
-	Data data( "Polyline_demo" );
-//	data.vpt.resize(8);
+	Param_PL data( "Polyline_demo" );
 	std::cout << "Demo " << n << ": polyline\n";
 	data.leftClicAddPoint=true;
 
 	data.setMouseCallback( mouse_CB_PL );
 
 	action_PL( &data );
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&]
+		{
+			data.polyline.isClosed() = !data.polyline.isClosed();
+		},
+		"switch close"
+	);
+	kbloop.addCommonAction( [&]
+		{
+			data.clearImage();
+			data.polyline.setPoints( data.vpt );
+			data.polyline.draw( data.img );
+			data.showImage();
+		}
+	);
+	kbloop.start( data );
+
 
 	if( 27 == cv::waitKey(0) )
 		std::exit(0);

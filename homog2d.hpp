@@ -1152,6 +1152,7 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-15;
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
+/// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
@@ -1574,7 +1575,7 @@ class Polyline_
 				it++;
 			}
 		}
-		bool isClosed() const { return _isClosed; }
+		bool& isClosed() { return _isClosed; }
 
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
 		{
