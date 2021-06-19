@@ -5,6 +5,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch:
  - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
  - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
+ - added operator * to apply homography to a vector of points
 
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18

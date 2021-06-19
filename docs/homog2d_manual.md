@@ -297,6 +297,13 @@ h.applyTo( v_pts );
 ```
 This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
+Or you may use the `*` operator to achieve the same result:
+```C++
+std::vector<Point2d> v_in;
+... // fill with values
+auto v_out = h * v_in;
+```
+
 
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;

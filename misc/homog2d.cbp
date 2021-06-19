@@ -36,8 +36,12 @@
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
-		<Unit filename="no_build/no_build_1.cpp" />
-		<Unit filename="no_build/no_build_2.cpp" />
+		<Unit filename="no_build/no_build_1.cxx" />
+		<Unit filename="no_build/no_build_2.cxx" />
+		<Unit filename="no_build/no_build_3.cxx" />
+		<Unit filename="no_build/no_build_4.cxx" />
+		<Unit filename="no_build/no_build_5.cxx" />
+		<Unit filename="no_build/readme.txt" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

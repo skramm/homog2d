@@ -450,6 +450,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 */
 	Hmatrix_& operator * (FPT v)
 	{
+		HOMOG2D_CHECK_IS_NUMBER(FPT);
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] *= v;
@@ -2327,13 +2328,14 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	return out;
 }
 
-#if 0
-/// Apply homography to a vector of point or line. Free function, templated by point or line
-template<typename T,typename U,typename V>
-std::vector<Root<T,V>>
-operator * ( const Hmatrix_<type::IsHomogr,U>& h, std::vector<const Root<T,V>>& vin )
+#if 1
+/// Apply homography to a vector of points or lines. Free function, templated by point or line
+/// \todo edit so that it can accept other iterable types (std::array, std::list)
+template<typename T,typename FPT1,typename FPT2>
+std::vector<Root<T,FPT1>>
+operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const std::vector<Root<T,FPT1>>& vin )
 {
-	std::vector<Root<T,V>> vout( vin.size() );
+	std::vector<Root<T,FPT1>> vout( vin.size() );
 	auto it = std::begin( vout );
 	for( const auto& elem: vin )
 	{

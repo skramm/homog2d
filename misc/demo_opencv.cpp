@@ -207,7 +207,6 @@ struct KeyboardLoop
 		char key=0;
 		do
 		{
-			bool d = false;
 			key = cv::waitKey(0);
 			if( key == 27 )
 			{
@@ -303,13 +302,6 @@ void action_1( void* param )
 	l_mouse.draw( data.img );
 	l_mouse2.draw( data.img );
 }
-
-/*void action_1M( void* param )
-{
-	auto& data = *reinterpret_cast<Data*>(param);
-
-}*/
-
 
 void demo_1( int nd )
 {
@@ -451,12 +443,7 @@ struct Param_C: public Data
 
 void action_C( void* param )
 {
-
-
-//void action_CM( void* param )
-//{
 	auto& data = *reinterpret_cast<Param_C*>(param);
-
 	data.clearImage();
 	data.drawLines();
 
@@ -590,10 +577,6 @@ void action_6( void* param )
 	s1.get().second.draw( data.img, CvDrawParams().selectPoint() );
 }
 
-void action_6M( void* /*param*/ )
-{
-}
-
 void demo_6(int n)
 {
 	std::cout << "Demo " << n << ": apply homography to lines and segments\n Hit [lm] to change angle, "
@@ -708,9 +691,7 @@ void action_H( void* param )
 		s1.draw( data.img2, CvDrawParams().setColor( 0,250,0) );
 	}
 
-	std::vector<Point2d> vsegH = vseg;
-	H.applyTo( vsegH );
-
+	auto vsegH  = H * vseg;
 	Segment sa2( vsegH[0], vsegH[1] );
 	Segment sb2( vsegH[2], vsegH[3] );
 
@@ -719,11 +700,6 @@ void action_H( void* param )
 
 	data.showImage();
 }
-
-void action_HM( void* /*param*/ )
-{
-}
-
 
 /// Demo of computing a homography from two sets of 4 points
 void demo_H( int n )
@@ -771,10 +747,6 @@ void action_PL( void* param )
 	data.polyline.setPoints( data.vpt );
 	data.polyline.draw( data.img );
 	data.showImage();
-}
-
-void action_PL_M( void* /*param*/ )
-{
 }
 
 void demo_PL( int n )
