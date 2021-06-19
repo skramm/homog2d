@@ -832,8 +832,9 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 
 		/// Returns a pair of points that are lying on line ad distance \c dist from a point defined by one of its coordinates.
+		template<typename FPT2>
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-		getPoints( GivenCoord gc, FPT coord, FPT dist ) const
+		getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
 		{
 			return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
 		}
@@ -940,9 +941,10 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 
 		Root<type::IsPoint,FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
-
-		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsLine>& ) const;
-		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename FPT2>
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename FPT2>
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<type::IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>&  ) const;
@@ -1745,8 +1747,9 @@ Root<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<
 //------------------------------------------------------------------
 /// ILLEGAL INSTANCIATION
 template<typename LP,typename FPT>
+template<typename FPT2>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-Root<LP,FPT>::impl_getPoints( GivenCoord, FPT, FPT, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getPoints( GivenCoord, FPT, FPT2, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
@@ -1754,19 +1757,23 @@ Root<LP,FPT>::impl_getPoints( GivenCoord, FPT, FPT, const detail::RootHelper<typ
 //------------------------------------------------------------------
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
+template<typename FPT2>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-Root<LP,FPT>::impl_getPoints( GivenCoord gc, FPT coord, FPT dist, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
 {
 	auto pt = impl_getPoint( gc, coord, detail::RootHelper<type::IsLine>() );
-	auto coeff = dist / std::sqrt( _v[0] * _v[0] + _v[1] * _v[1] );
+
+	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(_v[0]);
+	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(_v[1]);
+	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
 
 	Root<type::IsPoint,FPT> pt1(
-        pt.getX() -  _v[1] * coeff,
-        pt.getY() +  _v[0] * coeff
+        pt.getX() -  b * coeff,
+        pt.getY() +  a * coeff
 	);
 	Root<type::IsPoint,FPT> pt2(
-        pt.getX() +  _v[1] * coeff,
-        pt.getY() -  _v[0] * coeff
+        pt.getX() +  b * coeff,
+        pt.getY() -  a * coeff
 	);
 	detail::fix_order( pt1, pt2 );
 	return std::make_pair( pt1, pt2 );

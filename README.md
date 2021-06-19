@@ -52,7 +52,9 @@ When installed, run `$ make test` (or `$ make testall` for testing with all 3 nu
   - Direct bindings with [OpenCv](https://opencv.org/) (optional)
 
 - Related libraries:
-  - [Wykobi](http://www.wykobi.com/), has much more features but maybe harder to dive in.
+  - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
+  - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
+
 
 - [Release history](docs/homog2d_history.md)
 
