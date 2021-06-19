@@ -34,6 +34,10 @@
 		<Unit filename="doxyfile" />
 		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
+		<Unit filename="no_build/footer.txt" />
+		<Unit filename="no_build/header.txt" />
+		<Unit filename="no_build/no_build_1.cpp" />
+		<Unit filename="no_build/no_build_2.cpp" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

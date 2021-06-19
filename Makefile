@@ -87,6 +87,32 @@ diff:
 	git diff | colordiff | aha > diff.html
 	xdg-open diff.html
 
+
+NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx, /tmp/%.o, $(NOBUILD_SRC_FILES))
+
+a:
+	@echo "NOBUILD_SRC_FILES=$(NOBUILD_SRC_FILES)"
+	@echo "NOBUILD_OBJ_FILES=$(NOBUILD_OBJ_FILES)"
+
+.PRECIOUS: /tmp/no_build_%.cpp
+
+nobuild: $(NOBUILD_OBJ_FILES)
+	@echo "done target $@"
+
+/tmp/no_build_%.cpp: misc/no_build/no_build_%.cxx
+	cat misc/no_build/header.txt >/tmp/$(notdir $@)
+	cat $< >>/tmp/$(notdir $@)
+	cat misc/no_build/footer.txt >>/tmp/$(notdir $@)
+
+
+#no_build_%.o: misc/no_build/no_build_%.cxx
+/tmp/no_build_%.o: /tmp/no_build_%.cpp
+	@echo "Checking build failure of $<" >>no_build.stdout
+	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>no_build.stderr
+	! $(CXX) -o $@ -c $< 1>>no_build.stdout 2>>no_build.stderr
+
+
 clean:
 	-rm -r html/*
 	-rm homog2d_test
