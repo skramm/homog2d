@@ -44,7 +44,7 @@ struct Data
 	std::vector<Point2d> vpt; ///< some points used in demo
 	bool leftClicAddPoint = false;
 
-	Data( std::string wname ): win1(wname)
+	explicit Data( std::string wname ): win1(wname)
 	{
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
@@ -334,7 +334,7 @@ void demo_1( int nd )
 //------------------------------------------------------------------
 struct Param_B: public Data
 {
-	Param_B(std::string wname): Data(wname)
+	explicit Param_B(std::string wname): Data(wname)
 	{}
 	void initPts()
 	{
@@ -436,7 +436,7 @@ void demo_3( int n )
 //------------------------------------------------------------------
 struct Param_C: public Data
 {
-	Param_C(std::string wname): Data(wname)
+	explicit Param_C(std::string wname): Data(wname)
 	{}
 
 	int radius = 80;
@@ -501,7 +501,7 @@ void demo_C( int n )
 //------------------------------------------------------------------
 struct Param_5: Data
 {
-	Param_5(std::string wname): Data(wname)
+	explicit Param_5(std::string wname): Data(wname)
 	{}
 
 	Segment seg1,seg2;
@@ -564,7 +564,7 @@ void demo_5( int n )
 //------------------------------------------------------------------
 struct Param_6 : Data
 {
-	Param_6(std::string wname): Data(wname)
+	explicit Param_6(std::string wname): Data(wname)
 	{}
 
 	float angle = 20;
@@ -621,7 +621,7 @@ struct Param_H: public Data
 	cv::Mat img2;
 	std::string win2 = "Computed_projection";
 
-	Param_H(std::string wname): Data(wname)
+	explicit Param_H(std::string wname): Data(wname)
 	{
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, width, 50 );
@@ -733,7 +733,7 @@ void demo_H( int n )
 //------------------------------------------------------------------
 struct Param_PL : Data
 {
-	Param_PL( std::string title ):Data(title)
+	explicit Param_PL( std::string title ):Data(title)
 	{}
 	Polyline_<float> polyline;
 };

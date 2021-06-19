@@ -1,20 +1,19 @@
 # Homog2d: history
+
 See [Release page](https://github.com/skramm/homog2d/releases).
 
-- [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
-- [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): latest release, fully templated.
+- current master branch:
+ - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
+ - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
 
-- [v2.1](https://github.com/skramm/homog2d/releases/tag/v2.1), released on 2020-04-27.
-  - added `intersectsCircle()`, to get intersection with circles
-  - intersection data structure name changed, now `Intersect`
-  - the intersection points are now private, they must be fetched with `get()`:
-  this `Intersect` member function will return a `std::pair` holding the two intersection points.
-  - added `getPoints()`
-  - added single argument constructors
-  - renamed `distToPoints()` member function: now `distTo()`, and can be used with lines as argument.
-  - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
-  - renamed `clear()` to `init()` for matrices
-  - added `getParallelLine()`
+
+- [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
+  - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
+  - added `buildFrom4Points()` to Homography class
+  - added templated conversion free functions and member function to Opencv point types
+  - added full testing with all three arithmetic types (`make testall`)
+  - added segment type and associated features
+  - demo code heavy refactoring (requires Opencv)
 
 - [v2.2](https://github.com/skramm/homog2d/releases/tag/v2.2), released on 2021-06-01
   - added 2 constructors to `Homogr`
@@ -28,13 +27,26 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Licence change to MPLv2
   - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
 
-- [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
-  - all computations are now done using default numerical type `HOMOG2D_INUMTYPE`
-  - added `buildFrom4Points()` to Homography class
-  - added templated conversion free functions and member function to Opencv point types
-  - added full testing with all three arithmetic types (`make testall`)
-  - added segment type and associated features
-  - demo code heavy refactoring (requires Opencv)
+- [v2.1](https://github.com/skramm/homog2d/releases/tag/v2.1), released on 2020-04-27.
+  - added `intersectsCircle()`, to get intersection with circles
+  - intersection data structure name changed, now `Intersect`
+  - the intersection points are now private, they must be fetched with `get()`:
+  this `Intersect` member function will return a `std::pair` holding the two intersection points.
+  - added `getPoints()`
+  - added single argument constructors
+  - renamed `distToPoints()` member function: now `distTo()`, and can be used with lines as argument.
+  - added new matrix type: `Hmatrix`, for point to line (or line to point) mapping.
+  - renamed `clear()` to `init()` for matrices
+  - added `getParallelLine()`
+
+
+- [v2.0](https://github.com/skramm/homog2d/releases/tag/v2.0): fully templated.
+
+- [v1.0](https://github.com/skramm/homog2d/releases/tag/v1.0): initial release, not templated by numerical data type. Same API, works fine. A bit lighter on template stuff.
+
+
+
+
 
 
 

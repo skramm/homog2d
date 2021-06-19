@@ -38,7 +38,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.3
+#define HOMOG2D_VERSION 2.4
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -2018,10 +2018,7 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto a = getAngle(li);
-//	std::cout << __FUNCTION__ << "():\n-" << *this << "\n-" << li << "\n-angle=" << a << "\n-thres=" <<Root::nullAngleValue() << "\n";
-	if( a < Root::nullAngleValue() )
-//	if( getAngle(li) < Root::nullAngleValue() )
+	if( getAngle(li) < Root::nullAngleValue() )
 		return true;
 	return false;
 }
