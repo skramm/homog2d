@@ -18,7 +18,7 @@ ifeq ($(USE_EIGEN),Y)
 endif
 
 
-test: homog2d_test #demo_check
+test: homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
 	./homog2d_test
 
@@ -31,7 +31,7 @@ cov:
 	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
 
 check:
-	cppcheck . --enable=all --std=c++11 2>cppcheck.log
+	cppcheck . --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
 	xdg-open cppcheck.log
 
 
@@ -40,7 +40,8 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 
 # 2019-11-15: added options for code coverage with gcov
 homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) -O2 -o homog2d_test $< $(LDFLAGS)
+#	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 
 homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
@@ -87,31 +88,36 @@ diff:
 	git diff | colordiff | aha > diff.html
 	xdg-open diff.html
 
+#=================================================================
+# The following is used to make sure that some constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
 NOBUILD_OBJ_FILES := $(patsubst %.cxx, /tmp/%.o, $(NOBUILD_SRC_FILES))
 
-a:
-	@echo "NOBUILD_SRC_FILES=$(NOBUILD_SRC_FILES)"
-	@echo "NOBUILD_OBJ_FILES=$(NOBUILD_OBJ_FILES)"
-
-.PRECIOUS: /tmp/no_build_%.cpp
+#.PRECIOUS: /tmp/no_build_%.cpp
 
 nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "done target $@"
 
+$(NOBUILD_OBJ_FILES): rm_nb
+
+rm_nb:
+	rm *.stdout
+	rm *.stderr
+
+# assemble file to create a cpp program holding a main()
 /tmp/no_build_%.cpp: misc/no_build/no_build_%.cxx
-	cat misc/no_build/header.txt >/tmp/$(notdir $@)
-	cat $< >>/tmp/$(notdir $@)
-	cat misc/no_build/footer.txt >>/tmp/$(notdir $@)
+	@cat misc/no_build/header.txt >/tmp/$(notdir $@)
+	@cat $< >>/tmp/$(notdir $@)
+	@cat misc/no_build/footer.txt >>/tmp/$(notdir $@)
 
-
-#no_build_%.o: misc/no_build/no_build_%.cxx
+# compile, and return 0 if compilation fails (which is supposed to happen)
 /tmp/no_build_%.o: /tmp/no_build_%.cpp
 	@echo "Checking build failure of $<" >>no_build.stdout
 	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>no_build.stderr
 	! $(CXX) -o $@ -c $< 1>>no_build.stdout 2>>no_build.stderr
 
+#=================================================================
 
 clean:
 	-rm -r html/*
