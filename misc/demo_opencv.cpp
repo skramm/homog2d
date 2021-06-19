@@ -112,14 +112,14 @@ struct Data
 - If so, that point gets moved by the mouse, and the function \c actionM is called
 */
 void
-checkSelected( int event, int x, int y, std::function<void(void*)> action, std::function<void(void*)> actionM, void* param )
+checkSelected( int event, int x, int y, std::function<void(void*)> action, /*std::function<void(void*)> action_M,*/ void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
 	data.setMousePos(x,y);
-
-	data.clearImage();
-	action( param );
+	bool doSomething = true;
+//	data.clearImage();
+//	action( param );
 
 	switch( event )
 	{
@@ -143,26 +143,26 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, std::
 				data.vpt[data.selected] = data.pt_mouse;
 				data.vpt[data.selected].draw( data.img, CvDrawParams().selectPoint() );
 			}
-			actionM( param );
+//			action_M( param );
 		break;
 
-		default: break;
+		default: doSomething = false; break;
 	}
-	data.showImage();
+	if( doSomething )
+	{
+		data.clearImage();
+		action( param );
+//		action_M( param );
+		data.showImage();
+	}
 }
 
 void action_1(  void* param );
-void action_1M( void* param );
 void action_C(  void* param );
-void action_CM( void* param );
 void action_5(  void* param );
-void action_5M( void* param );
 void action_6(  void* param );
-void action_6M( void* param );
 void action_H(  void* param );
-void action_HM( void* param );
 void action_PL(   void* param );
-void action_PL_M( void* param );
 
 
 //------------------------------------------------------------------
@@ -252,36 +252,36 @@ struct KeyboardLoop
 /// Mouse callback for demo_H
 void mouse_CB_H( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_H, action_HM, param );
+	checkSelected( event, x, y, action_H, param );
 }
 
 /// Mouse callback for demo_1
 void mouse_CB_1( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_1, action_1M, param );
+	checkSelected( event, x, y, action_1, param );
 }
 
 /// Mouse callback for demo_C
 void mouse_CB_C( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_C, action_CM, param );
+	checkSelected( event, x, y, action_C, param );
 }
 /// Mouse callback for demo5
 void mouse_CB_5( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_5, action_5M, param );
+	checkSelected( event, x, y, action_5, param );
 }
 
 /// Mouse callback for demo_6
 void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_6, action_6M, param );
+	checkSelected( event, x, y, action_6, param );
 }
 
 /// Mouse callback for demo_PL
 void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_PL, action_PL_M, param );
+	checkSelected( event, x, y, action_PL, param );
 }
 
 //------------------------------------------------------------------
@@ -297,17 +297,18 @@ void action_1( void* param )
 
 	l.addOffset( LineOffset::horiz, 60 );
 	l.draw( data.img, CvDrawParams().setColor(250,250,0) );
-}
-
-void action_1M( void* param )
-{
-	auto& data = *reinterpret_cast<Data*>(param);
 
 	Line2d l_mouse  = data.pt_mouse * Point2d();
 	Line2d l_mouse2 = l_mouse.getOrthogonalLine( GivenCoord::X, 100 );
 	l_mouse.draw( data.img );
 	l_mouse2.draw( data.img );
 }
+
+/*void action_1M( void* param )
+{
+	auto& data = *reinterpret_cast<Data*>(param);
+
+}*/
 
 
 void demo_1( int nd )
@@ -448,12 +449,12 @@ struct Param_C: public Data
 	}
 };
 
-void action_C( void* /*param*/ )
+void action_C( void* param )
 {
-}
 
-void action_CM( void* param )
-{
+
+//void action_CM( void* param )
+//{
 	auto& data = *reinterpret_cast<Param_C*>(param);
 
 	data.clearImage();
@@ -520,15 +521,10 @@ void action_5( void* param )
 	data.seg1.getLine().draw( data.img, CvDrawParams().setColor( 100,100,100) );
 	data.seg2.getLine().draw( data.img, CvDrawParams().setColor( 100,100,100) );
 	draw( data.img, data.vpt );
-	data.showImage();
-}
-
-void action_5M( void* param )
-{
-	auto& data = *reinterpret_cast<Param_5*>(param);
 
 	if( data.selected != -1 )
 		data.vpt[data.selected].draw( data.img, CvDrawParams().selectPoint() );
+
 	auto inters = data.seg1.intersects( data.seg2 );
 	if( inters() ) //&& g_data.selected != -1 )
 	{
@@ -542,6 +538,7 @@ void action_5M( void* param )
 	}
 	data.showImage();
 }
+
 
 void demo_5( int n )
 {
@@ -611,6 +608,7 @@ void demo_6(int n)
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'm', [&] { data.angle += angle_delta; } );
 	kbloop.addKeyAction( 'l', [&] { data.angle -= angle_delta; } );
+	kbloop.addCommonAction( [&]{ action_6(&data);} );
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
@@ -708,7 +706,8 @@ void demo_H( int n )
 	data.vpt.resize(8);
 	data.reset();
 	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n"
-		<< " - usage: move points with mouse in left window, right window will show source rectangle and computed projected rectangle (green)\n"
+		<< " - usage: move points with mouse in left window, right window will show source rectangle (blue)\n"
+		<< "and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
 
 	data.setMouseCallback( mouse_CB_H );
@@ -769,21 +768,15 @@ void demo_PL( int n )
 		},
 		"switch close"
 	);
-	kbloop.addCommonAction( [&]
-		{
-			data.clearImage();
-			data.polyline.setPoints( data.vpt );
-			data.polyline.draw( data.img );
-			data.showImage();
-		}
-	);
+	kbloop.addCommonAction( [&] { action_PL(&data); } );
 	kbloop.start( data );
-
-
-	if( 27 == cv::waitKey(0) )
-		std::exit(0);
 }
 //------------------------------------------------------------------
+/// Demo program, using Opencv.
+/**
+- if called with no arguments, will switch through all the demos
+- if called with an (integer) argument, will launch only that demo
+*/
 int main( int argc, const char** argv )
 {
 	std::cout << "homog2d graphical demo using Opencv"
