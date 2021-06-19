@@ -675,6 +675,22 @@ void action_H( void* param )
 		v2[i].draw( data.img );
 	}
 
+	std::vector<Point2d> vseg;
+	auto center_x = 160;
+	auto center_y = 220;
+	auto size_v = 40;
+	auto size_h = 60;
+	vseg.emplace_back( Point2d(center_x+size_h, center_y) );
+	vseg.emplace_back( Point2d(center_x-size_h, center_y) );
+	vseg.emplace_back( Point2d(center_x,        center_y+size_v) );
+	vseg.emplace_back( Point2d(center_x,        center_y-size_v) );
+
+	Segment sa1( vseg[0], vseg[1] );
+	Segment sb1( vseg[2], vseg[3] );
+
+	sa1.draw( data.img, CvDrawParams().setColor( 0,100,100) );
+	sb1.draw( data.img, CvDrawParams().setColor( 0,100,100) );
+
 	cv::putText(  data.img, "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 	cv::putText(  data.img, "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
 
@@ -691,6 +707,16 @@ void action_H( void* param )
 		Segment s1( vpt3[i], vpt3[i==3?0:i+1] );
 		s1.draw( data.img2, CvDrawParams().setColor( 0,250,0) );
 	}
+
+	std::vector<Point2d> vsegH = vseg;
+	H.applyTo( vsegH );
+
+	Segment sa2( vsegH[0], vsegH[1] );
+	Segment sb2( vsegH[2], vsegH[3] );
+
+	sa2.draw( data.img2, CvDrawParams().setColor( 0,100,100) );
+	sb2.draw( data.img2, CvDrawParams().setColor( 0,100,100) );
+
 	data.showImage();
 }
 
