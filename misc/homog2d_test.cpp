@@ -399,7 +399,7 @@ TEST_CASE( "exceptions", "[testE]" )
 
 TEST_CASE( "test Matrix", "[testM]" )
 {
-	Hmatrix m;
+	Epipmat m;
 	Point2d_<NUMTYPE> p1;
 	Line2d_<NUMTYPE> l1 = m*p1;
 	Point2d_<NUMTYPE> p2 = m*l1;
