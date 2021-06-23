@@ -206,16 +206,10 @@ class Hmatrix_
 	}
 
 	private:
-	void clear()
-	{
-		for( auto& li: _data )
-			for( auto& elem: li )
-				elem = 0.;
-	}
 /// Implementation for epipolar matrices: initialize to aligned axis
 	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
-		clear();
+		p_zero();
 		_data[2][1] = 1.;
 		_data[1][2] = 1.;
 	}
@@ -223,12 +217,13 @@ class Hmatrix_
 /// Implementation for homographies: initialize to unit transformation
 	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
 	{
-		clear();
+		p_zero();
 		_data[0][0] = 1.;
 		_data[1][1] = 1.;  // "eye" matrix => unit transformation
 		_data[2][2] = 1.;
 		_isNormalized = true;
 	}
+
 	public:
 
 /// Constructor, used to fill with a vector of vectors matrix
@@ -2311,7 +2306,8 @@ product(
 
 } // namespace detail
 
-/// Apply Hmatrix to a point or line. Free function, templated by point or line
+/// Apply Epipolar matrix to a point or line, this will return the opposite type.
+/// Free function, templated by point or line
 template<typename T,typename U,typename V>
 Root<typename detail::HelperPL<T>::OtherType,V>
 operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
