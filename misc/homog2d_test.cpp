@@ -484,6 +484,8 @@ TEST_CASE( "test Homogr", "[testH]" )
 		std::vector<Point2d> v_pt(3);
 		H.applyTo( v_pt );
 		CHECK( v_pt[2].getX() == 5 );
+		auto vpt2 = H * v_pt;
+		CHECK( v_pt.size() == 3 );
 
 		std::array<Point2d,3> a_pt;
 		H.applyTo( a_pt );

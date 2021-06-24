@@ -102,8 +102,8 @@ nobuild: $(NOBUILD_OBJ_FILES)
 $(NOBUILD_OBJ_FILES): rm_nb
 
 rm_nb:
-	rm *.stdout
-	rm *.stderr
+	-rm *.stdout
+	-rm *.stderr
 
 # assemble file to create a cpp program holding a main()
 /tmp/no_build_%.cpp: misc/no_build/no_build_%.cxx
