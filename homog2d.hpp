@@ -28,6 +28,7 @@ See https://github.com/skramm/homog2d
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <list>
 #include <vector>
 #include <iomanip>
 #include <cassert>
@@ -68,7 +69,7 @@ namespace type {
 struct IsLine   {};
 struct IsPoint  {};
 struct IsHomogr {};
-struct IsMatrix {};
+struct IsEpipmat {};
 
 } // namespace detail end
 
@@ -87,11 +88,11 @@ namespace detail {
 	template<>
 	struct HelperMat<type::IsHomogr>
 	{
-		using M_OtherType = IsMatrix;
+		using M_OtherType = IsEpipmat;
 	};
 
 	template<>
-	struct HelperMat<type::IsMatrix>
+	struct HelperMat<type::IsEpipmat>
 	{
 		using M_OtherType = IsHomogr;
 	};
@@ -164,7 +165,7 @@ To return to unit transformation, use init()
 
 Implemented as a 3x3 matrix
 
-Templated by Floating-Point Type (FPT) and by type M (type::IsMatrix or type::IsHomogr)
+Templated by Floating-Point Type (FPT) and by type M (type::IsEpipmat or type::IsHomogr)
  */
 template<typename M,typename FPT>
 class Hmatrix_
@@ -206,26 +207,24 @@ class Hmatrix_
 	}
 
 	private:
-/// Implementation for matrices: initialize to empty
-	void impl_mat_init0( const detail::RootHelper<type::IsMatrix>& )
+/// Implementation for epipolar matrices: initialize to aligned axis
+	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
-		for( auto& li: _data )
-			for( auto& elem: li )
-				elem = 0.;
+		p_zero();
+		_data[2][1] = 1.;
+		_data[1][2] = 1.;
 	}
 
 /// Implementation for homographies: initialize to unit transformation
 	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
 	{
-		impl_mat_init0( detail::RootHelper<type::IsMatrix>() ); // call other overload
-/*		for( auto& li: _data )
-			for( auto& elem: li )
-				elem = 0.; */
+		p_zero();
 		_data[0][0] = 1.;
-		_data[1][1] = 1.;
+		_data[1][1] = 1.;  // "eye" matrix => unit transformation
 		_data[2][2] = 1.;
 		_isNormalized = true;
 	}
+
 	public:
 
 /// Constructor, used to fill with a vector of vectors matrix
@@ -2308,10 +2307,11 @@ product(
 
 } // namespace detail
 
-/// Apply Hmatrix to a point or line. Free function, templated by point or line
+/// Apply Epipolar matrix to a point or line, this will return the opposite type.
+/// Free function, templated by point or line
 template<typename T,typename U,typename V>
 Root<typename detail::HelperPL<T>::OtherType,V>
-operator * ( const Hmatrix_<type::IsMatrix,U>& h, const Root<T,V>& in )
+operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 {
 	Root<typename detail::HelperPL<T>::OtherType,V> out;
 	detail::product( out, h, in );
@@ -2329,6 +2329,27 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 }
 
 #if 1
+template <typename T>               struct Is_container: std::false_type { };
+template <typename T,std::size_t N> struct Is_container<std::array<T,N>>:     std::true_type { };
+template <typename... Ts>           struct Is_container<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct Is_container<std::list<Ts...  >> : std::true_type { };
+
+template<typename FPT,typename Cont>
+typename std::enable_if<Is_container<Cont>::value,Cont>::type
+operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin )
+{
+	Cont vout( vin.size() );
+	auto it = std::begin( vout );
+	for( const auto& elem: vin )
+	{
+		detail::product( *it, h, elem );
+		it++;
+	}
+
+	return vout;
+}
+
+#else
 /// Apply homography to a vector of points or lines. Free function, templated by point or line
 /// \todo edit so that it can accept other iterable types (std::array, std::list)
 template<typename T,typename FPT1,typename FPT2>
@@ -2597,7 +2618,7 @@ using Point2d = Root<type::IsPoint,double>;
 using Homogr = Hmatrix_<type::IsHomogr,double>;
 
 /// Default homogeneous matrix, uses \c double as numerical type
-using Hmatrix = Hmatrix_<type::IsMatrix,double>;
+using Epipmat = Hmatrix_<type::IsEpipmat,double>;
 
 /// Default segment type
 using Segment = Segment_<double>;
@@ -2607,23 +2628,30 @@ using Line2dF  = Root<type::IsLine,float>;
 using Point2dF = Root<type::IsPoint,float>;
 using HomogrF  = Hmatrix_<type::IsHomogr,float>;
 using SegmentF = Segment_<float>;
+using HomogrF  = Hmatrix_<type::IsHomogr,float>;
 
 // double types
 using Line2dD  = Root<type::IsLine,double>;
 using Point2dD = Root<type::IsPoint,double>;
 using HomogrD  = Hmatrix_<type::IsHomogr,double>;
 using SegmentD = Segment_<double>;
+using HomogrD  = Hmatrix_<type::IsHomogr,double>;
 
 // long double types
 using Line2dL  = Root<type::IsLine,long double>;
 using Point2dL = Root<type::IsPoint,long double>;
 using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
 using SegmentL = Segment_<long double>;
+using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
+template<typename T>
+using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
+template<typename T>
+using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
 
 template<typename T>
 using Intersect_ = typename Root<type::IsLine,T>::Intersect;

@@ -397,9 +397,9 @@ TEST_CASE( "exceptions", "[testE]" )
 	CHECK_THROWS( p1*p2 ); // same points can't define a line
 }
 
-TEST_CASE( "test Matrix", "[testM]" )
+TEST_CASE( "test Epipmat", "[testM]" )
 {
-	Hmatrix m;
+	Epipmat m;
 	Point2d_<NUMTYPE> p1;
 	Line2d_<NUMTYPE> l1 = m*p1;
 	Point2d_<NUMTYPE> p2 = m*l1;
@@ -494,6 +494,23 @@ TEST_CASE( "test Homogr", "[testH]" )
 		std::list<Point2d> l_pt(3);
 		H.applyTo( l_pt );
 		CHECK( std::begin(l_pt)->getX() == 5 );
+	}
+	{
+		Homogr H;
+		H.setTranslation(5,6);
+
+		std::vector<Point2d> v_pt(3);
+		auto vpt2 = H * v_pt;
+		CHECK( vpt2.size() == 3 );
+
+/*   // fail at present for array
+		std::array<Point2d,3> a_pt;
+		auto vpt3 = H * a_pt;
+		CHECK( vpt3.size() == 3 );*/
+
+		std::list<Point2d> l_pt(3);
+		auto vpt4 = H * l_pt;
+		CHECK( vpt4.size() == 3 );
 	}
 }
 
