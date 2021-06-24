@@ -700,6 +700,7 @@ class Circle_
 	Circle_( Root<type::IsPoint,FPT2> center, FPT3 rad )
 		: _radius(rad), _center(center)
 	{}
+
 	HOMOG2D_INUMTYPE&       radius()       { return _radius; }
 	const HOMOG2D_INUMTYPE& radius() const { return _radius; }
 
@@ -1049,19 +1050,19 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const;
 
-		bool isInsideRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
+		bool isInside( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
 		{
-			return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
+			return impl_isInsideRect( pt1, pt2, detail::RootHelper<LP>() );
 		}
 
 		template<typename T>
-		bool isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius ) const
+		bool isInside( const Root<type::IsPoint,FPT>& center, T radius ) const
 		{
 			HOMOG2D_CHECK_IS_NUMBER(T);
 			return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
 		}
 		template<typename T>
-		bool isInsideCircle( Circle_<T> cir ) const
+		bool isInside( Circle_<T> cir ) const
 		{
 			HOMOG2D_CHECK_IS_NUMBER(T);
 			return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
@@ -1145,8 +1146,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
 
-		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool impl_isInsideRect( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_isInsideRect( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 		template<typename T>
 		bool impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2162,7 +2163,7 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type:
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isInsideRect( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const
 {
 	auto pair_pts = detail::getCorrectPoints( p0, p1 );
 	const auto& p00 = pair_pts.first;
@@ -2171,9 +2172,9 @@ Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>& p0, const R
 }
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_isInsideRectangle( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideRect( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideRectangle() with a line" );
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Rectangle) with a line" );
 	return false; // to avoid a warning
 }
 
@@ -2192,7 +2193,7 @@ template<typename T>
 bool
 Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInsideCircle() with a line" );
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Circle) with a line" );
 	return false; // to avoid a warning
 }
 

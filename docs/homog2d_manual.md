@@ -390,7 +390,7 @@ For both of these functions, the returned pair of intersection points will alway
 
 You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
 ```C++
-bool b = pt.isInsideRectangle( p1, p2 );
+bool b = pt.isInside( p1, p2 );
 ```
 Again, the two points can be any of the four corners of the rectangle.
 

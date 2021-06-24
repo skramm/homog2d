@@ -695,22 +695,22 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	Point2d_<NUMTYPE> pt2(10,2);
 
 //	Line2d_<NUMTYPE> li;                              // THIS DOES NOT BUILD (on purpose)
-//	li.isInsideRectangle( pt1, pt2 );       // (but we can't test this...)
+//	li.isInside( pt1, pt2 );       // (but we can't test this...)
 
 	Point2d_<NUMTYPE> pt; // (0,0)
-	CHECK( pt.isInsideRectangle( pt1, pt2 ) == false );
+	CHECK( pt.isInside( pt1, pt2 ) == false );
 	pt.set(5,5);
-	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( pt.isInside( pt1, pt2 ) == true );
 
 	pt.set(10,5);                                         // on the edge
-	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( pt.isInside( pt1, pt2 ) == true );
 	pt.set(5,10);
-	CHECK( pt.isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( pt.isInside( pt1, pt2 ) == true );
 
-	CHECK( Point2d_<NUMTYPE>( 2, 2).isInsideRectangle( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>( 2,10).isInsideRectangle( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10, 2).isInsideRectangle( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10,10).isInsideRectangle( pt1, pt2 ) == true );
+	CHECK( Point2d_<NUMTYPE>( 2, 2).isInside( pt1, pt2 ) == true );
+	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == true );
+	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == true );
+	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == true );
 }
 
 TEST_CASE( "circle intersection", "[test_Circle]" )
@@ -752,10 +752,10 @@ TEST_CASE( "inside circle", "[tic]" )
 	}
 	{
 		Point2d p1( 3,3 );
-		CHECK( p1.isInsideCircle(c1) );
-		CHECK( !p1.isInsideCircle(c2) );
-		CHECK( p1.isInsideCircle(  Point2d(0,0), 8 ) );
-		CHECK( !p1.isInsideCircle( Point2d(0,0), 2 ) );
+		CHECK( p1.isInside(c1) );
+		CHECK( !p1.isInside(c2) );
+		CHECK( p1.isInside(  Point2d(0,0), 8 ) );
+		CHECK( !p1.isInside( Point2d(0,0), 2 ) );
 	}
 }
 
