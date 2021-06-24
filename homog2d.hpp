@@ -28,6 +28,7 @@ See https://github.com/skramm/homog2d
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <list>
 #include <vector>
 #include <iomanip>
 #include <cassert>
@@ -2328,6 +2329,27 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 }
 
 #if 1
+template <typename T>               struct Is_container: std::false_type { };
+template <typename T,std::size_t N> struct Is_container<std::array<T,N>>:     std::true_type { };
+template <typename... Ts>           struct Is_container<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct Is_container<std::list<Ts...  >> : std::true_type { };
+
+template<typename FPT,typename Cont>
+typename std::enable_if<Is_container<Cont>::value,Cont>::type
+operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin )
+{
+	Cont vout( vin.size() );
+	auto it = std::begin( vout );
+	for( const auto& elem: vin )
+	{
+		detail::product( *it, h, elem );
+		it++;
+	}
+
+	return vout;
+}
+
+#else
 /// Apply homography to a vector of points or lines. Free function, templated by point or line
 /// \todo edit so that it can accept other iterable types (std::array, std::list)
 template<typename T,typename FPT1,typename FPT2>
