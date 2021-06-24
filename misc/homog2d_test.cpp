@@ -437,29 +437,29 @@ TEST_CASE( "test Homogr", "[testH]" )
 		std::vector<std::vector<float>> m1a(3);
 		for( auto& li: m1a)
 			li.resize(3,1);
-		Homogr H1a(m1a);
+		Homogr_<NUMTYPE> H1a(m1a);
 
 		std::vector<std::vector<double>> m1b(3);
 		for( auto& li: m1b)
 			li.resize(3,1);
-		Homogr H1b(m1b);
+		Homogr_<NUMTYPE> H1b(m1b);
 
 		std::vector<std::vector<int>> m1c(3);
 		for( auto& li: m1c)
 			li.resize(3,1);
-		Homogr H1c(m1c);
+		Homogr_<NUMTYPE> H1c(m1c);
 
 		std::array<std::array<float,3>,3> m2a;
 		m2a[2][2] = 1.;
-		Homogr H2a(m2a);
+		Homogr_<NUMTYPE> H2a(m2a);
 
 		std::array<std::array<double,3>,3> m2b;
 		m2b[2][2] = 1.;
-		Homogr H2b(m2b);
+		Homogr_<NUMTYPE> H2b(m2b);
 
 		std::array<std::array<int,3>,3> m2c;
 		m2c[2][2] = 1.;
-		Homogr H2c(m2c);
+		Homogr_<NUMTYPE> H2c(m2c);
 	}
 	{
 		Homogr H;
@@ -478,7 +478,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( pt3.getY() == Approx(  1. ) );
 	}
 	{
-		Homogr H;
+		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
 		std::vector<Point2d> v_pt(3);
@@ -496,7 +496,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
 	{
-		Homogr H;
+		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
 		std::vector<Point2d> v_pt(3);
@@ -515,9 +515,9 @@ TEST_CASE( "test Homogr", "[testH]" )
 
 TEST_CASE( "matrix inversion", "[testH3]" )
 {
-	Homogr H;
+	Homogr_<NUMTYPE> H;
 	{
-		Homogr HR=H;
+		Homogr_<NUMTYPE> HR=H;
 		HR.inverse();
 		CHECK( HR == H );
 		HR.transpose();
@@ -532,7 +532,7 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 			{ 5,  1, -1 }
 		};
 
-		Homogr H2;
+		Homogr_<NUMTYPE> H2;
 
 		H2 = H;        // transposing twice = original matrix
 		H2.transpose();
@@ -554,7 +554,7 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 
 		H2 = H;
 		H.inverse();
-		Homogr HR = std::vector<std::vector<double>>{
+		Homogr_<NUMTYPE> HR = std::vector<std::vector<double>>{
 			{   6, - 1,  6 },
 			{ -34,  11, -2 },
 			{ - 4,   6, -4 }
