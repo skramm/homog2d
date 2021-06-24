@@ -54,7 +54,7 @@ See https://github.com/skramm/homog2d
 
 
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
-	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type must be numerical" )
+	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type of value must be numerical" )
 
 /// Internal type used for numerical computations, possible	values: \c double, <code>long double</code>
 #if !defined(HOMOG2D_INUMTYPE)
@@ -431,7 +431,7 @@ Thus some assert can get triggered elsewhere.
 	template<typename T>
 	Hmatrix_& operator / (T v)
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER( T );
 		if( std::abs(v) <= std::numeric_limits<FPT>::epsilon() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
@@ -449,7 +449,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 */
 	Hmatrix_& operator * (FPT v)
 	{
-		HOMOG2D_CHECK_IS_NUMBER(FPT);
+		HOMOG2D_CHECK_IS_NUMBER( FPT );
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] *= v;
@@ -676,6 +676,70 @@ template<typename T1,typename T2,typename T3>
 Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 }
+
+//------------------------------------------------------------------
+/// A circle
+template<typename FPT>
+class Circle_
+{
+	private:
+	FPT _radius;
+	Root<type::IsPoint,FPT> _center;
+
+	public:
+/// Default constructor, unit-radius circle at (0,0)
+	Circle_() : _radius(1.)
+	{}
+/// Constructor, given radius circle at (0,0)
+	template<typename FPT2>
+	Circle_( FPT2 rad ) : _radius(rad)
+	{}
+
+/// Constructor, given radius circle at (0,0)
+	template<typename FPT2,typename FPT3>
+	Circle_( Root<type::IsPoint,FPT2> center, FPT3 rad )
+		: _radius(rad), _center(center)
+	{}
+	HOMOG2D_INUMTYPE&       radius()       { return _radius; }
+	const HOMOG2D_INUMTYPE& radius() const { return _radius; }
+
+	Root<type::IsPoint,FPT>       center()       { return _center; }
+	const Root<type::IsPoint,FPT> center() const { return _center; }
+
+/// Returns true if circle is inside \c other circle
+	template<typename FPT2>
+	bool isInside( Circle_<FPT2> other ) const
+	{
+		return( _radius + _center.distTo( other.center() ) < other.radius() );
+	}
+	template<typename FPT2>
+	bool operator == ( const Circle_<FPT2>& other ) const
+	{
+		if( _radius != other._radius )
+			return false;
+		if( _center != other._center )
+			return false;
+		return true;
+	}
+	template<typename FPT2>
+	bool operator != ( const Circle_<FPT2>& other ) const
+	{
+		return !( *this == other );
+	}
+#ifdef HOMOG2D_USE_OPENCV
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	{
+		cv::circle(
+			mat,
+			_center.getCvPti(),
+			static_cast<int>(_radius),
+			dp._dpValues._color,
+			dp._dpValues._lineThickness,
+			dp._dpValues._lineType
+		);
+	}
+#endif // HOMOG2D_USE_OPENCV
+};
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -989,11 +1053,18 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_isInsideRectangle( pt1, pt2, detail::RootHelper<LP>() );
 		}
+
 		template<typename T>
 		bool isInsideCircle( const Root<type::IsPoint,FPT>& center, T radius ) const
 		{
-			static_assert( std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, "Radius type needs to be arithmetic" );
+			HOMOG2D_CHECK_IS_NUMBER(T);
 			return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
+		}
+		template<typename T>
+		bool isInsideCircle( Circle_<T> cir ) const
+		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
+			return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
 		}
 
 //////////////////////////

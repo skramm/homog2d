@@ -10,7 +10,7 @@ Home page: https://github.com/skramm/homog2d
 6. [Bindings](#bind)
 7. [Numerical data types](#numdt)
 8. [Technical details](#tech)
-9. [History](#history)
+9. [History](homog2d_history.md)
 
 
 ## 1 - Introduction

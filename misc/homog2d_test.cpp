@@ -731,6 +731,32 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	CHECK( riv() == true );
 	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
+
+	Circle_<NUMTYPE> cir1;
+	Circle_<NUMTYPE> cir2(45);
+	CHECK( cir2.radius() == 45. );
+	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
+	CHECK( cir3.radius() == 7. );
+}
+
+TEST_CASE( "inside circle", "[tic]" )
+{
+	Circle_<NUMTYPE> c1(10.);
+	Circle_<NUMTYPE> c2(2.);
+	{
+		CHECK( c2.isInside(c1) );
+		CHECK( !c1.isInside(c2) );
+		CHECK( !c1.isInside(c1) );
+		CHECK( c1 != c2 );
+		CHECK( c1 == c1 );
+	}
+	{
+		Point2d p1( 3,3 );
+		CHECK( p1.isInsideCircle(c1) );
+		CHECK( !p1.isInsideCircle(c2) );
+		CHECK( p1.isInsideCircle(  Point2d(0,0), 8 ) );
+		CHECK( !p1.isInsideCircle( Point2d(0,0), 2 ) );
+	}
 }
 
 TEST_CASE( "rectangle intersection", "[test_RI]" )
