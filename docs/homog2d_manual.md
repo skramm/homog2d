@@ -297,14 +297,16 @@ h.applyTo( v_pts );
 ```
 This actually works with any other container on whom one can iterate, such as `std::array` or `std::list`.
 
-Or you may use the `*` operator to achieve the same result:
+- Or you may use the `*` operator to achieve the same result:
 ```C++
 std::vector<Point2d> v_in;
 ... // fill with values
 auto v_out = h * v_in;
 ```
+Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
+### 4.2 - Constructors
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
@@ -315,7 +317,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 4.2 - Computing from 2 sets of 4 points
+### 4.3 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -510,7 +512,7 @@ In case you have some trouble building this program, please [read this](docs/ope
 ## 7 - Numerical data types
 <a name="numdt"></a>
 
-### Underlying data type
+### 7.1 - Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -538,7 +540,7 @@ configure the library to use `long double` by adding this before the "include":
 #define HOMOG2D_INUMTYPE long double
 ```
 
-### Numerical type conversion
+### 7.2 - Numerical type conversion
 
 It is of course possible to convert to/from an object templated by a different type:
 ```C++
@@ -548,8 +550,7 @@ Point2dF pt_float  = pt_double;
 Line2dD  li_double = li_long;
 ```
 
-
-### Numerical issues
+### 7.3 - Numerical issues
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
 As you may know, the concept of "equal floating point values" is very tricky.

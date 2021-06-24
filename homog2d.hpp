@@ -2328,45 +2328,71 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	return out;
 }
 
-#if 1
-template <typename T>               struct Is_container: std::false_type { };
-template <typename T,std::size_t N> struct Is_container<std::array<T,N>>:     std::true_type { };
-template <typename... Ts>           struct Is_container<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct Is_container<std::list<Ts...  >> : std::true_type { };
+//------------------------------------------------------------------
+namespace priv {
 
+/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
+/// used to detect if container is valid
+template <typename T>               struct Is_Container: std::false_type { };
+template <typename T,std::size_t N> struct Is_Container<std::array<T,N>>:     std::true_type { };
+template <typename... Ts>           struct Is_Container<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct Is_Container<std::list<Ts...  >> : std::true_type { };
+
+/// Traits class used to detect if container \c T is a \c std::array
+/** (because allocation is different, see \ref alloc() ) */
+template <typename T>
+struct Is_std_array: std::false_type {};
+template <typename V, size_t n>
+struct Is_std_array<std::array<V, n>>: std::true_type {};
+
+/// Allocation for \c std::array container
+template<
+	typename Cont,
+	typename std::enable_if<
+		Is_std_array<Cont>::value,
+		Cont
+	>::type* = nullptr
+>
+Cont
+alloc( std::size_t )
+{
+	return Cont();
+}
+
+/// Allocation for \c std::vector and \c std::list container
+template<
+	typename Cont,
+	typename std::enable_if<
+		!Is_std_array<Cont>::value,
+		Cont
+	>::type* = nullptr
+>
+Cont
+alloc( std::size_t nb )
+{
+	return Cont(nb);
+}
+
+} // namespace priv
+//------------------------------------------------------------------
+/// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
+/// Returned container is of same type as given input
 template<typename FPT,typename Cont>
-typename std::enable_if<Is_container<Cont>::value,Cont>::type
-operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin )
+typename std::enable_if<priv::Is_Container<Cont>::value,Cont>::type
+operator * (
+	const Hmatrix_<type::IsHomogr,FPT>& h,    ///< Matrix
+	const Cont&                         vin   ///< Input container
+)
 {
-	Cont vout( vin.size() );
+	Cont vout = priv::alloc<Cont>( vin.size() );
 	auto it = std::begin( vout );
 	for( const auto& elem: vin )
 	{
 		detail::product( *it, h, elem );
 		it++;
 	}
-
 	return vout;
 }
-
-#else
-/// Apply homography to a vector of points or lines. Free function, templated by point or line
-/// \todo edit so that it can accept other iterable types (std::array, std::list)
-template<typename T,typename FPT1,typename FPT2>
-std::vector<Root<T,FPT1>>
-operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const std::vector<Root<T,FPT1>>& vin )
-{
-	std::vector<Root<T,FPT1>> vout( vin.size() );
-	auto it = std::begin( vout );
-	for( const auto& elem: vin )
-	{
-		detail::product( *it, h, elem );
-		it++;
-	}
-
-	return vout;
-}
-#endif
 
 /// Apply homography to a segment
 template<typename FPT1,typename FPT2>

@@ -503,10 +503,9 @@ TEST_CASE( "test Homogr", "[testH]" )
 		auto vpt2 = H * v_pt;
 		CHECK( vpt2.size() == 3 );
 
-/*   // fail at present for array
 		std::array<Point2d,3> a_pt;
 		auto vpt3 = H * a_pt;
-		CHECK( vpt3.size() == 3 );*/
+		CHECK( vpt3.size() == 3 );
 
 		std::list<Point2d> l_pt(3);
 		auto vpt4 = H * l_pt;
