@@ -701,8 +701,8 @@ class Circle_
 		: _radius(rad), _center(center)
 	{}
 
-	HOMOG2D_INUMTYPE&       radius()       { return _radius; }
-	const HOMOG2D_INUMTYPE& radius() const { return _radius; }
+	FPT&       radius()       { return _radius; }
+	const FPT& radius() const { return _radius; }
 
 	Root<type::IsPoint,FPT>       center()       { return _center; }
 	const Root<type::IsPoint,FPT> center() const { return _center; }
@@ -1606,6 +1606,14 @@ std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
 {
 	f << seg._ptS1 << "-" << seg._ptS2;
 	return f;
+}
+
+//------------------------------------------------------------------
+template<typename FPT1,typename FPT2,typename FPT3>
+Segment_<FPT1>
+getSegment( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+{
+	return Segment_<FPT1>( c1.center(), c2.center() );
 }
 
 //------------------------------------------------------------------
