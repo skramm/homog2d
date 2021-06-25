@@ -701,6 +701,39 @@ Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 }
 
 //------------------------------------------------------------------
+/// A Flat rectangle
+template<typename FPT>
+class FRect_
+{
+	private:
+	Root<type::IsPoint,FPT> _pt1,_pt2;
+
+	public:
+/// Default constructor,
+	FRect_()
+	{
+		_pt2.set( 1., 1. );
+	}
+	FRect_( const Root<type::IsPoint,FPT>& pa, const Root<type::IsPoint,FPT>& pb )
+	{
+		auto ppts = detail::getCorrectPoints( pa, pb );
+		_pt1 = ppts.first;
+		_pt2 = ppts.second;
+	}
+	std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+	getPts() const
+	{
+		return std::make_pair( _pt1, _pt2 );
+	}
+#ifdef HOMOG2D_USE_OPENCV
+/// \todo finish this
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	{
+	}
+#endif
+};
+
+//------------------------------------------------------------------
 /// A circle
 template<typename FPT>
 class Circle_
@@ -740,18 +773,32 @@ class Circle_
 	template<typename FPT2>
 	bool isInside( const Root<type::IsPoint,FPT2>& p1, const Root<type::IsPoint,FPT2>& p2 ) const
 	{
-		const auto pair_pts = detail::getCorrectPoints( p1, p2 );
-		const auto& pt1 = pair_pts.first;
-		const auto& pt2 = pair_pts.second;
-
-		if( _center.getX() + _radius < pt2.getX() )
-			if( _center.getX() - _radius > pt1.getX() )
-				if( _center.getY() + _radius < pt2.getY() )
-					if( _center.getY() - _radius > pt1.getY() )
-						return true;
-		return false;
+		return impl_isInside( detail::getCorrectPoints( p1, p2 ) );
 	}
 
+/// Returns true if circle is inside flat rectangle \c rect
+	template<typename FPT2>
+	bool isInside( const FRect_<FPT2>& rect )
+	{
+		return impl_isInside( rect.getPts() );
+	}
+
+	private:
+	template<typename FPT2>
+	bool impl_isInside( const std::pair<Root<type::IsPoint,FPT2>, Root<type::IsPoint,FPT2>>& ppts ) const
+	{
+		auto p1 = ppts.first;
+		auto p2 = ppts.second;
+		if( _center.getX() + _radius < p2.getX() )
+			if( _center.getX() - _radius > p1.getX() )
+				if( _center.getY() + _radius < p2.getY() )
+					if( _center.getY() - _radius > p1.getY() )
+						return true;
+		return false;
+
+	}
+
+	public:
 	template<typename FPT2>
 	bool operator == ( const Circle_<FPT2>& other ) const
 	{
@@ -2753,6 +2800,9 @@ using Segment = Segment_<double>;
 
 /// Default circle type
 using Circle = Circle_<double>;
+
+/// Default rectangle type
+using FRect = FRect_<double>;
 
 // float types
 using Line2dF  = Root<type::IsLine,float>;

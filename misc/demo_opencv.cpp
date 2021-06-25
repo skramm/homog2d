@@ -453,13 +453,10 @@ void action_C( void* param )
 	data.drawLines();
 	Circle c( data.pt_mouse, data.radius );
 	CvDrawParams dp;
+	dp.setColor(150,0,150);
 	if( c.isInside( data.pr1, data.pr2 ) )
-	{
 		dp.setColor(250,100,0);
-		std::cout << "is inside\n";
-	}
 	c.draw( data.img, dp );
-//	cv::circle( data.img, data.pt_mouse.getCvPtd(), data.radius, cv::Scalar(50,100,150) );
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
 	for( size_t i=0; i<data.li.size(); i++ )
@@ -474,7 +471,6 @@ void action_C( void* param )
 	}
 	data.showImage();
 }
-
 
 void demo_C( int n )
 {
