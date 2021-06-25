@@ -430,17 +430,15 @@ void demo_3( int n )
 struct Param_C: public Data
 {
 	explicit Param_C(std::string wname): Data(wname)
-	{}
+	{
+		pr1 = Point2d( 80,80);
+		pr2 = Point2d( 380,280);
+	}
 
 	int radius = 80;
 	std::array<Line2d,3> li;
 	Point2d pr1, pr2;
 
-	Param_C():Data()
-	{
-		pr1 = Point2d( 80,80);
-		pr2 = Point2d( 380,280);
-	}
 	void drawLines()
 	{
 		for( size_t i=0; i<li.size(); i++ )
@@ -453,10 +451,13 @@ void action_C( void* param )
 	auto& data = *reinterpret_cast<Param_C*>(param);
 	data.clearImage();
 	data.drawLines();
-	Circle c( data.pt_mouse.getCvPtd(), data.radius );
+	Circle c( data.pt_mouse, data.radius );
 	CvDrawParams dp;
 	if( c.isInside( data.pr1, data.pr2 ) )
+	{
 		dp.setColor(250,100,0);
+		std::cout << "is inside\n";
+	}
 	c.draw( data.img, dp );
 //	cv::circle( data.img, data.pt_mouse.getCvPtd(), data.radius, cv::Scalar(50,100,150) );
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
@@ -478,7 +479,7 @@ void action_C( void* param )
 void demo_C( int n )
 {
 	std::cout << "Demo " << n << ": move circle over line, hit [lm] to change circle radius\n";
-	Param_C data("circle");
+	Param_C data("circle demo");
 
 	data.li[0] = Point2d() * Point2d(200,100);
 	data.li[1] = Point2d(200,0) * Point2d(200,200);
@@ -795,7 +796,7 @@ int main( int argc, const char** argv )
 	std::vector<std::function<void(int)>> v_demo{
 		demo_H,
 		demo_PL,
-		demo_1,
+//		demo_1,
 		demo_B,
 //		demo_3,
 		demo_C,

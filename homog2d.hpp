@@ -138,7 +138,7 @@ class Segment_;
 
 namespace detail {
 
-// forward declaration of function
+/// forward declaration of function
 template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 void
 product(
@@ -146,6 +146,28 @@ product(
 	const Hmatrix_<U,FPT2>& h,
 	const Root<T2,FPT1>&    in
 );
+
+//------------------------------------------------------------------
+/// Private free function, get top-left and bottom-right points from two arbitrary points
+template<typename FPT>
+std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if(
+		   std::fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
+	)
+		throw std::runtime_error(
+			std::string("error: a coordinate of the 2 points is identical, does not define a rectangle: \n ")
+			+ " p0.getX()=" + std::to_string(p0.getX()) + " p1.getX()=" + std::to_string(p1.getX())
+			+ " p0.getY()=" + std::to_string(p0.getY()) + " p1.getY()=" + std::to_string(p1.getY())
+		);
+#endif
+	Root<type::IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
+	Root<type::IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
+	return std::make_pair( p00, p11 );
+}
 
 } // namespace detail
 
@@ -721,14 +743,14 @@ class Circle_
 		const auto pair_pts = detail::getCorrectPoints( p1, p2 );
 		const auto& pt1 = pair_pts.first;
 		const auto& pt2 = pair_pts.second;
+
 		if( _center.getX() + _radius < pt2.getX() )
-			if( _center.getX() - _radius > pt2.getX() )
-				if( _center.getY() + _radius > pt1.getY() )
-					if( _center.getY() - _radius < pt1.getY() )
+			if( _center.getX() - _radius > pt1.getX() )
+				if( _center.getY() + _radius < pt2.getY() )
+					if( _center.getY() - _radius > pt1.getY() )
 						return true;
 		return false;
 	}
-
 
 	template<typename FPT2>
 	bool operator == ( const Circle_<FPT2>& other ) const
@@ -1321,23 +1343,6 @@ getCvPts( const std::vector<Root<type::IsPoint,FPT>>& vpt )
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
 namespace detail {
-
-/// Private free function, get top-left and bottom-right points from two arbitrary points
-template<typename FPT>
-std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-getCorrectPoints( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if(
-		   std::fabs( p0.getX() - p1.getX() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
-		|| std::fabs( p0.getY() - p1.getY() ) < Root<type::IsPoint,FPT>::nullOrthogDistance()
-	)
-		throw std::runtime_error( "error: a coordinate of the 2 points are identical, does not define a rectangle" );
-#endif
-	Root<type::IsPoint,FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
-	Root<type::IsPoint,FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
-	return std::make_pair( p00, p11 );
-}
 
 //------------------------------------------------------------------
 /// Private free function, returns true if point \c pt is inside the rectangle defined by (\c p00 , \c p11)

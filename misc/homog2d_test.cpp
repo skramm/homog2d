@@ -689,6 +689,31 @@ TEST_CASE( "getAngle", "[test_angle]" )
 //	getAngle( liv, Point2d() );         // NO BUILD
 }
 
+
+TEST_CASE( "getCorrectPoints", "[gcpts]" )
+{
+	{
+		auto p1 = detail::getCorrectPoints( Point2d(0,0), Point2d(5,5) );
+		CHECK( p1.first  == Point2d(0,0) );
+		CHECK( p1.second == Point2d(5,5) );
+	}
+	{
+		auto p1 = detail::getCorrectPoints( Point2d(0,5), Point2d(5,0) );
+		CHECK( p1.first  == Point2d(0,0) );
+		CHECK( p1.second == Point2d(5,5) );
+	}
+	{
+		auto p1 = detail::getCorrectPoints( Point2d(5,0), Point2d(0,5) );
+		CHECK( p1.first  == Point2d(0,0) );
+		CHECK( p1.second == Point2d(5,5) );
+	}
+	{
+		auto p1 = detail::getCorrectPoints( Point2d(5,5), Point2d(0,0) );
+		CHECK( p1.first  == Point2d(0,0) );
+		CHECK( p1.second == Point2d(5,5) );
+	}
+}
+
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
