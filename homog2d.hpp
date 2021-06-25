@@ -71,7 +71,7 @@ struct IsPoint  {};
 struct IsHomogr {};
 struct IsEpipmat {};
 
-} // namespace detail end
+} // namespace type
 
 
 namespace detail {
@@ -118,6 +118,7 @@ namespace detail {
 	struct AlwaysFalse {
 		enum { value = false };
 	};
+
 
 } // namespace detail
 
@@ -691,13 +692,12 @@ class Circle_
 	Circle_() : _radius(1.)
 	{}
 /// Constructor, given radius circle at (0,0)
-	template<typename FPT2>
-	Circle_( FPT2 rad ) : _radius(rad)
+	Circle_( FPT rad ) : _radius(rad)
 	{}
 
 /// Constructor, given radius circle at (0,0)
-	template<typename FPT2,typename FPT3>
-	Circle_( Root<type::IsPoint,FPT2> center, FPT3 rad )
+	template<typename FPT2>
+	Circle_( Root<type::IsPoint,FPT2> center, FPT rad )
 		: _radius(rad), _center(center)
 	{}
 
@@ -713,6 +713,23 @@ class Circle_
 	{
 		return( _radius + _center.distTo( other.center() ) < other.radius() );
 	}
+
+/// Returns true if circle is inside rectangle defined by \c p1 and \c p2
+	template<typename FPT2>
+	bool isInside( const Root<type::IsPoint,FPT2>& p1, const Root<type::IsPoint,FPT2>& p2 ) const
+	{
+		const auto pair_pts = detail::getCorrectPoints( p1, p2 );
+		const auto& pt1 = pair_pts.first;
+		const auto& pt2 = pair_pts.second;
+		if( _center.getX() + _radius < pt2.getX() )
+			if( _center.getX() - _radius > pt2.getX() )
+				if( _center.getY() + _radius > pt1.getY() )
+					if( _center.getY() - _radius < pt1.getY() )
+						return true;
+		return false;
+	}
+
+
 	template<typename FPT2>
 	bool operator == ( const Circle_<FPT2>& other ) const
 	{
@@ -2728,6 +2745,9 @@ using Epipmat = Hmatrix_<type::IsEpipmat,double>;
 
 /// Default segment type
 using Segment = Segment_<double>;
+
+/// Default circle type
+using Circle = Circle_<double>;
 
 // float types
 using Line2dF  = Root<type::IsLine,float>;

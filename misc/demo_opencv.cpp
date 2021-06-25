@@ -434,6 +434,13 @@ struct Param_C: public Data
 
 	int radius = 80;
 	std::array<Line2d,3> li;
+	Point2d pr1, pr2;
+
+	Param_C():Data()
+	{
+		pr1 = Point2d( 80,80);
+		pr2 = Point2d( 380,280);
+	}
 	void drawLines()
 	{
 		for( size_t i=0; i<li.size(); i++ )
@@ -446,8 +453,12 @@ void action_C( void* param )
 	auto& data = *reinterpret_cast<Param_C*>(param);
 	data.clearImage();
 	data.drawLines();
-
-	cv::circle( data.img, data.pt_mouse.getCvPtd(), data.radius, cv::Scalar(50,100,150) );
+	Circle c( data.pt_mouse.getCvPtd(), data.radius );
+	CvDrawParams dp;
+	if( c.isInside( data.pr1, data.pr2 ) )
+		dp.setColor(250,100,0);
+	c.draw( data.img, dp );
+//	cv::circle( data.img, data.pt_mouse.getCvPtd(), data.radius, cv::Scalar(50,100,150) );
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
 	for( size_t i=0; i<data.li.size(); i++ )
