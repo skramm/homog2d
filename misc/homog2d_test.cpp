@@ -744,9 +744,16 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	Line2d_<NUMTYPE> liv(0,1); // vertical line going through (0,0)
 	Line2d_<NUMTYPE> lih(1,0); // horizontal line going through (0,0)
 	Point2d_<NUMTYPE> pt;
-	auto ri = lid.intersectsCircle( pt, 0.5 );
-	CHECK( ri() == true );
-
+	{
+		auto ri = lid.intersectsCircle( Point2d_<NUMTYPE>(), 0.5 );
+		CHECK( ri() == true );
+		auto ri2 = lid.intersectsCircle( Point2d_<NUMTYPE>(10,5), 1. );
+		CHECK( ri2() == false );
+		auto ri3 = lid.intersectsCircle( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(), 0.5 ) );
+		CHECK( ri3() == true );
+		auto ri4 = lid.intersectsCircle( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
+		CHECK( ri4() == false );
+	}
 	auto rih = lih.intersectsCircle( pt, 1.0 );
 	CHECK( rih() == true );
 	CHECK( rih.get().first  == Point2d_<NUMTYPE>(-1,0) );

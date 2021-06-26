@@ -712,7 +712,7 @@ class FRect_
 	Root<type::IsPoint,FPT> _pt1,_pt2;
 
 	public:
-/// Default constructor,
+/// Default constructor, initialise rectangle to (0,0)-(1,1)
 	FRect_()
 	{
 		_pt2.set( 1., 1. );
@@ -744,13 +744,13 @@ class FRect_
 		return arr;
 	}
 
-/// Returns true if rectangle is inside circle \c circle
-	template<typename FPT2>
-	bool isInside( const Circle_<FPT2>& circle )
+/// Returns true if rectangle is inside \c shape (circle or rectangle)
+/// \todo maybe add some SFINAE to enable only for Circ_ or FRect_?
+	template<typename T>
+	bool isInside( const T& shape )
 	{
-//		auto arr = get4Pts();
 		for( const auto& pt: get4Pts() )
-			if( !pt.isInside( circle ) )
+			if( !pt.isInside( shape ) )
 				return false;
 		return true;
 	}
@@ -1168,9 +1168,27 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	};
 
 	public:
-		Intersect intersectsRectangle( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const;
+		template<typename FPT2>
+		Intersect intersectsRectangle( const Root<type::IsPoint,FPT2>& pt1, const Root<type::IsPoint,FPT2>& pt2 ) const
+		{
+			return intersectsRectangle( FRect_<FPT2>( pt1, pt2 ) ) ;
+		}
+		template<typename FPT2>
+		Intersect intersectsRectangle( const FRect_<FPT2>& rect ) const
+		{
+			return impl_intersectsRectangle( rect, detail::RootHelper<LP>() );
+		}
+
 		template<typename T>
-		Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const;
+		Intersect intersectsCircle( const Root<type::IsPoint,FPT>& pt0, T radius ) const
+		{
+			return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
+		}
+		template<typename T>
+		Intersect intersectsCircle( const Circle_<T>& cir ) const
+		{
+			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
+		}
 
 		bool isInside( const Root<type::IsPoint,FPT>& pt1, const Root<type::IsPoint,FPT>& pt2 ) const
 		{
@@ -1255,10 +1273,12 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	private:
 		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
 
+		template<typename FPT2>
 		Root<LP,FPT>::Intersect
-		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const;
+		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename FPT2>
 		Root<LP,FPT>::Intersect
-		impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const;
+		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
 
 		template<typename T>
 		Root<LP,FPT>::Intersect
@@ -1266,7 +1286,6 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		Root<LP,FPT>::Intersect
 		impl_intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
-
 
 		bool impl_isInsideRect( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isInsideRect( const Root<type::IsPoint,FPT>&, const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2077,10 +2096,6 @@ namespace detail {
 		auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
 		auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
 
-/*		res._v[0] = r1._v[1] * r2._v[2] - r1._v[2] * r2._v[1];
-		res._v[1] = r1._v[2] * r2._v[0] - r1._v[0] * r2._v[2];
-		res._v[2] = r1._v[0] * r2._v[1] - r1._v[1] * r2._v[0];
-*/
 		Root<Out,FPT> res;
 		res._v[0] = static_cast<FPT>( r1_b * r2_c  - r1_c * r2_b );
 		res._v[1] = static_cast<FPT>( r1_c * r2_a  - r1_a * r2_c );
@@ -2327,16 +2342,6 @@ Root<LP,FPT>::impl_isInsideCircle( const Root<type::IsPoint,FPT>&, T, const deta
 }
 
 //------------------------------------------------------------------
-/// Intersection of line and circle
-template<typename LP, typename FPT>
-template<typename T>
-typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::intersectsCircle( const Root<type::IsPoint,FPT>& pt, T radius ) const
-{
-	return impl_intersectsCircle( pt, radius, detail::RootHelper<type::IsLine>() );
-}
-
-//------------------------------------------------------------------
 /// Intersection of line and circle: implementation for points
 template<typename LP, typename FPT>
 template<typename T>
@@ -2345,7 +2350,7 @@ Root<LP,FPT>::impl_intersectsCircle( const Root<type::IsPoint,FPT>&, T, const de
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
 }
-//------------------------------------------------------------------
+
 /// Intersection of line and circle: implementation
 /// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
 template<typename LP, typename FPT>
@@ -2395,36 +2400,26 @@ Root<LP,FPT>::impl_intersectsCircle(
 	return out;
 }
 //------------------------------------------------------------------
-/// Checks for intersection with flat rectangle defined by the two points \c p0 and \c p1
-/**
-Pre-conditions: points are different (throws if not)
-*/
-template<typename LP, typename FPT>
-typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1 ) const
-{
-	return impl_intersectsRectangle( p0, p1, detail::RootHelper<LP>() );
-}
-
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
+template<typename FPT2>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
 }
 
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
 template<typename LP, typename FPT>
+template<typename FPT2>
 typename Root<LP,FPT>::Intersect
-Root<LP,FPT>::impl_intersectsRectangle( const Root<type::IsPoint,FPT>& p0, const Root<type::IsPoint,FPT>& p1, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto pair_pts = detail::getCorrectPoints( p0, p1 );
-	const auto& p00 = pair_pts.first;
-	const auto& p11 = pair_pts.second;
-
-	Root<type::IsPoint,FPT> p01( p11.getX(), p00.getY() );
-	Root<type::IsPoint,FPT> p10( p00.getX(), p11.getY() );
+	auto arr = rect.get4Pts();
+	const auto& p00 = arr[0];
+	const auto& p01 = arr[1];
+	const auto& p10 = arr[2];
+	const auto& p11 = arr[3];
 
 	Root<type::IsLine,FPT> l[4];
 	l[0] = Root<type::IsLine,FPT>( p00, p01 );
