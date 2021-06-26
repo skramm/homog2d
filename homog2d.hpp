@@ -721,9 +721,19 @@ class FRect_
 		_pt2 = ppts.second;
 	}
 	std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-	getPts() const
+	get2Pts() const
 	{
 		return std::make_pair( _pt1, _pt2 );
+	}
+	std::array<Root<type::IsPoint,FPT>,4>
+	get4Pts() const
+	{
+		std::array<Root<type::IsPoint,FPT>,4> arr;
+		arr[0] = _pt1;
+		arr[1] = Root<type::IsPoint,FPT>( _pt1.getX(), _pt2.getY() );
+		arr[2] = Root<type::IsPoint,FPT>( _pt2.getX(), _pt1.getY() );
+		arr[3] = _pt2;
+		return arr;
 	}
 #ifdef HOMOG2D_USE_OPENCV
 /// \todo finish this
@@ -780,7 +790,7 @@ class Circle_
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect )
 	{
-		return impl_isInside( rect.getPts() );
+		return impl_isInside( rect.get2Pts() );
 	}
 
 	private:
@@ -795,7 +805,6 @@ class Circle_
 					if( _center.getY() - _radius > p1.getY() )
 						return true;
 		return false;
-
 	}
 
 	public:
