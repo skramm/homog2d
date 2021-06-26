@@ -700,6 +700,9 @@ Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 }
 
+template<typename FPT>
+class Circle_;
+
 //------------------------------------------------------------------
 /// A Flat rectangle
 template<typename FPT>
@@ -716,10 +719,15 @@ class FRect_
 	}
 	FRect_( const Root<type::IsPoint,FPT>& pa, const Root<type::IsPoint,FPT>& pb )
 	{
+		set( pa, pb );
+	}
+	void set( const Root<type::IsPoint,FPT>& pa, const Root<type::IsPoint,FPT>& pb )
+	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
 		_pt1 = ppts.first;
 		_pt2 = ppts.second;
 	}
+
 	std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 	get2Pts() const
 	{
@@ -735,10 +743,29 @@ class FRect_
 		arr[3] = _pt2;
 		return arr;
 	}
+
+/// Returns true if rectangle is inside circle \c circle
+	template<typename FPT2>
+	bool isInside( const Circle_<FPT2>& circle )
+	{
+//		auto arr = get4Pts();
+		for( const auto& pt: get4Pts() )
+			if( !pt.isInside( circle ) )
+				return false;
+		return true;
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
-/// \todo finish this
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
+		cv::rectangle(
+			mat,
+			_pt1.getCvPti(),
+			_pt2.getCvPti(),
+			dp._dpValues._color,
+			dp._dpValues._lineThickness,
+			dp._dpValues._lineType
+		);
 	}
 #endif
 };
@@ -1706,14 +1733,16 @@ class Polyline_
 	public:
 		Polyline_()
 		{}
-		Polyline_( Root<type::IsPoint,FPT> pt )
+		Polyline_( const Root<type::IsPoint,FPT>& pt )
 		{
 			_plinevec.push_back( pt );
 		}
 		/// Returns the number of points (not segments!)
 		size_t size() const { return _plinevec.size(); }
+		void clear() { _plinevec.clear(); }
 
-		void add( Root<type::IsPoint,FPT> pt )
+		template<typename FPT2>
+		void add( const Root<type::IsPoint,FPT2>& pt )
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( size() )
@@ -1722,6 +1751,7 @@ class Polyline_
 #endif
 			_plinevec.push_back( pt );
 		}
+
 #ifdef HOMOG2D_USE_OPENCV
 
 		template<typename FPT2>
@@ -1735,6 +1765,20 @@ class Polyline_
 				it++;
 			}
 		}
+		template<typename FPT2>
+		void add( const std::vector<Root<type::IsPoint,FPT2>>& vec )
+		{
+			if( vec.size() == 0 )
+				return;
+			auto it = std::end( _plinevec );
+			_plinevec.resize( _plinevec.size() + vec.size() );
+			for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
+			{
+				*it = pt;
+				it++;
+			}
+		}
+
 		bool& isClosed() { return _isClosed; }
 
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
@@ -1813,7 +1857,6 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 	const auto& ptA2 = this->get().second;
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
-//	std::cout << "s1=" << *this << " s2=" << s2 << " pi=" << pi << '\n';
 
 	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
 		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )

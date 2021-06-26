@@ -6,7 +6,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
  - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
  - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
  - added operator * to apply homography to all elements of a container holding points or lines
- - added templated type `Circle_` and associated code
+ - added templated types `Circle_`, `Polyline_`, `FRect_` and associated code
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - switch to MPLv2 licence
