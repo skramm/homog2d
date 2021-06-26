@@ -341,6 +341,25 @@ The default is Opencv, thus it will fail to build if not installed on system (ch
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
+## XXX - other types
+
+Some other data types are provided, that interact nicely with the root types
+
+- a `Segment` is modeled by 2 points, usage is straight forward:
+```C++
+Segment s;  // default : (0,0)--(1,1)
+Segment s( p1, p2 );  // or give the two points
+s.set( p1, p2 );  // or give them afterwards
+```
+
+- you can apply a Homography in a similar way:
+```C++
+Segment s;
+auto s2 = H * s;
+```
+
+You can check if it is inside a circle or a rectangle.
+TODO
 
 ## 5 - Computation of intersection points
 <a name="inter"></a>

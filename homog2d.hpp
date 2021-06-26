@@ -1758,6 +1758,16 @@ class Polyline_
 		}
 		/// Returns the number of points (not segments!)
 		size_t size() const { return _plinevec.size(); }
+		/// Returns the number of segments
+		size_t nbSegs() const
+		{
+			if( size() == 0 )
+				return 0;
+			if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
+				return size() - 1;
+			return size() - 1 + (size_t)_isClosed;
+		}
+
 		void clear() { _plinevec.clear(); }
 
 		template<typename FPT2>
@@ -1771,8 +1781,6 @@ class Polyline_
 			_plinevec.push_back( pt );
 		}
 
-#ifdef HOMOG2D_USE_OPENCV
-
 		template<typename FPT2>
 		void setPoints( const std::vector<Root<type::IsPoint,FPT2>>& vec )
 		{
@@ -1784,6 +1792,7 @@ class Polyline_
 				it++;
 			}
 		}
+
 		template<typename FPT2>
 		void add( const std::vector<Root<type::IsPoint,FPT2>>& vec )
 		{
@@ -1800,6 +1809,7 @@ class Polyline_
 
 		bool& isClosed() { return _isClosed; }
 
+#ifdef HOMOG2D_USE_OPENCV
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
 		{
 			if( size() < 2 ) // nothing to draw
@@ -2523,6 +2533,18 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	detail::product( out, h, in );
 	return out;
 }
+
+template<typename FPT1,typename FPT2,typename FPT3>
+Segment_<FPT1>
+operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT3>& s_in )
+{
+	auto pts = s_in.getPts();
+	Root<type::IsPoint,FPT1> p1, p2;
+	detail::product( p1, h, pts.first );
+	detail::product( p2, h, pts.second );
+	return Segment_<FPT1>(p1,p2);
+}
+
 
 //------------------------------------------------------------------
 namespace priv {
