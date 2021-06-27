@@ -125,7 +125,7 @@ Point2d pt2 = li.getPoint( GivenCoord::X, 2 );
 
 You can compute the two points that are lying on a line and at a given distance from a point.
 
-![fig](misc/fig1.png)
+![fig](../misc/fig1.png)
 
 The "middle" point must be given as either its x or y coordinate [(1)](#fn1).
 ```C++
