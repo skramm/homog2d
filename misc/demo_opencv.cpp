@@ -298,7 +298,10 @@ void action_1( void* param )
 	l.draw( data.img, CvDrawParams().setColor(250,250,0) );
 
 	Line2d l_mouse  = data.pt_mouse * Point2d();
-	Line2d l_mouse2 = l_mouse.getOrthogonalLine( GivenCoord::X, 100 );
+
+	auto ppts = l_mouse.getPoints( GivenCoord::X, 100, 100 );
+
+	Line2d l_mouse2 = l_mouse.getOrthogonalLine( ppts.second );
 	l_mouse.draw( data.img );
 	l_mouse2.draw( data.img );
 }
@@ -530,10 +533,12 @@ void action_5( void* param )
 	{
 		auto pti = inters.get();
 		pti.draw( data.img );
-		Line2d l1 = data.seg1.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
+//		Line2d l1 = data.seg1.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
+		Line2d l1 = data.seg1.getLine().getOrthogonalLine( pti );
 		l1.draw( data.img, CvDrawParams().setColor( 0,0,100) );
 
-		Line2d l2 = data.seg2.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
+//		Line2d l2 = data.seg2.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
+		Line2d l2 = data.seg2.getLine().getOrthogonalLine( pti );
 		l2.draw( data.img, CvDrawParams().setColor( 100,0,0) );
 	}
 	data.showImage();

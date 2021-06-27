@@ -1057,9 +1057,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
 		Root<type::IsLine,FPT>
-		getOrthogonalLine( GivenCoord gc, FPT other ) const
+//		getOrthogonalLine( GivenCoord gc, FPT other ) const
+		getOrthogonalLine( const Root<type::IsPoint,FPT>& pt ) const
 		{
-			return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
+//			return impl_getOrthogonalLine( gc, other, detail::RootHelper<LP>() );
+			return impl_getOrthogonalLine( pt, detail::RootHelper<LP>() );
 		}
 
 		/// Returns an parallel line to the one it is called on, with \c pt lying on it.
@@ -1326,8 +1328,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
-		Root<type::IsLine,FPT> impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const;
-		Root<type::IsLine,FPT> impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsPoint>& ) const;
+//		Root<type::IsLine,FPT> impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const;
+//		Root<type::IsLine,FPT> impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsPoint>& ) const;
+		Root<type::IsLine,FPT> impl_getOrthogonalLine( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		Root<type::IsLine,FPT> impl_getOrthogonalLine( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
 		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&,    const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&,    const detail::RootHelper<type::IsPoint>& ) const;
 
@@ -1772,11 +1777,47 @@ std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
 }
 
 //------------------------------------------------------------------
+/// Free function, returns segment between two circle centers
 template<typename FPT1,typename FPT2,typename FPT3>
 Segment_<FPT1>
 getSegment( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 {
 	return Segment_<FPT1>( c1.center(), c2.center() );
+}
+
+/// Free function, returns line between two circle centers
+template<typename FPT1,typename FPT2,typename FPT3>
+Root<type::IsLine,FPT1>
+getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+{
+	return Root<type::IsLine,FPT1>( c1.center(), c2.center() );
+}
+
+
+/// Free function, returns the pair of segments tangential to the two circles
+template<typename FPT1,typename FPT2,typename FPT3>
+std::pair<Segment_<FPT1>,Segment_<FPT1>>
+getTanSegs( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( c1 == c2 )
+		throw std::runtime_error( "unable, c1 and c2 identical" );
+#endif
+
+	auto li0 = Root<type::IsLine,FPT1>( c1.center(), c2.center() );
+	auto li1 = li0.getOrthogonalLine( c1.center() );
+	auto li2 = li0.getOrthogonalLine( c2.center() );
+
+	const auto ri1 = li1.intersectsCircle( c1 );
+	const auto ri2 = li2.intersectsCircle( c2 );
+	assert( ri1() && ri2() );
+	const auto& ppts1 = ri1.get();
+	const auto& ppts2 = ri2.get();
+
+	return std::make_pair(
+		Segment_<FPT1>( ppts1.first,  ppts2.first  ),
+		Segment_<FPT1>( ppts1.second, ppts2.second )
+	);
 }
 
 //------------------------------------------------------------------
@@ -2052,7 +2093,8 @@ Root<LP,FPT>::impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail:
 /// Illegal instanciation
 template<typename LP,typename FPT>
 Root<type::IsLine,FPT>
-Root<LP,FPT>::impl_getOrthogonalLine( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const
+//Root<LP,FPT>::impl_getOrthogonalLine( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getOrthogonalLine( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
 }
@@ -2060,19 +2102,26 @@ Root<LP,FPT>::impl_getOrthogonalLine( GivenCoord, FPT, const detail::RootHelper<
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Root<type::IsLine,FPT>
-Root<LP,FPT>::impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const
+//Root<LP,FPT>::impl_getOrthogonalLine( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_getOrthogonalLine( const Root<type::IsPoint,FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto other_val = impl_getCoord( gc, val, detail::RootHelper<type::IsLine>() );
+#ifndef HOMOG2D_NOCHECKS
+	if( this->distTo( pt ) > nullDistance() )
+		throw std::runtime_error( "error: point is not on line" );
+#endif
+
+/*	auto other_val = impl_getCoord( gc, val, detail::RootHelper<type::IsLine>() );
 
 	Root<type::IsPoint,FPT> pt( other_val, val ) ;
 	if( gc == GivenCoord::X )
 		pt.set( val, other_val );
-
+*/
 	Root<type::IsLine,FPT> out;
 	out._v[0] = -_v[1];
 	out._v[1] =  _v[0];
 	out._v[2] = _v[1] * pt.getX() - _v[0] * pt.getY();
 	out.p_normalizeLine();
+
 	return out;
 }
 
