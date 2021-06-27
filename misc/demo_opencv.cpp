@@ -118,8 +118,6 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, /*std
 
 	data.setMousePos(x,y);
 	bool doSomething = true;
-//	data.clearImage();
-//	action( param );
 
 	switch( event )
 	{
@@ -162,7 +160,7 @@ void action_C(  void* param );
 void action_5(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
-void action_PL(   void* param );
+void action_PL( void* param );
 
 
 //------------------------------------------------------------------
@@ -802,7 +800,7 @@ int main( int argc, const char** argv )
 	std::vector<std::function<void(int)>> v_demo{
 		demo_H,
 		demo_PL,
-//		demo_1,
+		demo_1,
 		demo_B,
 //		demo_3,
 		demo_C,
