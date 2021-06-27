@@ -350,6 +350,7 @@ Some other data types are provided, that interact nicely with the root types
 Segment s;  // default : (0,0)--(1,1)
 Segment s( p1, p2 );  // or give the two points
 s.set( p1, p2 );  // or give them afterwards
+auto pt_mid = s.getMiddlePoint();
 ```
 
 - you can apply a Homography in a similar way:

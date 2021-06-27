@@ -704,18 +704,18 @@ template<typename FPT>
 class Circle_;
 
 //------------------------------------------------------------------
-/// A Flat rectangle
+/// A Flat Rectangle
 template<typename FPT>
 class FRect_
 {
 	private:
-	Root<type::IsPoint,FPT> _pt1,_pt2;
+	Root<type::IsPoint,FPT> _ptR1,_ptR2;
 
 	public:
-/// Default constructor, initialise rectangle to (0,0)-(1,1)
+/// Default constructor, initialize rectangle to (0,0)-(1,1)
 	FRect_()
 	{
-		_pt2.set( 1., 1. );
+		_ptR2.set( 1., 1. );
 	}
 	FRect_( const Root<type::IsPoint,FPT>& pa, const Root<type::IsPoint,FPT>& pb )
 	{
@@ -724,26 +724,41 @@ class FRect_
 	void set( const Root<type::IsPoint,FPT>& pa, const Root<type::IsPoint,FPT>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
-		_pt1 = ppts.first;
-		_pt2 = ppts.second;
+		_ptR1 = ppts.first;
+		_ptR2 = ppts.second;
 	}
 
+/// Returns the 2 major points of the rectangle
 	std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 	get2Pts() const
 	{
-		return std::make_pair( _pt1, _pt2 );
+		return std::make_pair( _ptR1, _ptR2 );
 	}
+
+/// Returns the 4 points of the rectangle, starting from "smallest" one, and
+/// in clockwise order
 	std::array<Root<type::IsPoint,FPT>,4>
 	get4Pts() const
 	{
 		std::array<Root<type::IsPoint,FPT>,4> arr;
-		arr[0] = _pt1;
-		arr[1] = Root<type::IsPoint,FPT>( _pt1.getX(), _pt2.getY() );
-		arr[2] = Root<type::IsPoint,FPT>( _pt2.getX(), _pt1.getY() );
-		arr[3] = _pt2;
+		arr[0] = _ptR1;
+		arr[1] = Root<type::IsPoint,FPT>( _ptR1.getX(), _ptR2.getY() );
+		arr[2] = _ptR2;
+		arr[3] = Root<type::IsPoint,FPT>( _ptR2.getX(), _ptR1.getY() );
 		return arr;
 	}
-
+/// Returns the 4 segments of the rectangle
+	std::array<Segment_<FPT>,4>
+	getSegs()
+	{
+		auto pts = get4Pts();
+		std::array<Segment_<FPT>,4> out;
+		out[0] = Segment_<FPT>( pts[0], pts[1] );
+		out[1] = Segment_<FPT>( pts[1], pts[2] );
+		out[2] = Segment_<FPT>( pts[2], pts[3] );
+		out[3] = Segment_<FPT>( pts[3], pts[0] );
+		return out;
+	}
 /// Returns true if rectangle is inside \c shape (circle or rectangle)
 /// \todo maybe add some SFINAE to enable only for Circ_ or FRect_?
 	template<typename T>
@@ -755,13 +770,28 @@ class FRect_
 		return true;
 	}
 
+	template<typename FPT2>
+	bool operator == ( const FRect_<FPT2>& other ) const
+	{
+		if( _ptR1 != other._ptR1 )
+			return false;
+		if( _ptR2 != other._ptR2 )
+			return false;
+		return true;
+	}
+	template<typename FPT2>
+	bool operator != ( const FRect_<FPT2>& other ) const
+	{
+		return !( *this == other );
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
 		cv::rectangle(
 			mat,
-			_pt1.getCvPti(),
-			_pt2.getCvPti(),
+			_ptR1.getCvPti(),
+			_ptR2.getCvPti(),
 			dp._dpValues._color,
 			dp._dpValues._lineThickness,
 			dp._dpValues._lineType
@@ -801,7 +831,7 @@ class Circle_
 
 /// Returns true if circle is inside \c other circle
 	template<typename FPT2>
-	bool isInside( Circle_<FPT2> other ) const
+	bool isInside( const Circle_<FPT2>& other ) const
 	{
 		return( _radius + _center.distTo( other.center() ) < other.radius() );
 	}
@@ -981,7 +1011,6 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		void impl_init_1_Point( const Root<type::IsPoint,T>& pt, const detail::RootHelper<type::IsPoint>& )
 		{
-//			*this = pt;   // we can't use this because it implies calling the constructor to build a converted point from T to FPT, thus infinite loop
 			p_copyFrom( pt );
 		}
 		/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
@@ -1687,6 +1716,16 @@ the one with smallest y-coordinate will be returned first */
 		get() const
 		{
 			return std::make_pair( _ptS1, _ptS2 );
+		}
+
+		template<typename S>
+		bool isInside( const S& shape ) const
+		{
+			if( !_ptS1.isInside( shape ) )
+				return false;
+			if( !_ptS2.isInside( shape ) )
+				return false;
+			return true;
 		}
 
 /// Returns supporting line
@@ -2428,8 +2467,8 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 	auto arr = rect.get4Pts();
 	const auto& p00 = arr[0];
 	const auto& p01 = arr[1];
-	const auto& p10 = arr[2];
-	const auto& p11 = arr[3];
+	const auto& p11 = arr[2];
+	const auto& p10 = arr[3];
 
 	Root<type::IsLine,FPT> l[4];
 	l[0] = Root<type::IsLine,FPT>( p00, p01 );

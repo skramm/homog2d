@@ -431,13 +431,12 @@ struct Param_C: public Data
 {
 	explicit Param_C(std::string wname): Data(wname)
 	{
-		rect.set( Point2d( 80,80), Point2d( 380,280) );
+		rect.set( Point2d( 180,120), Point2d( 380,280) );
 	}
 
 	int radius = 80;
 	std::array<Line2d,3> li;
 	FRect rect;
-//	Point2d pr1, pr2;
 
 	void drawLines()
 	{
@@ -451,9 +450,14 @@ void action_C( void* param )
 	auto& data = *reinterpret_cast<Param_C*>(param);
 	data.clearImage();
 	data.drawLines();
-	data.rect.draw( data.img );
 	Circle c( data.pt_mouse, data.radius );
+
 	CvDrawParams dp;
+	dp.setColor(150,0,150);
+	if( data.rect.isInside( c ) )
+		dp.setColor(250,100,0);
+	data.rect.draw( data.img, dp );
+
 	dp.setColor(150,0,150);
 	if( c.isInside( data.rect ) )
 		dp.setColor(250,100,0);
