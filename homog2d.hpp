@@ -52,7 +52,6 @@ See https://github.com/skramm/homog2d
 	if( c > 2 ) \
 		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
 
-
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type of value must be numerical" )
 
@@ -2647,17 +2646,27 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
 	return out;
 }
 
-template<typename FPT1,typename FPT2,typename FPT3>
+/// Apply homography to a segment
+template<typename FPT1,typename FPT2>
 Segment_<FPT1>
-operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT3>& s_in )
+operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT1>& seg )
 {
-	auto pts = s_in.getPts();
-	Root<type::IsPoint,FPT1> p1, p2;
-	detail::product( p1, h, pts.first );
-	detail::product( p2, h, pts.second );
-	return Segment_<FPT1>(p1,p2);
+	const auto& pts = seg.get();
+	Root<type::IsPoint,FPT1> pt1 = h * pts.first;
+	Root<type::IsPoint,FPT1> pt2 = h * pts.second;
+	return Segment_<FPT1>( pt1, pt2 );
 }
 
+/// Apply homography to a rectangle
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const FRect_<FPT1>& rin )
+{
+	auto pts = rin.get2Pts();
+	Root<type::IsPoint,FPT1> p1 = h * pts.first;
+	Root<type::IsPoint,FPT1> p2 = h * pts.second;
+	return FRect_<FPT1>(p1,p2);
+}
 
 //------------------------------------------------------------------
 namespace priv {
@@ -2685,7 +2694,7 @@ template<
 	>::type* = nullptr
 >
 Cont
-alloc( std::size_t )
+alloc( std::size_t /* unused here */ )
 {
 	return Cont();
 }
@@ -2725,17 +2734,6 @@ operator * (
 	return vout;
 }
 
-/// Apply homography to a segment
-template<typename FPT1,typename FPT2>
-Segment_<FPT1>
-operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT1>& seg )
-{
-	const auto& pts = seg.get();
-	Root<type::IsPoint,FPT1> pt1 = h * pts.first;
-	Root<type::IsPoint,FPT1> pt2 = h * pts.second;
-	return Segment_<FPT1>( pt1, pt2 );
-
-}
 //------------------------------------------------------------------
 /// Apply homography to a vector/array/list (type T) of points or lines.
 template<typename W,typename FPT>

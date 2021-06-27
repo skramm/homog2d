@@ -723,6 +723,12 @@ void action_H( void* param )
 	sa2.draw( data.img2, CvDrawParams().setColor( 0,100,100) );
 	sb2.draw( data.img2, CvDrawParams().setColor( 0,100,100) );
 
+
+	FRect rect( Point2d(160,160), Point2d(300,200));
+	rect.draw( data.img );
+//	auto rect2 = H * rect;
+	FRect rect2 = H * rect;
+	rect2.draw( data.img2 );
 	data.showImage();
 }
 
