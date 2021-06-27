@@ -898,7 +898,63 @@ class Circle_
 #endif // HOMOG2D_USE_OPENCV
 };
 
-namespace priv {}
+
+
+namespace priv {
+
+/// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
+template<typename FPT>
+void
+fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
+{
+	if( ptA.getX() > ptB.getX() )
+		std::swap( ptA, ptB );
+	else
+		if( ptA.getX() == ptB.getX() )
+			if( ptA.getY() > ptB.getY() )
+				std::swap( ptA, ptB );
+}
+
+
+/// Helper function, factorized here for the two impl_getPoints_A() implementations
+template<typename FPT, typename FPT2>
+std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
+getPoints_B2( const Root<type::IsPoint,FPT>& pt, FPT2 dist, const Root<type::IsLine,FPT>& li )
+{
+	auto arr = li.get();
+	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
+	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(arr[1]);
+	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
+
+	Root<type::IsPoint,FPT> pt1(
+        pt.getX() -  b * coeff,
+        pt.getY() +  a * coeff
+	);
+	Root<type::IsPoint,FPT> pt2(
+        pt.getX() +  b * coeff,
+        pt.getY() -  a * coeff
+	);
+	fix_order( pt1, pt2 );
+	return std::make_pair( pt1, pt2 );
+}
+
+/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B()
+template<typename T1,typename T2>
+Root<type::IsLine,T1>
+getOrthogonalLine_B2( const Root<type::IsPoint,T2>& pt, const Root<type::IsLine,T1>& li )
+{
+	auto arr = li.get();
+	Root<type::IsLine,T1> out(
+		-arr[1],
+		arr[0],
+		arr[1] * pt.getX() - arr[0] * pt.getY()
+	);
+	out.p_normalizeLine();
+	return out;
+}
+
+} // namespace priv
+
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -934,20 +990,12 @@ class Root
 	operator << ( std::ostream& f, const Root<U,V>& r );
 
 	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
-	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
+	friend void
+	detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
 
-template<typename T2>
-friend
-Root<type::IsLine,FPT>
-priv::getOrthogonalLine_B2( const Root<type::IsPoint,T2>&, const Root<type::IsLine,T2>& );
-
-/*	private:
-		Root( double a, double b, double c )
-		{
-			_v[0] = a;
-			_v[1] = b;
-			_v[2] = c;
-		}*/
+	template<typename T1,typename T2>
+	friend Root<type::IsLine,T1>
+	priv::getOrthogonalLine_B2( const Root<type::IsPoint,T2>&, const Root<type::IsLine,T1>& );
 
 	public:
 
@@ -1291,16 +1339,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			return !(*this == other);
 		}
 
-// optional stuff
 #ifdef HOMOG2D_USE_OPENCV
-
-// Constructor: build line from two OpenCv points
-/*		template<typename T>
-		Root( const cv::Point2d& p1, const cv::Point2d& p2 )
-		{
-			impl_init_2( v1, v2, detail::RootHelper<LP>() );
-		}*/
-
 		bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 		{
 			return impl_draw( mat, dp, detail::RootHelper<LP>() );
@@ -1325,6 +1364,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
 	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
 	static HOMOG2D_INUMTYPE& nullOrthogDistance() { return _zeroOrthoDistance; }
+	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -1335,8 +1375,9 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
 		static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
-		static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
 		static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
+		static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
+		static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1441,6 +1482,9 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-13;
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
+template<typename LP,typename FPT>
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDenom = 1E-10;
+
 /// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
@@ -1530,19 +1574,6 @@ ptIsInside( const Root<type::IsPoint,FPT>& pt, const Root<type::IsPoint,FPT>& p0
 		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
 			return true;
 	return false;
-}
-
-/// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
-template<typename FPT>
-void
-fix_order( Root<type::IsPoint,FPT>& ptA, Root<type::IsPoint,FPT>& ptB )
-{
-	if( ptA.getX() > ptB.getX() )
-		std::swap( ptA, ptB );
-	else
-		if( ptA.getX() == ptB.getX() )
-			if( ptA.getY() > ptB.getY() )
-				std::swap( ptA, ptB );
 }
 
 
@@ -1718,14 +1749,14 @@ class Segment_
 			if( p1 == p2 )
 				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
-			detail::fix_order( _ptS1, _ptS2 );
+			priv::fix_order( _ptS1, _ptS2 );
 		}
 /// Setter
 		void set( const Root<type::IsPoint,FPT>& p1, const Root<type::IsPoint,FPT>& p2 )
 		{
 			_ptS1 = p1;
 			_ptS2 = p2;
-			detail::fix_order( _ptS1, _ptS2 );
+			priv::fix_order( _ptS1, _ptS2 );
 		}
 
 /// Get length
@@ -2084,7 +2115,11 @@ Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<
 {
 	const auto a = static_cast<HOMOG2D_INUMTYPE>( _v[0] );
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
-//	auto c = static_cast<HOMOG2D_INUMTYPE>( _v[2] ); // useless, automatic conversion will take place
+	auto denom = ( gc == GivenCoord::X ? b : a );
+#ifndef HOMOG2D_NOCHECKS
+	if( std::abs(denom) < nullDenom() )
+		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encoutered" );
+#endif
 	if( gc == GivenCoord::X )
 		return ( -a * other - _v[2] ) / b;
 	else
@@ -2126,47 +2161,6 @@ Root<LP,FPT>::impl_getPoints_B( const Root<type::IsPoint,FPT>&, FPT2 dist, const
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
 
-namespace priv {
-/// Helper function, factorized here for the two impl_getPoints_A() implementations
-template<typename FPT, typename FPT2>
-std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-getPoints_B2( const Root<type::IsPoint,FPT>& pt, FPT2 dist, const Root<type::IsLine,FPT>& li )
-{
-	auto arr = li.get();
-	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
-	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(arr[1]);
-	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
-
-	Root<type::IsPoint,FPT> pt1(
-        pt.getX() -  b * coeff,
-        pt.getY() +  a * coeff
-	);
-	Root<type::IsPoint,FPT> pt2(
-        pt.getX() +  b * coeff,
-        pt.getY() -  a * coeff
-	);
-	detail::fix_order( pt1, pt2 );
-	return std::make_pair( pt1, pt2 );
-}
-
-/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B()
-template<typename FPT>
-Root<type::IsLine,FPT>
-getOrthogonalLine_B2( const Root<type::IsPoint,FPT>& pt, const Root<type::IsLine,FPT>& li )
-{
-	auto arr = li.get();
-	Root<type::IsLine,FPT> out(
-		-arr[1],
-		arr[0],
-		arr[1] * pt.getX() - arr[0] * pt.getY()
-	);
-	out.p_normalizeLine();
-	return out;
-}
-
-} // namespace priv
-
-
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
@@ -2174,7 +2168,7 @@ std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
 Root<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
 {
 	const auto pt = impl_getPoint( gc, coord, detail::RootHelper<type::IsLine>() );
-	return impl_getPoints_B2( pt, dist, *this );
+	return priv::getPoints_B2( pt, dist, *this );
 }
 
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
@@ -2217,7 +2211,7 @@ template<typename LP,typename FPT>
 Root<type::IsLine,FPT>
 Root<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto other_val = impl_getCoord_A( gc, val, detail::RootHelper<type::IsLine>() );
+	auto other_val = impl_getCoord( gc, val, detail::RootHelper<type::IsLine>() );
 
 	Root<type::IsPoint,FPT> pt( other_val, val ) ;
 	if( gc == GivenCoord::X )
@@ -2611,7 +2605,7 @@ Root<LP,FPT>::impl_intersectsCircle(
 	out.ptB.set( x2 + pt.getX(), y2 + pt.getY() );
 	out._doesIntersect = true;
 
-	detail::fix_order( out.ptA, out.ptB );
+	priv::fix_order( out.ptA, out.ptB );
 	return out;
 }
 //------------------------------------------------------------------
@@ -2685,7 +2679,7 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 			out.ptA = vec2[0];
 			out.ptB = vec2[1];
 		}
-		detail::fix_order( out.ptA, out.ptB );
+		priv::fix_order( out.ptA, out.ptB );
 	}
 	return out;
 }

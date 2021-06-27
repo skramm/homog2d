@@ -76,7 +76,7 @@ auto y = pt.getY();
 To get the 3 components of a line as a homogeneous array, one may use:
 ```C++
 auto v = line.get();
-std::cout << "[" << v[0] << ',' << v[1] << ',' << v[2] << "\";
+std::cout << '[' << v[0] << ',' << v[1] << ',' << v[2] << '\n';
 ```
 
 - Add some offset to a line:
@@ -120,6 +120,15 @@ You can also get directly the point with:
 Point2d pt2 = li.getPoint( GivenCoord::X, 2 );
 ```
 
+Some care has to be taken with these functions, because they will throw if unable to provide a result.
+For example, if you try to get the 'y' coordinate from a vertical line, this will fail.
+The following code will throw:
+
+```C++
+Line2d li;
+auto y = li.getCoord( GivenCoord::X, 0 );
+```
+
 ### Points at equal distance from a point on line
 <a name="paedfapol"></a>
 
@@ -127,13 +136,25 @@ You can compute the two points that are lying on a line and at a given distance 
 
 ![fig](../misc/fig1.png)
 
-The "middle" point must be given as either its x or y coordinate [(1)](#fn1).
+The API provides two ways to get these.
+
+- either you provide the x or y coordinate:
 ```C++
 Line2d li( ..., ... ); // some line
 auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
 Point2d p1 = ppts.first;
 Point2d p2 = ppts.second;
 ```
+- either you provide directly the point:
+```C++
+Line2d li( ..., ... ); // some line
+Point2d pt_on_line;
+auto ppts = li.getPoints( pt_on_line;, dist ); // returns a std::pair
+```
+
+The drawback is that you need to be sure that this point is truely on the line.
+This will be checked for, and library will throw if not
+(except if error checking is disabled, see [build options](#options)). 
 
 Upon return, the "first" point will hold the one with smallest 'x' coordinates, or the smallest 'y' coordinates if x coordinates are equal.
 
@@ -146,6 +167,10 @@ Line2d li2 = li.getOrthogonalLine( GivenCoord::X, 2 );
 ```
 will build `li2` so that it is orthogonal to `li` at `x=2`.
 
+Similarly, you can also directly use as input a point on the line:
+```C++
+Line2d li2 = li.getOrthogonalLine( some_point_on_line );
+```
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
 This function takes as argument a point that the line will intersect.
@@ -203,6 +228,61 @@ Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
 ```
 
+## XX - Other shapes
+
+Some other shapes are provided, for conveniency.
+
+### X.XX - Circles
+
+Center and radius can be accessed (read/write) with provided member functions:
+```C++
+Circle c1( center_point, radius );
+c1.radius() = 100;
+std::cout << c1.radius();
+```
+
+
+### X.XX - Flat rectangles
+
+A flat rectangle is provided through the template class `FRect`.
+It is modeled by its two opposite points.
+```C++
+FRect r1; // (0,0) (1,1)
+FRect r2( Point2d(0,0), Point2d(10,10) );
+r1.set( pt1, pt2 );
+```
+When using the constuctor of the set() method, there is no constraint on the points themselves:
+the library will automatically adjust the points to store the two opposite ones.
+The only constraint is that no coordinate can be equal.
+The library will throw if not.
+
+You can get the points with two different member functions:
+```C++
+FRect rect( pt1, pt2 );
+auto pair_pts = rect.get2Pts();  // returns the 2 points in a std::pair
+auto pts = rect.get4Pts(); // return a std::array of 4 points
+```
+
+You can also fetch the 4 segments of the rectangle:
+```C++
+FRect rect( pt1, pt2 );
+auto segs = rect.getSegs(); // returns a std::array of 4 segments.
+```
+
+
+### X.XX Common features
+
+Both provide a `isInside()' member function, that can be used also with segments:
+```C++
+FRect r1;
+Circle c1;
+bool b1 = r1.isInside( c1 );
+bool b2 = c1.isInside( r1 );
+Segment s1;
+bool b3 = s1.isInside( c1 );
+bool b4 = s1.isInside( r1 );
+```
+
 
 ## 4 - Homographies
 <a name="matrix"></a>
@@ -215,6 +295,17 @@ h.setTranslation(3,4);
 Point2d pt1(1,2);
 Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
+```
+
+This can be used with other types too:
+```C++
+Homogr h;
+ ... assign some planar transformation
+Segment s1( ..., ... );
+auto s2 = H * s1;
+
+FRect r1( ..., ... );
+auto r2 = H * s1;
 ```
 
 
@@ -341,26 +432,6 @@ The default is Opencv, thus it will fail to build if not installed on system (ch
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
-## XXX - other types
-
-Some other data types are provided, that interact nicely with the root types
-
-- a `Segment` is modeled by 2 points, usage is straight forward:
-```C++
-Segment s;  // default : (0,0)--(1,1)
-Segment s( p1, p2 );  // or give the two points
-s.set( p1, p2 );  // or give them afterwards
-auto pt_mid = s.getMiddlePoint();
-```
-
-- you can apply a Homography in a similar way:
-```C++
-Segment s;
-auto s2 = H * s;
-```
-
-You can check if it is inside a circle or a rectangle.
-TODO
 
 ## 5 - Computation of intersection points
 <a name="inter"></a>

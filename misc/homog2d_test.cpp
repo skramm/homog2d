@@ -254,6 +254,12 @@ TEST_CASE( "test1", "[test1]" )
 	}
 }
 
+TEST_CASE( "test throw", "[test_thr]" )
+{
+	Line2d li;
+	CHECK_THROWS( li.getCoord( GivenCoord::X, 0 ) );
+}
+
 TEST_CASE( "test parallel", "[test_para]" )
 {
 	INFO( "Checking angle" )

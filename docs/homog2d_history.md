@@ -28,7 +28,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
     - replaced enums `En_OffsetDir` and `En_GivenCoord` with class enums `LineOffset` and `GivenCoord`
   - added `Segment` type and associated code
   - Licence change to MPLv2
-  - remplaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
+  - replaced `HOMOG2D_SAFE_MODE` with `HOMOG2D_NOCHECKS`, so that checking is enabled by default.
 
 - [v2.1](https://github.com/skramm/homog2d/releases/tag/v2.1), released on 2020-04-27.
   - added `intersectsCircle()`, to get intersection with circles
