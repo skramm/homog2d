@@ -61,6 +61,12 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_INUMTYPE double
 #endif
 
+#define HOMOG2D_THROW_ERROR_1( msg ) \
+	throw std::runtime_error( std::string("homog2d") + std::string(__FUNCTION__) + "(): " + msg )
+
+#define HOMOG2D_THROW_ERROR_2( f, msg ) \
+	throw std::runtime_error( std::string("homog2d") + f + "(): " + msg )
+
 namespace homog2d {
 
 /// Holds the types needed for policy based design
@@ -118,7 +124,6 @@ namespace detail {
 	struct AlwaysFalse {
 		enum { value = false };
 	};
-
 
 } // namespace detail
 
@@ -262,10 +267,10 @@ Thus some assert can get triggered elsewhere.
 #ifndef HOMOG2D_NOCHECKS
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
-			throw std::runtime_error( "Invalid line size for input: " + std::to_string(in.size()) );
+			HOMOG2D_THROW_ERROR_1( "Invalid line size for input: " + std::to_string(in.size()) );
 		for( auto li: in )
 			if( li.size() != 3 )
-				throw std::runtime_error( "Invalid column size for input: " + std::to_string(li.size()) );
+				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
 #endif
 		p_fillWith( in );
 	}
@@ -945,7 +950,7 @@ class Root
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( v1.isParallelTo(v2) )
-				std::runtime_error( "unable to build point from these two lines, are parallel" );
+				HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
 #endif
 			*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 		}
@@ -955,7 +960,7 @@ class Root
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( v1 == v2 )
-				std::runtime_error( "unable to build line from these two points, are the same" );
+				HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same" );
 #endif
 			*this = detail::crossProduct<type::IsLine>( v1, v2 );
 			p_normalizeLine();
@@ -1050,9 +1055,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		/// Returns a pair of points that are lying on line ad distance \c dist from a point defined by one of its coordinates.
 		template<typename FPT2>
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-		getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
+//		getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
+		getPoints( const Root<type::IsPoint,FPT>& pt, FPT2 dist ) const
 		{
-			return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
+//			return impl_getPoints( gc, coord, dist, detail::RootHelper<LP>() );
+			return impl_getPoints( pt, dist, detail::RootHelper<LP>() );
 		}
 
 		/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
@@ -1159,10 +1166,16 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 
 		Root<type::IsPoint,FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
-		template<typename FPT2>
+
+/*		template<typename FPT2>
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
 		template<typename FPT2>
 		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
+*/
+		template<typename FPT2>
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( const Root<type::IsPoint,FPT>&, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename FPT2>
+		std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>> impl_getPoints( const Root<type::IsPoint,FPT>&, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
 
 		void impl_op_stream( std::ostream&, const Root<type::IsPoint,FPT>& ) const;
 		void impl_op_stream( std::ostream&, const Root<type::IsLine,FPT>&  ) const;
@@ -1395,7 +1408,7 @@ HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-15;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-13;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
@@ -1676,7 +1689,7 @@ class Segment_
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( p1 == p2 )
-				throw std::runtime_error( "failure, cannot build a segment with two identical points" );
+				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
 			detail::fix_order( _ptS1, _ptS2 );
 		}
@@ -1778,9 +1791,9 @@ std::ostream& operator << ( std::ostream& f, const Segment_<U>& seg )
 
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers
-template<typename FPT1,typename FPT2,typename FPT3>
+template<typename FPT1,typename FPT2>
 Segment_<FPT1>
-getSegment( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+getSegment( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 	return Segment_<FPT1>( c1.center(), c2.center() );
 }
@@ -1795,13 +1808,13 @@ getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 
 
 /// Free function, returns the pair of segments tangential to the two circles
-template<typename FPT1,typename FPT2,typename FPT3>
+template<typename FPT1,typename FPT2>
 std::pair<Segment_<FPT1>,Segment_<FPT1>>
-getTanSegs( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( c1 == c2 )
-		throw std::runtime_error( "unable, c1 and c2 identical" );
+		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
 #endif
 
 	auto li0 = Root<type::IsLine,FPT1>( c1.center(), c2.center() );
@@ -1856,7 +1869,7 @@ class Polyline_
 #ifndef HOMOG2D_NOCHECKS
 			if( size() )
 				if( pt == _plinevec.back() )
-					throw std::runtime_error( "Error, cannot add a point identical to previous one" );
+					HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
 #endif
 			_plinevec.push_back( pt );
 		}
@@ -2059,20 +2072,29 @@ Root<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<
 template<typename LP,typename FPT>
 template<typename FPT2>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-Root<LP,FPT>::impl_getPoints( GivenCoord, FPT, FPT2, const detail::RootHelper<type::IsPoint>& ) const
+//Root<LP,FPT>::impl_getPoints( GivenCoord, FPT, FPT2, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getPoints( const Root<type::IsPoint,FPT>&, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
 
-//------------------------------------------------------------------
+
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
 std::pair<Root<type::IsPoint,FPT>,Root<type::IsPoint,FPT>>
-Root<LP,FPT>::impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
+//Root<LP,FPT>::impl_getPoints( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_getPoints( const Root<type::IsPoint,FPT>& pt, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
 {
-	auto pt = impl_getPoint( gc, coord, detail::RootHelper<type::IsLine>() );
+//	auto pt = impl_getPoint( gc, coord, detail::RootHelper<type::IsLine>() );
 
+#ifndef HOMOG2D_NOCHECKS
+	if( this->distTo( pt ) > nullDistance() )
+	{
+		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		HOMOG2D_THROW_ERROR_2( "getPoints", "point is not on line" );
+	}
+#endif
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(_v[0]);
 	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(_v[1]);
 	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
@@ -2107,7 +2129,10 @@ Root<LP,FPT>::impl_getOrthogonalLine( const Root<type::IsPoint,FPT>& pt, const d
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > nullDistance() )
-		throw std::runtime_error( "error: point is not on line" );
+	{
+		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		HOMOG2D_THROW_ERROR_2( "getOrthogonalLine", "point is not on line" );
+	}
 #endif
 
 /*	auto other_val = impl_getCoord( gc, val, detail::RootHelper<type::IsLine>() );
@@ -2210,7 +2235,7 @@ operator * ( const Root<type::IsLine,FPT>& lhs, const Root<type::IsLine,FPT>& rh
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs.isParallelTo(rhs) )
-		throw std::runtime_error( "lines are parallel, unable to compute product" );
+		HOMOG2D_THROW_ERROR_1( "lines are parallel, unable to compute product" );
 #endif
 
 	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
@@ -2223,7 +2248,7 @@ operator * ( const Root<type::IsPoint,FPT>& lhs, const Root<type::IsPoint,FPT>& 
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs == rhs )
-		throw std::runtime_error( "points are identical, unable to compute product" );
+		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product" );
 #endif
 	Root<type::IsLine, FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
 	line.p_normalizeLine();

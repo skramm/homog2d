@@ -50,6 +50,7 @@ struct Data
 		cv::namedWindow( win1 );
 		img.create( height, width, CV_8UC3 );
 		vpt.resize(4);
+		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
 	}
 	void reset()
@@ -296,9 +297,8 @@ void action_1( void* param )
 	l.draw( data.img, CvDrawParams().setColor(250,250,0) );
 
 	Line2d l_mouse  = data.pt_mouse * Point2d();
-
-	auto ppts = l_mouse.getPoints( GivenCoord::X, 100, 100 );
-
+	auto ppts = l_mouse.getPoints( Point2d(), 200 );
+//	std::cout << "mouse=" <<  data.pt_mouse << ", ppts=" << ppts.first << "-" << ppts.second << "\n";
 	Line2d l_mouse2 = l_mouse.getOrthogonalLine( ppts.second );
 	l_mouse.draw( data.img );
 	l_mouse2.draw( data.img );
@@ -451,18 +451,22 @@ void action_C( void* param )
 	auto& data = *reinterpret_cast<Param_C*>(param);
 	data.clearImage();
 	data.drawLines();
-	Circle c( data.pt_mouse, data.radius );
+
+	Circle c1( data.vpt[0], data.radius );
+	Circle c2( data.vpt[1], 100 );
+
+	c2.draw( data.img );
 
 	CvDrawParams dp;
 	dp.setColor(150,0,150);
-	if( data.rect.isInside( c ) )
+	if( data.rect.isInside( c1 ) )
 		dp.setColor(250,100,0);
 	data.rect.draw( data.img, dp );
 
 	dp.setColor(150,0,150);
-	if( c.isInside( data.rect ) )
+	if( c1.isInside( data.rect ) )
 		dp.setColor(250,100,0);
-	c.draw( data.img, dp );
+	c1.draw( data.img, dp );
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
 	for( size_t i=0; i<data.li.size(); i++ )
@@ -475,6 +479,11 @@ void action_C( void* param )
 			inter.second.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 		}
 	}
+	auto seg = getSegment( c1, c2 );
+	seg.draw( data.img );
+	auto pseg = getTanSegs( c1, c2 );
+	pseg.first.draw(  data.img, CvDrawParams().setColor(250, 250, 0) );
+	pseg.second.draw( data.img, CvDrawParams().setColor(0, 250, 250) );
 	data.showImage();
 }
 
