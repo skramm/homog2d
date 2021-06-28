@@ -19,8 +19,9 @@ Home page: https://github.com/skramm/homog2d
 
 All the code is in the namespace `homog2d`, so either add `using namespace homog2d`, either use it as a prefix on each type.
 
-This library provides several data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
+This library provides several main data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
 It is implemented as a homogeneous 3x3 matrix.
+It also provides some additional types, derived from these.
 
 ## 2 - Lines and points
 <a name="basic"></a>
@@ -146,13 +147,14 @@ auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
 Point2d p1 = ppts.first;
 Point2d p2 = ppts.second;
 ```
+The drawback is same as the above paragraph: if line is vertical/horizontal (or near), these can fail.
+
 - either you provide directly the point:
 ```C++
 Line2d li( ..., ... ); // some line
 Point2d pt_on_line;
 auto ppts = li.getPoints( pt_on_line;, dist ); // returns a std::pair
 ```
-
 The drawback is that you need to be sure that this point is truely on the line.
 This will be checked for, and library will throw if not
 (except if error checking is disabled, see [build options](#options)).
@@ -276,8 +278,8 @@ Two additional free functions provide the segment (or line) between the centers 
 and the two segments tangential to two circles:
 ```C++
 Circle c1, c2;
-auto seg = getSegment( c1, c2 );
-auto line = getLine( c1, c2 );
+auto seg = getSegment( c1, c2 );  // as a segment
+auto line = getLine( c1, c2 );    // as a line
 auto pair_segs = getTanSegs( c1, c2 );
 ```
 ![circles1](figures_src/circles1.png)

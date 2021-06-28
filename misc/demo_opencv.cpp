@@ -455,7 +455,11 @@ void action_C( void* param )
 	Circle c1( data.vpt[0], data.radius );
 	Circle c2( data.vpt[1], 100 );
 
-	c2.draw( data.img );
+	CvDrawParams dpc2;
+	dpc2.setColor(150,0,150);
+	if( c2.isInside( c1 ) )
+		dpc2.setColor(100,250,0);
+	c2.draw( data.img, dpc2 );
 
 	CvDrawParams dp;
 	dp.setColor(150,0,150);
@@ -463,15 +467,19 @@ void action_C( void* param )
 		dp.setColor(250,100,0);
 	data.rect.draw( data.img, dp );
 
-	dp.setColor(150,0,150);
+	CvDrawParams dpc1;
+	dpc1.setColor(150,0,150);
 	if( c1.isInside( data.rect ) )
-		dp.setColor(250,100,0);
-	c1.draw( data.img, dp );
+		dpc1.setColor(250,100,0);
+	if( c1.isInside( c2 ) )
+		dpc1.setColor(100,250,0);
+	c1.draw( data.img, dpc1 );
+
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
 	for( size_t i=0; i<data.li.size(); i++ )
 	{
-		auto ri = data.li[i].intersectsCircle( data.pt_mouse, data.radius );
+		auto ri = data.li[i].intersectsCircle( c1 );
 		if( ri() )
 		{
 			auto inter = ri.get();
@@ -498,6 +506,7 @@ void demo_C( int n )
 
 	data.clearImage();
 	data.drawLines();
+	action_C( &data );
 	data.showImage();
 
 	data.setMouseCallback( mouse_CB_C );
@@ -587,7 +596,7 @@ void action_6( void* param )
 	double K = M_PI / 180.;
 
 	Homogr H( data.angle * K );
-	H.transpose();
+	H.addTranslation(-50,0).inverse().transpose();
 	Line2d l1( data.vpt[0], data.vpt[1] );
 	Line2d l2 = H*l1;
 

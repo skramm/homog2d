@@ -61,10 +61,10 @@ See https://github.com/skramm/homog2d
 #endif
 
 #define HOMOG2D_THROW_ERROR_1( msg ) \
-	throw std::runtime_error( std::string("homog2d") + std::string(__FUNCTION__) + "(): " + msg )
+	throw std::runtime_error( std::string("homog2d:") + std::string(__FUNCTION__) + "(): " + msg )
 
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
-	throw std::runtime_error( std::string("homog2d") + f + "(): " + msg )
+	throw std::runtime_error( std::string("homog2d:") + f + "(): " + msg )
 
 namespace homog2d {
 
@@ -1414,8 +1414,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		Root<type::IsLine,FPT> impl_getOrthogonalLine_B( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
 		Root<type::IsLine,FPT> impl_getOrthogonalLine_B( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
-		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&,    const detail::RootHelper<type::IsLine>& ) const;
-		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&,    const detail::RootHelper<type::IsPoint>& ) const;
+		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		Root<type::IsLine,FPT> impl_getParallelLine( const Root<type::IsPoint,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1476,7 +1476,7 @@ HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-13;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 2E-13;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
@@ -1651,7 +1651,7 @@ buildFrom4Points_Opencv (
 {
 	const auto& src = getCvPts<cv::Point2f>( vpt1 );
 	const auto& dst = getCvPts<cv::Point2f>( vpt2 );
-	return cv::getPerspectiveTransform( src, dst );
+	return cv::getPerspectiveTransform( src, dst ); // automatic type conversion to Hmatrix_
 }
 #endif
 
@@ -1681,7 +1681,6 @@ Hmatrix_<MT,FPT>::buildFrom4Points(
 	if( method == 1 )
 	{
 #ifdef HOMOG2D_USE_EIGEN
-//		std::cerr << "H compute: using Eigen\n";
 		*this = detail::buildFrom4Points_Eigen( vpt1, vpt2 );
 #else
 		throw std::runtime_error( "Unable, build without Eigen support" );
@@ -1690,7 +1689,6 @@ Hmatrix_<MT,FPT>::buildFrom4Points(
 	else
 	{
 #ifdef HOMOG2D_USE_OPENCV
-//		std::cerr << "H compute: using Opencv\n";
 		*this = detail::buildFrom4Points_Opencv( vpt1, vpt2 );
 #else
 		throw std::runtime_error( "Unable, build without Opencv support" );
