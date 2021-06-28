@@ -19,7 +19,7 @@ endif
 
 DOC_IMAGES_LOC:=docs/figures_src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,docs/figures_cpp/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
 
 show:
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
@@ -72,12 +72,14 @@ precision_test1: misc/precision_test_opencv.cpp
 precision_test2: misc/precision_test.cpp
 	$(CXX) $(CFLAGS) -I. -o $@ $<
 
-$(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%.cpp
-#%.png: %.cpp
-#$(DOC_IMAGES_LOC)/%.png:
-	@echo "@=$@ <=$<"
+# run the program
+$(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
+	$<
+	mv $(notdir $@) $(DOC_IMAGES_LOC)/
+
+# build the program
+$(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
-	$(DOC_IMAGES_LOC)/$@
 
 doc_fig: $(DOC_IMAGES_PNG)
 

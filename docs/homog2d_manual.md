@@ -280,6 +280,7 @@ auto seg = getSegment( c1, c2 );
 auto line = getLine( c1, c2 );
 auto pair_segs = getTanSegs( c1, c2 );
 ```
+![circles1](docs/figures_src/circles1.png)
 
 ### 4.3 - Common features
 
@@ -293,7 +294,7 @@ bool b3 = r2.isInside( r1 );
 bool b4 = c2.isInside( c1 );
 ```
 
-This can be used also with types Point2d and Segment:
+This can be used also with types `Point2d` and `Segment`:
 
 ```C++
 FRect rect;
