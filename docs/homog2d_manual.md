@@ -280,7 +280,7 @@ auto seg = getSegment( c1, c2 );
 auto line = getLine( c1, c2 );
 auto pair_segs = getTanSegs( c1, c2 );
 ```
-![circles1](docs/figures_src/circles1.png)
+![circles1](figures_src/circles1.png)
 
 ### 4.3 - Common features
 
