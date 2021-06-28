@@ -25,6 +25,7 @@
 		<Unit filename="../.travis.yml" />
 		<Unit filename="../Makefile" />
 		<Unit filename="../README.md" />
+		<Unit filename="../docs/figures_src/circles1.cpp" />
 		<Unit filename="../docs/homog2d_history.md" />
 		<Unit filename="../docs/homog2d_manual.md" />
 		<Unit filename="../docs/homog2d_qa.md" />
