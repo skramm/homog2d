@@ -5,12 +5,13 @@ Home page: https://github.com/skramm/homog2d
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
 3. [Segments](#segments)
-4. [2D transformation (aka homographies)](#matrix)
-5. [Intersection with rectangles and circles](#inter)
-6. [Bindings](#bind)
-7. [Numerical data types](#numdt)
-8. [Technical details](#tech)
-9. [History](homog2d_history.md)
+4. [Other geometric primitives](#shapes)
+5. [2D transformation (aka homographies)](#matrix)
+6. [Computing Intersections](#inter)
+7. [Bindings](#bind)
+8. [Numerical data types](#numdt)
+9. [Technical details](#tech)
+10. [History](homog2d_history.md)
 
 
 ## 1 - Introduction
@@ -171,6 +172,8 @@ Similarly, you can also directly use as input a point on the line:
 ```C++
 Line2d li2 = li.getOrthogonalLine( some_point_on_line );
 ```
+Again, point is checked and this will throw if distance from point to line is above some threshold
+(see ["numerical issues"](#num_issues))
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
 This function takes as argument a point that the line will intersect.
@@ -228,21 +231,12 @@ Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
 ```
 
-## XX - Other shapes
+## 4 - Other geometric primitives
+<a name="shapes"></a>
 
 Some other shapes are provided, for conveniency.
 
-### X.XX - Circles
-
-Center and radius can be accessed (read/write) with provided member functions:
-```C++
-Circle c1( center_point, radius );
-c1.radius() = 100;
-std::cout << c1.radius();
-```
-
-
-### X.XX - Flat rectangles
+### 4.1 - Flat rectangles
 
 A flat rectangle is provided through the template class `FRect`.
 It is modeled by its two opposite points.
@@ -269,22 +263,44 @@ FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 ```
 
+### 4.2 - Circles
 
-### X.XX Common features
-
-Both provide a `isInside()' member function, that can be used also with segments:
+Center and radius can be accessed (read/write) with provided member functions:
 ```C++
-FRect r1;
-Circle c1;
+Circle c1( center_point, radius );
+c1.radius() = 100;
+std::cout << c1.radius();
+```
+
+### 4.3 - Common features
+
+Both provide a `isInside()' member function, that works for all combination of theses 2 types:
+```C++
+FRect r1, r2;
+Circle c1, c2;
 bool b1 = r1.isInside( c1 );
 bool b2 = c1.isInside( r1 );
-Segment s1;
-bool b3 = s1.isInside( c1 );
-bool b4 = s1.isInside( r1 );
+bool b3 = r2.isInside( r1 );
+bool b4 = c2.isInside( c1 );
+```
+
+This can be used also with types Point2d and Segment:
+
+```C++
+FRect rect;
+Circle cir;
+
+Point2d pt;
+bool b1 = pt.isInside( cir );
+bool b2 = pt.isInside( rect );
+
+Segment seg;
+bool b3 = seg.isInside( cir );
+bool b4 = seg.isInside( rect );
 ```
 
 
-## 4 - Homographies
+## 5 - Homographies
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`:
@@ -309,7 +325,7 @@ auto r2 = H * s1;
 ```
 
 
-### 4.1 - Setting up from a given planar transformation
+### 5.1 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -397,7 +413,7 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 4.2 - Constructors
+### 5.2 - Constructors
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
@@ -408,7 +424,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 4.3 - Computing from 2 sets of 4 points
+### 5.3 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -433,10 +449,10 @@ The default is Opencv, thus it will fail to build if not installed on system (ch
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
 
-## 5 - Computation of intersection points
+## 6 - Computation of intersection points
 <a name="inter"></a>
 
-### 5.1 - Intersection of lines with flat rectangles
+### 6.1 - Intersection of lines with flat rectangles
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
 `intersectsRectangle()` member function.
@@ -460,7 +476,7 @@ You don't have to give the bottom-right, top-left corners of the rectangle, the 
 In the example above, you could have as well given the points (1,8)-(8,1), the result would have been the same.
 The only requirement is that no coordinate must be the same in the two points.
 
-### 5.2 - Intersection of a line with a circle
+### 6.2 - Intersection of a line with a circle
 
 For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
 ```C++
@@ -477,7 +493,7 @@ Also see the provided demo for a runnable example.
 
 For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
 
-### 5.3 - Points and rectangles
+### 6.3 - Points and rectangles
 
 You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
 ```C++
@@ -488,7 +504,7 @@ Again, the two points can be any of the four corners of the rectangle.
 This function will return `true` for all points lying on edges of the rectangle.
 
 
-## 6 - Bindings with other libraries
+## 7 - Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -498,7 +514,7 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
-### 6.1 - Data conversion from/to Opencv data types
+### 7.1 - Data conversion from/to Opencv data types
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -554,7 +570,7 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 6.2 - Drawing functions using OpenCv
+### 7.2 - Drawing functions using OpenCv
 
 You can also directly draw points and lines on an image (`cv::Mat` type):
 ```C++
@@ -600,10 +616,10 @@ A demo demonstrating this Opencv binding is provided, try it with
 
 In case you have some trouble building this program, please [read this](docs/opencv_notes.md).
 
-## 7 - Numerical data types
+## 8 - Numerical data types
 <a name="numdt"></a>
 
-### 7.1 - Underlying data type
+### 8.1 - Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -631,7 +647,7 @@ configure the library to use `long double` by adding this before the "include":
 #define HOMOG2D_INUMTYPE long double
 ```
 
-### 7.2 - Numerical type conversion
+### 8.2 - Numerical type conversion
 
 It is of course possible to convert to/from an object templated by a different type:
 ```C++
@@ -641,7 +657,8 @@ Point2dF pt_float  = pt_double;
 Line2dD  li_double = li_long;
 ```
 
-### 7.3 - Numerical issues
+### 8.3 - Numerical issues
+<a name="num_issues"></a>
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
 As you may know, the concept of "equal floating point values" is very tricky.
@@ -652,7 +669,7 @@ In this library, this can hurt in several ways:
 This library will ensure these conditions, and will throw an exception (of
 type `std::runtime_error`) if that kind of thing happens.
 The thresholds have default values.
-They are implemented as static values, that user code can be changed any time.
+They are implemented as static values, that user code can change any time.
 
 - When checking for parallel lines (see `isParallelTo()`), the "null" angle value
 has a default value of one thousand of a radian (0.001 rad).
@@ -673,7 +690,7 @@ That same function can be used to change (or print) the current value.
 - When attempting to compute the inverse of a matrix, if the determinant is less
 than `Homogr::nullDeterValue()`, the inversion code will throw.
 
-## 8 - Technical details
+## 9 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually the same class,
@@ -730,8 +747,4 @@ If the situation only makes sense for one of the types (for example `getAngle()`
 the implementation of that type only holds a `static_assert`, so that can be catched at build time.
 
 
-### Footnotes
 
-[(1)](#paedfapol)
-<a name="fn1"></a> The rationale behind this interface is that if we had choosen to pass a point as argument, no guarantee would have been given that the point is effectively lying on the line.
-With this function signature, the function can compute the point itself.
