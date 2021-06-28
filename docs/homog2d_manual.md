@@ -272,6 +272,15 @@ c1.radius() = 100;
 std::cout << c1.radius();
 ```
 
+Two additional free functions provide the segment (or line) between the centers of two circles,
+and the two segments tangential to two circles:
+```C++
+Circle c1, c2;
+auto seg = getSegment( c1, c2 );
+auto line = getLine( c1, c2 );
+auto pair_segs = getTanSegs( c1, c2 );
+```
+
 ### 4.3 - Common features
 
 Both provide a `isInside()' member function, that works for all combination of theses 2 types:

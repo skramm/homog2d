@@ -17,6 +17,14 @@ ifeq ($(USE_EIGEN),Y)
 	CFLAGS += -DHOMOG2D_USE_EIGEN
 endif
 
+DOC_IMAGES_LOC:=docs/figures_src
+DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
+DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,docs/figures_cpp/%.png, $(DOC_IMAGES_SRC))
+
+show:
+	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
+	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
+	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
 
 test: homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
@@ -64,8 +72,16 @@ precision_test1: misc/precision_test_opencv.cpp
 precision_test2: misc/precision_test.cpp
 	$(CXX) $(CFLAGS) -I. -o $@ $<
 
+$(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%.cpp
+#%.png: %.cpp
+#$(DOC_IMAGES_LOC)/%.png:
+	@echo "@=$@ <=$<"
+	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	$(DOC_IMAGES_LOC)/$@
 
-doc: html/index.html
+doc_fig: $(DOC_IMAGES_PNG)
+
+doc: html/index.html doc_fig
 	xdg-open html/index.html
 
 html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
