@@ -1161,6 +1161,13 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 
 		template<typename T>
+		std::pair<Line2d_<FPT>,Line2d_<FPT>>
+		getParallelLines( T dist )
+		{
+			return impl_getParallelLines( dist, detail::RootHelper<LP>() );
+		}
+
+		template<typename T>
 		void
 		addOffset( LineOffset dir, T v )
 		{
@@ -1428,6 +1435,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsPoint>& ) const;
 		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+		template<typename T>
+		std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename T>
+		std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -2267,6 +2279,29 @@ Root<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::RootH
 }
 
 //------------------------------------------------------------------
+/// Illegal instanciation
+template<typename LP,typename FPT>
+template<typename T>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+Root<LP,FPT>::impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLines() on a point" );
+}
+
+/// Implementation for lines
+/// \todo finish this !
+template<typename LP,typename FPT>
+template<typename T>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+Root<LP,FPT>::impl_getParallelLines( T dist, const detail::RootHelper<type::IsLine>& ) const
+{
+	Line2d_<FPT> l1 = *this;
+	Line2d_<FPT> l2 = *this;
+//	l1._v[2] = ?
+	return std::make_pair( l1, l2 );
+}
+
+//------------------------------------------------------------------
 /// Comparison operator, used for lines
 /**
 Definition: two lines will be equal:
@@ -2856,12 +2891,11 @@ get2Pts( const FRect_<FPT>& rect )
 
 //------------------------------------------------------------------
 /// Returns 2 parallel lines at distance \c dist from \c li
-/// \todo Write this !
 template<typename FPT,typename T>
 std::pair<Line2d_<FPT>,Line2d_<FPT>>
 getParallelLines( const Line2d_<FPT>& li, T dist )
 {
-assert(0);
+	return li.getParallelLines( dist );
 }
 
 /// Returns the distance between 2 parallel lines
