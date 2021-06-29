@@ -266,13 +266,9 @@ TEST_CASE( "test parallel", "[test_para]" )
 	{
 		Line2d_<NUMTYPE> l1;                                                   // vertical line
 		Line2d_<NUMTYPE> l2a( Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ); // 45° line, starting at (0,0)
-
-//		CHECK( getAngle( l1, l2a ) == M_PI/4. );
 		CHECK( getAngle( l1, l2a ) == Approx( M_PI/4. ) );
 
 		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
-
-//		CHECK( getAngle( l1, l2b ) == M_PI/4. );
 		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 
 		l2b.addOffset( LineOffset::horiz, 10. );
@@ -320,19 +316,15 @@ TEST_CASE( "test parallel", "[test_para]" )
 		CHECK( l3.distTo( Point2d_<NUMTYPE>(0,2) ) == 0. );
 		CHECK( getAngle(l3,l1) == 0. );
 	}
-/*	SECTION( "Vertical line at x=1" )
+	INFO( "dist parallel lines" )
 	{
-		Line2d_<NUMTYPE> l1( Point2d(1,0), Point2d(1,10) ); // vertical line at x=1
-
-		Line2d_<NUMTYPE> l2 = l1.getParallelLine( Point2d(1,1) );
-		CHECK_THROWS( l1 * l2 ); // two parallel lines never cross
-		CHECK( l2.distTo( Point2d(0,0) ) == 1. );
-		CHECK( l2.distTo( Point2d(0,2) ) == 1. );
-
-		Line2d_<NUMTYPE> l3 = l1.getParallelLine( Point2d(0,0) );
-		CHECK( l3.distTo( Point2d(0,0) ) == 1. );
-		CHECK( l3.distTo( Point2d(0,2) ) == 1. );
-	}*/
+		Line2d_<NUMTYPE> l1;                                // vertical line at x=0
+		Line2d_<NUMTYPE> l2( Point2d(1,0), Point2d(1,10) ); // vertical line at x=1
+		CHECK( getParallelDistance( l1, l2 ) == 1. );
+		Line2d_<NUMTYPE> l3( Point2d(-3,0), Point2d(-3,-10) ); // vertical line at x=1
+		CHECK( getParallelDistance( l1, l3 ) == 3. );
+		CHECK( getParallelDistance( l2, l3 ) == 4. );
+	}
 }
 
 TEST_CASE( "dist2points", "[test2]" )

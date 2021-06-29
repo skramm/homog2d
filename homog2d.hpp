@@ -695,11 +695,9 @@ struct CvDrawParams
 //------------------------------------------------------------------
 
 /// Used in Line2d::getValue() and getOrthogonalLine()
-//enum En_GivenCoord { GC_X, GC_Y };
 enum class GivenCoord { X, Y };
 
 /// Used in Line2d::addOffset()
-//enum En_OffsetDir{ OD_Vert, OD_Horiz };
 enum class LineOffset { vert, horiz };
 
 // forward declaration of template instanciation
@@ -710,11 +708,15 @@ Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
 
 }
 
+// forward declaration
 template<typename FPT>
 class Circle_;
 
 //------------------------------------------------------------------
-/// A Flat Rectangle
+/// A Flat Rectangle, modeled with its two opposite points
+/**
+
+*/
 template<typename FPT>
 class FRect_
 {
@@ -816,7 +818,7 @@ template<typename FPT>
 class Circle_
 {
 	private:
-	FPT _radius;
+	FPT           _radius;
 	Point2d_<FPT> _center;
 
 	public:
@@ -1420,12 +1422,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
-		Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>& ) const;
+		Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>&  ) const;
 		Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsPoint>& ) const;
-		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>& ) const;
-		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-
-		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsLine>&  ) const;
+		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsPoint>& ) const;
+		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
@@ -2260,7 +2261,7 @@ Line2d_<FPT>
 Root<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 	Line2d_<FPT> out = *this;
-	out._v[2] = -_v[0] * pt.getX() - _v[1] * pt.getY();
+	out._v[2] = static_cast<HOMOG2D_INUMTYPE>(-_v[0]) * pt.getX() - _v[1] * pt.getY();
 	out.p_normalizeLine();
 	return out;
 }
@@ -2523,10 +2524,8 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type:
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
 template<typename LP, typename FPT>
 bool
-//Root<LP,FPT>::impl_isInsideRect( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1, const detail::RootHelper<type::IsPoint>& ) const
 Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
-//	auto pair_pts = detail::getCorrectPoints( p0, p1 );
 	auto pair_pts = rect.get2Pts();
 	const auto& p00 = pair_pts.first;
 	const auto& p11 = pair_pts.second;
@@ -2576,7 +2575,7 @@ template<typename T>
 typename Root<LP,FPT>::Intersect
 Root<LP,FPT>::impl_intersectsCircle(
 	const Point2d_<FPT>& pt,       ///< circle origin
-	T                              r,        ///< radius
+	T                    r,        ///< radius
 	const detail::RootHelper<type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
@@ -2842,25 +2841,6 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 }
 
 //------------------------------------------------------------------
-// deprecated
-#if 0
-/// Free function, returns the set of four points defining a flat rectangle
-template<typename FPT>
-std::vector<Point2d_<FPT>>
-getRectPts( Point2d_<FPT> ptA, Point2d_<FPT>& ptB )
-{
-	auto pair_pts = detail::getCorrectPoints( ptA, ptB );
-	const auto& pt1 = pair_pts.first;
-	const auto& pt2 = pair_pts.second;
-	std::vector<Point2d_<FPT>> v(4);
-	v[0] = pt1;
-	v[1] = Point2d_<FPT>( pt2.getX(), pt1.getY() );
-	v[2] = pt2;
-	v[3] = Point2d_<FPT>( pt1.getX(), pt2.getY() );
-	return v;
-}
-#endif
-
 template<typename FPT>
 std::array<Point2d_<FPT>,4>
 get4Pts( const FRect_<FPT>& rect )
@@ -2874,6 +2854,46 @@ get2Pts( const FRect_<FPT>& rect )
 	return rect.get2Pts();
 }
 
+//------------------------------------------------------------------
+/// Returns 2 parallel lines at distance \c dist from \c li
+/// \todo Write this !
+template<typename FPT,typename T>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+getParallelLines( const Line2d_<FPT>& li, T dist )
+{
+assert(0);
+}
+
+/// Returns the distance between 2 parallel lines
+/**
+- ref: https://en.wikipedia.org/wiki/Distance_between_two_parallel_lines
+
+We first check that the two lines are indeed parallel.
+This should ensure that a1=a2 and b1=b2.
+But due to numeric issues they could by slightly different. In order to gain accuracy,
+we use the geometric mean of these.
+*/
+template<typename FPT>
+HOMOG2D_INUMTYPE
+getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( !li1.isParallelTo(li2) )
+		HOMOG2D_THROW_ERROR_1( "lines are not parallel" );
+#endif
+	const auto ar1 = li1.get();
+	const auto ar2 = li2.get();
+	const HOMOG2D_INUMTYPE a1 = ar1[0];
+	const HOMOG2D_INUMTYPE b1 = ar1[1];
+	const HOMOG2D_INUMTYPE c1 = ar1[2];
+	const HOMOG2D_INUMTYPE a2 = ar2[0];
+	const HOMOG2D_INUMTYPE b2 = ar2[1];
+	const HOMOG2D_INUMTYPE c2 = ar2[2];
+
+	HOMOG2D_INUMTYPE a = std::sqrt( a1*a2 );
+	HOMOG2D_INUMTYPE b = std::sqrt( b1*b2 );
+	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
+}
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
