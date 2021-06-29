@@ -245,6 +245,7 @@ class Hmatrix_
 		p_zero();
 		_data[2][1] = 1.;
 		_data[1][2] = 1.;
+		_isNormalized = true;
 	}
 
 /// Implementation for homographies: initialize to unit transformation
@@ -464,7 +465,7 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& operator / (T v)
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T );
-		if( std::abs(v) <= std::numeric_limits<FPT>::epsilon() )
+		if( std::abs(v) <= Point2d_<FPT>::nullDenom() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
 #if 0
 		for( int i=0; i<3; i++ )
@@ -2267,7 +2268,7 @@ Root<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::RootH
 //------------------------------------------------------------------
 /// Comparison operator, used for lines
 /**
-Definition used: two lines will be equal:
+Definition: two lines will be equal:
 - if they are not parallel
 AND
 - if their offset (3 third value) is less than nullOffsetValue()
@@ -2276,14 +2277,12 @@ template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
 {
-//	std::cout << __FUNCTION__ << "(IsLine):\n -this=" << *this << "\n -other=" << other <<"\n";
 	if( !this->isParallelTo( other ) )
 		return false;
 
 	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
 		return false;
 
-//	std::cout << "=>TRUE\n";
 	return true;
 }
 
@@ -2843,7 +2842,9 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 }
 
 //------------------------------------------------------------------
-/// Free function, returns  the set of four points defining a flat rectangle
+// deprecated
+#if 0
+/// Free function, returns the set of four points defining a flat rectangle
 template<typename FPT>
 std::vector<Point2d_<FPT>>
 getRectPts( Point2d_<FPT> ptA, Point2d_<FPT>& ptB )
@@ -2858,6 +2859,22 @@ getRectPts( Point2d_<FPT> ptA, Point2d_<FPT>& ptB )
 	v[3] = Point2d_<FPT>( pt1.getX(), pt2.getY() );
 	return v;
 }
+#endif
+
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+get4Pts( const FRect_<FPT>& rect )
+{
+	return rect.get4Pts();
+}
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+get2Pts( const FRect_<FPT>& rect )
+{
+	return rect.get2Pts();
+}
+
+
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
 /// Return Opencv 2D point
@@ -2868,7 +2885,6 @@ Root<LP,FPT>::impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPEN
 {
 	return OPENCVT( getX(),getY() );
 }
-
 
 //------------------------------------------------------------------
 /// Copy matrix to Opencv \c cv::Mat
@@ -3086,28 +3102,20 @@ using Line2dF  = Line2d_<float>;
 using Point2dF = Root<type::IsPoint,float>;
 using HomogrF  = Hmatrix_<type::IsHomogr,float>;
 using SegmentF = Segment_<float>;
-using HomogrF  = Hmatrix_<type::IsHomogr,float>;
+
 
 // double types
 using Line2dD  = Line2d_<double>;
 using Point2dD = Root<type::IsPoint,double>;
 using HomogrD  = Hmatrix_<type::IsHomogr,double>;
 using SegmentD = Segment_<double>;
-using HomogrD  = Hmatrix_<type::IsHomogr,double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
 using Point2dL = Root<type::IsPoint,long double>;
 using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
 using SegmentL = Segment_<long double>;
-using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
 
-/*
-template<typename T>
-using Point2d_ = Root<type::IsPoint,T>;
-template<typename T>
-using Line2d_  = Root<type::IsLine,T>;
-*/
 template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
 template<typename T>

@@ -549,11 +549,9 @@ void action_5( void* param )
 	{
 		auto pti = inters.get();
 		pti.draw( data.img );
-//		Line2d l1 = data.seg1.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
 		Line2d l1 = data.seg1.getLine().getOrthogonalLine( pti );
 		l1.draw( data.img, CvDrawParams().setColor( 0,0,100) );
 
-//		Line2d l2 = data.seg2.getLine().getOrthogonalLine( GivenCoord::X, pti.getX() );
 		Line2d l2 = data.seg2.getLine().getOrthogonalLine( pti );
 		l2.draw( data.img, CvDrawParams().setColor( 100,0,0) );
 	}
@@ -656,11 +654,11 @@ struct Param_H: public Data
 	{
 		auto pa1 = Point2d(100,100);
 		auto pa2 = Point2d(400,300);
-		auto v1 = getRectPts( pa1, pa2 );
+		auto v1 = get4Pts( FRect(pa1, pa2) );
 
 		auto pb1 = Point2d(80,150);
 		auto pb2 = Point2d(450,350);
-		auto v2 = getRectPts( pb1, pb2 );
+		auto v2 = get4Pts( FRect(pb1, pb2) );
 		std::copy( v1.begin(), v1.end(), vpt.begin() );
 		std::copy( v2.begin(), v2.end(), vpt.begin()+4 );
 	}
