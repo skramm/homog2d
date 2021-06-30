@@ -446,6 +446,7 @@ struct Param_C: public Data
 	explicit Param_C(std::string wname): Data(wname)
 	{
 		rect.set( Point2d( 180,120), Point2d( 380,280) );
+		vpt[1] = Point2d( 480,380 );
 	}
 
 	int radius = 50;
@@ -471,7 +472,7 @@ void action_C( void* param )
 	CvDrawParams dpc2;
 	dpc2.setColor(150,0,150);
 	if( c2.isInside( c1 ) )
-		dpc2.setColor(100,250,0);
+		dpc2.setColor(250,100,0);
 	c2.draw( data.img, dpc2 );
 
 	CvDrawParams dp;
@@ -481,11 +482,11 @@ void action_C( void* param )
 	data.rect.draw( data.img, dp );
 
 	CvDrawParams dpc1;
-	dpc1.setColor(150,0,150);
+	dpc1.setColor(0,250,0);
 	if( c1.isInside( data.rect ) )
 		dpc1.setColor(250,100,0);
 	if( c1.isInside( c2 ) )
-		dpc1.setColor(100,250,0);
+		dpc1.setColor(250,100,0);
 	c1.draw( data.img, dpc1 );
 
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
