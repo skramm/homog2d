@@ -913,6 +913,41 @@ TEST_CASE( "Segment", "[seg1]" )
 		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
 	}
 }
+TEST_CASE( "FRect", "[frect]" )
+{
+	{
+		FRect_<NUMTYPE> r1;
+		CHECK( r1.width() == 1. );
+		CHECK( r1.height() == 1. );
+		auto p_pts = r1.get2Pts();
+		CHECK( p_pts.first  == Point2d() );
+		CHECK( p_pts.second == Point2d(1.,1.) );
+
+		auto pts = r1.get4Pts();
+		CHECK( pts[0] == Point2d(0,0) );
+		CHECK( pts[1] == Point2d(0,1) );
+		CHECK( pts[2] == Point2d(1,1) );
+		CHECK( pts[3] == Point2d(1,0) );
+	}
+	CHECK_THROWS( FRect_<NUMTYPE>( Point2d(4,5), Point2d(4,2) ) );
+	{
+		FRect_<NUMTYPE> r2a( Point2d(6,5), Point2d(1,2) );
+		FRect_<NUMTYPE> r2b( Point2d(6,2), Point2d(1,5) );
+		CHECK( r2a == r2b );
+
+		CHECK( r2a.width() == 5. );
+		CHECK( r2a.height() == 3. );
+		auto p_pts = r2b.get2Pts();
+		CHECK( p_pts.first  == Point2d(1,2) );
+		CHECK( p_pts.second == Point2d(6,5) );
+
+		auto pts = r2b.get4Pts();
+		CHECK( pts[0] == Point2d(1,2) );
+		CHECK( pts[1] == Point2d(1,5) );
+		CHECK( pts[2] == Point2d(6,5) );
+		CHECK( pts[3] == Point2d(6,2) );
+	}
+}
 
 
 #ifdef HOMOG2D_USE_OPENCV

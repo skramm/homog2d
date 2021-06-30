@@ -186,6 +186,17 @@ Point2d pt; // some point
 Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is parallel to li1
 ```
 
+If you need a parallel line to another at a given distance, then you can use 
+`getParallelLines()`, provided either as a free function or as a member function.
+They both return a pair (std::pair) of lines, one on one side, and the other on the other side of the input line:
+```C++
+Line2d li; // some line
+auto p_lines1 = li.getParallelLines( 100 );
+auto p_lines2 = getParallelLines( li, 50 );
+auto liA = p_lines1.first;
+auto liB = p_lines1.second;
+```
+
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
 auto angle1 = li2.getAngle( li1 );
@@ -247,8 +258,9 @@ FRect r1; // (0,0) (1,1)
 FRect r2( Point2d(0,0), Point2d(10,10) );
 r1.set( pt1, pt2 );
 ```
-When using the constuctor of the set() method, there is no constraint on the points themselves:
-the library will automatically adjust the points to store the two opposite ones.
+When using the constuctor or the set() method, there is no constraint on the points themselves:
+the library will automatically adjust the points to store the two opposite ones,
+with the one with smallest coordinates as "first".
 The only constraint is that no coordinate can be equal.
 The library will throw if not.
 
@@ -263,6 +275,13 @@ You can also fetch the 4 segments of the rectangle:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
+```
+
+And of course, its width and height:
+```C++
+FRect rect;
+auto w = rect.width();
+auto h = rect.height();
 ```
 
 ### 4.2 - Circles

@@ -448,7 +448,7 @@ struct Param_C: public Data
 		rect.set( Point2d( 180,120), Point2d( 380,280) );
 	}
 
-	int radius = 80;
+	int radius = 50;
 	std::array<Line2d,3> li;
 	FRect rect;
 
@@ -501,7 +501,7 @@ void action_C( void* param )
 		}
 	}
 	auto seg = getSegment( c1, c2 );
-	seg.draw( data.img );
+	seg.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );
 	pseg.first.draw(  data.img, CvDrawParams().setColor(250, 250, 0) );
 	pseg.second.draw( data.img, CvDrawParams().setColor(0, 250, 250) );

@@ -734,6 +734,7 @@ class FRect_
 	{
 		_ptR2.set( 1., 1. );
 	}
+/// Constructor from 2 points
 	FRect_( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
 		set( pa, pb );
@@ -744,6 +745,8 @@ class FRect_
 		_ptR1 = ppts.first;
 		_ptR2 = ppts.second;
 	}
+	FPT height() const { return  _ptR2.getY() - _ptR1.getY(); }
+	FPT width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 
 /// Returns the 2 major points of the rectangle
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
@@ -911,8 +914,7 @@ class Circle_
 #endif // HOMOG2D_USE_OPENCV
 };
 
-
-
+/// Holds private stuff
 namespace priv {
 
 /// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
@@ -1024,7 +1026,8 @@ class Root
 	public:
 
 /// Constructor: build a point from two lines
-		Root( const Line2d_<FPT>& v1, const Line2d_<FPT>& v2 )
+		template<typename FPT2>
+		Root( const Line2d_<FPT2>& v1, const Line2d_<FPT2>& v2 )
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( v1.isParallelTo(v2) )
@@ -1034,7 +1037,8 @@ class Root
 		}
 
 /// Constructor: build a line from two points
-		Root( const Point2d_<FPT>& v1, const Point2d_<FPT>& v2 )
+		template<typename FPT2>
+		Root( const Point2d_<FPT2>& v1, const Point2d_<FPT2>& v2 )
 		{
 #ifndef HOMOG2D_NOCHECKS
 			if( v1 == v2 )
@@ -1080,6 +1084,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		template<typename T>
 		Root( T v0, T v1, T v2 )
 		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
 			_v[0] = v0;
 			_v[1] = v1;
 			_v[2] = v2;
@@ -1208,7 +1213,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_getParallelLine( pt, detail::RootHelper<LP>() );
 		}
-
+		/// Returns the pair of parallel lines at a distance \c dist from line.
 		template<typename T>
 		std::pair<Line2d_<FPT>,Line2d_<FPT>>
 		getParallelLines( T dist )
@@ -1245,17 +1250,26 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			return impl_isParallelTo( li, detail::RootHelper<T>() );
 		}
 		template<typename T>
-		bool isParallelTo( const Segment_<T>& seg ) const;
-
-/// Returns angle in rad. between the lines
-/** Please check out warning described in impl_getAngle() */
+		bool isParallelTo( const Segment_<T>& seg ) const
+		{
+			return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
+		}
+/// Returns angle in rad. between the lines. \sa homog2d::getAngle()
+/**
+Please check out warning described in impl_getAngle()
+*/
 		template<typename T>
 		HOMOG2D_INUMTYPE getAngle( const Root<T,FPT>& other ) const
 		{
 			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
+
+/// Returns angle in rad. between line and segment \c seg. \sa  homog2d::getAngle()
 		template<typename T>
-		HOMOG2D_INUMTYPE getAngle( const Segment_<T>& seg ) const;
+		HOMOG2D_INUMTYPE getAngle( const Segment_<T>& seg ) const
+		{
+			return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
+		}
 
 	private:
 		FPT impl_getX( const detail::RootHelper<type::IsPoint>& ) const
@@ -2052,26 +2066,6 @@ class Polyline_
 };
 
 //------------------------------------------------------------------
-/// Implementation of line::isParallelTo( Segment )
-template<typename LP,typename FPT>
-template<typename T>
-bool
-Root<LP,FPT>::isParallelTo( const Segment_<T>& seg ) const
-{
-	return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
-}
-
-/// Returns angle in rad. between the line and the segment \c seg
-template<typename LP,typename FPT>
-template<typename T>
-HOMOG2D_INUMTYPE
-Root<LP,FPT>::getAngle( const Segment_<T>& seg ) const
-{
-	return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
-}
-
-
-//------------------------------------------------------------------
 namespace detail {
 
 /// Helper function
@@ -2550,7 +2544,7 @@ Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<t
 //------------------------------------------------------------------
 /// Returns the angle (in rad.) between the line and the other one.
 /**
-The returned value will be in the range <code> [0, M_PI/2] </code>
+- The returned value will be in the range <code> [0, M_PI/2] </code>
 
 If the lines \f$ (a_0,a_1,a_2) \f$ and \f$ (b_0,b_1,b_2) \f$ are correctly normalized (should be, but...)
 then the angle between them is \f$ \alpha = acos( a_0*b_0 + a_1*b_1) \f$. <br>
@@ -2939,7 +2933,7 @@ get2Pts( const FRect_<FPT>& rect )
 }
 
 //------------------------------------------------------------------
-/// Returns 2 parallel lines at distance \c dist from \c li
+/// Returns the 2 parallel lines at distance \c dist from \c li
 template<typename FPT,typename T>
 std::pair<Line2d_<FPT>,Line2d_<FPT>>
 getParallelLines( const Line2d_<FPT>& li, T dist )
@@ -3205,19 +3199,24 @@ using Line2dF  = Line2d_<float>;
 using Point2dF = Root<type::IsPoint,float>;
 using HomogrF  = Hmatrix_<type::IsHomogr,float>;
 using SegmentF = Segment_<float>;
-
+using CircleF  = Circle_<float>;
+using FRectF   = FRect_<float>;
 
 // double types
 using Line2dD  = Line2d_<double>;
 using Point2dD = Root<type::IsPoint,double>;
 using HomogrD  = Hmatrix_<type::IsHomogr,double>;
 using SegmentD = Segment_<double>;
+using CircleD  = Circle_<double>;
+using FRectD   = FRect_<double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
 using Point2dL = Root<type::IsPoint,long double>;
 using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
 using SegmentL = Segment_<long double>;
+using CircleL  = Circle_<long double>;
+using FRectL   = FRect_<long double>;
 
 template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
