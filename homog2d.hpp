@@ -983,6 +983,94 @@ enum class Dtype : char
 };
 
 //------------------------------------------------------------------
+namespace detail {
+
+struct Inters_1 {};
+struct Inters_2 {};
+
+/// Common stuff for intersection code
+//template<typename FPT>
+struct IntersectCommon
+{
+	template<typename U> friend class Segment_;
+
+	private:
+		bool _doesIntersect = false;
+	public:
+		bool operator()() const
+		{
+			return _doesIntersect;
+		}
+	private:
+//		Point2d_<FPT> _ptIntersect_1;
+
+};
+
+template<typename T,typename FPT>
+struct Intersect
+{
+//	template<typename U>
+//	friend class Segment_;
+
+/*	public:
+		bool operator()() const
+		{
+			return _doesIntersect;
+		}
+		Intersect()
+		{}
+		Point2d_<FPT>
+		get() const
+		{
+			return _ptIntersect;
+		}
+	private:
+		Point2d_<FPT> _ptIntersect;
+		bool _doesIntersect = false;
+*/
+};
+
+template<typename FPT>
+struct Intersect<Inters_1,FPT>: IntersectCommon
+{
+	template<typename U> friend class Segment_;
+	template<typename U,typename V> friend class Root;
+
+	public:
+		Point2d_<FPT>
+		get() const
+		{
+			return _ptIntersect;
+		}
+	private:
+		Point2d_<FPT> _ptIntersect;
+};
+
+template<typename FPT>
+struct Intersect<Inters_2,FPT>: IntersectCommon
+{
+	template<typename U> friend class Segment_;
+	template<typename U,typename V> friend class Root;
+	public:
+		Intersect() {}
+		Intersect( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
+			: _ptIntersect_1(p1), _ptIntersect_2(p2)
+		{
+				_doesIntersect = true;
+		}
+
+		std::pair<Point2d_<FPT>,Point2d_<FPT>>
+		get() const
+		{
+			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
+		}
+	private:
+		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
+};
+
+} // namespace detail
+
+//------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
 Parameters:
@@ -1334,6 +1422,7 @@ Please check out warning described in impl_getAngle()
 		void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
 
 	public:
+#if 0
 /// Sub-type, holds result of rectangle intersection, see intersectsRectangle().
 /// Only defined for Point2d
 /// \todo change name (as this will be used also for line-circle intersection)
@@ -1363,26 +1452,26 @@ Please check out warning described in impl_getAngle()
 			Point2d_<FPT> ptB;
 			bool _doesIntersect = false;
 	};
-
+#endif
 	public:
 		template<typename FPT2>
-		Intersect intersectsRectangle( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
+		detail::Intersect<detail::Inters_2,FPT> intersectsRectangle( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 		{
 			return intersectsRectangle( FRect_<FPT2>( pt1, pt2 ) ) ;
 		}
 		template<typename FPT2>
-		Intersect intersectsRectangle( const FRect_<FPT2>& rect ) const
+		detail::Intersect<detail::Inters_2,FPT> intersectsRectangle( const FRect_<FPT2>& rect ) const
 		{
 			return impl_intersectsRectangle( rect, detail::RootHelper<LP>() );
 		}
 
 		template<typename T>
-		Intersect intersectsCircle( const Point2d_<FPT>& pt0, T radius ) const
+		detail::Intersect<detail::Inters_2,FPT> intersectsCircle( const Point2d_<FPT>& pt0, T radius ) const
 		{
 			return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 		}
 		template<typename T>
-		Intersect intersectsCircle( const Circle_<T>& cir ) const
+		detail::Intersect<detail::Inters_2,FPT> intersectsCircle( const Circle_<T>& cir ) const
 		{
 			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 		}
@@ -1469,17 +1558,23 @@ Please check out warning described in impl_getAngle()
 		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
 
 		template<typename FPT2>
-		Root<LP,FPT>::Intersect
+//		Root<LP,FPT>::Intersect
+		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
+
 		template<typename FPT2>
-		Root<LP,FPT>::Intersect
+//		Root<LP,FPT>::Intersect
+		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
 
 		template<typename T>
-		Root<LP,FPT>::Intersect
+//		Root<LP,FPT>::Intersect
+		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsLine>& ) const;
+
 		template<typename T>
-		Root<LP,FPT>::Intersect
+//		Root<LP,FPT>::Intersect
+		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1795,6 +1890,7 @@ class Segment_
 		Point2d_<FPT> _ptS1, _ptS2;
 
 	public:
+#if 0
 /// sub type, holds intersection between two segments
 	struct SIntersect
 	{
@@ -1821,7 +1917,7 @@ class Segment_
 			Point2d_<FPT> _ptIntersect;
 			bool _doesIntersect = false;
 	};
-
+#endif
 	public:
 /// Default constructor: initializes segment to (0,0)--(1,1)
 		Segment_(): _ptS2(1.,1.)
@@ -1894,7 +1990,8 @@ the one with smallest y-coordinate will be returned first */
 		{
 			return _ptS1 * _ptS2;
 		}
-		SIntersect intersects( const Segment_<FPT>& ) const;
+
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT>& ) const;
 
 		template<typename T>
 		bool isParallelTo( const T& other ) const
@@ -2087,14 +2184,18 @@ Algorithm:<br>
 We check if the intersection point lies in between the range of both segments, both on x and on y
 */
 template<typename FPT>
-typename Segment_<FPT>::SIntersect
+//typename Segment_<FPT>::SIntersect
+detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 {
-	typename Segment_<FPT>::SIntersect out;
+//	typename Segment_<FPT>::SIntersect out;
+	detail::Intersect<detail::Inters_1,FPT> out;
 	auto l1 = getLine();
 	auto l2 = s2.getLine();
-	if( l1.isParallelTo( l2 ) )
+
+	if( l1.isParallelTo( l2 ) ) // if parallel, no intersection
 		return out;
+
 	out._ptIntersect = l1 * l2;   // intersection point
 
 	const auto& pi   = out._ptIntersect;
@@ -2640,7 +2741,8 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::RootHe
 /// Intersection of line and circle: implementation for points
 template<typename LP, typename FPT>
 template<typename T>
-typename Root<LP,FPT>::Intersect
+//typename Root<LP,FPT>::Intersect
+detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
@@ -2650,14 +2752,16 @@ Root<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::Root
 /// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
 template<typename LP, typename FPT>
 template<typename T>
-typename Root<LP,FPT>::Intersect
+//typename Root<LP,FPT>::Intersect
+detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsCircle(
 	const Point2d_<FPT>& pt,       ///< circle origin
 	T                    r,        ///< radius
 	const detail::RootHelper<type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
-	Intersect out;
+//	Intersect out;
+	detail::Intersect<detail::Inters_2,FPT> out;
 	HOMOG2D_CHECK_IS_NUMBER(T);
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(_v[0]); // just to lighten a bit...
 	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(_v[1]);
@@ -2687,18 +2791,19 @@ Root<LP,FPT>::impl_intersectsCircle(
 	auto y2 = yb + m*a;
 
 // last step: translate back
-	out.ptA.set( x1 + pt.getX(), y1 + pt.getY() );
-	out.ptB.set( x2 + pt.getX(), y2 + pt.getY() );
+	out._ptIntersect_1.set( x1 + pt.getX(), y1 + pt.getY() );
+	out._ptIntersect_2.set( x2 + pt.getX(), y2 + pt.getY() );
 	out._doesIntersect = true;
 
-	priv::fix_order( out.ptA, out.ptB );
+	priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
 	return out;
 }
 //------------------------------------------------------------------
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
 template<typename FPT2>
-typename Root<LP,FPT>::Intersect
+//typename Root<LP,FPT>::Intersect
+detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
@@ -2707,7 +2812,8 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 /// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
 template<typename LP, typename FPT>
 template<typename FPT2>
-typename Root<LP,FPT>::Intersect
+//typename Root<LP,FPT>::Intersect
+detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
 	auto arr = rect.get4Pts();
@@ -2726,7 +2832,8 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 	for( int i=0; i<4; i++ )         // compare with each of the 4 lines
 	{
 		if( *this == l[i] )          // if same line, then we are done: return the two points
-			return typename Line2d_<FPT>::Intersect( p00, p11 );
+//			return typename Line2d_<FPT>::Intersect( p00, p11 );
+			return detail::Intersect<detail::Inters_2,FPT>( p00, p11 );
 		else
 		{
 			Point2d_<FPT> pt;
@@ -2746,7 +2853,8 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 		}
 	}
 
-	typename Root<LP,FPT>::Intersect out;
+//	typename Root<LP,FPT>::Intersect out;
+	detail::Intersect<detail::Inters_2,FPT> out;
 	if( vec.size() > 1 )                                // if more than one point was found, then
 	{
 		std::vector<Point2d_<FPT>> vec2( 1, vec[0] );   // build a second vector, holding the first found point as first element
@@ -2762,10 +2870,10 @@ Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::
 		if( vec2.size() > 1 )
 		{
 			out._doesIntersect = true;
-			out.ptA = vec2[0];
-			out.ptB = vec2[1];
+			out._ptIntersect_1 = vec2[0];
+			out._ptIntersect_2 = vec2[1];
 		}
-		priv::fix_order( out.ptA, out.ptB );
+		priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
 	}
 	return out;
 }
@@ -3140,18 +3248,18 @@ Steps:
 */
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& /* dummy */ ) const
+Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& ) const
 {
 	assert( mat.rows > 2 );
 	assert( mat.cols > 2 );
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( mat.cols-1, mat.rows-1 );
-    Intersect ri = this->intersectsRectangle( pt1,  pt2 );
+    detail::Intersect<detail::Inters_2,FPT> ri = this->intersectsRectangle( pt1,  pt2 );
     if( ri() )
     {
-		cv::Point2d ptcv1 = ri.ptA.getCvPtd();
-		cv::Point2d ptcv2 = ri.ptB.getCvPtd();
+		cv::Point2d ptcv1 = ri._ptIntersect_1.getCvPtd();
+		cv::Point2d ptcv2 = ri._ptIntersect_2.getCvPtd();
 		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 		return true;
 	}
@@ -3223,11 +3331,11 @@ using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
 template<typename T>
 using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
 
-template<typename T>
-using Intersect_ = typename Root<type::IsLine,T>::Intersect;
+//template<typename T>
+//using Intersect_ = typename Root<type::IsLine,T>::Intersect;
 
-using Intersect = Intersect_<double>;
-
+//using Intersect = Intersect_<double>;
+using Intersect = detail::Intersect<detail::Inters_1,double>;
 } // namespace homog2d end
 
 
