@@ -989,12 +989,12 @@ struct Inters_1 {};
 struct Inters_2 {};
 
 /// Common stuff for intersection code
-//template<typename FPT>
 struct IntersectCommon
 {
-	template<typename U> friend class Segment_;
+	template<typename U> friend class ::homog2d::Segment_;
+	template<typename U,typename V> friend class ::homog2d::Root;
 
-	private:
+	protected:
 		bool _doesIntersect = false;
 	public:
 		bool operator()() const
@@ -1007,34 +1007,14 @@ struct IntersectCommon
 };
 
 template<typename T,typename FPT>
-struct Intersect
-{
-//	template<typename U>
-//	friend class Segment_;
+struct Intersect {};
 
-/*	public:
-		bool operator()() const
-		{
-			return _doesIntersect;
-		}
-		Intersect()
-		{}
-		Point2d_<FPT>
-		get() const
-		{
-			return _ptIntersect;
-		}
-	private:
-		Point2d_<FPT> _ptIntersect;
-		bool _doesIntersect = false;
-*/
-};
-
+/// One point intersection
 template<typename FPT>
 struct Intersect<Inters_1,FPT>: IntersectCommon
 {
-	template<typename U> friend class Segment_;
-	template<typename U,typename V> friend class Root;
+	template<typename U> friend class ::homog2d::Segment_;
+	template<typename U,typename V> friend class ::homog2d::Root;
 
 	public:
 		Point2d_<FPT>
@@ -1046,11 +1026,12 @@ struct Intersect<Inters_1,FPT>: IntersectCommon
 		Point2d_<FPT> _ptIntersect;
 };
 
+/// Two points intersection
 template<typename FPT>
 struct Intersect<Inters_2,FPT>: IntersectCommon
 {
-	template<typename U> friend class Segment_;
-	template<typename U,typename V> friend class Root;
+	template<typename U> friend class ::homog2d::Segment_;
+	template<typename U,typename V> friend class ::homog2d::Root;
 	public:
 		Intersect() {}
 		Intersect( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
@@ -3255,11 +3236,12 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( mat.cols-1, mat.rows-1 );
-    detail::Intersect<detail::Inters_2,FPT> ri = this->intersectsRectangle( pt1,  pt2 );
+    auto ri = this->intersectsRectangle( pt1,  pt2 );
     if( ri() )
     {
-		cv::Point2d ptcv1 = ri._ptIntersect_1.getCvPtd();
-		cv::Point2d ptcv2 = ri._ptIntersect_2.getCvPtd();
+    	auto ppts = ri.get();
+		cv::Point2d ptcv1 = ppts.first.getCvPtd();
+		cv::Point2d ptcv2 = ppts.second.getCvPtd();
 		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 		return true;
 	}
