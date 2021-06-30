@@ -1,9 +1,13 @@
 # Homog2d: history
 
+
 See [Release page](https://github.com/skramm/homog2d/releases).
 
+Planned:
+ - add conic homography (circle=>ellipse)
+
 - current master branch:
- - Major release, some API change
+ - Major release, some API changes
  - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
  - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
  - added operator * to apply homography to all elements of a container holding points or lines
