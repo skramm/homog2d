@@ -297,17 +297,24 @@ void action_1( void* param )
 	l.draw( data.img, CvDrawParams().setColor(250,250,0) );
 
 	Line2d l_mouse  = data.pt_mouse * Point2d();
-	auto p_lines = l_mouse.getParallelLines( 20 );
+	auto p_lines = l_mouse.getParallelLines( 30 );
 
 	auto ppts = l_mouse.getPoints( Point2d(), 200 );
 //	std::cout << "mouse=" <<  data.pt_mouse << ", ppts=" << ppts.first << "-" << ppts.second << "\n";
-	Line2d l_mouse2 = l_mouse.getOrthogonalLine( ppts.second );
+	Line2d l_mouse_o = l_mouse.getOrthogonalLine( ppts.second );
 	l_mouse.draw( data.img );
-	l_mouse2.draw( data.img );
+	l_mouse_o.draw( data.img );
+
+	auto p_lines_o = l_mouse_o.getParallelLines( 10 );
+
 
 	CvDrawParams dp;
 	dp.setColor(100,250,100);
-	p_lines.first.draw( data.img, dp );
+	p_lines.first.draw(  data.img, dp );
+	p_lines.second.draw( data.img, dp );
+
+	p_lines_o.first.draw(  data.img, dp );
+	p_lines_o.second.draw( data.img, dp );
 }
 
 void demo_1( int nd )

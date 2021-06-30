@@ -2289,7 +2289,6 @@ Root<LP,FPT>::impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>&
 }
 
 /// Implementation for lines
-/// \todo finish this !
 template<typename LP,typename FPT>
 template<typename T>
 std::pair<Line2d_<FPT>,Line2d_<FPT>>
@@ -2297,7 +2296,8 @@ Root<LP,FPT>::impl_getParallelLines( T dist, const detail::RootHelper<type::IsLi
 {
 	Line2d_<FPT> l1 = *this;
 	Line2d_<FPT> l2 = *this;
-//	l1._v[2] = ?
+	l1._v[2] = static_cast<HOMOG2D_INUMTYPE>(this->_v[2]) + dist;
+	l2._v[2] = static_cast<HOMOG2D_INUMTYPE>(this->_v[2]) - dist;
 	return std::make_pair( l1, l2 );
 }
 
