@@ -85,6 +85,11 @@ namespace detail {
 	template<typename>
 	struct RootHelper {};
 
+	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
+	template<typename>
+	struct RootDataType {};
+
+
 #if 0
 	/// Helper class for Matrix type
 	template<typename T1>
@@ -963,6 +968,17 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 } // namespace priv
 
+/// Type of Root object, see Root::type()
+enum class Type : char
+{
+	Line2d,Point2d
+};
+
+/// Type of underlying floating point, see Root::dtype()
+enum class Dtype : char
+{
+	Float,Double,LongDouble
+};
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -1108,6 +1124,39 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		void impl_init_1_Line( const Line2d_<T>& li, const detail::RootHelper<type::IsLine>& )
 		{
 			p_copyFrom( li );
+		}
+
+	public:
+		Type type() const
+		{
+			return impl_type( detail::RootHelper<LP>() );
+		}
+		Dtype dtype() const
+		{
+			return impl_dtype( detail::RootDataType<FPT>() );
+		}
+
+	private:
+		Type impl_type( const detail::RootHelper<type::IsPoint>& ) const
+		{
+			return Type::Point2d;
+		}
+		Type impl_type( const detail::RootHelper<type::IsLine>& ) const
+		{
+			return Type::Line2d;
+		}
+
+		Dtype impl_dtype( const detail::RootDataType<float>& ) const
+		{
+			return Dtype::Float;
+		}
+		Dtype impl_dtype( const detail::RootDataType<double>& ) const
+		{
+			return Dtype::Double;
+		}
+		Dtype impl_dtype( const detail::RootDataType<long double>& ) const
+		{
+			return Dtype::LongDouble;
 		}
 
 	public:

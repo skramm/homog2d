@@ -100,6 +100,9 @@ TEST_CASE( "types testing", "[testtypes]" )
 		Point2dD ptD(4,4);
 		Point2dF ptF(5,5);
 		Point2dL ptL(6,6);
+		CHECK( ptF.dtype() == Dtype::Float );
+		CHECK( ptD.dtype() == Dtype::Double );
+		CHECK( ptL.dtype() == Dtype::LongDouble );
 
 		ptL = ptD0;
 		CHECK( ptL.getX() == 1. );
@@ -398,9 +401,17 @@ TEST_CASE( "exceptions", "[testE]" )
 TEST_CASE( "test Epipmat", "[testM]" )
 {
 	Epipmat m;
-	Point2d_<NUMTYPE> p1;
-	Line2d_<NUMTYPE> l1 = m*p1;
-	Point2d_<NUMTYPE> p2 = m*l1;
+	Point2d_<NUMTYPE> p1(0,10);
+
+	auto l1 = m*p1;                  // applying an epipolar transformation to a point will return a line
+	CHECK( l1.type() == Type::Line2d );
+
+	Line2d_<NUMTYPE> lH( Point2d_<NUMTYPE>(-10,10), Point2d_<NUMTYPE>(10,10) ); // horizontal line at y=10
+	CHECK( getAngle( l1, lH)  == 0. );
+
+	auto p2 = m*l1;                  // applying an epipolar transformation to a line will return a point
+	CHECK( p2.type() == Type::Point2d );
+	CHECK( p2.getY() == 10. );
 }
 
 TEST_CASE( "Homogr constructors", "[testHC]" )
@@ -409,8 +420,6 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 		auto angle = 0.5;
 		Homogr H0,H1( angle ); // set rotation with constructor
 		H0.setRotation( angle );
-//		std::cout << "H0:\n" << H0;
-//		std::cout << "H1:\n" << H1;
 		Line2d_<NUMTYPE> li1;
 		Line2d_<NUMTYPE> li2 = H0 * li1;
 		auto angle2 = getAngle( li1, li2 );
@@ -460,11 +469,11 @@ TEST_CASE( "test Homogr", "[testH]" )
 		Homogr_<NUMTYPE> H2c(m2c);
 	}
 	{
-		Homogr H;
+		Homogr_<NUMTYPE> H;
 		Point2d_<NUMTYPE> pt1(1,1);
 		H.setTranslation( 3., 2. );
 
-		Point2d_<NUMTYPE> pt2 = H * pt1;
+		auto pt2 = H * pt1;
 
 		CHECK( pt2.getX() == 4. );
 		CHECK( pt2.getY() == 3. );
