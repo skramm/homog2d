@@ -91,9 +91,9 @@ struct Data
 		for( int i=0; i<nbPts(); i++ )
 		{
 			if( selected == i )
-				vpt[i].draw( img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PointStyle)i).selectPoint() );
+				vpt[i].draw( img, CvDrawParams().setColor( 250, 0, 150).setPointStyle( (PtStyle)i).selectPoint() );
 			else
-				vpt[i].draw( img, CvDrawParams().setPointStyle((PointStyle)i) );
+				vpt[i].draw( img, CvDrawParams().setPointStyle((PtStyle)i) );
 		}
 		Line2d lA( vpt[0], vpt[2] );
 		Line2d lB( vpt[0], vpt[3] );
@@ -113,7 +113,7 @@ struct Data
 - If so, that point gets moved by the mouse, and the function \c actionM is called
 */
 void
-checkSelected( int event, int x, int y, std::function<void(void*)> action, /*std::function<void(void*)> action_M,*/ void* param )
+checkSelected( int event, int x, int y, std::function<void(void*)> action, void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
@@ -158,7 +158,7 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, /*std
 
 void action_1(  void* param );
 void action_C(  void* param );
-void action_5(  void* param );
+void action_SI(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
@@ -264,10 +264,10 @@ void mouse_CB_C( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_C, param );
 }
-/// Mouse callback for demo5
-void mouse_CB_5( int event, int x, int y, int /* flags */, void* param )
+/// Mouse callback for demo_SI
+void mouse_CB_SI( int event, int x, int y, int /* flags */, void* param )
 {
-	checkSelected( event, x, y, action_5, param );
+	checkSelected( event, x, y, action_SI, param );
 }
 
 /// Mouse callback for demo_6
@@ -446,6 +446,7 @@ struct Param_C: public Data
 	explicit Param_C(std::string wname): Data(wname)
 	{
 		rect.set( Point2d( 180,120), Point2d( 380,280) );
+		vpt[0] = Point2d( 70,70 );
 		vpt[1] = Point2d( 480,380 );
 	}
 
@@ -533,17 +534,17 @@ void demo_C( int n )
 }
 
 //------------------------------------------------------------------
-struct Param_5: Data
+struct Param_SI: Data
 {
-	explicit Param_5(std::string wname): Data(wname)
+	explicit Param_SI(std::string wname): Data(wname)
 	{}
 
 	Segment seg1,seg2;
 };
 
-void action_5( void* param )
+void action_SI( void* param )
 {
-	auto& data = *reinterpret_cast<Param_5*>(param);
+	auto& data = *reinterpret_cast<Param_SI*>(param);
 
 	data.clearImage();
 	data.seg1.set( data.vpt[0], data.vpt[1] );
@@ -575,15 +576,15 @@ void action_5( void* param )
 	auto inters2 = data.seg1.intersects( li2 );
 	if( inters2() )
 	{
-		 inters.get().draw( data.img, CvDrawParams().setPointStyle( PS_DIAM).setColor( 0,250,0));
+		 inters2.get().draw( data.img, CvDrawParams().setPointStyle(PtStyle::Diam).setColor( 250,0,0));
 	}
 	data.showImage();
 }
 
 
-void demo_5( int n )
+void demo_SI( int n )
 {
-	Param_5 data( "segment_intersection" );
+	Param_SI data( "segment_intersection" );
 	std::cout << "Demo " << n << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
 
@@ -592,8 +593,8 @@ void demo_5( int n )
 	data.vpt[2] = Point2d(150,50);
 	data.vpt[3] = Point2d(300,250);
 
-	action_5( &data );
-	data.setMouseCallback( mouse_CB_5 );
+	action_SI( &data );
+	data.setMouseCallback( mouse_CB_SI );
 
 	if( 27 == cv::waitKey(0) )
 		std::exit(0);
@@ -848,7 +849,7 @@ int main( int argc, const char** argv )
 		demo_B,
 //		demo_3,
 		demo_C,
-		demo_5,
+		demo_SI,
 		demo_6
 	};
 

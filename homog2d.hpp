@@ -618,12 +618,12 @@ See https://en.wikipedia.org/wiki/Determinant
 #ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
 /// Point drawing style
-enum PointStyle
+enum class PtStyle
 {
-	PS_PLUS,   ///< "+" symbol
-	PS_TIMES,  ///< "times" symbol
-	PS_STAR,   ///< "*" symbol
-	PS_DIAM    ///< diamond
+	Plus,   ///< "+" symbol
+	Times,  ///< "times" symbol
+	Star,   ///< "*" symbol
+	Diam    ///< diamond
 };
 
 //------------------------------------------------------------------
@@ -638,7 +638,7 @@ struct CvDrawParams
 		int        _lineThickness = 1;
 		int        _lineType      = cv::LINE_AA; // or cv::LINE_8
 		int        _ptDelta       = 8; // pixels, used for drawing points
-		PointStyle _ptStyle       = PS_PLUS;
+		PtStyle    _ptStyle       = PtStyle::Plus;
 		bool       _enhancePoint  = false;   // to draw selected points
 	};
 	Dp_values _dpValues;
@@ -663,9 +663,9 @@ struct CvDrawParams
 	{
 		p_getDefault() = Dp_values();
 	}
-	CvDrawParams& setPointStyle( PointStyle ps )
+	CvDrawParams& setPointStyle( PtStyle ps )
 	{
-		if( (int)ps > (int)PS_DIAM )
+		if( (int)ps > (int)PtStyle::Diam )
 			throw std::runtime_error( "Error: invalid value for point style");
 		_dpValues._ptStyle = ps;
 		return *this;
@@ -3082,13 +3082,13 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 void
-drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
+drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
 	switch( ps )
 	{
-		case PS_TIMES:
+		case PtStyle::Times:
 			vpt[0].x -= delta2;
 			vpt[0].y += delta2;
 			vpt[1].x += delta2;
@@ -3100,8 +3100,8 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 			vpt[3].y -= delta2;
 		break;
 
-		case PS_PLUS:
-		case PS_DIAM:
+		case PtStyle::Plus:
+		case PtStyle::Diam:
 			vpt[0].x -= delta;
 			vpt[1].x += delta;
 			vpt[2].y -= delta;
@@ -3128,7 +3128,7 @@ drawPt( cv::Mat& mat, PointStyle ps, std::vector<cv::Point2d> vpt, const CvDrawP
 /// Returns false if point not in image
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& /* dummy */ )  const
+Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& )  const
 {
 	if( getX()<0 || getX()>=mat.cols )
 		return false;
@@ -3138,21 +3138,21 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
 	switch( dp._dpValues._ptStyle )
 	{
-		case PS_PLUS:   // "+" symbol
-			detail::drawPt( mat, PS_PLUS,  vpt, dp );
+		case PtStyle::Plus:   // "+" symbol
+			detail::drawPt( mat, PtStyle::Plus,  vpt, dp );
 		break;
 
-		case PS_STAR:
-			detail::drawPt( mat, PS_PLUS,  vpt, dp );
-			detail::drawPt( mat, PS_TIMES, vpt, dp );
+		case PtStyle::Star:
+			detail::drawPt( mat, PtStyle::Plus,  vpt, dp );
+			detail::drawPt( mat, PtStyle::Times, vpt, dp );
 		break;
 
-		case PS_DIAM:
-			detail::drawPt( mat, PS_PLUS,  vpt, dp, true );
+		case PtStyle::Diam:
+			detail::drawPt( mat, PtStyle::Plus,  vpt, dp, true );
 		break;
 
-		case PS_TIMES:      // "times" symbol
-			detail::drawPt( mat, PS_TIMES, vpt, dp );
+		case PtStyle::Times:      // "times" symbol
+			detail::drawPt( mat, PtStyle::Times, vpt, dp );
 		break;
 
 		default: assert(0);
