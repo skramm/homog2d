@@ -129,22 +129,24 @@ namespace detail {
 } // namespace detail
 
 
-// forward declaration
+// forward declarations
 template<typename LP,typename FPT>
 class Root;
 
-// forward declaration
 template<typename LP,typename FPT>
 class Hmatrix_;
 
-// forward declaration
 template<typename FPT>
 class Segment_;
+
+template<typename FPT>
+class Polyline_;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
+
 
 
 namespace detail {
@@ -1039,6 +1041,24 @@ struct Intersect<Inters_2,FPT>: IntersectCommon
 		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
 };
 
+#if 0
+/// Multiple intersections
+template<typename FPT>
+struct IntersectM
+{
+	private:
+		std::vector<Point2d_<FPT>> _vecInters;
+	public:
+		bool operator()() const
+		{
+			return !_vecInters.empty();
+		}
+		void addPt( const Point2d_<FPT>& pt )
+		{
+			_vecInters.push_back(pt);
+		}
+};
+#endif
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -1421,6 +1441,12 @@ Please check out warning described in impl_getAngle()
 			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 		}
 
+		template<typename T>
+		std::vector<Point2d_<FPT>> intersects( const Polyline_<T>& pl ) const
+		{
+			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
+		}
+
 		bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
 		{
 			return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::RootHelper<LP>() );
@@ -1517,6 +1543,13 @@ Please check out warning described in impl_getAngle()
 		template<typename T>
 		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
+
+		template<typename T>
+		std::vector<Point2d_<FPT>>
+		impl_intersectsPolyline( const Polyline_<T>& pl, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename T>
+		std::vector<Point2d_<FPT>>
+		impl_intersectsPolyline( const Polyline_<T>& pl, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2021,7 +2054,25 @@ class Polyline_
 				return size() - 1;
 			return size() - 1 + (size_t)_isClosed;
 		}
+/// Returns the segments of the polyline
+		std::vector<Segment_<FPT>> getSegs() const
+		{
+			std::vector<Segment_<FPT>> out;
+			if( size() < 2 ) // nothing to draw
+				return out;
 
+			for( size_t i=0; i<size()-1; i++ )
+			{
+				const auto& pt1 = _plinevec[i];
+				const auto& pt2 = _plinevec[i+1];
+				out.push_back( Segment_<FPT>( pt1,pt2) );
+			}
+			if( _isClosed )
+				out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+			return out;
+		}
+
+/// Clear all
 		void clear() { _plinevec.clear(); }
 
 		template<typename FPT2>
@@ -2810,6 +2861,32 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 		priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
 	}
 	return out;
+}
+
+/// Intersection between line and polyline
+
+template<typename LP, typename FPT>
+template<typename FPT2>
+std::vector<Point2d_<FPT>>
+Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const
+{
+	std::vector<Point2d_<FPT>> out;
+	for( const auto& seg: pl.getSegs() )
+	{
+		auto ri = seg.intersects( *this );
+		if( ri() )
+			out.push_back( ri.get() );
+	}
+	return out;
+}
+
+/// Invalid instanciation
+template<typename LP, typename FPT>
+template<typename FPT2>
+std::vector<Point2d_<FPT>>
+Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(Polyline) on a point" );
 }
 
 //------------------------------------------------------------------

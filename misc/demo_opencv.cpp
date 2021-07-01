@@ -810,6 +810,11 @@ void action_PL( void* param )
 	data.clearImage();
 	data.polyline.setPoints( data.vpt );
 	data.polyline.draw( data.img );
+	Line2d li( Point2d( 10,60), Point2d( 400,270) );
+	li.draw( data.img );
+	auto intersPts = li.intersects(data.polyline);
+	for( const auto& pt: intersPts )
+		pt.draw( data.img );
 	data.showImage();
 }
 
