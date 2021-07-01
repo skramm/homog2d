@@ -1841,6 +1841,10 @@ class Segment_
 /// Setter
 		void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
 		{
+#ifndef HOMOG2D_NOCHECKS
+			if( p1 == p2 )
+				HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
+#endif
 			_ptS1 = p1;
 			_ptS2 = p2;
 			priv::fix_order( _ptS1, _ptS2 );
@@ -1898,6 +1902,7 @@ the one with smallest y-coordinate will be returned first */
 		}
 
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT>& ) const;
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT>&  ) const;
 
 		template<typename T>
 		bool isParallelTo( const T& other ) const
@@ -2113,6 +2118,33 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 			if( detail::isBetween( pi.getX(), ptB1.getX(), ptB2.getX() ) )
 				if( detail::isBetween( pi.getY(), ptB1.getY(), ptB2.getY() ) )
 					out._doesIntersect = true;
+	return out;
+}
+/// Computes intersection between line and segment
+/**
+Algorithm:<br>
+We check if the intersection point lies in between the range of the segment, both on x and on y
+*/
+template<typename FPT>
+detail::Intersect<detail::Inters_1,FPT>
+Segment_<FPT>::intersects( const Line2d_<FPT>& li1 ) const
+{
+	detail::Intersect<detail::Inters_1,FPT> out;
+	auto li2 = getLine();
+
+	if( li1.isParallelTo( li2 ) ) // if parallel, no intersection
+		return out;
+
+	out._ptIntersect = li1 * li2;   // intersection point
+
+	const auto& pi   = out._ptIntersect;
+	const auto& ptA1 = this->get().first;
+	const auto& ptA2 = this->get().second;
+
+	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
+		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
+			out._doesIntersect = true;
+
 	return out;
 }
 

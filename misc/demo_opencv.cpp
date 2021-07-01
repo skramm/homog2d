@@ -569,6 +569,14 @@ void action_5( void* param )
 		Line2d l2 = data.seg2.getLine().getOrthogonalLine( pti );
 		l2.draw( data.img, CvDrawParams().setColor( 100,0,0) );
 	}
+
+	Line2d li2( Point2d(350,120),Point2d(20,50));
+	li2.draw( data.img );
+	auto inters2 = data.seg1.intersects( li2 );
+	if( inters2() )
+	{
+		 inters.get().draw( data.img, CvDrawParams().setPointStyle( PS_DIAM).setColor( 0,250,0));
+	}
 	data.showImage();
 }
 
