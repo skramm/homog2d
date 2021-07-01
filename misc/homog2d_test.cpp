@@ -752,21 +752,21 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	Line2d_<NUMTYPE> lih(1,0); // horizontal line going through (0,0)
 	Point2d_<NUMTYPE> pt;
 	{
-		auto ri = lid.intersectsCircle( Point2d_<NUMTYPE>(), 0.5 );
+		auto ri = lid.intersects( Point2d_<NUMTYPE>(), 0.5 );
 		CHECK( ri() == true );
-		auto ri2 = lid.intersectsCircle( Point2d_<NUMTYPE>(10,5), 1. );
+		auto ri2 = lid.intersects( Point2d_<NUMTYPE>(10,5), 1. );
 		CHECK( ri2() == false );
-		auto ri3 = lid.intersectsCircle( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(), 0.5 ) );
+		auto ri3 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(), 0.5 ) );
 		CHECK( ri3() == true );
-		auto ri4 = lid.intersectsCircle( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
+		auto ri4 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
 		CHECK( ri4() == false );
 	}
-	auto rih = lih.intersectsCircle( pt, 1.0 );
+	auto rih = lih.intersects( pt, 1.0 );
 	CHECK( rih() == true );
 	CHECK( rih.get().first  == Point2d_<NUMTYPE>(-1,0) );
 	CHECK( rih.get().second == Point2d_<NUMTYPE>(+1,0) );
 
-	auto riv = liv.intersectsCircle( pt, 1.0 );
+	auto riv = liv.intersects( pt, 1.0 );
 	CHECK( riv() == true );
 	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
@@ -819,13 +819,13 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 
 		Point2d_<NUMTYPE> pt1, pt2; // 0,0
 
-		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // point identical => unable
+		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // point identical => unable
 
 		pt2.set(0,4);
-		CHECK_THROWS( li.intersectsRectangle( pt1, pt2 ) ); // still fails: x coordinate is identical => unable
+		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // still fails: x coordinate is identical => unable
 
 		pt2.set(1,1);
-		auto ri = li.intersectsRectangle( pt1, pt2 );
+		auto ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		auto sol = ri.get();
 		CHECK( sol.first  == pt1 );
@@ -833,7 +833,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 
 		pt1.set( 5,0 );
 		pt2.set( 6,1 );
-		ri = li.intersectsRectangle( pt1, pt2 );
+		ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == false );
 	}
 	INFO( "with H/V line" )
@@ -841,25 +841,25 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
 		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line through (0,0)
-		auto ri = li.intersectsRectangle( pt1, pt2 );
+		auto ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
 		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line through (1,0)
-		ri = li.intersectsRectangle( pt1, pt2 );
+		ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
 		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line through (0,0)
-		ri = li.intersectsRectangle( pt1, pt2 );
+		ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
 		li = Point2d_<NUMTYPE>(0,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line through (0,1)
-		ri = li.intersectsRectangle( pt1, pt2 );
+		ri = li.intersects( pt1, pt2 );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );

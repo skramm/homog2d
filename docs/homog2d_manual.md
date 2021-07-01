@@ -486,7 +486,7 @@ The member function `buildFrom4Points()` accepts as third argument an `int`, 0 m
 ### 6.1 - Intersection of lines with flat rectangles
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
-`intersectsRectangle()` member function.
+`intersects()` member function.
 It will return an object that holds the intersection points.
 
 Usage:
@@ -495,7 +495,7 @@ Usage:
 Line2d li( ..., ... ); // some line
 Point2d pt1(1,1);
 Point2d pt2(8,8);
-auto ri = li.intersectsRectangle( pt1, pt2 );
+auto ri = li.intersects( pt1, pt2 );
 if( ri() )  // means the line does intersect the rectangle defined by (1,1)-(8,1)-(8,8)-(1,8)
 {
 	Point2d intersect_pt1 = ri.get().first;
@@ -511,7 +511,7 @@ The only requirement is that no coordinate must be the same in the two points.
 
 For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
 ```C++
-auto ri = li.intersectsCircle( pt, rad );
+auto ri = li.intersects( pt, rad );
 if( ri() )   // means the line intersects the circle
 {
 	auto inter = ri.get(); // returns a std::pair
@@ -662,14 +662,14 @@ The other types can be selected by an additional suffix letter added after the t
 
 For example: `Point2dF`, `Line2dF` or `HomogrF` are float types.
 
-If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`, which are templated types:
+If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`:
 
 ```C++
 Point2d_<float> pt; // this is fine
 ```
 
 However, this only applies to **storage**.
-All the computation (distances, angles, ...) use (and return)
+All the computation (distances, angles, intersections, ...) uses (and returns)
 the type defined by symbol `HOMOG2D_INUMTYPE`, that defaults to `double`.
 
 If you need extra precision (and if your compiler supports it), you may
@@ -677,6 +677,8 @@ configure the library to use `long double` by adding this before the "include":
 ```C++
 #define HOMOG2D_INUMTYPE long double
 ```
+or add that as a compile flag:
+
 
 ### 8.2 - Numerical type conversion
 

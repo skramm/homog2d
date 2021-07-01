@@ -1394,23 +1394,30 @@ Please check out warning described in impl_getAngle()
 
 	public:
 		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT> intersectsRectangle( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
+		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 		{
-			return intersectsRectangle( FRect_<FPT2>( pt1, pt2 ) ) ;
+			return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
 		}
 		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT> intersectsRectangle( const FRect_<FPT2>& rect ) const
+		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
 		{
 			return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
 		}
 
-		template<typename T>
-		detail::Intersect<detail::Inters_2,FPT> intersectsCircle( const Point2d_<FPT>& pt0, T radius ) const
+// This Sfinae below is needed to avoid ambiguity with the other 2 args function (with 2 points defining a FRect, see above)
+		template<
+			typename T,
+			typename std::enable_if<
+				(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
+				,T
+			>::type* = nullptr
+		>
+		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT>& pt0, T radius ) const
 		{
 			return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 		}
 		template<typename T>
-		detail::Intersect<detail::Inters_2,FPT> intersectsCircle( const Circle_<T>& cir ) const
+		detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
 		{
 			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 		}
@@ -1972,8 +1979,8 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	auto li1 = li0.getOrthogonalLine( c1.center() );
 	auto li2 = li0.getOrthogonalLine( c2.center() );
 
-	const auto ri1 = li1.intersectsCircle( c1 );
-	const auto ri2 = li2.intersectsCircle( c2 );
+	const auto ri1 = li1.intersects( c1 );
+	const auto ri2 = li2.intersects( c2 );
 	assert( ri1() && ri2() );
 	const auto& ppts1 = ri1.get();
 	const auto& ppts2 = ri2.get();
@@ -3179,7 +3186,7 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( mat.cols-1, mat.rows-1 );
-    auto ri = this->intersectsRectangle( pt1,  pt2 );
+    auto ri = this->intersects( pt1,  pt2 );
     if( ri() )
     {
     	auto ppts = ri.get();

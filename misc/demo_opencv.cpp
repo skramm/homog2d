@@ -494,7 +494,7 @@ void action_C( void* param )
 
 	for( size_t i=0; i<data.li.size(); i++ )
 	{
-		auto ri = data.li[i].intersectsCircle( c1 );
+		auto ri = data.li[i].intersects( c1 );
 		if( ri() )
 		{
 			auto inter = ri.get();
