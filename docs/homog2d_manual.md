@@ -136,7 +136,7 @@ auto y = li.getCoord( GivenCoord::X, 0 );
 
 You can compute the two points that are lying on a line and at a given distance from a point.
 
-![fig](../docs/fig1.png)
+![fig1](../docs/fig1.png)
 
 The API provides two ways to get these.
 
@@ -261,6 +261,11 @@ r1.set( pt1, pt2 );
 When using the constuctor or the set() method, there is no constraint on the points themselves:
 the library will automatically adjust the points to store the two opposite ones,
 with the one with smallest coordinates as "first".
+
+This means you can give any of the 4 points below, only p0 and p1 will be stored:
+
+![fig2](../docs/fig2.png)
+
 The only constraint is that no coordinate can be equal.
 The library will throw if not.
 

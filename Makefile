@@ -18,6 +18,10 @@ ifeq ($(USE_EIGEN),Y)
 	CFLAGS += -DHOMOG2D_USE_EIGEN
 endif
 
+TEX_FIG_LOC=docs
+TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
+TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,$(TEX_FIG_LOC)/%.png, $(TEX_FIG_SRC))
+
 DOC_IMAGES_LOC:=docs/figures_src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
 DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
@@ -26,6 +30,9 @@ show:
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
 	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
 	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
+	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
+	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
+	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
 
 test: homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
@@ -82,13 +89,18 @@ $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
 $(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
+$(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
+	cd docs; pdflatex --shell-escape $(notdir $<)
+
 doc_fig: $(DOC_IMAGES_PNG)
 
-doc: html/index.html doc_fig
+doc_fig_tex: $(TEX_FIG_PNG)
+
+doc: html/index.html doc_fig doc_fig_tex
 	xdg-open html/index.html
 
 html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
-	doxygen misc/doxyfile
+	doxygen misc/doxyfile 1>doxygen.stdout 2>doxygen.stderr
 
 install:
 	cp homog2d.hpp /usr/local/include
