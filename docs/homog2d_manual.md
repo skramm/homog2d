@@ -186,7 +186,7 @@ Point2d pt; // some point
 Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is parallel to li1
 ```
 
-If you need a parallel line to another at a given distance, then you can use 
+If you need a parallel line to another at a given distance, then you can use
 `getParallelLines()`, provided either as a free function or as a member function.
 They both return a pair (std::pair) of lines, one on one side, and the other on the other side of the input line:
 ```C++
@@ -487,7 +487,7 @@ The member function `buildFrom4Points()` accepts as third argument an `int`, 0 m
 
 You can compute the intersection of a line with a flat rectangle defined by two points with the
 `intersectsRectangle()` member function.
-It will return a `Intersect` object that holds the intersection points.
+It will return an object that holds the intersection points.
 
 Usage:
 

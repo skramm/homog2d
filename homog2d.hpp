@@ -1401,7 +1401,7 @@ Please check out warning described in impl_getAngle()
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT> intersectsRectangle( const FRect_<FPT2>& rect ) const
 		{
-			return impl_intersectsRectangle( rect, detail::RootHelper<LP>() );
+			return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
 		}
 
 		template<typename T>
@@ -1498,11 +1498,11 @@ Please check out warning described in impl_getAngle()
 
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
+		impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
 
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
+		impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
 
 		template<typename T>
 		detail::Intersect<detail::Inters_2,FPT>
@@ -2675,7 +2675,7 @@ template<typename T>
 detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::RootHelper<type::IsPoint>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersectsCircle() with a point" );
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersects(Circle) with a point" );
 }
 
 /// Intersection of line and circle: implementation
@@ -2731,16 +2731,16 @@ Root<LP,FPT>::impl_intersectsCircle(
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
-Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersectsRectangle() on a point" );
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(FRect) on a point" );
 }
 
-/// Checks for intersection with flat rectangle defined by the two points p00 and p11: implementation
+/// Implementation of line intersection with flat rectangle \c rect
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
-Root<LP,FPT>::impl_intersectsRectangle( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
 	auto arr = rect.get4Pts();
 	const auto& p00 = arr[0];

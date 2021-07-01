@@ -581,7 +581,7 @@ void action_SI( void* param )
 	data.showImage();
 }
 
-
+/// Segment intersection demo
 void demo_SI( int n )
 {
 	Param_SI data( "segment_intersection" );
