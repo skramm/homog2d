@@ -100,10 +100,12 @@ struct Data
 		Line2d lC( vpt[1], vpt[2] );
 		Line2d lD( vpt[1], vpt[3] );
 
-		lA.draw( img, CvDrawParams().setColor(   0,  50, 150) );
-		lB.draw( img, CvDrawParams().setColor( 150,  50,   0) );
-		lC.draw( img, CvDrawParams().setColor(  50, 150,   0) );
-		lD.draw( img, CvDrawParams().setColor( 150,   0,  50) );
+		CvDrawParams dp;
+		dp.setColor(  250,  50, 100) ;
+		lA.draw( img, dp );
+		lB.draw( img, dp );
+		lC.draw( img, dp );
+		lD.draw( img, dp );
 	}
 };
 
@@ -176,7 +178,7 @@ struct KeyboardLoop
 		friend std::ostream& operator << ( std::ostream& f, const KbLoopAction& action )
 		{
 			if( !action._msg.empty() )
-				f << action._key << ": " << action._msg << '\n';
+				f << " -" << action._key << ": " << action._msg << '\n';
 			return f;
 		}
 	};
@@ -298,19 +300,10 @@ void action_1( void* param )
 	auto& data = *reinterpret_cast<Data*>(param);
 	data.drawLines();
 
-	Line2d l( data.vpt[0], data.vpt[2] );
-	Line2d la_V( l );
-	la_V.addOffset( LineOffset::vert, 60 );
-	la_V.draw( data.img, CvDrawParams().setColor(250,0,250) );
-
-	l.addOffset( LineOffset::horiz, 60 );
-	l.draw( data.img, CvDrawParams().setColor(250,250,0) );
-
 	Line2d l_mouse  = data.pt_mouse * Point2d();
 	auto p_lines = l_mouse.getParallelLines( 30 );
 
 	auto ppts = l_mouse.getPoints( Point2d(), 200 );
-//	std::cout << "mouse=" <<  data.pt_mouse << ", ppts=" << ppts.first << "-" << ppts.second << "\n";
 	Line2d l_mouse_o = l_mouse.getOrthogonalLine( ppts.second );
 	l_mouse.draw( data.img );
 	l_mouse_o.draw( data.img );

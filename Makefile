@@ -90,7 +90,7 @@ $(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
-	cd docs; pdflatex --shell-escape $(notdir $<)
+	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
 doc_fig: $(DOC_IMAGES_PNG)
 

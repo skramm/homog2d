@@ -15,6 +15,7 @@ Planned:
  - added `type()` and `dtype()` to root class (and associated enums), to be able to fetch underlyng type at runtime.
  - renamed `intersectsCircle()` and `intersectsRectangle()` to `intersects()`
  - changed enums for class enums
+ - deprecated `Root::addOffset()`
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - switch to MPLv2 licence

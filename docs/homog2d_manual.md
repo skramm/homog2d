@@ -81,12 +81,6 @@ auto v = line.get();
 std::cout << '[' << v[0] << ',' << v[1] << ',' << v[2] << '\n';
 ```
 
-- Add some offset to a line:
-```C++
-li1.addOffset( LineOffset::horiz, 5 ); // horizontal offset
-li1.addOffset( LineOffset::vert, 5 ); // vertical offset
-```
-
 - Compute distances from line to point or from point to point:
 ```C++
 Line2d li;        // some line
@@ -258,7 +252,7 @@ FRect r1; // (0,0) (1,1)
 FRect r2( Point2d(0,0), Point2d(10,10) );
 r1.set( pt1, pt2 );
 ```
-When using the constuctor or the set() method, there is no constraint on the points themselves:
+When using the constuctor or the `set()` member function, there is no constraint on the points themselves:
 the library will automatically adjust the points to store the two opposite ones,
 with the one with smallest coordinates as "first".
 
@@ -267,7 +261,7 @@ This means you can give any of the 4 points below, only p0 and p1 will be stored
 ![fig2](../docs/fig2.png)
 
 The only constraint is that no coordinate can be equal.
-The library will throw if not.
+The library will throw if it is not enforced.
 
 You can get the points with two different member functions:
 ```C++

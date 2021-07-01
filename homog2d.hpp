@@ -1279,7 +1279,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_getParallelLines( dist, detail::RootHelper<LP>() );
 		}
-
+#if 0
 		template<typename T>
 		void
 		addOffset( LineOffset dir, T v )
@@ -1287,7 +1287,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			HOMOG2D_CHECK_IS_NUMBER(T);
 			impl_addOffset( dir, v, detail::RootHelper<LP>() );
 		}
-
+#endif
 		FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
 		std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
@@ -1360,9 +1360,8 @@ Please check out warning described in impl_getAngle()
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
 
-		template<typename T>
-		void
-		impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& );
+//		template<typename T>
+//		void impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& );
 
 		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2550,7 +2549,7 @@ Root<LP,FPT>::impl_distToLine( const Line2d_<FPT>&, const detail::RootHelper<typ
 	return 0.;    // to avoid warning message on build
 }
 
-
+#if 0
 /// overload for lines, undefined for points
 template<typename LP, typename FPT>
 template<typename T>
@@ -2563,7 +2562,7 @@ Root<LP,FPT>::impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type
 		_v[2] = _v[2] - v*_v[0];
 	p_normalizeLine();
 }
-
+#endif
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>

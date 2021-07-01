@@ -1,3 +1,8 @@
 *.layout
-stderr*
-stdout*
+*stderr*
+*stdout*
+*.out
+*.aux
+*.log
+*.pdf
+
