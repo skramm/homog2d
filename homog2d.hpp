@@ -1613,6 +1613,10 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDenom = 1E-10;
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
+template<typename FPT>
+FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
+template<typename FPT>
+FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Free function to return an OpenCv point
