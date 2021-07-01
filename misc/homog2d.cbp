@@ -25,6 +25,8 @@
 		<Unit filename="../.travis.yml" />
 		<Unit filename="../Makefile" />
 		<Unit filename="../README.md" />
+		<Unit filename="../docs/fig1.tex" />
+		<Unit filename="../docs/fig2.tex" />
 		<Unit filename="../docs/figures_src/circles1.cpp" />
 		<Unit filename="../docs/homog2d_history.md" />
 		<Unit filename="../docs/homog2d_manual.md" />
@@ -34,6 +36,7 @@
 		<Unit filename="demo_check.cpp" />
 		<Unit filename="demo_opencv.cpp" />
 		<Unit filename="doxyfile" />
+		<Unit filename="doxyfile_opencv" />
 		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
@@ -47,6 +50,9 @@
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

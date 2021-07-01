@@ -136,7 +136,7 @@ auto y = li.getCoord( GivenCoord::X, 0 );
 
 You can compute the two points that are lying on a line and at a given distance from a point.
 
-![fig](../misc/fig1.png)
+![fig](../docs/fig1.png)
 
 The API provides two ways to get these.
 
@@ -772,8 +772,7 @@ by the datatype (point or line).
 To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type `RootHelper`,
 templated by the numerical type.
 In the definition of the function, this additional argument value is ignored,
-it is there just so that the compiler can select the correct overload
-(in a similar way of what happens with templates).
+it is there just so that the compiler can select the correct overload.
 
 The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then

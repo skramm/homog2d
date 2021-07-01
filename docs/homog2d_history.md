@@ -1,4 +1,4 @@
-# Homog2d: history
+# History
 
 
 See [Release page](https://github.com/skramm/homog2d/releases).

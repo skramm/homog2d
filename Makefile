@@ -1,7 +1,8 @@
-.PHONY: doc test install demo
+# Makefile for homog2d library
+# see https://github.com/skramm/homog2d
 
-#TOOL=$(CXX)
-TOOL=clang++
+.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild
+
 CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 ifeq "$(USE_OPENCV)" ""

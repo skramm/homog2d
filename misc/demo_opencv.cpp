@@ -173,6 +173,12 @@ struct KeyboardLoop
 		char                  _key;
 		std::function<void()> _action;
 		std::string           _msg;
+		friend std::ostream& operator << ( std::ostream& f, const KbLoopAction& action )
+		{
+			if( !action._msg.empty() )
+				f << action._key << ": " << action._msg << '\n';
+			return f;
+		}
 	};
 
 	private:
@@ -203,6 +209,10 @@ struct KeyboardLoop
 	}
 	void start( const Data& data )
 	{
+		std::cout << "available keys:\n";
+		for( const auto& elem: _actions )
+			std::cout << elem;
+
 		char key=0;
 		do
 		{

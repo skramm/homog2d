@@ -1,4 +1,4 @@
-## homog2d: Opencv binding usage
+# homog2d: Opencv binding usage
 
 __Please read this if you have Opencv installed on your system, but fail to build the Opencv binding demo.__
 
