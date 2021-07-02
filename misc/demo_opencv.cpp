@@ -209,11 +209,18 @@ struct KeyboardLoop
 	{
 		_common = action;
 	}
+	void showAvailableKeys() const
+	{
+		if( !_actions.empty() )
+		{
+			std::cout << "Available keys: " << _actions.size() << '\n';
+			for( const auto& elem: _actions )
+				std::cout << elem;
+		}
+	}
 	void start( const Data& data )
 	{
-		std::cout << "available keys:\n";
-		for( const auto& elem: _actions )
-			std::cout << elem;
+		showAvailableKeys();
 
 		char key=0;
 		do
@@ -229,30 +236,33 @@ struct KeyboardLoop
 				std::cout << "SPC: switch to next\n";
 				return;
 			}
-			auto it = std::find_if(
-				_actions.begin(),
-				_actions.end(),
-				[&]
-				( const KbLoopAction& elem )
-				{
-					return key == elem._key;
-				}
-			);
-
-			if( it != _actions.end() )
+			if( key == 'H' || key == 'h' )
+				showAvailableKeys();
+			else
 			{
-				std::cout << "Action";
-				if( !it->_msg.empty() )
-					std::cout << ": " << it->_msg;
-				std::cout << '\n';
+				auto it = std::find_if(
+					_actions.begin(),
+					_actions.end(),
+					[&]
+					( const KbLoopAction& elem )
+					{
+						return key == elem._key;
+					}
+				);
 
-				it->_action();
-				if( _common )
-					_common();
-				data.showImage();
+				if( it != _actions.end() )
+				{
+					std::cout << "Action";
+					if( !it->_msg.empty() )
+						std::cout << ": " << it->_msg;
+					std::cout << '\n';
+
+					it->_action();
+					if( _common )
+						_common();
+					data.showImage();
+				}
 			}
-//			else
-//				std::cout << "Unrecognized key\n";
 		}
 		while( key != 32 ); // SPC
 	}
@@ -381,8 +391,8 @@ void demo_B( int n )
 	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; } );
 	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
 	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
-	kbloop.addKeyAction( 'h', [&]{ tx += trans_delta;    }, "increment tx" );
-	kbloop.addKeyAction( 'g', [&]{ tx -= trans_delta;    }, "decrement tx" );
+	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
+	kbloop.addKeyAction( 'a', [&]{ tx -= trans_delta;    }, "decrement tx" );
 	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
 	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
 	kbloop.addKeyAction( 'p', [&]{ scale *= scale_delta; }, "increment scale" );
@@ -530,9 +540,9 @@ void demo_C( int n )
 	data.setMouseCallback( mouse_CB_C );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'l', [&] { data.radius += 10; } );
-	kbloop.addKeyAction( 'm', [&] { data.radius -= 10; } );
-	kbloop.addKeyAction( 'r', [&] { data.radius = 80;  } );
+	kbloop.addKeyAction( 'l', [&] { data.radius += 10; }, "increment radius" );
+	kbloop.addKeyAction( 'm', [&] { data.radius -= 10; }, "decrement radius" );
+	kbloop.addKeyAction( 'r', [&] { data.radius = 80;  }, "reset radius" );
 	kbloop.start( data );
 }
 
@@ -757,10 +767,9 @@ void action_H( void* param )
 	sb2.draw( data.img2, CvDrawParams().setColor( 0,100,100) );
 
 
-	FRect rect( Point2d(160,160), Point2d(300,200));
+	FRect rect( Point2d(200,160), Point2d(330,250));
 	rect.draw( data.img );
-//	auto rect2 = H * rect;
-	FRect rect2 = H * rect;
+	auto rect2 = H * rect;
 	rect2.draw( data.img2 );
 	data.showImage();
 }

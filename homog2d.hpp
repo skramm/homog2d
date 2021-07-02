@@ -2864,7 +2864,6 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 }
 
 /// Intersection between line and polyline
-
 template<typename LP, typename FPT>
 template<typename FPT2>
 std::vector<Point2d_<FPT>>

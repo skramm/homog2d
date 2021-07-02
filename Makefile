@@ -108,7 +108,7 @@ install:
 demo: demo_opencv
 	./demo_opencv
 
-# this target REQUIRES Opencv, no will attempt to build even when USE_OPENCV not given
+# this target REQUIRES Opencv
 demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
