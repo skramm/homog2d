@@ -1086,6 +1086,10 @@ class Root
 	friend Line2d_<T>
 	operator * ( const Point2d_<T>&, const Point2d_<T>& );
 
+	template<typename T,typename U>
+	friend Line2d_<T>
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+
 	template<typename T1,typename T2,typename T3>
 	friend Root<T1,T3>
 	detail::crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
@@ -2942,12 +2946,23 @@ operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 }
 
 /// Apply homography to a point or line. Free function, templated by point or line
-template<typename T,typename U,typename V>
-Root<T,V>
-operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
+template<typename T,typename U>
+Point2d_<T>
+operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
 {
-	Root<T,V> out;
+	Point2d_<T> out;
 	detail::product( out, h, in );
+	return out;
+}
+
+/// Apply homography to a point or line. Free function, templated by point or line
+template<typename T,typename U>
+Line2d_<T>
+operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
+{
+	Line2d_<T> out;
+	detail::product( out, h, in );
+	out.p_normalizeLine();
 	return out;
 }
 

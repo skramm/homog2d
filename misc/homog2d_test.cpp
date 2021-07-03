@@ -468,7 +468,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		m2c[2][2] = 1.;
 		Homogr_<NUMTYPE> H2c(m2c);
 	}
-	{
+	{ // test of operator * for points
 		Homogr_<NUMTYPE> H;
 		Point2d_<NUMTYPE> pt1(1,1);
 		H.setTranslation( 3., 2. );
@@ -484,7 +484,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( pt3.getX() == Approx( -1. ) );
 		CHECK( pt3.getY() == Approx(  1. ) );
 	}
-	{
+	{ // test of operator * for container holding points, using applyTo()
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
@@ -502,7 +502,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.applyTo( l_pt );
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
-	{
+	{ // test of operator * for container holding points
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
