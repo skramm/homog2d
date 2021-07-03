@@ -2,6 +2,9 @@
 
 Home page: https://github.com/skramm/homog2d
 
+This is the manual for the current master branch of `homog2d`.
+For stable releases, see home page.
+
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
 3. [Segments](#segments)
@@ -75,6 +78,13 @@ To get the euclidean coordinates of a point, two member functions are provided:
 auto x = pt.getX();
 auto y = pt.getY();
 ```
+Or use the equivalent free functions:
+```C++
+auto x = getX(pt);
+auto y = getY(pt);
+```
+
+
 To get the 3 components of a line as a homogeneous array, one may use:
 ```C++
 auto v = line.get();
@@ -182,7 +192,7 @@ Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is para
 
 If you need a parallel line to another at a given distance, then you can use
 `getParallelLines()`, provided either as a free function or as a member function.
-They both return a pair (std::pair) of lines, one on one side, and the other on the other side of the input line:
+They both return a pair (`std::pair`) of lines, one on one side, and the other on the other side of the input line:
 ```C++
 Line2d li; // some line
 auto p_lines1 = li.getParallelLines( 100 );
@@ -236,6 +246,7 @@ You can get the point lying in the middle of the segment with:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
+auto p_mid2 = getMiddlePoint(s1); // your choice
 ```
 
 ## 4 - Other geometric primitives
@@ -256,7 +267,7 @@ When using the constuctor or the `set()` member function, there is no constraint
 the library will automatically adjust the points to store the two opposite ones,
 with the one with smallest coordinates as "first".
 
-This means you can give any of the 4 points below, only p0 and p1 will be stored:
+This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored:
 
 ![fig2](../docs/fig2.png)
 
@@ -266,7 +277,7 @@ The library will throw if it is not enforced.
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );
-auto pair_pts = rect.get2Pts();  // returns the 2 points in a std::pair
+auto pair_pts = rect.get2Pts();  // returns the 2 points p0,p1 in a std::pair
 auto pts = rect.get4Pts(); // return a std::array of 4 points
 ```
 
@@ -274,6 +285,7 @@ You can also fetch the 4 segments of the rectangle:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
+auto segs2 = getSegs(rect); // your choice
 ```
 
 And of course, its width and height:

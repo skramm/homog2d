@@ -238,15 +238,15 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lH2(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> lH3 = lH2;
 
-		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
-		CHECK( li2 == lH2 );
+//		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
+//		CHECK( li2 == lH2 );
 		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
 		Line2d_<NUMTYPE> lV2;
-		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
-		CHECK( li3 == lV2 );
+//		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
+//		CHECK( li3 == lV2 );
 	}
 	{
 		Line2d_<NUMTYPE> li(4,2);
@@ -274,10 +274,10 @@ TEST_CASE( "test parallel", "[test_para]" )
 		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
 		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 
-		l2b.addOffset( LineOffset::horiz, 10. );
-		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
-		l2b.addOffset( LineOffset::vert, 10. );
-		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+//		l2b.addOffset( LineOffset::horiz, 10. );
+//		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+//		l2b.addOffset( LineOffset::vert, 10. );
+//		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 	}
 
 	INFO( "Checking parallel lines" )
@@ -349,7 +349,7 @@ TEST_CASE( "dist2points", "[test2]" )
 	Point2d_<NUMTYPE> p2( 4,4);
 	CHECK( p1.distTo( p2 ) == std::sqrt(2) );
 }
-
+#if 0
 TEST_CASE( "offset test", "[test3]" )
 {
 	Line2d_<NUMTYPE> lA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
@@ -385,14 +385,14 @@ TEST_CASE( "offset test", "[test3]" )
 		CHECK( liH == liH2 );
 	}
 }
-
+#endif
 TEST_CASE( "exceptions", "[testE]" )
 {
 	Line2d_<NUMTYPE> v1,v2; // 2 identical vertical lines
 
 	CHECK_THROWS( v1*v2 );
-	v2.addOffset( LineOffset::horiz, 1 );
-	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
+//	v2.addOffset( LineOffset::horiz, 1 );
+//	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
 
 	Point2d_<NUMTYPE> p1,p2;
 	CHECK_THROWS( p1*p2 ); // same points can't define a line

@@ -1726,9 +1726,9 @@ namespace detail {
 
 //------------------------------------------------------------------
 /// Private free function, returns true if point \c pt is inside the rectangle defined by (\c p00 , \c p11)
-template<typename FPT>
+template<typename FPT1,typename FPT2>
 bool
-ptIsInside( const Point2d_<FPT>& pt, const Point2d_<FPT>& p00, const Point2d_<FPT>& p11 )
+ptIsInside( const Point2d_<FPT1>& pt, const Point2d_<FPT2>& p00, const Point2d_<FPT2>& p11 )
 {
 	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
 		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
@@ -1998,6 +1998,20 @@ Line2d_<FPT1>
 getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 {
 	return Line2d_<FPT1>( c1.center(), c2.center() );
+}
+
+template<typename FPT>
+Point2d_<FPT>
+getMiddlePoint( const Segment_<FPT>& seg )
+{
+	return seg.getMiddlePoint();
+}
+
+template<typename FPT>
+std::array<Segment_<FPT>,4>
+getSegs( const FRect_<FPT>& seg )
+{
+	return seg.getSegs();
 }
 
 
