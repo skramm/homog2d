@@ -182,6 +182,17 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	return std::make_pair( p00, p11 );
 }
 
+template<typename FPT>
+using Matrix_ = std::array<std::array<FPT,3>,3> ;
+
+template<typename FPT1, typename FPT2>
+void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
+{
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			mat[i][j] /= value;
+}
+
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -212,19 +223,23 @@ class Hmatrix_
 	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
 	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
 
+	template<typename T,typename U>
+	friend Line2d_<T>
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+
 	public:
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
 	{
 		init();
 	}
-
+/// TODO: \todp change this to private
 	void init()
 	{
 		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
-/// Build homography and set it to a rotation matrix of angle \c val
+/// Constructor, set homography to a rotation matrix of angle \c val
 	template<typename T>
 	Hmatrix_( T val )
 	{
@@ -233,7 +248,7 @@ class Hmatrix_
 		setRotation( val );
 	}
 
-/// Build homography and set it to a translation matrix ( see Hmatrix_( T ) )
+/// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
 	template<typename T>
 	Hmatrix_( T tx, T ty )
 	{
@@ -264,7 +279,7 @@ class Hmatrix_
 
 	public:
 
-/// Constructor, used to fill with a vector of vectors matrix
+/// Constructor, used to fill with a vector of vector matrix
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
 - no checking is done on validity of matrix as an homography.
@@ -301,6 +316,29 @@ Thus some assert can get triggered elsewhere.
 
 #endif
 
+/// Assignment operator
+	Hmatrix_& operator = ( const Hmatrix_<M,FPT>& other )
+	{
+		_data         = other._data;
+		_hasChanged   = true;
+		_isNormalized = false;
+		_hmt          = nullptr;
+		return *this;
+	}
+
+/// Copy-constructor
+	Hmatrix_( const Hmatrix_<M,FPT>& other )
+		:_data          ( other._data )
+		, _hasChanged   ( other._hasChanged )
+		, _isNormalized ( other._isNormalized )
+		, _hmt          (  nullptr )
+	{
+/*		_data         = other._data;
+		_hasChanged   = other._hasChanged;
+		_isNormalized = other._isNormalized;
+		_hmt          = nullptr;*/
+	}
+
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -315,6 +353,7 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		_data[r][c] = v;
 		_isNormalized = false;
+		_hasChanged = true;
 	}
 /// Getter
 	FPT get( size_t r, size_t c ) const
@@ -332,7 +371,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
-//		normalize();
 		return *this;
 	}
 /// Sets the matrix as a translation \c tx,ty
@@ -344,6 +382,7 @@ Thus some assert can get triggered elsewhere.
 		_data[0][2] = tx;
 		_data[1][2] = ty;
 		_isNormalized = true;
+		_hasChanged = true;
 		return *this;
 	}
 /// Adds a rotation with an angle \c theta (radians) to the matrix
@@ -354,7 +393,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setRotation( theta );
 		*this = out * *this;
-//		normalize();
 		return *this;
 	}
 /// Sets the matrix as a rotation with an angle \c theta (radians)
@@ -367,6 +405,7 @@ Thus some assert can get triggered elsewhere.
 		_data[1][0] = std::sin(theta);
 		_data[0][1] = -_data[1][0];
 		_isNormalized = true;
+		_hasChanged = true;
 		return *this;
 	}
 /// Adds the same scale factor to the matrix
@@ -384,7 +423,8 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
-//		normalize();
+		normalize();
+		_hasChanged = true;
 		return *this;
 	}
 /// Sets the matrix as a scaling transformation (same on two axis)
@@ -403,6 +443,8 @@ Thus some assert can get triggered elsewhere.
 		_data[0][0] = kx;
 		_data[1][1] = ky;
 		_isNormalized = true;
+
+		_hasChanged = true;
 		return *this;
 	}
 
@@ -433,53 +475,65 @@ Thus some assert can get triggered elsewhere.
 			for( auto& li: _data )
 				for( auto& e: li )
 					e = -e;
+		_hasChanged = true;   /// \todo This is questionnable
 		_isNormalized = true;
 	}
 
 /// Transpose matrix
 	Hmatrix_& transpose()
 	{
-		Hmatrix_ out;
+		detail::Matrix_<FPT> out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
-				out._data[i][j] = _data[j][i];
-		*this = out;
+				out[i][j] = _data[j][i];
+		_data = out;
+		_hasChanged = true;
 		return *this;
 	}
 
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-		Hmatrix_ adjugate = p_adjugate();
+		auto adjugate = p_adjugate();
 		auto det = p_det();
 
 		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
-		*this = adjugate / det;
+//		*this = adjugate / det;
+		detail::divideAll(adjugate, det);
+		_data = adjugate;
 
 		normalize();
+		_hasChanged = true;
 		return *this;
 	}
 
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=0 );
 
+#if 0
 /// Divide all elements by scalar
+/**
+\todo this should be deprecated, as I can't see a usage
+*/
 	template<typename T>
-	Hmatrix_& operator / (T v)
+	Hmatrix_& operator / ( T value )
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T );
 		if( std::abs(v) <= Point2d_<FPT>::nullDenom() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
+		p_divideAll( value )
 #if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] /= v;
 		return *this;
 #else
+		_hasChanged = true;
 		return *this * (1.0L/v);
 #endif
 	}
+
 /// Multiply all elements by scalar
 /**
 Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
@@ -490,9 +544,10 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] *= v;
+		_hasChanged = true;
 		return *this;
 	}
-
+#endif
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
@@ -504,6 +559,8 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 					out._data[i][j] +=
 						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
 						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
+		out.normalize();
+		out._hasChanged = true;
 		return out;
 	}
 
@@ -541,6 +598,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( auto& li: _data )
 			for( auto& e: li )
 				e = 0.;
+		_hasChanged = true;
 	}
 	template<typename T>
 	void p_fillWith( const T& in )
@@ -549,6 +607,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 			for( auto j=0; j<3; j++ )
 				_data[i][j] = in[i][j];
 		normalize();
+		_hasChanged = true;
 	}
 	void p_divideBy( size_t r, size_t c ) const
 	{
@@ -556,7 +615,9 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( auto& li: _data )
 			for( auto& e: li )
 				e /= _data[r][c];
+		_hasChanged = true;
 	}
+
 /// Return determinant of matrix
 /**
 See https://en.wikipedia.org/wiki/Determinant
@@ -575,11 +636,11 @@ See https://en.wikipedia.org/wiki/Determinant
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	Hmatrix_ p_adjugate()
+	detail::Matrix_<FPT> p_adjugate()
 	{
-		Hmatrix_ out;
+		detail::Matrix_<FPT> out;
 
-		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
+/*		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 		out.set( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
 		out.set( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
 
@@ -590,6 +651,18 @@ See https://en.wikipedia.org/wiki/Determinant
 		out.set( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
 		out.set( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
 		out.set( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
+*/
+		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
+		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
+
+		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
+		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
+
+		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
+		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
 
 		return out;
 	}
@@ -598,8 +671,10 @@ See https://en.wikipedia.org/wiki/Determinant
 //      DATA SECTION    //
 //////////////////////////
 	private:
-	mutable std::array<std::array<FPT,3>,3> _data;
+	mutable detail::Matrix_<FPT> _data;
+	mutable bool _hasChanged   = true;
 	mutable bool _isNormalized = false;
+	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
@@ -1146,7 +1221,7 @@ to convert a line (or point) from double to float, but I don't get why...
 /// Constructor with single arg of type "Point"
 /**
 This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object:
-- if type is a point, then it can be seen as a copy constructor
+- if type is a point, then it can be seen as a copy-constructor
 - if type is a line, this will build a line from (0,0] to \c pt
 */
 		template<typename T>
@@ -1187,7 +1262,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			_v[1] = static_cast<FPT>(other._v[1]);
 			_v[2] = static_cast<FPT>(other._v[2]);
 		}
-		/// Arg is a point, object is a point => copy constructor
+		/// Arg is a point, object is a point => copy-constructor
 		template<typename T>
 		void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsPoint>& )
 		{
@@ -1207,7 +1282,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 		}
-		/// Arg is a line, object is a line => copy constructor
+		/// Arg is a line, object is a line => copy-constructor
 		template<typename T>
 		void impl_init_1_Line( const Line2d_<T>& li, const detail::RootHelper<type::IsLine>& )
 		{
@@ -2961,6 +3036,8 @@ Line2d_<T>
 operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
 {
 	Line2d_<T> out;
+	if( h._hmt == nullptr )
+		h._hmt = std::unique_ptr<detail::Matrix_<U>>( detail::Matrix_<U>() );
 	detail::product( out, h, in );
 	out.p_normalizeLine();
 	return out;

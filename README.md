@@ -44,6 +44,8 @@ This will copy that file in `/usr/local/include`.
 - A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
+- **Contributing**: at present, the best you can do is testing and bug/issue reporting.
+Don't hesitate, this is still beta but stable release expected soon!
 
 - Rationale:
   - Usage simplicity (see manual)
