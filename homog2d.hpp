@@ -234,17 +234,15 @@ class Hmatrix_
 	friend Point2d_<T>
 	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Point2d_<T>& );
 
+	template<typename T,typename U,typename V>
+	friend Root<typename detail::HelperPL<T>::OtherType,V>
+	operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in );
 
-	public:
+public:
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
 	{
 		init();
-	}
-/// TODO: \todp change this to private
-	void init()
-	{
-		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
 /// Constructor, set homography to a rotation matrix of angle \c val
@@ -265,7 +263,12 @@ class Hmatrix_
 		setTranslation( tx, ty );
 	}
 
-	private:
+private:
+	void init()
+	{
+		impl_mat_init0( detail::RootHelper<M>() );
+	}
+
 /// Implementation for epipolar matrices: initialize to aligned axis
 	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
@@ -285,7 +288,7 @@ class Hmatrix_
 		_isNormalized = true;
 	}
 
-	public:
+public:
 
 /// Constructor, used to fill with a vector of vector matrix
 /** \warning
@@ -496,12 +499,16 @@ private:
 				m_out[i][j] = m_in[j][i];
 		return m_out;
 	}
-
-	detail::Matrix_<FPT> p_inverse( const detail::Matrix_<FPT>& m_in ) const
+/// \todo finish this
+	detail::Matrix_<FPT> p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
 	{
-		detail::Matrix_<FPT> m_out;
+		auto det = p_det();
+		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
+			throw std::runtime_error( "matrix is not invertible" );
 
-		return m_out;
+		auto adjugate = p_adjugate();
+		detail::divideAll(adjugate, det);
+		return adjugate;
 	}
 
 public:
@@ -517,7 +524,7 @@ public:
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-		auto det = p_det();
+/*		auto det = p_det();
 		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
@@ -525,7 +532,8 @@ public:
 
 		detail::divideAll(adjugate, det);
 		_data = adjugate;
-
+*/
+		_data = p_inverse();
 		normalize();
 		_hasChanged = true;
 		return *this;
@@ -646,21 +654,21 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 /**
 See https://en.wikipedia.org/wiki/Determinant
 */
-	HOMOG2D_INUMTYPE p_det()
+	HOMOG2D_INUMTYPE p_det() const
 	{
 		auto det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		det     -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
 		det     += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
 		return det;
 	}
-	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v )
+	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
 	{
 		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * _data[v[6]][v[7]];
 		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * _data[v[4]][v[5]];
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	detail::Matrix_<FPT> p_adjugate()
+	detail::Matrix_<FPT> p_adjugate() const
 	{
 		detail::Matrix_<FPT> out;
 
@@ -3070,7 +3078,8 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
 
 	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
 	{
-		*h._hmt = h.p_inverse( h._data );
+		auto mat_inv = h.p_inverse();
+		*h._hmt = h.p_transpose( mat_inv );
 		h._hasChanged = false;
 	}
 

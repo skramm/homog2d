@@ -582,7 +582,7 @@ computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTY
 {
 	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
 	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-	H.inverse().transpose();
+//	H.inverse().transpose();
 	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
 	return line2.distTo( pt2 ); // should be 0 !
 }
