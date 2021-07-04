@@ -87,6 +87,7 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
 	template<typename> struct RootDataType {};
 
+
 #if 0
 	/// Helper class for Matrix type
 	template<typename T1>
@@ -105,8 +106,7 @@ namespace detail {
 	};
 #endif
 
-    template<typename>
-    struct HelperPL;
+    template<typename> struct HelperPL;
 
     template<>
     struct HelperPL<type::IsPoint>
@@ -119,6 +119,8 @@ namespace detail {
     {
         using OtherType = type::IsPoint;
     };
+
+//	template<typename> class Matrix_;
 
 	/// A trick used in static_assert, so it aborts only if function is instanciated
 	template<typename T>
@@ -151,13 +153,16 @@ using Line2d_  = Root<type::IsLine,T>;
 
 namespace detail {
 
+template<typename FPT>
+using Matrix_ = std::array<std::array<FPT,3>,3> ;
+
 /// forward declaration of function
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
+	Root<T1,FPT1>&        out,
+	const Matrix_<FPT2>&  h,
+	const Root<T2,FPT1>&  in
 );
 
 //------------------------------------------------------------------
@@ -181,9 +186,6 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	Point2d_<FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
 }
-
-template<typename FPT>
-using Matrix_ = std::array<std::array<FPT,3>,3> ;
 
 template<typename FPT1, typename FPT2>
 void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
@@ -220,12 +222,18 @@ class Hmatrix_
 	template<typename T1,typename T2>
 	friend class Root;
 
-	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
-	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
+	friend void
+	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 
 	template<typename T,typename U>
 	friend Line2d_<T>
 	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+
+	template<typename T,typename U>
+	friend Point2d_<T>
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Point2d_<T>& );
+
 
 	public:
 	/// Default constructor, initialize to unit transformation
@@ -479,13 +487,28 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = true;
 	}
 
+private:
+	detail::Matrix_<FPT> p_transpose( const detail::Matrix_<FPT>& m_in ) const
+	{
+		detail::Matrix_<FPT> m_out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				m_out[i][j] = m_in[j][i];
+		return m_out;
+	}
+
+	detail::Matrix_<FPT> p_inverse( const detail::Matrix_<FPT>& m_in ) const
+	{
+		detail::Matrix_<FPT> m_out;
+
+		return m_out;
+	}
+
+public:
 /// Transpose matrix
 	Hmatrix_& transpose()
 	{
-		detail::Matrix_<FPT> out;
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				out[i][j] = _data[j][i];
+		detail::Matrix_<FPT> out = p_transpose( _data );
 		_data = out;
 		_hasChanged = true;
 		return *this;
@@ -494,13 +517,12 @@ Thus some assert can get triggered elsewhere.
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-		auto adjugate = p_adjugate();
 		auto det = p_det();
-
 		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
-//		*this = adjugate / det;
+		auto adjugate = p_adjugate();
+
 		detail::divideAll(adjugate, det);
 		_data = adjugate;
 
@@ -511,7 +533,7 @@ Thus some assert can get triggered elsewhere.
 
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=0 );
 
-#if 0
+#if 0  // DEPRECATED
 /// Divide all elements by scalar
 /**
 \todo this should be deprecated, as I can't see a usage
@@ -547,7 +569,8 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		_hasChanged = true;
 		return *this;
 	}
-#endif
+#endif // deprecated
+
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
@@ -564,6 +587,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		return out;
 	}
 
+	public:
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Hmatrix_& h ) const
 	{
@@ -631,8 +655,8 @@ See https://en.wikipedia.org/wiki/Determinant
 	}
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v )
 	{
-		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[6]][v[7]] );
-		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[4]][v[5]] );
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * _data[v[6]][v[7]];
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * _data[v[4]][v[5]];
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
@@ -1173,9 +1197,9 @@ class Root
 	friend std::ostream&
 	operator << ( std::ostream& f, const Root<U,V>& r );
 
-	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
-	detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
+	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 
 	template<typename T1,typename T2>
 	friend Line2d_<T1>
@@ -2988,21 +3012,23 @@ namespace detail {
 /**
 - T1 and T2: IsLine or IsPoint
 
-\todo Add checking that T1 and T2 are opposite class
 */
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
+	Root<T1,FPT1>&       out,
+	const Matrix_<FPT2>& h,
+	const Root<T2,FPT1>& in
 )
 {
 	for( int i=0; i<3; i++ )
 	{
-		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._data[i][0]) * in._v[0];
+/*		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._data[i][0]) * in._v[0];
 		sum      += h._data[i][1] * in._v[1];
-		sum      += h._data[i][2] * in._v[2];
+		sum      += h._data[i][2] * in._v[2]; */
+		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h[i][0]) * in._v[0];
+		sum      += h[i][1] * in._v[1];
+		sum      += h[i][2] * in._v[2];
 		out._v[i] = sum;
 	}
 }
@@ -3016,29 +3042,40 @@ Root<typename detail::HelperPL<T>::OtherType,V>
 operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 {
 	Root<typename detail::HelperPL<T>::OtherType,V> out;
-	detail::product( out, h, in );
+	detail::product( out, h._data, in );
 	return out;
 }
 
-/// Apply homography to a point or line. Free function, templated by point or line
+/// Free function, apply homography to a point.
 template<typename T,typename U>
 Point2d_<T>
 operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
 {
 	Point2d_<T> out;
-	detail::product( out, h, in );
+	detail::product( out, h._data, in );
 	return out;
 }
 
-/// Apply homography to a point or line. Free function, templated by point or line
+/// Free function, apply homography to a line.
+/// \todo finish this
 template<typename T,typename U>
 Line2d_<T>
 operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
 {
+	if( h._hmt == nullptr )             // if H^-T	not allocated yet, do it
+	{
+		h._hmt = std::unique_ptr<detail::Matrix_<U>>( new detail::Matrix_<U>() );
+		h._hasChanged = true;
+	}
+
+	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
+	{
+		*h._hmt = h.p_inverse( h._data );
+		h._hasChanged = false;
+	}
+
 	Line2d_<T> out;
-	if( h._hmt == nullptr )
-		h._hmt = std::unique_ptr<detail::Matrix_<U>>( detail::Matrix_<U>() );
-	detail::product( out, h, in );
+	detail::product( out, *h._hmt, in );
 	out.p_normalizeLine();
 	return out;
 }
@@ -3114,6 +3151,7 @@ alloc( std::size_t nb )
 //------------------------------------------------------------------
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
+/// \todo Fix the for lines, so that it uses the H^-T matrix !
 template<typename FPT,typename Cont>
 typename std::enable_if<priv::Is_Container<Cont>::value,Cont>::type
 operator * (
@@ -3125,7 +3163,7 @@ operator * (
 	auto it = std::begin( vout );
 	for( const auto& elem: vin )
 	{
-		detail::product( *it, h, elem );
+		*it = h * elem;
 		it++;
 	}
 	return vout;
