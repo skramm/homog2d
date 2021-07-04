@@ -345,7 +345,10 @@ bool b4 = seg.isInside( rect );
 ## 5 - Homographies
 <a name="matrix"></a>
 
-You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`:
+You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
+
+
+### 5.1 - Homographies for points
 
 ```C++
 Homogr h; // unit transformation ("eye" matrix)
@@ -365,9 +368,27 @@ auto s2 = H * s1;
 FRect r1( ..., ... );
 auto r2 = H * r1;
 ```
+** Transforming lines **
+
+<a name="line_homography"></a>
+For lines, a known result is that if we have a line lA going through p1 and p2,
+and a homography H mapping p1 and p2 to p'1 and p'2, then the line lB joining these
+two points can be computed with lB = H-T lA.
+<br>
+Since release 2.4, this library automatically handle this inversion, inside the class:
+```C++
+Homogr h;
+ ... assign some planar transformation
+Point2d p1a( ..., ... );
+Point2d p2a( ..., ... );
+Line2d lA = p1a * p2a;
+auto p1b = H * p1a;
+auto p2b = H * p2a;
+lB = lA * H; // same as lB = p1b * p2b;
+```
 
 
-### 5.1 - Setting up from a given planar transformation
+### 5.2 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -455,7 +476,8 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 5.2 - Constructors
+### 5.3 - Constructors
+
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
@@ -466,7 +488,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 5.3 - Computing from 2 sets of 4 points
+### 5.4 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:

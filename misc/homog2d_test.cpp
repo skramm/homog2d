@@ -580,11 +580,11 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 long double
 computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
-	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
-	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-//	H.inverse().transpose();
-	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
-	return line2.distTo( pt2 ); // should be 0 !
+	Line2d_<NUMTYPE> line1( pt1 );       // line from (0,0) to pt1
+	Point2d_<NUMTYPE> pt2 = H * pt1;     // move the point with H
+//	H.inverse().transpose();             // not needed, done automatically since release 2.4 !
+	Line2d_<NUMTYPE> line2 = H * line1;  // move the line with H^{-T}
+	return line2.distTo( pt2 );          // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789

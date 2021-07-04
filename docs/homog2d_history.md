@@ -3,19 +3,20 @@
 
 See [Release page](https://github.com/skramm/homog2d/releases).
 
-Planned:
- - add conic homography (circle=>ellipse)
+- Planned:
+  - add conic homography (circle=>ellipse)
 
-- current master branch:
- - **Major release, some API changes**
- - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
- - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
- - added operator * to apply homography to all elements of a container holding points or lines
- - added templated types `Circle_`, `Polyline_`, `FRect_` and associated code (intersection, isInside, ...)
- - added `type()` and `dtype()` to root class (and associated enums), to be able to fetch underlyng type at runtime.
- - renamed `intersectsCircle()` and `intersectsRectangle()` to `intersects()`
- - changed enums for class enums
- - deprecated `Root::addOffset()`
+- Current master branch:
+  - **Major release, some API changes**
+  - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
+  - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
+  - added operator * to apply homography to all elements of a container holding points or lines
+  - added templated types `Circle_`, `Polyline_`, `FRect_` and associated code (intersection, isInside, ...)
+  - added `type()` and `dtype()` to root class (and associated enums), to be able to fetch underlyng type at runtime.
+  - renamed `intersectsCircle()` and `intersectsRectangle()` to `intersects()`
+  - changed enums for class enums
+  - deprecated `Root::addOffset()`
+  - Homography now automatically inverted/transposed for lines, [see here](homog2d_manual#line_homography).
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - switch to MPLv2 licence
