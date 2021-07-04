@@ -678,7 +678,7 @@ s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-In case you have some trouble building this program, please [read this](docs/opencv_notes.md).
+In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 ## 8 - Numerical data types
 <a name="numdt"></a>
