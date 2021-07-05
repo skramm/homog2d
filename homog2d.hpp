@@ -2265,6 +2265,18 @@ isBetween( T v, T v1, T v2 )
 			return true;
 	return false;
 }
+
+/// Helper function
+template<typename T>
+bool
+isInArea( const Point2d_<T>& pt, const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+{
+	if( isBetween( pt.getX(), pt1.getX(), pt2.getX() ) )
+		if( isBetween( pt.getY(), pt1.getY(), pt2.getY() ) )
+			return true;
+	return false;
+}
+
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -2293,11 +2305,16 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
 
-	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
+	if( detail::isInArea( pi, ptA1, ptA2 ) )
+		if( detail::isInArea( pi, ptB1, ptB2 ) )
+			out._doesIntersect = true;
+
+/*	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
 		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
 			if( detail::isBetween( pi.getX(), ptB1.getX(), ptB2.getX() ) )
 				if( detail::isBetween( pi.getY(), ptB1.getY(), ptB2.getY() ) )
 					out._doesIntersect = true;
+*/
 	return out;
 }
 
@@ -2351,14 +2368,13 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
 
-	FRect_<FPT> rseg( _ptS1, _ptS2 );
 	if(                                                          // if one point of the segment is
 		(!_ptS1.isInside( circle ) && _ptS2.isInside( circle ))  // inside and the other outside,
 		||                                                       // then we have a single
 		(_ptS1.isInside( circle ) && !_ptS2.isInside( circle ))  // intersection point
 	)
 	{
-        if( p1.isInside( rseg ) )          // check which one of the intersections
+        if( detail::isInArea( p1, _ptS1, _ptS2 ) )         // check which one of the intersections
 			out.add( p1 );           // points is inside
 		else
 			out.add( p2 );
@@ -2368,7 +2384,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 // here, we have both points of segment outside the circle
 	assert( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) );
 
-	if( p1.isInside( rseg ) )  // if yes, then the other is inside too
+	if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // if yes, then the other is inside too
 	{
 		out.add( p1 );           // points is inside
 		out.add( p2 );

@@ -822,7 +822,7 @@ void action_PL( void* param )
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img );
 	auto intersPts = li.intersects(data.polyline);
-	for( const auto& pt: intersPts )
+	for( const auto& pt: intersPts.get() )
 		pt.draw( data.img );
 	data.showImage();
 }
