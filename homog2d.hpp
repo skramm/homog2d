@@ -815,6 +815,11 @@ struct Intersect<Inters_1,FPT>: IntersectCommon
 				throw std::runtime_error( "No intersection points!" );
 			return _ptIntersect;
 		}
+		void set( const Point2d_<FPT>& pt )
+		{
+			_ptIntersect = pt;
+			_doesIntersect = true;
+		}
 		size_t size() const { return _doesIntersect?1:0; }
 
 	private:
@@ -1507,6 +1512,18 @@ Please check out warning described in impl_getAngle()
 		void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
 
 	public:
+		template<typename FPT2>
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>& other ) const
+		{
+			detail::Intersect<detail::Inters_1,FPT> out;
+			if( this->isParallelTo( other ) )
+				return out;
+			 out.set( *this * other );
+//			 out._ptIntersect = *this * other;
+//			 out._doesIntersect = true;
+			 return out;
+		}
+
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 		{
@@ -2340,8 +2357,9 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	const auto& ptA1 = this->get().first;
 	const auto& ptA2 = this->get().second;
 
-	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
-		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
+	if( detail::isInArea( pi, ptA1, ptA2 ) )
+//	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
+//		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
 			out._doesIntersect = true;
 
 	return out;

@@ -745,7 +745,29 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == true );
 }
 
-TEST_CASE( "circle segment intersection", "[inters_circ_seg]" )
+TEST_CASE( "line/line intersection", "[inters_circ_seg]" )
+{
+	Line2d_<NUMTYPE> liv1;
+	Line2d_<NUMTYPE> liv2( Point2d(5,0), Point2d(5,10) );
+	Line2d_<NUMTYPE> lih( Point2d(0,0), Point2d(1,0) );
+	CHECK(  liv1.intersects( lih  )() );
+	CHECK( !liv1.intersects( liv2 )() );
+	CHECK(  lih.intersects(  liv2 )() );
+
+	auto i1 = liv1.intersects( lih  );
+	auto i2 = liv1.intersects( liv2 );
+	auto i3 = lih.intersects(  liv2 );
+
+	CHECK(  i1() );
+	CHECK( !i2() );
+	CHECK(  i3() );
+
+	CHECK( i1.size()==1 );
+	CHECK( i2.size()==0 );
+	CHECK( i3.size()==1 );
+}
+
+TEST_CASE( "circle/segment intersection", "[inters_circ_seg]" )
 {
 	Circle_<NUMTYPE> c1( Point2d(1,1), 1 );
 	{
@@ -801,7 +823,7 @@ TEST_CASE( "circle segment intersection", "[inters_circ_seg]" )
 	}
 }
 
-TEST_CASE( "circle line intersection", "[inters_circ_line]" )
+TEST_CASE( "circle/line intersection", "[inters_circ_line]" )
 {
 	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
 	Line2d_<NUMTYPE> liv(0,1); // vertical line going through (0,0)
