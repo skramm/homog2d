@@ -2348,7 +2348,6 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 }
 
 /// Segment - Circle intersection
-/// \todo need a fix here: if segment is horizontal of vertical, we can't get the corresponding FRect !
 template<typename FPT>
 template<typename FPT2>
 detail::IntersectM<FPT>

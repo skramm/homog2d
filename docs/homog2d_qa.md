@@ -12,8 +12,8 @@
 0  1  0
 ```
 On usage:
- - `Homog2d` is designed to hold a planar transformation, i.e. mapping a point to a point and a line to a line.
- - `Epipmat` is designed to handle epipolar mapping in the case of stereovision situations for example, i.e. a point will be mapped to a line,
+  - `Homog2d` is designed to hold a planar transformation, i.e. mapping a point to a point and a line to a line.
+  - `Epipmat` is designed to handle epipolar mapping in the case of stereovision situations for example, i.e. a point will be mapped to a line,
  and a line will be mapped to a point.
 
  ```C++

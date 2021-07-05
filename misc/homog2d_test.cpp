@@ -755,8 +755,20 @@ TEST_CASE( "circle segment intersection", "[inters_circ_seg]" )
 		CHECK( !s1.intersects( c1 )() );
 		auto int_a = c1.intersects( s1 );
 		auto int_b = s1.intersects( c1 );
+		CHECK( !int_a() );
+		CHECK( !int_b() );
 		CHECK( int_a.size() == 0 );
 		CHECK( int_b.size() == 0 );
+
+		Segment_<NUMTYPE> s2( Point2d(10,0),Point2d(10,20) ); // vertical segment at x=10
+		CHECK( !c1.intersects( s2 )() );
+		CHECK( !s2.intersects( c1 )() );
+		auto int_a2 = c1.intersects( s2 );
+		auto int_b2 = s2.intersects( c1 );
+		CHECK( int_a2.size() == 0 );
+		CHECK( int_b2.size() == 0 );
+		CHECK( !int_a2() );
+		CHECK( !int_b2() );
 	}
 	{
 		Segment_<NUMTYPE> s2( Point2d(-5,1),Point2d(+5,1) ); // horizontal segment at y=1
@@ -772,6 +784,20 @@ TEST_CASE( "circle segment intersection", "[inters_circ_seg]" )
 		CHECK( int_b.size() == 2 );
 		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
 		CHECK( int_b.get()[1] == Point2d_<NUMTYPE>(2,1) );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(-5,1),Point2d(1,1) ); // horizontal segment at y=1
+
+		CHECK( c1.intersects( s2 )() );
+		CHECK( s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() );
+		CHECK( int_b() );
+		CHECK( int_a.size() == 1 );
+		CHECK( int_b.size() == 1 );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
 	}
 }
 
