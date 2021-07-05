@@ -244,7 +244,7 @@ TEST_CASE( "test1", "[test1]" )
 
 		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
-		Line2d_<NUMTYPE> lV2;
+//		Line2d_<NUMTYPE> lV2;
 //		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
 //		CHECK( li3 == lV2 );
 	}
@@ -771,11 +771,17 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
 
-	Circle_<NUMTYPE> cir1;
+//	Circle_<NUMTYPE> cir1;
 	Circle_<NUMTYPE> cir2(45);
-	CHECK( (cir2.radius() == 45.) );
+	CHECK( cir2.radius() == 45. );
 	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
 	CHECK( cir3.radius() == 7. );
+	{
+		auto cl1 = cir2.intersects( liv );
+		CHECK( cl1() == true );
+		CHECK( cl1.get().first  == Point2d(0,-45) );
+		CHECK( cl1.get().second == Point2d(0,+45) );
+	}
 }
 
 TEST_CASE( "inside circle", "[tic]" )
