@@ -747,12 +747,13 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 
 TEST_CASE( "line/line intersection", "[inters_circ_seg]" )
 {
-	Line2d_<NUMTYPE> liv1;
+	Line2d_<NUMTYPE> liv1,liv3;
 	Line2d_<NUMTYPE> liv2( Point2d(5,0), Point2d(5,10) );
 	Line2d_<NUMTYPE> lih( Point2d(0,0), Point2d(1,0) );
 	CHECK(  liv1.intersects( lih  )() );
 	CHECK( !liv1.intersects( liv2 )() );
 	CHECK(  lih.intersects(  liv2 )() );
+	CHECK( !liv1.intersects( liv3 )() );
 
 	auto i1 = liv1.intersects( lih  );
 	auto i2 = liv1.intersects( liv2 );
@@ -765,6 +766,24 @@ TEST_CASE( "line/line intersection", "[inters_circ_seg]" )
 	CHECK( i1.size()==1 );
 	CHECK( i2.size()==0 );
 	CHECK( i3.size()==1 );
+}
+
+TEST_CASE( "segment/segment intersection", "[inters_seg_seg]" )
+{
+	Segment_<NUMTYPE> s1,s2;
+	{
+		auto si = s1.intersects(s2);
+		CHECK( si() == false );
+		CHECK( si.size() == 0 );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(10,10) );
+		s2.set( Point2d(0,10), Point2d(10,0) );
+		auto si = s1.intersects(s2);
+		CHECK( si() == true );
+		CHECK( si.size() == 1 );
+		CHECK( si.get() == Point2d(5,5) );
+	}
 }
 
 TEST_CASE( "circle/segment intersection", "[inters_circ_seg]" )
@@ -850,7 +869,7 @@ TEST_CASE( "circle/line intersection", "[inters_circ_line]" )
 	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
 
-//	Circle_<NUMTYPE> cir1;
+
 	Circle_<NUMTYPE> cir2(45);
 	CHECK( cir2.radius() == 45. );
 	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
@@ -860,6 +879,15 @@ TEST_CASE( "circle/line intersection", "[inters_circ_line]" )
 		CHECK( cl1() == true );
 		CHECK( cl1.get().first  == Point2d(0,-45) );
 		CHECK( cl1.get().second == Point2d(0,+45) );
+	}
+}
+
+TEST_CASE( "circle/circle intersection", "[cci]" )
+{
+	{
+		Circle_<NUMTYPE> cA, cB;
+		CHECK( cA == cB );
+		CHECK( !cA.intersects(cB)() );
 	}
 }
 
@@ -976,9 +1004,6 @@ TEST_CASE( "Segment", "[seg1]" )
 		auto pts = s2.get();
 		CHECK( pts.first  == Point2d_<NUMTYPE>(8,8) );
 		CHECK( pts.second == Point2d_<NUMTYPE>(9,9) );
-
-		auto si = s1.intersects(s2);
-		CHECK( si() == false );
 	}
 	{
 		Segment_<NUMTYPE> s1( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );

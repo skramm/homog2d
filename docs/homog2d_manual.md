@@ -544,7 +544,7 @@ The number of intersection points will depend on the primitives, thus the access
 It will also throw if there is no intersection!
 And whatever the primitives, you can always get the number of intersection points with the `size()` member function.
 
-The table below summarizes what you can expect:
+The table below summarizes the number of intersection points to expect:
 
 |          | Line2d | Segment | FRect   | Circle |
 |----------|--------|---------|---------|--------|

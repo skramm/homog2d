@@ -1040,6 +1040,10 @@ public:
 	{
 		return seg.intersects( *this );
 	}
+/// Circle - Circle intersection
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT>
+	intersects( const Circle_<FPT2>& seg ) const;
 
 private:
 	template<typename FPT2>
@@ -1084,6 +1088,32 @@ public:
 	}
 #endif // HOMOG2D_USE_OPENCV
 };
+
+/// Circle - Circle intersection
+/**
+Ref:
+- https://stackoverflow.com/questions/3349125/
+
+\todo optimize to remove the sqrt (in \c distTo() )
+
+\todo finish this !
+*/
+template<typename FPT>
+template<typename FPT2>
+detail::Intersect<detail::Inters_2,FPT>
+Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
+{
+	auto d = _center.distTo( other._center );
+	detail::Intersect<detail::Inters_2,FPT> out;
+
+	if( d > _radius + other._radius )  // no intersection
+		return out;
+
+	if( d < std::abs(_radius - other._radius ) ) // no intersection:
+		return out;                              // one circle inside the other
+
+
+}
 
 /// Holds private stuff
 namespace priv {
