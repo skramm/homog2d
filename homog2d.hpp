@@ -502,7 +502,7 @@ private:
 				m_out[i][j] = m_in[j][i];
 		return m_out;
 	}
-/// \todo finish this
+
 	detail::Matrix_<FPT> p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
 	{
 		auto det = p_det();
@@ -543,44 +543,6 @@ public:
 	}
 
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=0 );
-
-#if 0  // DEPRECATED
-/// Divide all elements by scalar
-/**
-\todo this should be deprecated, as I can't see a usage
-*/
-	template<typename T>
-	Hmatrix_& operator / ( T value )
-	{
-		HOMOG2D_CHECK_IS_NUMBER( T );
-		if( std::abs(v) <= Point2d_<FPT>::nullDenom() )
-			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
-		p_divideAll( value )
-#if 0
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				_data[i][j] /= v;
-		return *this;
-#else
-		_hasChanged = true;
-		return *this * (1.0L/v);
-#endif
-	}
-
-/// Multiply all elements by scalar
-/**
-Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
-*/
-	Hmatrix_& operator * (FPT v)
-	{
-		HOMOG2D_CHECK_IS_NUMBER( FPT );
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				_data[i][j] *= v;
-		_hasChanged = true;
-		return *this;
-	}
-#endif // deprecated
 
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
@@ -3101,7 +3063,6 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
 }
 
 /// Free function, apply homography to a line.
-/// \todo finish this
 template<typename T,typename U>
 Line2d_<T>
 operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
@@ -3196,7 +3157,6 @@ alloc( std::size_t nb )
 //------------------------------------------------------------------
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
-/// \todo Fix the for lines, so that it uses the H^-T matrix !
 template<typename FPT,typename Cont>
 typename std::enable_if<priv::Is_Container<Cont>::value,Cont>::type
 operator * (
