@@ -2,6 +2,9 @@
 
 Home page: https://github.com/skramm/homog2d
 
+This is the manual for the current master branch of `homog2d`.
+For stable releases, see home page.
+
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
 3. [Segments](#segments)
@@ -76,6 +79,13 @@ To get the euclidean coordinates of a point, two member functions are provided:
 auto x = pt.getX();
 auto y = pt.getY();
 ```
+Or use the equivalent free functions:
+```C++
+auto x = getX(pt);
+auto y = getY(pt);
+```
+
+
 To get the 3 components of a line as a homogeneous array, one may use:
 ```C++
 auto v = line.get();
@@ -183,7 +193,7 @@ Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is para
 
 If you need a parallel line to another at a given distance, then you can use
 `getParallelLines()`, provided either as a free function or as a member function.
-They both return a pair (std::pair) of lines, one on one side, and the other on the other side of the input line:
+They both return a pair (`std::pair`) of lines, one on one side, and the other on the other side of the input line:
 ```C++
 Line2d li; // some line
 auto p_lines1 = li.getParallelLines( 100 );
@@ -237,6 +247,7 @@ You can get the point lying in the middle of the segment with:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
+auto p_mid2 = getMiddlePoint(s1); // your choice
 ```
 
 ## 4 - Other geometric primitives
@@ -257,7 +268,7 @@ When using the constuctor or the `set()` member function, there is no constraint
 the library will automatically adjust the points to store the two opposite ones,
 with the one with smallest coordinates as "first".
 
-This means you can give any of the 4 points below, only p0 and p1 will be stored:
+This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored:
 
 ![fig2](../docs/fig2.png)
 
@@ -267,7 +278,7 @@ The library will throw if it is not enforced.
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );
-auto pair_pts = rect.get2Pts();  // returns the 2 points in a std::pair
+auto pair_pts = rect.get2Pts();  // returns the 2 points p0,p1 in a std::pair
 auto pts = rect.get4Pts(); // return a std::array of 4 points
 ```
 
@@ -275,6 +286,7 @@ You can also fetch the 4 segments of the rectangle:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
+auto segs2 = getSegs(rect); // your choice
 ```
 
 And of course, its width and height:
@@ -334,7 +346,10 @@ bool b4 = seg.isInside( rect );
 ## 5 - Homographies
 <a name="matrix"></a>
 
-You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`:
+You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
+
+
+### 5.1 - Homographies for points
 
 ```C++
 Homogr h; // unit transformation ("eye" matrix)
@@ -354,9 +369,27 @@ auto s2 = H * s1;
 FRect r1( ..., ... );
 auto r2 = H * r1;
 ```
+** Transforming lines **
+
+<a name="line_homography"></a>
+For lines, a known result is that if we have a line lA going through p1 and p2,
+and a homography H mapping p1 and p2 to p'1 and p'2, then the line lB joining these
+two points can be computed with lB = H-T lA.
+<br>
+Since release 2.4, this library automatically handle this inversion, inside the class:
+```C++
+Homogr h;
+ ... assign some planar transformation
+Point2d p1a( ..., ... );
+Point2d p2a( ..., ... );
+Line2d lA = p1a * p2a;
+auto p1b = H * p1a;
+auto p2b = H * p2a;
+lB = lA * H; // same as lB = p1b * p2b;
+```
 
 
-### 5.1 - Setting up from a given planar transformation
+### 5.2 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -444,7 +477,8 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 5.2 - Constructors
+### 5.3 - Constructors
+
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
@@ -455,7 +489,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 5.3 - Computing from 2 sets of 4 points
+### 5.4 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -645,7 +679,7 @@ s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-In case you have some trouble building this program, please [read this](docs/opencv_notes.md).
+In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 ## 8 - Numerical data types
 <a name="numdt"></a>

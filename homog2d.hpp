@@ -87,6 +87,7 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
 	template<typename> struct RootDataType {};
 
+
 #if 0
 	/// Helper class for Matrix type
 	template<typename T1>
@@ -105,8 +106,7 @@ namespace detail {
 	};
 #endif
 
-    template<typename>
-    struct HelperPL;
+    template<typename> struct HelperPL;
 
     template<>
     struct HelperPL<type::IsPoint>
@@ -119,6 +119,8 @@ namespace detail {
     {
         using OtherType = type::IsPoint;
     };
+
+//	template<typename> class Matrix_;
 
 	/// A trick used in static_assert, so it aborts only if function is instanciated
 	template<typename T>
@@ -142,6 +144,9 @@ class Segment_;
 template<typename FPT>
 class Polyline_;
 
+template<typename FPT>
+class Circle_;
+
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
@@ -151,13 +156,16 @@ using Line2d_  = Root<type::IsLine,T>;
 
 namespace detail {
 
+template<typename FPT>
+using Matrix_ = std::array<std::array<FPT,3>,3> ;
+
 /// forward declaration of function
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
+	Root<T1,FPT1>&        out,
+	const Matrix_<FPT2>&  h,
+	const Root<T2,FPT1>&  in
 );
 
 //------------------------------------------------------------------
@@ -180,6 +188,14 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	Point2d_<FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
 	Point2d_<FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
+}
+
+template<typename FPT1, typename FPT2>
+void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
+{
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			mat[i][j] /= value;
 }
 
 } // namespace detail
@@ -209,22 +225,30 @@ class Hmatrix_
 	template<typename T1,typename T2>
 	friend class Root;
 
-	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
-	friend void detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
+	friend void
+	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 
-	public:
+	template<typename T,typename U>
+	friend Line2d_<T>
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+
+	template<typename T,typename U>
+	friend Point2d_<T>
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Point2d_<T>& );
+
+	template<typename T,typename U,typename V>
+	friend Root<typename detail::HelperPL<T>::OtherType,V>
+	operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in );
+
+public:
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
 	{
 		init();
 	}
 
-	void init()
-	{
-		impl_mat_init0( detail::RootHelper<M>() );
-	}
-
-/// Build homography and set it to a rotation matrix of angle \c val
+/// Constructor, set homography to a rotation matrix of angle \c val
 	template<typename T>
 	Hmatrix_( T val )
 	{
@@ -233,7 +257,7 @@ class Hmatrix_
 		setRotation( val );
 	}
 
-/// Build homography and set it to a translation matrix ( see Hmatrix_( T ) )
+/// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
 	template<typename T>
 	Hmatrix_( T tx, T ty )
 	{
@@ -242,7 +266,12 @@ class Hmatrix_
 		setTranslation( tx, ty );
 	}
 
-	private:
+private:
+	void init()
+	{
+		impl_mat_init0( detail::RootHelper<M>() );
+	}
+
 /// Implementation for epipolar matrices: initialize to aligned axis
 	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
@@ -262,9 +291,9 @@ class Hmatrix_
 		_isNormalized = true;
 	}
 
-	public:
+public:
 
-/// Constructor, used to fill with a vector of vectors matrix
+/// Constructor, used to fill with a vector of vector matrix
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
 - no checking is done on validity of matrix as an homography.
@@ -301,6 +330,29 @@ Thus some assert can get triggered elsewhere.
 
 #endif
 
+/// Assignment operator
+	Hmatrix_& operator = ( const Hmatrix_<M,FPT>& other )
+	{
+		_data         = other._data;
+		_hasChanged   = true;
+		_isNormalized = false;
+		_hmt          = nullptr;
+		return *this;
+	}
+
+/// Copy-constructor
+	Hmatrix_( const Hmatrix_<M,FPT>& other )
+		:_data          ( other._data )
+		, _hasChanged   ( other._hasChanged )
+		, _isNormalized ( other._isNormalized )
+		, _hmt          (  nullptr )
+	{
+/*		_data         = other._data;
+		_hasChanged   = other._hasChanged;
+		_isNormalized = other._isNormalized;
+		_hmt          = nullptr;*/
+	}
+
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -315,6 +367,7 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		_data[r][c] = v;
 		_isNormalized = false;
+		_hasChanged = true;
 	}
 /// Getter
 	FPT get( size_t r, size_t c ) const
@@ -332,7 +385,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setTranslation( tx, ty );
 		*this = out * *this;
-//		normalize();
 		return *this;
 	}
 /// Sets the matrix as a translation \c tx,ty
@@ -344,6 +396,7 @@ Thus some assert can get triggered elsewhere.
 		_data[0][2] = tx;
 		_data[1][2] = ty;
 		_isNormalized = true;
+		_hasChanged = true;
 		return *this;
 	}
 /// Adds a rotation with an angle \c theta (radians) to the matrix
@@ -354,7 +407,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setRotation( theta );
 		*this = out * *this;
-//		normalize();
 		return *this;
 	}
 /// Sets the matrix as a rotation with an angle \c theta (radians)
@@ -367,6 +419,7 @@ Thus some assert can get triggered elsewhere.
 		_data[1][0] = std::sin(theta);
 		_data[0][1] = -_data[1][0];
 		_isNormalized = true;
+		_hasChanged = true;
 		return *this;
 	}
 /// Adds the same scale factor to the matrix
@@ -384,7 +437,8 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
-//		normalize();
+		normalize();
+		_hasChanged = true;
 		return *this;
 	}
 /// Sets the matrix as a scaling transformation (same on two axis)
@@ -403,6 +457,8 @@ Thus some assert can get triggered elsewhere.
 		_data[0][0] = kx;
 		_data[1][1] = ky;
 		_isNormalized = true;
+
+		_hasChanged = true;
 		return *this;
 	}
 
@@ -433,53 +489,84 @@ Thus some assert can get triggered elsewhere.
 			for( auto& li: _data )
 				for( auto& e: li )
 					e = -e;
+		_hasChanged = true;   /// \todo This is questionnable
 		_isNormalized = true;
 	}
 
+private:
+	detail::Matrix_<FPT> p_transpose( const detail::Matrix_<FPT>& m_in ) const
+	{
+		detail::Matrix_<FPT> m_out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				m_out[i][j] = m_in[j][i];
+		return m_out;
+	}
+/// \todo finish this
+	detail::Matrix_<FPT> p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
+	{
+		auto det = p_det();
+		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
+			throw std::runtime_error( "matrix is not invertible" );
+
+		auto adjugate = p_adjugate();
+		detail::divideAll(adjugate, det);
+		return adjugate;
+	}
+
+public:
 /// Transpose matrix
 	Hmatrix_& transpose()
 	{
-		Hmatrix_ out;
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				out._data[i][j] = _data[j][i];
-		*this = out;
+		detail::Matrix_<FPT> out = p_transpose( _data );
+		_data = out;
+		_hasChanged = true;
 		return *this;
 	}
 
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-		Hmatrix_ adjugate = p_adjugate();
-		auto det = p_det();
-
+/*		auto det = p_det();
 		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
 			throw std::runtime_error( "matrix is not invertible" );
 
-		*this = adjugate / det;
+		auto adjugate = p_adjugate();
 
+		detail::divideAll(adjugate, det);
+		_data = adjugate;
+*/
+		_data = p_inverse();
 		normalize();
+		_hasChanged = true;
 		return *this;
 	}
 
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=0 );
 
+#if 0  // DEPRECATED
 /// Divide all elements by scalar
+/**
+\todo this should be deprecated, as I can't see a usage
+*/
 	template<typename T>
-	Hmatrix_& operator / (T v)
+	Hmatrix_& operator / ( T value )
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T );
 		if( std::abs(v) <= Point2d_<FPT>::nullDenom() )
 			throw std::runtime_error( "unable to divide by " + std::to_string(v) );
+		p_divideAll( value )
 #if 0
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] /= v;
 		return *this;
 #else
+		_hasChanged = true;
 		return *this * (1.0L/v);
 #endif
 	}
+
 /// Multiply all elements by scalar
 /**
 Can't be templated by arg type because it would conflict with operator * for Homogr and line/point
@@ -490,8 +577,10 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				_data[i][j] *= v;
+		_hasChanged = true;
 		return *this;
 	}
+#endif // deprecated
 
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
@@ -504,9 +593,12 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 					out._data[i][j] +=
 						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
 						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
+		out.normalize();
+		out._hasChanged = true;
 		return out;
 	}
 
+	public:
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Hmatrix_& h ) const
 	{
@@ -541,6 +633,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( auto& li: _data )
 			for( auto& e: li )
 				e = 0.;
+		_hasChanged = true;
 	}
 	template<typename T>
 	void p_fillWith( const T& in )
@@ -549,6 +642,7 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 			for( auto j=0; j<3; j++ )
 				_data[i][j] = in[i][j];
 		normalize();
+		_hasChanged = true;
 	}
 	void p_divideBy( size_t r, size_t c ) const
 	{
@@ -556,30 +650,32 @@ Can't be templated by arg type because it would conflict with operator * for Hom
 		for( auto& li: _data )
 			for( auto& e: li )
 				e /= _data[r][c];
+		_hasChanged = true;
 	}
+
 /// Return determinant of matrix
 /**
 See https://en.wikipedia.org/wiki/Determinant
 */
-	HOMOG2D_INUMTYPE p_det()
+	HOMOG2D_INUMTYPE p_det() const
 	{
 		auto det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		det     -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
 		det     += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
 		return det;
 	}
-	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v )
+	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
 	{
-		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[6]][v[7]] );
-		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * static_cast<HOMOG2D_INUMTYPE>( _data[v[4]][v[5]] );
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * _data[v[6]][v[7]];
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * _data[v[4]][v[5]];
 		return det;
 	}
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	Hmatrix_ p_adjugate()
+	detail::Matrix_<FPT> p_adjugate() const
 	{
-		Hmatrix_ out;
+		detail::Matrix_<FPT> out;
 
-		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
+/*		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
 		out.set( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
 		out.set( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
 
@@ -590,6 +686,18 @@ See https://en.wikipedia.org/wiki/Determinant
 		out.set( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
 		out.set( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
 		out.set( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
+*/
+		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
+		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
+
+		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
+		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
+
+		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
+		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
 
 		return out;
 	}
@@ -598,8 +706,10 @@ See https://en.wikipedia.org/wiki/Determinant
 //      DATA SECTION    //
 //////////////////////////
 	private:
-	mutable std::array<std::array<FPT,3>,3> _data;
+	mutable detail::Matrix_<FPT> _data;
+	mutable bool _hasChanged   = true;
 	mutable bool _isNormalized = false;
+	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
@@ -704,23 +814,91 @@ enum class GivenCoord { X, Y };
 /// Used in Line2d::addOffset()
 enum class LineOffset { vert, horiz };
 
-// forward declaration of template instanciation
 namespace detail {
 
-template<typename T1,typename T2,typename T3>
-Root<T1,T3> crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
+// forward declaration of template instanciation
+template<typename T1,typename T2,typename FPT1,typename FPT2>
+Root<T1,FPT1> crossProduct( const Root<T2,FPT1>&, const Root<T2,FPT2>& );
 
-}
+struct Inters_1 {};
+struct Inters_2 {};
 
-// forward declaration
+/// Common stuff for intersection code
+struct IntersectCommon
+{
+	protected:
+		bool _doesIntersect = false;
+	public:
+		bool operator()() const
+		{
+			return _doesIntersect;
+		}
+};
+
+/// Base class for intersection
+template<typename T,typename FPT>
+struct Intersect {};
+
+/// One point intersection
 template<typename FPT>
-class Circle_;
+struct Intersect<Inters_1,FPT>: IntersectCommon
+{
+	template<typename U> friend class ::homog2d::Segment_;
+
+	public:
+		Point2d_<FPT>
+		get() const
+		{
+			return _ptIntersect;
+		}
+	private:
+		Point2d_<FPT> _ptIntersect;
+};
+
+/// Two points intersection
+template<typename FPT>
+struct Intersect<Inters_2,FPT>: IntersectCommon
+{
+	template<typename U,typename V> friend class ::homog2d::Root;
+	public:
+		Intersect() {}
+		Intersect( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
+			: _ptIntersect_1(p1), _ptIntersect_2(p2)
+		{
+				_doesIntersect = true;
+		}
+
+		std::pair<Point2d_<FPT>,Point2d_<FPT>>
+		get() const
+		{
+			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
+		}
+	private:
+		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
+};
+#if 0
+/// Multiple intersections
+template<typename FPT>
+struct IntersectM
+{
+	private:
+		std::vector<Point2d_<FPT>> _vecInters;
+	public:
+		bool operator()() const
+		{
+			return !_vecInters.empty();
+		}
+		void addPt( const Point2d_<FPT>& pt )
+		{
+			_vecInters.push_back(pt);
+		}
+};
+#endif
+} // namespace detail
+
 
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled with its two opposite points
-/**
-
-*/
 template<typename FPT>
 class FRect_
 {
@@ -779,7 +957,7 @@ class FRect_
 		return out;
 	}
 /// Returns true if rectangle is inside \c shape (circle or rectangle)
-/// \todo maybe add some SFINAE to enable only for Circ_ or FRect_?
+/// \todo maybe add some SFINAE to enable only for Circle_ or FRect_?
 	template<typename T>
 	bool isInside( const T& shape )
 	{
@@ -824,11 +1002,11 @@ class FRect_
 template<typename FPT>
 class Circle_
 {
-	private:
+private:
 	FPT           _radius;
 	Point2d_<FPT> _center;
 
-	public:
+public:
 /// Default constructor, unit-radius circle at (0,0)
 	Circle_() : _radius(1.)
 	{}
@@ -859,19 +1037,26 @@ class Circle_
 	template<typename FPT2>
 	bool isInside( const Point2d_<FPT2>& p1, const Point2d_<FPT2>& p2 ) const
 	{
-		return impl_isInside( detail::getCorrectPoints( p1, p2 ) );
+		return implC_isInside( detail::getCorrectPoints( p1, p2 ) );
 	}
 
 /// Returns true if circle is inside flat rectangle \c rect
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect )
 	{
-		return impl_isInside( rect.get2Pts() );
+		return implC_isInside( rect.get2Pts() );
 	}
 
-	private:
 	template<typename FPT2>
-	bool impl_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const
+	detail::Intersect<detail::Inters_2,FPT>
+	intersects( const Line2d_<FPT2>& li ) const
+	{
+		return li.intersects( *this );
+	}
+
+private:
+	template<typename FPT2>
+	bool implC_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const
 	{
 		auto p1 = ppts.first;
 		auto p2 = ppts.second;
@@ -883,7 +1068,7 @@ class Circle_
 		return false;
 	}
 
-	public:
+public:
 	template<typename FPT2>
 	bool operator == ( const Circle_<FPT2>& other ) const
 	{
@@ -981,85 +1166,6 @@ enum class Dtype : char
 	Float,Double,LongDouble
 };
 
-//------------------------------------------------------------------
-namespace detail {
-
-struct Inters_1 {};
-struct Inters_2 {};
-
-/// Common stuff for intersection code
-struct IntersectCommon
-{
-	protected:
-		bool _doesIntersect = false;
-	public:
-		bool operator()() const
-		{
-			return _doesIntersect;
-		}
-};
-
-/// Base class for intersection
-template<typename T,typename FPT>
-struct Intersect {};
-
-/// One point intersection
-template<typename FPT>
-struct Intersect<Inters_1,FPT>: IntersectCommon
-{
-	template<typename U> friend class ::homog2d::Segment_;
-
-	public:
-		Point2d_<FPT>
-		get() const
-		{
-			return _ptIntersect;
-		}
-	private:
-		Point2d_<FPT> _ptIntersect;
-};
-
-/// Two points intersection
-template<typename FPT>
-struct Intersect<Inters_2,FPT>: IntersectCommon
-{
-	template<typename U,typename V> friend class ::homog2d::Root;
-	public:
-		Intersect() {}
-		Intersect( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
-			: _ptIntersect_1(p1), _ptIntersect_2(p2)
-		{
-				_doesIntersect = true;
-		}
-
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		get() const
-		{
-			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
-		}
-	private:
-		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
-};
-
-#if 0
-/// Multiple intersections
-template<typename FPT>
-struct IntersectM
-{
-	private:
-		std::vector<Point2d_<FPT>> _vecInters;
-	public:
-		bool operator()() const
-		{
-			return !_vecInters.empty();
-		}
-		void addPt( const Point2d_<FPT>& pt )
-		{
-			_vecInters.push_back(pt);
-		}
-};
-#endif
-} // namespace detail
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -1078,25 +1184,29 @@ class Root
 	template<typename U,typename V>
 	friend class Root;
 
-	template<typename T>
-	friend Point2d_<T>
-	operator * ( const Line2d_<T>&, const Line2d_<T>& );
+	template<typename FPT1,typename FPT2>
+	friend Point2d_<FPT1>
+	operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
 
-	template<typename T>
+	template<typename FPT1,typename FPT2>
+	friend Line2d_<FPT1>
+	operator * ( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
+
+	template<typename T,typename U>
 	friend Line2d_<T>
-	operator * ( const Point2d_<T>&, const Point2d_<T>& );
+	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
 
-	template<typename T1,typename T2,typename T3>
-	friend Root<T1,T3>
-	detail::crossProduct( const Root<T2,T3>&, const Root<T2,T3>& );
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
+	friend Root<T1,FPT1>
+	detail::crossProduct( const Root<T2,FPT1>&, const Root<T2,FPT2>& );
 
 	template<typename U,typename V>
 	friend std::ostream&
 	operator << ( std::ostream& f, const Root<U,V>& r );
 
-	template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
-	detail::product( Root<T1,FPT1>&, const Hmatrix_<U,FPT2>&, const Root<T2,FPT1>& );
+	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 
 	template<typename T1,typename T2>
 	friend Line2d_<T1>
@@ -1142,7 +1252,7 @@ to convert a line (or point) from double to float, but I don't get why...
 /// Constructor with single arg of type "Point"
 /**
 This will call one of the two overloads of \c impl_init_1_Point(), depending on type of object:
-- if type is a point, then it can be seen as a copy constructor
+- if type is a point, then it can be seen as a copy-constructor
 - if type is a line, this will build a line from (0,0] to \c pt
 */
 		template<typename T>
@@ -1183,7 +1293,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			_v[1] = static_cast<FPT>(other._v[1]);
 			_v[2] = static_cast<FPT>(other._v[2]);
 		}
-		/// Arg is a point, object is a point => copy constructor
+		/// Arg is a point, object is a point => copy-constructor
 		template<typename T>
 		void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsPoint>& )
 		{
@@ -1203,7 +1313,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 		}
-		/// Arg is a line, object is a line => copy constructor
+		/// Arg is a line, object is a line => copy-constructor
 		template<typename T>
 		void impl_init_1_Line( const Line2d_<T>& li, const detail::RootHelper<type::IsLine>& )
 		{
@@ -1323,8 +1433,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
 
-		template<typename T>
-		bool isParallelTo( const Root<T,FPT>& li ) const
+		template<typename T,typename FPT2>
+		bool isParallelTo( const Root<T,FPT2>& li ) const
 		{
 			return impl_isParallelTo( li, detail::RootHelper<T>() );
 		}
@@ -1337,15 +1447,15 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 /**
 Please check out warning described in impl_getAngle()
 */
-		template<typename T>
-		HOMOG2D_INUMTYPE getAngle( const Root<T,FPT>& other ) const
+		template<typename T,typename FPT2>
+		HOMOG2D_INUMTYPE getAngle( const Root<T,FPT2>& other ) const
 		{
 			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
 
 /// Returns angle in rad. between line and segment \c seg. \sa  homog2d::getAngle()
-		template<typename T>
-		HOMOG2D_INUMTYPE getAngle( const Segment_<T>& seg ) const
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
 		{
 			return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
 		}
@@ -1390,8 +1500,11 @@ Please check out warning described in impl_getAngle()
 
 		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		bool impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+		template<typename FPT2>
+		bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename FPT2>
+		bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
 		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const;
@@ -1441,8 +1554,8 @@ Please check out warning described in impl_getAngle()
 			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 		}
 
-		template<typename T>
-		std::vector<Point2d_<FPT>> intersects( const Polyline_<T>& pl ) const
+		template<typename FPT2>
+		std::vector<Point2d_<FPT>> intersects( const Polyline_<FPT2>& pl ) const
 		{
 			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
 		}
@@ -1544,12 +1657,12 @@ Please check out warning described in impl_getAngle()
 		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
-		template<typename T>
+		template<typename FPT2>
 		std::vector<Point2d_<FPT>>
-		impl_intersectsPolyline( const Polyline_<T>& pl, const detail::RootHelper<type::IsLine>& ) const;
-		template<typename T>
+		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const;
+		template<typename FPT2>
 		std::vector<Point2d_<FPT>>
-		impl_intersectsPolyline( const Polyline_<T>& pl, const detail::RootHelper<type::IsPoint>& ) const;
+		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -1726,9 +1839,9 @@ namespace detail {
 
 //------------------------------------------------------------------
 /// Private free function, returns true if point \c pt is inside the rectangle defined by (\c p00 , \c p11)
-template<typename FPT>
+template<typename FPT1,typename FPT2>
 bool
-ptIsInside( const Point2d_<FPT>& pt, const Point2d_<FPT>& p00, const Point2d_<FPT>& p11 )
+ptIsInside( const Point2d_<FPT1>& pt, const Point2d_<FPT2>& p00, const Point2d_<FPT2>& p11 )
 {
 	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
 		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
@@ -1944,8 +2057,12 @@ the one with smallest y-coordinate will be returned first */
 			return _ptS1 * _ptS2;
 		}
 
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT>& ) const;
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT>&  ) const;
+		template<typename FPT2>
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
+		template<typename FPT2>
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
+		template<typename FPT2>
+		std::vector<Point2d_<FPT>>              intersects( const Circle_<FPT2>&  ) const;
 
 		template<typename T>
 		bool isParallelTo( const T& other ) const
@@ -1998,6 +2115,20 @@ Line2d_<FPT1>
 getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 {
 	return Line2d_<FPT1>( c1.center(), c2.center() );
+}
+
+template<typename FPT>
+Point2d_<FPT>
+getMiddlePoint( const Segment_<FPT>& seg )
+{
+	return seg.getMiddlePoint();
+}
+
+template<typename FPT>
+std::array<Segment_<FPT>,4>
+getSegs( const FRect_<FPT>& seg )
+{
+	return seg.getSegs();
 }
 
 
@@ -2156,8 +2287,9 @@ Algorithm:<br>
 We check if the intersection point lies in between the range of both segments, both on x and on y
 */
 template<typename FPT>
+template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
-Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
+Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto l1 = getLine();
@@ -2181,14 +2313,16 @@ Segment_<FPT>::intersects( const Segment_<FPT>& s2 ) const
 					out._doesIntersect = true;
 	return out;
 }
+
 /// Computes intersection between line and segment
 /**
 Algorithm:<br>
 We check if the intersection point lies in between the range of the segment, both on x and on y
 */
 template<typename FPT>
+template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
-Segment_<FPT>::intersects( const Line2d_<FPT>& li1 ) const
+Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
@@ -2208,6 +2342,31 @@ Segment_<FPT>::intersects( const Line2d_<FPT>& li1 ) const
 
 	return out;
 }
+
+/// Segment-circle intersection
+/// \todo finish this !
+template<typename FPT>
+template<typename FPT2>
+std::vector<Point2d_<FPT>>
+Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
+{
+	std::vector<Point2d_<FPT>> out;
+	auto line = this->getLine();
+
+	auto ilc = line.intersects( circle );
+	if( !ilc() )	                       // line does not intersect circle
+		return out;
+
+	auto p_pts = ilc.get();
+	const auto& p1 = p_pts.first;
+	const auto& p2 = p_pts.second;
+//	if( )
+//	if( !p_pts.first.isInside( circle ) && !p_pts.secont.isInside( circle ) )
+//		return out;  // both points are outside circle
+
+	return out;
+}
+
 
 //------------------------------------------------------------------
 /// Overload for points
@@ -2479,8 +2638,8 @@ Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper
 namespace detail {
 
 	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	template<typename Out,typename In,typename FPT>
-	Root<Out,FPT> crossProduct( const Root<In,FPT>& r1, const Root<In,FPT>& r2 )
+	template<typename Out,typename In,typename FPT1,typename FPT2>
+	Root<Out,FPT1> crossProduct( const Root<In,FPT1>& r1, const Root<In,FPT2>& r2 )
 	{
 		auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
 		auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
@@ -2489,19 +2648,19 @@ namespace detail {
 		auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
 		auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
 
-		Root<Out,FPT> res;
-		res._v[0] = static_cast<FPT>( r1_b * r2_c  - r1_c * r2_b );
-		res._v[1] = static_cast<FPT>( r1_c * r2_a  - r1_a * r2_c );
-		res._v[2] = static_cast<FPT>( r1_a * r2_b  - r1_b * r2_a );
+		Root<Out,FPT1> res;
+		res._v[0] = static_cast<FPT1>( r1_b * r2_c  - r1_c * r2_b );
+		res._v[1] = static_cast<FPT1>( r1_c * r2_a  - r1_a * r2_c );
+		res._v[2] = static_cast<FPT1>( r1_a * r2_b  - r1_b * r2_a );
 
 		return res;
 	}
 } // namespace detail
 
 /// Free function template, product of two lines, returns a point
-template<typename FPT>
+template<typename FPT,typename FPT2>
 Point2d_<FPT>
-operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT>& rhs )
+operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs.isParallelTo(rhs) )
@@ -2512,9 +2671,9 @@ operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT>& rhs )
 }
 
 /// Free function template, product of two points, returns a line
-template<typename FPT>
+template<typename FPT,typename FPT2>
 Line2d_<FPT>
-operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT>& rhs )
+operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs == rhs )
@@ -2624,16 +2783,18 @@ getAngle( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 }
 
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>& li, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT2>& li, const detail::RootHelper<type::IsLine>& ) const
 {
 	if( getAngle(li) < Root::nullAngleValue() )
 		return true;
 	return false;
 }
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot use IsParallel() with a point" );
 	return false;    // to avoid a warning message on build
@@ -2895,21 +3056,23 @@ namespace detail {
 /**
 - T1 and T2: IsLine or IsPoint
 
-\todo Add checking that T1 and T2 are opposite class
 */
-template<typename T1,typename T2,typename U,typename FPT1,typename FPT2>
+template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product(
-	Root<T1,FPT1>&          out,
-	const Hmatrix_<U,FPT2>& h,
-	const Root<T2,FPT1>&    in
+	Root<T1,FPT1>&       out,
+	const Matrix_<FPT2>& h,
+	const Root<T2,FPT1>& in
 )
 {
 	for( int i=0; i<3; i++ )
 	{
-		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._data[i][0]) * in._v[0];
+/*		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._data[i][0]) * in._v[0];
 		sum      += h._data[i][1] * in._v[1];
-		sum      += h._data[i][2] * in._v[2];
+		sum      += h._data[i][2] * in._v[2]; */
+		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h[i][0]) * in._v[0];
+		sum      += h[i][1] * in._v[1];
+		sum      += h[i][2] * in._v[2];
 		out._v[i] = sum;
 	}
 }
@@ -2923,17 +3086,42 @@ Root<typename detail::HelperPL<T>::OtherType,V>
 operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 {
 	Root<typename detail::HelperPL<T>::OtherType,V> out;
-	detail::product( out, h, in );
+	detail::product( out, h._data, in );
 	return out;
 }
 
-/// Apply homography to a point or line. Free function, templated by point or line
-template<typename T,typename U,typename V>
-Root<T,V>
-operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Root<T,V>& in )
+/// Free function, apply homography to a point.
+template<typename T,typename U>
+Point2d_<T>
+operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
 {
-	Root<T,V> out;
-	detail::product( out, h, in );
+	Point2d_<T> out;
+	detail::product( out, h._data, in );
+	return out;
+}
+
+/// Free function, apply homography to a line.
+/// \todo finish this
+template<typename T,typename U>
+Line2d_<T>
+operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
+{
+	if( h._hmt == nullptr )             // if H^-T	not allocated yet, do it
+	{
+		h._hmt = std::unique_ptr<detail::Matrix_<U>>( new detail::Matrix_<U>() );
+		h._hasChanged = true;
+	}
+
+	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
+	{
+		auto mat_inv = h.p_inverse();
+		*h._hmt = h.p_transpose( mat_inv );
+		h._hasChanged = false;
+	}
+
+	Line2d_<T> out;
+	detail::product( out, *h._hmt, in );
+	out.p_normalizeLine();
 	return out;
 }
 
@@ -3008,6 +3196,7 @@ alloc( std::size_t nb )
 //------------------------------------------------------------------
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
+/// \todo Fix the for lines, so that it uses the H^-T matrix !
 template<typename FPT,typename Cont>
 typename std::enable_if<priv::Is_Container<Cont>::value,Cont>::type
 operator * (
@@ -3019,7 +3208,7 @@ operator * (
 	auto it = std::begin( vout );
 	for( const auto& elem: vin )
 	{
-		detail::product( *it, h, elem );
+		*it = h * elem;
 		it++;
 	}
 	return vout;

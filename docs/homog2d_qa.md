@@ -28,4 +28,5 @@ auto b = mat * li; // b is a point !
 - A: I don't see any reason why that would not be the case, as long as you are able to handle the inclusion of a file in your build process.
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 
-
+- Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite, why?
+- A: This seems to be an issue whith Catch, regular program shouldn't issue those, no worry.

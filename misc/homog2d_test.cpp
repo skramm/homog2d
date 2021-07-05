@@ -238,15 +238,15 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lH2(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> lH3 = lH2;
 
-		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
-		CHECK( li2 == lH2 );
+//		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
+//		CHECK( li2 == lH2 );
 		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
-		Line2d_<NUMTYPE> lV2;
-		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
-		CHECK( li3 == lV2 );
+//		Line2d_<NUMTYPE> lV2;
+//		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
+//		CHECK( li3 == lV2 );
 	}
 	{
 		Line2d_<NUMTYPE> li(4,2);
@@ -274,10 +274,10 @@ TEST_CASE( "test parallel", "[test_para]" )
 		Line2d_<NUMTYPE> l2b( Point2d_<NUMTYPE>(3,0),Point2d_<NUMTYPE>(4,1) ); // 45° line, starting at (3,0)
 		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 
-		l2b.addOffset( LineOffset::horiz, 10. );
-		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
-		l2b.addOffset( LineOffset::vert, 10. );
-		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+//		l2b.addOffset( LineOffset::horiz, 10. );
+//		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
+//		l2b.addOffset( LineOffset::vert, 10. );
+//		CHECK( getAngle( l1, l2b ) == Approx( M_PI/4. ) );
 	}
 
 	INFO( "Checking parallel lines" )
@@ -349,7 +349,7 @@ TEST_CASE( "dist2points", "[test2]" )
 	Point2d_<NUMTYPE> p2( 4,4);
 	CHECK( p1.distTo( p2 ) == std::sqrt(2) );
 }
-
+#if 0
 TEST_CASE( "offset test", "[test3]" )
 {
 	Line2d_<NUMTYPE> lA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
@@ -385,14 +385,14 @@ TEST_CASE( "offset test", "[test3]" )
 		CHECK( liH == liH2 );
 	}
 }
-
+#endif
 TEST_CASE( "exceptions", "[testE]" )
 {
 	Line2d_<NUMTYPE> v1,v2; // 2 identical vertical lines
 
 	CHECK_THROWS( v1*v2 );
-	v2.addOffset( LineOffset::horiz, 1 );
-	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
+//	v2.addOffset( LineOffset::horiz, 1 );
+//	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
 
 	Point2d_<NUMTYPE> p1,p2;
 	CHECK_THROWS( p1*p2 ); // same points can't define a line
@@ -468,7 +468,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		m2c[2][2] = 1.;
 		Homogr_<NUMTYPE> H2c(m2c);
 	}
-	{
+	{ // test of operator * for points
 		Homogr_<NUMTYPE> H;
 		Point2d_<NUMTYPE> pt1(1,1);
 		H.setTranslation( 3., 2. );
@@ -484,7 +484,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( pt3.getX() == Approx( -1. ) );
 		CHECK( pt3.getY() == Approx(  1. ) );
 	}
-	{
+	{ // test of operator * for container holding points, using applyTo()
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
@@ -502,7 +502,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.applyTo( l_pt );
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
-	{
+	{ // test of operator * for container holding points
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
@@ -580,11 +580,11 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 long double
 computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
-	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
-	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-	H.inverse().transpose();
-	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
-	return line2.distTo( pt2 ); // should be 0 !
+	Line2d_<NUMTYPE> line1( pt1 );       // line from (0,0) to pt1
+	Point2d_<NUMTYPE> pt2 = H * pt1;     // move the point with H
+//	H.inverse().transpose();             // not needed, done automatically since release 2.4 !
+	Line2d_<NUMTYPE> line2 = H * line1;  // move the line with H^{-T}
+	return line2.distTo( pt2 );          // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789
@@ -771,11 +771,17 @@ TEST_CASE( "circle intersection", "[test_Circle]" )
 	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
 	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
 
-	Circle_<NUMTYPE> cir1;
+//	Circle_<NUMTYPE> cir1;
 	Circle_<NUMTYPE> cir2(45);
-	CHECK( (cir2.radius() == 45.) );
+	CHECK( cir2.radius() == 45. );
 	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
 	CHECK( cir3.radius() == 7. );
+	{
+		auto cl1 = cir2.intersects( liv );
+		CHECK( cl1() == true );
+		CHECK( cl1.get().first  == Point2d(0,-45) );
+		CHECK( cl1.get().second == Point2d(0,+45) );
+	}
 }
 
 TEST_CASE( "inside circle", "[tic]" )
