@@ -811,8 +811,12 @@ struct Intersect<Inters_1,FPT>: IntersectCommon
 		Point2d_<FPT>
 		get() const
 		{
+			if( !_doesIntersect )
+				throw std::runtime_error( "No intersection points!" );
 			return _ptIntersect;
 		}
+		size_t size() const { return _doesIntersect?1:0; }
+
 	private:
 		Point2d_<FPT> _ptIntersect;
 };
@@ -829,16 +833,18 @@ struct Intersect<Inters_2,FPT>: IntersectCommon
 		{
 				_doesIntersect = true;
 		}
-
+		size_t size() const { return _doesIntersect?2:0; }
 		std::pair<Point2d_<FPT>,Point2d_<FPT>>
 		get() const
 		{
+			if( !_doesIntersect )
+				throw std::runtime_error( "No intersection points!" );
 			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
 		}
 	private:
 		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
 };
-#if 0
+
 /// Multiple intersections
 template<typename FPT>
 struct IntersectM
@@ -850,12 +856,17 @@ struct IntersectM
 		{
 			return !_vecInters.empty();
 		}
-		void addPt( const Point2d_<FPT>& pt )
+		size_t size() const { return _vecInters.size(); }
+		void add( const Point2d_<FPT>& pt )
 		{
 			_vecInters.push_back(pt);
 		}
+		std::vector<Point2d_<FPT>> get() const
+		{
+			return _vecInters;
+		}
 };
-#endif
+
 } // namespace detail
 
 
@@ -1009,11 +1020,20 @@ public:
 		return implC_isInside( rect.get2Pts() );
 	}
 
+/// Circle - Line intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Line2d_<FPT2>& li ) const
 	{
 		return li.intersects( *this );
+	}
+
+/// Circle - Segment intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT>
+	intersects( const Segment_<FPT2>& seg ) const
+	{
+		return seg.intersects( *this );
 	}
 
 private:
@@ -1517,27 +1537,32 @@ Please check out warning described in impl_getAngle()
 		}
 
 		template<typename FPT2>
-		std::vector<Point2d_<FPT>> intersects( const Polyline_<FPT2>& pl ) const
+		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
 		{
 			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
 		}
 
+/// Point is inside flat rectangle
 		bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
 		{
 			return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::RootHelper<LP>() );
 		}
+
+/// Point is inside FRect
 		template<typename FPT2>
-		bool isInside( const FRect_<FPT2>& rect )
+		bool isInside( const FRect_<FPT2>& rect ) const
 		{
 			return impl_isInsideRect( rect, detail::RootHelper<LP>() );
 		}
 
+/// Point is inside circle
 		template<typename T>
 		bool isInside( const Point2d_<FPT>& center, T radius ) const
 		{
 			HOMOG2D_CHECK_IS_NUMBER(T);
 			return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
 		}
+/// Point is inside Circle
 		template<typename T>
 		bool isInside( Circle_<T> cir ) const
 		{
@@ -1620,10 +1645,10 @@ Please check out warning described in impl_getAngle()
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
 		template<typename FPT2>
-		std::vector<Point2d_<FPT>>
+		detail::IntersectM<FPT>
 		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const;
 		template<typename FPT2>
-		std::vector<Point2d_<FPT>>
+		detail::IntersectM<FPT>
 		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
 
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -2024,7 +2049,7 @@ the one with smallest y-coordinate will be returned first */
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
 		template<typename FPT2>
-		std::vector<Point2d_<FPT>>              intersects( const Circle_<FPT2>&  ) const;
+		detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
 
 		template<typename T>
 		bool isParallelTo( const T& other ) const
@@ -2305,30 +2330,51 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	return out;
 }
 
-/// Segment-circle intersection
-/// \todo finish this !
+/// Segment - Circle intersection
+/// \todo need a fix here: if segment is horizontal of vertical, we can't get the corresponding FRect !
 template<typename FPT>
 template<typename FPT2>
-std::vector<Point2d_<FPT>>
+detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
-	std::vector<Point2d_<FPT>> out;
+	detail::IntersectM<FPT> out;
 	auto line = this->getLine();
 
-	auto ilc = line.intersects( circle );
-	if( !ilc() )	                       // line does not intersect circle
+	auto int_lc = line.intersects( circle );
+	if( !int_lc() )	                       // line does not intersect circle
 		return out;
 
-	auto p_pts = ilc.get();
+	if( _ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // if both points of segment are
+		return out;                                             // inside the circle, no intersection !
+
+	auto p_pts = int_lc.get();      // get the line intersection points
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
-//	if( )
-//	if( !p_pts.first.isInside( circle ) && !p_pts.secont.isInside( circle ) )
-//		return out;  // both points are outside circle
 
+	FRect_<FPT> rseg( _ptS1, _ptS2 );
+	if(                                                          // if one point of the segment is
+		(!_ptS1.isInside( circle ) && _ptS2.isInside( circle ))  // inside and the other outside,
+		||                                                       // then we have a single
+		(_ptS1.isInside( circle ) && !_ptS2.isInside( circle ))  // intersection point
+	)
+	{
+        if( p1.isInside( rseg ) )          // check which one of the intersections
+			out.add( p1 );           // points is inside
+		else
+			out.add( p2 );
+		return out;
+	}
+
+// here, we have both points of segment outside the circle
+	assert( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) );
+
+	if( p1.isInside( rseg ) )  // if yes, then the other is inside too
+	{
+		out.add( p1 );           // points is inside
+		out.add( p2 );
+	}
 	return out;
 }
-
 
 //------------------------------------------------------------------
 /// Overload for points
@@ -2989,15 +3035,15 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 /// Intersection between line and polyline
 template<typename LP, typename FPT>
 template<typename FPT2>
-std::vector<Point2d_<FPT>>
+detail::IntersectM<FPT>
 Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const
 {
-	std::vector<Point2d_<FPT>> out;
+	detail::IntersectM<FPT> out;
 	for( const auto& seg: pl.getSegs() )
 	{
 		auto ri = seg.intersects( *this );
 		if( ri() )
-			out.push_back( ri.get() );
+			out.add( ri.get() );
 	}
 	return out;
 }
@@ -3005,7 +3051,7 @@ Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::
 /// Invalid instanciation
 template<typename LP, typename FPT>
 template<typename FPT2>
-std::vector<Point2d_<FPT>>
+detail::IntersectM<FPT>
 Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(Polyline) on a point" );

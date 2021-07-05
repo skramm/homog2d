@@ -2,6 +2,8 @@
 
 Home page: https://github.com/skramm/homog2d
 
+[TOC]
+
 This is the manual for the current master branch of `homog2d`.
 For stable releases, see home page.
 
@@ -516,6 +518,45 @@ The member function `buildFrom4Points()` accepts as third argument an `int`, 0 m
 
 ## 6 - Computation of intersection points
 <a name="inter"></a>
+
+This library has a homogeneous API for all intersections between the provided geometrical primitives.
+That is, whatever `a` and `b` (excepts points of course), there is a member function `intersects()` that both
+gives the answer to the question "do theses primitives intersect?" but also provides the intersections points.
+
+If you are only interested in the first answer, you can write:
+
+```C++
+	if( a.intersects(b)() )  // or b.intersects(a)()
+	 ... then do something
+```
+
+If you need the intersection points, then just store the returned value:
+```C++
+	auto res = a.intersects(b);  // or b.intersects(a)
+	if( res() )           // does intersect !
+	{
+		std::cout << "number of intersections: " << res.size() << '\n';
+		auto pts = res.get(); // get the points
+	}
+```
+
+The number of intersection points will depend on the primitives, thus the access method (`get()`) will return different types.
+It will also throw if there is no intersection!
+And whatever the primitives, you can always get the number of intersection points with the `size()` member function.
+
+The table below summarizes what you can expect:
+
+|          | Line2d | Segment | FRect   | Circle |
+|----------|--------|---------|---------|--------|
+| Line2d   |    1   |  0 or 1 |  0 or 2 | 0 or 2 |
+| Segment  | 0 or 1 |  0 or 1 |  0,1,2  | 0,1,2  |
+| FRect    | 0 or 2 |  0,1,2  |  TODO   |  TODO  |
+| Circle   | 0 or 2 |  0,1,2  |  TODO   |  TODO  |
+
+
+- For line-line intersections, the `get()` member function will return the intersection point.
+- For line-circle or line-FRect intersections, the `get()` member function will return the two intersection points as a `std::pair`.
+- For the other situations, the `get()` member function will return a `std::vector` holding the points.
 
 ### 6.1 - Intersection of lines with flat rectangles
 
