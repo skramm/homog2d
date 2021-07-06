@@ -678,12 +678,16 @@ H = m;        // or call assignment operator
 
 ### 7.2 - Drawing functions using OpenCv
 
-You can also directly draw points and lines on an image (`cv::Mat` type):
+All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` type), using their `draw()` member function:
+
 ```C++
 Point2d pt( ... );
 Line2d li( ... );
+Segment seg( ... );
 li.draw( mat );
 pt.draw( mat );
+seg.draw( mat );
+...
 ```
 
 These drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
@@ -709,13 +713,13 @@ You can at any time return to the "factory" settings with a call to a static fun
 CvDrawParams::resetDefault();
 ```
 
-You can also draw line segments with the Segment type. It also supports the drawing parameter:
-```C++
-Segment s1( Point2d(100,100),  Point2d(300,200) );
-s1.draw( some_img );                                 // using default style
-Segment s2( Point2d(300,100),  Point2d(100,200) );
-s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
-```
+The available functions are given in the table below:
+    Function    | arguments |
+----------------|------------------|
+setColor()      | 3 ints ([0-255]) |
+setPointStyle() | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` |
+setPointSize()  |  1 int (pixels)  |
+setThickness()  |  1 int (pixels)  |
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).

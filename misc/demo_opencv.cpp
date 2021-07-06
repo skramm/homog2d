@@ -871,14 +871,31 @@ void action_CC( void* param )
 
 	data.clearImage();
 
+	data.c1.set( data.vpt[0], 80 );
+	data.c2.set( data.vpt[1], 120 );
+
+	Segment seg( data.vpt[2], data.vpt[3] );
+	seg.draw( data.img, CvDrawParams().setColor( 200,0,50) );
+
 	data.c1.draw( data.img );
 	data.c2.draw( data.img );
 	data.c1.center().draw( data.img );
 	data.c2.center().draw( data.img );
-	auto intersPts = data.c1.intersects(data.c2);
-	if( intersPts() )
+
+	auto intersSeg = data.c1.intersects(seg);
+//	auto intersSeg = seg.intersects(data.c1);
+	if( intersSeg() )
 	{
-		std::cout << "intersection !\n";
+		auto pts = intersSeg.get();
+		draw( data.img, pts );
+	}
+	auto intersCir = data.c1.intersects(data.c2);
+	if( intersCir() )
+	{
+//		std::cout << "intersection !\n";
+		auto ppts = intersCir.get();
+		ppts.first.draw( data.img );
+		ppts.second.draw( data.img );
 	}
 	data.showImage();
 }
