@@ -548,10 +548,10 @@ The table below summarizes the number of intersection points to expect:
 
 |          | Line2d | Segment | FRect   | Circle |
 |----------|--------|---------|---------|--------|
-| Line2d   |    1   |  0 or 1 |  0 or 2 | 0 or 2 |
+| Line2d   | 0 or 1 |  0 or 1 |  0 or 2 | 0 or 2 |
 | Segment  | 0 or 1 |  0 or 1 |  0,1,2  | 0,1,2  |
-| FRect    | 0 or 2 |  0,1,2  |  TODO   |  TODO  |
-| Circle   | 0 or 2 |  0,1,2  |  TODO   | 0 or 2 |
+| FRect    | 0 or 2 |  0,1,2  |  0,2,4  | 0,2,4  |
+| Circle   | 0 or 2 |  0,1,2  |  0,2,4  | 0 or 2 |
 
 
 - For line-line intersections, the `get()` member function will return the intersection point.

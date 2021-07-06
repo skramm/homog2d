@@ -889,7 +889,46 @@ TEST_CASE( "circle/circle intersection", "[cci]" )
 		CHECK( cA == cB );
 		CHECK( !cA.intersects(cB)() );
 	}
+	{
+		Circle_<NUMTYPE> cA( Point2d(0,0), 2 );
+		Circle_<NUMTYPE> cB( Point2d(3,0), 2 );
+		CHECK( cA != cB );
+		CHECK( cA.intersects(cB)() );
+	}
 }
+
+TEST_CASE( "FRect/FRect intersection", "[rri]" )
+{
+	{
+		FRect_<NUMTYPE> r1, r2;
+		CHECK( r1 == r2 );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(1,1) );
+		FRect_<NUMTYPE> r2( Point2d(4,4), Point2d(5,5) );
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  == r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+		FRect_<NUMTYPE> r2( Point2d(2,1), Point2d(5,3) );
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  == r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+	}
+
+}
+
 
 TEST_CASE( "inside circle", "[tic]" )
 {

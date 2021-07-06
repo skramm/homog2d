@@ -965,7 +965,7 @@ class FRect_
 	}
 /// Returns the 4 segments of the rectangle
 	std::array<Segment_<FPT>,4>
-	getSegs()
+	getSegs() const
 	{
 		auto pts = get4Pts();
 		std::array<Segment_<FPT>,4> out;
@@ -984,6 +984,48 @@ class FRect_
 			if( !pt.isInside( shape ) )
 				return false;
 		return true;
+	}
+
+/// FRect/Line intersection
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
+	{
+		return line.intersects( *this );
+	}
+
+/// FRect/Segment intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
+	{
+		std::vector<Point2d_<FPT>> v_inters;
+		for( const auto& rseg: getSegs() )
+		{
+			auto inters = rseg.intersects( seg );
+			if( inters() )
+				v_inters.push_back( inters.get() );
+		}
+		assert( v_inters.size() < 3 );
+
+		detail::IntersectM<FPT> out;
+		for( const auto& elem: v_inters )
+			out.add( elem );
+		return out;
+	}
+
+/// FRect/Circle + FRect/FRect intersection
+	template<typename T>
+	detail::IntersectM<FPT> intersects( const T& other ) const
+	{
+		detail::IntersectM<FPT> out;
+		for( const auto& seg: getSegs() )
+		{
+			auto inters = seg.intersects( other );
+			if( inters() )
+			{
+				out.add( inters.get() );
+			}
+		}
+		return out;
 	}
 
 	template<typename FPT2>
@@ -2127,6 +2169,11 @@ the one with smallest y-coordinate will be returned first */
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
 		template<typename FPT2>
 		detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
+		template<typename FPT2>
+		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& r ) const
+		{
+			return r.intersects( *this );
+		}
 
 		template<typename T>
 		bool isParallelTo( const T& other ) const
@@ -2504,8 +2551,8 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 		(_ptS1.isInside( circle ) && !_ptS2.isInside( circle ))  // intersection point
 	)
 	{
-        if( detail::isInArea( p1, _ptS1, _ptS2 ) )         // check which one of the intersections
-			out.add( p1 );           // points is inside
+        if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // check which one of the intersections
+			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
 		return out;
