@@ -823,7 +823,12 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		}
 		size_t size() const { return _doesIntersect?1:0; }
 
-		Intersect() {};
+		Intersect() {}
+		Intersect( const Point2d_<FPT>& ptInter )
+			: _ptIntersect(ptInter)
+		{
+			_doesIntersect = true;
+		}
 /// To enable conversions from different floating-point types
 		template<typename FPT2>
 		Intersect( const Intersect<Inters_1,FPT2>& other )
@@ -1126,53 +1131,6 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 };
 
-/// Circle/Circle intersection
-/**
-Ref:
-- https://stackoverflow.com/questions/3349125/
-
-\todo optimize to remove the sqrt (in \c distTo() )
-
-\todo fix this !
-*/
-template<typename FPT>
-template<typename FPT2>
-detail::Intersect<detail::Inters_2,FPT>
-Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
-{
-	auto d = _center.distTo( other._center );
-	detail::Intersect<detail::Inters_2,FPT> out;
-
-	const auto& r1 = _radius;
-	const auto& r2 = other._radius;
-	const auto& p1 = _center;
-	const auto& p2 = other._center;
-
-	if( d > r1 + r2 )  // no intersection
-		return detail::Intersect<detail::Inters_2,FPT>();
-
-	if( d < std::abs( r1 - r2 ) ) // no intersection: one circle inside the other
-		return detail::Intersect<detail::Inters_2,FPT>();
-
-	auto a = (r1*r1 - r2*r2 + d*d) / (2.*d);
-	auto h = std::sqrt(r1*r1 - a*a);
-
-	Point2d_<FPT> P0(
-		( p1.getX() - p2.getX() ) * a / d + p2.getX(),
-		( p1.getY() - p2.getY() ) * a / d + p2.getY()
-	);
-
-	Point2d_<FPT> pt3(
-		P0.getX() + h*( p1.getY() - p2.getY() ) / d,
-		P0.getY() - h*( p1.getX() - p2.getX() ) / d
-	);
-	Point2d_<FPT> pt4(
-		P0.getX() - h*( p1.getY() - p2.getY() ) / d,
-		P0.getY() + h*( p1.getX() - p2.getX() ) / d
-	);
-	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
-}
-
 /// Holds private stuff
 namespace priv {
 
@@ -1240,7 +1198,6 @@ enum class Dtype : char
 {
 	Float,Double,LongDouble
 };
-
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -1838,7 +1795,7 @@ HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 2E-13;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 2E-10;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
@@ -2268,6 +2225,69 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	);
 }
 
+/// Circle/Circle intersection
+/**
+Ref:
+- https://stackoverflow.com/questions/3349125/
+
+\todo benchmark the two approaches below
+*/
+template<typename FPT>
+template<typename FPT2>
+detail::Intersect<detail::Inters_2,FPT>
+Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
+{
+	if( *this == other )
+		return detail::Intersect<detail::Inters_2,FPT>();
+
+	HOMOG2D_INUMTYPE r1 = _radius;
+	HOMOG2D_INUMTYPE r2 = other._radius;
+	Point2d_<HOMOG2D_INUMTYPE> pt1 = _center;
+	Point2d_<HOMOG2D_INUMTYPE> pt2 = other._center;
+
+#if 0
+	HOMOG2D_INUMTYPE d  = _center.distTo( other._center );
+	if( d > r1 + r2 )                                     // no intersection
+		return detail::Intersect<detail::Inters_2,FPT>();
+
+	if( d < std::abs( r1 - r2 ) )                         // no intersection: one circle inside the other
+		return detail::Intersect<detail::Inters_2,FPT>();
+	auto a = (r1*r1 - r2*r2 + d*d) / 2. / d;
+#else
+	HOMOG2D_INUMTYPE x1 = pt1.getX();
+	HOMOG2D_INUMTYPE y1 = pt1.getY();
+	HOMOG2D_INUMTYPE x2 = pt2.getX();
+	HOMOG2D_INUMTYPE y2 = pt2.getY();
+	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+
+	if( d_squared > r1*r1 + r2*r2 + 2.*r1*r2 )              // no intersection
+		return detail::Intersect<detail::Inters_2,FPT>();
+
+	if( d_squared < ( r1*r1 + r2*r2 - 2.*r1*r2 ) )          // no intersection: one circle inside the other
+		return detail::Intersect<detail::Inters_2,FPT>();
+
+	auto d = std::sqrt( d_squared );
+	auto a = (r1*r1 - r2*r2 + d_squared) / 2. / d;
+#endif
+
+	auto h = std::sqrt( r1*r1 - a*a );
+
+	Point2d_<FPT> P0(
+		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
+		( pt2.getY() - pt1.getY() ) * a / d + pt1.getY()
+	);
+
+	Point2d_<FPT> pt3(
+		P0.getX() + h*( pt1.getY() - pt2.getY() ) / d,
+		P0.getY() - h*( pt1.getX() - pt2.getX() ) / d
+	);
+	Point2d_<FPT> pt4(
+		P0.getX() - h*( pt1.getY() - pt2.getY() ) / d,
+		P0.getY() + h*( pt1.getX() - pt2.getX() ) / d
+	);
+	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
+}
+
 //------------------------------------------------------------------
 /// Polyline
 template<typename FPT>
@@ -2379,10 +2399,11 @@ class Polyline_
 namespace detail {
 
 /// Helper function
-template<typename T>
+template<typename T1,typename T2>
 bool
-isBetween( T v, T v1, T v2 )
+isBetween( T1 v, T2 v1, T2 v2 )
 {
+	static_assert( std::is_arithmetic<T1>::value, "Error, type not arithmetic" );
 	if( v >= std::min( v1, v2 ) )
 		if( v <= std::max( v1, v2 ) )
 			return true;
@@ -2390,9 +2411,9 @@ isBetween( T v, T v1, T v2 )
 }
 
 /// Helper function
-template<typename T>
+template<typename T1,typename T2>
 bool
-isInArea( const Point2d_<T>& pt, const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+isInArea( const Point2d_<T1>& pt, const Point2d_<T2>& pt1, const Point2d_<T2>& pt2 )
 {
 	if( isBetween( pt.getX(), pt1.getX(), pt2.getX() ) )
 		if( isBetween( pt.getY(), pt1.getY(), pt2.getY() ) )
@@ -2414,23 +2435,25 @@ detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
 	detail::Intersect<detail::Inters_1,FPT> out;
-	auto l1 = getLine();
-	auto l2 = s2.getLine();
+	Line2d_<HOMOG2D_INUMTYPE> l1 = getLine();
+	Line2d_<HOMOG2D_INUMTYPE> l2 = s2.getLine();
 
 	if( l1.isParallelTo( l2 ) ) // if parallel, no intersection
 		return out;
 
-	out._ptIntersect = l1 * l2;   // intersection point
+//	out._ptIntersect = l1 * l2;   // intersection point
+	Point2d_<HOMOG2D_INUMTYPE> ptInter = l1 * l2;   // intersection point
 
-	const auto& pi   = out._ptIntersect;
 	const auto& ptA1 = this->get().first;
 	const auto& ptA2 = this->get().second;
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
 
-	if( detail::isInArea( pi, ptA1, ptA2 ) )
-		if( detail::isInArea( pi, ptB1, ptB2 ) )
-			out._doesIntersect = true;
+	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
+		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
+			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
+
+//			out._doesIntersect = true;
 
 /*	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
 		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
@@ -2438,7 +2461,7 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 				if( detail::isBetween( pi.getY(), ptB1.getY(), ptB2.getY() ) )
 					out._doesIntersect = true;
 */
-	return out;
+	return out; // no intersection
 }
 
 /// Segment/Line intersection
@@ -2520,7 +2543,9 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
 {
-	f << '[' << r.getX() << ',' << r.getY() << "] ";
+	f << std::scientific << std::setprecision(25)
+	 << '[' << r.getX() << ',' << r.getY() << "] ";
+//	f << '[' << r.getX() << ',' << r.getY() << "] ";
 }
 
 /// Overload for lines
