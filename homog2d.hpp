@@ -839,6 +839,7 @@ struct Intersect<Inters_2,FPT>: IntersectCommon
 				_doesIntersect = true;
 		}
 		size_t size() const { return _doesIntersect?2:0; }
+
 		std::pair<Point2d_<FPT>,Point2d_<FPT>>
 		get() const
 		{
@@ -994,7 +995,7 @@ public:
 
 /// Constructor, given radius circle at (0,0)
 	template<typename FPT2>
-	Circle_( Point2d_<FPT2> center, FPT rad )
+	Circle_( const Point2d_<FPT2>& center, FPT rad )
 		: _radius(rad), _center(center)
 	{}
 
@@ -1003,7 +1004,11 @@ public:
 
 	Point2d_<FPT>       center()       { return _center; }
 	const Point2d_<FPT> center() const { return _center; }
-
+	void set( const Point2d_<FPT>& center, FPT rad )
+	{
+		_radius = rad;
+		_center = center;
+	}
 /// Returns true if circle is inside \c other circle
 	template<typename FPT2>
 	bool isInside( const Circle_<FPT2>& other ) const
@@ -1106,13 +1111,34 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	auto d = _center.distTo( other._center );
 	detail::Intersect<detail::Inters_2,FPT> out;
 
-	if( d > _radius + other._radius )  // no intersection
-		return out;
+	const auto& r1 = _radius;
+	const auto& r2 = other._radius;
+	const auto& p1 = _center;
+	const auto& p2 = other._center;
 
-	if( d < std::abs(_radius - other._radius ) ) // no intersection:
-		return out;                              // one circle inside the other
+	if( d > r1 + r2 )  // no intersection
+		return detail::Intersect<detail::Inters_2,FPT>();
 
+	if( d < std::abs( r1 - r2 ) ) // no intersection: one circle inside the other
+		return detail::Intersect<detail::Inters_2,FPT>();
 
+	auto a = (r1*r1 - r2*r2 + d*d) / (2.*d);
+	auto h = std::sqrt(r1*r1 - a*a);
+
+	Point2d_<FPT> P0(
+		( p1.getX() - p2.getX() ) * a / d + p2.getX(),
+		( p1.getY() - p2.getY() ) * a / d + p2.getY()
+	);
+
+	Point2d_<FPT> pt3(
+		P0.getX() + h*( p1.getY() - p2.getY() ) / d,
+		P0.getY() - h*( p1.getX() - p2.getX() ) / d
+	);
+	Point2d_<FPT> pt4(
+		P0.getX() - h*( p1.getY() - p2.getY() ) / d,
+		P0.getY() + h*( p1.getX() - p2.getX() ) / d
+	);
+	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
 }
 
 /// Holds private stuff
@@ -1798,6 +1824,18 @@ template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
 #ifdef HOMOG2D_USE_OPENCV
+template<typename FPT>
+FRect_<FPT> getFRect( cv::Mat& mat )
+{
+	if(  mat.cols == 0 || mat.rows == 0 )
+		throw HOMOG2D_THROW_ERROR_1( "Illegal values: cols=" + std::to_string(mat.cols) + ", rows=" + std::to_string(mat.rows) );
+
+	return FRect_<FPT>(
+		Point2d_<FPT>(),                      // (0,0)
+		Point2d_<FPT>( mat.cols, mat.rows )   // (w,h)
+	);
+}
+
 /// Free function to return an OpenCv point
 /**
 - RT: return type

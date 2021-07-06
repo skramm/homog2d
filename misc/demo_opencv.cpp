@@ -164,6 +164,7 @@ void action_SI(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
+void action_CC( void* param );
 
 
 //------------------------------------------------------------------
@@ -302,6 +303,12 @@ void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_PL, param );
+}
+
+/// Mouse callback for demo_CC
+void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_CC, param );
 }
 
 //------------------------------------------------------------------
@@ -848,6 +855,46 @@ void demo_PL( int n )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
+struct Param_CC : Data
+{
+	explicit Param_CC( std::string title ):Data(title)
+	{
+		c1.set( vpt[0], 80 );
+		c2.set( vpt[1], 120 );
+	}
+	Circle_<float> c1,c2;
+};
+
+void action_CC( void* param )
+{
+	auto& data = *reinterpret_cast<Param_CC*>(param);
+
+	data.clearImage();
+
+	data.c1.draw( data.img );
+	data.c2.draw( data.img );
+	data.c1.center().draw( data.img );
+	data.c2.center().draw( data.img );
+	auto intersPts = data.c1.intersects(data.c2);
+	if( intersPts() )
+	{
+		std::cout << "intersection !\n";
+	}
+	data.showImage();
+}
+
+void demo_CC( int n )
+{
+	Param_CC data( "Circle-circle intersection" );
+	std::cout << "Demo " << n << ": Circle-circle intersection\n";
+
+	data.setMouseCallback( mouse_CB_CC );
+
+	action_CC( &data );
+	KeyboardLoop kbloop;
+	kbloop.start( data );
+}
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos
@@ -860,6 +907,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_CC,
 		demo_H,
 		demo_PL,
 		demo_1,
