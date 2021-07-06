@@ -907,6 +907,13 @@ class IntersectM
 		{
 			_vecInters.push_back(pt);
 		}
+
+		void add( const std::vector<Point2d_<FPT>>& vpt )
+		{
+			for( const auto& pt: vpt )
+				_vecInters.push_back(pt);
+		}
+
 		std::vector<Point2d_<FPT>> get() const
 		{
 			return _vecInters;
@@ -998,17 +1005,15 @@ class FRect_
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
 		std::vector<Point2d_<FPT>> v_inters;
+		detail::IntersectM<FPT> out;
 		for( const auto& rseg: getSegs() )
 		{
-			auto inters = rseg.intersects( seg );
+			auto inters = rseg.intersects( seg ); // call of Segment/Segment
 			if( inters() )
-				v_inters.push_back( inters.get() );
+				out.add( inters.get() );
+//				v_inters.push_back( inters.get() );
 		}
-		assert( v_inters.size() < 3 );
-
-		detail::IntersectM<FPT> out;
-		for( const auto& elem: v_inters )
-			out.add( elem );
+		assert( out.size() < 3 );
 		return out;
 	}
 
@@ -1016,14 +1021,15 @@ class FRect_
 	template<typename T>
 	detail::IntersectM<FPT> intersects( const T& other ) const
 	{
+		if( *this == other )
+			return detail::IntersectM<FPT>();
+
 		detail::IntersectM<FPT> out;
-		for( const auto& seg: getSegs() )
+		for( const auto& rseg: getSegs() )
 		{
-			auto inters = seg.intersects( other );
+			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment
 			if( inters() )
-			{
 				out.add( inters.get() );
-			}
 		}
 		return out;
 	}
@@ -1041,6 +1047,13 @@ class FRect_
 	bool operator != ( const FRect_<FPT2>& other ) const
 	{
 		return !( *this == other );
+	}
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const FRect_<FPT>& r )
+	{
+		f << "pt1: " << r._ptR1 << " pt2: " << r._ptR2;
+		return f;
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1161,6 +1174,14 @@ public:
 	{
 		return !( *this == other );
 	}
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Circle_<FPT>& r )
+	{
+		f << "center: " << r._center << ", radius=" << r._radius;
+		return f;
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
@@ -1947,8 +1968,10 @@ template<typename FPT1,typename FPT2>
 bool
 ptIsInside( const Point2d_<FPT1>& pt, const Point2d_<FPT2>& p00, const Point2d_<FPT2>& p11 )
 {
-	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
-		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+//	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
+//		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
+	if( pt.getX() > p00.getX() && pt.getX() < p11.getX() )
+		if( pt.getY() > p00.getY() && pt.getY() < p11.getY() )
 			return true;
 	return false;
 }
@@ -2146,7 +2169,7 @@ the one with smallest y-coordinate will be returned first */
 			return std::make_pair( _ptS1, _ptS2 );
 		}
 
-/// Segment "isInside"
+/// Segment "isInside", S can be Circle or FRect
 		template<typename S>
 		bool isInside( const S& shape ) const
 		{
@@ -2169,8 +2192,9 @@ the one with smallest y-coordinate will be returned first */
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
 		template<typename FPT2>
 		detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
+/// Segment/FRect intersection
 		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& r ) const
+		detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 		{
 			return r.intersects( *this );
 		}
@@ -2479,21 +2503,29 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 	Line2d_<HOMOG2D_INUMTYPE> l2 = s2.getLine();
 
 	if( l1.isParallelTo( l2 ) ) // if parallel, no intersection
-		return out;
+		return detail::Intersect<detail::Inters_1,FPT>();
 
-//	out._ptIntersect = l1 * l2;   // intersection point
-	auto ptInter = l1 * l2;   // intersection point
-
-	const auto& ptA1 = this->get().first;
-	const auto& ptA2 = this->get().second;
+	const auto& ptA1 = get().first;
+	const auto& ptA2 = get().second;
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
 
+// if one of the points it the same then one of the other segment, then: NO INTERSECTION !
+	if( ptA1 == ptB1 )
+		return detail::Intersect<detail::Inters_1,FPT>();
+	if( ptA1 == ptB2 )
+		return detail::Intersect<detail::Inters_1,FPT>();
+	if( ptA2 == ptB1 )
+		return detail::Intersect<detail::Inters_1,FPT>();
+	if( ptA2 == ptB2 )
+		return detail::Intersect<detail::Inters_1,FPT>();
+
+	auto ptInter = l1 * l2;   // intersection point
 	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
 		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
 			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
 
-	return out; // no intersection
+	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
 }
 
 /// Segment/Line intersection
@@ -2519,9 +2551,7 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	const auto& ptA2 = this->get().second;
 
 	if( detail::isInArea( pi, ptA1, ptA2 ) )
-//	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
-//		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
-			out._doesIntersect = true;
+		out._doesIntersect = true;
 
 	return out;
 }
@@ -2575,9 +2605,9 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
 {
-	f << std::scientific << std::setprecision(25)
+	f
+//	<< std::scientific << std::setprecision(25)
 	 << '[' << r.getX() << ',' << r.getY() << "] ";
-//	f << '[' << r.getX() << ',' << r.getY() << "] ";
 }
 
 /// Overload for lines

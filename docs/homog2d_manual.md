@@ -2,8 +2,6 @@
 
 Home page: https://github.com/skramm/homog2d
 
-[TOC]
-
 This is the manual for the current master branch of `homog2d`.
 For stable releases, see home page.
 
@@ -12,7 +10,7 @@ For stable releases, see home page.
 3. [Segments](#segments)
 4. [Other geometric primitives](#shapes)
 5. [2D transformation (aka homographies)](#matrix)
-6. [Computing Intersections](#inter)
+6. [Intersections and enclosings determination](#inter)
 7. [Bindings](#bind)
 8. [Numerical data types](#numdt)
 9. [Technical details](#tech)
@@ -516,7 +514,7 @@ The default is Opencv, thus it will fail to build if not installed on system (ch
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
 
-## 6 - Computation of intersection points
+## 6 - Intersections and enclosings determination
 <a name="inter"></a>
 
 This library has a homogeneous API for all intersections between the provided geometrical primitives.
@@ -564,15 +562,32 @@ See the provided demo for a runnable example (relies on Opencv backend).
 For these functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
 and if equal, the point with the lowest `y` value.
 
-### 6.3 - Points and rectangles
+### 6.1 - Enclosing determination
 
-You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
+You can quickly check if a points lies within a flat rectangle (FRect) or a circle
 ```C++
-bool b = pt.isInside( p1, p2 );
+bool b1 = pt.isInside( rect );
+bool b2 = pt.isInside( circle );
 ```
-Again, the two points can be any of the four corners of the rectangle.
+For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
+```C++
+bool b1 = pt.isInside( pt1, pt2 );
+bool b2 = pt.isInside( pt1, radius );
+```
 
-This function will return `true` for all points lying on edges of the rectangle.
+This is also available for segments, circles, or rectangles:
+```C++
+FRect rect2;
+Circle c2;
+Segment seg;
+
+bool ba1 = rect2.isInside( rect );
+bool ba2 = rect2.isInside( circle );
+bool bb1 = c2.isInside( rect );
+bool bb2 = c2.isInside( circle );
+bool bc1 = seg.isInside( rect );
+bool bc2 = seg.isInside( circle );
+```
 
 
 ## 7 - Bindings with other libraries

@@ -283,7 +283,8 @@ TEST_CASE( "test parallel", "[test_para]" )
 	INFO( "Checking parallel lines" )
 	{
 //		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
-		Line2d_<NUMTYPE> l1; // vertical line
+		Line2d_<NUMTYPE> l1, l1b; // vertical line
+		CHECK( l1.isParallelTo(l1b) );
 		{
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2a) == true );
@@ -721,30 +722,6 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 	}
 }
 
-TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
-{
-	Point2d_<NUMTYPE> pt1(2,10);
-	Point2d_<NUMTYPE> pt2(10,2);
-
-//	Line2d_<NUMTYPE> li;                              // THIS DOES NOT BUILD (on purpose)
-//	li.isInside( pt1, pt2 );       // (but we can't test this...)
-
-	Point2d_<NUMTYPE> pt; // (0,0)
-	CHECK( pt.isInside( pt1, pt2 ) == false );
-	pt.set(5,5);
-	CHECK( pt.isInside( pt1, pt2 ) == true );
-
-	pt.set(10,5);                                         // on the edge
-	CHECK( pt.isInside( pt1, pt2 ) == true );
-	pt.set(5,10);
-	CHECK( pt.isInside( pt1, pt2 ) == true );
-
-	CHECK( Point2d_<NUMTYPE>( 2, 2).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == true );
-}
-
 TEST_CASE( "line/line intersection", "[inters_circ_seg]" )
 {
 	Line2d_<NUMTYPE> liv1,liv3;
@@ -768,10 +745,11 @@ TEST_CASE( "line/line intersection", "[inters_circ_seg]" )
 	CHECK( i3.size()==1 );
 }
 
-TEST_CASE( "segment/segment intersection", "[inters_seg_seg]" )
+TEST_CASE( "Segment/Segment intersection", "[inters_seg_seg]" )
 {
 	Segment_<NUMTYPE> s1,s2;
 	{
+		CHECK( s1 == s2 );
 		auto si = s1.intersects(s2);
 		CHECK( si() == false );
 		CHECK( si.size() == 0 );
@@ -784,9 +762,23 @@ TEST_CASE( "segment/segment intersection", "[inters_seg_seg]" )
 		CHECK( si.size() == 1 );
 		CHECK( si.get() == Point2d(2,2) );
 	}
+	{
+		s1.set( Point2d(0,0), Point2d(10,0) );
+		s2.set( Point2d(5,0), Point2d(15,0) );
+		auto si = s1.intersects(s2);
+		CHECK( si() == false );
+		CHECK( si.size() == 0 );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(0,1) );  // horizontal
+		s2.set( Point2d(0,1), Point2d(1,1) );  // vertical
+		auto si = s1.intersects(s2);
+		CHECK( si() == false );
+		CHECK( si.size() == 0 );
+	}
 }
 
-TEST_CASE( "circle/segment intersection", "[inters_circ_seg]" )
+TEST_CASE( "Circle/Segment intersection", "[inters_circ_seg]" )
 {
 	Circle_<NUMTYPE> c1( Point2d(1,1), 1 );
 	{
@@ -842,7 +834,7 @@ TEST_CASE( "circle/segment intersection", "[inters_circ_seg]" )
 	}
 }
 
-TEST_CASE( "circle/line intersection", "[inters_circ_line]" )
+TEST_CASE( "Circle/Line intersection", "[inters_circ_line]" )
 {
 	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
 	Line2d_<NUMTYPE> liv(0,1); // vertical line going through (0,0)
@@ -890,6 +882,12 @@ TEST_CASE( "circle/circle intersection", "[cci]" )
 		CHECK( !cA.intersects(cB)() );
 	}
 	{
+		Circle_<NUMTYPE> cA;
+		Circle_<NUMTYPE> cB( Point2d(5,5), 2 );
+		CHECK( cA != cB );
+		CHECK( !cA.intersects(cB)() );
+	}
+	{
 		Circle_<NUMTYPE> cA( Point2d(0,0), 2 );
 		Circle_<NUMTYPE> cB( Point2d(3,0), 2 );
 		CHECK( cA != cB );
@@ -927,6 +925,49 @@ TEST_CASE( "FRect/FRect intersection", "[rri]" )
 		CHECK( inters.size() == 2 );
 	}
 
+}
+
+TEST_CASE( "IsInside - manual", "[IsInside_man]" )
+{
+	FRect rect;
+	FRect rect2;
+	Circle circle;
+	Circle c2;
+	Segment seg;
+
+	CHECK( !rect2.isInside( rect ) );
+	CHECK( !rect2.isInside( circle ) );
+	CHECK( !c2.isInside( rect ) );
+	CHECK( !c2.isInside( circle ) );
+	CHECK( !seg.isInside( rect ) );
+	CHECK( !seg.isInside( circle ) );
+}
+
+TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
+{
+	Point2d_<NUMTYPE> pt1(2,10);
+	Point2d_<NUMTYPE> pt2(10,2);
+
+//	Line2d_<NUMTYPE> li;                              // THIS DOES NOT BUILD (on purpose)
+//	li.isInside( pt1, pt2 );       // (but we can't test this...)
+
+	Point2d_<NUMTYPE> pt; // (0,0)
+	CHECK( pt.isInside( pt1, pt2 ) == false );
+	pt.set(5,5);
+	CHECK( pt.isInside( pt1, pt2 ) == true );
+
+	pt.set(10,5);                                         // on the edge
+	CHECK( pt.isInside( pt1, pt2 ) == false );
+	pt.set(5,10);
+	CHECK( pt.isInside( pt1, pt2 ) == false );
+
+	pt.set(4.999,9.99);
+	CHECK( pt.isInside( pt1, pt2 ) == true );
+
+	CHECK( Point2d_<NUMTYPE>( 2, 2).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == false );
 }
 
 
