@@ -13,7 +13,7 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
-- Author: S. Kramm
+- Author: Sebastien Kramm, firstname.lastname@univ-rouen.fr
 - Licence: MPLv2
 - Dependencies: none, other than standard library
 

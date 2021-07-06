@@ -551,53 +551,18 @@ The table below summarizes the number of intersection points to expect:
 | Line2d   |    1   |  0 or 1 |  0 or 2 | 0 or 2 |
 | Segment  | 0 or 1 |  0 or 1 |  0,1,2  | 0,1,2  |
 | FRect    | 0 or 2 |  0,1,2  |  TODO   |  TODO  |
-| Circle   | 0 or 2 |  0,1,2  |  TODO   |  TODO  |
+| Circle   | 0 or 2 |  0,1,2  |  TODO   | 0 or 2 |
 
 
 - For line-line intersections, the `get()` member function will return the intersection point.
-- For line-circle or line-FRect intersections, the `get()` member function will return the two intersection points as a `std::pair`.
-- For the other situations, the `get()` member function will return a `std::vector` holding the points.
+- For line-circle or line-FRect intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
+- For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
 
-### 6.1 - Intersection of lines with flat rectangles
 
-You can compute the intersection of a line with a flat rectangle defined by two points with the
-`intersects()` member function.
-It will return an object that holds the intersection points.
+See the provided demo for a runnable example (relies on Opencv backend).
 
-Usage:
-
-```C++
-Line2d li( ..., ... ); // some line
-Point2d pt1(1,1);
-Point2d pt2(8,8);
-auto ri = li.intersects( pt1, pt2 );
-if( ri() )  // means the line does intersect the rectangle defined by (1,1)-(8,1)-(8,8)-(1,8)
-{
-	Point2d intersect_pt1 = ri.get().first;
-	Point2d intersect_pt2 = ri.get().second;
-}
-```
-
-You don't have to give the bottom-right, top-left corners of the rectangle, the function checks and automatically computes these two points.
-In the example above, you could have as well given the points (1,8)-(8,1), the result would have been the same.
-The only requirement is that no coordinate must be the same in the two points.
-
-### 6.2 - Intersection of a line with a circle
-
-For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
-```C++
-auto ri = li.intersects( pt, rad );
-if( ri() )   // means the line intersects the circle
-{
-	auto inter = ri.get(); // returns a std::pair
-	Point2d intersect_pt1 = inter.first;
-	Point2d intersect_pt2 = inter.second;
-}
-```
-
-Also see the provided demo for a runnable example.
-
-For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
+For these functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
+and if equal, the point with the lowest `y` value.
 
 ### 6.3 - Points and rectangles
 

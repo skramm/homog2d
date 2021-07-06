@@ -138,6 +138,11 @@ class Root;
 template<typename LP,typename FPT>
 class Hmatrix_;
 
+template<typename T>
+using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
+template<typename T>
+using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
+
 template<typename FPT>
 class Segment_;
 
@@ -231,11 +236,11 @@ class Hmatrix_
 
 	template<typename T,typename U>
 	friend Line2d_<T>
-	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+	operator * ( const Homogr_<U>&, const Line2d_<T>& );
 
 	template<typename T,typename U>
 	friend Point2d_<T>
-	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Point2d_<T>& );
+	operator * ( const Homogr_<U>&, const Point2d_<T>& );
 
 	template<typename T,typename U,typename V>
 	friend Root<typename detail::HelperPL<T>::OtherType,V>
@@ -890,9 +895,7 @@ class IntersectM
 			_vecInters.resize( other.size() );
 			auto it = _vecInters.begin();
 			for( const auto& elem: other.get() )
-			{
 				*it++ = elem; // automatic type conversion
-			}
 		}
 
 		bool operator()() const
@@ -1226,7 +1229,7 @@ class Root
 
 	template<typename T,typename U>
 	friend Line2d_<T>
-	operator * ( const Hmatrix_<type::IsHomogr,U>&, const Line2d_<T>& );
+	operator * ( const Homogr_<U>&, const Line2d_<T>& );
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend Root<T1,FPT1>
@@ -1795,7 +1798,7 @@ HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 2E-10;
+HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-8;
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
@@ -1886,10 +1889,7 @@ getCvPts( const std::vector<Point2d_<FPT>>& vpt )
 	std::vector<RT> vout( vpt.size() );
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
-	{
-		*it = getCvPt<RT>(pt);
-		it++;
-	}
+		*it++ = getCvPt<RT>(pt);
 	return vout;
 }
 #endif // HOMOG2D_USE_OPENCV
@@ -1920,7 +1920,7 @@ see
 - https://eigen.tuxfamily.org/dox/group__DenseMatrixManipulation__chapter.html
 */
 template<typename FPT>
-Hmatrix_<type::IsHomogr,FPT>
+Homogr_<FPT>
 buildFrom4Points_Eigen(
 	const std::vector<Point2d_<FPT>>& vpt1, ///< source points
 	const std::vector<Point2d_<FPT>>& vpt2  ///< destination points
@@ -1957,7 +1957,7 @@ buildFrom4Points_Eigen(
 	Eigen::VectorXd X = Ai * b;
 #endif
 
-	Hmatrix_<type::IsHomogr,FPT> H;
+	Homogr_<FPT> H;
 //	std::cout << H << '\n';
 
 	for( int i=0; i<8; i++ )
@@ -1978,7 +1978,7 @@ buildFrom4Points_Eigen(
 requires that the points are "CV_32F" (\c float), and NOT double.
 */
 template<typename FPT>
-Hmatrix_<type::IsHomogr,FPT>
+Homogr_<FPT>
 buildFrom4Points_Opencv (
 	const std::vector<Point2d_<FPT>>& vpt1, ///< source points
 	const std::vector<Point2d_<FPT>>& vpt2  ///< destination points
@@ -1991,7 +1991,6 @@ buildFrom4Points_Opencv (
 #endif
 
 } // namespace detail
-
 
 //------------------------------------------------------------------
 /// Build Homography from 2 sets of 4 points
@@ -2353,10 +2352,7 @@ class Polyline_
 			_plinevec.resize( vec.size() );
 			auto it = std::begin( _plinevec );
 			for( const auto& pt: vec )
-			{
-				*it = pt;
-				it++;
-			}
+				*it++ = pt;
 		}
 
 		template<typename FPT2>
@@ -2367,10 +2363,7 @@ class Polyline_
 			auto it = std::end( _plinevec );
 			_plinevec.resize( _plinevec.size() + vec.size() );
 			for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
-			{
-				*it = pt;
-				it++;
-			}
+				*it++ = pt;
 		}
 
 		bool& isClosed() { return _isClosed; }
@@ -2442,7 +2435,7 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 		return out;
 
 //	out._ptIntersect = l1 * l2;   // intersection point
-	Point2d_<HOMOG2D_INUMTYPE> ptInter = l1 * l2;   // intersection point
+	auto ptInter = l1 * l2;   // intersection point
 
 	const auto& ptA1 = this->get().first;
 	const auto& ptA2 = this->get().second;
@@ -2453,14 +2446,6 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
 			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
 
-//			out._doesIntersect = true;
-
-/*	if( detail::isBetween( pi.getX(), ptA1.getX(), ptA2.getX() ) )
-		if( detail::isBetween( pi.getY(), ptA1.getY(), ptA2.getY() ) )
-			if( detail::isBetween( pi.getX(), ptB1.getX(), ptB2.getX() ) )
-				if( detail::isBetween( pi.getY(), ptB1.getY(), ptB2.getY() ) )
-					out._doesIntersect = true;
-*/
 	return out; // no intersection
 }
 
@@ -3261,7 +3246,7 @@ operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 /// Free function, apply homography to a point.
 template<typename T,typename U>
 Point2d_<T>
-operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
+operator * ( const Homogr_<U>& h, const Point2d_<T>& in )
 {
 	Point2d_<T> out;
 	detail::product( out, h._data, in );
@@ -3271,7 +3256,7 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Point2d_<T>& in )
 /// Free function, apply homography to a line.
 template<typename T,typename U>
 Line2d_<T>
-operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
+operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 {
 	if( h._hmt == nullptr )             // if H^-T	not allocated yet, do it
 	{
@@ -3295,7 +3280,7 @@ operator * ( const Hmatrix_<type::IsHomogr,U>& h, const Line2d_<T>& in )
 /// Apply homography to a segment
 template<typename FPT1,typename FPT2>
 Segment_<FPT1>
-operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT1>& seg )
+operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
 {
 	const auto& pts = seg.get();
 	Root<type::IsPoint,FPT1> pt1 = h * pts.first;
@@ -3306,7 +3291,7 @@ operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const Segment_<FPT1>& seg )
 /// Apply homography to a rectangle
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
-operator * ( const Hmatrix_<type::IsHomogr,FPT2>& h, const FRect_<FPT1>& rin )
+operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 {
 	auto pts = rin.get2Pts();
 	Root<type::IsPoint,FPT1> p1 = h * pts.first;
@@ -3373,10 +3358,7 @@ operator * (
 	Cont vout = priv::alloc<Cont>( vin.size() );
 	auto it = std::begin( vout );
 	for( const auto& elem: vin )
-	{
-		*it = h * elem;
-		it++;
-	}
+		*it++ = h * elem;
 	return vout;
 }
 
@@ -3654,7 +3636,7 @@ using Line2d = Line2d_<double>;
 using Point2d = Root<type::IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
-using Homogr = Hmatrix_<type::IsHomogr,double>;
+using Homogr = Homogr_<double>;
 
 /// Default homogeneous matrix, uses \c double as numerical type
 using Epipmat = Hmatrix_<type::IsEpipmat,double>;
@@ -3671,7 +3653,7 @@ using FRect = FRect_<double>;
 // float types
 using Line2dF  = Line2d_<float>;
 using Point2dF = Root<type::IsPoint,float>;
-using HomogrF  = Hmatrix_<type::IsHomogr,float>;
+using HomogrF  = Homogr_<float>;
 using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
 using FRectF   = FRect_<float>;
@@ -3679,7 +3661,7 @@ using FRectF   = FRect_<float>;
 // double types
 using Line2dD  = Line2d_<double>;
 using Point2dD = Root<type::IsPoint,double>;
-using HomogrD  = Hmatrix_<type::IsHomogr,double>;
+using HomogrD  = Homogr_<double>;
 using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
 using FRectD   = FRect_<double>;
@@ -3687,15 +3669,16 @@ using FRectD   = FRect_<double>;
 // long double types
 using Line2dL  = Line2d_<long double>;
 using Point2dL = Root<type::IsPoint,long double>;
-using HomogrL  = Hmatrix_<type::IsHomogr,long double>;
+using HomogrL  = Homogr_<long double>;
 using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 
-template<typename T>
+/*template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
 template<typename T>
 using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
+*/
 
 //template<typename T>
 //using Intersect_ = typename Root<type::IsLine,T>::Intersect;

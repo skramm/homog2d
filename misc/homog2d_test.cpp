@@ -243,7 +243,7 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
-		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
+//		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
 //		Line2d_<NUMTYPE> lV2;
 //		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
 //		CHECK( li3 == lV2 );
@@ -578,7 +578,7 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 /// the distance between the resulting line and the transformed point.
 /// Should be 0, always.
 long double
-computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
+computeDistTransformedLined( Homogr_<NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
 	Line2d_<NUMTYPE> line1( pt1 );       // line from (0,0) to pt1
 	Point2d_<NUMTYPE> pt2 = H * pt1;     // move the point with H
@@ -603,7 +603,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 		CHECK( d1.distTo( pt1 ) < g_epsilon );
 	}
 	Point2d_<NUMTYPE> pt( 5, 6);
-	Hmatrix_<type::IsHomogr,NUMTYPE> H;
+	Homogr_<NUMTYPE> H;
 	{
 		H.setTranslation(4,5);
 		auto d = computeDistTransformedLined( H , pt );
@@ -777,12 +777,12 @@ TEST_CASE( "segment/segment intersection", "[inters_seg_seg]" )
 		CHECK( si.size() == 0 );
 	}
 	{
-		s1.set( Point2d(0,0), Point2d(10,10) );
-		s2.set( Point2d(0,10), Point2d(10,0) );
+		s1.set( Point2d(0,0), Point2d(4,4) );
+		s2.set( Point2d(0,4), Point2d(4,0) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
 		CHECK( si.size() == 1 );
-		CHECK( si.get() == Point2d(5,5) );
+		CHECK( si.get() == Point2d(2,2) );
 	}
 }
 
