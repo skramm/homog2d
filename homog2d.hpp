@@ -61,10 +61,10 @@ See https://github.com/skramm/homog2d
 #endif
 
 #define HOMOG2D_THROW_ERROR_1( msg ) \
-	throw std::runtime_error( std::string("homog2d:") + std::string(__FUNCTION__) + "(): " + msg )
+	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + std::string(__FUNCTION__) + "(): " + msg )
 
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
-	throw std::runtime_error( std::string("homog2d:") + f + "(): " + msg )
+	throw std::runtime_error( std::string("homog2d:") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
 
 namespace homog2d {
 
@@ -818,7 +818,7 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				throw std::runtime_error( "No intersection points!" );
+				HOMOG2D_THROW_ERROR_1( "No intersection points!" );
 			return _ptIntersect;
 		}
 		void set( const Point2d_<FPT>& pt )
@@ -863,8 +863,11 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		template<typename FPT2>
 		Intersect( const Intersect<Inters_2,FPT2>& other )
 		{
-			_ptIntersect_1 = other._ptIntersect_1;
-			_ptIntersect_2 = other._ptIntersect_2;
+			auto ppts = other.get();
+			_ptIntersect_1 = ppts.first;
+			_ptIntersect_2 = ppts.second;
+//			_ptIntersect_1 = other._ptIntersect_1;
+//			_ptIntersect_2 = other._ptIntersect_2;
 		}
 		size_t size() const { return _doesIntersect?2:0; }
 
@@ -872,7 +875,7 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				throw std::runtime_error( "No intersection points!" );
+				HOMOG2D_THROW_ERROR_1( "No intersection points!" );
 			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
 		}
 
@@ -1004,15 +1007,36 @@ class FRect_
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
-		std::vector<Point2d_<FPT>> v_inters;
+//		std::cout << "FRect/Segment intersection: seg=" << seg << '\n';
+//		std::set<Point2d_<FPT>> s_inters;
 		detail::IntersectM<FPT> out;
+		int i=0;
 		for( const auto& rseg: getSegs() )
 		{
+//			std::cout << "  -"<<  i++ << ": test seg " << rseg << "\n";
 			auto inters = rseg.intersects( seg ); // call of Segment/Segment
 			if( inters() )
-				out.add( inters.get() );
+			{
+				auto pt =  inters.get();
+	//			std::cout << "  -intersection: pt=" << pt << '\n';
+				bool addPoint = true;
+				if( out.size() == 1 ) // if we have already one
+					if( out.get()[0] == pt )
+						addPoint = false;
+				if( addPoint )
+				{
+					out.add( pt );
+//					std::cout << "  -adding pt, nb=" << out.size()  << "\n";
+				}
+				if( out.size() == 2 )
+				{
+//					std::cout << "  -break!\n";
+					break;
+				}
+			}
+//			else
+//				std::cout << "  -NO intersection\n";
 		}
-		assert( out.size() < 3 );
 		return out;
 	}
 
@@ -2165,6 +2189,20 @@ class Segment_
 #endif
 			priv::fix_order( _ptS1, _ptS2 );
 		}
+
+/// Contructor 3: build segment from two points coordinates
+		template<typename T>
+		Segment_( T x1, T y1, T x2, T y2 )
+		{
+			_ptS1.set( x1, y1 );
+			_ptS2.set( x2, y2 );
+#ifndef HOMOG2D_NOCHECKS
+			if( _ptS1 == _ptS2 )
+				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+#endif
+			priv::fix_order( _ptS1, _ptS2 );
+		}
+
 /// Setter
 		void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
 		{
@@ -2543,6 +2581,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
+//	std::cout << " - Segment/Segment intersection\n";
 	if( *this == s2 )              // same segment => no intersection
 		return detail::Intersect<detail::Inters_1,FPT>();
 
@@ -2668,7 +2707,7 @@ Root<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
 {
 	f
 //	<< std::scientific << std::setprecision(25)
-	 << '[' << r.getX() << ',' << r.getY() << "] ";
+	 << '[' << r.getX() << ',' << r.getY() << "]";
 }
 
 /// Overload for lines
@@ -2676,7 +2715,7 @@ template<typename LP,typename FPT>
 void
 Root<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) const
 {
-	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "] ";
+	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "]";
 }
 
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
@@ -3258,8 +3297,39 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
-#if 0
- NEW ALGO: TODO
+#if 1
+//	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
+	std::vector<Point2d_<FPT>> pti;
+	int i=0;
+	for( const auto seg: rect.getSegs() )
+	{
+//		std::cout << i++ << ": considering seg: " << seg <<"\n";
+		auto ppts_seg = seg.get();
+		auto inters = seg.intersects( *this );
+		if( inters() )
+		{
+			bool storePoint(true);
+			auto pt = inters.get();
+//			std::cout << " -INTERSECTION at " << pt << "\n";
+			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
+				if( pti.size() == 1 )                            // AND if there is already one
+					if( pti[0] == pt )                           // AND that one is already stored
+						storePoint = false;
+			if( storePoint )
+				pti.push_back( pt );
+			if( pti.size() == 2 )
+			{
+//				std::cout << " -got 2, break\n";
+				break;
+			}
+		}
+	}
+	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
+	if( pti.empty() )
+		return detail::Intersect<detail::Inters_2,FPT>();
+
+	priv::fix_order( pti[0], pti[1] );
+	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 
 #else                      // old algo
 	auto arr = rect.get4Pts();
