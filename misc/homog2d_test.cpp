@@ -806,12 +806,44 @@ TEST_CASE( "Segment/Segment intersection", "[inters_seg_seg]" )
 		CHECK( si.size() == 0 );
 	}
 	{
-		s1.set( Point2d(0,0), Point2d(0,1) );  // horizontal
-		s2.set( Point2d(1,1), Point2d(0,1) );  // vertical
+		s1.set( Point2d(0,0), Point2d(0,1) );  // vertical
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal
 		auto si = s1.intersects(s2);
 		CHECK( si() );
 		CHECK( si.size() == 1 );
 		CHECK( si.get() == Point2d(0,1) );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(0,2) );  // vertical
+
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal, touches the other one in the middle
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
+		s2.set( Point2d(0,0), Point2d(1,0) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,0) );
+		}
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
+		s2.set( Point2d(-1,1), Point2d(0,1) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
 	}
 }
 
@@ -1041,7 +1073,7 @@ TEST_CASE( "inside circle", "[tic]" )
 	}
 }
 
-TEST_CASE( "rectangle intersection", "[test_RI]" )
+TEST_CASE( "Line/Rectangle intersection", "[test_RI]" )
 {
 	INFO( "with diagonal line" )
 	{

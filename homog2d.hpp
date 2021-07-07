@@ -3212,12 +3212,16 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(FRect) on a point" );
 }
 
-/// Implementation of line intersection with flat rectangle \c rect
+/// Line/FRect intersection
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
+#if 0
+ NEW ALGO: TODO
+
+#else                      // old algo
 	auto arr = rect.get4Pts();
 	const auto& p00 = arr[0];
 	const auto& p01 = arr[1];
@@ -3276,6 +3280,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 		priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
 	}
 	return out;
+#endif
 }
 
 /// Intersection between line and polyline
