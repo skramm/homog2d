@@ -1016,21 +1016,44 @@ class FRect_
 		return out;
 	}
 
-/// FRect/Circle + FRect/FRect intersection
+private:
 	template<typename T>
-	detail::IntersectM<FPT> intersects( const T& other ) const
+	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
 	{
-		if( *this == other )
-			return detail::IntersectM<FPT>();
-
 		detail::IntersectM<FPT> out;
+		for( const auto& rseg: getSegs() )
+		{
+			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
+			if( inters() )
+				out.add( inters.get() );
+		}
+		return out;
+	}
+
+public:
+/// FRect/Circle intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
+	{
+		return p_intersects_R_C( circle );
+	}
+
+/// FRect/FRect intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
+	{
+		if( *this == rect )
+			return detail::IntersectM<FPT>();
+		return p_intersects_R_C( rect );
+
+/*		detail::IntersectM<FPT> out;
 		for( const auto& rseg: getSegs() )
 		{
 			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment
 			if( inters() )
 				out.add( inters.get() );
 		}
-		return out;
+		return out;*/
 	}
 
 	template<typename FPT2>
@@ -1146,9 +1169,17 @@ public:
 		return seg.intersects( *this );
 	}
 
+// Circle/Circle intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Circle_<FPT2>& seg ) const;
+
+/// Circle/FRect intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
+	{
+		return rect.intersects( * this );
+	}
 
 private:
 	template<typename FPT2>
@@ -1628,6 +1659,7 @@ Please check out warning described in impl_getAngle()
 		void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
 
 	public:
+/// Line/Line intersection
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>& other ) const
 		{
@@ -1648,6 +1680,14 @@ Please check out warning described in impl_getAngle()
 		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
 		{
 			return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
+		}
+
+/// Line/Segment intersection
+/** \warning no implementation for points */
+		template<typename FPT2>
+		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
+		{
+			return seg.intersects( *this );
 		}
 
 /// Line/Circle intersection

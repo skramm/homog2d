@@ -1012,6 +1012,36 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	CHECK( !seg.isInside( circle ) );
 }
 
+TEST_CASE( "Intersection", "[intersection]" )
+{
+	FRect r1,r2;
+	Circle c1,c2;
+	Segment s1,s2;
+	Line2d l1,l2;
+
+	CHECK( !r1.intersects( r2 )() );
+	CHECK( !c1.intersects( c2 )() );
+	CHECK( !s1.intersects( s2 )() );
+	CHECK( !l1.intersects( l2 )() );
+
+	CHECK(  r1.intersects( c2 )() );
+	CHECK( !r1.intersects( s2 )() );
+	CHECK( !r1.intersects( l2 )() );
+
+	CHECK( !c1.intersects( r2 )() );
+	CHECK( !c1.intersects( s2 )() );
+	CHECK( !c1.intersects( l2 )() );
+
+	CHECK( !s1.intersects( r2 )() );
+	CHECK( !s1.intersects( c2 )() );
+	CHECK( !s1.intersects( l2 )() );
+
+	CHECK( !l1.intersects( r2 )() );
+	CHECK( !l1.intersects( c2 )() );
+	CHECK( !l1.intersects( s2 )() );
+}
+
+
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
