@@ -261,6 +261,42 @@ TEST_CASE( "test throw", "[test_thr]" )
 {
 	Line2d li;
 	CHECK_THROWS( li.getCoord( GivenCoord::X, 0 ) );
+
+	INFO("rectangle constructor")
+	{
+		Point2d_<NUMTYPE> p1, p2;
+		CHECK_THROWS( FRect( p1,p2) );
+		p2.set( 1, 1);
+		CHECK_NOTHROW( FRect( p1,p2) );
+		CHECK( FRect( p1,p2).get2Pts()==std::make_pair(Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ) );
+		p1.set( 4, 4 );
+		p2.set( 5, 5 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+		p1.set( 4, 5 );
+		p2.set( 5, 4 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+		p1.set( 5, 4 );
+		p2.set( 4, 5 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+
+		p1.set( 4, 4 );
+		p2.set( 5, 4 );
+		CHECK_THROWS( FRect( p1,p2) );
+		p2.set( 4, 5 );
+		CHECK_THROWS( FRect( p1,p2) );
+	}
+	INFO("circle constructor")           // 0 not allowed as radius
+	{
+		Point2d_<NUMTYPE> pt;
+		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, 0 ) );
+		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()/1.1 ) );
+		CHECK_NOTHROW( Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()*1.1 ) );
+	}
+	INFO("segment constructor")           // can't have identical points
+	{
+		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(0,0) ) );
+		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d_<NUMTYPE>(1,5), Point2d_<NUMTYPE>(1,5) ) );
+	}
 }
 
 TEST_CASE( "test parallel", "[test_para]" )
@@ -755,7 +791,7 @@ TEST_CASE( "Segment/Segment intersection", "[inters_seg_seg]" )
 		CHECK( si.size() == 0 );
 	}
 	{
-		s1.set( Point2d(0,0), Point2d(4,4) );
+		s1.set( Point2d(0,0), Point2d(4,4) ); // diagonal
 		s2.set( Point2d(0,4), Point2d(4,0) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
@@ -763,7 +799,7 @@ TEST_CASE( "Segment/Segment intersection", "[inters_seg_seg]" )
 		CHECK( si.get() == Point2d(2,2) );
 	}
 	{
-		s1.set( Point2d(0,0), Point2d(10,0) );
+		s1.set( Point2d(0,0), Point2d(10,0) ); // overlapping (complete
 		s2.set( Point2d(5,0), Point2d(15,0) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == false );
@@ -771,10 +807,11 @@ TEST_CASE( "Segment/Segment intersection", "[inters_seg_seg]" )
 	}
 	{
 		s1.set( Point2d(0,0), Point2d(0,1) );  // horizontal
-		s2.set( Point2d(0,1), Point2d(1,1) );  // vertical
+		s2.set( Point2d(1,1), Point2d(0,1) );  // vertical
 		auto si = s1.intersects(s2);
-		CHECK( si() == false );
-		CHECK( si.size() == 0 );
+		CHECK( si() );
+		CHECK( si.size() == 1 );
+		CHECK( si.get() == Point2d(0,1) );
 	}
 }
 
@@ -1009,13 +1046,7 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 	INFO( "with diagonal line" )
 	{
 		Line2d_<NUMTYPE> li(1,1); // diagonal line going through (0,0)
-
 		Point2d_<NUMTYPE> pt1, pt2; // 0,0
-
-		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // point identical => unable
-
-		pt2.set(0,4);
-		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // still fails: x coordinate is identical => unable
 
 		pt2.set(1,1);
 		auto ri = li.intersects( FRect(pt1, pt2) );
@@ -1033,29 +1064,35 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 	{
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 
-		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line through (0,0)
+		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line at y=x
 		auto ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
-		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line through (1,0)
+		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line at x=1
 		ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
-		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line through (0,0)
+		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line at y=0
 		ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
 
-		li = Point2d_<NUMTYPE>(0,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line through (0,1)
+		li = Point2d_<NUMTYPE>(-1,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line at y=1
 		ri = li.intersects( pt1, pt2 );
 		CHECK( ri() == true );
 		CHECK( ri.get().first  == pt1 );
 		CHECK( ri.get().second == pt2 );
+
+		li = Point2d_<NUMTYPE>(-1.,.5) * Point2d_<NUMTYPE>(2.,.5);     // horizontal line at y=0.5
+		ri = li.intersects( pt1, pt2 );
+		CHECK( ri() == true );
+		CHECK( ri.get().first  == Point2d_<NUMTYPE>(0.,.5) );
+		CHECK( ri.get().second == Point2d_<NUMTYPE>(1.,.5) );
 	}
 }
 

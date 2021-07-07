@@ -1011,7 +1011,6 @@ class FRect_
 			auto inters = rseg.intersects( seg ); // call of Segment/Segment
 			if( inters() )
 				out.add( inters.get() );
-//				v_inters.push_back( inters.get() );
 		}
 		assert( out.size() < 3 );
 		return out;
@@ -1086,13 +1085,19 @@ public:
 	{}
 /// Constructor, given radius circle at (0,0)
 	Circle_( FPT rad ) : _radius(rad)
-	{}
+	{
+		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
+			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+	}
 
 /// Constructor, given radius circle at (0,0)
 	template<typename FPT2>
 	Circle_( const Point2d_<FPT2>& center, FPT rad )
 		: _radius(rad), _center(center)
-	{}
+	{
+		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
+			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+	}
 
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
@@ -2498,12 +2503,18 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
-	detail::Intersect<detail::Inters_1,FPT> out;
+	if( *this == s2 )              // same segment => no intersection
+		return detail::Intersect<detail::Inters_1,FPT>();
+
+//	bool sameLine(false);
 	Line2d_<HOMOG2D_INUMTYPE> l1 = getLine();
 	Line2d_<HOMOG2D_INUMTYPE> l2 = s2.getLine();
-
-	if( l1.isParallelTo( l2 ) ) // if parallel, no intersection
-		return detail::Intersect<detail::Inters_1,FPT>();
+	if( l1.isParallelTo( l2 ) )                                // if parallel,
+	{
+//		if( l1 != l2 )                                         // AND not the same
+			return detail::Intersect<detail::Inters_1,FPT>();  // then, no intersection
+//		sameLine = true;
+	}
 
 	const auto& ptA1 = get().first;
 	const auto& ptA2 = get().second;
@@ -2511,7 +2522,7 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 	const auto& ptB2 = s2.get().second;
 
 // if one of the points it the same then one of the other segment, then: NO INTERSECTION !
-	if( ptA1 == ptB1 )
+/*	if( ptA1 == ptB1 )
 		return detail::Intersect<detail::Inters_1,FPT>();
 	if( ptA1 == ptB2 )
 		return detail::Intersect<detail::Inters_1,FPT>();
@@ -2519,13 +2530,23 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 		return detail::Intersect<detail::Inters_1,FPT>();
 	if( ptA2 == ptB2 )
 		return detail::Intersect<detail::Inters_1,FPT>();
+*/
 
-	auto ptInter = l1 * l2;   // intersection point
-	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
-		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
-			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
+//	if( !sameLine )
+	{
+		auto ptInter = l1 * l2;   // intersection point
 
-	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
+		if( detail::isInArea( ptInter, ptA1, ptA2 ) )
+			if( detail::isInArea( ptInter, ptB1, ptB2 ) )
+				return detail::Intersect<detail::Inters_1,FPT>( ptInter );
+
+		return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
+	}
+// here, same line
+/*	return detail::Intersect<detail::Inters_1,FPT>(
+		this->_ptS1,
+		s2._ptS2,
+	);*/
 }
 
 /// Segment/Line intersection
