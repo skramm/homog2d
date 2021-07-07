@@ -1010,7 +1010,7 @@ class FRect_
 //		std::cout << "FRect/Segment intersection: seg=" << seg << '\n';
 //		std::set<Point2d_<FPT>> s_inters;
 		detail::IntersectM<FPT> out;
-		int i=0;
+//		int i=0;
 		for( const auto& rseg: getSegs() )
 		{
 //			std::cout << "  -"<<  i++ << ": test seg " << rseg << "\n";
@@ -3300,7 +3300,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 #if 1
 //	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
 	std::vector<Point2d_<FPT>> pti;
-	int i=0;
+//	int i=0;
 	for( const auto seg: rect.getSegs() )
 	{
 //		std::cout << i++ << ": considering seg: " << seg <<"\n";
