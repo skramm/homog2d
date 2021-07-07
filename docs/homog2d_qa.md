@@ -30,3 +30,15 @@ However, all the additional stuff here (Opencv graphical demo, test files, ...) 
 
 - Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite, why?
 - A: This seems to be an issue whith Catch, regular program shouldn't issue those, no worry.
+
+- Q: Why does this code fails to build:
+```C++
+Point2d pt( 2, 0.5 );
+```
+- A: because the first argument is considered as an `int` value, and the second a `double`, and there are no constructors with this signature.
+If you give two ints, then it works, because automatic promotion to floating-point happens behind the scene.<br>
+In this situation, you only need to add a dot to make it build:
+```C++
+Point2d pt( 2., 0.5 );
+```
+

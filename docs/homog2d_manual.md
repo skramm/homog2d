@@ -202,6 +202,12 @@ auto liA = p_lines1.first;
 auto liB = p_lines1.second;
 ```
 
+
+If you know that two lines are parallel and you want the distance between them, then you have:
+```C++
+auto dist = getParallelDistance( li1, li2 );
+```
+
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
 auto angle1 = li2.getAngle( li1 );
