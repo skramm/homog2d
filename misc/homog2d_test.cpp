@@ -305,7 +305,7 @@ TEST_CASE( "test throw", "[test_thr]" )
 	}
 	INFO("segment constructor")           // can't have identical points
 	{
-		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(0,0) ) );
+		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d(), Point2d() ) );
 		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d_<NUMTYPE>(1,5), Point2d_<NUMTYPE>(1,5) ) );
 	}
 }
@@ -1005,7 +1005,47 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,2) );
+		CHECK( vpts[1] == Point2d(3,1) );
 	}
+
+	{      // 4 intersection points
+		FRect_<NUMTYPE> r1( Point2d(0,2), Point2d(6,4) );
+		FRect_<NUMTYPE> r2( Point2d(2,0), Point2d(4,6) );
+		CHECK( r1 != r2 );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 4 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,2) );
+		CHECK( vpts[1] == Point2d(2,4) );
+		CHECK( vpts[2] == Point2d(4,2) );
+		CHECK( vpts[3] == Point2d(4,4) );
+	}
+
+	{     // horizontal segment overlap
+		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+		FRect_<NUMTYPE> r2( Point2d(2,0), Point2d(5,2) );
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  == r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{     // common vertical segment
+		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+		FRect_<NUMTYPE> r2( Point2d(3,0), Point2d(5,2) );
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  != r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+
+
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
@@ -1156,19 +1196,10 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 		FRect r1(pt1, pt2);
 		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line at y=x
-
-//		std::cout << "-------Calling ri1=li.intersects( r1 ); \n";
 		auto ri1 = li.intersects( r1 );
-//		std::cout << "-------Checking ri1:\n";
-		CHECK( ri1() == true );
-
-//		std::cout << "-------Calling ri2=r1.intersects( li ) \n";
 		auto ri2 = r1.intersects( li );
-//		std::cout << "---ri2()=" << ri2() << "\n";
-
-//		std::cout << "-------Checking ri2:\n";
+		CHECK( ri1() == true );
 		CHECK( ri2() == true );
-		LOCALLOG( "ri2=" << ri2 << '\n' );
 
 		CHECK( ri1.get().first  == pt1 );
 		CHECK( ri1.get().second == Point2d(0,1) );
@@ -1215,9 +1246,6 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 
 TEST_CASE( "Segment", "[seg1]" )
 {
-	{
-		CHECK_THROWS( Segment_<NUMTYPE>( Point2d(), Point2d() ) );
-	}
 	{
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s2( Point2d(2,2), Point2d(0,0) );

@@ -231,6 +231,13 @@ Segment s2; // default value
 std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
+
+You can also build the segment by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
+The only constraint is that they must be all of the same type (no int/float/double mix):
+```C++
+Segment s1( x1, y1, x2, y2 );
+```
+
 You can get the pair of points (as an `std::pair`) with `get()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
@@ -256,6 +263,14 @@ auto p_middle = s1.getMiddlePoint();
 auto p_mid2 = getMiddlePoint(s1); // your choice
 ```
 
+The length is available with:
+```C++
+Segment s1( Point2d(1,2), Point2d(3,4) );
+auto length = s1.length();
+```
+
+
+
 ## 4 - Other geometric primitives
 <a name="shapes"></a>
 
@@ -280,6 +295,12 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 
 The only constraint is that no coordinate can be equal.
 The library will throw if it is not enforced.
+
+You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2, y2.
+The only constraint is that they must be all of the same type (no int/float/double mix).
+```C++
+FRect r1( x1, y1, x2, y2 );
+```
 
 You can get the points with two different member functions:
 ```C++
@@ -348,9 +369,10 @@ auto s2 = H * s1;
 FRect r1( ..., ... );
 auto r2 = H * r1;
 ```
-** Transforming lines **
 
+### 5.2 - Homographies for lines
 <a name="line_homography"></a>
+
 For lines, a known result is that if we have a line lA going through p1 and p2,
 and a homography H mapping p1 and p2 to p'1 and p'2, then the line lB joining these
 two points can be computed with lB = H-T lA.
@@ -367,8 +389,7 @@ auto p2b = H * p2a;
 lB = lA * H; // same as lB = p1b * p2b;
 ```
 
-
-### 5.2 - Setting up from a given planar transformation
+### 5.3 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -456,7 +477,7 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 5.3 - Constructors
+### 5.4 - Constructors
 
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
@@ -468,7 +489,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 5.4 - Computing from 2 sets of 4 points
+### 5.5 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -542,6 +563,17 @@ See the provided demo for a runnable example (relies on Opencv backend).
 
 For the functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
 and if equal, the point with the lowest `y` value.
+
+### 6.1.1 - Details on intersections
+
+When a segment has a point lying on another segment, such as int the figure below, this will be considered as an intersection point:
+
+![segment1](figures_src/segment1.png)
+
+This has a consequence on rectangle intersections: when the rectangles are overlapping such as the figure below, we will have here **4** intersection points.
+
+![frect1](figures_src/frect1.png)
+
 
 ### 6.2 - Enclosing determination
 

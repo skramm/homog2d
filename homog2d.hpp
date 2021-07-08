@@ -718,12 +718,12 @@ struct CvDrawParams
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
-		cv::Scalar _color         = cv::Scalar(128,128,128);
+		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
 		int        _lineThickness = 1;
-		int        _lineType      = cv::LINE_AA; // or cv::LINE_8
-		int        _ptDelta       = 8; // pixels, used for drawing points
+		int        _lineType      = cv::LINE_AA; ///< or cv::LINE_8
+		int        _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle    _ptStyle       = PtStyle::Plus;
-		bool       _enhancePoint  = false;   // to draw selected points
+		bool       _enhancePoint  = false;       ///< to draw selected points
 	};
 	Dp_values _dpValues;
 
@@ -901,7 +901,7 @@ template<typename FPT>
 class IntersectM
 {
 	private:
-		std::vector<Point2d_<FPT>> _vecInters;
+		mutable std::vector<Point2d_<FPT>> _vecInters;
 	public:
 		IntersectM() {}
 /// To enable conversions from different floating-point types
@@ -932,6 +932,7 @@ class IntersectM
 
 		std::vector<Point2d_<FPT>> get() const
 		{
+			std::sort( std::begin(_vecInters), std::end(_vecInters) );
 			return _vecInters;
 		}
 };
@@ -958,6 +959,15 @@ class FRect_
 	{
 		set( pa, pb );
 	}
+
+/// Constructor from x1, y1, x2, y2
+	template<typename T>
+	FRect_( T x1, T y1, T x2, T y2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
+	}
+
 	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
@@ -1805,6 +1815,10 @@ Please check out warning described in impl_getAngle()
 		{
 			return !(*this == other);
 		}
+		bool operator < ( const Root<LP,FPT>& other ) const
+		{
+			return impl_op_sort( other, detail::RootHelper<LP>() );
+		}
 
 #ifdef HOMOG2D_USE_OPENCV
 		bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
@@ -1897,8 +1911,11 @@ Please check out warning described in impl_getAngle()
 		template<typename T>
 		std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>& ) const;
 
-		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const;
+		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+		bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
 		Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::RootHelper<type::IsPoint>& ) const;
 		Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2220,6 +2237,7 @@ class Segment_
 		template<typename T>
 		Segment_( T x1, T y1, T x2, T y2 )
 		{
+			HOMOG2D_CHECK_IS_NUMBER(T);
 			_ptS1.set( x1, y1 );
 			_ptS2.set( x2, y2 );
 #ifndef HOMOG2D_NOCHECKS
@@ -2999,6 +3017,31 @@ Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper
 }
 
 //------------------------------------------------------------------
+/// Sorting operator, used for points
+template<typename LP,typename FPT>
+bool
+Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
+{
+	if( getX() < other.getX() )
+		return true;
+	if( getX() > other.getX() )
+		return false;
+	if( getY() < other.getY() )
+		return true;
+	return false;
+}
+/// Sorting operator, used for lines
+template<typename LP,typename FPT>
+bool
+Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid < operator: you cannot sort lines" );
+	return false; // to avoid a warning
+}
+
+
+
+//------------------------------------------------------------------
 /// Inner implementation details
 namespace detail {
 
@@ -3461,8 +3504,7 @@ namespace detail {
 
 /// Implementation of product 3x3 by 3x1
 /**
-- T1 and T2: IsLine or IsPoint
-
+- T1 and T2: type::IsLine or type::IsPoint
 */
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
