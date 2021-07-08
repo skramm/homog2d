@@ -17,6 +17,9 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 - Licence: MPLv2
 - Dependencies: none, other than standard library
 
+:new: (2021-07-08): A major rework of code and manual is currently under development, should be available in 10-15 days, it is advised to wait for next release as they will be some API changes.
+
+
 Short preview:
 
 ```C++
