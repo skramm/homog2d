@@ -321,33 +321,6 @@ auto pair_segs = getTanSegs( c1, c2 );
 ```
 ![circles1](figures_src/circles1.png)
 
-### 4.3 - Common features
-
-Both provide a `isInside()' member function, that works for all combination of theses 2 types:
-```C++
-FRect r1, r2;
-Circle c1, c2;
-bool b1 = r1.isInside( c1 );
-bool b2 = c1.isInside( r1 );
-bool b3 = r2.isInside( r1 );
-bool b4 = c2.isInside( c1 );
-```
-
-This can be used also with types `Point2d` and `Segment`:
-
-```C++
-FRect rect;
-Circle cir;
-
-Point2d pt;
-bool b1 = pt.isInside( cir );
-bool b2 = pt.isInside( rect );
-
-Segment seg;
-bool b3 = seg.isInside( cir );
-bool b4 = seg.isInside( rect );
-```
-
 
 ## 5 - Homographies
 <a name="matrix"></a>
@@ -523,6 +496,8 @@ The member function `buildFrom4Points()` accepts as third argument an `int`, 0 m
 ## 6 - Intersections and enclosings determination
 <a name="inter"></a>
 
+### 6.1 - Intersections between primitives
+
 This library has a homogeneous API for all intersections between the provided geometrical primitives.
 That is, whatever `a` and `b` (excepts points of course), there is a member function `intersects()` that both
 gives the answer to the question "do theses primitives intersect?" but also provides the intersections points.
@@ -550,25 +525,25 @@ And whatever the primitives, you can always get the number of intersection point
 
 The table below summarizes the number of intersection points to expect:
 
-|          | Line2d | Segment | FRect   | Circle |
-|----------|--------|---------|---------|--------|
-| Line2d   | 0 or 1 |  0 or 1 |  0 or 2 | 0 or 2 |
-| Segment  | 0 or 1 |  0 or 1 |  0,1,2  | 0,1,2  |
-| FRect    | 0 or 2 |  0,1,2  |  0,2,4  | 0,2,4  |
-| Circle   | 0 or 2 |  0,1,2  |  0,2,4  | 0 or 2 |
+|           | `Line2d` | `Segment` | `FRect`  | `Circle` |
+|-----------|----------|-----------|----------|----------|
+| `Line2d`  |  0 or 1  |   0 or 1  |   0 or 2 |  0 or 2  |
+| `Segment` |  0 or 1  |   0 or 1  |   0,1,2  |  0,1,2   |
+| `FRect`   |  0 or 2  |   0,1,2   |   0,2,4  |  0,2,4   |
+| `Circle`  |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |
 
 
-- For line-line intersections, the `get()` member function will return the intersection point.
-- For line-circle or line-FRect intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
+- For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
+- For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
 - For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
 
 
 See the provided demo for a runnable example (relies on Opencv backend).
 
-For these functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
+For the functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
 and if equal, the point with the lowest `y` value.
 
-### 6.1 - Enclosing determination
+### 6.2 - Enclosing determination
 
 You can quickly check if a points lies within a flat rectangle (FRect) or a circle
 ```C++
@@ -700,12 +675,12 @@ CvDrawParams::resetDefault();
 ```
 
 The available functions are given in the table below:
-    Function    | arguments |
-----------------|------------------|
-setColor()      | 3 ints ([0-255]) |
-setPointStyle() | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` |
-setPointSize()  |  1 int (pixels)  |
-setThickness()  |  1 int (pixels)  |
+     Function     |    Arguments     |
+------------------|------------------|
+`setColor()`      | 3 ints ([0-255]) |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` |
+`setPointSize()`  |  1 int (pixels)  |
+`setThickness()`  |  1 int (pixels)  |
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
