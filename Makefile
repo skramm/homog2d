@@ -3,6 +3,8 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild
 
+.PRECIOUS: BUILD/figures_test/%.cpp
+
 CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 ifeq "$(USE_OPENCV)" ""
@@ -17,6 +19,10 @@ endif
 ifeq ($(USE_EIGEN),Y)
 	CFLAGS += -DHOMOG2D_USE_EIGEN
 endif
+
+TEST_FIG_LOC=misc/figures_test
+TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
+TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,$(TEST_FIG_LOC)/%.png, $(TEST_FIG_SRC))
 
 TEX_FIG_LOC=docs
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
@@ -91,6 +97,18 @@ $(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 
 $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
+
+$(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
+	./$<
+
+BUILD/figures_test/%: BUILD/figures_test/%.cpp
+	$(CXX) $<
+
+BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
+	@echo "---$<---"
+	cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
+
+test_fig: $(TEST_FIG_PNG)
 
 doc_fig: $(DOC_IMAGES_PNG)
 

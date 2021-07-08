@@ -34,7 +34,7 @@ run with "make test"
 
 #include <list>
 
-#define LOCALLOG(a) std::cout << " -" << std::string(__FUNCTION__) << "(): " << a << '\n'
+#define LOCALLOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
@@ -987,8 +987,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 0 );
 	}
 	{
-		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(1,1) );
-		FRect_<NUMTYPE> r2( Point2d(4,4), Point2d(5,5) );
+#include "figures_test/frect_intersect_1.code"
+//		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(1,1) );
+//		FRect_<NUMTYPE> r2( Point2d(4,4), Point2d(5,5) );
 		CHECK( r1 != r2 );
 		CHECK( r1.width()  == r2.width() );
 		CHECK( r1.height() == r2.height() );
@@ -997,8 +998,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 0 );
 	}
 	{
-		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
-		FRect_<NUMTYPE> r2( Point2d(2,1), Point2d(5,3) );
+#include "figures_test/frect_intersect_2.code"
+//		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+//		FRect_<NUMTYPE> r2( Point2d(2,1), Point2d(5,3) );
 		CHECK( r1 != r2 );
 		CHECK( r1.width()  == r2.width() );
 		CHECK( r1.height() == r2.height() );
@@ -1030,9 +1032,14 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1 != r2 );
 		CHECK( r1.width()  == r2.width() );
 		CHECK( r1.height() == r2.height() );
-		CHECK( !r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
-		CHECK( inters.size() == 0 );
+		CHECK( inters.size() == 4 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,0) );
+		CHECK( vpts[1] == Point2d(2,2) );
+		CHECK( vpts[2] == Point2d(3,0) );
+		CHECK( vpts[3] == Point2d(3,2) );
 	}
 	{     // common vertical segment
 		FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
@@ -1040,12 +1047,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1 != r2 );
 		CHECK( r1.width()  != r2.width() );
 		CHECK( r1.height() == r2.height() );
-		CHECK( !r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
-		CHECK( inters.size() == 0 );
+		CHECK( inters.size() == 2 );
 	}
-
-
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
