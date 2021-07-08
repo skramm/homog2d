@@ -34,7 +34,7 @@ run with "make test"
 
 #include <list>
 
-#define LOCALLOG(a) std::cout << " -" << a << '\n';
+#define LOCALLOG(a) std::cout << " -" << std::string(__FUNCTION__) << "(): " << a << '\n'
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
@@ -1156,10 +1156,20 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
 		FRect r1(pt1, pt2);
 		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line at y=x
+
+//		std::cout << "-------Calling ri1=li.intersects( r1 ); \n";
 		auto ri1 = li.intersects( r1 );
-		auto ri2 = r1.intersects( li );
+//		std::cout << "-------Checking ri1:\n";
 		CHECK( ri1() == true );
+
+//		std::cout << "-------Calling ri2=r1.intersects( li ) \n";
+		auto ri2 = r1.intersects( li );
+//		std::cout << "---ri2()=" << ri2() << "\n";
+
+//		std::cout << "-------Checking ri2:\n";
 		CHECK( ri2() == true );
+		LOCALLOG( "ri2=" << ri2 << '\n' );
+
 		CHECK( ri1.get().first  == pt1 );
 		CHECK( ri1.get().second == Point2d(0,1) );
 		CHECK( ri2.get().first  == pt1 );

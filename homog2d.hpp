@@ -45,6 +45,11 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/imgproc.hpp"
 #endif
 
+#if 0
+	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
+#else
+	#define HOMOG2D_START
+#endif
 
 #define HOMOG2D_CHECK_ROW_COL \
 	if( r > 2 ) \
@@ -64,7 +69,7 @@ See https://github.com/skramm/homog2d
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + std::string(__FUNCTION__) + "(): " + msg )
 
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
-	throw std::runtime_error( std::string("homog2d:") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
+	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
 
 namespace homog2d {
 
@@ -837,8 +842,9 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 /// To enable conversions from different floating-point types
 		template<typename FPT2>
 		Intersect( const Intersect<Inters_1,FPT2>& other )
+			: IntersectCommon( other )
 		{
-			_ptIntersect = other._ptIntersect;
+			_ptIntersect   = other._ptIntersect;
 		}
 
 	private:
@@ -862,12 +868,11 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 /// To enable conversions from different floating-point types
 		template<typename FPT2>
 		Intersect( const Intersect<Inters_2,FPT2>& other )
+			: IntersectCommon( other )
 		{
 			auto ppts = other.get();
 			_ptIntersect_1 = ppts.first;
 			_ptIntersect_2 = ppts.second;
-//			_ptIntersect_1 = other._ptIntersect_1;
-//			_ptIntersect_2 = other._ptIntersect_2;
 		}
 		size_t size() const { return _doesIntersect?2:0; }
 
@@ -881,6 +886,14 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 
 	private:
 		Point2d_<FPT> _ptIntersect_1, _ptIntersect_2;
+
+	friend std::ostream& operator << ( std::ostream& f, const Intersect<Inters_2,FPT>& inters )
+	{
+		f << "bool=" << inters._doesIntersect
+			<< " p1:" << inters._ptIntersect_1
+			<< " p2:" << inters._ptIntersect_2;
+		return f;
+	}
 };
 
 /// Multiple points intersections
@@ -1000,13 +1013,24 @@ class FRect_
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
 	{
+		HOMOG2D_START;
+#if 0
 		return line.intersects( *this );
+#else
+//		std::cout << "--- FRect/Line intersection: calling Line/FRect\n";
+		auto res=line.intersects( *this );
+//		std::cout << "--- FRect/Line intersection: return from Line/FRect=" << res() << "\n";
+//		std::cout << "--- FRect/Line intersection: res:" << res << "\n";
+
+		return res;
+#endif
 	}
 
 /// FRect/Segment intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
+		HOMOG2D_START;
 //		std::cout << "FRect/Segment intersection: seg=" << seg << '\n';
 //		std::set<Point2d_<FPT>> s_inters;
 		detail::IntersectM<FPT> out;
@@ -1059,6 +1083,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
 	{
+		HOMOG2D_START;
 		return p_intersects_R_C( circle );
 	}
 
@@ -1066,18 +1091,10 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
+		HOMOG2D_START;
 		if( *this == rect )
 			return detail::IntersectM<FPT>();
 		return p_intersects_R_C( rect );
-
-/*		detail::IntersectM<FPT> out;
-		for( const auto& rseg: getSegs() )
-		{
-			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment
-			if( inters() )
-				out.add( inters.get() );
-		}
-		return out;*/
 	}
 
 	template<typename FPT2>
@@ -1182,6 +1199,7 @@ public:
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Line2d_<FPT2>& li ) const
 	{
+		HOMOG2D_START;
 		return li.intersects( *this );
 	}
 
@@ -1190,6 +1208,7 @@ public:
 	detail::IntersectM<FPT>
 	intersects( const Segment_<FPT2>& seg ) const
 	{
+		HOMOG2D_START;
 		return seg.intersects( *this );
 	}
 
@@ -1202,6 +1221,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
+		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
 
@@ -1697,12 +1717,14 @@ Please check out warning described in impl_getAngle()
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 		{
+			HOMOG2D_START;
 			return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
 		}
 /// Line/FRect intersection
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
 		{
+			HOMOG2D_START;
 			return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
 		}
 
@@ -1711,6 +1733,7 @@ Please check out warning described in impl_getAngle()
 		template<typename FPT2>
 		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
 		{
+			HOMOG2D_START;
 			return seg.intersects( *this );
 		}
 
@@ -1725,18 +1748,21 @@ Please check out warning described in impl_getAngle()
 		>
 		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT>& pt0, T radius ) const
 		{
+			HOMOG2D_START;
 			return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 		}
 /// Line/Circle intersection
 		template<typename T>
 		detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
 		{
+			HOMOG2D_START;
 			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 		}
 /// Line/Polyline intersection
 		template<typename FPT2>
 		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
 		{
+			HOMOG2D_START;
 			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
 		}
 
@@ -2279,6 +2305,7 @@ the one with smallest y-coordinate will be returned first */
 		template<typename FPT2>
 		detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 		{
+			HOMOG2D_START;
 			return r.intersects( *this );
 		}
 
@@ -2390,6 +2417,8 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
+	HOMOG2D_START;
+
 	if( *this == other )
 		return detail::Intersect<detail::Inters_2,FPT>();
 
@@ -2581,6 +2610,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
+	HOMOG2D_START;
 //	std::cout << " - Segment/Segment intersection\n";
 	if( *this == s2 )              // same segment => no intersection
 		return detail::Intersect<detail::Inters_1,FPT>();
@@ -2638,6 +2668,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
+	HOMOG2D_START;
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
 
@@ -2662,6 +2693,7 @@ template<typename FPT2>
 detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
+	HOMOG2D_START;
 	detail::IntersectM<FPT> out;
 
 	if( _ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // if both points of segment are
@@ -3297,6 +3329,8 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
+	HOMOG2D_START;
+
 #if 1
 //	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
 	std::vector<Point2d_<FPT>> pti;
@@ -3326,9 +3360,13 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	}
 	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
 	if( pti.empty() )
+	{
+//		std::cout << " -empty !\n";
 		return detail::Intersect<detail::Inters_2,FPT>();
+	}
 
 	priv::fix_order( pti[0], pti[1] );
+//	std::cout << " -Returned points: " << pti[0] << " + " << pti[1] << "\n";
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 
 #else                      // old algo
