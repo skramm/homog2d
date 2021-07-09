@@ -1111,7 +1111,7 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
 	}
 	{
-		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, touching edge of circle
+		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, touching edge of circle at (1,0)
 
 		CHECK( c1.intersects( s2 )() );
 		CHECK( s2.intersects( c1 )() );
@@ -1122,9 +1122,8 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_b() );
 		CHECK( int_a.size() == 1 );
 		CHECK( int_b.size() == 1 );
-		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(2,0) );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(1,0) );
 	}
-
 }
 
 TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
@@ -1167,15 +1166,13 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 		CHECK( vpts[0] == Point2d( 1,0 ) );
 		CHECK( vpts[1] == Point2d( 1,0 ) );
 	}
-
-
 }
 
 TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 {
 	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
-	Line2d_<NUMTYPE> liv(0,1); // vertical line going through (0,0)
-	Line2d_<NUMTYPE> lih(1,0); // horizontal line going through (0,0)
+	Line2d_<NUMTYPE> liv; // vertical line at x=0
+	Line2d_<NUMTYPE> lih( Point2d(-1,0), Point2d(1,0) ); // horizontal line at y=0
 	Point2d_<NUMTYPE> pt;
 	{
 		CHECK( lid.intersects( Point2d_<NUMTYPE>(), 0.5 )() );
@@ -1188,16 +1185,18 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 		auto ri4 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
 		CHECK( ri4() == false );
 	}
-	auto rih = lih.intersects( pt, 1.0 );
-	CHECK( rih() == true );
-	CHECK( rih.get().first  == Point2d_<NUMTYPE>(-1,0) );
-	CHECK( rih.get().second == Point2d_<NUMTYPE>(+1,0) );
-
-	auto riv = liv.intersects( pt, 1.0 );
-	CHECK( riv() == true );
-	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
-	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
-
+	{
+		auto rih = lih.intersects( pt, 1.0 );
+		CHECK( rih() == true );
+		CHECK( rih.get().first  == Point2d(-1,0) );
+		CHECK( rih.get().second == Point2d(+1,0) );
+	}
+	{
+		auto riv = liv.intersects( pt, 1.0 );
+		CHECK( riv() == true );
+		CHECK( riv.get().first  == Point2d(0,-1) );
+		CHECK( riv.get().second == Point2d(0,+1) );
+	}
 
 	Circle_<NUMTYPE> cir2(45);
 	CHECK( cir2.radius() == 45. );
@@ -1208,6 +1207,21 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 		CHECK( cl1() == true );
 		CHECK( cl1.get().first  == Point2d(0,-45) );
 		CHECK( cl1.get().second == Point2d(0,+45) );
+	}
+	{
+		Circle_<NUMTYPE> c4( Point2d(1,1),1);
+		Line2d_<NUMTYPE> l4( Point2d(-5,1), Point2d(5,1));
+		auto res1 = c4.intersects( l4 );
+		CHECK( res1() == true );
+		CHECK( res1.size() == 2 );
+		CHECK( res1.get().first  == Point2d(0,1) );
+		CHECK( res1.get().second == Point2d(2,1) );
+
+		auto res2 = l4.intersects( c4 );
+		CHECK( res2() == true );
+		CHECK( res2.size() == 2 );
+		CHECK( res2.get().first  == Point2d(0,1) );
+		CHECK( res2.get().second == Point2d(2,1) );
 	}
 }
 

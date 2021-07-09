@@ -2740,6 +2740,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 		return detail::IntersectM<FPT>();                       // inside the circle, no intersection !
 	}
 	auto int_lc = getLine().intersects( circle );
+	std::cout << "LINE:" << getLine() << "\n";
 	if( !int_lc() )
 	{     std::cout << "S4B: line does not intersect circle\n";
 		return detail::IntersectM<FPT>();
@@ -2779,7 +2780,8 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	if( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) )   // both points outside
 	{
 		out.add( p1 );
-		out.add( p2 );
+		if( p2 != p1 )
+			out.add( p2 );
 		std::cout << "S4A, p1="<<p1 << " p2= " << p2 << "\n";
 		return out;
 	}
@@ -3352,7 +3354,7 @@ Root<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::Root
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersects(Circle) with a point" );
 }
 
-/// Intersection of line and circle: implementation
+/// Line/Circle intersection: implementation
 /// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
 template<typename LP, typename FPT>
 template<typename T>
