@@ -1128,7 +1128,7 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		Segment_<NUMTYPE> s2( 3,2,4,2 );
 		Circle_<NUMTYPE> c2( Point2d(1,1), 1 );
 		auto int_a = c2.intersects( s2 );
-		CHECK( int_a() == false );
+		CHECK( int_a() == true );
 		auto int_b = s2.intersects( c2 );
 		CHECK( int_b() == false );
 	}

@@ -2622,6 +2622,25 @@ isInArea( const Point2d_<T1>& pt, const Point2d_<T2>& pt1, const Point2d_<T2>& p
 	return false;
 }
 
+//------------------------------------------------------------------
+/// See getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
+enum class PtTag: char
+{
+	Inside, Outside, OnEdge
+};
+
+/// Returns a label characterizing point \c pt, related to \c circle
+template<typename FPT,typename FPT2>
+PtTag
+getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
+{
+	if( pt.isInside( circle ) )
+		return PtTag::Inside;
+	if( std::abs( pt.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+		return PtTag::OnEdge;
+	return PtTag::Outside;
+}
+
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -2683,6 +2702,7 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 	);*/
 }
 
+//------------------------------------------------------------------
 /// Segment/Line intersection
 /**
 Algorithm:<br>
@@ -2712,6 +2732,7 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	return out;
 }
 
+//------------------------------------------------------------------
 /// Segment/Circle intersection
 /**
 For each point of the segment, we need to consider 3 different situations
@@ -2724,9 +2745,10 @@ That makes 6 different situations to handle:
  - S1: PI-PI => no intersection
  - S2: PI-PO => 1 intersection
  - S3: PI-PE => 1 intersection
- - S4: PO-PO => depends on the support line: if line intersects circle, that's 2 intersections, else none
-  - S4A: if line does NOT intersects circle, no intersection
-  - S4B: if line does intersects circle,
+ - S4: PO-PO => depends on the support line:
+  - S4A: if line does NOT intersects circle, no intersection pts
+  - S4B: if line does intersects circle, and intersections point in segment area => 2 intersection pts
+  - S4C: if line does intersects circle, and intersections point NOT in segment area => no intersection pts
  - S5: PO-PE => 1 intersection
  - S6: PE-PE => 2 intersections
 */
@@ -2737,10 +2759,17 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
 	HOMOG2D_START;
 	std::cout << "Segment/Circle: this=" << *this << " circle=" << circle << '\n';
-	if( _ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // S1: if both points of segment are
-	{	std::cout << "S1\n";
-		return detail::IntersectM<FPT>();                       // inside the circle, no intersection !
-	}
+	using detail::PtTag;
+
+	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle );
+	auto tag_ptS2 = detail::getPtLabel( _ptS2, circle );
+
+	if( tag_ptS1 == PtTag::Inside )
+		if( tag_ptS2 == PtTag::Inside )
+		{	std::cout << "S1\n";
+			return detail::IntersectM<FPT>();
+		}
+
 	auto int_lc = getLine().intersects( circle );
 	std::cout << "LINE:" << getLine() << "\n";
 	if( !int_lc() )
@@ -2752,13 +2781,14 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
 	std::cout << "LINE INTERS: p1=" << p1 << " p2=" << p2 << "\n";
-	detail::IntersectM<FPT> out;
-	if(                                                            // S2: if one point of the segment is
-		( !_ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // inside and the other outside,
-		||                                                         // then we have a single
-		( _ptS1.isInside( circle ) && !_ptS2.isInside( circle ) )  // intersection point
+
+	if(
+		( tag_ptS1 == PtTag::Inside  && tag_ptS2 == PtTag::Outside )
+		||
+		( tag_ptS1 == PtTag::Outside && tag_ptS2 == PtTag::Inside )
 	)
 	{
+		detail::IntersectM<FPT> out;
         if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // check which one of the intersections
 			out.add( p1 );                          // points is inside
 		else
@@ -2767,38 +2797,33 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 		return out;
 	}
 
+	detail::IntersectM<FPT> out;
+	if( tag_ptS1 == PtTag::Outside &&  tag_ptS2 == PtTag::Outside ) // both outside
+	{
+		if( !detail::isInArea( p1,  _ptS1, _ptS2 ) )
+		{
+			std::cout << "S4C\n";
+			return detail::IntersectM<FPT>();
+		}
+		out.add( p1 );
+		out.add( p2 );
+		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << " out.size=" << out.size() << '\n';
+		return out;
+	}
+
 	if( std::abs( _ptS1.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
 		out.add( _ptS1 );
 	if( std::abs( _ptS2.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
 		out.add( _ptS2 );
+	return out;
 
-	if( out.size() == 2 )     // S6: both points are on the edge
+/*	if( out.size() == 2 )     // S6: both points are on the edge
 	{
 		std::cout << "S6: both points are on the edge\n";
 		return out;
-	}
+	}*/
 
 // here, need to handle S4A (PO-PO), S3 (PI-PE) and S5 (PO-PE)
-	if( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) )   // both points outside
-	{
-		out.add( p1 );
-		if( p2 != p1 )
-			out.add( p2 );
-		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << "\n";
-		return out;
-	}
-
-	if( _ptS1.isInside( circle ) || _ptS2.isInside( circle ) ) // then, we are in S3
-	{
-		if( detail::isInArea( p1, _ptS1, _ptS2 ) )
-			out.add( p1 );           // points is inside
-		else
-			out.add( p2 );
-		std::cout << "S3: one is inside\n";
-		return out;
-	}
-	std::cout << "S5\n";
-	return out; // S5
 }
 
 //------------------------------------------------------------------
@@ -3332,7 +3357,7 @@ template<typename T>
 bool
 Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, const detail::RootHelper<type::IsPoint>& ) const
 {
-	if( distTo( center ) <= radius )
+	if( distTo( center ) < radius )
 		return true;
 	return false;
 }
