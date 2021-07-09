@@ -46,6 +46,7 @@
 		<Unit filename="figures_test/frect_intersect_3.code" />
 		<Unit filename="figures_test/frect_intersect_4.code" />
 		<Unit filename="figures_test/frect_intersect_5.code" />
+		<Unit filename="figures_test/frect_intersect_6.code" />
 		<Unit filename="figures_test/header.cpp" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
@@ -59,6 +60,9 @@
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

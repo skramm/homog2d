@@ -44,7 +44,7 @@ test: BUILD/homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
 	BUILD/homog2d_test
 
-testall: homog2d_test_f homog2d_test_d homog2d_test_l
+testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 
@@ -100,6 +100,7 @@ $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 
 $(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
 	@./$<
+	@mogrify -flip $<.png
 
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
@@ -162,9 +163,9 @@ rm_nb:
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
 /tmp/no_build_%.o: /tmp/no_build_%.cpp
-	@echo "Checking build failure of $<" >>no_build.stdout
-	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>no_build.stderr
-	! $(CXX) -o $@ -c $< 1>>no_build.stdout 2>>no_build.stderr
+	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
+	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
+	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 #=================================================================
 
