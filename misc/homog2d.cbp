@@ -40,6 +40,13 @@
 		<Unit filename="doxyfile" />
 		<Unit filename="doxyfile_opencv" />
 		<Unit filename="extra_style_sheet.css" />
+		<Unit filename="figures_test/footer.cpp" />
+		<Unit filename="figures_test/frect_intersect_1.code" />
+		<Unit filename="figures_test/frect_intersect_2.code" />
+		<Unit filename="figures_test/frect_intersect_3.code" />
+		<Unit filename="figures_test/frect_intersect_4.code" />
+		<Unit filename="figures_test/frect_intersect_5.code" />
+		<Unit filename="figures_test/header.cpp" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
@@ -52,9 +59,6 @@
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

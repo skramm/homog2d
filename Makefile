@@ -40,9 +40,9 @@ show:
 	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
 
-test: homog2d_test nobuild #demo_check
+test: BUILD/homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
-	./homog2d_test
+	BUILD/homog2d_test
 
 testall: homog2d_test_f homog2d_test_d homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
@@ -61,17 +61,17 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 # 2019-11-15: added options for code coverage with gcov
-homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o homog2d_test $< $(LDFLAGS)
+BUILD/homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
 #	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 
-homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
 
-homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
 
-homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
 
 ptest1: precision_test1
@@ -99,14 +99,13 @@ $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
 $(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
-	./$<
+	@./$<
 
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
-	$(CXX) $<
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
-	@echo "---$<---"
-	cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
+	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 test_fig: $(TEST_FIG_PNG)
 
@@ -114,11 +113,12 @@ doc_fig: $(DOC_IMAGES_PNG)
 
 doc_fig_tex: $(TEX_FIG_PNG)
 
-doc: html/index.html doc_fig doc_fig_tex
-	xdg-open html/index.html
+doc: BUILD/html/index.html doc_fig doc_fig_tex
+	xdg-open BUILD/html/index.html
 
-html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
-	doxygen misc/doxyfile 1>doxygen.stdout 2>doxygen.stderr
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
+	@mkdir -p BUILD/html
+	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
 install:
 	cp homog2d.hpp /usr/local/include
