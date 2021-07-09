@@ -1075,16 +1075,34 @@ class FRect_
 	}
 
 private:
+/// Intersection of FRect vs FRect of Circle
 	template<typename T>
 	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
 	{
-		detail::IntersectM<FPT> out;
+		std::cout << "Intersection of FRect vs FRect-Circle\nthis=" << *this << ", other=" << other << '\n';
+
+		std::set<Point2d_<FPT>> pts;
 		for( const auto& rseg: getSegs() )
 		{
+			std::cout << "test of seg " << rseg << '\n';
 			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
 			if( inters() )
-				out.add( inters.get() );
+			{
+				auto vpts = inters.get();
+				assert( vpts.size() < 3 );
+				std::cout << "adding " << vpts.size() << " pts:\n";
+				std::cout << " -"<< vpts << "\n";
+				if( vpts.size() > 0 )
+					pts.insert( vpts[0] );
+				if( vpts.size() > 1 )
+					pts.insert( vpts[1] );
+				std::cout << " set size=" << pts.size() << "\n";
+
+			}
 		}
+		detail::IntersectM<FPT> out;
+		for( const auto& elem: pts )
+			out.add( elem );
 		return out;
 	}
 
@@ -1597,15 +1615,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_getParallelLines( dist, detail::RootHelper<LP>() );
 		}
-#if 0
-		template<typename T>
-		void
-		addOffset( LineOffset dir, T v )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			impl_addOffset( dir, v, detail::RootHelper<LP>() );
-		}
-#endif
+
 		FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
 		std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
@@ -1677,9 +1687,6 @@ Please check out warning described in impl_getAngle()
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
-
-//		template<typename T>
-//		void impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& );
 
 		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
@@ -2706,47 +2713,88 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 }
 
 /// Segment/Circle intersection
+/**
+For each point of the segment, we need to consider 3 different situations
+ - point is inside (PI)
+ - point is outside (PO)
+ - point is on the edge (PE)
+
+That makes 6 different situations to handle:
+
+ - S1: PI-PI => no intersection
+ - S2: PI-PO => 1 intersection
+ - S3: PI-PE => 1 intersection
+ - S4: PO-PO => depends on the support line: if line intersects circle, that's 2 intersections, else none
+ - S5: PO-PE => 1 intersection
+ - S6: PE-PE => 2 intersections
+*/
 template<typename FPT>
 template<typename FPT2>
 detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
 	HOMOG2D_START;
-	detail::IntersectM<FPT> out;
-
-	if( _ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // if both points of segment are
-		return out;                                             // inside the circle, no intersection !
-
+	std::cout << "Segment/Circle: this=" << *this << " circle=" << circle << '\n';
+	if( _ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // S1: if both points of segment are
+	{	std::cout << "S1\n";
+		return detail::IntersectM<FPT>();                       // inside the circle, no intersection !
+	}
 	auto int_lc = getLine().intersects( circle );
-	if( !int_lc() )	                       // line does not intersect circle
-		return out;
+	if( !int_lc() )
+	{     std::cout << "S4B: line does not intersect circle\n";
+		return detail::IntersectM<FPT>();
+	}
 
 	auto p_pts = int_lc.get();      // get the line intersection points
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
-
-	if(                                                          // if one point of the segment is
-		(!_ptS1.isInside( circle ) && _ptS2.isInside( circle ))  // inside and the other outside,
-		||                                                       // then we have a single
-		(_ptS1.isInside( circle ) && !_ptS2.isInside( circle ))  // intersection point
+	std::cout << "LINE INTERS: p1=" << p1 << " p2=" << p2 << "\n";
+	detail::IntersectM<FPT> out;
+	if(                                                            // S2: if one point of the segment is
+		( !_ptS1.isInside( circle ) && _ptS2.isInside( circle ) )  // inside and the other outside,
+		||                                                         // then we have a single
+		( _ptS1.isInside( circle ) && !_ptS2.isInside( circle ) )  // intersection point
 	)
 	{
         if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // check which one of the intersections
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
+		std::cout << "S2: one inside, one outside\n";
 		return out;
 	}
 
-// here, we have both points of segment outside the circle
-	assert( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) );
+	if( std::abs( _ptS1.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+		out.add( _ptS1 );
+	if( std::abs( _ptS2.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+		out.add( _ptS2 );
 
-	if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // if yes, then the other is inside too
+	if( out.size() == 2 )     // S6: both points are on the edge
 	{
-		out.add( p1 );           // points is inside
-		out.add( p2 );
+		std::cout << "S6: both points are on the edge\n";
+		return out;
 	}
-	return out;
+
+// here, need to handle S4A (PO-PO), S3 (PI-PE) and S5 (PO-PE)
+	if( !_ptS1.isInside( circle ) && !_ptS2.isInside( circle ) )   // both points outside
+	{
+		out.add( p1 );
+		out.add( p2 );
+		std::cout << "S4A, p1="<<p1 << " p2= " << p2 << "\n";
+		return out;
+	}
+
+	if( _ptS1.isInside( circle ) || _ptS2.isInside( circle ) ) // then, we are in S3
+	{
+		if( detail::isInArea( p1, _ptS1, _ptS2 ) )
+			out.add( p1 );           // points is inside
+		else
+			out.add( p2 );
+		std::cout << "S3: one is inside\n";
+		return out;
+	}
+	std::cout << "S5\n";
+	return out; // S5
 }
 
 //------------------------------------------------------------------
@@ -2774,6 +2822,16 @@ std::ostream&
 operator << ( std::ostream& f, const Root<LP,FPT>& r )
 {
 	r.impl_op_stream( f, r );
+	return f;
+}
+
+/// Stream operator, free function, call member function pseudo operator impl_op_stream()
+template<typename LP,typename FPT>
+std::ostream&
+operator << ( std::ostream& f, const std::vector<Root<LP,FPT>>& vec )
+{
+	for( const auto& elem: vec )
+		f << elem << '\n';
 	return f;
 }
 
@@ -3167,20 +3225,6 @@ Root<LP,FPT>::impl_distToLine( const Line2d_<FPT>&, const detail::RootHelper<typ
 	return 0.;    // to avoid warning message on build
 }
 
-#if 0
-/// overload for lines, undefined for points
-template<typename LP, typename FPT>
-template<typename T>
-void
-Root<LP,FPT>::impl_addOffset( LineOffset dir, T v, const detail::RootHelper<type::IsLine>& )
-{
-	if( dir == LineOffset::vert )
-		_v[2] = _v[2] - v*_v[1];
-	else
-		_v[2] = _v[2] - v*_v[0];
-	p_normalizeLine();
-}
-#endif
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
@@ -3921,6 +3965,7 @@ void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
+
 
 /// Default line type, uses \c double as numerical type
 using Line2d = Line2d_<double>;

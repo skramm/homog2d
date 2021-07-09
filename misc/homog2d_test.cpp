@@ -1042,12 +1042,23 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,0 ) );
+		CHECK( vpts[1] == Point2d( 3,2 ) );
+	}
+	{     // two rectangles joined by corner at 3,2
+#include "figures_test/frect_intersect_6.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 1 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,2 ) );
 	}
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {
-	Circle_<NUMTYPE> c1( Point2d(1,1), 1 );
+	Circle_<NUMTYPE> c1( Point2d(1,1), 1 ); // circle centered on 1,1, going horizontally from 0 to 2 at y=0
 	{
 		Segment_<NUMTYPE> s1( Point2d(0,20),Point2d(2,20) ); // horizontal segment at y=20
 
@@ -1099,6 +1110,65 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_b.size() == 1 );
 		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
 	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, touching edge of circle
+
+		CHECK( c1.intersects( s2 )() );
+		CHECK( s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() );
+		CHECK( int_b() );
+		CHECK( int_a.size() == 1 );
+		CHECK( int_b.size() == 1 );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(2,0) );
+	}
+
+}
+
+TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
+{
+	{
+//#include "figures_test/circle_intersect_1.code"
+		Circle_<NUMTYPE> r1( Point2d(1,1), 1 );
+		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+//#include "figures_test/circle_intersect_2.code"
+		Circle_<NUMTYPE> r1( Point2d(3,3), 2 );
+		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
+		CHECK( !r1.intersects(r2)() );
+//		auto inters = r1.intersects(r2);
+//		CHECK( inters.size() == 2 );
+//		auto vpts = inters.get();
+//		CHECK( vpts[0] == Point2d( 3,2 ) );
+	}
+	{
+		Circle_<NUMTYPE> r1;
+		FRect_<NUMTYPE> r2( 0,0, 3,3 );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 0,1 ) );
+		CHECK( vpts[1] == Point2d( 1,0 ) );
+	}
+	{
+		Circle_<NUMTYPE> r1;
+		FRect_<NUMTYPE> r2( 1,0, 3,3 );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 1,0 ) );
+		CHECK( vpts[1] == Point2d( 1,0 ) );
+	}
+
+
 }
 
 TEST_CASE( "Circle/Line intersection", "[int_CL]" )
