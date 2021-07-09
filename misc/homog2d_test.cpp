@@ -1124,6 +1124,14 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_b.size() == 1 );
 		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(1,0) );
 	}
+	{
+		Segment_<NUMTYPE> s2( 3,2,4,2 );
+		Circle_<NUMTYPE> c2( Point2d(1,1), 1 );
+		auto int_a = c2.intersects( s2 );
+		CHECK( int_a() == false );
+		auto int_b = s2.intersects( c2 );
+		CHECK( int_b() == false );
+	}
 }
 
 TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
@@ -1132,7 +1140,7 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 //#include "figures_test/circle_intersect_1.code"
 		Circle_<NUMTYPE> r1( Point2d(1,1), 1 );
 		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
-		CHECK( !r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() == false );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
 	}
@@ -1140,7 +1148,7 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 //#include "figures_test/circle_intersect_2.code"
 		Circle_<NUMTYPE> r1( Point2d(3,3), 2 );
 		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
-		CHECK( !r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() == false );
 //		auto inters = r1.intersects(r2);
 //		CHECK( inters.size() == 2 );
 //		auto vpts = inters.get();
@@ -1149,7 +1157,7 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 	{
 		Circle_<NUMTYPE> r1;
 		FRect_<NUMTYPE> r2( 0,0, 3,3 );
-		CHECK( r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() == true );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 2 );
 		auto vpts = inters.get();
@@ -1159,7 +1167,7 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 	{
 		Circle_<NUMTYPE> r1;
 		FRect_<NUMTYPE> r2( 1,0, 3,3 );
-		CHECK( r1.intersects(r2)() );
+		CHECK( r1.intersects(r2)() == true );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 2 );
 		auto vpts = inters.get();

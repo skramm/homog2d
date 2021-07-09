@@ -2725,6 +2725,8 @@ That makes 6 different situations to handle:
  - S2: PI-PO => 1 intersection
  - S3: PI-PE => 1 intersection
  - S4: PO-PO => depends on the support line: if line intersects circle, that's 2 intersections, else none
+  - S4A: if line does NOT intersects circle, no intersection
+  - S4B: if line does intersects circle,
  - S5: PO-PE => 1 intersection
  - S6: PE-PE => 2 intersections
 */
@@ -2742,7 +2744,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	auto int_lc = getLine().intersects( circle );
 	std::cout << "LINE:" << getLine() << "\n";
 	if( !int_lc() )
-	{     std::cout << "S4B: line does not intersect circle\n";
+	{     std::cout << "S4A: line does not intersect circle\n";
 		return detail::IntersectM<FPT>();
 	}
 
@@ -2782,7 +2784,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 		out.add( p1 );
 		if( p2 != p1 )
 			out.add( p2 );
-		std::cout << "S4A, p1="<<p1 << " p2= " << p2 << "\n";
+		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << "\n";
 		return out;
 	}
 
