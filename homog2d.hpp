@@ -1079,25 +1079,24 @@ private:
 	template<typename T>
 	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
 	{
-		std::cout << "Intersection of FRect vs FRect-Circle\nthis=" << *this << ", other=" << other << '\n';
+//		std::cout << "Intersection of FRect vs FRect-Circle\nthis=" << *this << ", other=" << other << '\n';
 
 		std::set<Point2d_<FPT>> pts;
 		for( const auto& rseg: getSegs() )
 		{
-			std::cout << "test of seg " << rseg << '\n';
+//			std::cout << "test of seg " << rseg << '\n';
 			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
 			if( inters() )
 			{
 				auto vpts = inters.get();
 				assert( vpts.size() < 3 );
-				std::cout << "adding " << vpts.size() << " pts:\n";
-				std::cout << " -"<< vpts << "\n";
+//				std::cout << "adding " << vpts.size() << " pts:\n";
+//				std::cout << " -"<< vpts << "\n";
 				if( vpts.size() > 0 )
 					pts.insert( vpts[0] );
 				if( vpts.size() > 1 )
 					pts.insert( vpts[1] );
-				std::cout << " set size=" << pts.size() << "\n";
-
+//				std::cout << " set size=" << pts.size() << "\n";
 			}
 		}
 		detail::IntersectM<FPT> out;
@@ -2640,7 +2639,20 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 		return PtTag::OnEdge;
 	return PtTag::Outside;
 }
-
+#if 0
+/// Debug, can be removed after
+void
+printTag( std::string txt, PtTag tag )
+{
+	std::cout << "point " << txt << ": ";
+	switch( tag )
+	{
+		case PtTag::Inside: std::cout << "Inside\n"; break;
+		case PtTag::Outside: std::cout << "Outside\n"; break;
+		case PtTag::OnEdge: std::cout << "OnEdge\n"; break;
+	}
+}
+#endif
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -2758,29 +2770,26 @@ detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
 	HOMOG2D_START;
-	std::cout << "Segment/Circle: this=" << *this << " circle=" << circle << '\n';
+//	std::cout << "Segment/Circle: this=" << *this << " circle=" << circle << '\n';
 	using detail::PtTag;
 
 	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle );
 	auto tag_ptS2 = detail::getPtLabel( _ptS2, circle );
-
+//	detail::printTag("pt1",tag_ptS1);
+//	detail::printTag("pt2",tag_ptS2);
 	if( tag_ptS1 == PtTag::Inside )
 		if( tag_ptS2 == PtTag::Inside )
-		{	std::cout << "S1\n";
 			return detail::IntersectM<FPT>();
-		}
 
 	auto int_lc = getLine().intersects( circle );
-	std::cout << "LINE:" << getLine() << "\n";
+//	std::cout << "LINE:" << getLine() << "\n";
 	if( !int_lc() )
-	{     std::cout << "S4A: line does not intersect circle\n";
 		return detail::IntersectM<FPT>();
-	}
 
 	auto p_pts = int_lc.get();      // get the line intersection points
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
-	std::cout << "LINE INTERS: p1=" << p1 << " p2=" << p2 << "\n";
+//	std::cout << "LINE INTERS: p1=" << p1 << " p2=" << p2 << "\n";
 
 	if(
 		( tag_ptS1 == PtTag::Inside  && tag_ptS2 == PtTag::Outside )
@@ -2793,37 +2802,27 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
-		std::cout << "S2: one inside, one outside\n";
+//		std::cout << "S2: one inside, one outside\n";
 		return out;
 	}
 
 	detail::IntersectM<FPT> out;
 	if( tag_ptS1 == PtTag::Outside &&  tag_ptS2 == PtTag::Outside ) // both outside
 	{
-		if( !detail::isInArea( p1,  _ptS1, _ptS2 ) )
-		{
-			std::cout << "S4C\n";
+		if( !detail::isInArea( p1, _ptS1, _ptS2 ) ) //could have done for p2, doesn't matter
 			return detail::IntersectM<FPT>();
-		}
 		out.add( p1 );
 		out.add( p2 );
-		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << " out.size=" << out.size() << '\n';
+//		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << " out.size=" << out.size() << '\n';
 		return out;
 	}
 
-	if( std::abs( _ptS1.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+	if( tag_ptS1 == PtTag::OnEdge )
 		out.add( _ptS1 );
-	if( std::abs( _ptS2.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+	if( tag_ptS2 == PtTag::OnEdge )
 		out.add( _ptS2 );
+//	std::cout << "S3-S5-S6: size=" << out.size() << '\n';
 	return out;
-
-/*	if( out.size() == 2 )     // S6: both points are on the edge
-	{
-		std::cout << "S6: both points are on the edge\n";
-		return out;
-	}*/
-
-// here, need to handle S4A (PO-PO), S3 (PI-PE) and S5 (PO-PE)
 }
 
 //------------------------------------------------------------------

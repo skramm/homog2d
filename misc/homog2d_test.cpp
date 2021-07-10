@@ -1111,7 +1111,20 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
 	}
 	{
-		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, touching edge of circle at (1,0)
+		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, outside circle
+
+		CHECK( !c1.intersects( s2 )() );
+		CHECK( !s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() == false );
+		CHECK( int_b() == false );
+		CHECK( int_a.size() == 0 );
+		CHECK( int_b.size() == 0 );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(2,1),Point2d(4,1) ); // horizontal segment at y=0, touching edge of circle at (1,1)
 
 		CHECK( c1.intersects( s2 )() );
 		CHECK( s2.intersects( c1 )() );
@@ -1122,15 +1135,7 @@ TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 		CHECK( int_b() );
 		CHECK( int_a.size() == 1 );
 		CHECK( int_b.size() == 1 );
-		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(1,0) );
-	}
-	{
-		Segment_<NUMTYPE> s2( 3,2,4,2 );
-		Circle_<NUMTYPE> c2( Point2d(1,1), 1 );
-		auto int_a = c2.intersects( s2 );
-		CHECK( int_a() == true );
-		auto int_b = s2.intersects( c2 );
-		CHECK( int_b() == false );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(2,1) );
 	}
 }
 
@@ -1149,10 +1154,6 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 		Circle_<NUMTYPE> r1( Point2d(3,3), 2 );
 		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
 		CHECK( r1.intersects(r2)() == false );
-//		auto inters = r1.intersects(r2);
-//		CHECK( inters.size() == 2 );
-//		auto vpts = inters.get();
-//		CHECK( vpts[0] == Point2d( 3,2 ) );
 	}
 	{
 		Circle_<NUMTYPE> r1;
@@ -1165,14 +1166,13 @@ TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
 		CHECK( vpts[1] == Point2d( 1,0 ) );
 	}
 	{
-		Circle_<NUMTYPE> r1;
+		Circle_<NUMTYPE> r1; // (0,0) with radius=1
 		FRect_<NUMTYPE> r2( 1,0, 3,3 );
 		CHECK( r1.intersects(r2)() == true );
 		auto inters = r1.intersects(r2);
-		CHECK( inters.size() == 2 );
+		CHECK( inters.size() == 1 );
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 1,0 ) );
-		CHECK( vpts[1] == Point2d( 1,0 ) );
 	}
 }
 
