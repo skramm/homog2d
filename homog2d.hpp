@@ -1621,11 +1621,13 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 		void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
 
-		HOMOG2D_INUMTYPE distTo( const Point2d_<FPT>& pt ) const
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>& pt ) const
 		{
 			return impl_distToPoint( pt, detail::RootHelper<LP>() );
 		}
-		HOMOG2D_INUMTYPE distTo( const Line2d_<FPT>& li ) const
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE distTo( const Line2d_<FPT2>& li ) const
 		{
 			return impl_distToLine( li, detail::RootHelper<LP>() );
 		}
@@ -1687,10 +1689,14 @@ Please check out warning described in impl_getAngle()
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
 
-		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT>&,  const detail::RootHelper<type::IsPoint>& ) const;
-		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT>&,  const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename FPT2>
+		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
 		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -2629,13 +2635,19 @@ enum class PtTag: char
 };
 
 /// Returns a label characterizing point \c pt, related to \c circle
+/// \todo use HOMOG2D_INUMTYPE for computation
 template<typename FPT,typename FPT2>
 PtTag
 getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 {
 	if( pt.isInside( circle ) )
 		return PtTag::Inside;
-	if( std::abs( pt.distTo( circle.center() ) - circle.radius() ) < Point2d_<FPT>::nullDistance() )
+	if(
+		std::abs(
+			pt.distTo( circle.center() ) - circle.radius()
+		)
+		< Point2d_<FPT>::nullDistance()
+	)
 		return PtTag::OnEdge;
 	return PtTag::Outside;
 }
@@ -3208,8 +3220,9 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<ty
 
 /// Overload for point to point distance
 template<typename LP, typename FPT>
+template<typename FPT2>
 HOMOG2D_INUMTYPE
-Root<LP,FPT>::impl_distToPoint( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
 	return static_cast<double>(
 		std::hypot(
@@ -3230,24 +3243,27 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 \todo Do we really require computation of hypot ? (because the line is supposed to be normalized, i.e. h=1 ?)
 */
 template<typename LP, typename FPT>
+template<typename FPT2>
 HOMOG2D_INUMTYPE
-Root<LP,FPT>::impl_distToPoint( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
 }
 
 /// overload for line to point distance
 template<typename LP, typename FPT>
+template<typename FPT2>
 HOMOG2D_INUMTYPE
-Root<LP,FPT>::impl_distToLine( const Line2d_<FPT>& li, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_distToLine( const Line2d_<FPT2>& li, const detail::RootHelper<type::IsPoint>& ) const
 {
 	return li.distTo( *this );
 }
 
 /// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
 template<typename LP, typename FPT>
+template<typename FPT2>
 HOMOG2D_INUMTYPE
-Root<LP,FPT>::impl_distToLine( const Line2d_<FPT>&, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
 	return 0.;    // to avoid warning message on build
@@ -3446,20 +3462,19 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 {
 	HOMOG2D_START;
 
-#if 1
-//	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
+	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
 	std::vector<Point2d_<FPT>> pti;
-//	int i=0;
+	int i=0;
 	for( const auto seg: rect.getSegs() )
 	{
-//		std::cout << i++ << ": considering seg: " << seg <<"\n";
+		std::cout << i++ << ": considering seg: " << seg <<"\n";
 		auto ppts_seg = seg.get();
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-//			std::cout << " -INTERSECTION at " << pt << "\n";
+			std::cout << " -INTERSECTION at " << pt << "\n";
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
 				if( pti.size() == 1 )                            // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
@@ -3468,11 +3483,12 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 				pti.push_back( pt );
 			if( pti.size() == 2 )
 			{
-//				std::cout << " -got 2, break\n";
+				std::cout << " -got 2, break\n";
 				break;
 			}
 		}
 	}
+	std::cout << "pti.size()=" << pti.size() << "\n";
 	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
 	if( pti.empty() )
 	{
@@ -3483,67 +3499,6 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	priv::fix_order( pti[0], pti[1] );
 //	std::cout << " -Returned points: " << pti[0] << " + " << pti[1] << "\n";
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
-
-#else                      // old algo
-	auto arr = rect.get4Pts();
-	const auto& p00 = arr[0];
-	const auto& p01 = arr[1];
-	const auto& p11 = arr[2];
-	const auto& p10 = arr[3];
-
-	Line2d_<FPT> l[4];
-	l[0] = Line2d_<FPT>( p00, p01 );
-	l[1] = Line2d_<FPT>(      p01, p11 );
-	l[2] = Line2d_<FPT>(           p11, p10 );
-	l[3] = Line2d_<FPT>(                p10, p00 );
-
-	std::vector<Point2d_<FPT>> vec;
-	for( int i=0; i<4; i++ )         // compare with each of the 4 lines
-	{
-		if( *this == l[i] )          // if same line, then we are done: return the two points
-			return detail::Intersect<detail::Inters_2,FPT>( p00, p11 );
-		else
-		{
-			Point2d_<FPT> pt;
-			bool okFlag(true);
-			try{
-				pt = *this * l[i];
-			}
-			catch( const std::exception& )
-			{
-				okFlag = false; // lines are parallel
-			}
-			if( okFlag )
-			{
-				if( detail::ptIsInside( pt, p00, p11 ) )
-					vec.push_back( pt );
-			}
-		}
-	}
-
-	detail::Intersect<detail::Inters_2,FPT> out;
-	if( vec.size() > 1 )                                // if more than one point was found, then
-	{
-		std::vector<Point2d_<FPT>> vec2( 1, vec[0] );   // build a second vector, holding the first found point as first element
-		for( size_t i=1; i<vec.size(); i++ )            // and add the other points, only once
-		{
-			if(
-				std::find( std::begin( vec2 ), std::end( vec2 ), vec[i] ) // if not already stored,
-				== std::end( vec2 )
-			)
-				vec2.push_back( vec[i] );                                 // then, add the point
-		}
-
-		if( vec2.size() > 1 )
-		{
-			out._doesIntersect = true;
-			out._ptIntersect_1 = vec2[0];
-			out._ptIntersect_2 = vec2[1];
-		}
-		priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
-	}
-	return out;
-#endif
 }
 
 /// Intersection between line and polyline

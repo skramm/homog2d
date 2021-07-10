@@ -945,7 +945,10 @@ int main( int argc, const char** argv )
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
+	{
+		std::cout << "----------------------------------\n";
 		v_demo[i](i+1);
+	}
 
 	std::cout << "Demo end\n";
 }

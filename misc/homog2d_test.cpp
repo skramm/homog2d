@@ -975,6 +975,17 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 		CHECK( cA != cB );
 		CHECK( cA.intersects(cB)() );
 	}
+	{
+		Circle_<NUMTYPE> cA( Point2d(0,0), 1 );
+		Circle_<NUMTYPE> cB( Point2d(2,0), 1 );
+		CHECK( cA != cB );
+		CHECK( cA.intersects(cB)() );
+		auto inter = cA.intersects(cB);
+		CHECK( inter() == true );
+		CHECK( inter.size() == 2 );
+		CHECK( inter.get().first  == Point2d( 1,0) );
+		CHECK( inter.get().second == Point2d( 1,0) );
+	}
 }
 
 TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
