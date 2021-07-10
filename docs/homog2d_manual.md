@@ -793,7 +793,8 @@ configure the library to use `long double` by adding this before the "include":
 ```C++
 #define HOMOG2D_INUMTYPE long double
 ```
-or add that as a compile flag:
+or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
+<br>(don't forget the quotes!)
 
 
 ### 8.2 - Numerical type conversion
@@ -846,7 +847,7 @@ The most crucial is when computing intersection points between a rectangle and a
 The algorithm just checks the intersection points between each of the 4 segments of the rectangle and the line:
 for each segments supporting line, we check if the intersection point is in the segment area.
 However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
-(i.e with coordinates in the range [0-99]).
+(i.e. with coordinates in the range [0-99]).
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
 Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
 
@@ -855,10 +856,6 @@ To avoid this issue, the "Segment/Line" intersection code will request an additi
 <br>so that the value stays at "99".
 
 At present the cefficient value is not adjustable, but will in the future.
-
-
-The math is clear: there are either no intersections, or 2.
-
 
 
 ## 9 - Technical details
