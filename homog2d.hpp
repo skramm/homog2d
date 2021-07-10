@@ -2503,6 +2503,12 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 }
 
 //------------------------------------------------------------------
+/// Used in PolyLine_
+enum class IsClosed: char
+{
+	Yes, No
+};
+//------------------------------------------------------------------
 /// Polyline
 template<typename FPT>
 class Polyline_
@@ -2512,15 +2518,31 @@ class Polyline_
 		bool _isClosed = false;
 
 	public:
+/// Default constructor
 		Polyline_()
 		{}
-		Polyline_( const Point2d_<FPT>& pt )
+/// Constructor for single point
+		Polyline_( const Point2d_<FPT>& pt, IsClosed ic = IsClosed::No )
 		{
 			_plinevec.push_back( pt );
+			if( ic == IsClosed::Yes )
+				_isClosed = true;
 		}
-		/// Returns the number of points (not segments!)
+/// Constructor from FRect
+		template<typename FPT2>
+		Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::No )
+		{
+			for( const auto& pt: rect.get4Pts() )
+				_plinevec.push_back( pt );
+			if( ic == IsClosed::Yes )
+				_isClosed = true;
+			std::cout << "_isClosed=" << _isClosed << "\n";
+		}
+
+/// Returns the number of points (not segments!)
 		size_t size() const { return _plinevec.size(); }
-		/// Returns the number of segments
+
+/// Returns the number of segments
 		size_t nbSegs() const
 		{
 			if( size() == 0 )
@@ -2529,6 +2551,12 @@ class Polyline_
 				return size() - 1;
 			return size() - 1 + (size_t)_isClosed;
 		}
+/// Returns the points
+		std::vector<Point2d_<FPT>> getPts() const
+		{
+			return _plinevec;
+		}
+
 /// Returns the segments of the polyline
 		std::vector<Segment_<FPT>> getSegs() const
 		{
@@ -2550,6 +2578,7 @@ class Polyline_
 /// Clear all
 		void clear() { _plinevec.clear(); }
 
+/// Add single point
 		template<typename FPT2>
 		void add( const Point2d_<FPT2>& pt )
 		{
@@ -2569,7 +2598,7 @@ class Polyline_
 			for( const auto& pt: vec )
 				*it++ = pt;
 		}
-
+/// Add vector of points
 		template<typename FPT2>
 		void add( const std::vector<Point2d_<FPT2>>& vec )
 		{
@@ -2581,7 +2610,20 @@ class Polyline_
 				*it++ = pt;
 		}
 
-		bool& isClosed() { return _isClosed; }
+		const bool& isClosed() const { return _isClosed; }
+		bool& isClosed()             { return _isClosed; }
+
+		friend std::ostream&
+		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
+		{
+			f << "Polyline: ";
+			for( const auto& pt: pl._plinevec )
+				f << pt << "-";
+			f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
+
+			return f;
+		}
+
 
 #ifdef HOMOG2D_USE_OPENCV
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
@@ -3609,34 +3651,7 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 	return out;
 }
 
-#if 0
-/// Apply homography to a rectangle or a segment
-template<
-	typename FPT1,
-	typename FPT2,
-	typename T,
-	typename std::enable_if<
-		(std::is_same<
-			T,
-			FRect_<FPT1>
-		>::value
-		||
-		std::is_same<
-			T,
-			Segment_<FPT1>
-		>::value )
-	>::type* = nullptr
->
-T
-operator * ( const Homogr_<FPT2>& h, const T& rin )
-{
-	auto pts = rin.getPts();
-	Point2d_<FPT1> p1 = h * pts.first;
-	Point2d_<FPT1> p2 = h * pts.second;
-	return FRect_<FPT1>(p1,p2);
-}
-#else
-/// Apply homography to a segment
+/// Apply homography to a Segment
 template<typename FPT1,typename FPT2>
 Segment_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
@@ -3647,7 +3662,22 @@ operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
 	return Segment_<FPT1>( pt1, pt2 );
 }
 
-/// Apply homography to a rectangle
+/// Apply homography to a Polyline
+template<typename FPT1,typename FPT2>
+Polyline_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Polyline_<FPT1>& pl )
+{
+	Polyline_<FPT1> out;
+	const auto& pts = pl.getPts();
+	for( const auto pt: pts )
+		out.add( h * pt );
+	out.isClosed() = pl.isClosed();
+	return out;
+}
+
+#if 0
+// THIS CANNOT BE !!!
+// Apply homography to a rectangle
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
@@ -4009,6 +4039,9 @@ using Circle = Circle_<double>;
 
 /// Default rectangle type
 using FRect = FRect_<double>;
+
+/// Default polyline type
+using Polyline = Polyline_<double>;
 
 // float types
 using Line2dF  = Line2d_<float>;
