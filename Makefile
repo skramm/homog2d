@@ -124,11 +124,11 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 install:
 	cp homog2d.hpp /usr/local/include
 
-demo: demo_opencv
-	./demo_opencv
+demo: BUILD/demo_opencv
+	BUILD/demo_opencv
 
 # this target REQUIRES Opencv
-demo_opencv: misc/demo_opencv.cpp homog2d.hpp
+BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 demo_sdl2: misc/demo_sdl2.cpp homog2d.hpp
