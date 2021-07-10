@@ -47,8 +47,10 @@ See https://github.com/skramm/homog2d
 
 #if 0
 	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
+	#define HOMOG2D_LOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_START
+	#define HOMOG2D_LOG(a) {;}
 #endif
 
 #define HOMOG2D_CHECK_ROW_COL \
@@ -2604,25 +2606,48 @@ class Polyline_
 //------------------------------------------------------------------
 namespace detail {
 
+enum class Rounding: char { Yes, No };
+
 /// Helper function
 template<typename T1,typename T2>
 bool
 isBetween( T1 v, T2 v1, T2 v2 )
 {
-	static_assert( std::is_arithmetic<T1>::value, "Error, type not arithmetic" );
+	HOMOG2D_CHECK_IS_NUMBER(T1);
+	HOMOG2D_CHECK_IS_NUMBER(T2);
+//std::cout << std::scientific << std::setprecision(18);
+//HOMOG2D_LOG("v="<<v << " v1=" << v1 << " v2=" << v2 );
 	if( v >= std::min( v1, v2 ) )
 		if( v <= std::max( v1, v2 ) )
 			return true;
 	return false;
 }
 
-/// Helper function
+/// Does some small rounding (if requested), to avoid some numerical issues
+/// \todo provide access to the coefficient in API
+template<typename FPT>
+long double
+doRounding( FPT value, Rounding r )
+{
+	if( r == Rounding::No )
+		return value;
+	long double coeff=1E6;
+	return std::llroundl( value * coeff ) / coeff;
+}
+
+/// Helper function, checks if \c pt is in the area defined by \c pt1 and \c pt2
 template<typename T1,typename T2>
 bool
-isInArea( const Point2d_<T1>& pt, const Point2d_<T2>& pt1, const Point2d_<T2>& pt2 )
+isInArea(
+	const Point2d_<T1>& pt,
+	const Point2d_<T2>& pt1,
+	const Point2d_<T2>& pt2,
+	Rounding r = Rounding::No
+)
 {
-	if( isBetween( pt.getX(), pt1.getX(), pt2.getX() ) )
-		if( isBetween( pt.getY(), pt1.getY(), pt2.getY() ) )
+	HOMOG2D_START;
+	if( isBetween( doRounding(pt.getX(), r), pt1.getX(), pt2.getX() ) )
+		if( isBetween( doRounding(pt.getY(), r), pt1.getY(), pt2.getY() ) )
 			return true;
 	return false;
 }
@@ -2698,32 +2723,13 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 	const auto& ptB1 = s2.get().first;
 	const auto& ptB2 = s2.get().second;
 
-// if one of the points it the same then one of the other segment, then: NO INTERSECTION !
-/*	if( ptA1 == ptB1 )
-		return detail::Intersect<detail::Inters_1,FPT>();
-	if( ptA1 == ptB2 )
-		return detail::Intersect<detail::Inters_1,FPT>();
-	if( ptA2 == ptB1 )
-		return detail::Intersect<detail::Inters_1,FPT>();
-	if( ptA2 == ptB2 )
-		return detail::Intersect<detail::Inters_1,FPT>();
-*/
+	auto ptInter = l1 * l2;   // intersection point
 
-//	if( !sameLine )
-	{
-		auto ptInter = l1 * l2;   // intersection point
+	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
+		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
+			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
 
-		if( detail::isInArea( ptInter, ptA1, ptA2 ) )
-			if( detail::isInArea( ptInter, ptB1, ptB2 ) )
-				return detail::Intersect<detail::Inters_1,FPT>( ptInter );
-
-		return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
-	}
-// here, same line
-/*	return detail::Intersect<detail::Inters_1,FPT>(
-		this->_ptS1,
-		s2._ptS2,
-	);*/
+	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
 }
 
 //------------------------------------------------------------------
@@ -2738,6 +2744,7 @@ detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
 	HOMOG2D_START;
+	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
 
@@ -2750,9 +2757,14 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	const auto& ptA1 = this->get().first;
 	const auto& ptA2 = this->get().second;
 
-	if( detail::isInArea( pi, ptA1, ptA2 ) )
+	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
+	if( detail::isInArea( pi, ptA1, ptA2, detail::Rounding::Yes ) )
+	{
+		HOMOG2D_LOG( "Is in area" );
 		out._doesIntersect = true;
-
+	}
+	else
+		HOMOG2D_LOG( "Is NOT in area" );
 	return out;
 }
 
@@ -3462,19 +3474,19 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 {
 	HOMOG2D_START;
 
-	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
+//	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
 	std::vector<Point2d_<FPT>> pti;
-	int i=0;
+//	int i=0;
 	for( const auto seg: rect.getSegs() )
 	{
-		std::cout << i++ << ": considering seg: " << seg <<"\n";
+//		std::cout << i++ << ": considering seg: " << seg <<"\n";
 		auto ppts_seg = seg.get();
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-			std::cout << " -INTERSECTION at " << pt << "\n";
+//			std::cout << " -INTERSECTION at " << pt << "\n";
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
 				if( pti.size() == 1 )                            // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
@@ -3483,12 +3495,12 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 				pti.push_back( pt );
 			if( pti.size() == 2 )
 			{
-				std::cout << " -got 2, break\n";
+//				std::cout << " -got 2, break\n";
 				break;
 			}
 		}
 	}
-	std::cout << "pti.size()=" << pti.size() << "\n";
+//	std::cout << "pti.size()=" << pti.size() << "\n";
 	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
 	if( pti.empty() )
 	{

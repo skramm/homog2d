@@ -17,6 +17,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - changed enums for class enums
   - deprecated `Root::addOffset()`
   - Homography now automatically inverted/transposed for lines, [see here](homog2d_manual.md#line_homography).
+  - solved numerical rounding issues
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - switch to MPLv2 licence

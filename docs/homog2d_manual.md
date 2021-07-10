@@ -795,6 +795,28 @@ That same function can be used to change (or print) the current value.
 - When attempting to compute the inverse of a matrix, if the determinant is less
 than `Homogr::nullDeterValue()`, the inversion code will throw.
 
+### Additional rounding
+
+In some situations, although the math is clear, some numerical issues always happen.
+The most crucial is when computing intersection points between a rectangle and a line.
+The algorithm just checks the intersection points between each of the 4 segments of the rectangle and the line:
+for each segments supporting line, we check if the intersection point is in the segment area.
+However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
+(i.e with coordinates in the range [0-99]).
+The intersection point can appear to have for one of the coordinates the value "99". So far so good.
+Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
+
+To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates:
+<br>value = std::round( value * coeff ) / coeff
+<br>so that the value stays at "99".
+
+At present the cefficient value is not adjustable, but will in the future.
+
+
+The math is clear: there are either no intersections, or 2.
+
+
+
 ## 9 - Technical details
 <a name="tech"></a>
 
