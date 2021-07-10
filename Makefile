@@ -86,6 +86,9 @@ precision_test1: misc/precision_test_opencv.cpp
 precision_test2: misc/precision_test.cpp
 	$(CXX) $(CFLAGS) -I. -o $@ $<
 
+#=======================================================================
+# Generation of the doc figures from code
+
 # run the program
 $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
 	$<
@@ -95,15 +98,21 @@ $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
 $(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
+doc_fig: $(DOC_IMAGES_PNG)
+
+#=======================================================================
+# Generation of the doc figures from LaTeX sources
+
 $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
+doc_fig_tex: $(TEX_FIG_PNG)
+
+#=======================================================================
+# Generation of figures for the test samples
 $(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
 	@./$<
 	@mogrify -flip $<.png
-
-BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
@@ -112,10 +121,15 @@ BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/hea
 	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 test_fig: $(TEST_FIG_PNG)
+#=======================================================================
 
-doc_fig: $(DOC_IMAGES_PNG)
 
-doc_fig_tex: $(TEX_FIG_PNG)
+
+BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+
+
 
 doc: BUILD/html/index.html doc_fig doc_fig_tex
 	xdg-open BUILD/html/index.html

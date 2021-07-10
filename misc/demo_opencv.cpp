@@ -512,16 +512,32 @@ void action_C( void* param )
 
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
+// circle - circle intersections
+	auto cci = c1.intersects( c2 );
+	if( cci() )
+		draw( data.img, cci.get(), CvDrawParams().setColor(0,150,0).setPointStyle(PtStyle::Diam) );
+
+
+// circle - rectangle intersections
+	auto cr1 = c1.intersects( data.rect );
+	auto cr2 = c2.intersects( data.rect );
+	if( cr1() )
+		draw( data.img, cr1.get(), CvDrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+	if( cr2() )
+		draw( data.img, cr2.get(), CvDrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+
+// circle - lines intersections
 	for( size_t i=0; i<data.li.size(); i++ )
 	{
 		auto ri = data.li[i].intersects( c1 );
 		if( ri() )
 		{
 			auto inter = ri.get();
-			inter.first.draw( data.img,  CvDrawParams().setColor(250, 0, 0) );
+			inter.first.draw(  data.img, CvDrawParams().setColor(250, 0, 0) );
 			inter.second.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 		}
 	}
+
 	auto seg = getSegment( c1, c2 );
 	seg.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );

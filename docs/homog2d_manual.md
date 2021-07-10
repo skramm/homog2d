@@ -309,7 +309,7 @@ auto pair_pts = rect.getPts();  // returns the 2 points p0,p1 in a std::pair
 auto pts = rect.get4Pts(); // return a std::array of 4 points
 ```
 
-You can also fetch the 4 segments of the rectangle:
+You can also fetch the 4 segments of the rectangle, with a member function or a free function:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
@@ -327,7 +327,7 @@ auto h = rect.height();
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
-Circle c1( center_point, radius );
+Circle c1( center_point, 50 );
 c1.radius() = 100;
 std::cout << c1.radius();
 ```
@@ -338,9 +338,27 @@ and the two segments tangential to two circles:
 Circle c1, c2;
 auto seg = getSegment( c1, c2 );  // as a segment
 auto line = getLine( c1, c2 );    // as a line
-auto pair_segs = getTanSegs( c1, c2 );
+auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
 ![circles1](figures_src/circles1.png)
+
+
+### 4.3 - Polyline
+
+The class holds a set of points, and models an arbitrary polygon.
+It can be either open or closed (last points joins first one).
+```C++
+Polygon pl1;                  // default is open
+Polygon pl2( IsClosed::Yes ); // this one is closed
+pl1.add( pt );       // add a point
+pl1.add( 66,77 );    // add a point as (x,y)
+std::vector<Point2d> vpts;
+// fill vpt
+pl1.add( vpt );      // add a vector of points
+pl2.isClosed() = false;  // now open
+```
+
+![polyline1](figures_src/polyline1.png)
 
 
 ## 5 - Homographies
@@ -359,16 +377,26 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-This can be used with other types too:
+This can be used with some of other types too:
 ```C++
 Homogr h;
  ... assign some planar transformation
 Segment s1( ..., ... );
 auto s2 = H * s1;
 
-FRect r1( ..., ... );
-auto r2 = H * r1;
+Polyline pl;
+pl = H * pl;
 ```
+
+It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `Polyline`.
+```C++
+Homogr h( 100, 200 );
+FRect rect( 0,0, 50,20 );
+auto a = H * rect; // a is a Polyline
+```
+
+(note: homography product not available in this release for circles)
+
 
 ### 5.2 - Homographies for lines
 <a name="line_homography"></a>
@@ -386,7 +414,7 @@ Point2d p2a( ..., ... );
 Line2d lA = p1a * p2a;
 auto p1b = H * p1a;
 auto p2b = H * p2a;
-lB = lA * H; // same as lB = p1b * p2b;
+lB = H * lA; // same as lB = p1b * p2b;
 ```
 
 ### 5.3 - Setting up from a given planar transformation
@@ -462,12 +490,12 @@ Point2d p2 = H * p1;
 
 - You don't even need to create a variable, you can build one "on the fly" for translations and rotations:
 ```C++
-p1 = Homogr(50,100) * p1;
-p2 = Homogr(M_PI/4) * p2;
+p1 = Homogr(50,100) * p1;   // translation
+p2 = Homogr(M_PI/4) * p2;   // rotation
 ```
 This is possible for all the primitives accepting a homography product.
 
-- But more complex stuff is possible too, without creating a variable:
+- More complex stuff is possible too, without creating a variable:
 ```C++
 p1 = Homogr().addTranslation(50,100).addScale(2) * p1;
 ```
@@ -690,13 +718,16 @@ All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` 
 Point2d pt( ... );
 Line2d li( ... );
 Segment seg( ... );
+Circle c;
+Polyline pl;
 li.draw( mat );
 pt.draw( mat );
 seg.draw( mat );
-...
+c.draw( mat );
+pl.draw( mat );
 ```
 
-These drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+All these drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
 li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );

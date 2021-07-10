@@ -10,7 +10,7 @@ int main()
 	Segment s2(150,150, 150,50 );
 
 	cv::Mat img;
-	img.create( 350, 450, CV_8UC3 );
+	img.create( 200, 350, CV_8UC3 );
 	img = cv::Scalar(255,255,255);
 	s1.draw( img, CvDrawParams().setColor(250,0,20) );
 	s2.draw( img, CvDrawParams().setColor(20,0,250) );

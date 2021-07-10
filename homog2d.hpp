@@ -2514,12 +2514,24 @@ class Polyline_
 
 	public:
 /// Default constructor
-		Polyline_()
-		{}
+		Polyline_( IsClosed ic = IsClosed::No )
+		{
+			if( ic == IsClosed::Yes )
+				_isClosed = true;
+		}
 /// Constructor for single point
-		Polyline_( const Point2d_<FPT>& pt, IsClosed ic = IsClosed::No )
+		template<typename FPT2>
+		Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
 		{
 			_plinevec.push_back( pt );
+			if( ic == IsClosed::Yes )
+				_isClosed = true;
+		}
+/// Constructor for single point as x,y
+		template<typename FPT2>
+		Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
+		{
+			_plinevec.push_back( Point2d_<FPT>(x,y) );
 			if( ic == IsClosed::Yes )
 				_isClosed = true;
 		}
@@ -2572,6 +2584,12 @@ class Polyline_
 /// Clear all
 		void clear() { _plinevec.clear(); }
 
+/// Add single point as x,y
+		template<typename FPT2>
+		void add( FPT2 x, FPT2 y )
+		{
+			add( Point2d_<FPT>( x, y ) );
+		}
 /// Add single point
 		template<typename FPT2>
 		void add( const Point2d_<FPT2>& pt )
@@ -2705,7 +2723,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 		return PtTag::Inside;
 	if(
 		std::abs(
-			pt.distTo( circle.center() ) - circle.radius()
+			static_cast<HOMOG2D_INUMTYPE>(pt.distTo( circle.center() ) ) - circle.radius()
 		)
 		< Point2d_<FPT>::nullDistance()
 	)
@@ -3669,19 +3687,17 @@ operator * ( const Homogr_<FPT2>& h, const Polyline_<FPT1>& pl )
 	return out;
 }
 
-#if 0
-// THIS CANNOT BE !!!
-// Apply homography to a rectangle
+/// Apply homography to a flat rectangle produces a closed polyline
 template<typename FPT1,typename FPT2>
-FRect_<FPT1>
+Polyline_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 {
-	auto pts = rin.getPts();
-	Point2d_<FPT1> p1 = h * pts.first;
-	Point2d_<FPT1> p2 = h * pts.second;
-	return FRect_<FPT1>(p1,p2);
+	Polyline_<FPT1> out( IsClosed::Yes );
+	for( const auto& pt: rin.get4Pts() )
+		out.add( h * pt );
+	return out;
 }
-#endif
+
 //------------------------------------------------------------------
 namespace priv {
 
@@ -4008,6 +4024,18 @@ void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
 	for( const auto& elem: cont )
 		elem.draw( mat, dp );
 }
+//------------------------------------------------------------------
+/// Free function, draws a pair of points
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<typename T>
+void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDrawParams() )
+{
+	ppts.first.draw( mat, dp );
+	ppts.second.draw( mat, dp );
+}
+
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
