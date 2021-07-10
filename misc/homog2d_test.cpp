@@ -279,7 +279,7 @@ TEST_CASE( "test throw", "[test_thr]" )
 		CHECK_THROWS( FRect( p1,p2) );
 		p2.set( 1, 1);
 		CHECK_NOTHROW( FRect( p1,p2) );
-		CHECK( FRect_<NUMTYPE>( p1,p2).get2Pts()==std::make_pair(Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ) );
+		CHECK( FRect_<NUMTYPE>( p1,p2).getPts()==std::make_pair(Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ) );
 		p1.set( 4, 4 );
 		p2.set( 5, 5 );
 		CHECK_NOTHROW( FRect( p1,p2) );
@@ -828,8 +828,8 @@ TEST_CASE( "inside circle", "[tic]" )
 
 		Circle_<NUMTYPE> cB( Point2d(5,0), 2.);
 		auto seg = getSegment<NUMTYPE>( cA, cB );
-		CHECK( seg.get().first  == Point2d(0,0) );
-		CHECK( seg.get().second == Point2d(5,0) );
+		CHECK( seg.getPts().first  == Point2d(0,0) );
+		CHECK( seg.getPts().second == Point2d(5,0) );
 		CHECK( seg.length() == 5 );
 	}
 }
@@ -1363,7 +1363,7 @@ TEST_CASE( "Segment", "[seg1]" )
 		CHECK( s1.length() == 5 );
 
 		Segment_<NUMTYPE> s2( Point2d(9,9), Point2d(8,8) );
-		auto pts = s2.get();
+		auto pts = s2.getPts();
 		CHECK( pts.first  == Point2d_<NUMTYPE>(8,8) );
 		CHECK( pts.second == Point2d_<NUMTYPE>(9,9) );
 	}
@@ -1391,7 +1391,7 @@ TEST_CASE( "FRect", "[frect]" )
 		FRect_<NUMTYPE> r1;
 		CHECK( r1.width() == 1. );
 		CHECK( r1.height() == 1. );
-		auto p_pts = r1.get2Pts();
+		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
 		CHECK( p_pts.second == Point2d(1.,1.) );
 
@@ -1409,7 +1409,7 @@ TEST_CASE( "FRect", "[frect]" )
 
 		CHECK( r2a.width() == 5. );
 		CHECK( r2a.height() == 3. );
-		auto p_pts = r2b.get2Pts();
+		auto p_pts = r2b.getPts();
 		CHECK( p_pts.first  == Point2d(1,2) );
 		CHECK( p_pts.second == Point2d(6,5) );
 

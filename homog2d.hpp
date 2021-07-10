@@ -981,7 +981,7 @@ class FRect_
 
 /// Returns the 2 major points of the rectangle
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
-	get2Pts() const
+	getPts() const
 	{
 		return std::make_pair( _ptR1, _ptR2 );
 	}
@@ -1220,7 +1220,7 @@ public:
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect )
 	{
-		return implC_isInside( rect.get2Pts() );
+		return implC_isInside( rect.getPts() );
 	}
 
 /// Circle/Line intersection
@@ -2305,7 +2305,7 @@ class Segment_
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
 		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		get() const
+		getPts() const
 		{
 			return std::make_pair( _ptS1, _ptS2 );
 		}
@@ -2718,10 +2718,10 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 //		sameLine = true;
 	}
 
-	const auto& ptA1 = get().first;
-	const auto& ptA2 = get().second;
-	const auto& ptB1 = s2.get().first;
-	const auto& ptB2 = s2.get().second;
+	const auto& ptA1 = getPts().first;
+	const auto& ptA2 = getPts().second;
+	const auto& ptB1 = s2.getPts().first;
+	const auto& ptB2 = s2.getPts().second;
 
 	auto ptInter = l1 * l2;   // intersection point
 
@@ -2754,8 +2754,8 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	out._ptIntersect = li1 * li2;   // intersection point
 
 	const auto& pi   = out._ptIntersect;
-	const auto& ptA1 = this->get().first;
-	const auto& ptA2 = this->get().second;
+	const auto& ptA1 = getPts().first;
+	const auto& ptA2 = getPts().second;
 
 	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
 	if( detail::isInArea( pi, ptA1, ptA2, detail::Rounding::Yes ) )
@@ -3366,7 +3366,7 @@ template<typename LP, typename FPT>
 bool
 Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
-	auto pair_pts = rect.get2Pts();
+	auto pair_pts = rect.getPts();
 	const auto& p00 = pair_pts.first;
 	const auto& p11 = pair_pts.second;
 	return detail::ptIsInside( *this, p00, p11 );
@@ -3480,7 +3480,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	for( const auto seg: rect.getSegs() )
 	{
 //		std::cout << i++ << ": considering seg: " << seg <<"\n";
-		auto ppts_seg = seg.get();
+		auto ppts_seg = seg.getPts();
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
@@ -3609,14 +3609,41 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 	return out;
 }
 
+#if 0
+/// Apply homography to a rectangle or a segment
+template<
+	typename FPT1,
+	typename FPT2,
+	typename T,
+	typename std::enable_if<
+		(std::is_same<
+			T,
+			FRect_<FPT1>
+		>::value
+		||
+		std::is_same<
+			T,
+			Segment_<FPT1>
+		>::value )
+	>::type* = nullptr
+>
+T
+operator * ( const Homogr_<FPT2>& h, const T& rin )
+{
+	auto pts = rin.getPts();
+	Point2d_<FPT1> p1 = h * pts.first;
+	Point2d_<FPT1> p2 = h * pts.second;
+	return FRect_<FPT1>(p1,p2);
+}
+#else
 /// Apply homography to a segment
 template<typename FPT1,typename FPT2>
 Segment_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
 {
-	const auto& pts = seg.get();
-	Root<type::IsPoint,FPT1> pt1 = h * pts.first;
-	Root<type::IsPoint,FPT1> pt2 = h * pts.second;
+	const auto& pts = seg.getPts();
+	Point2d_<FPT1> pt1 = h * pts.first;
+	Point2d_<FPT1> pt2 = h * pts.second;
 	return Segment_<FPT1>( pt1, pt2 );
 }
 
@@ -3625,12 +3652,12 @@ template<typename FPT1,typename FPT2>
 FRect_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 {
-	auto pts = rin.get2Pts();
-	Root<type::IsPoint,FPT1> p1 = h * pts.first;
-	Root<type::IsPoint,FPT1> p2 = h * pts.second;
+	auto pts = rin.getPts();
+	Point2d_<FPT1> p1 = h * pts.first;
+	Point2d_<FPT1> p2 = h * pts.second;
 	return FRect_<FPT1>(p1,p2);
 }
-
+#endif
 //------------------------------------------------------------------
 namespace priv {
 
@@ -3714,9 +3741,9 @@ get4Pts( const FRect_<FPT>& rect )
 }
 template<typename FPT>
 std::array<Point2d_<FPT>,4>
-get2Pts( const FRect_<FPT>& rect )
+getPts( const FRect_<FPT>& rect )
 {
-	return rect.get2Pts();
+	return rect.getPts();
 }
 
 //------------------------------------------------------------------

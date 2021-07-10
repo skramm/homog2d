@@ -305,7 +305,7 @@ FRect r1( x1, y1, x2, y2 );
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );
-auto pair_pts = rect.get2Pts();  // returns the 2 points p0,p1 in a std::pair
+auto pair_pts = rect.getPts();  // returns the 2 points p0,p1 in a std::pair
 auto pts = rect.get4Pts(); // return a std::array of 4 points
 ```
 

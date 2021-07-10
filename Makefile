@@ -102,6 +102,9 @@ $(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
 	@./$<
 	@mogrify -flip $<.png
 
+BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 

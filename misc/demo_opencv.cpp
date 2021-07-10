@@ -648,8 +648,8 @@ void action_6( void* param )
 	Segment s2 = H*s1;
 	s1.draw( data.img, CvDrawParams().setColor( 0,0,250) );
 	s2.draw( data.img, CvDrawParams().setColor( 250,250,0) );
-	s1.get().first.draw( data.img, CvDrawParams().selectPoint() );
-	s1.get().second.draw( data.img, CvDrawParams().selectPoint() );
+	s1.getPts().first.draw( data.img, CvDrawParams().selectPoint() );
+	s1.getPts().second.draw( data.img, CvDrawParams().selectPoint() );
 }
 
 void demo_6(int n)
