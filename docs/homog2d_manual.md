@@ -460,6 +460,19 @@ Point2d p1;
 Point2d p2 = H * p1;
 ```
 
+- You don't even need to create a variable, you can build one "on the fly" for translations and rotations:
+```C++
+p1 = Homogr(50,100) * p1;
+p2 = Homogr(M_PI/4) * p2;
+```
+This is possible for all the primitives accepting a homography product.
+
+- But more complex stuff is possible too, without creating a variable:
+```C++
+p1 = Homogr().addTranslation(50,100).addScale(2) * p1;
+```
+
+
 - You can apply the homography to a set of points or lines:
 ```C++
 std::vector<Point2d> v_pts;

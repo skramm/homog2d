@@ -150,20 +150,15 @@ using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
 template<typename T>
 using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
 
-template<typename FPT>
-class Segment_;
-
-template<typename FPT>
-class Polyline_;
-
-template<typename FPT>
-class Circle_;
+template<typename FPT> class Segment_;
+template<typename FPT> class Polyline_;
+template<typename FPT> class Circle_;
+template<typename FPT> class FRect_;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
-
 
 
 namespace detail {
@@ -2503,13 +2498,13 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 }
 
 //------------------------------------------------------------------
-/// Used in PolyLine_
+/// Used in Polyline_ constructors
 enum class IsClosed: char
 {
 	Yes, No
 };
 //------------------------------------------------------------------
-/// Polyline
+/// Polyline, can be closed or not
 template<typename FPT>
 class Polyline_
 {
@@ -2536,7 +2531,6 @@ class Polyline_
 				_plinevec.push_back( pt );
 			if( ic == IsClosed::Yes )
 				_isClosed = true;
-			std::cout << "_isClosed=" << _isClosed << "\n";
 		}
 
 /// Returns the number of points (not segments!)
