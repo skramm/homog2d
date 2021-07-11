@@ -689,7 +689,7 @@ void demo_6(int n)
 /// This one has two windows
 struct Param_H: public Data
 {
-	int hmethod = 0;
+	int hmethod = 1;
 	cv::Mat img2;
 	std::string win2 = "Computed_projection";
 
@@ -817,10 +817,10 @@ void demo_H( int n )
 		{
 				data.hmethod = data.hmethod?0:1;
 #if !defined(HOMOG2D_USE_EIGEN)
-				if( data.hmethod == 1 )
+				if( data.hmethod == 0 )
 				{
 					std::cout << "Unable, build without Eigen support, see manual, switch to Opencv\n";
-					data.hmethod = 0;
+					data.hmethod = 1;
 				}
 #endif
 		}

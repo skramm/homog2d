@@ -534,22 +534,13 @@ public:
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-/*		auto det = p_det();
-		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
-			throw std::runtime_error( "matrix is not invertible" );
-
-		auto adjugate = p_adjugate();
-
-		detail::divideAll(adjugate, det);
-		_data = adjugate;
-*/
 		_data = p_inverse();
 		normalize();
 		_hasChanged = true;
 		return *this;
 	}
 
-	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=0 );
+	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
@@ -1021,16 +1012,7 @@ class FRect_
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
 	{
 		HOMOG2D_START;
-#if 0
 		return line.intersects( *this );
-#else
-//		std::cout << "--- FRect/Line intersection: calling Line/FRect\n";
-		auto res=line.intersects( *this );
-//		std::cout << "--- FRect/Line intersection: return from Line/FRect=" << res() << "\n";
-//		std::cout << "--- FRect/Line intersection: res:" << res << "\n";
-
-		return res;
-#endif
 	}
 
 /// FRect/Segment intersection
@@ -1038,35 +1020,22 @@ class FRect_
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
 		HOMOG2D_START;
-//		std::cout << "FRect/Segment intersection: seg=" << seg << '\n';
-//		std::set<Point2d_<FPT>> s_inters;
 		detail::IntersectM<FPT> out;
-//		int i=0;
 		for( const auto& rseg: getSegs() )
 		{
-//			std::cout << "  -"<<  i++ << ": test seg " << rseg << "\n";
 			auto inters = rseg.intersects( seg ); // call of Segment/Segment
 			if( inters() )
 			{
 				auto pt =  inters.get();
-	//			std::cout << "  -intersection: pt=" << pt << '\n';
 				bool addPoint = true;
 				if( out.size() == 1 ) // if we have already one
 					if( out.get()[0] == pt )
 						addPoint = false;
 				if( addPoint )
-				{
 					out.add( pt );
-//					std::cout << "  -adding pt, nb=" << out.size()  << "\n";
-				}
 				if( out.size() == 2 )
-				{
-//					std::cout << "  -break!\n";
 					break;
-				}
 			}
-//			else
-//				std::cout << "  -NO intersection\n";
 		}
 		return out;
 	}
@@ -1076,24 +1045,18 @@ private:
 	template<typename T>
 	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
 	{
-//		std::cout << "Intersection of FRect vs FRect-Circle\nthis=" << *this << ", other=" << other << '\n';
-
 		std::set<Point2d_<FPT>> pts;
 		for( const auto& rseg: getSegs() )
 		{
-//			std::cout << "test of seg " << rseg << '\n';
 			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
 			if( inters() )
 			{
 				auto vpts = inters.get();
 				assert( vpts.size() < 3 );
-//				std::cout << "adding " << vpts.size() << " pts:\n";
-//				std::cout << " -"<< vpts << "\n";
 				if( vpts.size() > 0 )
 					pts.insert( vpts[0] );
 				if( vpts.size() > 1 )
 					pts.insert( vpts[1] );
-//				std::cout << " set size=" << pts.size() << "\n";
 			}
 		}
 		detail::IntersectM<FPT> out;
@@ -2144,8 +2107,6 @@ buildFrom4Points_Eigen(
 #endif
 
 	Homogr_<FPT> H;
-//	std::cout << H << '\n';
-
 	for( int i=0; i<8; i++ )
 		H.set( i/3, i%3, X(i) );
 	H.set(2, 2, 1.);
@@ -2179,26 +2140,43 @@ buildFrom4Points_Opencv (
 } // namespace detail
 
 //------------------------------------------------------------------
+/// Build Homography from 2 sets of 4 points (free function)
+template<typename FPT>
+Homogr_<FPT>
+buildFrom4Points(
+	const std::vector<Point2d_<FPT>>& vpt1,     ///< source points
+	const std::vector<Point2d_<FPT>>& vpt2,     ///< destination points
+	int                               method=1  ///< 0: Eigen, 1: Opencv
+)
+{
+	Homogr_<FPT> H;
+	H.buildFrom4Points( vpt1, vpt2, method );
+	return H;
+}
+
+//------------------------------------------------------------------
 /// Build Homography from 2 sets of 4 points
 /**
 - Requires either Eigen or Opencv
 - we build a 8x8 matrix A and a 8x1 vector B, and get the solution from X = A^-1 B
 - see this for details:
 https://skramm.lautre.net/files/misc/Kramm_compute_H_from_4pts.pdf
+
+\todo fix this so that user can provide a std::array of points
 */
-template<typename MT,typename FPT>
+template<typename M,typename FPT>
 void
-Hmatrix_<MT,FPT>::buildFrom4Points(
-	const std::vector<Point2d_<FPT>>& vpt1,  ///< source points
-	const std::vector<Point2d_<FPT>>& vpt2,  ///< destination points
-	int method                                         ///< 0: Eigen, 1: Opencv
+Hmatrix_<M,FPT>::buildFrom4Points(
+	const std::vector<Point2d_<FPT>>& vpt1,   ///< source points
+	const std::vector<Point2d_<FPT>>& vpt2,   ///< destination points
+	int                               method  ///< 0: Eigen, 1: Opencv (default)
 )
 {
 	assert( vpt1.size() == 4 );
 	assert( vpt2.size() == 4 );
 	assert( method == 0 || method == 1 );
 
-	if( method == 1 )
+	if( method == 0 )
 	{
 #ifdef HOMOG2D_USE_EIGEN
 		*this = detail::buildFrom4Points_Eigen( vpt1, vpt2 );
@@ -2758,19 +2736,13 @@ detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
 	HOMOG2D_START;
-//	std::cout << " - Segment/Segment intersection\n";
 	if( *this == s2 )              // same segment => no intersection
 		return detail::Intersect<detail::Inters_1,FPT>();
 
-//	bool sameLine(false);
 	Line2d_<HOMOG2D_INUMTYPE> l1 = getLine();
 	Line2d_<HOMOG2D_INUMTYPE> l2 = s2.getLine();
 	if( l1.isParallelTo( l2 ) )                                // if parallel,
-	{
-//		if( l1 != l2 )                                         // AND not the same
 			return detail::Intersect<detail::Inters_1,FPT>();  // then, no intersection
-//		sameLine = true;
-	}
 
 	const auto& ptA1 = getPts().first;
 	const auto& ptA2 = getPts().second;
@@ -2848,26 +2820,22 @@ detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
 	HOMOG2D_START;
-//	std::cout << "Segment/Circle: this=" << *this << " circle=" << circle << '\n';
 	using detail::PtTag;
 
 	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle );
 	auto tag_ptS2 = detail::getPtLabel( _ptS2, circle );
-//	detail::printTag("pt1",tag_ptS1);
-//	detail::printTag("pt2",tag_ptS2);
+
 	if( tag_ptS1 == PtTag::Inside )
 		if( tag_ptS2 == PtTag::Inside )
 			return detail::IntersectM<FPT>();
 
 	auto int_lc = getLine().intersects( circle );
-//	std::cout << "LINE:" << getLine() << "\n";
 	if( !int_lc() )
 		return detail::IntersectM<FPT>();
 
 	auto p_pts = int_lc.get();      // get the line intersection points
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
-//	std::cout << "LINE INTERS: p1=" << p1 << " p2=" << p2 << "\n";
 
 	if(
 		( tag_ptS1 == PtTag::Inside  && tag_ptS2 == PtTag::Outside )
@@ -2880,7 +2848,6 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
-//		std::cout << "S2: one inside, one outside\n";
 		return out;
 	}
 
@@ -2891,7 +2858,6 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 			return detail::IntersectM<FPT>();
 		out.add( p1 );
 		out.add( p2 );
-//		std::cout << "S4B, p1="<<p1 << " p2= " << p2 << " out.size=" << out.size() << '\n';
 		return out;
 	}
 
@@ -2899,7 +2865,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 		out.add( _ptS1 );
 	if( tag_ptS2 == PtTag::OnEdge )
 		out.add( _ptS2 );
-//	std::cout << "S3-S5-S6: size=" << out.size() << '\n';
+
 	return out;
 }
 
@@ -3181,7 +3147,7 @@ Root<LP,FPT>::impl_op_equal( const Root<LP,FPT>& other, const detail::RootHelper
 }
 
 //------------------------------------------------------------------
-/// Sorting operator, used for points
+/// Sorting operator, for points
 template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
@@ -3194,7 +3160,7 @@ Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<
 		return true;
 	return false;
 }
-/// Sorting operator, used for lines
+/// Sorting operator, for lines
 template<typename LP,typename FPT>
 bool
 Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
@@ -3202,8 +3168,6 @@ Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid < operator: you cannot sort lines" );
 	return false; // to avoid a warning
 }
-
-
 
 //------------------------------------------------------------------
 /// Inner implementation details

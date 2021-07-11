@@ -550,7 +550,7 @@ The two options available are:
 - Opencv (https://opencv.org)
 - Eigen (https://eigen.tuxfamily.org/)
 
-The default is Opencv, thus it will fail to build if not installed on system (check out  [bindings](#bind) for more on this).
+The default is Opencv, thus it will fail to build if not installed on system (check out [bindings](#bind) for more on this).
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 

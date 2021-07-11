@@ -1427,6 +1427,16 @@ TEST_CASE( "FRect", "[frect]" )
 //////////////////////////////////////////////////////////////
 
 #ifdef HOMOG2D_USE_OPENCV
+TEST_CASE( "Opencv build H", "[test_opencv2]" )
+{
+	std::vector<Point2d_<NUMTYPE>> v1(4);
+	std::vector<Point2d_<NUMTYPE>> v2(4);
+	Homogr_<NUMTYPE> H;
+	H.buildFrom4Points( v1, v2 );
+	buildFrom4Points( v1, v2 );
+
+}
+
 TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);
