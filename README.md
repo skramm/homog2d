@@ -9,6 +9,8 @@ A small single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D transformations),
 using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
 
+![showcase1](docs/showcase1.gif)
+
 - Language: C++11 (or later)
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
@@ -17,7 +19,7 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 - Licence: MPLv2
 - Dependencies: none, other than standard library
 
-:new: (2021-07-08): A major rework of code and manual is currently under development, should be available in 10-15 days, it is advised to wait for next release as they will be some API changes.
+:new: (2021-07-08): A major rework of code and manual is currently under development, should be available in 10-15 days, it is advised to wait for next release as there will be some API changes.
 
 
 Short preview:

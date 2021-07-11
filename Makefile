@@ -118,16 +118,11 @@ BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
+	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 test_fig: $(TEST_FIG_PNG)
 #=======================================================================
-
-
-
-BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
-
 
 
 
@@ -185,9 +180,15 @@ rm_nb:
 	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 #=================================================================
+showcase: BUILD/showcase1
+	$<
+	docs/build_gif.sh
+
+BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 clean:
-	-rm -r html/*
-	-rm homog2d_test
-	-rm demo_opencv
-	-rm *.gcov
+	@-rm -r BUILD/*
+	@-rm homog2d_test
+	@-rm demo_opencv
+	@-rm *.gcov
