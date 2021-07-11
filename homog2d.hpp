@@ -2249,16 +2249,19 @@ class Segment_
 			priv::fix_order( _ptS1, _ptS2 );
 		}
 
-/// Get length
-		FPT length() const
+/// Get segment length
+		HOMOG2D_INUMTYPE length() const
 		{
 			return _ptS1.distTo( _ptS2 );
 		}
+
+/// Get angle between segment and other segment/line
 		template<typename U>
 		HOMOG2D_INUMTYPE getAngle( const U& other ) const
 		{
 			return other.getAngle( this->getLine() );
 		}
+
 /// Comparison operator
 		bool operator == ( const Segment_& s2 ) const
 		{
@@ -2352,6 +2355,15 @@ the one with smallest y-coordinate will be returned first */
 	}
 #endif
 };
+
+
+//------------------------------------------------------------------
+/// Get segment length (free function)
+template<typename FPT>
+HOMOG2D_INUMTYPE length( const Segment_<FPT>& seg )
+{
+	return seg.length();
+}
 
 //------------------------------------------------------------------
 template<typename U>

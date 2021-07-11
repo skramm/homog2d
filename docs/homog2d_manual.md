@@ -7,15 +7,14 @@ For stable releases, see home page.
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
-3. [Segments](#segments)
-4. [Other geometric primitives](#shapes)
-5. [2D transformation (aka homographies)](#matrix)
-6. [Intersections and enclosings determination](#inter)
-7. [Bindings](#bind)
-8. [Numerical data types](#numdt)
-9. [Technical details](#tech)
-10. [FAQ](homog2d_qa.md)
-11. [History](homog2d_history.md)
+3. [Other geometric primitives](#shapes)
+4. [2D transformation (aka homographies)](#matrix)
+5. [Intersections and enclosings determination](#inter)
+6. [Bindings](#bind)
+7. [Numerical data types](#numdt)
+8. [Technical details](#tech)
+9. [FAQ](homog2d_qa.md)
+10. [History](homog2d_history.md)
 
 
 ## 1 - Introduction
@@ -26,6 +25,16 @@ All the code is in the namespace `homog2d`, so either add `using namespace homog
 This library provides several main data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
 It is implemented as a homogeneous 3x3 matrix.
 It also provides some additional types, derived from these.
+
+Most of the API is exposed both as member functions and as free functions.
+Say for example you have a type `AAA` on which you can apply the `foo()` operation.
+Both of these is possible:
+```C++
+AAA myvar;
+auto v1 = myvar.foo();
+auto v2 = foo(myvar);
+```
+
 
 ## 2 - Lines and points
 <a name="basic"></a>
@@ -227,7 +236,13 @@ Line2d l1,l2; // some lines
 bool it_is = l1.isParallelTo( l2 );
 ```
 
-## 3 - Segments
+## 3 - Other geometric primitives
+<a name="shapes"></a>
+
+Some other shapes are provided, for conveniency.
+
+
+### 3.1 - Segments
 <a name="segments"></a>
 
 A segment is implemented internally as a pair of points.
@@ -270,20 +285,15 @@ auto p_middle = s1.getMiddlePoint();
 auto p_mid2 = getMiddlePoint(s1); // your choice
 ```
 
-The length is available with:
+The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
-auto length = s1.length();
+auto length  = s1.length();
+auto length2 = length(s1);
 ```
 
 
-
-## 4 - Other geometric primitives
-<a name="shapes"></a>
-
-Some other shapes are provided, for conveniency.
-
-### 4.1 - Flat rectangles
+### 3.2 - Flat rectangles
 
 A flat rectangle is provided through the template class `FRect`.
 It is modeled by its two opposite points.
@@ -330,7 +340,7 @@ auto w = rect.width();
 auto h = rect.height();
 ```
 
-### 4.2 - Circles
+### 3.3 - Circles
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
@@ -350,7 +360,7 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ![circles1](figures_src/circles1.png)
 
 
-### 4.3 - Polyline
+### 3.4 - Polyline
 
 This class holds a set of points and models an arbitrary polygon.
 It can be either open or closed (last points joins first one).
@@ -375,13 +385,13 @@ Polygon pl2( frect, IsClosed::Yes );  // optional argument
 ```
 
 
-## 5 - Homographies
+## 4 - Homographies
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
 
 
-### 5.1 - Homographies for points
+### 4.1 - Homographies for points
 
 ```C++
 Homogr h; // unit transformation ("eye" matrix)
@@ -412,7 +422,7 @@ auto a = H * rect; // a is a Polyline
 (note: homography product not available in this release for circles)
 
 
-### 5.2 - Homographies for lines
+### 4.2 - Homographies for lines
 <a name="line_homography"></a>
 
 For lines, a known result is that if we have a line lA going through p1 and p2,
@@ -431,7 +441,7 @@ auto p2b = H * p2a;
 lB = H * lA; // same as lB = p1b * p2b;
 ```
 
-### 5.3 - Setting up from a given planar transformation
+### 4.3 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -532,7 +542,7 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 5.4 - Constructors
+### 4.4 - Constructors
 
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
@@ -544,7 +554,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 5.5 - Computing from 2 sets of 4 points
+### 4.5 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -569,10 +579,10 @@ The default is Opencv, thus it will fail to build if not installed on system (ch
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
 
-## 6 - Intersections and enclosings determination
+## 5 - Intersections and enclosings determination
 <a name="inter"></a>
 
-### 6.1 - Intersections between primitives
+### 5.1 - Intersections between primitives
 
 This library has a homogeneous API for all intersections between the provided geometrical primitives.
 That is, whatever `a` and `b` (excepts points of course), there is a member function `intersects()` that both
@@ -619,7 +629,7 @@ See the provided demo for a runnable example (relies on Opencv backend).
 For the functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
 and if equal, the point with the lowest `y` value.
 
-### 6.1.1 - Details on intersections
+### 5.1.1 - Details on intersections
 
 When a segment has a point lying on another segment, such as int the figure below, this will be considered as an intersection point:
 
@@ -629,8 +639,12 @@ This has a consequence on rectangle intersections: when the rectangles are overl
 
 ![frect1](figures_src/frect1.png)
 
+Similarly, in the situation as in the figure below, we will have **2** intersection points:
 
-### 6.2 - Enclosing determination
+![frect2](figures_src/frect2.png)
+
+
+### 5.2 - Enclosing determination
 
 You can quickly check if a points lies within a flat rectangle (FRect) or a circle
 ```C++
@@ -658,7 +672,7 @@ bool bc2 = seg.isInside( circle );
 ```
 
 
-## 7 - Bindings with other libraries
+## 6 - Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -668,7 +682,7 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
-### 7.1 - Data conversion from/to Opencv data types
+### 6.1 - Data conversion from/to Opencv data types
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -724,7 +738,7 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 7.2 - Drawing functions using OpenCv
+### 6.2 - Drawing functions using OpenCv
 
 All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` type), using their `draw()` member function:
 
@@ -777,10 +791,10 @@ A demo demonstrating this Opencv binding is provided, try it with
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 
-## 8 - Numerical data types
+## 7 - Numerical data types
 <a name="numdt"></a>
 
-### 8.1 - Underlying data type
+### 7.1 - Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -811,7 +825,7 @@ or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double
 <br>(don't forget the quotes!)
 
 
-### 8.2 - Numerical type conversion
+### 7.2 - Numerical type conversion
 
 It is of course possible to convert to/from an object templated by a different type:
 ```C++
@@ -821,7 +835,7 @@ Point2dF pt_float  = pt_double;
 Line2dD  li_double = li_long;
 ```
 
-### 8.3 - Numerical issues
+### 7.3 - Numerical issues
 <a name="num_issues"></a>
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
@@ -872,7 +886,7 @@ To avoid this issue, the "Segment/Line" intersection code will request an additi
 At present the cefficient value is not adjustable, but will in the future.
 
 
-## 9 - Technical details
+## 8 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually the same class,

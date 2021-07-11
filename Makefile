@@ -88,6 +88,7 @@ precision_test2: misc/precision_test.cpp
 
 #=======================================================================
 # Generation of the doc figures from code
+.PRECIOUS: docs/figures_src/%
 
 # run the program
 $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
