@@ -92,6 +92,13 @@ auto v = line.get();
 std::cout << '[' << v[0] << ',' << v[1] << ',' << v[2] << '\n';
 ```
 
+But if its about printing, then the easiest is to use the overloaded operators:
+```C++
+Line2d li;
+std::cout << li << '\n';
+```
+(BTW: this is the same for all the other primitives, points and others).
+
 - Compute distances from line to point or from point to point:
 ```C++
 Line2d li;        // some line
@@ -345,7 +352,7 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 ### 4.3 - Polyline
 
-The class holds a set of points, and models an arbitrary polygon.
+This class holds a set of points and models an arbitrary polygon.
 It can be either open or closed (last points joins first one).
 ```C++
 Polygon pl1;                  // default is open
@@ -359,6 +366,13 @@ pl2.isClosed() = false;  // now open
 ```
 
 ![polyline1](figures_src/polyline1.png)
+
+It can be build directly from a `FRect` object:
+```C++
+FRect rect;
+Polygon pl1( frect );                 // open
+Polygon pl2( frect, IsClosed::Yes );  // optional argument
+```
 
 
 ## 5 - Homographies

@@ -1745,7 +1745,8 @@ Please check out warning described in impl_getAngle()
 		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
 		{
 			HOMOG2D_START;
-			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
+//			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
+			return pl.intersects( *this );
 		}
 
 /// Point is inside flat rectangle
@@ -1854,13 +1855,13 @@ Please check out warning described in impl_getAngle()
 		detail::Intersect<detail::Inters_2,FPT>
 		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
-		template<typename FPT2>
+/*		template<typename FPT2>
 		detail::IntersectM<FPT>
 		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const;
 		template<typename FPT2>
 		detail::IntersectM<FPT>
 		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
-
+*/
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 
@@ -2064,7 +2065,7 @@ ptIsInside( const Point2d_<FPT1>& pt, const Point2d_<FPT2>& p00, const Point2d_<
 #ifdef HOMOG2D_USE_EIGEN
 ///  Build Homography from 2 sets of 4 points, using Eigen
 /**
-see
+See
 - https://eigen.tuxfamily.org/dox/group__TutorialLinearAlgebra.html
 - https://eigen.tuxfamily.org/dox/group__DenseMatrixManipulation__chapter.html
 */
@@ -2161,6 +2162,8 @@ buildFrom4Points(
 - we build a 8x8 matrix A and a 8x1 vector B, and get the solution from X = A^-1 B
 - see this for details:
 https://skramm.lautre.net/files/misc/Kramm_compute_H_from_4pts.pdf
+
+\sa free function: homog2d::buildFrom4Points()
 
 \todo fix this so that user can provide a std::array of points
 */
@@ -2314,6 +2317,14 @@ the one with smallest y-coordinate will be returned first */
 			return r.intersects( *this );
 		}
 
+/// Segment/Polyline intersection
+		template<typename FPT2>
+		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
+		{
+			HOMOG2D_START;
+			return other.intersects( *this );
+		}
+
 		template<typename T>
 		bool isParallelTo( const T& other ) const
 		{
@@ -2369,6 +2380,7 @@ getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 	return Line2d_<FPT1>( c1.center(), c2.center() );
 }
 
+/// Free function, returns middle point of segment
 template<typename FPT>
 Point2d_<FPT>
 getMiddlePoint( const Segment_<FPT>& seg )
@@ -2476,6 +2488,18 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 }
 
 //------------------------------------------------------------------
+namespace priv {
+
+/// Traits class, used in intersect for Polyline
+template<typename T> struct IsShape              : std::false_type {};
+template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+
+} // namespace priv
+
+//------------------------------------------------------------------
 /// Used in Polyline_ constructors
 enum class IsClosed: char
 {
@@ -2535,6 +2559,7 @@ class Polyline_
 				return size() - 1;
 			return size() - 1 + (size_t)_isClosed;
 		}
+
 /// Returns the points
 		std::vector<Point2d_<FPT>> getPts() const
 		{
@@ -2588,6 +2613,7 @@ class Polyline_
 			for( const auto& pt: vec )
 				*it++ = pt;
 		}
+
 /// Add vector of points
 		template<typename FPT2>
 		void add( const std::vector<Point2d_<FPT2>>& vec )
@@ -2602,6 +2628,26 @@ class Polyline_
 
 		const bool& isClosed() const { return _isClosed; }
 		bool& isClosed()             { return _isClosed; }
+
+/// Polyline intersection with Line, Segment, FRect, Circle
+		template<
+			typename T,
+			typename std::enable_if<
+				priv::IsShape<T>::value,
+				T
+			>::type* = nullptr
+		>
+		detail::IntersectM<FPT> intersects( const T& other ) const
+		{
+			detail::IntersectM<FPT> out;
+			for( const auto& pseg: getSegs() )
+			{
+				auto inters = pseg.intersects( other );
+				if( inters() )
+					out.add( inters.get() );
+			}
+			return out;
+		}
 
 		friend std::ostream&
 		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
@@ -3531,7 +3577,9 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
-/// Intersection between line and polyline
+#if 0
+// DEPRECATED !
+// Line/Polyline intersection
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::IntersectM<FPT>
@@ -3547,7 +3595,7 @@ Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::
 	return out;
 }
 
-/// Invalid instanciation
+// Invalid instanciation
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::IntersectM<FPT>
@@ -3555,6 +3603,7 @@ Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(Polyline) on a point" );
 }
+#endif
 
 //------------------------------------------------------------------
 namespace detail {

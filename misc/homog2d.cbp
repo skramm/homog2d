@@ -25,6 +25,7 @@
 		<Unit filename="../.travis.yml" />
 		<Unit filename="../Makefile" />
 		<Unit filename="../README.md" />
+		<Unit filename="../docs/build_gif.sh" />
 		<Unit filename="../docs/fig1.tex" />
 		<Unit filename="../docs/fig2.tex" />
 		<Unit filename="../docs/figures_src/circles1.cpp" />
@@ -59,6 +60,7 @@
 		<Unit filename="no_build/no_build_5.cxx" />
 		<Unit filename="no_build/no_build_6.cxx" />
 		<Unit filename="no_build/no_build_7.cxx" />
+		<Unit filename="no_build/no_build_8.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="showcase1.cpp" />
 		<Unit filename="test_all.sh" />
