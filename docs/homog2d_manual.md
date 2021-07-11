@@ -26,7 +26,7 @@ This library provides several main data types: lines, points, segments, and homo
 It is implemented as a homogeneous 3x3 matrix.
 It also provides some additional types, derived from these.
 
-Most of the API is exposed both as member functions and as free functions.
+A large part of the API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
 Both of these is possible:
 ```C++

@@ -962,8 +962,8 @@ class FRect_
 		_ptR1 = ppts.first;
 		_ptR2 = ppts.second;
 	}
-	FPT height() const { return  _ptR2.getY() - _ptR1.getY(); }
-	FPT width()  const { return  _ptR2.getX() - _ptR1.getX(); }
+	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
+	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 
 /// Returns the 2 major points of the rectangle
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
@@ -1120,6 +1120,19 @@ public:
 	}
 #endif
 };
+
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE height( const FRect_<FPT>& rect )
+{
+	return rect.height();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
+{
+	return rect.width();
+}
 
 //------------------------------------------------------------------
 /// A circle
