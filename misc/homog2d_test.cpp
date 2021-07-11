@@ -34,7 +34,7 @@ run with "make test"
 
 #include <list>
 
-#define LOCALLOG(a) std::cout << " -" << a << '\n';
+#define LOCALLOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
@@ -85,6 +85,11 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( sizeof(Point2dF) == 12 );
 		CHECK( sizeof(Point2dD) == 24 );
 		CHECK( sizeof(Point2dL) == 48 );
+
+		CHECK( ptF.type()  == Type::Point2d );
+		CHECK( ptF.dtype() == Dtype::Float );
+		CHECK( liF.type()  == Type::Line2d );
+		CHECK( liF.dtype() == Dtype::Float );
 	}
 
 	Point2dD ptD0(1,1);
@@ -175,8 +180,6 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lA1 = ptA1 * ptA2;
 		Line2d_<NUMTYPE> lA2 = ptA2 * ptA1;
 
-// auto dist = lA1.distTo( lA2 );   // THIS WOULD BREAK THE BUILD (can't compute distance between two lines)
-
 		CHECK( lA1 == lA2 );
 		CHECK( lA1.getAngle(lA2) == 0. );
 		CHECK( lA2.getAngle(lA1) == 0. );
@@ -192,8 +195,8 @@ TEST_CASE( "test1", "[test1]" )
 	}
 	{
 // build point from two diagonal lines
-		Line2d_<NUMTYPE> liA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-		Line2d_<NUMTYPE> liB( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,0) );
+		Line2d_<NUMTYPE> liA( Point2d(0,0), Point2d(2,2) );
+		Line2d_<NUMTYPE> liB( Point2d(0,2), Point2d(2,0) );
 		CHECK( Line2d_<NUMTYPE>() != liA );
 
 		auto mA1 = liA * liB;
@@ -209,8 +212,8 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lv0 * lh0 == Point2d_<NUMTYPE>(0.,0.) );
 		CHECK( lh0 * lv0 == Point2d_<NUMTYPE>(0.,0.) );
 
-		Line2d_<NUMTYPE> lv2( Point2d_<NUMTYPE>(2,0), Point2d_<NUMTYPE>(2,2) ); // vertical, x=2
-		Line2d_<NUMTYPE> lh2( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,2) ); // horizontal, y=2
+		Line2d_<NUMTYPE> lv2( Point2d(2,0), Point2d(2,2) ); // vertical, x=2
+		Line2d_<NUMTYPE> lh2( Point2d(0,2), Point2d(2,2) ); // horizontal, y=2
 
 		CHECK( lv2*lh2 == Point2d_<NUMTYPE>(2.,2.) );
 
@@ -243,8 +246,8 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( lH2.getAngle(lH3) == 0. );
 
 		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
-		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
-		Line2d_<NUMTYPE> lV2;
+//		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
+//		Line2d_<NUMTYPE> lV2;
 //		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
 //		CHECK( li3 == lV2 );
 	}
@@ -261,6 +264,50 @@ TEST_CASE( "test throw", "[test_thr]" )
 {
 	Line2d li;
 	CHECK_THROWS( li.getCoord( GivenCoord::X, 0 ) );
+
+	INFO("Lines and points");
+	{
+		Line2d_<NUMTYPE> v1,v2; // 2 identical vertical lines
+		CHECK_THROWS( v1*v2 );
+
+		Point2d_<NUMTYPE> p1,p2;
+		CHECK_THROWS( p1*p2 ); // same points can't define a line
+	}
+	INFO("rectangle constructor")
+	{
+		Point2d_<NUMTYPE> p1, p2;
+		CHECK_THROWS( FRect( p1,p2) );
+		p2.set( 1, 1);
+		CHECK_NOTHROW( FRect( p1,p2) );
+		CHECK( FRect_<NUMTYPE>( p1,p2).getPts()==std::make_pair(Point2d_<NUMTYPE>(0,0),Point2d_<NUMTYPE>(1,1) ) );
+		p1.set( 4, 4 );
+		p2.set( 5, 5 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+		p1.set( 4, 5 );
+		p2.set( 5, 4 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+		p1.set( 5, 4 );
+		p2.set( 4, 5 );
+		CHECK_NOTHROW( FRect( p1,p2) );
+
+		p1.set( 4, 4 );
+		p2.set( 5, 4 );
+		CHECK_THROWS( FRect( p1,p2) );
+		p2.set( 4, 5 );
+		CHECK_THROWS( FRect( p1,p2) );
+	}
+	INFO("circle constructor")           // 0 not allowed as radius
+	{
+		Point2d_<NUMTYPE> pt;
+		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, 0 ) );
+		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()/1.1 ) );
+		CHECK_NOTHROW( Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()*1.1 ) );
+	}
+	INFO("segment constructor")           // can't have identical points
+	{
+		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d(), Point2d() ) );
+		CHECK_THROWS( Segment_<NUMTYPE> ( Point2d_<NUMTYPE>(1,5), Point2d_<NUMTYPE>(1,5) ) );
+	}
 }
 
 TEST_CASE( "test parallel", "[test_para]" )
@@ -282,8 +329,8 @@ TEST_CASE( "test parallel", "[test_para]" )
 
 	INFO( "Checking parallel lines" )
 	{
-//		std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
-		Line2d_<NUMTYPE> l1; // vertical line
+		Line2d_<NUMTYPE> l1, l1b; // vertical line
+		CHECK( l1.isParallelTo(l1b) );
 		{
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2a) == true );
@@ -330,7 +377,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 	}
 }
 
-TEST_CASE( "dist2points", "[test2]" )
+TEST_CASE( "dist2points", "[t_d2p]" )
 {
 	Line2d_<NUMTYPE> li(2,1);
 	auto d = li.distTo( Point2d_<NUMTYPE>() );
@@ -386,19 +433,8 @@ TEST_CASE( "offset test", "[test3]" )
 	}
 }
 #endif
-TEST_CASE( "exceptions", "[testE]" )
-{
-	Line2d_<NUMTYPE> v1,v2; // 2 identical vertical lines
 
-	CHECK_THROWS( v1*v2 );
-//	v2.addOffset( LineOffset::horiz, 1 );
-//	CHECK_THROWS( v1*v2 ); // still no intersection (they never cross)
-
-	Point2d_<NUMTYPE> p1,p2;
-	CHECK_THROWS( p1*p2 ); // same points can't define a line
-}
-
-TEST_CASE( "test Epipmat", "[testM]" )
+TEST_CASE( "test Epipmat", "[t_epipmat]" )
 {
 	Epipmat m;
 	Point2d_<NUMTYPE> p1(0,10);
@@ -468,7 +504,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		m2c[2][2] = 1.;
 		Homogr_<NUMTYPE> H2c(m2c);
 	}
-	{
+	{ // test of operator * for points
 		Homogr_<NUMTYPE> H;
 		Point2d_<NUMTYPE> pt1(1,1);
 		H.setTranslation( 3., 2. );
@@ -484,7 +520,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( pt3.getX() == Approx( -1. ) );
 		CHECK( pt3.getY() == Approx(  1. ) );
 	}
-	{
+	{ // test of operator * for container holding points, using applyTo()
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
@@ -502,7 +538,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		H.applyTo( l_pt );
 		CHECK( std::begin(l_pt)->getX() == 5 );
 	}
-	{
+	{ // test of operator * for container holding points
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
@@ -578,13 +614,13 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 /// the distance between the resulting line and the transformed point.
 /// Should be 0, always.
 long double
-computeDistTransformedLined( Hmatrix_<type::IsHomogr,NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
+computeDistTransformedLined( Homogr_<NUMTYPE>& H, Point2d_<NUMTYPE> pt1 )
 {
-	Line2d_<NUMTYPE> line1( pt1 ); // line from (0,0) to pt1
-	Point2d_<NUMTYPE> pt2 = H * pt1; // move the point with H
-	H.inverse().transpose();
-	Line2d_<NUMTYPE> line2 = H * line1; // move the line with H^{-T}
-	return line2.distTo( pt2 ); // should be 0 !
+	Line2d_<NUMTYPE> line1( pt1 );       // line from (0,0) to pt1
+	Point2d_<NUMTYPE> pt2 = H * pt1;     // move the point with H
+//	H.inverse().transpose();             // not needed, done automatically since release 2.4 !
+	Line2d_<NUMTYPE> line2 = H * line1;  // move the line with H^{-T}
+	return line2.distTo( pt2 );          // should be 0 !
 }
 
 // from https://stackoverflow.com/a/55868408/193789
@@ -603,7 +639,7 @@ TEST_CASE( "line transformation", "[testH3]" )
 		CHECK( d1.distTo( pt1 ) < g_epsilon );
 	}
 	Point2d_<NUMTYPE> pt( 5, 6);
-	Hmatrix_<type::IsHomogr,NUMTYPE> H;
+	Homogr_<NUMTYPE> H;
 	{
 		H.setTranslation(4,5);
 		auto d = computeDistTransformedLined( H , pt );
@@ -721,6 +757,22 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 	}
 }
 
+TEST_CASE( "IsInside - manual", "[IsInside_man]" )
+{
+	FRect rect;
+	FRect rect2;
+	Circle circle;
+	Circle c2;
+	Segment seg;
+
+	CHECK( !rect2.isInside( rect ) );
+	CHECK( !rect2.isInside( circle ) );
+	CHECK( !c2.isInside( rect ) );
+	CHECK( !c2.isInside( circle ) );
+	CHECK( !seg.isInside( rect ) );
+	CHECK( !seg.isInside( circle ) );
+}
+
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
@@ -735,48 +787,19 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( pt.isInside( pt1, pt2 ) == true );
 
 	pt.set(10,5);                                         // on the edge
-	CHECK( pt.isInside( pt1, pt2 ) == true );
+	CHECK( pt.isInside( pt1, pt2 ) == false );
 	pt.set(5,10);
+	CHECK( pt.isInside( pt1, pt2 ) == false );
+
+	pt.set(4.999,9.99);
 	CHECK( pt.isInside( pt1, pt2 ) == true );
 
-	CHECK( Point2d_<NUMTYPE>( 2, 2).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == true );
-	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == true );
+	CHECK( Point2d_<NUMTYPE>( 2, 2).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == false );
+	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == false );
 }
 
-TEST_CASE( "circle intersection", "[test_Circle]" )
-{
-	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
-	Line2d_<NUMTYPE> liv(0,1); // vertical line going through (0,0)
-	Line2d_<NUMTYPE> lih(1,0); // horizontal line going through (0,0)
-	Point2d_<NUMTYPE> pt;
-	{
-		auto ri = lid.intersects( Point2d_<NUMTYPE>(), 0.5 );
-		CHECK( ri() == true );
-		auto ri2 = lid.intersects( Point2d_<NUMTYPE>(10,5), 1. );
-		CHECK( ri2() == false );
-		auto ri3 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(), 0.5 ) );
-		CHECK( ri3() == true );
-		auto ri4 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
-		CHECK( ri4() == false );
-	}
-	auto rih = lih.intersects( pt, 1.0 );
-	CHECK( rih() == true );
-	CHECK( rih.get().first  == Point2d_<NUMTYPE>(-1,0) );
-	CHECK( rih.get().second == Point2d_<NUMTYPE>(+1,0) );
-
-	auto riv = liv.intersects( pt, 1.0 );
-	CHECK( riv() == true );
-	CHECK( riv.get().first  == Point2d_<NUMTYPE>(0,-1) );
-	CHECK( riv.get().second == Point2d_<NUMTYPE>(0,+1) );
-
-	Circle_<NUMTYPE> cir1;
-	Circle_<NUMTYPE> cir2(45);
-	CHECK( (cir2.radius() == 45.) );
-	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
-	CHECK( cir3.radius() == 7. );
-}
 
 TEST_CASE( "inside circle", "[tic]" )
 {
@@ -805,24 +828,456 @@ TEST_CASE( "inside circle", "[tic]" )
 
 		Circle_<NUMTYPE> cB( Point2d(5,0), 2.);
 		auto seg = getSegment<NUMTYPE>( cA, cB );
-		CHECK( seg.get().first  == Point2d(0,0) );
-		CHECK( seg.get().second == Point2d(5,0) );
+		CHECK( seg.getPts().first  == Point2d(0,0) );
+		CHECK( seg.getPts().second == Point2d(5,0) );
 		CHECK( seg.length() == 5 );
 	}
 }
 
-TEST_CASE( "rectangle intersection", "[test_RI]" )
+//////////////////////////////////////////////////////////////
+/////           INTERSECTION TESTS                       /////
+//////////////////////////////////////////////////////////////
+
+TEST_CASE( "Intersection", "[int_all]" )
+{
+	FRect r1,r2;
+	Circle c1,c2;
+	Segment s1,s2;
+	Line2d l1,l2;
+
+	CHECK( !r1.intersects( r2 )() );
+	CHECK( !c1.intersects( c2 )() );
+	CHECK( !s1.intersects( s2 )() );
+	CHECK( !l1.intersects( l2 )() );
+
+	CHECK( r1.intersects( c2 )() );
+	CHECK( r1.intersects( s2 )() );
+	CHECK( r1.intersects( l2 )() );
+
+	CHECK( c1.intersects( r2 )() );
+	CHECK( c1.intersects( s2 )() );
+	CHECK( c1.intersects( l2 )() );
+
+	CHECK( s1.intersects( r2 )() );
+	CHECK( s1.intersects( c2 )() );
+	CHECK( s1.intersects( l2 )() );
+
+	CHECK( l1.intersects( r2 )() );
+	CHECK( l1.intersects( c2 )() );
+	CHECK( l1.intersects( s2 )() );
+}
+
+TEST_CASE( "Line/Line intersection", "[int_LL]" )
+{
+	Line2d_<NUMTYPE> liv1,liv3;
+	Line2d_<NUMTYPE> liv2( Point2d(5,0), Point2d(5,10) );
+	Line2d_<NUMTYPE> lih( Point2d(0,0), Point2d(1,0) );
+	CHECK(  liv1.intersects( lih  )() );
+	CHECK( !liv1.intersects( liv2 )() );
+	CHECK(  lih.intersects(  liv2 )() );
+	CHECK( !liv1.intersects( liv3 )() );
+
+	auto i1 = liv1.intersects( lih  );
+	auto i2 = liv1.intersects( liv2 );
+	auto i3 = lih.intersects(  liv2 );
+
+	CHECK(  i1() );
+	CHECK( !i2() );
+	CHECK(  i3() );
+
+	CHECK( i1.size()==1 );
+	CHECK( i2.size()==0 );
+	CHECK( i3.size()==1 );
+}
+
+TEST_CASE( "Segment/Segment intersection", "[int_SS]" )
+{
+	Segment_<NUMTYPE> s1,s2;
+	{
+		CHECK( s1 == s2 );
+		auto si = s1.intersects(s2);
+		CHECK( si() == false );
+		CHECK( si.size() == 0 );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(4,4) ); // diagonal
+		s2.set( Point2d(0,4), Point2d(4,0) );
+		auto si = s1.intersects(s2);
+		CHECK( si() == true );
+		CHECK( si.size() == 1 );
+		CHECK( si.get() == Point2d(2,2) );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(10,0) ); // overlapping (complete
+		s2.set( Point2d(5,0), Point2d(15,0) );
+		auto si = s1.intersects(s2);
+		CHECK( si() == false );
+		CHECK( si.size() == 0 );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(0,1) );  // vertical
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal
+		auto si = s1.intersects(s2);
+		CHECK( si() );
+		CHECK( si.size() == 1 );
+		CHECK( si.get() == Point2d(0,1) );
+	}
+	{
+		s1.set( Point2d(0,0), Point2d(0,2) );  // vertical
+
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal, touches the other one in the middle
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
+		s2.set( Point2d(0,0), Point2d(1,0) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,0) );
+		}
+		s2.set( Point2d(1,1), Point2d(0,1) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
+		s2.set( Point2d(-1,1), Point2d(0,1) );  // horizontal, touches the edge of other one
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(0,1) );
+		}
+	}
+}
+
+TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
+{
+	{
+		Circle_<NUMTYPE> cA, cB;
+		CHECK( cA == cB );
+		CHECK( !cA.intersects(cB)() );
+	}
+	{
+		Circle_<NUMTYPE> cA;
+		Circle_<NUMTYPE> cB( Point2d(5,5), 2 );
+		CHECK( cA != cB );
+		CHECK( !cA.intersects(cB)() );
+	}
+	{
+		Circle_<NUMTYPE> cA( Point2d(0,0), 2 );
+		Circle_<NUMTYPE> cB( Point2d(3,0), 2 );
+		CHECK( cA != cB );
+		CHECK( cA.intersects(cB)() );
+	}
+	{
+		Circle_<NUMTYPE> cA( Point2d(0,0), 1 );
+		Circle_<NUMTYPE> cB( Point2d(2,0), 1 );
+		CHECK( cA != cB );
+		CHECK( cA.intersects(cB)() );
+		auto inter = cA.intersects(cB);
+		CHECK( inter() == true );
+		CHECK( inter.size() == 2 );
+		CHECK( inter.get().first  == Point2d( 1,0) );
+		CHECK( inter.get().second == Point2d( 1,0) );
+	}
+}
+
+TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
+{
+	{
+		FRect_<NUMTYPE> r1, r2;
+		CHECK( r1 == r2 );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+#include "figures_test/frect_intersect_1.code"
+		CHECK( r1 != r2 );
+		CHECK( r1.height() == r2.height() );
+		CHECK( !r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+#include "figures_test/frect_intersect_2.code"
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  == r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,2) );
+		CHECK( vpts[1] == Point2d(3,1) );
+	}
+
+	{      // 4 intersection points
+#include "figures_test/frect_intersect_3.code"
+		CHECK( r1 != r2 );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 4 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,2) );
+		CHECK( vpts[1] == Point2d(2,4) );
+		CHECK( vpts[2] == Point2d(4,2) );
+		CHECK( vpts[3] == Point2d(4,4) );
+	}
+
+	{     // horizontal segment overlap
+#include "figures_test/frect_intersect_4.code"
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  == r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 4 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d(2,0) );
+		CHECK( vpts[1] == Point2d(2,2) );
+		CHECK( vpts[2] == Point2d(3,0) );
+		CHECK( vpts[3] == Point2d(3,2) );
+	}
+	{     // common vertical segment
+#include "figures_test/frect_intersect_5.code"
+		CHECK( r1 != r2 );
+		CHECK( r1.width()  != r2.width() );
+		CHECK( r1.height() == r2.height() );
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,0 ) );
+		CHECK( vpts[1] == Point2d( 3,2 ) );
+	}
+	{     // two rectangles joined by corner at 3,2
+#include "figures_test/frect_intersect_6.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 1 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,2 ) );
+	}
+}
+
+TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
+{
+	Circle_<NUMTYPE> c1( Point2d(1,1), 1 ); // circle centered on 1,1, going horizontally from 0 to 2 at y=0
+	{
+		Segment_<NUMTYPE> s1( Point2d(0,20),Point2d(2,20) ); // horizontal segment at y=20
+
+		CHECK( !c1.intersects( s1 )() );
+		CHECK( !s1.intersects( c1 )() );
+		auto int_a = c1.intersects( s1 );
+		auto int_b = s1.intersects( c1 );
+		CHECK( !int_a() );
+		CHECK( !int_b() );
+		CHECK( int_a.size() == 0 );
+		CHECK( int_b.size() == 0 );
+
+		Segment_<NUMTYPE> s2( Point2d(10,0),Point2d(10,20) ); // vertical segment at x=10
+		CHECK( !c1.intersects( s2 )() );
+		CHECK( !s2.intersects( c1 )() );
+		auto int_a2 = c1.intersects( s2 );
+		auto int_b2 = s2.intersects( c1 );
+		CHECK( int_a2.size() == 0 );
+		CHECK( int_b2.size() == 0 );
+		CHECK( !int_a2() );
+		CHECK( !int_b2() );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(-5,1),Point2d(+5,1) ); // horizontal segment at y=1
+
+		CHECK( c1.intersects( s2 )() );
+		CHECK( s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() );
+		CHECK( int_b() );
+		CHECK( int_a.size() == 2 );
+		CHECK( int_b.size() == 2 );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
+		CHECK( int_b.get()[1] == Point2d_<NUMTYPE>(2,1) );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(-5,1),Point2d(1,1) ); // horizontal segment at y=1
+
+		CHECK( c1.intersects( s2 )() );
+		CHECK( s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() );
+		CHECK( int_b() );
+		CHECK( int_a.size() == 1 );
+		CHECK( int_b.size() == 1 );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(0,1) );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(2,0),Point2d(4,0) ); // horizontal segment at y=0, outside circle
+
+		CHECK( !c1.intersects( s2 )() );
+		CHECK( !s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() == false );
+		CHECK( int_b() == false );
+		CHECK( int_a.size() == 0 );
+		CHECK( int_b.size() == 0 );
+	}
+	{
+		Segment_<NUMTYPE> s2( Point2d(2,1),Point2d(4,1) ); // horizontal segment at y=0, touching edge of circle at (1,1)
+
+		CHECK( c1.intersects( s2 )() );
+		CHECK( s2.intersects( c1 )() );
+
+		auto int_a = c1.intersects( s2 );
+		auto int_b = s2.intersects( c1 );
+		CHECK( int_a() );
+		CHECK( int_b() );
+		CHECK( int_a.size() == 1 );
+		CHECK( int_b.size() == 1 );
+		CHECK( int_a.get()[0] == Point2d_<NUMTYPE>(2,1) );
+	}
+}
+
+TEST_CASE( "Circle/FRect intersection", "[int_CF]" )
+{
+	{
+//#include "figures_test/circle_intersect_1.code"
+		Circle_<NUMTYPE> r1( Point2d(1,1), 1 );
+		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
+		CHECK( r1.intersects(r2)() == false );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+	}
+	{
+//#include "figures_test/circle_intersect_2.code"
+		Circle_<NUMTYPE> r1( Point2d(3,3), 2 );
+		FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );
+		CHECK( r1.intersects(r2)() == false );
+	}
+	{
+		Circle_<NUMTYPE> r1;
+		FRect_<NUMTYPE> r2( 0,0, 3,3 );
+		CHECK( r1.intersects(r2)() == true );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 0,1 ) );
+		CHECK( vpts[1] == Point2d( 1,0 ) );
+	}
+	{
+		Circle_<NUMTYPE> r1; // (0,0) with radius=1
+		FRect_<NUMTYPE> r2( 1,0, 3,3 );
+		CHECK( r1.intersects(r2)() == true );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 1 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 1,0 ) );
+	}
+}
+
+TEST_CASE( "Circle/Line intersection", "[int_CL]" )
+{
+	Line2d_<NUMTYPE> lid(1,1); // diagonal line going through (0,0)
+	Line2d_<NUMTYPE> liv; // vertical line at x=0
+	Line2d_<NUMTYPE> lih( Point2d(-1,0), Point2d(1,0) ); // horizontal line at y=0
+	Point2d_<NUMTYPE> pt;
+	{
+		CHECK( lid.intersects( Point2d_<NUMTYPE>(), 0.5 )() );
+		auto ri = lid.intersects( Point2d_<NUMTYPE>(), 0.5 );
+		CHECK( ri() == true );
+		auto ri2 = lid.intersects( Point2d_<NUMTYPE>(10,5), 1. );
+		CHECK( ri2() == false );
+		auto ri3 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(), 0.5 ) );
+		CHECK( ri3() == true );
+		auto ri4 = lid.intersects( Circle_<NUMTYPE>(Point2d_<NUMTYPE>(10,5), 1. ) );
+		CHECK( ri4() == false );
+	}
+	{
+		auto rih = lih.intersects( pt, 1.0 );
+		CHECK( rih() == true );
+		CHECK( rih.get().first  == Point2d(-1,0) );
+		CHECK( rih.get().second == Point2d(+1,0) );
+	}
+	{
+		auto riv = liv.intersects( pt, 1.0 );
+		CHECK( riv() == true );
+		CHECK( riv.get().first  == Point2d(0,-1) );
+		CHECK( riv.get().second == Point2d(0,+1) );
+	}
+
+	Circle_<NUMTYPE> cir2(45);
+	CHECK( cir2.radius() == 45. );
+	Circle_<NUMTYPE> cir3( Point2d(4,6),7);
+	CHECK( cir3.radius() == 7. );
+	{
+		auto cl1 = cir2.intersects( liv );
+		CHECK( cl1() == true );
+		CHECK( cl1.get().first  == Point2d(0,-45) );
+		CHECK( cl1.get().second == Point2d(0,+45) );
+	}
+	{
+		Circle_<NUMTYPE> c4( Point2d(1,1),1);
+		Line2d_<NUMTYPE> l4( Point2d(-5,1), Point2d(5,1));
+		auto res1 = c4.intersects( l4 );
+		CHECK( res1() == true );
+		CHECK( res1.size() == 2 );
+		CHECK( res1.get().first  == Point2d(0,1) );
+		CHECK( res1.get().second == Point2d(2,1) );
+
+		auto res2 = l4.intersects( c4 );
+		CHECK( res2() == true );
+		CHECK( res2.size() == 2 );
+		CHECK( res2.get().first  == Point2d(0,1) );
+		CHECK( res2.get().second == Point2d(2,1) );
+	}
+}
+
+
+TEST_CASE( "Line/Segment intersection", "[int_LS]" )
+{
+	Line2d_<NUMTYPE> li;             // vertical line x=0
+	{
+		Segment_<NUMTYPE> seg;           // (0,0 -- (1,1)
+		CHECK( li.intersects( seg )() );
+		CHECK( seg.intersects( li )() );
+		auto ri1 = li.intersects( seg );
+		auto ri2 = seg.intersects( li );
+		CHECK( ri1.size() == 1 );
+		CHECK( ri2.size() == 1 );
+
+		CHECK( ri1.get() == Point2d(0,0) );
+		CHECK( ri2.get() == Point2d(0,0) );
+	}
+	{
+		Segment_<NUMTYPE> seg( 0,0, 0,2 );  // vertical x=0
+		CHECK( !li.intersects( seg )() );
+		CHECK( !seg.intersects( li )() );
+	}
+	{
+		Segment_<NUMTYPE> seg( 1,0, 1,2 );
+		CHECK( !li.intersects( seg )() );
+		CHECK( !seg.intersects( li )() );
+	}
+}
+
+TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 {
 	INFO( "with diagonal line" )
 	{
 		Line2d_<NUMTYPE> li(1,1); // diagonal line going through (0,0)
-
 		Point2d_<NUMTYPE> pt1, pt2; // 0,0
-
-		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // point identical => unable
-
-		pt2.set(0,4);
-		CHECK_THROWS( li.intersects( FRect(pt1, pt2) ) ); // still fails: x coordinate is identical => unable
 
 		pt2.set(1,1);
 		auto ri = li.intersects( FRect(pt1, pt2) );
@@ -839,65 +1294,82 @@ TEST_CASE( "rectangle intersection", "[test_RI]" )
 	INFO( "with H/V line" )
 	{
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
+		FRect r1(pt1, pt2);
+		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line at y=x
+		auto ri1 = li.intersects( r1 );
+		auto ri2 = r1.intersects( li );
+		CHECK( ri1() == true );
+		CHECK( ri2() == true );
 
-		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line through (0,0)
-		auto ri = li.intersects( FRect(pt1, pt2) );
-		CHECK( ri() == true );
-		CHECK( ri.get().first  == pt1 );
-		CHECK( ri.get().second == pt2 );
+		CHECK( ri1.get().first  == pt1 );
+		CHECK( ri1.get().second == Point2d(0,1) );
+		CHECK( ri2.get().first  == pt1 );
+		CHECK( ri2.get().second == Point2d(0,1) );
 
-		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line through (1,0)
-		ri = li.intersects( FRect(pt1, pt2) );
-		CHECK( ri() == true );
-		CHECK( ri.get().first  == pt1 );
-		CHECK( ri.get().second == pt2 );
+		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line at x=1
+		ri1 = li.intersects( r1 );
+		ri2 = r1.intersects( li );
+		CHECK( ri1() == true );
+		CHECK( ri2() == true );
+		CHECK( ri1.get().first  == Point2d(1,0) );
+		CHECK( ri1.get().second == Point2d(1,1) );
 
-		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line through (0,0)
-		ri = li.intersects( FRect(pt1, pt2) );
-		CHECK( ri() == true );
-		CHECK( ri.get().first  == pt1 );
-		CHECK( ri.get().second == pt2 );
+		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line at y=0
+		ri1 = li.intersects( r1 );
+		ri2 = r1.intersects( li );
+		CHECK( ri1() == true );
+		CHECK( ri2() == true );
+		CHECK( ri1.get().first  == pt1 );
+		CHECK( ri1.get().second == Point2d(1,0) );
 
-		li = Point2d_<NUMTYPE>(0,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line through (0,1)
-		ri = li.intersects( pt1, pt2 );
-		CHECK( ri() == true );
-		CHECK( ri.get().first  == pt1 );
-		CHECK( ri.get().second == pt2 );
+		li = Point2d_<NUMTYPE>(-1,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line at y=1
+		ri1 = li.intersects( r1 );
+		ri2 = r1.intersects( li );
+		CHECK( ri1() == true );
+		CHECK( ri2() == true );
+		CHECK( ri1.get().first  == Point2d(0,1) );
+		CHECK( ri1.get().second == Point2d(1,1) );
+
+		li = Point2d_<NUMTYPE>(-1.,.5) * Point2d_<NUMTYPE>(2.,.5);     // horizontal line at y=0.5
+		ri1 = li.intersects( r1 );
+		ri2 = r1.intersects( li );
+		CHECK( ri1() == true );
+		CHECK( ri2() == true );
+		CHECK( ri1.get().first  == Point2d(0.,.5) );
+		CHECK( ri1.get().second == Point2d(1.,.5) );
 	}
 }
+
+//////////////////////////////////////////////////////////////
+/////               MISC. TESTS                          /////
+//////////////////////////////////////////////////////////////
 
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{
-		CHECK_THROWS( Segment( Point2d_<NUMTYPE>(), Point2d_<NUMTYPE>() ) );
-	}
-	{
-		Segment_<NUMTYPE> s1( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-		Segment_<NUMTYPE> s2( Point2d_<NUMTYPE>(2,2), Point2d_<NUMTYPE>(0,0) );
+		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
+		Segment_<NUMTYPE> s2( Point2d(2,2), Point2d(0,0) );
 		CHECK( s1 == s2 );
 		CHECK( s1.isParallelTo(s2) );
 //		CHECK( s1.isParallelTo( Point2d() ) );
-		Line2d_<NUMTYPE> l1( Point2d_<NUMTYPE>(10,0), Point2d_<NUMTYPE>(12,2) );
+		Line2d_<NUMTYPE> l1( Point2d(10,0), Point2d(12,2) );
 		CHECK( s1.isParallelTo(l1) );
 		CHECK( l1.isParallelTo(s1) );
 		l1.getAngle( s1 );               //just to make sure that this builds
 		s1.getAngle( l1 );
 	}
 	{
-		Segment_<NUMTYPE> s1( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(3,4) );
+		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(3,4) );
 		CHECK( s1.length() == 5 );
 
-		Segment_<NUMTYPE> s2( Point2d_<NUMTYPE>(9,9), Point2d_<NUMTYPE>(8,8) );
-		auto pts = s2.get();
+		Segment_<NUMTYPE> s2( Point2d(9,9), Point2d(8,8) );
+		auto pts = s2.getPts();
 		CHECK( pts.first  == Point2d_<NUMTYPE>(8,8) );
 		CHECK( pts.second == Point2d_<NUMTYPE>(9,9) );
-
-		auto si = s1.intersects(s2);
-		CHECK( si() == false );
 	}
 	{
-		Segment_<NUMTYPE> s1( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-		Segment_<NUMTYPE> s2( Point2d_<NUMTYPE>(2,0), Point2d_<NUMTYPE>(0,2) );
+		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
+		Segment_<NUMTYPE> s2( Point2d(2,0), Point2d(0,2) );
 		auto si = s1.intersects(s2);
 		CHECK( si() == true );
 		CHECK( si.get() == Point2d_<NUMTYPE>(1,1) );
@@ -919,7 +1391,7 @@ TEST_CASE( "FRect", "[frect]" )
 		FRect_<NUMTYPE> r1;
 		CHECK( r1.width() == 1. );
 		CHECK( r1.height() == 1. );
-		auto p_pts = r1.get2Pts();
+		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
 		CHECK( p_pts.second == Point2d(1.,1.) );
 
@@ -937,7 +1409,7 @@ TEST_CASE( "FRect", "[frect]" )
 
 		CHECK( r2a.width() == 5. );
 		CHECK( r2a.height() == 3. );
-		auto p_pts = r2b.get2Pts();
+		auto p_pts = r2b.getPts();
 		CHECK( p_pts.first  == Point2d(1,2) );
 		CHECK( p_pts.second == Point2d(6,5) );
 
@@ -950,7 +1422,21 @@ TEST_CASE( "FRect", "[frect]" )
 }
 
 
+//////////////////////////////////////////////////////////////
+/////           OPENCV BINDING TESTS                     /////
+//////////////////////////////////////////////////////////////
+
 #ifdef HOMOG2D_USE_OPENCV
+TEST_CASE( "Opencv build H", "[test_opencv2]" )
+{
+	std::vector<Point2d_<NUMTYPE>> v1(4);
+	std::vector<Point2d_<NUMTYPE>> v2(4);
+	Homogr_<NUMTYPE> H;
+	H.buildFrom4Points( v1, v2 );
+	buildFrom4Points( v1, v2 );
+
+}
+
 TEST_CASE( "Opencv binding", "[test_opencv]" )
 {
 	cv::Mat mat_64 = cv::Mat::eye(3, 3, CV_64F);

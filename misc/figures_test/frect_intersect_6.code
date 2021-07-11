@@ -1,0 +1,4 @@
+// two rectangles joined by corner at 3,2
+
+	FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+	FRect_<NUMTYPE> r2( Point2d(3,2), Point2d(4,3) );

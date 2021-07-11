@@ -164,6 +164,7 @@ void action_SI(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
+void action_CC( void* param );
 
 
 //------------------------------------------------------------------
@@ -302,6 +303,12 @@ void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_PL, param );
+}
+
+/// Mouse callback for demo_CC
+void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_CC, param );
 }
 
 //------------------------------------------------------------------
@@ -505,16 +512,32 @@ void action_C( void* param )
 
 	data.pt_mouse.draw( data.img, CvDrawParams().setColor(250,50,20) );
 
+// circle - circle intersections
+	auto cci = c1.intersects( c2 );
+	if( cci() )
+		draw( data.img, cci.get(), CvDrawParams().setColor(0,150,0).setPointStyle(PtStyle::Diam) );
+
+
+// circle - rectangle intersections
+	auto cr1 = c1.intersects( data.rect );
+	auto cr2 = c2.intersects( data.rect );
+	if( cr1() )
+		draw( data.img, cr1.get(), CvDrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+	if( cr2() )
+		draw( data.img, cr2.get(), CvDrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+
+// circle - lines intersections
 	for( size_t i=0; i<data.li.size(); i++ )
 	{
 		auto ri = data.li[i].intersects( c1 );
 		if( ri() )
 		{
 			auto inter = ri.get();
-			inter.first.draw( data.img,  CvDrawParams().setColor(250, 0, 0) );
+			inter.first.draw(  data.img, CvDrawParams().setColor(250, 0, 0) );
 			inter.second.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 		}
 	}
+
 	auto seg = getSegment( c1, c2 );
 	seg.draw( data.img, CvDrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );
@@ -641,8 +664,8 @@ void action_6( void* param )
 	Segment s2 = H*s1;
 	s1.draw( data.img, CvDrawParams().setColor( 0,0,250) );
 	s2.draw( data.img, CvDrawParams().setColor( 250,250,0) );
-	s1.get().first.draw( data.img, CvDrawParams().selectPoint() );
-	s1.get().second.draw( data.img, CvDrawParams().selectPoint() );
+	s1.getPts().first.draw( data.img, CvDrawParams().selectPoint() );
+	s1.getPts().second.draw( data.img, CvDrawParams().selectPoint() );
 }
 
 void demo_6(int n)
@@ -666,7 +689,7 @@ void demo_6(int n)
 /// This one has two windows
 struct Param_H: public Data
 {
-	int hmethod = 0;
+	int hmethod = 1;
 	cv::Mat img2;
 	std::string win2 = "Computed_projection";
 
@@ -794,10 +817,10 @@ void demo_H( int n )
 		{
 				data.hmethod = data.hmethod?0:1;
 #if !defined(HOMOG2D_USE_EIGEN)
-				if( data.hmethod == 1 )
+				if( data.hmethod == 0 )
 				{
 					std::cout << "Unable, build without Eigen support, see manual, switch to Opencv\n";
-					data.hmethod = 0;
+					data.hmethod = 1;
 				}
 #endif
 		}
@@ -822,7 +845,7 @@ void action_PL( void* param )
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img );
 	auto intersPts = li.intersects(data.polyline);
-	for( const auto& pt: intersPts )
+	for( const auto& pt: intersPts.get() )
 		pt.draw( data.img );
 	data.showImage();
 }
@@ -848,6 +871,63 @@ void demo_PL( int n )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
+struct Param_CC : Data
+{
+	explicit Param_CC( std::string title ):Data(title)
+	{
+		c1.set( vpt[0], 80 );
+		c2.set( vpt[1], 120 );
+	}
+	Circle_<float> c1,c2;
+};
+
+void action_CC( void* param )
+{
+	auto& data = *reinterpret_cast<Param_CC*>(param);
+
+	data.clearImage();
+
+	data.c1.set( data.vpt[0], 80 );
+	data.c2.set( data.vpt[1], 120 );
+
+	Segment seg( data.vpt[2], data.vpt[3] );
+	seg.draw( data.img, CvDrawParams().setColor( 200,0,50) );
+
+	data.c1.draw( data.img );
+	data.c2.draw( data.img );
+	data.c1.center().draw( data.img );
+	data.c2.center().draw( data.img );
+
+	auto intersSeg = data.c1.intersects(seg);
+//	auto intersSeg = seg.intersects(data.c1);
+	if( intersSeg() )
+	{
+		auto pts = intersSeg.get();
+		draw( data.img, pts );
+	}
+	auto intersCir = data.c1.intersects(data.c2);
+	if( intersCir() )
+	{
+//		std::cout << "intersection !\n";
+		auto ppts = intersCir.get();
+		ppts.first.draw( data.img );
+		ppts.second.draw( data.img );
+	}
+	data.showImage();
+}
+
+void demo_CC( int n )
+{
+	Param_CC data( "Circle-circle intersection" );
+	std::cout << "Demo " << n << ": Circle-circle intersection\n";
+
+	data.setMouseCallback( mouse_CB_CC );
+
+	action_CC( &data );
+	KeyboardLoop kbloop;
+	kbloop.start( data );
+}
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos
@@ -860,6 +940,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_CC,
 		demo_H,
 		demo_PL,
 		demo_1,
@@ -880,7 +961,10 @@ int main( int argc, const char** argv )
 	}
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
+	{
+		std::cout << "----------------------------------\n";
 		v_demo[i](i+1);
+	}
 
 	std::cout << "Demo end\n";
 }

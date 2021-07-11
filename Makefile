@@ -3,6 +3,8 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild
 
+.PRECIOUS: BUILD/figures_test/%.cpp
+
 CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 ifeq "$(USE_OPENCV)" ""
@@ -17,6 +19,10 @@ endif
 ifeq ($(USE_EIGEN),Y)
 	CFLAGS += -DHOMOG2D_USE_EIGEN
 endif
+
+TEST_FIG_LOC=misc/figures_test
+TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
+TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,$(TEST_FIG_LOC)/%.png, $(TEST_FIG_SRC))
 
 TEX_FIG_LOC=docs
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
@@ -34,11 +40,11 @@ show:
 	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
 
-test: homog2d_test nobuild #demo_check
+test: BUILD/homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
-	./homog2d_test
+	BUILD/homog2d_test
 
-testall: homog2d_test_f homog2d_test_d homog2d_test_l
+testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 
@@ -55,17 +61,17 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 # 2019-11-15: added options for code coverage with gcov
-homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o homog2d_test $< $(LDFLAGS)
+BUILD/homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
 #	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
 
-homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
 
-homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
 
-homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
 
 ptest1: precision_test1
@@ -80,6 +86,9 @@ precision_test1: misc/precision_test_opencv.cpp
 precision_test2: misc/precision_test.cpp
 	$(CXX) $(CFLAGS) -I. -o $@ $<
 
+#=======================================================================
+# Generation of the doc figures from code
+
 # run the program
 $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
 	$<
@@ -89,27 +98,54 @@ $(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
 $(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
+doc_fig: $(DOC_IMAGES_PNG)
+
+#=======================================================================
+# Generation of the doc figures from LaTeX sources
+
 $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
-doc_fig: $(DOC_IMAGES_PNG)
-
 doc_fig_tex: $(TEX_FIG_PNG)
 
-doc: html/index.html doc_fig doc_fig_tex
-	xdg-open html/index.html
+#=======================================================================
+# Generation of figures for the test samples
+$(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
+	@./$<
+	@mogrify -flip $<.png
 
-html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
-	doxygen misc/doxyfile 1>doxygen.stdout 2>doxygen.stderr
+BUILD/figures_test/%: BUILD/figures_test/%.cpp
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
+	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
+
+test_fig: $(TEST_FIG_PNG)
+#=======================================================================
+
+
+
+BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+
+
+
+doc: BUILD/html/index.html doc_fig doc_fig_tex
+	xdg-open BUILD/html/index.html
+
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
+	@mkdir -p BUILD/html
+	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
 install:
 	cp homog2d.hpp /usr/local/include
 
-demo: demo_opencv
-	./demo_opencv
+demo: BUILD/demo_opencv
+	BUILD/demo_opencv
 
 # this target REQUIRES Opencv
-demo_opencv: misc/demo_opencv.cpp homog2d.hpp
+BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 demo_sdl2: misc/demo_sdl2.cpp homog2d.hpp
@@ -133,8 +169,8 @@ nobuild: $(NOBUILD_OBJ_FILES)
 $(NOBUILD_OBJ_FILES): rm_nb
 
 rm_nb:
-	-rm *.stdout
-	-rm *.stderr
+	-rm BUILD/*.stdout
+	-rm BUILD/*.stderr
 
 # assemble file to create a cpp program holding a main()
 /tmp/no_build_%.cpp: misc/no_build/no_build_%.cxx
@@ -144,9 +180,9 @@ rm_nb:
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
 /tmp/no_build_%.o: /tmp/no_build_%.cpp
-	@echo "Checking build failure of $<" >>no_build.stdout
-	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>no_build.stderr
-	! $(CXX) -o $@ -c $< 1>>no_build.stdout 2>>no_build.stderr
+	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
+	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
+	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 #=================================================================
 

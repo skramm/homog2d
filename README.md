@@ -13,7 +13,7 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
-- Author: S. Kramm
+- Author: Sebastien Kramm, firstname.lastname@univ-rouen.fr
 - Licence: MPLv2
 - Dependencies: none, other than standard library
 
@@ -47,6 +47,8 @@ This will copy that file in `/usr/local/include`.
 - A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
+- **Contributing**: at present, the best you can do is testing and bug/issue reporting.
+Don't hesitate, this is still beta but stable release expected soon!
 
 - Rationale:
   - Usage simplicity (see manual)

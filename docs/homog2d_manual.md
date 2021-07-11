@@ -10,11 +10,12 @@ For stable releases, see home page.
 3. [Segments](#segments)
 4. [Other geometric primitives](#shapes)
 5. [2D transformation (aka homographies)](#matrix)
-6. [Computing Intersections](#inter)
+6. [Intersections and enclosings determination](#inter)
 7. [Bindings](#bind)
 8. [Numerical data types](#numdt)
 9. [Technical details](#tech)
-10. [History](homog2d_history.md)
+10. [FAQ](homog2d_qa.md)
+11. [History](homog2d_history.md)
 
 
 ## 1 - Introduction
@@ -201,6 +202,12 @@ auto liA = p_lines1.first;
 auto liB = p_lines1.second;
 ```
 
+
+If you know that two lines are parallel and you want the distance between them, then you have:
+```C++
+auto dist = getParallelDistance( li1, li2 );
+```
+
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
 auto angle1 = li2.getAngle( li1 );
@@ -224,6 +231,13 @@ Segment s2; // default value
 std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
+
+You can also build the segment by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
+The only constraint is that they must be all of the same type (no int/float/double mix):
+```C++
+Segment s1( x1, y1, x2, y2 );
+```
+
 You can get the pair of points (as an `std::pair`) with `get()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
@@ -248,6 +262,14 @@ Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
 auto p_mid2 = getMiddlePoint(s1); // your choice
 ```
+
+The length is available with:
+```C++
+Segment s1( Point2d(1,2), Point2d(3,4) );
+auto length = s1.length();
+```
+
+
 
 ## 4 - Other geometric primitives
 <a name="shapes"></a>
@@ -274,14 +296,20 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 The only constraint is that no coordinate can be equal.
 The library will throw if it is not enforced.
 
+You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2, y2.
+The only constraint is that they must be all of the same type (no int/float/double mix).
+```C++
+FRect r1( x1, y1, x2, y2 );
+```
+
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );
-auto pair_pts = rect.get2Pts();  // returns the 2 points p0,p1 in a std::pair
+auto pair_pts = rect.getPts();  // returns the 2 points p0,p1 in a std::pair
 auto pts = rect.get4Pts(); // return a std::array of 4 points
 ```
 
-You can also fetch the 4 segments of the rectangle:
+You can also fetch the 4 segments of the rectangle, with a member function or a free function:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
@@ -299,7 +327,7 @@ auto h = rect.height();
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
-Circle c1( center_point, radius );
+Circle c1( center_point, 50 );
 c1.radius() = 100;
 std::cout << c1.radius();
 ```
@@ -310,42 +338,36 @@ and the two segments tangential to two circles:
 Circle c1, c2;
 auto seg = getSegment( c1, c2 );  // as a segment
 auto line = getLine( c1, c2 );    // as a line
-auto pair_segs = getTanSegs( c1, c2 );
+auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
 ![circles1](figures_src/circles1.png)
 
-### 4.3 - Common features
 
-Both provide a `isInside()' member function, that works for all combination of theses 2 types:
+### 4.3 - Polyline
+
+The class holds a set of points, and models an arbitrary polygon.
+It can be either open or closed (last points joins first one).
 ```C++
-FRect r1, r2;
-Circle c1, c2;
-bool b1 = r1.isInside( c1 );
-bool b2 = c1.isInside( r1 );
-bool b3 = r2.isInside( r1 );
-bool b4 = c2.isInside( c1 );
+Polygon pl1;                  // default is open
+Polygon pl2( IsClosed::Yes ); // this one is closed
+pl1.add( pt );       // add a point
+pl1.add( 66,77 );    // add a point as (x,y)
+std::vector<Point2d> vpts;
+// fill vpt
+pl1.add( vpt );      // add a vector of points
+pl2.isClosed() = false;  // now open
 ```
 
-This can be used also with types `Point2d` and `Segment`:
-
-```C++
-FRect rect;
-Circle cir;
-
-Point2d pt;
-bool b1 = pt.isInside( cir );
-bool b2 = pt.isInside( rect );
-
-Segment seg;
-bool b3 = seg.isInside( cir );
-bool b4 = seg.isInside( rect );
-```
+![polyline1](figures_src/polyline1.png)
 
 
 ## 5 - Homographies
 <a name="matrix"></a>
 
-You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`:
+You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
+
+
+### 5.1 - Homographies for points
 
 ```C++
 Homogr h; // unit transformation ("eye" matrix)
@@ -355,19 +377,47 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-This can be used with other types too:
+This can be used with some of other types too:
 ```C++
 Homogr h;
  ... assign some planar transformation
 Segment s1( ..., ... );
 auto s2 = H * s1;
 
-FRect r1( ..., ... );
-auto r2 = H * r1;
+Polyline pl;
+pl = H * pl;
 ```
 
+It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `Polyline`.
+```C++
+Homogr h( 100, 200 );
+FRect rect( 0,0, 50,20 );
+auto a = H * rect; // a is a Polyline
+```
 
-### 5.1 - Setting up from a given planar transformation
+(note: homography product not available in this release for circles)
+
+
+### 5.2 - Homographies for lines
+<a name="line_homography"></a>
+
+For lines, a known result is that if we have a line lA going through p1 and p2,
+and a homography H mapping p1 and p2 to p'1 and p'2, then the line lB joining these
+two points can be computed with lB = H-T lA.
+<br>
+Since release 2.4, this library automatically handle this inversion, inside the class:
+```C++
+Homogr h;
+ ... assign some planar transformation
+Point2d p1a( ..., ... );
+Point2d p2a( ..., ... );
+Line2d lA = p1a * p2a;
+auto p1b = H * p1a;
+auto p2b = H * p2a;
+lB = H * lA; // same as lB = p1b * p2b;
+```
+
+### 5.3 - Setting up from a given planar transformation
 
 The three planar transformations (rotation, translation, scaling) are available directly through provided member functions.
 They are available in two forms: "`setXxxx()`" and "`addXxxx()`".
@@ -438,6 +488,19 @@ Point2d p1;
 Point2d p2 = H * p1;
 ```
 
+- You don't even need to create a variable, you can build one "on the fly" for translations and rotations:
+```C++
+p1 = Homogr(50,100) * p1;   // translation
+p2 = Homogr(M_PI/4) * p2;   // rotation
+```
+This is possible for all the primitives accepting a homography product.
+
+- More complex stuff is possible too, without creating a variable:
+```C++
+p1 = Homogr().addTranslation(50,100).addScale(2) * p1;
+```
+
+
 - You can apply the homography to a set of points or lines:
 ```C++
 std::vector<Point2d> v_pts;
@@ -455,7 +518,8 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 
-### 5.2 - Constructors
+### 5.4 - Constructors
+
 Three constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
@@ -466,7 +530,7 @@ Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 ```
 
-### 5.3 - Computing from 2 sets of 4 points
+### 5.5 - Computing from 2 sets of 4 points
 <a name="H_4points"></a>
 
 You can also compute the transformation from two sets of 4 (non-colinear) points:
@@ -486,64 +550,98 @@ The two options available are:
 - Opencv (https://opencv.org)
 - Eigen (https://eigen.tuxfamily.org/)
 
-The default is Opencv, thus it will fail to build if not installed on system (check out  [bindings](#bind) for more on this).
+The default is Opencv, thus it will fail to build if not installed on system (check out [bindings](#bind) for more on this).
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
 
-## 6 - Computation of intersection points
+## 6 - Intersections and enclosings determination
 <a name="inter"></a>
 
-### 6.1 - Intersection of lines with flat rectangles
+### 6.1 - Intersections between primitives
 
-You can compute the intersection of a line with a flat rectangle defined by two points with the
-`intersects()` member function.
-It will return an object that holds the intersection points.
+This library has a homogeneous API for all intersections between the provided geometrical primitives.
+That is, whatever `a` and `b` (excepts points of course), there is a member function `intersects()` that both
+gives the answer to the question "do theses primitives intersect?" but also provides the intersections points.
 
-Usage:
+If you are only interested in the first answer, you can write:
 
 ```C++
-Line2d li( ..., ... ); // some line
-Point2d pt1(1,1);
-Point2d pt2(8,8);
-auto ri = li.intersects( pt1, pt2 );
-if( ri() )  // means the line does intersect the rectangle defined by (1,1)-(8,1)-(8,8)-(1,8)
-{
-	Point2d intersect_pt1 = ri.get().first;
-	Point2d intersect_pt2 = ri.get().second;
-}
+	if( a.intersects(b)() )  // or b.intersects(a)()
+	 ... then do something
 ```
 
-You don't have to give the bottom-right, top-left corners of the rectangle, the function checks and automatically computes these two points.
-In the example above, you could have as well given the points (1,8)-(8,1), the result would have been the same.
-The only requirement is that no coordinate must be the same in the two points.
-
-### 6.2 - Intersection of a line with a circle
-
-For a line `li`, you can compute the intersection points with a circle having a radius `rad` and located at `pt` with the following code:
+If you need the intersection points, then just store the returned value:
 ```C++
-auto ri = li.intersects( pt, rad );
-if( ri() )   // means the line intersects the circle
-{
-	auto inter = ri.get(); // returns a std::pair
-	Point2d intersect_pt1 = inter.first;
-	Point2d intersect_pt2 = inter.second;
-}
+	auto res = a.intersects(b);  // or b.intersects(a)
+	if( res() )           // does intersect !
+	{
+		std::cout << "number of intersections: " << res.size() << '\n';
+		auto pts = res.get(); // get the points
+	}
 ```
 
-Also see the provided demo for a runnable example.
+The number of intersection points will depend on the primitives, thus the access method (`get()`) will return different types.
+It will also throw if there is no intersection!
+And whatever the primitives, you can always get the number of intersection points with the `size()` member function.
 
-For both of these functions, the returned pair of intersection points will always hold as "first" the point with the lowest `x` value, and if equal, the point if the lowest `y` value.
+The table below summarizes the number of intersection points to expect:
 
-### 6.3 - Points and rectangles
+|           | `Line2d` | `Segment` | `FRect`  | `Circle` |
+|-----------|----------|-----------|----------|----------|
+| `Line2d`  |  0 or 1  |   0 or 1  |   0 or 2 |  0 or 2  |
+| `Segment` |  0 or 1  |   0 or 1  |   0,1,2  |  0,1,2   |
+| `FRect`   |  0 or 2  |   0,1,2   |   0,2,4  |  0,2,4   |
+| `Circle`  |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |
 
-You can quickly check if a points lies within a flat rectangle defined by two points `p1`,`p2` with:
+
+- For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
+- For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
+- For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
+
+
+See the provided demo for a runnable example (relies on Opencv backend).
+
+For the functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
+and if equal, the point with the lowest `y` value.
+
+### 6.1.1 - Details on intersections
+
+When a segment has a point lying on another segment, such as int the figure below, this will be considered as an intersection point:
+
+![segment1](figures_src/segment1.png)
+
+This has a consequence on rectangle intersections: when the rectangles are overlapping such as the figure below, we will have here **4** intersection points.
+
+![frect1](figures_src/frect1.png)
+
+
+### 6.2 - Enclosing determination
+
+You can quickly check if a points lies within a flat rectangle (FRect) or a circle
 ```C++
-bool b = pt.isInside( p1, p2 );
+bool b1 = pt.isInside( rect );
+bool b2 = pt.isInside( circle );
 ```
-Again, the two points can be any of the four corners of the rectangle.
+For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
+```C++
+bool b1 = pt.isInside( pt1, pt2 );
+bool b2 = pt.isInside( pt1, radius );
+```
 
-This function will return `true` for all points lying on edges of the rectangle.
+This is also available for segments, circles, or rectangles:
+```C++
+FRect rect2;
+Circle c2;
+Segment seg;
+
+bool ba1 = rect2.isInside( rect );
+bool ba2 = rect2.isInside( circle );
+bool bb1 = c2.isInside( rect );
+bool bb2 = c2.isInside( circle );
+bool bc1 = seg.isInside( rect );
+bool bc2 = seg.isInside( circle );
+```
 
 
 ## 7 - Bindings with other libraries
@@ -614,15 +712,22 @@ H = m;        // or call assignment operator
 
 ### 7.2 - Drawing functions using OpenCv
 
-You can also directly draw points and lines on an image (`cv::Mat` type):
+All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` type), using their `draw()` member function:
+
 ```C++
 Point2d pt( ... );
 Line2d li( ... );
+Segment seg( ... );
+Circle c;
+Polyline pl;
 li.draw( mat );
 pt.draw( mat );
+seg.draw( mat );
+c.draw( mat );
+pl.draw( mat );
 ```
 
-These drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+All these drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
 li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
@@ -645,18 +750,18 @@ You can at any time return to the "factory" settings with a call to a static fun
 CvDrawParams::resetDefault();
 ```
 
-You can also draw line segments with the Segment type. It also supports the drawing parameter:
-```C++
-Segment s1( Point2d(100,100),  Point2d(300,200) );
-s1.draw( some_img );                                 // using default style
-Segment s2( Point2d(300,100),  Point2d(100,200) );
-s2.draw( some_img, CvDrawParams().setColor(0,0,0) ); // black
-```
+The available functions are given in the table below:
+     Function     |    Arguments     |
+------------------|------------------|
+`setColor()`      | 3 ints ([0-255]) |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` |
+`setPointSize()`  |  1 int (pixels)  |
+`setThickness()`  |  1 int (pixels)  |
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
-In case you have some trouble building this program, please [read this](docs/opencv_notes.md).
+In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 ## 8 - Numerical data types
 <a name="numdt"></a>
@@ -688,7 +793,8 @@ configure the library to use `long double` by adding this before the "include":
 ```C++
 #define HOMOG2D_INUMTYPE long double
 ```
-or add that as a compile flag:
+or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
+<br>(don't forget the quotes!)
 
 
 ### 8.2 - Numerical type conversion
@@ -733,6 +839,24 @@ That same function can be used to change (or print) the current value.
 
 - When attempting to compute the inverse of a matrix, if the determinant is less
 than `Homogr::nullDeterValue()`, the inversion code will throw.
+
+### Additional rounding
+
+In some situations, although the math is clear, some numerical issues always happen.
+The most crucial is when computing intersection points between a rectangle and a line.
+The algorithm just checks the intersection points between each of the 4 segments of the rectangle and the line:
+for each segments supporting line, we check if the intersection point is in the segment area.
+However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
+(i.e. with coordinates in the range [0-99]).
+The intersection point can appear to have for one of the coordinates the value "99". So far so good.
+Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
+
+To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates:
+<br>value = std::round( value * coeff ) / coeff
+<br>so that the value stays at "99".
+
+At present the cefficient value is not adjustable, but will in the future.
+
 
 ## 9 - Technical details
 <a name="tech"></a>

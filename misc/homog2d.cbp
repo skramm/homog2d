@@ -28,6 +28,9 @@
 		<Unit filename="../docs/fig1.tex" />
 		<Unit filename="../docs/fig2.tex" />
 		<Unit filename="../docs/figures_src/circles1.cpp" />
+		<Unit filename="../docs/figures_src/frect1.cpp" />
+		<Unit filename="../docs/figures_src/polyline1.cpp" />
+		<Unit filename="../docs/figures_src/segment1.cpp" />
 		<Unit filename="../docs/homog2d_history.md" />
 		<Unit filename="../docs/homog2d_manual.md" />
 		<Unit filename="../docs/homog2d_qa.md" />
@@ -38,6 +41,14 @@
 		<Unit filename="doxyfile" />
 		<Unit filename="doxyfile_opencv" />
 		<Unit filename="extra_style_sheet.css" />
+		<Unit filename="figures_test/footer.cpp" />
+		<Unit filename="figures_test/frect_intersect_1.code" />
+		<Unit filename="figures_test/frect_intersect_2.code" />
+		<Unit filename="figures_test/frect_intersect_3.code" />
+		<Unit filename="figures_test/frect_intersect_4.code" />
+		<Unit filename="figures_test/frect_intersect_5.code" />
+		<Unit filename="figures_test/frect_intersect_6.code" />
+		<Unit filename="figures_test/header.cpp" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
@@ -46,13 +57,13 @@
 		<Unit filename="no_build/no_build_3.cxx" />
 		<Unit filename="no_build/no_build_4.cxx" />
 		<Unit filename="no_build/no_build_5.cxx" />
+		<Unit filename="no_build/no_build_6.cxx" />
+		<Unit filename="no_build/no_build_7.cxx" />
 		<Unit filename="no_build/readme.txt" />
+		<Unit filename="showcase1.cpp" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
