@@ -94,7 +94,6 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
 	template<typename> struct RootDataType {};
 
-
 #if 0
 	/// Helper class for Matrix type
 	template<typename T1>
@@ -353,12 +352,7 @@ Thus some assert can get triggered elsewhere.
 		, _hasChanged   ( other._hasChanged )
 		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
-	{
-/*		_data         = other._data;
-		_hasChanged   = other._hasChanged;
-		_isNormalized = other._isNormalized;
-		_hmt          = nullptr;*/
-	}
+	{}
 
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
@@ -496,7 +490,7 @@ Thus some assert can get triggered elsewhere.
 			for( auto& li: _data )
 				for( auto& e: li )
 					e = -e;
-		_hasChanged = true;   /// \todo This is questionnable
+		_hasChanged = true;
 		_isNormalized = true;
 	}
 
@@ -4148,6 +4142,7 @@ using HomogrF  = Homogr_<float>;
 using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
 using FRectF   = FRect_<float>;
+using PolylineF= Polyline_<float>;
 
 // double types
 using Line2dD  = Line2d_<double>;
@@ -4156,6 +4151,7 @@ using HomogrD  = Homogr_<double>;
 using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
 using FRectD   = FRect_<double>;
+using PolylineD= Polyline_<double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
@@ -4164,18 +4160,8 @@ using HomogrL  = Homogr_<long double>;
 using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
+using PolylineL= Polyline_<long double>;
 
-/*template<typename T>
-using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
-template<typename T>
-using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
-*/
-
-//template<typename T>
-//using Intersect_ = typename Root<type::IsLine,T>::Intersect;
-
-
-using Intersect = detail::Intersect<detail::Inters_1,double>;
 } // namespace homog2d end
 
 
