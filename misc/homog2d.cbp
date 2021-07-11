@@ -30,6 +30,7 @@
 		<Unit filename="../docs/fig2.tex" />
 		<Unit filename="../docs/figures_src/circles1.cpp" />
 		<Unit filename="../docs/figures_src/frect1.cpp" />
+		<Unit filename="../docs/figures_src/frect2.cpp" />
 		<Unit filename="../docs/figures_src/polyline1.cpp" />
 		<Unit filename="../docs/figures_src/segment1.cpp" />
 		<Unit filename="../docs/homog2d_history.md" />

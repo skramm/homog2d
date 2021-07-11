@@ -985,6 +985,7 @@ class FRect_
 		return arr;
 	}
 /// Returns the 4 segments of the rectangle
+/// \sa homog2d::getSegs( const FRect& );
 	std::array<Segment_<FPT>,4>
 	getSegs() const
 	{
@@ -1120,6 +1121,24 @@ public:
 	}
 #endif
 };
+
+/// Returns the 4 points of the rectangle (free function)
+/// \sa FRect_::get4Pts()
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+get4Pts( const FRect_<FPT>& rect )
+{
+	return rect.get4Pts();
+}
+
+/// Returns the 2 major points of the rectangle (free function)
+/// \sa FRect_::getPts()
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+getPts( const FRect_<FPT>& rect )
+{
+	return rect.getPts();
+}
 
 /// Free function
 template<typename FPT>
@@ -2378,6 +2397,15 @@ HOMOG2D_INUMTYPE length( const Segment_<FPT>& seg )
 	return seg.length();
 }
 
+/// Returns the points as a std::pair (free function)
+/// \sa Segment_::getPts()
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+getPts( const Segment_<FPT>& seg )
+{
+	return seg.getPts();
+}
+
 //------------------------------------------------------------------
 template<typename U>
 inline
@@ -2406,6 +2434,7 @@ getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 }
 
 /// Free function, returns middle point of segment
+/// \sa Segment_::getMiddlePoint()
 template<typename FPT>
 Point2d_<FPT>
 getMiddlePoint( const Segment_<FPT>& seg )
@@ -2413,13 +2442,14 @@ getMiddlePoint( const Segment_<FPT>& seg )
 	return seg.getMiddlePoint();
 }
 
+/// Free function, returns segments of the rectangle
+/// \sa FRect_::getSegs()
 template<typename FPT>
 std::array<Segment_<FPT>,4>
 getSegs( const FRect_<FPT>& seg )
 {
 	return seg.getSegs();
 }
-
 
 /// Free function, returns the pair of segments tangential to the two circles
 template<typename FPT1,typename FPT2>
@@ -2515,7 +2545,7 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 //------------------------------------------------------------------
 namespace priv {
 
-/// Traits class, used in intersect for Polyline
+/// Traits class, used in intersects() for Polyline
 template<typename T> struct IsShape              : std::false_type {};
 template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
@@ -2705,6 +2735,16 @@ class Polyline_
 		}
 #endif
 };
+
+//------------------------------------------------------------------
+/// Returns the segments of the polyline (free function)
+/// \sa Polyline_::getSegs()
+template<typename FPT>
+std::vector<Segment_<FPT>>
+getSegs( const Polyline_<FPT>& pl )
+{
+	return pl.getSegs();
+}
 
 //------------------------------------------------------------------
 namespace detail {
@@ -3371,6 +3411,7 @@ Root<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::RootHelper<ty
 }
 
 //------------------------------------------------------------------
+#if 0
 /// Free function, returns the angle (in Rad) between two lines.
 template<typename FPT>
 HOMOG2D_INUMTYPE
@@ -3378,6 +3419,17 @@ getAngle( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 {
 	return li1.getAngle( li2 );
 }
+#else
+/// Free function, returns the angle (in Rad) between two lines/ or segments
+/// \sa Segment_::getAngle()
+/// \sa Line2d_::getAngle()
+template<typename T>
+HOMOG2D_INUMTYPE
+getAngle( const T& li1, const T& li2 )
+{
+	return li1.getAngle( li2 );
+}
+#endif
 
 template<typename LP, typename FPT>
 template<typename FPT2>
@@ -3808,20 +3860,6 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 {
 	for( auto& elem: vin )
 		elem = *this * elem;
-}
-
-//------------------------------------------------------------------
-template<typename FPT>
-std::array<Point2d_<FPT>,4>
-get4Pts( const FRect_<FPT>& rect )
-{
-	return rect.get4Pts();
-}
-template<typename FPT>
-std::array<Point2d_<FPT>,4>
-getPts( const FRect_<FPT>& rect )
-{
-	return rect.getPts();
 }
 
 //------------------------------------------------------------------

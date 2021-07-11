@@ -322,8 +322,10 @@ FRect r1( x1, y1, x2, y2 );
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );
-auto pair_pts = rect.getPts();  // returns the 2 points p0,p1 in a std::pair
-auto pts = rect.get4Pts(); // return a std::array of 4 points
+auto pair_pts  = rect.getPts();  // returns the 2 points p0,p1 in a std::pair
+auto pair_pts2 = getPts(rect);   // or use the free function
+auto pts  = rect.get4Pts();      // return a std::array of 4 points
+auto pts2 = get4Pts(rect);       // or use the free function
 ```
 
 You can also fetch the 4 segments of the rectangle, with a member function or a free function:
@@ -338,6 +340,8 @@ And of course, its width and height:
 FRect rect;
 auto w = rect.width();
 auto h = rect.height();
+auto w2 = width(rect);
+auto h2 = height(rect);
 ```
 
 ### 3.3 - Circles
@@ -425,11 +429,11 @@ auto a = H * rect; // a is a Polyline
 ### 4.2 - Homographies for lines
 <a name="line_homography"></a>
 
-For lines, a known result is that if we have a line lA going through p1 and p2,
-and a homography H mapping p1 and p2 to p'1 and p'2, then the line lB joining these
-two points can be computed with lB = H-T lA.
+For lines, a known result is that if we have a line `lA` going through `p1` and `p2`,
+and a homography `H` mapping `p1` and `p2` to `p'1` and `p'2`, then the line `lB` joining these
+two points can be computed with `lB = H^-T lA`.
 <br>
-Since release 2.4, this library automatically handle this inversion, inside the class:
+Since release 2.4, this library automatically handles this inversion, inside the class:
 ```C++
 Homogr h;
  ... assign some planar transformation
@@ -611,18 +615,19 @@ And whatever the primitives, you can always get the number of intersection point
 
 The table below summarizes the number of intersection points to expect:
 
-|           | `Line2d` | `Segment` | `FRect`  | `Circle` |
-|-----------|----------|-----------|----------|----------|
-| `Line2d`  |  0 or 1  |   0 or 1  |   0 or 2 |  0 or 2  |
-| `Segment` |  0 or 1  |   0 or 1  |   0,1,2  |  0,1,2   |
-| `FRect`   |  0 or 2  |   0,1,2   |   0,2,4  |  0,2,4   |
-| `Circle`  |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |
+|            | `Line2d` | `Segment` | `FRect`  | `Circle` |
+|------------|----------|-----------|----------|----------|
+| `Line2d`   |  0 or 1  |   0 or 1  |   0 or 2 |  0 or 2  |
+| `Segment`  |  0 or 1  |   0 or 1  |   0,1,2  |  0,1,2   |
+| `FRect`    |  0 or 2  |   0,1,2   |   0,2,4  |  0,2,4   |
+| `Circle`   |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |
 
 
 - For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
 - For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
 - For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
 
+For `Polyline`, the number of intersections is of course depending on the number of segments.
 
 See the provided demo for a runnable example (relies on Opencv backend).
 
@@ -631,7 +636,7 @@ and if equal, the point with the lowest `y` value.
 
 ### 5.1.1 - Details on intersections
 
-When a segment has a point lying on another segment, such as int the figure below, this will be considered as an intersection point:
+When a segment has a point lying on another segment, such as in the figure below, this will be considered as an intersection point:
 
 ![segment1](figures_src/segment1.png)
 
@@ -777,6 +782,13 @@ You can at any time return to the "factory" settings with a call to a static fun
 ```C++
 CvDrawParams::resetDefault();
 ```
+
+You can also save a style in a variable, to avoid lengthy lines:
+```C++
+auto color_red = CvDrawParams().setColor( 250, 0, 0 );
+something.draw( img, color_red );
+```
+
 
 The available functions are given in the table below:
      Function     |    Arguments     |
