@@ -4,8 +4,8 @@ Current test status:
 [![Build Status](https://travis-ci.com/skramm/homog2d.svg?branch=master)](https://travis-ci.com/skramm/homog2d) (GCC and Clang)
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 
-A small single-file header-only C++ library dedicated to
-handling 2D lines, points and homographies (2D transformations),
+A single-file header-only C++ library dedicated to
+handling 2D lines, points and homographies (2D planar transformations),
 using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
 
 ![showcase1](docs/showcase1.gif)
@@ -16,9 +16,6 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 - Status: beta
 - Author: Sebastien Kramm, firstname.lastname@univ-rouen.fr
 - Licence: MPLv2
-- Dependencies: none, other than standard library
-
-:new: (2021-07-08): A major rework of code and manual is currently under development, should be available in 10-15 days, it is advised to wait for next release as there will be some API changes.
 
 
 Short preview:
@@ -36,10 +33,13 @@ int main()
 }
 ```
 
+:new: Fresh 2.4 release! : https://github.com/skramm/homog2d/releases
 
 To install on your machine, copy file `homog2d.hpp` somewhere, or `sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.
 
+
+- Audience: any C++ dev requiring some basic computational geometry, without the burden of large scale framework.
 
 - Usage: see [full manual](docs/homog2d_manual.md)
 
@@ -52,7 +52,7 @@ When installed, run `$ make test` (or `$ make testall` for testing with all 3 nu
 Don't hesitate, this is still beta but stable release expected soon!
 
 - Rationale:
-  - Usage simplicity (see manual)
+  - Usage simplicity, max flexibility
   - No dependency [(*)](#rm_fn)
   - Modern C++, using policy-based design and tag dispatching
   - Direct bindings with [OpenCv](https://opencv.org/) (optional)
