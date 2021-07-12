@@ -53,6 +53,16 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_LOG(a) {;}
 #endif
 
+#define HOMOG2D_DEBUG_ASSERT(a,b) \
+	{ \
+		if( (a) == false ) \
+		{ \
+			std::cerr << " - line " << __LINE__ << ": " << b << '\n'; \
+			std::cout << "homog2d: internal failure, please check stderr and report this\n"; \
+			std::exit(1); \
+		} \
+	}
+
 #define HOMOG2D_CHECK_ROW_COL \
 	if( r > 2 ) \
 		throw std::runtime_error( "Error: invalid row value: r=" + std::to_string(r) ); \
@@ -958,6 +968,13 @@ class FRect_
 	}
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
+
+	template<typename T1, typename T2>
+	void translate( T1 dx, T2 dy )
+	{
+		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
+		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
+	}
 
 /// Returns the 2 major points of the rectangle
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
@@ -3624,40 +3641,39 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 
 //	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
 	std::vector<Point2d_<FPT>> pti;
-//	int i=0;
 	for( const auto seg: rect.getSegs() )
 	{
-//		std::cout << i++ << ": considering seg: " << seg <<"\n";
 		auto ppts_seg = seg.getPts();
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-//			std::cout << " -INTERSECTION at " << pt << "\n";
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
 				if( pti.size() == 1 )                            // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
 						storePoint = false;
 			if( storePoint )
 				pti.push_back( pt );
-			if( pti.size() == 2 )
-			{
-//				std::cout << " -got 2, break\n";
+
+			if( pti.size() == 2 )  // already got 2, done
 				break;
-			}
 		}
 	}
-//	std::cout << "pti.size()=" << pti.size() << "\n";
+
+#ifndef HOMOG2D_DEBUGMODE
 	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
+#else
+	HOMOG2D_DEBUG_ASSERT(
+		( pti.size() == 0 || pti.size() == 2 ),
+		"homog2d:" << __LINE__ << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect << "\n"
+	);
+#endif
+
 	if( pti.empty() )
-	{
-//		std::cout << " -empty !\n";
 		return detail::Intersect<detail::Inters_2,FPT>();
-	}
 
 	priv::fix_order( pti[0], pti[1] );
-//	std::cout << " -Returned points: " << pti[0] << " + " << pti[1] << "\n";
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
