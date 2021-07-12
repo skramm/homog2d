@@ -403,10 +403,11 @@ Thus some assert can get triggered elsewhere.
 		return *this;
 	}
 /// Sets the matrix as a translation \c tx,ty
-	template<typename T>
-	Hmatrix_& setTranslation( T tx, T ty )
+	template<typename T1,typename T2>
+	Hmatrix_& setTranslation( T1 tx, T2 ty )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
 		_data[0][2] = tx;
 		_data[1][2] = ty;
@@ -445,10 +446,11 @@ Thus some assert can get triggered elsewhere.
 		return this->addScale( k, k );
 	}
 /// Adds a scale factor to the matrix
-	template<typename T>
-	Hmatrix_& addScale( T kx, T ky )
+	template<typename T1,typename T2>
+	Hmatrix_& addScale( T1 kx, T2 ky )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
@@ -464,10 +466,11 @@ Thus some assert can get triggered elsewhere.
 		return setScale( k, k );
 	}
 /// Sets the matrix as a scaling transformation
-	template<typename T>
-	Hmatrix_& setScale( T kx, T ky )
+	template<typename T1,typename T2>
+	Hmatrix_& setScale( T1 kx, T2 ky )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
 		_data[0][0] = kx;
 		_data[1][1] = ky;
@@ -929,6 +932,7 @@ class IntersectM
 template<typename FPT>
 class FRect_
 {
+	using Type = FPT;
 	template<typename T> friend class FRect_;
 
 private:
@@ -1313,16 +1317,6 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 };
 
-
-//------------------------------------------------------------------
-/// Returns Bounding Box (free function)
-/// \sa Circle_::getBB()
-template<typename FPT>
-FRect_<FPT> getBB( const Circle_<FPT>& cir )
-{
-	return cir.getBB();
-}
-
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
@@ -1402,6 +1396,10 @@ Parameters:
 template<typename LP,typename FPT>
 class Root
 {
+public:
+	using Type = FPT;
+
+private:
 	template<typename U,typename V> friend class Hmatrix_;
 
 // This is needed so we can convert from, say, Point2d_<float> to Point2d_<double>
@@ -2428,22 +2426,6 @@ the one with smallest y-coordinate will be returned first */
 };
 
 //------------------------------------------------------------------
-/// Returns Bounding Box (free function)
-/// \sa Segment_::getBB()
-template<typename FPT>
-FRect_<FPT> getBB( const Segment_<FPT>& seg )
-{
-	return seg.getBB();
-}
-
-/// Get segment length (free function)
-/// \sa Segment_::length()
-template<typename FPT>
-HOMOG2D_INUMTYPE length( const Segment_<FPT>& seg )
-{
-	return seg.length();
-}
-
 /// Returns the points as a std::pair (free function)
 /// \sa Segment_::getPts()
 template<typename FPT>
@@ -2606,6 +2588,20 @@ template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
 
+/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
+/// used to detect if container is valid
+template <typename T>               struct Is_Container: std::false_type { };
+template <typename T,std::size_t N> struct Is_Container<std::array<T,N>>:     std::true_type { };
+template <typename... Ts>           struct Is_Container<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct Is_Container<std::list<Ts...  >> : std::true_type { };
+
+/// Traits class used to detect if container \c T is a \c std::array
+/** (because allocation is different, see \ref alloc() ) */
+template <typename T>
+struct Is_std_array: std::false_type {};
+template <typename V, size_t n>
+struct Is_std_array<std::array<V, n>>: std::true_type {};
+
 } // namespace priv
 
 //------------------------------------------------------------------
@@ -2681,7 +2677,12 @@ class Polyline_
 		}
 
 /// Returns the points
-		std::vector<Point2d_<FPT>> getPts() const
+		std::vector<Point2d_<FPT>>& getPts()
+		{
+			return _plinevec;
+		}
+/// Returns the points (const)
+		const std::vector<Point2d_<FPT>>& getPts() const
 		{
 			return _plinevec;
 		}
@@ -2816,7 +2817,6 @@ Segment \c n is the one between point \c n and point \c n+1
 			return f;
 		}
 
-
 #ifdef HOMOG2D_USE_OPENCV
 		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
 		{
@@ -2836,6 +2836,55 @@ Segment \c n is the one between point \c n and point \c n+1
 		}
 #endif
 };
+
+//------------------------------------------------------------------
+namespace priv {
+
+/// Returns the bounding box of points in vector/list/array \c vpts
+/**
+\todo This loops twice on the points. Maybe some improvement here.
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+FRect_<typename T::value_type::Type>
+getPointsBB( const T& vpts )
+{
+	using FPT = typename T::value_type::Type;
+#ifndef HOMOG2D_NOCHECKS
+	if( vpts.empty() )
+		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set !"	);
+#endif
+	auto mm_x = std::minmax_element(
+		std::begin( vpts ),
+		std::end( vpts ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getX() < pt2.getX();
+		}
+	);
+	auto mm_y = std::minmax_element(
+		std::begin( vpts ),
+		std::end( vpts ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getY() < pt2.getY();
+		}
+	);
+
+	return FRect_<typename T::value_type::Type>(
+		mm_x.first->getX(),  mm_y.first->getY(),
+		mm_x.second->getX(), mm_y.second->getY()
+	);
+}
+
+} // namespace priv
 
 //------------------------------------------------------------------
 /// Returns true if is a polygon (i.e. no segment crossing)
@@ -2867,26 +2916,20 @@ isPolygon( const Polyline_<FPT>& pl )
 }
 
 /// Returns the number of segments (free function)
+/// \sa Polyline_::nbSegs()
 template<typename FPT>
 size_t nbSegs( const Polyline_<FPT>& pl )
 {
 	return pl.nbSegs();
 }
 
-/// Returns the number of points (free function)
+/// Get segment length (free function)
+/// \sa Segment_::length()
 template<typename FPT>
-size_t size( const Polyline_<FPT>& pl )
+HOMOG2D_INUMTYPE
+length( const Segment_<FPT>& seg )
 {
-	return pl.size();
-}
-
-/// Returns Bounding Box (free function)
-/// \sa FRect_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Polyline_<FPT>& pl )
-{
-	return pl.getBB();
+	return seg.length();
 }
 
 /// Returns length (free function)
@@ -2907,45 +2950,62 @@ getSegs( const Polyline_<FPT>& pl )
 	return pl.getSegs();
 }
 
-//------------------------------------------------------------------
+/// Returns the number of points (free function)
+template<typename FPT>
+size_t size( const Polyline_<FPT>& pl )
+{
+	return pl.size();
+}
+
+
+/// Returns Bounding Box (free function)
+/// \sa Segment_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Segment_<FPT>& seg )
+{
+	return seg.getBB();
+}
+
+/// Returns Bounding Box (free function)
+/// \sa Circle_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Circle_<FPT>& cir )
+{
+	return cir.getBB();
+}
+
+/// Returns Bounding Box (free function)
+/// \sa FRect_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Polyline_<FPT>& pl )
+{
+	return pl.getBB();
+}
+
+/// Returns Bounding Box of arbitrary container holding points (free function)
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+FRect_<typename T::value_type::Type>
+getBB( const T& vpts )
+{
+	return priv::getPointsBB( vpts );
+}
+
+
 /// Returns Bounding Box
-/**
-\todo This loops twice on the points. Maybe some improvement here.
-*/
 template<typename FPT>
 FRect_<FPT>
 Polyline_<FPT>::getBB() const
 {
-#ifndef HOMOG2D_NOCHECKS
-	if( size() < 2)
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box with only " + std::to_string(size())
-			+ " points"
-		);
-#endif
-	auto vec = getPts();
-	auto mm_x = std::minmax_element(
-		std::begin( vec ),
-		std::end( vec ),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			return pt1.getX() < pt2.getX();
-		}
-	);
-	auto mm_y = std::minmax_element(
-		std::begin( vec ),
-		std::end( vec ),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			return pt1.getY() < pt2.getY();
-		}
-	);
-
-	return FRect_<FPT>(
-		mm_x.first->getX(),  mm_y.first->getY(),
-		mm_x.second->getX(), mm_y.second->getY()
-	);
+	return priv::getPointsBB( getPts() );
 }
 
 
@@ -3212,10 +3272,16 @@ operator << ( std::ostream& f, const Root<LP,FPT>& r )
 	return f;
 }
 
-/// Stream operator, free function, call member function pseudo operator impl_op_stream()
-template<typename LP,typename FPT>
+/// Stream operator for a container of points/lines, free function
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
 std::ostream&
-operator << ( std::ostream& f, const std::vector<Root<LP,FPT>>& vec )
+operator << ( std::ostream& f, const T& vec )
 {
 	for( const auto& elem: vec )
 		f << elem << '\n';
@@ -3508,32 +3574,6 @@ namespace detail {
 	}
 } // namespace detail
 
-/// Free function template, product of two lines, returns a point
-template<typename FPT,typename FPT2>
-Point2d_<FPT>
-operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if( lhs.isParallelTo(rhs) )
-		HOMOG2D_THROW_ERROR_1( "lines are parallel, unable to compute product" );
-#endif
-
-	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
-}
-
-/// Free function template, product of two points, returns a line
-template<typename FPT,typename FPT2>
-Line2d_<FPT>
-operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if( lhs == rhs )
-		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product" );
-#endif
-	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
-	line.p_normalizeLine();
-	return line;
-}
 
 //------------------------------------------------------------------
 ///////////////////////////////////////////
@@ -3848,33 +3888,6 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
-#if 0
-// DEPRECATED !
-// Line/Polyline intersection
-template<typename LP, typename FPT>
-template<typename FPT2>
-detail::IntersectM<FPT>
-Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const
-{
-	detail::IntersectM<FPT> out;
-	for( const auto& seg: pl.getSegs() )
-	{
-		auto ri = seg.intersects( *this );
-		if( ri() )
-			out.add( ri.get() );
-	}
-	return out;
-}
-
-// Invalid instanciation
-template<typename LP, typename FPT>
-template<typename FPT2>
-detail::IntersectM<FPT>
-Root<LP,FPT>::impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(Polyline) on a point" );
-}
-#endif
 
 //------------------------------------------------------------------
 namespace detail {
@@ -3901,6 +3914,38 @@ product(
 }
 
 } // namespace detail
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - PRODUCT OPERATORS DEFINITIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/// Free function template, product of two lines, returns a point
+template<typename FPT,typename FPT2>
+Point2d_<FPT>
+operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( lhs.isParallelTo(rhs) )
+		HOMOG2D_THROW_ERROR_1( "lines are parallel, unable to compute product" );
+#endif
+
+	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
+}
+
+/// Free function template, product of two points, returns a line
+template<typename FPT,typename FPT2>
+Line2d_<FPT>
+operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( lhs == rhs )
+		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product" );
+#endif
+	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
+	line.p_normalizeLine();
+	return line;
+}
 
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
@@ -3985,20 +4030,6 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 //------------------------------------------------------------------
 namespace priv {
 
-/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
-/// used to detect if container is valid
-template <typename T>               struct Is_Container: std::false_type { };
-template <typename T,std::size_t N> struct Is_Container<std::array<T,N>>:     std::true_type { };
-template <typename... Ts>           struct Is_Container<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct Is_Container<std::list<Ts...  >> : std::true_type { };
-
-/// Traits class used to detect if container \c T is a \c std::array
-/** (because allocation is different, see \ref alloc() ) */
-template <typename T>
-struct Is_std_array: std::false_type {};
-template <typename V, size_t n>
-struct Is_std_array<std::array<V, n>>: std::true_type {};
-
 /// Allocation for \c std::array container
 template<
 	typename Cont,
@@ -4028,6 +4059,7 @@ alloc( std::size_t nb )
 }
 
 } // namespace priv
+
 //------------------------------------------------------------------
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
@@ -4065,7 +4097,7 @@ getParallelLines( const Line2d_<FPT>& li, T dist )
 	return li.getParallelLines( dist );
 }
 
-/// Returns the distance between 2 parallel lines
+/// Returns the distance between 2 parallel lines (free function)
 /**
 - ref: https://en.wikipedia.org/wiki/Distance_between_two_parallel_lines
 
@@ -4095,6 +4127,11 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 	HOMOG2D_INUMTYPE b = std::sqrt( b1*b2 );
 	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
 }
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - OPENCV BINDING
+/////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
@@ -4310,6 +4347,9 @@ void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDr
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - TYPEDEFS
+/////////////////////////////////////////////////////////////////////////////
 
 /// Default line type, uses \c double as numerical type
 using Line2d = Line2d_<double>;

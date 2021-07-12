@@ -106,6 +106,8 @@ struct Data
 		lB.draw( img, dp );
 		lC.draw( img, dp );
 		lD.draw( img, dp );
+		auto rect = getBB( vpt );
+		rect.draw( img );
 	}
 };
 
