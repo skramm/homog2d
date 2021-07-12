@@ -2728,6 +2728,17 @@ class Polyline_
 			return out;
 		}
 
+/// Returns one point of the polyline.
+		Point2d_<FPT> getPoint( size_t idx ) const
+		{
+#ifndef HOMOG2D_NOCHECKS
+			if( idx >= size() )
+				HOMOG2D_THROW_ERROR_1( "requesting point " + std::to_string(idx)
+					+ ", only has "  + std::to_string(size()) );
+#endif
+			return _plinevec[idx];
+		}
+
 /// Returns one segment of the polyline.
 /**
 Segment \c n is the one between point \c n and point \c n+1

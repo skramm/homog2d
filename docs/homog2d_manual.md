@@ -71,13 +71,10 @@ If you are unsure, you can check first:
 ```C++
 if( li1.isParallelTo(li2) )
 	cout << "Lines are parallel !\n";
-```
-
-For points, it is as easy as:
-```C++
 if( pt1 == pt2  )
 	cout << "Points are identical !\n";
 ```
+
 For the numerical considerations on this,
 check below, section [Numerical data types](#numdt).
 
@@ -227,12 +224,6 @@ You can compute the angle in Radians between two lines, either with a member fun
 ```C++
 auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 );
-```
-
-You can check if a line is parallel to another line:
-```C++
-Line2d l1,l2; // some lines
-bool it_is = l1.isParallelTo( l2 );
 ```
 
 ## 3 - Other geometric primitives
@@ -414,7 +405,7 @@ pl.add( v_pts_2 );  // add
 
 You can extract either points or segments.
 The number of segments is related to the open/closed condition.
-For example, if we have 4 points, that will generate 4 segments if closed, but only 3 is open.
+For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
 ```C++
 Polygon pl;
 // ... add points
@@ -451,7 +442,7 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-This can be used with some of other types too:
+This can also be used with the types `Segment`, `FRect` and `Polyline`:
 ```C++
 Homogr h;
  ... assign some planar transformation
@@ -460,14 +451,10 @@ auto s2 = H * s1;
 
 Polyline pl;
 pl = H * pl;
-```
 
-It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `Polyline`.
-```C++
-Homogr h( 100, 200 );
-FRect rect( 0,0, 50,20 );
 auto a = H * rect; // a is a Polyline
 ```
+It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a (closed) `Polyline`.
 
 (note: homography product not available in this release for circles)
 
@@ -697,7 +684,7 @@ Similarly, in the situation as in the figure below, we will have **2** intersect
 
 ### 5.2 - Enclosing determination
 
-You can quickly check if a points lies within a flat rectangle (FRect) or a circle
+You can quickly check if a point lies within a flat rectangle (`FRect`) or a circle:
 ```C++
 bool b1 = pt.isInside( rect );
 bool b2 = pt.isInside( circle );
