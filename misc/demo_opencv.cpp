@@ -840,7 +840,7 @@ void action_PL( void* param )
 	auto& data = *reinterpret_cast<Param_PL*>(param);
 
 	data.clearImage();
-	data.polyline.setPoints( data.vpt );
+	data.polyline.set( data.vpt );
 	data.polyline.draw( data.img );
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img );

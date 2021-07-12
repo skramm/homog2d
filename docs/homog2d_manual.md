@@ -389,6 +389,34 @@ Polygon pl2( frect, IsClosed::Yes );  // optional argument
 ```
 
 
+The open/close attribute can be read/written:
+```C++
+Polygon pl1;
+std::cout << "IsClosed=" << pl1.isClosed() << '\n';
+pl1.isClosed() = true;
+```
+
+It is possible to replace all the points with the ones contained in a vector, or just add them:
+```C++
+Polygon pl;
+std::vector<Point2d> v_pts_2;
+std::vector<Point2d> v_pts_2;
+pl.set( v_pts_1 );  // replace
+pl.add( v_pts_2 );  // add
+```
+
+You can extract either points or segments.
+The number of segments is related to the open/closed condition.
+For example, if we have 4 points, that will generate 4 segments if closed, but only 3 is open.
+```C++
+Polygon pl;
+// ... add points
+std::cout << "nbpts=" << pl.size() << " nb segments=" << pl.nbSegs() << '\n';
+auto nbPts  = pl.getPts();
+auto nbSegs = pl.getSegs();
+```
+
+
 ## 4 - Homographies
 <a name="matrix"></a>
 

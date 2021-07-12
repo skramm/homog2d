@@ -2642,6 +2642,7 @@ class Polyline_
 		{
 			add( Point2d_<FPT>( x, y ) );
 		}
+
 /// Add single point
 		template<typename FPT2>
 		void add( const Point2d_<FPT2>& pt )
@@ -2654,8 +2655,9 @@ class Polyline_
 			_plinevec.push_back( pt );
 		}
 
+/// Set from vector of points
 		template<typename FPT2>
-		void setPoints( const std::vector<Point2d_<FPT2>>& vec )
+		void set( const std::vector<Point2d_<FPT2>>& vec )
 		{
 			_plinevec.resize( vec.size() );
 			auto it = std::begin( _plinevec );
@@ -2743,6 +2745,7 @@ getSegs( const Polyline_<FPT>& pl )
 //------------------------------------------------------------------
 namespace detail {
 
+/// Used in isBetween()
 enum class Rounding: char { Yes, No };
 
 /// Helper function
