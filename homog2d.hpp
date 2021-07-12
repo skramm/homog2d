@@ -2669,8 +2669,8 @@ class Polyline_
 		void clear() { _plinevec.clear(); }
 
 /// Add single point as x,y
-		template<typename FPT2>
-		void add( FPT2 x, FPT2 y )
+		template<typename FPT1,typename FPT2>
+		void add( FPT1 x, FPT2 y )
 		{
 			add( Point2d_<FPT>( x, y ) );
 		}
