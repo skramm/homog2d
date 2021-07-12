@@ -27,6 +27,7 @@ See https://github.com/skramm/homog2d
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 #include <set>
 #include <list>
 #include <vector>
@@ -2632,6 +2633,15 @@ class Polyline_
 /// Returns the number of points (not segments!)
 		size_t size() const { return _plinevec.size(); }
 
+/// Returns length
+		HOMOG2D_INUMTYPE length() const
+		{
+			HOMOG2D_INUMTYPE sum = 0.L;
+			for( const auto& seg: getSegs() )
+				sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
+			return sum;
+		}
+
 /// Returns the number of segments
 		size_t nbSegs() const
 		{
@@ -2664,6 +2674,27 @@ class Polyline_
 			if( _isClosed )
 				out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
 			return out;
+		}
+
+/// Returns one segment of the polyline.
+/**
+Segment \c n is the one between point \c n and point \c n+1
+*/
+		Segment_<FPT> getSegment( size_t idx ) const
+		{
+#ifndef HOMOG2D_NOCHECKS
+			if( idx >= nbSegs() )
+				HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
+					+ "only has "  + std::to_string(nbSegs()) );
+
+			if( size() < 2 ) // nothing to draw
+				HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
+#endif
+//			auto lastPoint = _isClosed?
+			return Segment_<FPT>(
+				_plinevec[idx],
+				_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
+			);
 		}
 
 /// Clear all
@@ -2743,6 +2774,8 @@ class Polyline_
 			return true;
 		}
 
+		bool isPolygon() const;
+
 		friend std::ostream&
 		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
 		{
@@ -2774,6 +2807,23 @@ class Polyline_
 		}
 #endif
 };
+
+//------------------------------------------------------------------
+/// Returns true if is a polygon (i.e. no segment crossing)
+template<typename FPT>
+bool
+Polyline_<FPT>::isPolygon() const
+{
+	auto nbs = nbSegs();
+	for( size_t i=0; i<nbs; i++ )
+	{
+		auto seg1 = getSegment(i);
+		for( auto j=i+2; j<nbs; j++ )
+			if( getSegment(j).intersects(seg1)() )
+				return false;
+	}
+	return true;
+}
 
 //------------------------------------------------------------------
 /// Returns the segments of the polyline (free function)

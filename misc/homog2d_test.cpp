@@ -1397,6 +1397,7 @@ TEST_CASE( "Segment", "[seg1]" )
 		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
 	}
 }
+
 TEST_CASE( "FRect", "[frect]" )
 {
 	{
@@ -1433,6 +1434,13 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 }
 
+TEST_CASE( "Polyline", "[polyline]" )
+{
+	Polyline pl1;
+	{
+//		pl1.add{ std::vector<Point2d>{ {0,0}, {1,2}, {3,5}, {5,1} };
+	}
+}
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

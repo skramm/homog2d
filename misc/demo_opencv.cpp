@@ -841,13 +841,19 @@ void action_PL( void* param )
 
 	data.clearImage();
 	data.polyline.set( data.vpt );
-	data.polyline.draw( data.img );
+
+	auto color = CvDrawParams().setColor( 0,10,200);
+	if( data.polyline.isPolygon() )
+		color = CvDrawParams().setColor( 250,10,20);
+
+	data.polyline.draw( data.img, color );
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img );
 	auto intersPts = li.intersects(data.polyline);
 	for( const auto& pt: intersPts.get() )
-		pt.draw( data.img );
+		pt.draw( data.img  );
 	data.showImage();
+	std::cout << "length=" << data.polyline.length() << '\n';
 }
 
 void demo_PL( int n )
