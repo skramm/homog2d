@@ -419,8 +419,18 @@ For example, if we have 4 points, that will generate 4 segments if closed, but o
 Polygon pl;
 // ... add points
 std::cout << "nbpts=" << pl.size() << " nb segments=" << pl.nbSegs() << '\n';
-auto nbPts  = pl.getPts();
-auto nbSegs = pl.getSegs();
+auto vec_pts  = pl.getPts();
+auto vec_segs = pl.getSegs();
+auto seg = pl.getSegment( i );   // will throw if non-existent
+```
+
+
+Additional features: length and bounding box:
+```C++
+Polygon pl;
+// ... add points
+std::cout << "length=" << pl.length() << '\n';
+FRect rect = pl.getBB();
 ```
 
 

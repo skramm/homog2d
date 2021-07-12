@@ -1203,6 +1203,16 @@ public:
 
 	Point2d_<FPT>       center()       { return _center; }
 	const Point2d_<FPT> center() const { return _center; }
+
+/// Returns Bounding Box
+		FRect_<FPT> getBB() const
+		{
+			return FRect_<FPT>(
+				_center.getX()-_radius, _center.getY()-_radius,
+				_center.getX()+_radius, _center.getY()+_radius
+			);
+		}
+
 	void set( const Point2d_<FPT>& center, FPT rad )
 	{
 		_radius = rad;
@@ -2307,6 +2317,11 @@ class Segment_
 		{
 			return _ptS1.distTo( _ptS2 );
 		}
+/// Returns Bounding Box
+		FRect_<FPT> getBB() const
+		{
+			return FRect_<FPT>(	_ptS1. _ptS2 );
+		}
 
 /// Get angle between segment and other segment/line
 		template<typename U>
@@ -2642,6 +2657,8 @@ class Polyline_
 			return sum;
 		}
 
+		FRect_<FPT> getBB() const;
+
 /// Returns the number of segments
 		size_t nbSegs() const
 		{
@@ -2685,7 +2702,7 @@ Segment \c n is the one between point \c n and point \c n+1
 #ifndef HOMOG2D_NOCHECKS
 			if( idx >= nbSegs() )
 				HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
-					+ "only has "  + std::to_string(nbSegs()) );
+					+ ", only has "  + std::to_string(nbSegs()) );
 
 			if( size() < 2 ) // nothing to draw
 				HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
@@ -2823,6 +2840,48 @@ Polyline_<FPT>::isPolygon() const
 				return false;
 	}
 	return true;
+}
+
+
+//------------------------------------------------------------------
+/// Returns Bounding Box
+/**
+\todo This loops twice on the points. Maybe some improvement here.
+*/
+template<typename FPT>
+FRect_<FPT>
+Polyline_<FPT>::getBB() const
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( size() < 2)
+		HOMOG2D_THROW_ERROR_1( "cannot get bounding box with only " + std::to_string(size())
+			+ " points"
+		);
+#endif
+	auto vec = getPts();
+	auto mm_x = std::minmax_element(
+		std::begin( vec ),
+		std::end( vec ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getX() < pt2.getX();
+		}
+	);
+	auto mm_y = std::minmax_element(
+		std::begin( vec ),
+		std::end( vec ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getY() < pt2.getY();
+		}
+	);
+
+	return FRect_<FPT>(
+		mm_x.first->getX(),  mm_y.first->getY(),
+		mm_x.second->getX(), mm_y.second->getY()
+	);
 }
 
 //------------------------------------------------------------------

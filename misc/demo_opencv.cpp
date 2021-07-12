@@ -852,6 +852,9 @@ void action_PL( void* param )
 	auto intersPts = li.intersects(data.polyline);
 	for( const auto& pt: intersPts.get() )
 		pt.draw( data.img  );
+
+	auto bb = data.polyline.getBB();
+	bb.draw( data.img );
 	data.showImage();
 	std::cout << "length=" << data.polyline.length() << '\n';
 }
