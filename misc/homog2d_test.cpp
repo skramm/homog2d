@@ -1353,16 +1353,20 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{
+		Line2d_<NUMTYPE> li( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s2( Point2d(2,2), Point2d(0,0) );
 		CHECK( s1 == s2 );
 		CHECK( s1.isParallelTo(s2) );
-//		CHECK( s1.isParallelTo( Point2d() ) );
 		Line2d_<NUMTYPE> l1( Point2d(10,0), Point2d(12,2) );
 		CHECK( s1.isParallelTo(l1) );
 		CHECK( l1.isParallelTo(s1) );
-		l1.getAngle( s1 );               //just to make sure that this builds
-		s1.getAngle( l1 );
+		CHECK( l1.getAngle( s1 ) == Approx(0) );
+		CHECK( s1.getAngle( l1 ) == Approx(0) );
+		CHECK( s1.getAngle( s2 ) == Approx(0) );
+		CHECK( getAngle( s1, s2 ) == Approx(0) );
+		CHECK( getAngle( li, s2 ) == Approx(0) );
+		CHECK( getAngle( s2, li ) == Approx(0) );
 	}
 	{
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(3,4) );

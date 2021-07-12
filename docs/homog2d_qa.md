@@ -9,12 +9,12 @@ Home page: https://github.com/skramm/homog2d
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 ---
 
-- Q: I have an unexpected assert that get triggered when I use this in my code.
+- Q: I have an unexpected assert that gets triggered when I use this in my code.
 What shall I do?
-- A: Unfortunately, this can still happen at this time, and is probably due to some numerical issue.
+- A: Unfortunately, this can still happen at this time, and it is probably due to some numerical issue.
 The best thing to do is to add `#define HOMOG2D_DEBUGMODE` just above `#include "homog2d.hpp"` before and log the error stream of your program:<br>
 `./myapp 2>stderr` <br>
-and open an issue with this output (after removing non relevant parts), so this can be checked and corrected.
+and open an issue [here](https://github.com/skramm/homog2d/issues) with this output (after removing non relevant parts), so this can be checked and corrected.
 ---
 
 - Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite with GCC, why?

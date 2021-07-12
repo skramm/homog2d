@@ -16,7 +16,6 @@ For stable releases, see home page.
 9. [FAQ](homog2d_qa.md)
 10. [History](homog2d_history.md)
 
-
 ## 1 - Introduction
 <a name="intro"></a>
 
@@ -271,7 +270,8 @@ std::cout << pair.first; // will print (10,10)
 Many operations available with lines can apply to segments too:
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
-Line2d l1 = s1.getLine();  // get supporting line
+Line2d l1  = s1.getLine();  // get supporting line
+Line2d l12 = getLine(s1);   // or with free function
 bool b1 = l1.isParallelTo( s1 );
 bool b2 = s1.isParallelTo( l1 );  // also works
 auto a1 = l1.getAngle( s1 );
@@ -343,6 +343,13 @@ auto h = rect.height();
 auto w2 = width(rect);
 auto h2 = height(rect);
 ```
+
+It is possible to translate the rectangle using some dx,dy offset:
+```C++
+FRect rect;
+rect.translate( dx, dy );
+```
+
 
 ### 3.3 - Circles
 

@@ -53,11 +53,13 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_LOG(a) {;}
 #endif
 
+/// Assert debug macro, used internally if \c HOMOG2D_DEBUGMODE is defined
 #define HOMOG2D_DEBUG_ASSERT(a,b) \
 	{ \
 		if( (a) == false ) \
 		{ \
-			std::cerr << " - line " << __LINE__ << ": " << b << '\n'; \
+			std::cerr << "Homog2d assert failure, version:" << HOMOG2D_VERSION \
+				<< ", line:" << __LINE__ << "\n -details: " << b << '\n'; \
 			std::cout << "homog2d: internal failure, please check stderr and report this\n"; \
 			std::exit(1); \
 		} \
@@ -77,9 +79,11 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_INUMTYPE double
 #endif
 
+/// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_1( msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + std::string(__FUNCTION__) + "(): " + msg )
 
+/// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
 
@@ -1053,7 +1057,7 @@ class FRect_
 	}
 
 private:
-/// Intersection of FRect vs FRect of Circle
+/// Intersection of FRect vs FRect or Circle
 	template<typename T>
 	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
 	{
@@ -1622,7 +1626,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
 		std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
 
-		void set( FPT x, FPT y ) { impl_set( x, y,   detail::RootHelper<LP>() ); }
+		template<typename T1,typename T2>
+		void set( T1 x, T2 y ) { impl_set( x, y, detail::RootHelper<LP>() ); }
 
 		template<typename FPT2>
 		HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>& pt ) const
@@ -1680,14 +1685,15 @@ Please check out warning described in impl_getAngle()
 		{
 			return std::array<FPT,3> { _v[0], _v[1], _v[2] };
 		}
-
-		void impl_set( FPT x, FPT y, const detail::RootHelper<type::IsPoint>& )
+		template<typename T1,typename T2>
+		void impl_set( T1 x, T2 y, const detail::RootHelper<type::IsPoint>& )
 		{
 			_v[0] = x;
 			_v[1] = y;
 			_v[2] = 1.;
 		}
-		void impl_set( FPT, FPT, const detail::RootHelper<type::IsLine>& )
+		template<typename T1,typename T2>
+		void impl_set( T1, T2, const detail::RootHelper<type::IsLine>& )
 		{
 			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 		}
@@ -2218,8 +2224,10 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 	int                               method  ///< 0: Eigen, 1: Opencv (default)
 )
 {
-	assert( vpt1.size() == 4 );
-	assert( vpt2.size() == 4 );
+	if( vpt1.size() != 4 )
+		HOMOG2D_THROW_ERROR_1( "invalid vector size for source points, should be 4, value=" + std::to_string(vpt1.size()) );
+	if( vpt2.size() != 4 )
+		HOMOG2D_THROW_ERROR_1( "invalid vector size for dest points, should be 4, value=" + std::to_string(vpt2.size()) );
 	assert( method == 0 || method == 1 );
 
 	if( method == 0 )
@@ -2415,6 +2423,13 @@ std::pair<Point2d_<FPT>,Point2d_<FPT>>
 getPts( const Segment_<FPT>& seg )
 {
 	return seg.getPts();
+}
+
+/// Returns supporting line (free function)
+template<typename FPT>
+Line2d_<FPT> getLine( const Segment_<FPT>& seg )
+{
+	return seg.getLine();
 }
 
 //------------------------------------------------------------------
@@ -3435,25 +3450,16 @@ Root<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::RootHelper<ty
 }
 
 //------------------------------------------------------------------
-#if 0
-/// Free function, returns the angle (in Rad) between two lines.
-template<typename FPT>
-HOMOG2D_INUMTYPE
-getAngle( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
-{
-	return li1.getAngle( li2 );
-}
-#else
 /// Free function, returns the angle (in Rad) between two lines/ or segments
 /// \sa Segment_::getAngle()
 /// \sa Line2d_::getAngle()
-template<typename T>
+template<typename T1,typename T2>
 HOMOG2D_INUMTYPE
-getAngle( const T& li1, const T& li2 )
+getAngle( const T1& li1, const T2& li2 )
 {
 	return li1.getAngle( li2 );
 }
-#endif
+
 
 template<typename LP, typename FPT>
 template<typename FPT2>
@@ -3666,7 +3672,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 #else
 	HOMOG2D_DEBUG_ASSERT(
 		( pti.size() == 0 || pti.size() == 2 ),
-		"homog2d:" << __LINE__ << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect << "\n"
+		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
 	);
 #endif
 
