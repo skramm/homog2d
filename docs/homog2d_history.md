@@ -8,6 +8,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - Current master branch:
   - **Major release, some API changes**
+  - renamed namespace to `h2d` (shorter)
   - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
   - added some static "no build" checking for illegal code instanciation (see target `nobuild` in makefile)
   - added operator * to apply homography to all elements of a container holding points or lines

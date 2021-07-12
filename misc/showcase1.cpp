@@ -7,7 +7,7 @@
 
 #include "opencv2/highgui.hpp"
 
-using namespace homog2d;
+using namespace h2d;
 
 int main( int argc, const char** argv )
 {

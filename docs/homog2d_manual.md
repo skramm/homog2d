@@ -20,7 +20,7 @@ For stable releases, see home page.
 ## 1 - Introduction
 <a name="intro"></a>
 
-All the code is in the namespace `homog2d`, so either add `using namespace homog2d`, either use it as a prefix on each type.
+All the code is in the namespace `h2d`, so either add `using namespace h2d;`, either use it as a prefix on each type.
 
 This library provides several main data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
 It is implemented as a homogeneous 3x3 matrix.

@@ -38,7 +38,7 @@ run with "make test"
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
-using namespace homog2d;
+using namespace h2d;
 
 #define XSTR(s) STR(s)
 #define STR(s) #s

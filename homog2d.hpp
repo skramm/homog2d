@@ -73,7 +73,7 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
 
-namespace homog2d {
+namespace h2d {
 
 /// Holds the types needed for policy based design
 namespace type {
@@ -798,7 +798,7 @@ template<typename FPT>
 class Intersect<Inters_1,FPT>: public IntersectCommon
 {
 	template<typename U>
-	friend class ::homog2d::Segment_;
+	friend class ::h2d::Segment_;
 
 	public:
 		Point2d_<FPT>
@@ -838,7 +838,7 @@ template<typename FPT>
 class Intersect<Inters_2,FPT>: public IntersectCommon
 {
 	template<typename U,typename V>
-	friend class ::homog2d::Root;
+	friend class ::h2d::Root;
 
 	public:
 		Intersect() {}
@@ -979,7 +979,7 @@ class FRect_
 		return arr;
 	}
 /// Returns the 4 segments of the rectangle
-/// \sa homog2d::getSegs( const FRect& );
+/// \sa h2d::getSegs( const FRect& );
 	std::array<Segment_<FPT>,4>
 	getSegs() const
 	{
@@ -1628,7 +1628,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		{
 			return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
 		}
-/// Returns angle in rad. between the lines. \sa homog2d::getAngle()
+/// Returns angle in rad. between the lines. \sa h2d::getAngle()
 /**
 Please check out warning described in impl_getAngle()
 */
@@ -1638,7 +1638,7 @@ Please check out warning described in impl_getAngle()
 			return impl_getAngle( other, detail::RootHelper<T>() );
 		}
 
-/// Returns angle in rad. between line and segment \c seg. \sa  homog2d::getAngle()
+/// Returns angle in rad. between line and segment \c seg. \sa  h2d::getAngle()
 		template<typename FPT2>
 		HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
 		{
@@ -2189,7 +2189,7 @@ buildFrom4Points(
 - see this for details:
 https://skramm.lautre.net/files/misc/Kramm_compute_H_from_4pts.pdf
 
-\sa free function: homog2d::buildFrom4Points()
+\sa free function: h2d::buildFrom4Points()
 
 \todo fix this so that user can provide a std::array of points
 */
@@ -4165,7 +4165,7 @@ using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 using PolylineL= Polyline_<long double>;
 
-} // namespace homog2d end
+} // namespace h2d end
 
 
 #endif // HG_HOMOG2D_HPP

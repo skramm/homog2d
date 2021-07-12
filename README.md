@@ -25,7 +25,7 @@ Short preview:
 
 ```C++
 #include "homog2d.hpp"
-using namespace homog2d;
+using namespace h2d;
 int main()
 {
 	Line2d l1( Point2d(10,10) );                 // a line passing through (0,0) and (10,10)

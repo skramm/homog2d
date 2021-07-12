@@ -3,7 +3,7 @@
 #include "homog2d.hpp"
 #include "opencv2/highgui.hpp"
 
-using namespace homog2d;
+using namespace h2d;
 int main()
 {
 	FRect r1( 50,50, 250,200 );

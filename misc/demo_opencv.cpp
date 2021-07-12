@@ -29,7 +29,7 @@
 
 #include <functional>
 
-using namespace homog2d;
+using namespace h2d;
 
 /// General data struct used in demos
 struct Data

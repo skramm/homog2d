@@ -3,7 +3,7 @@
 #include "homog2d.hpp"
 #include "opencv2/highgui.hpp"
 
-using namespace homog2d;
+using namespace h2d;
 int main()
 {
 	Circle c1( Point2d(120,100), 80 );

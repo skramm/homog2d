@@ -23,7 +23,7 @@
 
 #include "homog2d.hpp"
 
-using namespace homog2d;
+using namespace h2d;
 
 int main()
 {
