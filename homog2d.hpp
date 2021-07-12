@@ -363,7 +363,7 @@ Thus some assert can get triggered elsewhere.
 /// Copy-constructor
 	Hmatrix_( const Hmatrix_<M,FPT>& other )
 		:_data          ( other._data )
-		, _hasChanged   ( other._hasChanged )
+		, _hasChanged   ( true )
 		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
 	{}
@@ -643,18 +643,6 @@ See https://en.wikipedia.org/wiki/Determinant
 	{
 		detail::Matrix_<FPT> out;
 
-/*		out.set( 0, 0,  p_det2x2( {1,1, 1,2, 2,1, 2,2} ) );
-		out.set( 0, 1, -p_det2x2( {0,1, 0,2, 2,1, 2,2} ) );
-		out.set( 0, 2,  p_det2x2( {0,1, 0,2, 1,1, 1,2} ) );
-
-		out.set( 1, 0, -p_det2x2( {1,0, 1,2, 2,0, 2,2} ) );
-		out.set( 1, 1,  p_det2x2( {0,0, 0,2, 2,0, 2,2} ) );
-		out.set( 1, 2, -p_det2x2( {0,0, 0,2, 1,0, 1,2} ) );
-
-		out.set( 2, 0,  p_det2x2( {1,0, 1,1, 2,0, 2,1} ) );
-		out.set( 2, 1, -p_det2x2( {0,0, 0,1, 2,0, 2,1} ) );
-		out.set( 2, 2,  p_det2x2( {0,0, 0,1, 1,0, 1,1} ) );
-*/
 		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
 		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
