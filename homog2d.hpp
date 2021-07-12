@@ -243,8 +243,7 @@ Templated by Floating-Point Type (FPT) and by type M (type::IsEpipmat or type::I
 template<typename M,typename FPT>
 class Hmatrix_
 {
-	template<typename T1,typename T2>
-	friend class Root;
+	template<typename T1,typename T2> friend class Root;
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
@@ -942,7 +941,9 @@ class IntersectM
 template<typename FPT>
 class FRect_
 {
-	private:
+	template<typename T> friend class FRect_;
+
+private:
 	Point2d_<FPT> _ptR1,_ptR2;
 
 	public:
@@ -1174,6 +1175,8 @@ HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 template<typename FPT>
 class Circle_
 {
+	template<typename T> friend class Circle_;
+
 private:
 	FPT           _radius;
 	Point2d_<FPT> _center;
@@ -1411,12 +1414,10 @@ Parameters:
 template<typename LP,typename FPT>
 class Root
 {
-	template<typename U,typename V>
-	friend class Hmatrix_;
+	template<typename U,typename V> friend class Hmatrix_;
 
 // This is needed so we can convert from, say, Point2d_<float> to Point2d_<double>
-	template<typename U,typename V>
-	friend class Root;
+	template<typename U,typename V> friend class Root;
 
 	template<typename FPT1,typename FPT2>
 	friend Point2d_<FPT1>
@@ -2279,6 +2280,8 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 template<typename FPT>
 class Segment_
 {
+	template<typename T> friend class Segment_;
+
 	private:
 		Point2d_<FPT> _ptS1, _ptS2;
 
