@@ -2700,6 +2700,16 @@ class Polyline_
 			return out;
 		}
 
+		template<typename T>
+		bool
+		isInside( const T& cont )
+		{
+			for( const auto& pt: getPts() )
+				if( !pt.isInside( cont ) )
+					return false;
+			return true;
+		}
+
 		friend std::ostream&
 		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
 		{

@@ -126,8 +126,11 @@ test_fig: $(TEST_FIG_PNG)
 #=======================================================================
 
 
+doc: BUILD/html/index.html
+	xdg-open BUILD/html/index.html
 
-doc: BUILD/html/index.html doc_fig doc_fig_tex
+# also (re)builds the figures, but requires Opencv AND Latex!
+docall: BUILD/html/index.html doc_fig doc_fig_tex
 	xdg-open BUILD/html/index.html
 
 BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
