@@ -3057,7 +3057,7 @@ Root<LP,FPT>::impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) cons
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
 FPT
-Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getCoord( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getCoord() on a point" );
 }
@@ -3082,7 +3082,7 @@ Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<
 
 template<typename LP,typename FPT>
 Point2d_<FPT>
-Root<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getPoint( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoint() on a point" );
 }
@@ -3109,7 +3109,7 @@ Root<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::RootHelper<
 template<typename LP,typename FPT>
 template<typename FPT2>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
-Root<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
@@ -3281,7 +3281,7 @@ Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<
 /// Sorting operator, for lines
 template<typename LP,typename FPT>
 bool
-Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>& other, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid < operator: you cannot sort lines" );
 	return false; // to avoid a warning
@@ -3609,7 +3609,7 @@ Root<LP,FPT>::impl_intersectsCircle(
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
-Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(FRect) on a point" );
 }

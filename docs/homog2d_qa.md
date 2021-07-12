@@ -10,8 +10,9 @@ However, all the additional stuff here (Opencv graphical demo, test files, ...) 
 
 ---
 
-- Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite, why?
-- A: This seems to be an issue whith Catch, regular program shouldn't issue those, no worry.
+- Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite with GCC, why?
+- A: This seems to be an issue whith Catch, regular program shouldn't issue those, no worry
+(this doesn't seem to happen with clang).
 
 ---
 
