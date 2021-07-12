@@ -6,7 +6,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - Planned:
   - add conic homography (circle=>ellipse)
 
-- Current master branch:
+- [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**
   - renamed namespace to `h2d` (shorter)
   - added a template class `KeyboardLoop` to handle keyboard inputs and loop in Opencv demo
