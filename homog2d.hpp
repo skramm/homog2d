@@ -967,6 +967,8 @@ private:
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 
+	Circle_<FPT> getBoundingCircle() const;
+
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -1317,6 +1319,27 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 };
 
+//------------------------------------------------------------------
+/// Return circle passing through 4 points of flat rectangle
+template<typename FPT>
+Circle_<FPT>
+FRect_<FPT>::getBoundingCircle() const
+{
+	auto pts = get4Pts();
+	auto seg1 = pts[1] * pts[3];
+	auto seg2 = pts[0] * pts[2];
+
+	auto middle_pt = seg1 * seg2;
+	return Circle_<FPT>( middle_pt, middle_pt.distTo( pts[0] ) );
+}
+
+/// Return circle passing through 4 points of flat rectangle (free function)
+template<typename FPT>
+Circle_<FPT>
+getBoundingCircle( const FRect_<FPT>& rect )
+{
+	return rect.getBoundingCircle();
+}
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
@@ -2951,6 +2974,7 @@ getSegs( const Polyline_<FPT>& pl )
 }
 
 /// Returns the number of points (free function)
+/// \sa Polyline_::size()
 template<typename FPT>
 size_t size( const Polyline_<FPT>& pl )
 {
@@ -2993,7 +3017,8 @@ template<
 		T
 	>::type* = nullptr
 >
-FRect_<typename T::value_type::Type>
+//FRect_<typename T::value_type::Type> // if we dont have C++14 but only C++11
+auto
 getBB( const T& vpts )
 {
 	return priv::getPointsBB( vpts );

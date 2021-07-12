@@ -10,7 +10,7 @@ using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homog
 
 ![showcase1](docs/showcase1.gif)
 
-- Language: C++11 (or later)
+- Language: C++14
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta

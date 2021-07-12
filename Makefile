@@ -5,7 +5,7 @@
 
 .PRECIOUS: BUILD/figures_test/%.cpp
 
-CFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 ifeq "$(USE_OPENCV)" ""
 	USE_OPENCV=N

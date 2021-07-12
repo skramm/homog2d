@@ -108,9 +108,10 @@ struct Data
 		lD.draw( img, dp );
 		auto rect = getBB( vpt );
 		rect.draw( img );
+		auto cbb = rect.getBoundingCircle();
+		cbb.draw( img,  CvDrawParams().setColor( 150, 150, 0) );
 	}
 };
-
 
 /// Called by mouse callback functions, checks if one of the points is selected.
 /**
