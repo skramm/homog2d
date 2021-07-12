@@ -948,6 +948,8 @@ A second test target is included: `$ make testall`.
 It will build and run the test program 3 times, one for each numerical data
 type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYPE`.
 
+The test target also attempts to build the files in the folder `misc/no_build`.
+These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
 
 ### Build options
 <a name="options"></a>
