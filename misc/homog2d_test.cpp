@@ -1436,10 +1436,38 @@ TEST_CASE( "FRect", "[frect]" )
 
 TEST_CASE( "Polyline", "[polyline]" )
 {
-	Polyline pl1;
-	{
-//		pl1.add{ std::vector<Point2d>{ {0,0}, {1,2}, {3,5}, {5,1} };
-	}
+	Polyline_<NUMTYPE> pl1;
+	pl1.add(
+		std::vector<Point2d>{ {0,0}, {1,1.5}, {3,5}, {1,4} }
+	);
+	CHECK( pl1.size()   == 4 );
+	CHECK( pl1.nbSegs() == 3 );
+	CHECK( pl1.isPolygon() == false );
+	CHECK( isPolygon(pl1)  == false );
+	pl1.isClosed() = true;
+	CHECK( pl1.nbSegs()    == 4 );
+	CHECK( pl1.isPolygon() == true );
+	CHECK( isPolygon(pl1)  == true );
+	FRect bb1( 0,0, 3,5);
+	CHECK( getBB(pl1)  == bb1 );
+	CHECK( pl1.getBB() == bb1 );
+
+	pl1.set(
+		std::vector<Point2d>{ {0,0}, {0,1}, {1,1}, {1,0} }
+	);
+	CHECK( pl1.size()   == 4 );
+	CHECK( pl1.nbSegs() == 4 );
+	CHECK( pl1.length() == 4.);
+	CHECK( length(pl1)  == 4.);
+	pl1.isClosed() = false;
+	CHECK( pl1.size()   == 4 );
+	CHECK( pl1.nbSegs() == 3 );
+	CHECK( pl1.length() == 3.);
+	CHECK( length(pl1)  == 3.);
+
+	FRect bb2( 0,0, 1,1);
+	CHECK( getBB(pl1)  == bb2 );
+	CHECK( pl1.getBB() == bb2 );
 }
 
 //////////////////////////////////////////////////////////////

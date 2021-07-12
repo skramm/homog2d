@@ -1322,6 +1322,17 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 };
 
+
+//------------------------------------------------------------------
+/// Returns Bounding Box (free function)
+/// \sa Circle_::getBB()
+template<typename FPT>
+FRect_<FPT> getBB( const Circle_<FPT>& cir )
+{
+	return cir.getBB();
+}
+
+//------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
 
@@ -2317,6 +2328,7 @@ class Segment_
 		{
 			return _ptS1.distTo( _ptS2 );
 		}
+
 /// Returns Bounding Box
 		FRect_<FPT> getBB() const
 		{
@@ -2424,9 +2436,17 @@ the one with smallest y-coordinate will be returned first */
 #endif
 };
 
-
 //------------------------------------------------------------------
+/// Returns Bounding Box (free function)
+/// \sa Segment_::getBB()
+template<typename FPT>
+FRect_<FPT> getBB( const Segment_<FPT>& seg )
+{
+	return seg.getBB();
+}
+
 /// Get segment length (free function)
+/// \sa Segment_::length()
 template<typename FPT>
 HOMOG2D_INUMTYPE length( const Segment_<FPT>& seg )
 {
@@ -2742,8 +2762,8 @@ Segment \c n is the one between point \c n and point \c n+1
 		{
 			_plinevec.resize( vec.size() );
 			auto it = std::begin( _plinevec );
-			for( const auto& pt: vec )
-				*it++ = pt;
+			for( const auto& pt: vec )   // copying one by one will
+				*it++ = pt;              // allow type conversions (std::copy implies same type)
 		}
 
 /// Add vector of points
@@ -2752,10 +2772,11 @@ Segment \c n is the one between point \c n and point \c n+1
 		{
 			if( vec.size() == 0 )
 				return;
-			auto it = std::end( _plinevec );
-			_plinevec.resize( _plinevec.size() + vec.size() );
+//			auto it = std::end( _plinevec );
+			std::cout << "resizing to " << _plinevec.size() << "+" << vec.size() << '\n';
+			_plinevec.reserve( _plinevec.size() + vec.size() );
 			for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
-				*it++ = pt;
+				_plinevec.push_back( pt );
 		}
 
 		const bool& isClosed() const { return _isClosed; }
@@ -2831,17 +2852,69 @@ template<typename FPT>
 bool
 Polyline_<FPT>::isPolygon() const
 {
+	if( !_isClosed )   // cant be a polygon if
+		return false;  // it's not closed !
+
 	auto nbs = nbSegs();
 	for( size_t i=0; i<nbs; i++ )
 	{
 		auto seg1 = getSegment(i);
-		for( auto j=i+2; j<nbs; j++ )
+		for( auto j=i+2; j<nbs-1; j++ )
 			if( getSegment(j).intersects(seg1)() )
 				return false;
 	}
 	return true;
 }
 
+/// Returns true if is a polygon (free function)
+///  \sa Polyline_::isPolygon()
+template<typename FPT>
+bool
+isPolygon( const Polyline_<FPT>& pl )
+{
+	return pl.isPolygon();
+}
+
+/// Returns the number of segments (free function)
+template<typename FPT>
+size_t nbSegs( const Polyline_<FPT>& pl )
+{
+	return pl.nbSegs();
+}
+
+/// Returns the number of points (free function)
+template<typename FPT>
+size_t size( const Polyline_<FPT>& pl )
+{
+	return pl.size();
+}
+
+/// Returns Bounding Box (free function)
+/// \sa FRect_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Polyline_<FPT>& pl )
+{
+	return pl.getBB();
+}
+
+/// Returns length (free function)
+/// \sa Polyline_::length()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+length( const Polyline_<FPT>& pl )
+{
+	return pl.length();
+}
+
+/// Returns the segments of the polyline (free function)
+/// \sa Polyline_::getSegs()
+template<typename FPT>
+std::vector<Segment_<FPT>>
+getSegs( const Polyline_<FPT>& pl )
+{
+	return pl.getSegs();
+}
 
 //------------------------------------------------------------------
 /// Returns Bounding Box
@@ -2884,15 +2957,6 @@ Polyline_<FPT>::getBB() const
 	);
 }
 
-//------------------------------------------------------------------
-/// Returns the segments of the polyline (free function)
-/// \sa Polyline_::getSegs()
-template<typename FPT>
-std::vector<Segment_<FPT>>
-getSegs( const Polyline_<FPT>& pl )
-{
-	return pl.getSegs();
-}
 
 //------------------------------------------------------------------
 namespace detail {

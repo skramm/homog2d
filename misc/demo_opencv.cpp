@@ -144,7 +144,18 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, void*
 				data.vpt[data.selected] = data.pt_mouse;
 				data.vpt[data.selected].draw( data.img, CvDrawParams().selectPoint() );
 			}
-//			action_M( param );
+		break;
+
+		case CV_EVENT_RBUTTONDOWN:
+			data.selected = -1;
+			for( int i=0; i<data.nbPts(); i++ )
+				if( data.pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
+					data.selected = i;
+			if( data.selected != -1 )
+			{
+				data.vpt.erase( std::begin(data.vpt) + data.selected );
+				data.selected = -1;
+			}
 		break;
 
 		default: doSomething = false; break;
@@ -153,7 +164,6 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, void*
 	{
 		data.clearImage();
 		action( param );
-//		action_M( param );
 		data.showImage();
 	}
 }
@@ -653,7 +663,7 @@ void action_6( void* param )
 	double K = M_PI / 180.;
 
 	Homogr H( data.angle * K );
-	H.addTranslation(-50,0).inverse().transpose();
+	H.addTranslation(-50,0);
 	Line2d l1( data.vpt[0], data.vpt[1] );
 	Line2d l2 = H*l1;
 

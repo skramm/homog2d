@@ -430,7 +430,8 @@ Additional features: length and bounding box:
 Polygon pl;
 // ... add points
 std::cout << "length=" << pl.length() << '\n';
-FRect rect = pl.getBB();
+FRect rect  = pl.getBB();
+FRect rect2 = getBB(pl);
 ```
 
 

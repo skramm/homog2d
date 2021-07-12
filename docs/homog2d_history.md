@@ -7,7 +7,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add conic homography (circle=>ellipse)
 
 - current master branch
-  - added `Polyline::isPolygon()`, `Polyline::length()`
 
 - [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**
@@ -24,6 +23,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - solved numerical rounding issues
   - renamed `Segment::get()` to `Segment::getPts()` and `FRect::get2Pts()` to `FRect::getPts()`
   - enhanced `Polyline` class (intersection code, ...)
+  - added `Polyline::isPolygon()`, `Polyline::length()` and corresponding free functions
+  - added `getBB()` (member function and free functions) to `Polyline`, `Segment` and `Circle`
 
 - [v2.3](https://github.com/skramm/homog2d/releases/tag/v2.3), released on 2021-06-18
   - switch to MPLv2 licence
