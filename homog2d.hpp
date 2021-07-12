@@ -932,7 +932,7 @@ class IntersectM
 template<typename FPT>
 class FRect_
 {
-	using Type = FPT;
+	using FType = FPT;
 	template<typename T> friend class FRect_;
 
 private:
@@ -1420,7 +1420,7 @@ template<typename LP,typename FPT>
 class Root
 {
 public:
-	using Type = FPT;
+	using FType = FPT;
 
 private:
 	template<typename U,typename V> friend class Hmatrix_;
@@ -2874,10 +2874,10 @@ template<
 		T
 	>::type* = nullptr
 >
-FRect_<typename T::value_type::Type>
+FRect_<typename T::value_type::FType>
 getPointsBB( const T& vpts )
 {
-	using FPT = typename T::value_type::Type;
+	using FPT = typename T::value_type::FType;
 #ifndef HOMOG2D_NOCHECKS
 	if( vpts.empty() )
 		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set !"	);
@@ -2901,7 +2901,7 @@ getPointsBB( const T& vpts )
 		}
 	);
 
-	return FRect_<typename T::value_type::Type>(
+	return FRect_<typename T::value_type::FType>(
 		mm_x.first->getX(),  mm_y.first->getY(),
 		mm_x.second->getX(), mm_y.second->getY()
 	);
@@ -3017,7 +3017,7 @@ template<
 		T
 	>::type* = nullptr
 >
-//FRect_<typename T::value_type::Type> // if we dont have C++14 but only C++11
+//FRect_<typename T::value_type::FType> // if we dont have C++14 but only C++11
 auto
 getBB( const T& vpts )
 {
