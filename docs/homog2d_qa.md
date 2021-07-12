@@ -23,18 +23,6 @@ and open an issue [here](https://github.com/skramm/homog2d/issues) with this out
 
 ---
 
-- Q: Why does this code fails to build:
-```C++
-Point2d pt( 2, 0.5 );
-```
-- A: because the first argument is considered as an `int` value, and the second a `double`, and there are no constructors with this signature.
-If you give two ints, then it works, because automatic promotion to floating-point happens behind the scene.<br>
-In this situation, you only need to add a dot to make it build:
-```C++
-Point2d pt( 2., 0.5 );
-```
----
-
 - Q: what is the difference between the types `Homog2d` and `Epipmat`?
 - A: the two hold a 3x3 homogeneous matrix. The differences is on the usage and the default values:
   - With `Homog2d`, the default is a unit transformation, i.e. an "eye" matrix (null everywhere except the diagonal with ones).

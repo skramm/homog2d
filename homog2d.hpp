@@ -1474,10 +1474,11 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		}
 
 /// Constructor: build from two numerical values, depends on the type
-		template<typename T>
-		Root( const T& v1, const T& v2 )
+		template<typename T1,typename T2>
+		Root( const T1& v1, const T2& v2 )
 		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
+			HOMOG2D_CHECK_IS_NUMBER(T1);
+			HOMOG2D_CHECK_IS_NUMBER(T2);
 			impl_init_2( v1, v2, detail::RootHelper<LP>() );
 		}
 
@@ -1978,10 +1979,10 @@ Please check out warning described in impl_getAngle()
 			_v[1] = 0.;
 			_v[2] = 1.;
 		}
-		template<typename T>
-		void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsPoint>& );
-		template<typename T>
-		void impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsLine>& );
+		template<typename T1,typename T2>
+		void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsPoint>& );
+		template<typename T1,typename T2>
+		void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsLine>& );
 };
 
 
@@ -3377,9 +3378,9 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 
 /// Points overload: generic init from two numeric args
 template<typename LP, typename FPT>
-template<typename T>
+template<typename T1,typename T2>
 void
-Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsPoint>& )
+Root<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::RootHelper<type::IsPoint>& )
 {
 	_v[0] = v1;
 	_v[1] = v2;
@@ -3388,9 +3389,9 @@ Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<ty
 
 /// Lines overload: generic init from two numeric args
 template<typename LP, typename FPT>
-template<typename T>
+template<typename T1,typename T2>
 void
-Root<LP,FPT>::impl_init_2( const T& v1, const T& v2, const detail::RootHelper<type::IsLine>& )
+Root<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::RootHelper<type::IsLine>& )
 {
 	Point2d_<FPT> pt1;                // 0,0
 	Point2d_<FPT> pt2(v1,v2);

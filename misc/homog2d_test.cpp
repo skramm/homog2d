@@ -78,9 +78,11 @@ TEST_CASE( "types testing", "[testtypes]" )
 		HomogrD HD;
 		HomogrL HL;
 
+		Point2d pt(4.,5); // checking with 2 different types
 		Point2d_<float> pt2F1;
 		Point2d_<double> pt2F2;
 		Point2d_<long double> pt2F3;
+		pt2F1.set(4.,5); // checking with 2 different types
 
 		CHECK( sizeof(Point2dF) == 12 );
 		CHECK( sizeof(Point2dD) == 24 );
