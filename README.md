@@ -54,7 +54,7 @@ Don't hesitate, this is still beta but stable release expected soon!
 - Rationale:
   - Usage simplicity, max flexibility
   - No dependency [(*)](#rm_fn)
-  - Modern C++, using policy-based design and tag dispatching
+  - Modern C++, using policy-based design, tag dispatching, sfinae, ...
   - Direct bindings with [OpenCv](https://opencv.org/) (optional)
 
 - Related libraries:

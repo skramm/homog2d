@@ -825,7 +825,6 @@ auto color_red = CvDrawParams().setColor( 250, 0, 0 );
 something.draw( img, color_red );
 ```
 
-
 The available functions are given in the table below:
      Function     |    Arguments     |
 ------------------|------------------|
