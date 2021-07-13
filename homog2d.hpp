@@ -1419,8 +1419,6 @@ private:
 	Point2d_<FPT> _ecenter;
 	Point2d_<FPT> _semiMajor;
 	Point2d_<FPT> _semiMinor;
-//	Segment_<FPT> _semiMajor;
-//	Segment_<FPT> _semiMinor;
 
 public:
 /// Constructor: straight ellipse
@@ -1430,6 +1428,15 @@ public:
 	{
 		 _semiMajor.set( pt.getX()+major, pt.getY() );
 		 _semiMinor.set( pt.getX(),       pt.getY()+minor );
+	}
+
+/// Constructor: straight ellipse
+	template<typename FPT1, typename T2>
+	Ellipse_( const Point2d_<FPT1>& pt )
+		: _ecenter( pt )
+	{
+		 _semiMajor.set( pt.getX()+2., pt.getY() );
+		 _semiMinor.set( pt.getX(),    pt.getY()+1. );
 	}
 
 	Point2d_<FPT>&       center()       { return _ecenter; }
@@ -1450,18 +1457,31 @@ public:
 			_ecenter.distTo( _semiMinor )
 		);
 	}
-	void setAngle( FPT angle )
+	template<typename T>
+	void setAngle( T angle )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+#ifndef HOMOG2D_NOCHECKS
+		if( std::abs(angle) > M_PI )
+			HOMOG2D_THROW_ERROR_1( "invalid value for angle: " + std::to_string( angle ) );
+#endif
 		Homogr_<HOMOG2D_INUMTYPE> H( -_ecenter.getX(), -_ecenter.getY() );
 		H.addRotation( angle ).addTranslation( _ecenter.getX(), _ecenter.getY() );
 		_semiMajor = H * _semiMajor;
 		_semiMinor = H * _semiMinor;
+//		_eAngle = angle;
+//		_angleChanged = false;
 	}
 
 	HOMOG2D_INUMTYPE getAngle() const
 	{
-		auto lineH = Point2d_<FPT>(0,0) * Point2d_<FPT>(100,0);
-		return lineH.getAngle( Line2d_<FPT>(_ecenter, _semiMajor) );
+//		if( _angleChanged )
+		{
+			auto lineH = Point2d_<FPT>(0,0) * Point2d_<FPT>(100,0);
+			return lineH.getAngle( Line2d_<FPT>(_ecenter, _semiMajor) );
+//			_angleChanged = false;
+		}
+//		return _eAngle;
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1477,7 +1497,7 @@ public:
 
 		return f;
 	}
-};
+}; // class Ellipse_
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -2701,238 +2721,238 @@ enum class IsClosed: char
 template<typename FPT>
 class Polyline_
 {
-	private:
-		std::vector<Point2d_<FPT>> _plinevec;
-		bool _isClosed = false;
+private:
+	std::vector<Point2d_<FPT>> _plinevec;
+	bool _isClosed = false;
 
-	public:
+public:
 /// Default constructor
-		Polyline_( IsClosed ic = IsClosed::No )
-		{
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	Polyline_( IsClosed ic = IsClosed::No )
+	{
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 /// Constructor for single point
-		template<typename FPT2>
-		Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
-		{
-			_plinevec.push_back( pt );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	template<typename FPT2>
+	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
+	{
+		_plinevec.push_back( pt );
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 /// Constructor for single point as x,y
-		template<typename FPT2>
-		Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
-		{
-			_plinevec.push_back( Point2d_<FPT>(x,y) );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	template<typename FPT2>
+	Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
+	{
+		_plinevec.push_back( Point2d_<FPT>(x,y) );
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 /// Constructor from FRect
-		template<typename FPT2>
-		Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::No )
-		{
-			for( const auto& pt: rect.get4Pts() )
-				_plinevec.push_back( pt );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	template<typename FPT2>
+	Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::No )
+	{
+		for( const auto& pt: rect.get4Pts() )
+			_plinevec.push_back( pt );
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 
 /// Returns the number of points (not segments!)
-		size_t size() const { return _plinevec.size(); }
+	size_t size() const { return _plinevec.size(); }
 
 /// Returns length
-		HOMOG2D_INUMTYPE length() const
-		{
-			HOMOG2D_INUMTYPE sum = 0.L;
-			for( const auto& seg: getSegs() )
-				sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-			return sum;
-		}
+	HOMOG2D_INUMTYPE length() const
+	{
+		HOMOG2D_INUMTYPE sum = 0.L;
+		for( const auto& seg: getSegs() )
+			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
+		return sum;
+	}
 
-		FRect_<FPT> getBB() const;
+	FRect_<FPT> getBB() const;
 
 /// Returns the number of segments
-		size_t nbSegs() const
-		{
-			if( size() == 0 )
-				return 0;
-			if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
-				return size() - 1;
-			return size() - 1 + (size_t)_isClosed;
-		}
+	size_t nbSegs() const
+	{
+		if( size() == 0 )
+			return 0;
+		if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
+			return size() - 1;
+		return size() - 1 + (size_t)_isClosed;
+	}
 
 /// Returns the points
-		std::vector<Point2d_<FPT>>& getPts()
-		{
-			return _plinevec;
-		}
+	std::vector<Point2d_<FPT>>& getPts()
+	{
+		return _plinevec;
+	}
 /// Returns the points (const)
-		const std::vector<Point2d_<FPT>>& getPts() const
-		{
-			return _plinevec;
-		}
+	const std::vector<Point2d_<FPT>>& getPts() const
+	{
+		return _plinevec;
+	}
 
 /// Returns the segments of the polyline
-		std::vector<Segment_<FPT>> getSegs() const
-		{
-			std::vector<Segment_<FPT>> out;
-			if( size() < 2 ) // nothing to draw
-				return out;
-
-			for( size_t i=0; i<size()-1; i++ )
-			{
-				const auto& pt1 = _plinevec[i];
-				const auto& pt2 = _plinevec[i+1];
-				out.push_back( Segment_<FPT>( pt1,pt2) );
-			}
-			if( _isClosed )
-				out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+	std::vector<Segment_<FPT>> getSegs() const
+	{
+		std::vector<Segment_<FPT>> out;
+		if( size() < 2 ) // nothing to draw
 			return out;
+
+		for( size_t i=0; i<size()-1; i++ )
+		{
+			const auto& pt1 = _plinevec[i];
+			const auto& pt2 = _plinevec[i+1];
+			out.push_back( Segment_<FPT>( pt1,pt2) );
 		}
+		if( _isClosed )
+			out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+		return out;
+	}
 
 /// Returns one point of the polyline.
-		Point2d_<FPT> getPoint( size_t idx ) const
-		{
+	Point2d_<FPT> getPoint( size_t idx ) const
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( idx >= size() )
-				HOMOG2D_THROW_ERROR_1( "requesting point " + std::to_string(idx)
-					+ ", only has "  + std::to_string(size()) );
+		if( idx >= size() )
+			HOMOG2D_THROW_ERROR_1( "requesting point " + std::to_string(idx)
+				+ ", only has "  + std::to_string(size()) );
 #endif
-			return _plinevec[idx];
-		}
+		return _plinevec[idx];
+	}
 
 /// Returns one segment of the polyline.
 /**
 Segment \c n is the one between point \c n and point \c n+1
 */
-		Segment_<FPT> getSegment( size_t idx ) const
-		{
+	Segment_<FPT> getSegment( size_t idx ) const
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( idx >= nbSegs() )
-				HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
-					+ ", only has "  + std::to_string(nbSegs()) );
+		if( idx >= nbSegs() )
+			HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
+				+ ", only has "  + std::to_string(nbSegs()) );
 
-			if( size() < 2 ) // nothing to draw
-				HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
+		if( size() < 2 ) // nothing to draw
+			HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
 #endif
 //			auto lastPoint = _isClosed?
-			return Segment_<FPT>(
-				_plinevec[idx],
-				_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
-			);
-		}
+		return Segment_<FPT>(
+			_plinevec[idx],
+			_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
+		);
+	}
 
 /// Clear all
-		void clear() { _plinevec.clear(); }
+	void clear() { _plinevec.clear(); }
 
 /// Add single point as x,y
-		template<typename FPT1,typename FPT2>
-		void add( FPT1 x, FPT2 y )
-		{
-			add( Point2d_<FPT>( x, y ) );
-		}
+	template<typename FPT1,typename FPT2>
+	void add( FPT1 x, FPT2 y )
+	{
+		add( Point2d_<FPT>( x, y ) );
+	}
 
 /// Add single point
-		template<typename FPT2>
-		void add( const Point2d_<FPT2>& pt )
-		{
+	template<typename FPT2>
+	void add( const Point2d_<FPT2>& pt )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( size() )
-				if( pt == _plinevec.back() )
-					HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
+		if( size() )
+			if( pt == _plinevec.back() )
+				HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
 #endif
-			_plinevec.push_back( pt );
-		}
+		_plinevec.push_back( pt );
+	}
 
 /// Set from vector of points
-		template<typename FPT2>
-		void set( const std::vector<Point2d_<FPT2>>& vec )
-		{
-			_plinevec.resize( vec.size() );
-			auto it = std::begin( _plinevec );
-			for( const auto& pt: vec )   // copying one by one will
-				*it++ = pt;              // allow type conversions (std::copy implies same type)
-		}
+	template<typename FPT2>
+	void set( const std::vector<Point2d_<FPT2>>& vec )
+	{
+		_plinevec.resize( vec.size() );
+		auto it = std::begin( _plinevec );
+		for( const auto& pt: vec )   // copying one by one will
+			*it++ = pt;              // allow type conversions (std::copy implies same type)
+	}
 
 /// Add vector of points
-		template<typename FPT2>
-		void add( const std::vector<Point2d_<FPT2>>& vec )
-		{
-			if( vec.size() == 0 )
-				return;
+	template<typename FPT2>
+	void add( const std::vector<Point2d_<FPT2>>& vec )
+	{
+		if( vec.size() == 0 )
+			return;
 //			auto it = std::end( _plinevec );
-			std::cout << "resizing to " << _plinevec.size() << "+" << vec.size() << '\n';
-			_plinevec.reserve( _plinevec.size() + vec.size() );
-			for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
-				_plinevec.push_back( pt );
-		}
+		std::cout << "resizing to " << _plinevec.size() << "+" << vec.size() << '\n';
+		_plinevec.reserve( _plinevec.size() + vec.size() );
+		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
+			_plinevec.push_back( pt );
+	}
 
-		const bool& isClosed() const { return _isClosed; }
-		bool& isClosed()             { return _isClosed; }
+	const bool& isClosed() const { return _isClosed; }
+	bool& isClosed()             { return _isClosed; }
 
 /// Polyline intersection with Line, Segment, FRect, Circle
-		template<
-			typename T,
-			typename std::enable_if<
-				priv::IsShape<T>::value,
-				T
-			>::type* = nullptr
-		>
-		detail::IntersectM<FPT> intersects( const T& other ) const
+	template<
+		typename T,
+		typename std::enable_if<
+			priv::IsShape<T>::value,
+			T
+		>::type* = nullptr
+	>
+	detail::IntersectM<FPT> intersects( const T& other ) const
+	{
+		detail::IntersectM<FPT> out;
+		for( const auto& pseg: getSegs() )
 		{
-			detail::IntersectM<FPT> out;
-			for( const auto& pseg: getSegs() )
-			{
-				auto inters = pseg.intersects( other );
-				if( inters() )
-					out.add( inters.get() );
-			}
-			return out;
+			auto inters = pseg.intersects( other );
+			if( inters() )
+				out.add( inters.get() );
 		}
+		return out;
+	}
 
-		template<typename T>
-		bool
-		isInside( const T& cont )
-		{
-			for( const auto& pt: getPts() )
-				if( !pt.isInside( cont ) )
-					return false;
-			return true;
-		}
+	template<typename T>
+	bool
+	isInside( const T& cont )
+	{
+		for( const auto& pt: getPts() )
+			if( !pt.isInside( cont ) )
+				return false;
+		return true;
+	}
 
-		bool isPolygon() const;
+	bool isPolygon() const;
 
-		friend std::ostream&
-		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
-		{
-			f << "Polyline: ";
-			for( const auto& pt: pl._plinevec )
-				f << pt << "-";
-			f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
+	friend std::ostream&
+	operator << ( std::ostream& f, const Polyline_<FPT>& pl )
+	{
+		f << "Polyline: ";
+		for( const auto& pt: pl._plinevec )
+			f << pt << "-";
+		f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
 
-			return f;
-		}
+		return f;
+	}
 
 #ifdef HOMOG2D_USE_OPENCV
-		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
-		{
-			if( size() < 2 ) // nothing to draw
-				return;
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	{
+		if( size() < 2 ) // nothing to draw
+			return;
 
-			for( size_t i=0; i<size()-1; i++ )
-			{
-				const auto& pt1 = _plinevec[i];
-				const auto& pt2 = _plinevec[i+1];
-				Segment_<FPT>(pt1,pt2).draw( mat, dp );
-			}
-			if( size() < 3 ) // nothing to draw
-				return;
-			if( _isClosed )
-				Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
+		for( size_t i=0; i<size()-1; i++ )
+		{
+			const auto& pt1 = _plinevec[i];
+			const auto& pt2 = _plinevec[i+1];
+			Segment_<FPT>(pt1,pt2).draw( mat, dp );
 		}
+		if( size() < 3 ) // nothing to draw
+			return;
+		if( _isClosed )
+			Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
+	}
 #endif
-};
+}; // class Polyline_
 
 //------------------------------------------------------------------
 namespace priv {
@@ -4124,6 +4144,16 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 	for( const auto& pt: rin.get4Pts() )
 		out.add( h * pt );
 	return out;
+}
+
+/// Apply homography to a Circle, produces an Ellipse
+/// \todo finish this !
+template<typename FPT1,typename FPT2>
+Ellipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& seg )
+{
+	Ellipse_<FPT1> ell( h* seg.center() );
+	return ell;
 }
 
 //------------------------------------------------------------------
