@@ -2577,7 +2577,7 @@ the one with smallest y-coordinate will be returned first */
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const
 	{
 		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 	}
@@ -2635,16 +2635,22 @@ getMiddlePoint( const Segment_<FPT>& seg )
 }
 
 /// Free function, returns middle point of set of segments
-/// \sa Segment_::getMiddlePoint()
-template<typename T>
-T
-getMiddlePoints( const T& vsegs )
+/**
+\sa Segment_::getMiddlePoint()
+- input: set of segments
+- output: set of points (same container)
+*/
+
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
 {
-	T out( vsegs.size() );
-	auto it = std::begin( out );
-	for( const auto& seg: vsegs)
+	std::vector<Point2d_<FPT>> vout( vsegs.size() );
+
+	auto it = std::begin( vout );
+	for( const auto& seg: vsegs )
 		*it++ = getMiddlePoint( seg );
-	return out;
+	return vout;
 }
 
 /// Free function, returns segments of the rectangle
@@ -2756,6 +2762,7 @@ template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<Polyline_<T>>: std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
@@ -2770,6 +2777,12 @@ template <typename T>
 struct Is_std_array: std::false_type {};
 template <typename V, size_t n>
 struct Is_std_array<std::array<V, n>>: std::true_type {};
+
+/// Traits class, used in free function draw()
+//Is_Primitive
+//template<typename T> struct IsDrawable              : std::false_type {};
+//template<typename T> struct IsDrawable<              : std::false_type {};
+
 
 } // namespace priv
 
@@ -2992,7 +3005,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const
 	{
 		if( size() < 2 ) // nothing to draw
 			return;
@@ -4213,7 +4226,7 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 	Ellipse_<FPT1> ell( pt );
 	auto bb = cir.getBB();
 	auto bb2 = h * bb;
-	auto vsegs = getMiddlePoints( bb2.getSegs() );
+	auto vpts = getMiddlePoints( bb2.getSegs() );
 
 
 /*	Point2d_<HOMOG2D_INUMTYPE> pt1(
@@ -4524,11 +4537,29 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 }
 
 //------------------------------------------------------------------
+template<
+	typename Prim,
+	typename std::enable_if<
+		priv::IsShape<Prim>::value,
+		Prim
+	>::type* = nullptr
+>
+void draw( cv::Mat& mat, const Prim& prim, const CvDrawParams& dp=CvDrawParams() )
+{
+	prim.draw( mat, dp );
+}
+
 /// Free function, draws a set of points or lines
 /**
 Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
 */
-template<typename T>
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
 void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
 {
 	for( const auto& elem: cont )

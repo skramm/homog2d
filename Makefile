@@ -20,6 +20,11 @@ ifeq ($(USE_EIGEN),Y)
 	CFLAGS += -DHOMOG2D_USE_EIGEN
 endif
 
+ifeq ($(DEBUG),Y)
+	CFLAGS += -g
+endif
+
+
 TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
 TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,$(TEST_FIG_LOC)/%.png, $(TEST_FIG_SRC))

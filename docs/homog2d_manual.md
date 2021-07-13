@@ -834,10 +834,28 @@ The available functions are given in the table below:
 `setPointSize()`  |  1 int (pixels)  |
 `setThickness()`  |  1 int (pixels)  |
 
+Free function are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
+This means any graphical primitive `prim` can be drawn with:
+```C++
+draw( img, prim );
+draw( img, prim, dp );
+```
+
+Additionaly, if you have a container filled with one of the primitives (`std::vector`, `std::array` or `std::list`),
+you can draw them at once with a call to the same function:
+```C++
+std::vector<Segment> vseg;
+// ... fill vseg with data
+draw( img, vseg );      // use default parameters
+draw( img, vseg, dp );  // or pass some
+```
+
+
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires of course that Opencv is installed on your machine).
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).
+
 
 ## 7 - Numerical data types
 <a name="numdt"></a>

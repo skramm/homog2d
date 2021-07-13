@@ -777,6 +777,11 @@ void action_H( void* param )
 	auto e_r2 = H * e_r;
 //	ell2.draw( data.img2 );
 	e_r2.draw( data.img2 );
+	auto corners = e_r2.getPts();
+	auto seg1 = Segment( corners[0], corners[2] );
+//	draw( data.img2, seg1 );
+	draw( data.img2, Segment( corners[0], corners[2] ) );
+	draw( data.img2, Segment( corners[1], corners[3] ) );
 
 	data.showImage();
 }
