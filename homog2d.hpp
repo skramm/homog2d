@@ -40,7 +40,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.4
+#define HOMOG2D_VERSION 2.5
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -1410,6 +1410,76 @@ enum class Dtype : char
 };
 
 //------------------------------------------------------------------
+template<typename FPT>
+class Ellipse_
+{
+	template<typename T> friend class Ellipse_;
+
+private:
+	Point2d_<FPT> _ecenter;
+	Point2d_<FPT> _semiMajor;
+	Point2d_<FPT> _semiMinor;
+//	Segment_<FPT> _semiMajor;
+//	Segment_<FPT> _semiMinor;
+
+public:
+/// Constructor: straight ellipse
+	template<typename FPT1, typename T2>
+	Ellipse_( const Point2d_<FPT1>& pt, T2 major, T2 minor )
+		: _ecenter( pt )
+	{
+		 _semiMajor.set( pt.getX()+major, pt.getY() );
+		 _semiMinor.set( pt.getX(),       pt.getY()+minor );
+	}
+
+	Point2d_<FPT>&       center()       { return _ecenter; }
+	const Point2d_<FPT>& center() const { return _ecenter; }
+
+	HOMOG2D_INUMTYPE getMajor() const
+	{
+		return _ecenter.distTo( _semiMajor );
+	}
+	HOMOG2D_INUMTYPE getMinor() const
+	{
+		return _ecenter.distTo( _semiMinor );
+	}
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const
+	{
+		return std::make_pair(
+			_ecenter.distTo( _semiMajor ),
+			_ecenter.distTo( _semiMinor )
+		);
+	}
+	void setAngle( FPT angle )
+	{
+		Homogr_<HOMOG2D_INUMTYPE> H( -_ecenter.getX(), -_ecenter.getY() );
+		H.addRotation( angle ).addTranslation( _ecenter.getX(), _ecenter.getY() );
+		_semiMajor = H * _semiMajor;
+		_semiMinor = H * _semiMinor;
+	}
+
+	HOMOG2D_INUMTYPE getAngle() const
+	{
+		auto lineH = Point2d_<FPT>(0,0) * Point2d_<FPT>(100,0);
+		return lineH.getAngle( Line2d_<FPT>(_ecenter, _semiMajor) );
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
+#endif // HOMOG2D_USE_OPENCV
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Ellipse_<FPT>& ell )
+	{
+		f << "center=" << ell._ecenter
+			<< " maj=" << ell.getMajor()
+			<< " min=" << ell.getMinor();
+
+		return f;
+	}
+};
+
+//------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
 Parameters:
@@ -2291,154 +2361,150 @@ class Segment_
 {
 	template<typename T> friend class Segment_;
 
-	private:
-		Point2d_<FPT> _ptS1, _ptS2;
+private:
+	Point2d_<FPT> _ptS1, _ptS2;
 
-	public:
+public:
 /// Default constructor: initializes segment to (0,0)--(1,1)
-		Segment_(): _ptS2(1.,1.)
-		{}
+	Segment_(): _ptS2(1.,1.)
+	{}
 /// Contructor 2: build segment from two points
-		Segment_( Point2d_<FPT> p1, Point2d_<FPT> p2 ):
-			_ptS1(p1), _ptS2(p2)
-		{
+	Segment_( Point2d_<FPT> p1, Point2d_<FPT> p2 )
+		: _ptS1(p1), _ptS2(p2)
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( p1 == p2 )
-				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+		if( p1 == p2 )
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		priv::fix_order( _ptS1, _ptS2 );
+	}
 
 /// Contructor 3: build segment from two points coordinates
-		template<typename T>
-		Segment_( T x1, T y1, T x2, T y2 )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			_ptS1.set( x1, y1 );
-			_ptS2.set( x2, y2 );
+	template<typename T>
+	Segment_( T x1, T y1, T x2, T y2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		_ptS1.set( x1, y1 );
+		_ptS2.set( x2, y2 );
 #ifndef HOMOG2D_NOCHECKS
-			if( _ptS1 == _ptS2 )
-				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+		if( _ptS1 == _ptS2 )
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		priv::fix_order( _ptS1, _ptS2 );
+	}
 
 /// Setter
-		void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
-		{
+	void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( p1 == p2 )
-				HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
+		if( p1 == p2 )
+			HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
 #endif
-			_ptS1 = p1;
-			_ptS2 = p2;
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		_ptS1 = p1;
+		_ptS2 = p2;
+		priv::fix_order( _ptS1, _ptS2 );
+	}
 
 /// Get segment length
-		HOMOG2D_INUMTYPE length() const
-		{
-			return _ptS1.distTo( _ptS2 );
-		}
+	HOMOG2D_INUMTYPE length() const
+	{
+		return _ptS1.distTo( _ptS2 );
+	}
 
 /// Returns Bounding Box
-		FRect_<FPT> getBB() const
-		{
-			return FRect_<FPT>(	_ptS1. _ptS2 );
-		}
+	FRect_<FPT> getBB() const
+	{
+		return FRect_<FPT>(	_ptS1. _ptS2 );
+	}
 
 /// Get angle between segment and other segment/line
-		template<typename U>
-		HOMOG2D_INUMTYPE getAngle( const U& other ) const
-		{
-			return other.getAngle( this->getLine() );
-		}
+	template<typename U>
+	HOMOG2D_INUMTYPE getAngle( const U& other ) const
+	{
+		return other.getAngle( this->getLine() );
+	}
 
 /// Comparison operator
-		bool operator == ( const Segment_& s2 ) const
-		{
-			if( _ptS1 != s2._ptS1 )
-				return false;
-			if( _ptS2 != s2._ptS2 )
-				return false;
-			return true;
-		}
-		bool operator != ( const Segment_& s2 ) const
-		{
-			return !(*this == s2);
-		}
-
-		template<typename U>
-		friend std::ostream&
-		operator << ( std::ostream& f, const Segment_<U>& seg );
+	bool operator == ( const Segment_& s2 ) const
+	{
+		if( _ptS1 != s2._ptS1 )
+			return false;
+		if( _ptS2 != s2._ptS2 )
+			return false;
+		return true;
+	}
+	bool operator != ( const Segment_& s2 ) const
+	{
+		return !(*this == s2);
+	}
 
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		getPts() const
-		{
-			return std::make_pair( _ptS1, _ptS2 );
-		}
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPts() const
+	{
+		return std::make_pair( _ptS1, _ptS2 );
+	}
 
 /// Segment "isInside", S can be Circle or FRect
-		template<typename S>
-		bool isInside( const S& shape ) const
-		{
-			if( !_ptS1.isInside( shape ) )
-				return false;
-			if( !_ptS2.isInside( shape ) )
-				return false;
-			return true;
-		}
+	template<typename S>
+	bool isInside( const S& shape ) const
+	{
+		if( !_ptS1.isInside( shape ) )
+			return false;
+		if( !_ptS2.isInside( shape ) )
+			return false;
+		return true;
+	}
 
 /// Returns supporting line
-		Line2d_<FPT> getLine() const
-		{
-			return _ptS1 * _ptS2;
-		}
+	Line2d_<FPT> getLine() const
+	{
+		return _ptS1 * _ptS2;
+	}
 
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
-		template<typename FPT2>
-		detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
+	template<typename FPT2>
+	detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
 /// Segment/FRect intersection
-		template<typename FPT2>
-		detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
-		{
-			HOMOG2D_START;
-			return r.intersects( *this );
-		}
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
+	{
+		HOMOG2D_START;
+		return r.intersects( *this );
+	}
 
 /// Segment/Polyline intersection
-		template<typename FPT2>
-		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
-		{
-			HOMOG2D_START;
-			return other.intersects( *this );
-		}
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
+	{
+		HOMOG2D_START;
+		return other.intersects( *this );
+	}
 
-		template<typename T>
-		bool isParallelTo( const T& other ) const
-		{
-			static_assert(
-				std::is_same<T,Segment_<FPT>>::value ||
-				std::is_same<T,Line2d_<FPT>>::value,
-				"type needs to be a segment or a line" );
-			return getLine().isParallelTo( other );
-		}
+	template<typename T>
+	bool isParallelTo( const T& other ) const
+	{
+		static_assert(
+			std::is_same<T,Segment_<FPT>>::value ||
+			std::is_same<T,Line2d_<FPT>>::value,
+			"type needs to be a segment or a line" );
+		return getLine().isParallelTo( other );
+	}
 
-		/// Returns point that at middle distance between \c p1 and \c p2
-		Point2d_<FPT>
-		getMiddlePoint() const
-		{
-			return Point2d_<FPT>(
-				( _ptS1.getX() + _ptS2.getX() ) / 2.,
-				( _ptS1.getY() + _ptS2.getY() ) / 2.
-			);
-		}
+	/// Returns point that at middle distance between \c p1 and \c p2
+	Point2d_<FPT>
+	getMiddlePoint() const
+	{
+		return Point2d_<FPT>(
+			( _ptS1.getX() + _ptS2.getX() ) / 2.,
+			( _ptS1.getY() + _ptS2.getY() ) / 2.
+		);
+	}
 
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
@@ -2446,6 +2512,13 @@ the one with smallest y-coordinate will be returned first */
 		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 	}
 #endif
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Segment_<FPT>& seg )
+	{
+		f << seg._ptS1 << "-" << seg._ptS2;
+		return f;
+	}
 };
 
 //------------------------------------------------------------------
@@ -2463,16 +2536,6 @@ template<typename FPT>
 Line2d_<FPT> getLine( const Segment_<FPT>& seg )
 {
 	return seg.getLine();
-}
-
-//------------------------------------------------------------------
-template<typename U>
-inline
-std::ostream&
-operator << ( std::ostream& f, const Segment_<U>& seg )
-{
-	f << seg._ptS1 << "-" << seg._ptS2;
-	return f;
 }
 
 //------------------------------------------------------------------
@@ -4377,6 +4440,24 @@ void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDr
 {
 	ppts.first.draw( mat, dp );
 	ppts.second.draw( mat, dp );
+}
+
+
+template<typename FPT>
+void
+Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
+{
+	cv::ellipse(
+		mat,
+		_ecenter.getCvPti(),
+		cv::Size( getMajor(), getMinor() ),
+		getAngle() * 180./M_PI,
+		0.,
+		360.,
+		dp._dpValues._color,
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType
+	);
 }
 
 

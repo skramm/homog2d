@@ -909,6 +909,11 @@ void action_CC( void* param )
 
 	data.clearImage();
 
+	Ellipse_<float> ell( Point2d(350,100),200,80);
+	ell.setAngle( 25.*M_PI/180. );
+	ell.draw( data.img );
+	std::cout << ell << '\n';
+
 	data.c1.set( data.vpt[0], 80 );
 	data.c2.set( data.vpt[1], 120 );
 
