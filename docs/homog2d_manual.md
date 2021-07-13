@@ -49,6 +49,8 @@ pt1.set( 5, 6 );
 ```C++
 Line2d li1;             // vertical line at x=0
 Line2d li2( 3, 4 );     // line passing through (0,0) and (3,4)
+Line2d( LineDir::H, 15 ); // horizontal line at y=15
+Line2d( LineDir::V, -2 ); // vertical line at x=-2
 ```
 
 - Create a point from two lines, and a line from two points:

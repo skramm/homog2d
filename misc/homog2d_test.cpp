@@ -260,6 +260,14 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( li.getPoint( GivenCoord::X, 2 ) == Point2d_<NUMTYPE>(2,1) );
 		CHECK( li.getPoint( GivenCoord::Y, 1 ) == Point2d_<NUMTYPE>(2,1) );
 	}
+	{
+		Line2d_<NUMTYPE> liv1( LineDir::V, 10. );
+		Line2d_<NUMTYPE> liv2( Point2d(10,0), Point2d(10,20) );
+		CHECK( liv1 == liv2 );
+		Line2d_<NUMTYPE> lih1( LineDir::H, 10. );
+		Line2d_<NUMTYPE> lih2( Point2d(0,10), Point2d(20,10) );
+		CHECK( lih1 == lih2 );
+	}
 }
 
 TEST_CASE( "test throw", "[test_thr]" )
