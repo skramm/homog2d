@@ -1188,21 +1188,30 @@ public:
 /// Default constructor, unit-radius circle at (0,0)
 	Circle_() : _radius(1.)
 	{}
+
 /// Constructor, given radius circle at (0,0)
-	Circle_( FPT rad ) : _radius(rad)
+	template<typename T>
+	Circle_( T rad ) : _radius(rad)
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
 
-/// Constructor, given radius circle at (0,0)
-	template<typename FPT2>
-	Circle_( const Point2d_<FPT2>& center, FPT rad )
+/// Constructor
+	template<typename T1, typename T2>
+	Circle_( const Point2d_<T1>& center, T2 rad )
 		: _radius(rad), _center(center)
 	{
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
+
+/// Constructor
+	template<typename T1, typename T2>
+	Circle_( T1 x, T1 y, T2 rad )
+		: Circle_( Point2d_<FPT>(x,y), rad )
+	{}
 
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
@@ -1408,10 +1417,15 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 
 //------------------------------------------------------------------
+/// Ellipse
 template<typename FPT>
 class Ellipse_
 {
 	template<typename T> friend class Ellipse_;
+
+	template<typename FPT1,typename FPT2>
+	friend Ellipse_<FPT1>
+	operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& seg );
 
 private:
 	Point2d_<FPT> _ecenter;
@@ -1419,18 +1433,24 @@ private:
 	Point2d_<FPT> _semiMinor;
 
 public:
-/// Constructor: straight ellipse
-	template<typename FPT1, typename T2>
-	Ellipse_( const Point2d_<FPT1>& pt, T2 major, T2 minor )
+/// Constructor: horizontal ellipse
+	template<typename T1, typename T2>
+	Ellipse_( const Point2d_<T1>& pt, T2 major=1., T2 minor=1. )
 		: _ecenter( pt )
 	{
 		 _semiMajor.set( pt.getX()+major, pt.getY() );
 		 _semiMinor.set( pt.getX(),       pt.getY()+minor );
 	}
 
-/// Constructor: straight ellipse
-	template<typename FPT1, typename T2>
-	Ellipse_( const Point2d_<FPT1>& pt )
+/// Constructor: horizontal ellipse
+	template<typename T1, typename T2>
+	Ellipse_( T1 x, T1 y, T2 major, T2 minor )
+		: Ellipse_( Point2d_<FPT>( x, y), major, minor )
+	{}
+
+/// Constructor: horizontal ellipse
+	template<typename T1>
+	Ellipse_( const Point2d_<T1>& pt )
 		: _ecenter( pt )
 	{
 		 _semiMajor.set( pt.getX()+2., pt.getY() );
@@ -1440,21 +1460,27 @@ public:
 	Point2d_<FPT>&       center()       { return _ecenter; }
 	const Point2d_<FPT>& center() const { return _ecenter; }
 
-	HOMOG2D_INUMTYPE getMajor() const
+
+	HOMOG2D_INUMTYPE getMajorDist() const
 	{
 		return _ecenter.distTo( _semiMajor );
 	}
-	HOMOG2D_INUMTYPE getMinor() const
+	HOMOG2D_INUMTYPE getMinorDist() const
 	{
 		return _ecenter.distTo( _semiMinor );
 	}
-	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMinDist() const
 	{
 		return std::make_pair(
 			_ecenter.distTo( _semiMajor ),
 			_ecenter.distTo( _semiMinor )
 		);
 	}
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const
+	{
+		return std::make_pair( _semiMajor, _semiMinor );
+	}
+
 	template<typename T>
 	void setAngle( T angle )
 	{
@@ -1489,10 +1515,10 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const Ellipse_<FPT>& ell )
 	{
+		auto ppts = ell.getMajMin();
 		f << "center=" << ell._ecenter
-			<< " maj=" << ell.getMajor()
-			<< " min=" << ell.getMinor();
-
+			<< " maj=" << ppts.first
+			<< " min=" << ppts.second;
 		return f;
 	}
 }; // class Ellipse_
@@ -1942,7 +1968,6 @@ public:
 	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
 	{
 		HOMOG2D_START;
-//			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
 		return pl.intersects( *this );
 	}
 
@@ -4169,10 +4194,13 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 /// \todo finish this !
 template<typename FPT1,typename FPT2>
 Ellipse_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& seg )
+operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
-	Ellipse_<FPT1> ell( h * seg.center() );
-
+	auto pt = h * cir.center();
+	Ellipse_<FPT1> ell( pt );
+	auto ppts = ell.getMajMin();
+	ell._semiMajor = h * ppts.first;
+	ell._semiMinor = h * ppts.second;
 	return ell;
 }
 
@@ -4500,7 +4528,7 @@ Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
 	cv::ellipse(
 		mat,
 		_ecenter.getCvPti(),
-		cv::Size( getMajor(), getMinor() ),
+		cv::Size( getMajorDist(), getMinorDist() ),
 		getAngle() * 180./M_PI,
 		0.,
 		360.,
@@ -4541,6 +4569,8 @@ using FRect = FRect_<double>;
 
 /// Default polyline type
 using Polyline = Polyline_<double>;
+
+using Ellipse  = Ellipse_<double>;
 
 // float types
 using Line2dF  = Line2d_<float>;

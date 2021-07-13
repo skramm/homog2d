@@ -432,48 +432,6 @@ void demo_B( int n )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
-#if 0
-
-void demo_3( int n )
-{
-	std::cout << "Demo " << n << ": offset and drawing parameters demo (check code)\n";
-
-	Line2d li;
-
-	Line2d lV;
-	lV.addOffset( LineOffset::horiz, 100.);
-	Line2d lH(1,0);
-	lH.addOffset( LineOffset::vert, 100.);
-
-	data.clearImage();
-	lV.draw( data.img, CvDrawParams().setColor( 250, 50,  50).setThickness(2) );
-	lH.draw( data.img, CvDrawParams().setColor(  50, 50, 250).setThickness(2) );
-
-	CvDrawParams dp;
-	dp.setColor( 0, 250, 0 );
-	dp.setDefault();
-
-	li = lV;
-	li.addOffset( LineOffset::horiz, 50 );
-	li.draw( data.img ); // use default draw parameters
-	li = lV;
-	li.addOffset( LineOffset::horiz, -50 );
-	li.draw( data.img, CvDrawParams().setColor( 100,250,0) );
-
-	CvDrawParams::resetDefault();
-
-	li = lH;
-	li.addOffset( LineOffset::vert, 50 );
-	li.draw( data.img ); //, CvDrawParams().setColor( 100,0,250) );
-	li = lH;
-	li.addOffset( LineOffset::vert, -50 );
-	li.draw( data.img ); //, CvDrawParams().setColor( 100,0,250) );
-
-	data.showImage();
-	cv::waitKey(0);
-}
-#endif
-//------------------------------------------------------------------
 struct Param_C: public Data
 {
 	explicit Param_C(std::string wname): Data(wname)
@@ -807,6 +765,20 @@ void action_H( void* param )
 	rect.draw( data.img );
 	auto rect2 = H * rect;
 	rect2.draw( data.img2 );
+
+//	Ellipse ell( 320, 360, 100, 40 );
+	auto e_x = 320;
+	auto e_y = 360;
+	auto e_h = 70;
+	Circle ell( e_x, e_y, e_h );
+	auto e_r = ell.getBB();
+	ell.draw( data.img );
+	e_r.draw( data.img );
+	auto ell2 = H * ell;
+	auto e_r2 = H * e_r;
+	ell2.draw( data.img2 );
+	e_r2.draw( data.img2 );
+
 	data.showImage();
 }
 
@@ -972,7 +944,6 @@ int main( int argc, const char** argv )
 		demo_PL,
 		demo_1,
 		demo_B,
-//		demo_3,
 		demo_C,
 		demo_SI,
 		demo_6
