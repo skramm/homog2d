@@ -682,135 +682,6 @@ private:
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
 };
 
-//------------------------------------------------------------------
-/// Ellipse as a conic in matrix form
-/**
-This enables its projection using homography
-
-See:
-- https://en.wikipedia.org/wiki/Ellipse#General_ellipse
-- https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
-
-General equation of an ellipse:
-\f[
-A x^2 + B x y + C y^2 + D x + E y + F = 0
-\f]
-
-It can be written as a 3 x 3 matrix:
-\f[
-\begin{bmatrix}
-  A & B/2 & D/2 \\
-  B/2 & C & E/2 \\
-  D/2 & E/2 & F
-\end{bmatrix}
-\f]
-
-Matrix coefficients:
-\f[
-\begin{align}
-  A &=   a^2 \sin^2\theta + b^2 \cos^2\theta \\
-  B &=  2\left(b^2 - a^2\right) \sin\theta \cos\theta \\
-  C &=   a^2 \cos^2\theta + b^2 \sin^2\theta \\
-  D &= -2A x_\circ   -  B y_\circ \\
-  E &= - B x_\circ   - 2C y_\circ \\
-  F &=   A x_\circ^2 +  B x_\circ y_\circ + C y_\circ^2 - a^2 b^2.
-\end{align}
-\f]
-*/
-template<typename FPT>
-class HEllipse_
-{
-	template<typename T> friend class HEllipse_;
-
-	template<typename FPT1,typename FPT2>
-	friend HEllipse_<FPT1>
-	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
-	template<typename FPT1,typename FPT2>
-	friend HEllipse_<FPT1>
-	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
-
-public:
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1. )
-		: HEllipse_( pt.getX(), pt.getY(), major, minor )
-	{
-	}
-
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1. )
-	{
-		p_init(x,y, major, minor );
-	}
-
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
-	{
-// step 1: compute x0, y0, a, b, from matrix
-
-// step 2: draw
-		cv::ellipse(
-			mat,
-			_ptR1.getCvPti(),
-			_ptR2.getCvPti(),
-			dp._dpValues._color,
-			dp._dpValues._lineThickness,
-			dp._dpValues._lineType
-		);
-	}
-#endif
-};
-
-//////////////////////////
-//   PRIVATE FUNCTIONS  //
-//////////////////////////
-	void p_init( double x0, double y0, double a, double b, double theta=0. )
-	{
-		auto sin2 = std::sin(theta) * std::sin(theta);
-		auto cos2 = std::cos(theta) * std::cos(theta);
-		auto a2 = a*a;
-		auto b2 = b*b;
-		auto A = a2*sin2 + b2*cos2;
-		auto B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
-		auto C = a2 * cos2 + b2 * sin2;
-		auto D = -2.*A * x0 -    B * y0;
-		auto E =   - B * x0 - 2.*C * y0;
-		auto F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
-
-		_data[0][0] = A;
-		_data[1][1] = C;
-		_data[2][2] = F;
-
-		_data[0][1] = _data[1][0] = B / 2.;
-		_data[0][2] = _data[2][0] = D / 2.;
-		_data[1][2] = _data[2][1] = E / 2.;
-	}
-
-//////////////////////////
-//      DATA SECTION    //
-//////////////////////////
-private:
-	mutable detail::Matrix_<FPT> _data;
-
-};
-
-//------------------------------------------------------------------
-/// Used in Line2d::getValue() and getOrthogonalLine()
-enum class GivenCoord: char { X, Y };
-
-enum class LineDir: char { H, V };
-
-/// Used in Polyline_ constructors
-enum class IsClosed: char { Yes, No };
-
-/// Type of Root object, see Root::type()
-enum class Type : char { Line2d, Point2d };
-
-/// Type of underlying floating point, see Root::dtype()
-enum class Dtype : char { Float, Double, LongDouble };
-
-
 
 #ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
@@ -891,6 +762,170 @@ struct CvDrawParams
 	}
 };
 #endif // HOMOG2D_USE_OPENCV
+
+//------------------------------------------------------------------
+/// Ellipse as a conic in matrix form
+/**
+This enables its projection using homography
+
+See:
+- https://en.wikipedia.org/wiki/Ellipse#General_ellipse
+- https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
+
+General equation of an ellipse:
+\f[
+A x^2 + B x y + C y^2 + D x + E y + F = 0
+\f]
+
+It can be written as a 3 x 3 matrix:
+\f[
+\begin{bmatrix}
+  A & B/2 & D/2 \\
+  B/2 & C & E/2 \\
+  D/2 & E/2 & F
+\end{bmatrix}
+\f]
+
+Matrix coefficients:
+\f[
+\begin{align}
+  A &=   a^2 \sin^2\theta + b^2 \cos^2\theta \\
+  B &=  2\left(b^2 - a^2\right) \sin\theta \cos\theta \\
+  C &=   a^2 \cos^2\theta + b^2 \sin^2\theta \\
+  D &= -2A x_\circ   -  B y_\circ \\
+  E &= - B x_\circ   - 2C y_\circ \\
+  F &=   A x_\circ^2 +  B x_\circ y_\circ + C y_\circ^2 - a^2 b^2.
+\end{align}
+\f]
+*/
+template<typename FPT>
+class HEllipse_
+{
+	template<typename T> friend class HEllipse_;
+
+	template<typename FPT1,typename FPT2>
+	friend HEllipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
+	template<typename FPT1,typename FPT2>
+	friend HEllipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
+
+public:
+/// Constructor: horizontal ellipse
+	template<typename T1, typename T2>
+	HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1. )
+		: HEllipse_( pt.getX(), pt.getY(), major, minor )
+	{
+	}
+
+/// Constructor: horizontal ellipse
+	template<typename T1, typename T2>
+	HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1. )
+	{
+		p_init(x,y, major, minor );
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+/// Draw ellipse using Opencv
+/*
+- see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
+*/
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	{
+// step 1: compute x0, y0, a, b, from matrix
+		auto A = _data[0][0];
+		auto C = _data[1][1];
+		auto F = _data[2][2];
+		auto B = 2. * _data[0][1];
+		auto D = 2. * _data[0][2];
+		auto E = 2. * _data[1][2];
+
+		auto denom = B*B - 4. * A * C;
+		auto x0 = ( 2.*C*D - B*E ) / denom;
+		auto y0 = ( 2.*A*E - B*D ) / denom;
+		auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+		auto AmC = A-C;
+		auto AmC2 = AmC*AmC;
+		auto sqr = std::sqrt(AmC2+B*B);
+		auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+		auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+		auto theta = 0.;
+		if( std::abs(B) < 1.E-10 )
+		{
+			if( A > C )
+				theta = 90.;
+		}
+		else
+		{
+			auto t = (C - A -sqr) / B;
+			theta = std::atan( t );
+		}
+
+// step 2: draw
+		cv::ellipse(
+			mat,
+			cv::Point( x0,y0 ),
+			cv::Size( a, b ),
+			theta,
+			0., 360.,
+			dp._dpValues._color,
+			dp._dpValues._lineThickness,
+			dp._dpValues._lineType
+		);
+	}
+#endif
+
+
+//////////////////////////
+//   PRIVATE FUNCTIONS  //
+//////////////////////////
+	void p_init( double x0, double y0, double a, double b, double theta=0. )
+	{
+		auto sin2 = std::sin(theta) * std::sin(theta);
+		auto cos2 = std::cos(theta) * std::cos(theta);
+		auto a2 = a*a;
+		auto b2 = b*b;
+		auto A = a2*sin2 + b2*cos2;
+		auto B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
+		auto C = a2 * cos2 + b2 * sin2;
+		auto D = -2.*A * x0 -    B * y0;
+		auto E =   - B * x0 - 2.*C * y0;
+		auto F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
+
+		_data[0][0] = A;
+		_data[1][1] = C;
+		_data[2][2] = F;
+
+		_data[0][1] = _data[1][0] = B / 2.;
+		_data[0][2] = _data[2][0] = D / 2.;
+		_data[1][2] = _data[2][1] = E / 2.;
+	}
+
+//////////////////////////
+//      DATA SECTION    //
+//////////////////////////
+
+private:
+	mutable detail::Matrix_<FPT> _data;
+
+}; // class HEllipse
+
+//------------------------------------------------------------------
+/// Used in Line2d::getValue() and getOrthogonalLine()
+enum class GivenCoord: char { X, Y };
+
+enum class LineDir: char { H, V };
+
+/// Used in Polyline_ constructors
+enum class IsClosed: char { Yes, No };
+
+/// Type of Root object, see Root::type()
+enum class Type : char { Line2d, Point2d };
+
+/// Type of underlying floating point, see Root::dtype()
+enum class Dtype : char { Float, Double, LongDouble };
+
 //------------------------------------------------------------------
 
 namespace detail {

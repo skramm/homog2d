@@ -766,9 +766,14 @@ void action_H( void* param )
 	auto rect2 = H * rect;
 	rect2.draw( data.img2 );
 
-	auto e_x = 320;
-	auto e_y = 360;
-	auto e_h = 70;
+	auto e_x = 320.;
+	auto e_y = 360.;
+	auto e_h = 70.;
+
+	HEllipse_<float> ell( e_x, e_y, e_h, e_h/2. );
+	ell.draw( data.img );
+
+#if 0
 	Circle ell( e_x, e_y, e_h );
 	auto e_r = ell.getBB();
 	ell.draw( data.img );
@@ -799,10 +804,11 @@ void action_H( void* param )
 	for( const auto e: vdist )
 		std::cout << "dist=" << e << '\n';
 */
-	Ellipse ell3( center, mid[0].distTo( center ), mid[1].distTo( center ) );
+/*	Ellipse ell3( center, mid[0].distTo( center ), mid[1].distTo( center ) );
 
 	ell3.draw( data.img2, CvDrawParams().setColor(200,80,80) );
-
+*/
+#endif
 	data.showImage();
 }
 
