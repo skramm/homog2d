@@ -2634,6 +2634,19 @@ getMiddlePoint( const Segment_<FPT>& seg )
 	return seg.getMiddlePoint();
 }
 
+/// Free function, returns middle point of set of segments
+/// \sa Segment_::getMiddlePoint()
+template<typename T>
+T
+getMiddlePoints( const T& vsegs )
+{
+	T out( vsegs.size() );
+	auto it = std::begin( out );
+	for( const auto& seg: vsegs)
+		*it++ = getMiddlePoint( seg );
+	return out;
+}
+
 /// Free function, returns segments of the rectangle
 /// \sa FRect_::getSegs()
 template<typename FPT>
@@ -4198,9 +4211,22 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
 	auto pt = h * cir.center();
 	Ellipse_<FPT1> ell( pt );
-	auto ppts = ell.getMajMin();
-	ell._semiMajor = h * ppts.first;
-	ell._semiMinor = h * ppts.second;
+	auto bb = cir.getBB();
+	auto bb2 = h * bb;
+	auto vsegs = getMiddlePoints( bb2.getSegs() );
+
+
+/*	Point2d_<HOMOG2D_INUMTYPE> pt1(
+		cir.center().getX() - cir.radius(),
+		cir.center().getY()
+	);
+	Point2d_<HOMOG2D_INUMTYPE> pt2(
+		cir.center().getX(),
+		cir.center().getY() + cir.radius()
+	);
+
+	ell._semiMajor = h * pt1;
+	ell._semiMinor = h * pt2;*/
 	return ell;
 }
 

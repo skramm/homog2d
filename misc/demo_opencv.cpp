@@ -766,7 +766,6 @@ void action_H( void* param )
 	auto rect2 = H * rect;
 	rect2.draw( data.img2 );
 
-//	Ellipse ell( 320, 360, 100, 40 );
 	auto e_x = 320;
 	auto e_y = 360;
 	auto e_h = 70;
@@ -776,7 +775,7 @@ void action_H( void* param )
 	e_r.draw( data.img );
 	auto ell2 = H * ell;
 	auto e_r2 = H * e_r;
-	ell2.draw( data.img2 );
+//	ell2.draw( data.img2 );
 	e_r2.draw( data.img2 );
 
 	data.showImage();
