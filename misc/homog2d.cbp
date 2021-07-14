@@ -64,6 +64,7 @@
 		<Unit filename="no_build/no_build_8.cxx" />
 		<Unit filename="no_build/no_build_9.cxx" />
 		<Unit filename="no_build/readme.txt" />
+		<Unit filename="plot_gitlog.plt" />
 		<Unit filename="showcase1.cpp" />
 		<Unit filename="test_all.sh" />
 		<Extensions>
