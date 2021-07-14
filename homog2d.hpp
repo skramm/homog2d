@@ -200,7 +200,20 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 template<typename T>
 using Matrix_t = std::array<std::array<T,3>,3>;
 
+
+/// free function, needed because const issue if member function
+template<typename FPT>
+void p_divideBy( Matrix_t<FPT>& mat,  size_t r, size_t c )
+{
+//	HOMOG2D_CHECK_ROW_COL;
+//	assert( std::fabs( mat[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
+	for( auto& li: mat )
+		for( auto& e: li )
+			e /= mat[r][c];
+}
+
 //------------------------------------------------------------------
+/// A simple wrapper over a 3x3 matrix, provides root functionalities
 template<typename FPT>
 class Matrix_
 {
@@ -223,8 +236,8 @@ public:
 		fillZero();
 	}
 
-	Matrix_t<FPT>&       get()       { return _mdata; }
-	const Matrix_t<FPT>& get() const { return _mdata; }
+	Matrix_t<FPT>&       getRaw()       { return _mdata; }
+	const Matrix_t<FPT>& getRaw() const { return _mdata; }
 
 	template<typename T>
 	void set( size_t r, size_t c, T v )
@@ -240,7 +253,7 @@ public:
 /**
 See https://en.wikipedia.org/wiki/Determinant
 */
-	HOMOG2D_INUMTYPE p_det() const
+	HOMOG2D_INUMTYPE determ() const
 	{
 		auto det = _mdata[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		det     -= _mdata[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
@@ -252,9 +265,10 @@ See https://en.wikipedia.org/wiki/Determinant
 	{
 		HOMOG2D_CHECK_ROW_COL;
 		assert( std::fabs( _mdata[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
-		for( auto& li: _mdata )
+		p_divideBy( _mdata, r, c );
+/*		for( auto& li: _mdata )
 			for( auto& e: li )
-				e /= _mdata[r][c];
+				e /= _mdata[r][c];*/
 	}
 
 /// Transpose and return matrix
@@ -297,6 +311,28 @@ See https://en.wikipedia.org/wiki/Determinant
 				_mdata[i][j] = in[i][j];
 	}
 
+/// Divide all elements of \c mat by \v value (free function)
+	template<typename FPT2>
+	void divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				mat._mdata[i][j] /= value;
+	}
+
+/// Matrix multiplication
+	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
+	{
+		Matrix_ out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				for( int k=0; k<3; k++ )
+					out._mdata[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1._mdata[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2._mdata[k][j] );
+		return out;
+	}
+
 private:
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
 	{
@@ -307,7 +343,8 @@ private:
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
 	detail::Matrix_<FPT> p_adjugate() const
 	{
-		detail::Matrix_<FPT> out;
+		detail::Matrix_<FPT> mat_out;
+		Matrix_t<FPT>& out = mat_out._mdata;
 
 		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
@@ -321,7 +358,7 @@ private:
 		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
 		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
 
-		return out;
+		return mat_out;
 	}
 
 	Matrix_<FPT> p_inverse() const;
@@ -339,21 +376,11 @@ private:
 		return f;
 	}
 
-};
+}; // class Matrix_
 
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
-
-
-/// Divide all elements of \c mat by \v value (free function)
-template<typename FPT1, typename FPT2>
-void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
-{
-	for( int i=0; i<3; i++ )
-		for( int j=0; j<3; j++ )
-			mat[i][j] /= value;
-}
 
 /// Return inverse of matrix
 /// \todo fix magic number
@@ -364,7 +391,7 @@ template<typename FPT>
 Matrix_<FPT>
 Matrix_<FPT>::p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
 {
-	auto det = p_det();
+	auto det = determ();
 	if( std::abs(det) <= 1E-10 )
 //	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
 		throw std::runtime_error( "matrix is not invertible" );
@@ -404,9 +431,9 @@ class Hmatrix_
 	friend void
 	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 */
-template<typename FPT1,typename FPT2>
-friend HEllipse_<FPT1>
-operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
+	template<typename FPT1,typename FPT2>
+	friend HEllipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
 
 	template<typename T,typename U>
 	friend Line2d_<T>
@@ -543,6 +570,7 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = false;
 		_hasChanged = true;
 	}
+/*
 /// Getter
 	FPT get( size_t r, size_t c ) const
 	{
@@ -551,9 +579,12 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		return _data[r][c];
 	}
-
+*/
 	detail::Matrix_<FPT>&       getMat()       { return _data; }
 	const detail::Matrix_<FPT>& getMat() const { return _data; }
+
+//	detail::Matrix_t<FPT>&       getRawMat()       { return _data._mdata; }
+//	const detail::Matrix_t<FPT>& getRawMat() const { return _data._mdata; }
 
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
@@ -572,7 +603,7 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		auto& mat = _data.get();
+		auto& mat = _data.getRaw();
 		mat[0][2] = tx;
 		mat[1][2] = ty;
 		_isNormalized = true;
@@ -594,7 +625,7 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& setRotation( T theta )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		auto& mat = _data.get();
+		auto& mat = _data.getRaw();
 		init();
 		mat[0][0] = mat[1][1] = std::cos(theta);
 		mat[1][0] = std::sin(theta);
@@ -637,7 +668,7 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		auto& mat = _data.get();
+		auto& mat = _data.getRaw();
 		mat[0][0] = kx;
 		mat[1][1] = ky;
 		_isNormalized = true;
@@ -647,8 +678,7 @@ Thus some assert can get triggered elsewhere.
 	}
 
 	template<typename T>
-	void
-	applyTo( T& ) const;
+	void applyTo( T& ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
 	void copyTo( cv::Mat&, int type=CV_64F ) const;
@@ -656,80 +686,43 @@ Thus some assert can get triggered elsewhere.
 #endif
 
 /// Matrix normalisation
+/** \todo replace magic number with something else */
 	void normalize() const
 	{
+		auto& mat = _data.getRaw();
 		auto eps = std::numeric_limits<FPT>::epsilon()*10;
 
-		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
+		if( std::fabs(mat[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
 			_data.divideBy( 2, 2 );
 		else
 		{
-			if( std::fabs(_data[2][1]) > eps )
+			if( std::fabs(mat[2][1]) > eps )
 				_data.divideBy( 2, 1 );
 			else
 				_data.divideBy( 2, 0 );
 		}
-		if( std::signbit(_data[2][2]) )
-			for( auto& li: _data._mdata )
+		if( std::signbit( mat[2][2] ) )
+			for( auto& li: mat )
 				for( auto& e: li )
 					e = -e;
 		_hasChanged = true;
 		_isNormalized = true;
 	}
 
-#if 0
-private:
-	detail::Matrix_<FPT> p_transpose( const detail::Matrix_<FPT>& m_in ) const
-	{
-		detail::Matrix_<FPT> m_out;
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				m_out[i][j] = m_in[j][i];
-		return m_out;
-	}
-
-	detail::Matrix_<FPT> p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
-	{
-		auto det = p_det();
-		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
-			throw std::runtime_error( "matrix is not invertible" );
-
-		auto adjugate = p_adjugate();
-		detail::divideAll(adjugate, det);
-		return adjugate;
-	}
-public:
-/// Transpose matrix
-	Hmatrix_& transpose()
-	{
-		detail::Matrix_<FPT> out = p_transpose( _data );
-		_data = out;
-		_hasChanged = true;
-		return *this;
-	}
-
-/// Inverse matrix
-	Hmatrix_& inverse()
-	{
-		_data = _data.p_inverse();
-		normalize();
-		_hasChanged = true;
-		return *this;
-	}
-#endif
 public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication
+/** \todo pretty ugly: out.getMat().getRaw()[i][j]  */
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out._data.get()[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1._data.get()[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2._data.get()[k][j] );
+					out.getMat().getRaw()[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1.getMat().getRaw()[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2.getMat().getRaw()[k][j] );
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -764,71 +757,9 @@ public:
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
-private:
-/*
-	void p_zero()
-	{
-		for( auto& li: _data )
-			for( auto& e: li )
-				e = 0.;
-		_hasChanged = true;
-	}
-	template<typename T>
 
-	void p_fillWith( const T& in )
-	{
-		for( auto i=0; i<3; i++ )
-			for( auto j=0; j<3; j++ )
-				_data[i][j] = in[i][j];
-		normalize();
-		_hasChanged = true;
-	}
-	void p_divideBy( size_t r, size_t c ) const
-	{
-		assert( std::fabs( _data[r][c] ) > std::numeric_limits<FPT>::epsilon() );
-		for( auto& li: _data )
-			for( auto& e: li )
-				e /= _data[r][c];
-		_hasChanged = true;
-	}*/
-#if 0
-/// Return determinant of matrix
-/**
-See https://en.wikipedia.org/wiki/Determinant
-*/
-	HOMOG2D_INUMTYPE p_det() const
-	{
-		auto det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
-		det     -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
-		det     += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
-		return det;
-	}
-	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
-	{
-		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * _data[v[6]][v[7]];
-		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * _data[v[4]][v[5]];
-		return det;
-	}
-/// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	detail::Matrix_<FPT> p_adjugate() const
-	{
-		detail::Matrix_<FPT> out;
+// (none )
 
-		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
-		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
-		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
-
-		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
-		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
-		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
-
-		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
-		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
-		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
-
-		return out;
-	}
-#endif
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
@@ -840,18 +771,12 @@ private:
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
-		f << h._data;
-/*		for( const auto& li: h._data )
-		{
-			f << "| ";
-			for( const auto& e: li )
-				f << std::setw(6) << e << ' ';
-			f << " |\n";
-		}*/
+		f << "Hmatrix:\n" << h._data;
 		return f;
 	}
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-};
+
+}; // class Hmatrix_
 
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -1021,7 +946,7 @@ public:
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
 // step 1: compute x0, y0, a, b, from matrix
-		const auto& m = _data.get();
+		const auto& m = _data.getRaw();
 		HOMOG2D_INUMTYPE A = m[0][0];
 		HOMOG2D_INUMTYPE C = m[1][1];
 		HOMOG2D_INUMTYPE F = m[2][2];
@@ -4448,6 +4373,8 @@ product(
 	}
 }
 
+
+
 } // namespace detail
 
 
@@ -4600,8 +4527,10 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 	hm._data.inverse();
 	auto hmt = hm;
 	hmt._data.transpose();
-	auto prod = hmt * ell_in * hm;
-	HEllipse_<FPT1> out( prod.getMat() );
+
+	auto prod = hmt.getMat() * ell_in.getMat() * hm.getMat();
+
+	HEllipse_<FPT1> out( prod );
 	return out;
 }
 
@@ -4799,15 +4728,16 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 		throw std::runtime_error( "invalid matrix type" );
 #endif
 	size_t i=0;
+	auto& data = _data.getRaw();
 	switch( type )
 	{
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
-				_data[i/3][i%3] = *it;
+				data[i/3][i%3] = *it;
 			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
-				_data[i/3][i%3] = *it;
+				data[i/3][i%3] = *it;
 			break;
 		default: assert(0);
 	}
