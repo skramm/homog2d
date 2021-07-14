@@ -166,6 +166,7 @@ template<typename FPT> class Segment_;
 template<typename FPT> class Polyline_;
 template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
+template<typename FPT> class HEllipse_;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
@@ -174,18 +175,6 @@ using Line2d_  = Root<type::IsLine,T>;
 
 
 namespace detail {
-
-template<typename FPT>
-using Matrix_ = std::array<std::array<FPT,3>,3> ;
-
-/// forward declaration of function
-template<typename T1,typename T2,typename FPT1,typename FPT2>
-void
-product(
-	Root<T1,FPT1>&        out,
-	const Matrix_<FPT2>&  h,
-	const Root<T2,FPT1>&  in
-);
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
@@ -208,13 +197,181 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	Point2d_<FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
 }
+template<typename T>
+using Matrix_t = std::array<std::array<T,3>,3>;
 
+//------------------------------------------------------------------
+template<typename FPT>
+class Matrix_
+{
+/// forward declaration of function
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
+	friend void
+	product(
+		Root<T1,FPT1>&        out,
+		const detail::Matrix_<FPT2>&  h,
+		const Root<T2,FPT1>&  in
+	);
+
+private:
+	Matrix_t<FPT> _mdata;
+
+public:
+/// Constructor
+	Matrix_()
+	{
+		fillZero();
+	}
+
+	Matrix_t<FPT>&       get()       { return _mdata; }
+	const Matrix_t<FPT>& get() const { return _mdata; }
+
+	template<typename T>
+	void set( size_t r, size_t c, T v )
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		_mdata[r][c] = v;
+	}
+
+
+/// Return determinant of matrix
+/**
+See https://en.wikipedia.org/wiki/Determinant
+*/
+	HOMOG2D_INUMTYPE p_det() const
+	{
+		auto det = _mdata[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		det     -= _mdata[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		det     += _mdata[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		return det;
+	}
+
+	void divideBy( size_t r, size_t c ) const
+	{
+		HOMOG2D_CHECK_ROW_COL;
+		assert( std::fabs( _mdata[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
+		for( auto& li: _mdata )
+			for( auto& e: li )
+				e /= _mdata[r][c];
+	}
+
+/// Transpose and return matrix
+	Matrix_& transpose()
+	{
+		Matrix_t<FPT> out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				out[i][j] = _mdata[j][i];
+		_mdata = out;
+		return *this;
+	}
+
+/// Inverse matrix
+	Matrix_& inverse()
+	{
+		*this = p_inverse();
+		return *this;
+	}
+
+	void fillZero()
+	{
+		for( auto& li: _mdata )
+			for( auto& e: li )
+				e = 0.;
+	}
+	void fillEye()
+	{
+		fillZero();
+		_mdata[0][0] = 1.;
+		_mdata[1][1] = 1.;  // "eye" matrix => unit transformation
+		_mdata[2][2] = 1.;
+	}
+
+	template<typename T>
+	void fillWith( const T& in )
+	{
+		for( auto i=0; i<3; i++ )
+			for( auto j=0; j<3; j++ )
+				_mdata[i][j] = in[i][j];
+	}
+
+private:
+	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
+	{
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _mdata[v[0]][v[1]] ) * _mdata[v[6]][v[7]];
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _mdata[v[2]][v[3]] ) * _mdata[v[4]][v[5]];
+		return det;
+	}
+/// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
+	detail::Matrix_<FPT> p_adjugate() const
+	{
+		detail::Matrix_<FPT> out;
+
+		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
+		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
+
+		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
+		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
+
+		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
+		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
+
+		return out;
+	}
+
+	Matrix_<FPT> p_inverse() const;
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Matrix_& h )
+	{
+		for( const auto& li: h._mdata )
+		{
+			f << "| ";
+			for( const auto& e: li )
+				f << std::setw(6) << e << ' ';
+			f << " |\n";
+		}
+		return f;
+	}
+
+};
+
+template<typename T1,typename T2,typename FPT1,typename FPT2>
+void
+product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
+
+
+/// Divide all elements of \c mat by \v value (free function)
 template<typename FPT1, typename FPT2>
 void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
 {
 	for( int i=0; i<3; i++ )
 		for( int j=0; j<3; j++ )
 			mat[i][j] /= value;
+}
+
+/// Return inverse of matrix
+/// \todo fix magic number
+/**
+Implemented as member function so we can store the threshold in class
+*/
+template<typename FPT>
+Matrix_<FPT>
+Matrix_<FPT>::p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
+{
+	auto det = p_det();
+	if( std::abs(det) <= 1E-10 )
+//	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
+		throw std::runtime_error( "matrix is not invertible" );
+
+	auto adjugate = p_adjugate();
+	divideAll(adjugate, det);
+	return adjugate;
 }
 
 } // namespace detail
@@ -243,9 +400,13 @@ class Hmatrix_
 {
 	template<typename T1,typename T2> friend class Root;
 
-	template<typename T1,typename T2,typename FPT1,typename FPT2>
+/*	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
 	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
+*/
+template<typename FPT1,typename FPT2>
+friend HEllipse_<FPT1>
+operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
 
 	template<typename T,typename U>
 	friend Line2d_<T>
@@ -291,22 +452,21 @@ private:
 		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
+#ifdef HOMOG2D_FUTURE_STUFF
 /// Implementation for epipolar matrices: initialize to aligned axis
 	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
-		p_zero();
+		_data.fillZero();
 		_data[2][1] = 1.;
 		_data[1][2] = 1.;
 		_isNormalized = true;
 	}
+#endif
 
 /// Implementation for homographies: initialize to unit transformation
 	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
 	{
-		p_zero();
-		_data[0][0] = 1.;
-		_data[1][1] = 1.;  // "eye" matrix => unit transformation
-		_data[2][2] = 1.;
+		_data.fillEye();
 		_isNormalized = true;
 	}
 
@@ -329,7 +489,7 @@ Thus some assert can get triggered elsewhere.
 			if( li.size() != 3 )
 				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
 #endif
-		p_fillWith( in );
+		_data.fillWith( in );
 	}
 
 /// Constructor, used to fill with a std::array
@@ -412,8 +572,9 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		_data[0][2] = tx;
-		_data[1][2] = ty;
+		auto& mat = _data.get();
+		mat[0][2] = tx;
+		mat[1][2] = ty;
 		_isNormalized = true;
 		_hasChanged = true;
 		return *this;
@@ -433,10 +594,11 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& setRotation( T theta )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
+		auto& mat = _data.get();
 		init();
-		_data[0][0] = _data[1][1] = std::cos(theta);
-		_data[1][0] = std::sin(theta);
-		_data[0][1] = -_data[1][0];
+		mat[0][0] = mat[1][1] = std::cos(theta);
+		mat[1][0] = std::sin(theta);
+		mat[0][1] = -mat[1][0];
 		_isNormalized = true;
 		_hasChanged = true;
 		return *this;
@@ -475,8 +637,9 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		_data[0][0] = kx;
-		_data[1][1] = ky;
+		auto& mat = _data.get();
+		mat[0][0] = kx;
+		mat[1][1] = ky;
 		_isNormalized = true;
 
 		_hasChanged = true;
@@ -498,22 +661,23 @@ Thus some assert can get triggered elsewhere.
 		auto eps = std::numeric_limits<FPT>::epsilon()*10;
 
 		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
-			p_divideBy( 2, 2 );
+			_data.divideBy( 2, 2 );
 		else
 		{
 			if( std::fabs(_data[2][1]) > eps )
-				p_divideBy( 2, 1 );
+				_data.divideBy( 2, 1 );
 			else
-				p_divideBy( 2, 0 );
+				_data.divideBy( 2, 0 );
 		}
 		if( std::signbit(_data[2][2]) )
-			for( auto& li: _data )
+			for( auto& li: _data._mdata )
 				for( auto& e: li )
 					e = -e;
 		_hasChanged = true;
 		_isNormalized = true;
 	}
 
+#if 0
 private:
 	detail::Matrix_<FPT> p_transpose( const detail::Matrix_<FPT>& m_in ) const
 	{
@@ -534,7 +698,6 @@ private:
 		detail::divideAll(adjugate, det);
 		return adjugate;
 	}
-
 public:
 /// Transpose matrix
 	Hmatrix_& transpose()
@@ -548,25 +711,25 @@ public:
 /// Inverse matrix
 	Hmatrix_& inverse()
 	{
-		_data = p_inverse();
+		_data = _data.p_inverse();
 		normalize();
 		_hasChanged = true;
 		return *this;
 	}
-
+#endif
+public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
-		out.p_zero();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out._data[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
+					out._data.get()[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1._data.get()[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2._data.get()[k][j] );
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -602,6 +765,7 @@ public:
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 private:
+/*
 	void p_zero()
 	{
 		for( auto& li: _data )
@@ -610,6 +774,7 @@ private:
 		_hasChanged = true;
 	}
 	template<typename T>
+
 	void p_fillWith( const T& in )
 	{
 		for( auto i=0; i<3; i++ )
@@ -625,8 +790,8 @@ private:
 			for( auto& e: li )
 				e /= _data[r][c];
 		_hasChanged = true;
-	}
-
+	}*/
+#if 0
 /// Return determinant of matrix
 /**
 See https://en.wikipedia.org/wiki/Determinant
@@ -663,7 +828,7 @@ See https://en.wikipedia.org/wiki/Determinant
 
 		return out;
 	}
-
+#endif
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
@@ -675,13 +840,14 @@ private:
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
-		for( const auto& li: h._data )
+		f << h._data;
+/*		for( const auto& li: h._data )
 		{
 			f << "| ";
 			for( const auto& e: li )
 				f << std::setw(6) << e << ' ';
 			f << " |\n";
-		}
+		}*/
 		return f;
 	}
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
@@ -855,12 +1021,13 @@ public:
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
 // step 1: compute x0, y0, a, b, from matrix
-		HOMOG2D_INUMTYPE A = _data[0][0];
-		HOMOG2D_INUMTYPE C = _data[1][1];
-		HOMOG2D_INUMTYPE F = _data[2][2];
-		HOMOG2D_INUMTYPE B = 2. * _data[0][1];
-		HOMOG2D_INUMTYPE D = 2. * _data[0][2];
-		HOMOG2D_INUMTYPE E = 2. * _data[1][2];
+		const auto& m = _data.get();
+		HOMOG2D_INUMTYPE A = m[0][0];
+		HOMOG2D_INUMTYPE C = m[1][1];
+		HOMOG2D_INUMTYPE F = m[2][2];
+		HOMOG2D_INUMTYPE B = 2. * m[0][1];
+		HOMOG2D_INUMTYPE D = 2. * m[0][2];
+		HOMOG2D_INUMTYPE E = 2. * m[1][2];
 
 		auto denom = B*B - 4. * A * C;
 		auto x0 = ( 2.*C*D - B*E ) / denom;
@@ -1528,6 +1695,7 @@ getBoundingCircle( const FRect_<FPT>& rect )
 	return rect.getBoundingCircle();
 }
 
+/// \todo finish this
 template<typename FPT>
 HEllipse_<FPT>::HEllipse_( const Circle_<FPT>& mat )
 {
@@ -4261,7 +4429,7 @@ namespace detail {
 
 /// Implementation of product 3x3 by 3x1
 /**
-- T1 and T2: type::IsLine or type::IsPoint
+- T1 and T2: type::IsLine or type::IsPoint (same but also different)
 */
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
@@ -4273,9 +4441,9 @@ product(
 {
 	for( int i=0; i<3; i++ )
 	{
-		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h[i][0]) * in._v[0];
-		sum      += h[i][1] * in._v[1];
-		sum      += h[i][2] * in._v[2];
+		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._mdata[i][0]) * in._v[0];
+		sum      += h._mdata[i][1] * in._v[1];
+		sum      += h._mdata[i][2] * in._v[2];
 		out._v[i] = sum;
 	}
 }
@@ -4356,8 +4524,8 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 
 	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
 	{
-		auto mat_inv = h.p_inverse();
-		*h._hmt = h.p_transpose( mat_inv );
+		auto mat_inv = h._data.inverse().transpose();
+		*h._hmt = mat_inv;
 		h._hasChanged = false;
 	}
 
@@ -4402,6 +4570,20 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 	return out;
 }
 
+
+/// Apply homography to a HEllipse_, produces an HEllipse
+/**
+\todo finish this !
+\f[
+Q' = H^{-T} \cdot Q \cdot H^{-1}
+\f]
+*/
+template<typename FPT1,typename FPT2>
+HEllipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const HEllipse_<FPT1>& cir )
+{
+}
+
 /// Apply homography to a Circle, produces an HEllipse
 /**
 \todo finish this !
@@ -4415,12 +4597,12 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
 	HEllipse_<FPT1> ell_in( cir );
 	auto hm = h;
-	hm.inverse();
+	hm._data.inverse();
 	auto hmt = hm;
-	hmt.transpose();
-/*	auto prod = hmt * ell_in.getMat() * hm;
+	hmt._data.transpose();
+	auto prod = hmt * ell_in * hm;
 	HEllipse_<FPT1> out( prod.getMat() );
-	return out;*/
+	return out;
 }
 
 #if 0
