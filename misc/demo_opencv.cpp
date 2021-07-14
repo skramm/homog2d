@@ -770,9 +770,14 @@ void action_H( void* param )
 	auto e_y = 360.;
 	auto e_h = 70.;
 
-	HEllipse_<float> ell( e_x, e_y, e_h, e_h/2. );
-	ell.draw( data.img );
+//	HEllipse ell( e_x, e_y, e_h, e_h/2., 35 );
+//	ell.draw( data.img );
 
+	Circle c_ell( e_x, e_y, e_h );
+
+	c_ell.draw( data.img );
+	auto ell = H * c_ell;
+	ell.draw( data.img2 );
 #if 0
 	Circle ell( e_x, e_y, e_h );
 	auto e_r = ell.getBB();
@@ -911,10 +916,10 @@ void action_CC( void* param )
 
 	data.clearImage();
 
-	Ellipse_<float> ell( Point2d(350,100),200,80);
-	ell.setAngle( 25.*M_PI/180. );
-	ell.draw( data.img );
-	std::cout << ell << '\n';
+//	Ellipse_<float> ell( Point2d(350,100),200,80);
+//	ell.setAngle( 25.*M_PI/180. );
+//	ell.draw( data.img );
+//	std::cout << ell << '\n';
 
 	data.c1.set( data.vpt[0], 80 );
 	data.c2.set( data.vpt[1], 120 );

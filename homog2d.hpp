@@ -276,10 +276,11 @@ public:
 	}
 
 /// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
-	template<typename T>
-	Hmatrix_( T tx, T ty )
+	template<typename T1,typename T2>
+	Hmatrix_( T1 tx, T2 ty )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
 		setTranslation( tx, ty );
 	}
@@ -390,6 +391,10 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		return _data[r][c];
 	}
+
+	detail::Matrix_<FPT>&       getMat()       { return _data; }
+	const detail::Matrix_<FPT>& getMat() const { return _data; }
+
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
 	Hmatrix_& addTranslation( T tx, T ty )
@@ -788,15 +793,17 @@ It can be written as a 3 x 3 matrix:
 
 Matrix coefficients:
 \f[
-\begin{align}
+\begin{aligned}
   A &=   a^2 \sin^2\theta + b^2 \cos^2\theta \\
   B &=  2\left(b^2 - a^2\right) \sin\theta \cos\theta \\
   C &=   a^2 \cos^2\theta + b^2 \sin^2\theta \\
   D &= -2A x_\circ   -  B y_\circ \\
   E &= - B x_\circ   - 2C y_\circ \\
-  F &=   A x_\circ^2 +  B x_\circ y_\circ + C y_\circ^2 - a^2 b^2.
-\end{align}
+  F &=   A x_\circ^2 +  B x_\circ y_\circ + C y_\circ^2 - a^2 b^2
+\end{aligned}
 \f]
+
+Homography projection: https://math.stackexchange.com/a/2320082/133647
 */
 template<typename FPT>
 class HEllipse_
@@ -811,19 +818,34 @@ class HEllipse_
 	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
 
 public:
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1. )
-		: HEllipse_( pt.getX(), pt.getY(), major, minor )
+/// Constructor 1
+	template<typename T1,typename T2,typename T3>
+	HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
+		: HEllipse_( pt.getX(), pt.getY(), major, minor, angle )
+	{}
+
+/// Constructor 2
+	template<typename T1,typename T2,typename T3>
+	HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		HOMOG2D_CHECK_IS_NUMBER(T3);
+		if( major<minor )
+			std::swap( major, minor );
+		p_init( x, y, major, minor, angle );
 	}
 
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1. )
-	{
-		p_init(x,y, major, minor );
-	}
+/// Constructor 3
+	HEllipse_( const detail::Matrix_<FPT>& mat )
+		: _data( mat )
+	{}
+
+/// Constructor 4, import from circle
+	HEllipse_( const Circle_<FPT>& mat );
+
+	detail::Matrix_<FPT>&       getMat()       { return _data; }
+	const detail::Matrix_<FPT>& getMat() const { return _data; }
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Draw ellipse using Opencv
@@ -833,12 +855,12 @@ public:
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
 // step 1: compute x0, y0, a, b, from matrix
-		auto A = _data[0][0];
-		auto C = _data[1][1];
-		auto F = _data[2][2];
-		auto B = 2. * _data[0][1];
-		auto D = 2. * _data[0][2];
-		auto E = 2. * _data[1][2];
+		HOMOG2D_INUMTYPE A = _data[0][0];
+		HOMOG2D_INUMTYPE C = _data[1][1];
+		HOMOG2D_INUMTYPE F = _data[2][2];
+		HOMOG2D_INUMTYPE B = 2. * _data[0][1];
+		HOMOG2D_INUMTYPE D = 2. * _data[0][2];
+		HOMOG2D_INUMTYPE E = 2. * _data[1][2];
 
 		auto denom = B*B - 4. * A * C;
 		auto x0 = ( 2.*C*D - B*E ) / denom;
@@ -850,7 +872,7 @@ public:
 		auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
 		auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
 
-		auto theta = 0.;
+		HOMOG2D_INUMTYPE theta = 0.;
 		if( std::abs(B) < 1.E-10 )
 		{
 			if( A > C )
@@ -882,16 +904,17 @@ public:
 //////////////////////////
 	void p_init( double x0, double y0, double a, double b, double theta=0. )
 	{
-		auto sin2 = std::sin(theta) * std::sin(theta);
-		auto cos2 = std::cos(theta) * std::cos(theta);
-		auto a2 = a*a;
-		auto b2 = b*b;
-		auto A = a2*sin2 + b2*cos2;
-		auto B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
-		auto C = a2 * cos2 + b2 * sin2;
-		auto D = -2.*A * x0 -    B * y0;
-		auto E =   - B * x0 - 2.*C * y0;
-		auto F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
+		HOMOG2D_INUMTYPE sin2 = std::sin(theta) * std::sin(theta);
+		HOMOG2D_INUMTYPE cos2 = std::cos(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE a2   = a*a;
+		HOMOG2D_INUMTYPE b2   = b*b;
+
+		HOMOG2D_INUMTYPE A = a2*sin2 + b2*cos2;
+		HOMOG2D_INUMTYPE B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE C = a2 * cos2 + b2 * sin2;
+		HOMOG2D_INUMTYPE D = -2.*A * x0 -    B * y0;
+		HOMOG2D_INUMTYPE E =   - B * x0 - 2.*C * y0;
+		HOMOG2D_INUMTYPE F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
 
 		_data[0][0] = A;
 		_data[1][1] = C;
@@ -1504,6 +1527,13 @@ getBoundingCircle( const FRect_<FPT>& rect )
 {
 	return rect.getBoundingCircle();
 }
+
+template<typename FPT>
+HEllipse_<FPT>::HEllipse_( const Circle_<FPT>& mat )
+{
+}
+
+
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
@@ -1563,6 +1593,7 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 
 //------------------------------------------------------------------
+#if 0
 /// Ellipse
 template<typename FPT>
 class Ellipse_
@@ -1668,6 +1699,7 @@ public:
 		return f;
 	}
 }; // class Ellipse_
+#endif
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -4370,6 +4402,28 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 	return out;
 }
 
+/// Apply homography to a Circle, produces an HEllipse
+/**
+\todo finish this !
+\f[
+Q' = H^{-T} \cdot Q \cdot H^{-1}
+\f]
+*/
+template<typename FPT1,typename FPT2>
+HEllipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
+{
+	HEllipse_<FPT1> ell_in( cir );
+	auto hm = h;
+	hm.inverse();
+	auto hmt = hm;
+	hmt.transpose();
+/*	auto prod = hmt * ell_in.getMat() * hm;
+	HEllipse_<FPT1> out( prod.getMat() );
+	return out;*/
+}
+
+#if 0
 /// Apply homography to a Circle, produces an Ellipse
 /// \todo finish this !
 template<typename FPT1,typename FPT2>
@@ -4396,6 +4450,7 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 	ell._semiMinor = h * pt2;*/
 	return ell;
 }
+#endif
 
 //------------------------------------------------------------------
 namespace priv {
@@ -4691,6 +4746,7 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 }
 
 //------------------------------------------------------------------
+/// Free function, draws any of the primitives
 template<
 	typename Prim,
 	typename std::enable_if<
@@ -4731,7 +4787,7 @@ void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDr
 	ppts.second.draw( mat, dp );
 }
 
-
+#if 0
 template<typename FPT>
 void
 Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
@@ -4748,7 +4804,7 @@ Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
 		dp._dpValues._lineType
 	);
 }
-
+#endif
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
@@ -4781,7 +4837,8 @@ using FRect = FRect_<double>;
 /// Default polyline type
 using Polyline = Polyline_<double>;
 
-using Ellipse  = Ellipse_<double>;
+//using Ellipse  = Ellipse_<double>;
+using HEllipse = HEllipse_<double>;
 
 // float types
 using Line2dF  = Line2d_<float>;

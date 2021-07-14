@@ -196,6 +196,14 @@ showcase: BUILD/showcase1
 BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
+gitlog:	docs/gitlog_2.svg
+
+BUILD/git_log_2.dat:
+	git log --pretty=format:'%cn %ai' > BUILD/git_log_2.dat
+
+docs/gitlog_2.svg: BUILD/git_log_2.dat
+	misc/plot_gitlog.plt
+
 clean:
 	@-rm -r BUILD/*
 	@-rm homog2d_test
