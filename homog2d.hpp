@@ -40,7 +40,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.4
+#define HOMOG2D_VERSION 2.5
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -278,10 +278,11 @@ public:
 	}
 
 /// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
-	template<typename T>
-	Hmatrix_( T tx, T ty )
+	template<typename T1,typename T2>
+	Hmatrix_( T1 tx, T2 ty )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
 		setTranslation( tx, ty );
 	}
@@ -770,9 +771,6 @@ struct CvDrawParams
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord { X, Y };
 
-/// Used in Line2d::addOffset()
-enum class LineOffset { vert, horiz };
-
 namespace detail {
 
 // forward declaration of template instanciation
@@ -1179,21 +1177,30 @@ public:
 /// Default constructor, unit-radius circle at (0,0)
 	Circle_() : _radius(1.)
 	{}
+
 /// Constructor, given radius circle at (0,0)
-	Circle_( FPT rad ) : _radius(rad)
+	template<typename T>
+	Circle_( T rad ) : _radius(rad)
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
 
-/// Constructor, given radius circle at (0,0)
-	template<typename FPT2>
-	Circle_( const Point2d_<FPT2>& center, FPT rad )
+/// Constructor
+	template<typename T1, typename T2>
+	Circle_( const Point2d_<T1>& center, T2 rad )
 		: _radius(rad), _center(center)
 	{
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
+
+/// Constructor
+	template<typename T1, typename T2>
+	Circle_( T1 x, T1 y, T2 rad )
+		: Circle_( Point2d_<FPT>(x,y), rad )
+	{}
 
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
@@ -2610,6 +2617,7 @@ template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<Polyline_<T>>: std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
@@ -4346,11 +4354,30 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 }
 
 //------------------------------------------------------------------
+/// Free function, draws any of the primitives
+template<
+	typename Prim,
+	typename std::enable_if<
+		priv::IsShape<Prim>::value,
+		Prim
+	>::type* = nullptr
+>
+void draw( cv::Mat& mat, const Prim& prim, const CvDrawParams& dp=CvDrawParams() )
+{
+	prim.draw( mat, dp );
+}
+
 /// Free function, draws a set of points or lines
 /**
 Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
 */
-template<typename T>
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
 void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
 {
 	for( const auto& elem: cont )
