@@ -51,6 +51,7 @@
 		<Unit filename="figures_test/frect_intersect_5.code" />
 		<Unit filename="figures_test/frect_intersect_6.code" />
 		<Unit filename="figures_test/header.cpp" />
+		<Unit filename="gitlog.sh" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
