@@ -6,13 +6,14 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Release">
+			<Target title="test">
 				<Option output="./homog2d" prefix_auto="1" extension_auto="1" />
 				<Option object_output="./" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-I../" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -22,52 +23,142 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../.travis.yml" />
-		<Unit filename="../Makefile" />
-		<Unit filename="../README.md" />
-		<Unit filename="../docs/build_gif.sh" />
-		<Unit filename="../docs/fig1.tex" />
-		<Unit filename="../docs/fig2.tex" />
-		<Unit filename="../docs/figures_src/circles1.cpp" />
-		<Unit filename="../docs/figures_src/frect1.cpp" />
-		<Unit filename="../docs/figures_src/frect2.cpp" />
-		<Unit filename="../docs/figures_src/polyline1.cpp" />
-		<Unit filename="../docs/figures_src/segment1.cpp" />
-		<Unit filename="../docs/homog2d_history.md" />
-		<Unit filename="../docs/homog2d_manual.md" />
-		<Unit filename="../docs/homog2d_qa.md" />
-		<Unit filename="../docs/opencv_notes.md" />
-		<Unit filename="../homog2d.hpp" />
+		<Unit filename="../.travis.yml">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../Makefile">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../README.md">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/build_gif.sh">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/fig1.tex">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/fig2.tex">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/figures_src/circles1.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/figures_src/frect1.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/figures_src/frect2.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/figures_src/polyline1.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/figures_src/segment1.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/homog2d_history.md">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/homog2d_manual.md">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/homog2d_qa.md">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../docs/opencv_notes.md">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="../homog2d.hpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Unit filename="demo_check.cpp" />
-		<Unit filename="demo_opencv.cpp" />
-		<Unit filename="doxyfile" />
-		<Unit filename="doxyfile_opencv" />
-		<Unit filename="extra_style_sheet.css" />
-		<Unit filename="figures_test/footer.cpp" />
-		<Unit filename="figures_test/frect_intersect_1.code" />
-		<Unit filename="figures_test/frect_intersect_2.code" />
-		<Unit filename="figures_test/frect_intersect_3.code" />
-		<Unit filename="figures_test/frect_intersect_4.code" />
-		<Unit filename="figures_test/frect_intersect_5.code" />
-		<Unit filename="figures_test/frect_intersect_6.code" />
-		<Unit filename="figures_test/header.cpp" />
-		<Unit filename="gitlog.sh" />
-		<Unit filename="homog2d_test.cpp" />
-		<Unit filename="no_build/footer.txt" />
-		<Unit filename="no_build/header.txt" />
-		<Unit filename="no_build/no_build_1.cxx" />
-		<Unit filename="no_build/no_build_2.cxx" />
-		<Unit filename="no_build/no_build_3.cxx" />
-		<Unit filename="no_build/no_build_4.cxx" />
-		<Unit filename="no_build/no_build_5.cxx" />
-		<Unit filename="no_build/no_build_6.cxx" />
-		<Unit filename="no_build/no_build_7.cxx" />
-		<Unit filename="no_build/no_build_8.cxx" />
-		<Unit filename="no_build/no_build_9.cxx" />
-		<Unit filename="no_build/readme.txt" />
-		<Unit filename="plot_gitlog.plt" />
-		<Unit filename="showcase1.cpp" />
-		<Unit filename="test_all.sh" />
+		<Unit filename="demo_opencv.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="doxyfile">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="doxyfile_opencv">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="extra_style_sheet.css">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/footer.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_1.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_2.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_3.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_4.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_5.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/frect_intersect_6.code">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="figures_test/header.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="gitlog.sh">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="homog2d_test.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/footer.txt">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/header.txt">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_1.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_2.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_3.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_4.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_5.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_6.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_7.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_8.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/no_build_9.cxx">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="no_build/readme.txt">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="plot_gitlog.plt">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="showcase1.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="test_all.sh">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
