@@ -510,6 +510,7 @@ public:
 - no checking is done on validity of matrix as an homography.
 Thus some assert can get triggered elsewhere.
 */
+
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
@@ -522,7 +523,9 @@ Thus some assert can get triggered elsewhere.
 				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
 #endif
 		detail::Matrix_<FPT>::p_fillWith( in );
+		normalize();
 	}
+
 
 /// Constructor, used to fill with a std::array
 	template<typename T>
@@ -557,6 +560,14 @@ Thus some assert can get triggered elsewhere.
 		, _hmt          (  nullptr )
 	{
 		detail::Matrix_<FPT>::getRaw() = other.getRaw();
+	}
+
+/// Inverse matrix
+	Hmatrix_& inverse()
+	{
+		detail::Matrix_<FPT>::inverse();
+		normalize();
+		return *this;
 	}
 
 #if 0
