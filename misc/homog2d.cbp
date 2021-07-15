@@ -6,18 +6,23 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="test">
+			<Target title="demo">
 				<Option output="./homog2d" prefix_auto="1" extension_auto="1" />
 				<Option object_output="./" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add option="-I../" />
+					<Add directory="../" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 				</Linker>
+			</Target>
+			<Target title="test">
+				<Option output="homog2d" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="gcc" />
 			</Target>
 		</Build>
 		<Compiler>
@@ -71,7 +76,9 @@
 		<Unit filename="../homog2d.hpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="demo_check.cpp" />
+		<Unit filename="demo_check.cpp">
+			<Option target="demo" />
+		</Unit>
 		<Unit filename="demo_opencv.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -112,7 +119,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="homog2d_test.cpp">
-			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="no_build/footer.txt">
 			<Option target="&lt;{~None~}&gt;" />
@@ -161,6 +167,9 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

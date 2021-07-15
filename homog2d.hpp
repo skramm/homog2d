@@ -197,23 +197,15 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	Point2d_<FPT> p11( std::max(p0.getX(), p1.getX()), std::max(p0.getY(), p1.getY()) );
 	return std::make_pair( p00, p11 );
 }
+
 template<typename T>
-using Matrix_t = std::array<std::array<T,3>,3>;
-
-
-/// free function, needed because const issue if member function
-template<typename FPT>
-void p_divideBy( Matrix_t<FPT>& mat,  size_t r, size_t c )
-{
-//	HOMOG2D_CHECK_ROW_COL;
-//	assert( std::fabs( mat[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
-	for( auto& li: mat )
-		for( auto& e: li )
-			e /= mat[r][c];
-}
+using matrix_t = std::array<std::array<T,3>,3>;
 
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
+/**
+Homogeneous (thus the 'mutable' attribute).
+*/
 template<typename FPT>
 class Matrix_
 {
@@ -226,28 +218,43 @@ class Matrix_
 		const Root<T2,FPT1>&  in
 	);
 
-private:
-	Matrix_t<FPT> _mdata;
+protected:
+	mutable matrix_t<FPT> _mdata;
+	mutable bool          _isNormalized = false;
 
 public:
 /// Constructor
 	Matrix_()
 	{
-		fillZero();
+		p_fillZero();
 	}
 
-	Matrix_t<FPT>&       getRaw()       { return _mdata; }
-	const Matrix_t<FPT>& getRaw() const { return _mdata; }
+	matrix_t<FPT>&       getRaw()       { return _mdata; }
+	const matrix_t<FPT>& getRaw() const { return _mdata; }
 
-	template<typename T>
+/*	template<typename T>
 	void set( size_t r, size_t c, T v )
 	{
 		#ifndef HOMOG2D_NOCHECKS
 			HOMOG2D_CHECK_ROW_COL;
 		#endif
 		_mdata[r][c] = v;
-	}
+	}*/
 
+	const FPT& value( size_t r, size_t c ) const
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		return _mdata[r][c];
+	}
+	FPT& value( size_t r, size_t c )
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		return _mdata[r][c];
+	}
 
 /// Return determinant of matrix
 /**
@@ -261,63 +268,79 @@ See https://en.wikipedia.org/wiki/Determinant
 		return det;
 	}
 
-	void divideBy( size_t r, size_t c ) const
-	{
-		HOMOG2D_CHECK_ROW_COL;
-		assert( std::fabs( _mdata[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
-		p_divideBy( _mdata, r, c );
-/*		for( auto& li: _mdata )
-			for( auto& e: li )
-				e /= _mdata[r][c];*/
-	}
-
 /// Transpose and return matrix
 	Matrix_& transpose()
 	{
-		Matrix_t<FPT> out;
+		std::cout << "transpose: start\n";
+		matrix_t<FPT> out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				out[i][j] = _mdata[j][i];
 		_mdata = out;
+		_isNormalized = false;
+		std::cout << "transpose: end\n";
 		return *this;
 	}
 
 /// Inverse matrix
 	Matrix_& inverse()
 	{
-		*this = p_inverse();
+		std::cout << "INVERSE\n";
+		auto det = determ();
+		if( std::abs(det) <= 1E-10 )
+//	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
+			throw std::runtime_error( "matrix is not invertible" );
+
+		auto adjugate = p_adjugate();
+		p_divideAll(adjugate, det);
+
+		_isNormalized = false;
 		return *this;
 	}
+	bool& isNormalized() { return _isNormalized; }
+	const bool& isNormalized() const { return _isNormalized; }
 
-	void fillZero()
+protected:
+	void p_divideBy( size_t r, size_t c ) const
+	{
+		HOMOG2D_CHECK_ROW_COL;
+		assert( std::fabs( _mdata[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
+		for( auto& li: _mdata )
+			for( auto& e: li )
+				e /= _mdata[r][c];
+	}
+
+	void p_fillZero()
 	{
 		for( auto& li: _mdata )
 			for( auto& e: li )
 				e = 0.;
 	}
-	void fillEye()
+	void p_fillEye()
 	{
-		fillZero();
+		p_fillZero();
 		_mdata[0][0] = 1.;
 		_mdata[1][1] = 1.;  // "eye" matrix => unit transformation
 		_mdata[2][2] = 1.;
 	}
 
 	template<typename T>
-	void fillWith( const T& in )
+	void p_fillWith( const T& in )
 	{
 		for( auto i=0; i<3; i++ )
 			for( auto j=0; j<3; j++ )
 				_mdata[i][j] = in[i][j];
+		_isNormalized = false;
 	}
 
 /// Divide all elements of \c mat by \v value (free function)
 	template<typename FPT2>
-	void divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
+	void p_divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
 	{
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				mat._mdata[i][j] /= value;
+		_isNormalized = false;
 	}
 
 /// Matrix multiplication
@@ -330,6 +353,7 @@ See https://en.wikipedia.org/wiki/Determinant
 					out._mdata[i][j] +=
 						static_cast<HOMOG2D_INUMTYPE>(   h1._mdata[i][k] )
 						* static_cast<HOMOG2D_INUMTYPE>( h2._mdata[k][j] );
+		out._isNormalized = false;
 		return out;
 	}
 
@@ -344,7 +368,7 @@ private:
 	detail::Matrix_<FPT> p_adjugate() const
 	{
 		detail::Matrix_<FPT> mat_out;
-		Matrix_t<FPT>& out = mat_out._mdata;
+		matrix_t<FPT>& out = mat_out._mdata;
 
 		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
 		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
@@ -360,8 +384,6 @@ private:
 
 		return mat_out;
 	}
-
-	Matrix_<FPT> p_inverse() const;
 
 	friend std::ostream&
 	operator << ( std::ostream& f, const Matrix_& h )
@@ -382,24 +404,7 @@ template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 
-/// Return inverse of matrix
-/// \todo fix magic number
-/**
-Implemented as member function so we can store the threshold in class
-*/
-template<typename FPT>
-Matrix_<FPT>
-Matrix_<FPT>::p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
-{
-	auto det = determ();
-	if( std::abs(det) <= 1E-10 )
-//	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
-		throw std::runtime_error( "matrix is not invertible" );
 
-	auto adjugate = p_adjugate();
-	divideAll(adjugate, det);
-	return adjugate;
-}
 
 } // namespace detail
 
@@ -423,7 +428,7 @@ Implemented as a 3x3 matrix
 Templated by Floating-Point Type (FPT) and by type M (type::IsEpipmat or type::IsHomogr)
  */
 template<typename M,typename FPT>
-class Hmatrix_
+class Hmatrix_ : public detail::Matrix_<FPT>
 {
 	template<typename T1,typename T2> friend class Root;
 
@@ -431,10 +436,10 @@ class Hmatrix_
 	friend void
 	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 */
-	template<typename FPT1,typename FPT2>
+/*	template<typename FPT1,typename FPT2>
 	friend HEllipse_<FPT1>
 	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
-
+*/
 	template<typename T,typename U>
 	friend Line2d_<T>
 	operator * ( const Homogr_<U>&, const Line2d_<T>& );
@@ -456,7 +461,7 @@ public:
 
 /// Constructor, set homography to a rotation matrix of angle \c val
 	template<typename T>
-	Hmatrix_( T val )
+	explicit Hmatrix_( T val )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
@@ -465,7 +470,7 @@ public:
 
 /// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
 	template<typename T1,typename T2>
-	Hmatrix_( T1 tx, T2 ty )
+	explicit Hmatrix_( T1 tx, T2 ty )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
@@ -493,8 +498,8 @@ private:
 /// Implementation for homographies: initialize to unit transformation
 	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
 	{
-		_data.fillEye();
-		_isNormalized = true;
+		detail::Matrix_<FPT>::p_fillEye();
+		detail::Matrix_<FPT>::isNormalized() = true;
 	}
 
 public:
@@ -516,7 +521,7 @@ Thus some assert can get triggered elsewhere.
 			if( li.size() != 3 )
 				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
 #endif
-		_data.fillWith( in );
+		detail::Matrix_<FPT>::p_fillWith( in );
 	}
 
 /// Constructor, used to fill with a std::array
@@ -524,7 +529,7 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_( const std::array<std::array<T,3>,3>& in )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		p_fillWith( in );
+		detail::Matrix_<FPT>::p_fillWith( in );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -539,21 +544,22 @@ Thus some assert can get triggered elsewhere.
 /// Assignment operator
 	Hmatrix_& operator = ( const Hmatrix_<M,FPT>& other )
 	{
-		_data         = other._data;
-		_hasChanged   = true;
-		_isNormalized = false;
-		_hmt          = nullptr;
+		if( this != &other )
+			detail::Matrix_<FPT>::getRaw() = other.getRaw();
+
 		return *this;
 	}
 
 /// Copy-constructor
 	Hmatrix_( const Hmatrix_<M,FPT>& other )
-		:_data          ( other._data )
-		, _hasChanged   ( true )
+		: _hasChanged   ( true )
 		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
-	{}
+	{
+		detail::Matrix_<FPT>::getRaw() = other.getRaw();
+	}
 
+#if 0
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -570,7 +576,7 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = false;
 		_hasChanged = true;
 	}
-/*
+
 /// Getter
 	FPT get( size_t r, size_t c ) const
 	{
@@ -579,12 +585,13 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		return _data[r][c];
 	}
-*/
-	detail::Matrix_<FPT>&       getMat()       { return _data; }
-	const detail::Matrix_<FPT>& getMat() const { return _data; }
 
-//	detail::Matrix_t<FPT>&       getRawMat()       { return _data._mdata; }
-//	const detail::Matrix_t<FPT>& getRawMat() const { return _data._mdata; }
+	detail::Matrix_<FPT>&       getMat()       { return static_cast<detail::Matrix_<FPT>>(*this); }
+	const detail::Matrix_<FPT>& getMat() const { return static_cast<detail::Matrix_<FPT>>(*this); }
+//	detail::matrix_t<FPT>&       getRawMat()       { return _data._mdata; }
+//	const detail::matrix_t<FPT>& getRawMat() const { return _data._mdata; }
+#endif // 0
+
 
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
@@ -603,7 +610,7 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		auto& mat = _data.getRaw();
+		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][2] = tx;
 		mat[1][2] = ty;
 		_isNormalized = true;
@@ -625,7 +632,7 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& setRotation( T theta )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		auto& mat = _data.getRaw();
+		auto& mat = detail::Matrix_<FPT>::_mdata;
 		init();
 		mat[0][0] = mat[1][1] = std::cos(theta);
 		mat[1][0] = std::sin(theta);
@@ -668,7 +675,7 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		auto& mat = _data.getRaw();
+		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][0] = kx;
 		mat[1][1] = ky;
 		_isNormalized = true;
@@ -689,20 +696,20 @@ Thus some assert can get triggered elsewhere.
 /** \todo replace magic number with something else */
 	void normalize() const
 	{
-		auto& mat = _data.getRaw();
 		auto eps = std::numeric_limits<FPT>::epsilon()*10;
+		auto& data = detail::Matrix_<FPT>::_mdata;
 
-		if( std::fabs(mat[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
-			_data.divideBy( 2, 2 );
+		if( std::fabs(data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
+			detail::Matrix_<FPT>::p_divideBy( 2, 2 );
 		else
 		{
-			if( std::fabs(mat[2][1]) > eps )
-				_data.divideBy( 2, 1 );
+			if( std::fabs(data[2][1]) > eps )
+				detail::Matrix_<FPT>::p_divideBy( 2, 1 );
 			else
-				_data.divideBy( 2, 0 );
+				detail::Matrix_<FPT>::p_divideBy( 2, 0 );
 		}
-		if( std::signbit( mat[2][2] ) )
-			for( auto& li: mat )
+		if( std::signbit( data[2][2] ) )
+			for( auto& li: data )
 				for( auto& e: li )
 					e = -e;
 		_hasChanged = true;
@@ -720,9 +727,9 @@ public:
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out.getMat().getRaw()[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1.getMat().getRaw()[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2.getMat().getRaw()[k][j] );
+					out.value(i,j) += //getMat().getRaw()[i][j] +=
+						static_cast<HOMOG2D_INUMTYPE>(   h1.value(i,k) ) //Mat().getRaw()[i][k] )
+						* static_cast<HOMOG2D_INUMTYPE>( h2.value(k,j) ); //Mat().getRaw()[k][j] );
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -732,6 +739,8 @@ public:
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Hmatrix_& h ) const
 	{
+		auto& data = detail::Matrix_<FPT>::_mdata;
+
 		if( !_isNormalized )
 			normalize();
 		if( !h._isNormalized )
@@ -741,7 +750,7 @@ public:
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
-					static_cast<HOMOG2D_INUMTYPE>( _data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h._data[i][j] ) )
+					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h.value(i,j) ) )
 					>= eps
 				)
 					return false;
@@ -764,14 +773,15 @@ public:
 //      DATA SECTION    //
 //////////////////////////
 private:
-	mutable detail::Matrix_<FPT> _data;
+//	mutable detail::Matrix_<FPT> _data;
 	mutable bool _hasChanged   = true;
 	mutable bool _isNormalized = false;
 	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
-		f << "Hmatrix:\n" << h._data;
+		f << "Hmatrix:\n"
+			<< static_cast<const detail::Matrix_<FPT>&>(h);
 		return f;
 	}
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
@@ -897,7 +907,7 @@ Matrix coefficients:
 Homography projection: https://math.stackexchange.com/a/2320082/133647
 */
 template<typename FPT>
-class HEllipse_
+class HEllipse_: public detail::Matrix_<FPT>
 {
 	template<typename T> friend class HEllipse_;
 
@@ -909,15 +919,18 @@ class HEllipse_
 	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
 
 public:
+	HEllipse_(): HEllipse_( 0., 0., 2., 1., 0. )
+	{}
+
 /// Constructor 1
 	template<typename T1,typename T2,typename T3>
-	HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
+	explicit HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
 		: HEllipse_( pt.getX(), pt.getY(), major, minor, angle )
 	{}
 
 /// Constructor 2
 	template<typename T1,typename T2,typename T3>
-	HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
+	explicit HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
@@ -928,15 +941,17 @@ public:
 	}
 
 /// Constructor 3
-	HEllipse_( const detail::Matrix_<FPT>& mat )
-		: _data( mat )
+	HEllipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
 	{}
 
 /// Constructor 4, import from circle
-	HEllipse_( const Circle_<FPT>& mat );
+	explicit HEllipse_( const Circle_<FPT>& cir )
+	{
+		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
+	}
 
-	detail::Matrix_<FPT>&       getMat()       { return _data; }
-	const detail::Matrix_<FPT>& getMat() const { return _data; }
+//	detail::Matrix_<FPT>&       getMat()       { return _mdata; }
+//	const detail::Matrix_<FPT>& getMat() const { return _mdata; }
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Draw ellipse using Opencv
@@ -945,8 +960,9 @@ public:
 */
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
 	{
+		auto& m = detail::Matrix_<FPT>::_mdata;
 // step 1: compute x0, y0, a, b, from matrix
-		const auto& m = _data.getRaw();
+//		const auto& m = _data.getRaw();
 		HOMOG2D_INUMTYPE A = m[0][0];
 		HOMOG2D_INUMTYPE C = m[1][1];
 		HOMOG2D_INUMTYPE F = m[2][2];
@@ -996,6 +1012,7 @@ public:
 //////////////////////////
 	void p_init( double x0, double y0, double a, double b, double theta=0. )
 	{
+		auto& data = detail::Matrix_<FPT>::_mdata;
 		HOMOG2D_INUMTYPE sin2 = std::sin(theta) * std::sin(theta);
 		HOMOG2D_INUMTYPE cos2 = std::cos(theta) * std::cos(theta);
 		HOMOG2D_INUMTYPE a2   = a*a;
@@ -1008,21 +1025,21 @@ public:
 		HOMOG2D_INUMTYPE E =   - B * x0 - 2.*C * y0;
 		HOMOG2D_INUMTYPE F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
 
-		_data[0][0] = A;
-		_data[1][1] = C;
-		_data[2][2] = F;
+		data[0][0] = A;
+		data[1][1] = C;
+		data[2][2] = F;
 
-		_data[0][1] = _data[1][0] = B / 2.;
-		_data[0][2] = _data[2][0] = D / 2.;
-		_data[1][2] = _data[2][1] = E / 2.;
+		data[0][1] = data[1][0] = B / 2.;
+		data[0][2] = data[2][0] = D / 2.;
+		data[1][2] = data[2][1] = E / 2.;
 	}
 
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 
-private:
-	mutable detail::Matrix_<FPT> _data;
+//private:
+//	mutable detail::Matrix_<FPT> _data;
 
 }; // class HEllipse
 
@@ -1452,7 +1469,7 @@ public:
 
 /// Constructor, given radius circle at (0,0)
 	template<typename T>
-	Circle_( T rad ) : _radius(rad)
+	explicit Circle_( T rad ) : _radius(rad)
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
@@ -1620,12 +1637,15 @@ getBoundingCircle( const FRect_<FPT>& rect )
 	return rect.getBoundingCircle();
 }
 
+/*
+/// Constructor: build Ellipse from Circle
 /// \todo finish this
 template<typename FPT>
-HEllipse_<FPT>::HEllipse_( const Circle_<FPT>& mat )
+HEllipse_<FPT>::HEllipse_( const Circle_<FPT>& cir )
 {
+	p_init( cir.center().getX(), cir.center().getY(), radius(), radius(), 0. );
 }
-
+*/
 
 //------------------------------------------------------------------
 /// Holds private stuff
@@ -4417,6 +4437,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 	return line;
 }
 
+#if 0
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
 template<typename T,typename U,typename V>
@@ -4427,6 +4448,7 @@ operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 	detail::product( out, h._data, in );
 	return out;
 }
+#endif
 
 /// Free function, apply homography to a point.
 template<typename T,typename U>
@@ -4434,7 +4456,7 @@ Point2d_<T>
 operator * ( const Homogr_<U>& h, const Point2d_<T>& in )
 {
 	Point2d_<T> out;
-	detail::product( out, h._data, in );
+	detail::product( out, h, in );
 	return out;
 }
 
@@ -4451,7 +4473,8 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 
 	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
 	{
-		auto mat_inv = h._data.inverse().transpose();
+		auto hi = h;
+		auto mat_inv = hi.inverse().transpose();
 		*h._hmt = mat_inv;
 		h._hasChanged = false;
 	}
@@ -4522,13 +4545,15 @@ template<typename FPT1,typename FPT2>
 HEllipse_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
-	HEllipse_<FPT1> ell_in( cir );
-	auto hm = h;
-	hm._data.inverse();
-	auto hmt = hm;
-	hmt._data.transpose();
+	HEllipse_<FPT1> ell_in; //( cir );
+	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
+	hm.inverse();
+	auto hmt = static_cast<detail::Matrix_<FPT2>>(hm);
+	hmt.transpose();
 
-	auto prod = hmt.getMat() * ell_in.getMat() * hm.getMat();
+	const auto& ell_in2 = static_cast<detail::Matrix_<FPT1>>(ell_in);
+	auto prod = hmt * ell_in2 * hm;
+//	auto prod = hmt.getMat() * ell_in.getMat() * hm.getMat();
 
 	HEllipse_<FPT1> out( prod );
 	return out;
@@ -4691,6 +4716,7 @@ template<typename W,typename FPT>
 void
 Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
+	auto& data = detail::Matrix_<FPT>::_mdata;
 #ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid OpenCv matrix type" );
@@ -4701,11 +4727,11 @@ Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 	{
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
-				*it = _data[i/3][i%3];
+				*it = data[i/3][i%3];
 			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
-				*it = _data[i/3][i%3];
+				*it = data[i/3][i%3];
 			break;
 		default: assert(0);
 	}
@@ -4728,7 +4754,8 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 		throw std::runtime_error( "invalid matrix type" );
 #endif
 	size_t i=0;
-	auto& data = _data.getRaw();
+
+	auto& data = detail::Matrix_<FPT>::_mdata;
 	switch( type )
 	{
 		case CV_64F:
