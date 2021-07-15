@@ -444,6 +444,7 @@ TEST_CASE( "offset test", "[test3]" )
 }
 #endif
 
+#ifdef HOMOG2D_FUTURE_STUFF
 TEST_CASE( "test Epipmat", "[t_epipmat]" )
 {
 	Epipmat m;
@@ -459,6 +460,7 @@ TEST_CASE( "test Epipmat", "[t_epipmat]" )
 	CHECK( p2.type() == Type::Point2d );
 	CHECK( p2.getY() == 10. );
 }
+#endif
 
 TEST_CASE( "Homogr constructors", "[testHC]" )
 {
@@ -474,8 +476,8 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 	}
 	{
 		Homogr H0( 4. , 7. );
-		CHECK( H0.get( 0, 2 ) == 4. );
-		CHECK( H0.get( 1, 2 ) == 7. );
+		CHECK( H0.value( 0, 2 ) == 4. );
+		CHECK( H0.value( 1, 2 ) == 7. );
 	}
 }
 
