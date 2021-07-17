@@ -568,6 +568,13 @@ TEST_CASE( "test Homogr", "[testH]" )
 	}
 }
 
+/*
+Online inverse:
+| 1 -1  2 | -1     |   3/16  -1/32   3/16 |    | -3/2    1/4  -3/2 |
+| 4  0  6 |     =  | -17/16  11/32  -1/16 | =  | 17/2  -11/4   1/2 |
+| 5  1  1 |        |  -1/8    3/16  -1/8  |    |  1     -3/2   1   |
+
+*/
 TEST_CASE( "matrix inversion", "[testH3]" )
 {
 	Homogr_<NUMTYPE> H;
@@ -600,6 +607,12 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 
 		H2 = H;        // inverting twice = original matrix
 		H2.inverse();
+		Homogr_<NUMTYPE> HI = std::vector<std::vector<NUMTYPE>>{
+				{ -3./2,   1./4,  -3./2 },
+				{ 17./2, -11./4,   1./2 },
+				{  1.  ,  -3./2,   1.   }
+			};
+		CHECK( H2 == HI );
 		H2.inverse();
 		CHECK( H == H2 );
 

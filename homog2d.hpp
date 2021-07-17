@@ -293,7 +293,7 @@ See https://en.wikipedia.org/wiki/Determinant
 
 		auto adjugate = p_adjugate();
 		p_divideAll(adjugate, det);
-
+		_mdata = adjugate._mdata;
 		_isNormalized = false;
 		return *this;
 	}
