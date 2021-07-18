@@ -189,7 +189,7 @@ Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
 will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
-![fig1](../docs/fig3.png)
+![fig3](../docs/fig3.png)
 
 Similarly, you can also directly use as input a point on the line:
 ```C++

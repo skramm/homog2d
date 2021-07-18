@@ -779,9 +779,7 @@ void action_H( void* param )
 	ecenter.draw( data.img2 );
 
 	auto ell_bb = ell.getBB();
-//	ell_bb.draw( data.img2 );
-
-
+	ell_bb.draw( data.img2 );
 
 	data.showImage();
 }

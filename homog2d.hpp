@@ -981,6 +981,12 @@ public:
 #endif
 
 	Point2d_<FPT> getCenter() const;
+
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const
+	{
+		return std::make_pair( _semiMajor, _semiMinor );
+	}
+
 	Polyline_<FPT> getBB() const;
 
 //////////////////////////
@@ -1008,13 +1014,22 @@ public:
 		data[0][1] = data[1][0] = B / 2.;
 		data[0][2] = data[2][0] = D / 2.;
 		data[1][2] = data[2][1] = E / 2.;
+
+		_eqCoeffs[0] = A;
+		_eqCoeffs[1] = B;
+		_eqCoeffs[2] = C;
+		_eqCoeffs[3] = D;
+		_eqCoeffs[4] = E;
+		_eqCoeffs[5] = F;
 	}
 
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 
-// (none)
+	std::array<FPT,6> _eqCoeffs; ///< equation coefficients, A through F
+	Point2d_<FPT> _center;
+	FPT           _semiMajor, _semiMinor;
 
 }; // class HEllipse
 
@@ -1761,115 +1776,6 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 } // namespace priv
 
-
-//------------------------------------------------------------------
-#if 0
-/// Ellipse
-template<typename FPT>
-class Ellipse_
-{
-	template<typename T> friend class Ellipse_;
-
-	template<typename FPT1,typename FPT2>
-	friend Ellipse_<FPT1>
-	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
-
-private:
-	Point2d_<FPT> _ecenter;
-	Point2d_<FPT> _semiMajor;
-	Point2d_<FPT> _semiMinor;
-
-public:
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	Ellipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1. )
-		: _ecenter( pt )
-	{
-		 _semiMajor.set( pt.getX()+major, pt.getY() );
-		 _semiMinor.set( pt.getX(),       pt.getY()+minor );
-	}
-
-/// Constructor: horizontal ellipse
-	template<typename T1, typename T2>
-	Ellipse_( T1 x, T1 y, T2 major, T2 minor )
-		: Ellipse_( Point2d_<FPT>( x, y), major, minor )
-	{}
-
-/// Constructor: horizontal ellipse
-	template<typename T1>
-	Ellipse_( const Point2d_<T1>& pt )
-		: _ecenter( pt )
-	{
-		 _semiMajor.set( pt.getX()+2., pt.getY() );
-		 _semiMinor.set( pt.getX(),    pt.getY()+1. );
-	}
-
-	Point2d_<FPT>&       center()       { return _ecenter; }
-	const Point2d_<FPT>& center() const { return _ecenter; }
-
-
-	HOMOG2D_INUMTYPE getMajorDist() const
-	{
-		return _ecenter.distTo( _semiMajor );
-	}
-	HOMOG2D_INUMTYPE getMinorDist() const
-	{
-		return _ecenter.distTo( _semiMinor );
-	}
-	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMinDist() const
-	{
-		return std::make_pair(
-			_ecenter.distTo( _semiMajor ),
-			_ecenter.distTo( _semiMinor )
-		);
-	}
-	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const
-	{
-		return std::make_pair( _semiMajor, _semiMinor );
-	}
-
-	template<typename T>
-	void setAngle( T angle )
-	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
-#ifndef HOMOG2D_NOCHECKS
-		if( std::abs(angle) > M_PI )
-			HOMOG2D_THROW_ERROR_1( "invalid value for angle: " + std::to_string( angle ) );
-#endif
-		Homogr_<HOMOG2D_INUMTYPE> H( -_ecenter.getX(), -_ecenter.getY() );
-		H.addRotation( angle ).addTranslation( _ecenter.getX(), _ecenter.getY() );
-		_semiMajor = H * _semiMajor;
-		_semiMinor = H * _semiMinor;
-//		_eAngle = angle;
-//		_angleChanged = false;
-	}
-
-	HOMOG2D_INUMTYPE getAngle() const
-	{
-//		if( _angleChanged )
-		{
-			auto lineH = Point2d_<FPT>(0,0) * Point2d_<FPT>(100,0);
-			return lineH.getAngle( Line2d_<FPT>(_ecenter, _semiMajor) );
-//			_angleChanged = false;
-		}
-//		return _eAngle;
-	}
-
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
-#endif // HOMOG2D_USE_OPENCV
-
-	friend std::ostream&
-	operator << ( std::ostream& f, const Ellipse_<FPT>& ell )
-	{
-		auto ppts = ell.getMajMin();
-		f << "center=" << ell._ecenter
-			<< " maj=" << ppts.first
-			<< " min=" << ppts.second;
-		return f;
-	}
-}; // class Ellipse_
-#endif
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -4562,29 +4468,14 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 
 /// Apply homography to a HEllipse_, produces an HEllipse
 /**
-\todo finish this !
 \f[
 Q' = H^{-T} \cdot Q \cdot H^{-1}
 \f]
 */
 template<typename FPT1,typename FPT2>
 HEllipse_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const HEllipse_<FPT1>& cir )
+operator * ( const Homogr_<FPT2>& h, const HEllipse_<FPT1>& ell_in )
 {
-}
-
-/// Apply homography to a Circle, produces an HEllipse
-/**
-\todo finish this !
-\f[
-Q' = H^{-T} \cdot Q \cdot H^{-1}
-\f]
-*/
-template<typename FPT1,typename FPT2>
-HEllipse_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
-{
-	HEllipse_<FPT1> ell_in( cir );
 	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
 	hm.inverse();
 	auto hmt = hm;
@@ -4592,40 +4483,20 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 
 	const auto& ell_in2 = static_cast<detail::Matrix_<FPT1>>(ell_in);
 	auto prod = hmt * ell_in2 * hm;
-//	auto prod = hmt.getMat() * ell_in.getMat() * hm.getMat();
 
 	HEllipse_<FPT1> out( prod );
 	return out;
 }
 
-#if 0
-/// Apply homography to a Circle, produces an Ellipse
-/// \todo finish this !
+/// Apply homography to a Circle, produces an HEllipse
+/** Converts the circle to an ellipse, then calls the corresponding code */
 template<typename FPT1,typename FPT2>
-Ellipse_<FPT1>
+HEllipse_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
-	auto pt = h * cir.center();
-	Ellipse_<FPT1> ell( pt );
-	auto bb = cir.getBB();
-	auto bb2 = h * bb;
-	auto vpts = getMiddlePoints( bb2.getSegs() );
-
-
-/*	Point2d_<HOMOG2D_INUMTYPE> pt1(
-		cir.center().getX() - cir.radius(),
-		cir.center().getY()
-	);
-	Point2d_<HOMOG2D_INUMTYPE> pt2(
-		cir.center().getX(),
-		cir.center().getY() + cir.radius()
-	);
-
-	ell._semiMajor = h * pt1;
-	ell._semiMinor = h * pt2;*/
-	return ell;
+	HEllipse_<FPT1> ell_in( cir );
+	return h * ell_in;
 }
-#endif
 
 //------------------------------------------------------------------
 namespace priv {
@@ -4930,9 +4801,8 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 	return false;
 }
 
-
-
 //------------------------------------------------------------------
+/// Draw Polyline
 template<typename FPT>
 void
 Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
@@ -4947,12 +4817,11 @@ Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
 		Segment_<FPT>(pt1,pt2).draw( mat, dp );
 //			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
 	}
-	if( size() < 3 ) // nothing to draw
+	if( size() < 3 ) // no last segment
 		return;
 	if( _isClosed )
 		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
 }
-
 
 //------------------------------------------------------------------
 /// Draw ellipse using Opencv
@@ -4964,8 +4833,6 @@ void
 HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
-// step 1: compute x0, y0, a, b, from matrix
-//		const auto& m = _data.getRaw();
 	HOMOG2D_INUMTYPE A = m[0][0];
 	HOMOG2D_INUMTYPE C = m[1][1];
 	HOMOG2D_INUMTYPE F = m[2][2];
@@ -4980,8 +4847,8 @@ HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 	auto AmC = A-C;
 	auto AmC2 = AmC*AmC;
 	auto sqr = std::sqrt(AmC2+B*B);
-	auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
-	auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+	auto a = -std::sqrt( common_ab * ( A+C+sqr ) ) / denom;
+	auto b = -std::sqrt( common_ab * ( A+C-sqr ) ) / denom;
 
 	HOMOG2D_INUMTYPE theta = 0.;
 	if( std::abs(B) < 1.E-10 )
@@ -4995,7 +4862,6 @@ HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 		theta = std::atan( t );
 	}
 
-// step 2: draw
 	cv::ellipse(
 		mat,
 		cv::Point( x0,y0 ),
@@ -5101,7 +4967,6 @@ using FRect = FRect_<double>;
 /// Default polyline type
 using Polyline = Polyline_<double>;
 
-//using Ellipse  = Ellipse_<double>;
 using HEllipse = HEllipse_<double>;
 
 // float types
