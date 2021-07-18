@@ -173,6 +173,24 @@ using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
 
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - PUBLIC ENUM DECLARATIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/// Used in Line2d::getValue() and getOrthogonalLine()
+enum class GivenCoord: char { X, Y };
+
+enum class LineDir: char { H, V };
+
+/// Used in Polyline_ constructors
+enum class IsClosed: char { Yes, No };
+
+/// Type of Root object, see Root::type()
+enum class Type : char { Line2d, Point2d };
+
+/// Type of underlying floating point, see Root::dtype()
+enum class Dtype : char { Float, Double, LongDouble };
+
 
 namespace detail {
 
@@ -271,21 +289,18 @@ See https://en.wikipedia.org/wiki/Determinant
 /// Transpose and return matrix
 	Matrix_& transpose()
 	{
-		std::cout << "transpose: start\n";
 		matrix_t<FPT> out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				out[i][j] = _mdata[j][i];
 		_mdata = out;
 		_isNormalized = false;
-		std::cout << "transpose: end\n";
 		return *this;
 	}
 
 /// Inverse matrix
 	Matrix_& inverse()
 	{
-		std::cout << "INVERSE\n";
 		auto det = determ();
 		if( std::abs(det) <= 1E-10 )
 //	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
@@ -731,16 +746,14 @@ public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication
-/** \todo pretty ugly: out.getMat().getRaw()[i][j]  */
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
-					out.value(i,j) += //getMat().getRaw()[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1.value(i,k) ) //Mat().getRaw()[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2.value(k,j) ); //Mat().getRaw()[k][j] );
+					out.value(i,j) +=
+						static_cast<HOMOG2D_INUMTYPE>( h1.value(i,k) ) * h2.value(k,j);
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -925,11 +938,13 @@ class HEllipse_: public detail::Matrix_<FPT>
 	template<typename FPT1,typename FPT2>
 	friend HEllipse_<FPT1>
 	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
+
 	template<typename FPT1,typename FPT2>
 	friend HEllipse_<FPT1>
 	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
 
 public:
+/// Default constructor: centered at (0,0), major=2, minor=1
 	HEllipse_(): HEllipse_( 0., 0., 2., 1., 0. )
 	{}
 
@@ -952,7 +967,7 @@ public:
 	}
 
 /// Constructor 3
-	HEllipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
+	explicit HEllipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
 	{}
 
 /// Constructor 4, import from circle
@@ -961,13 +976,12 @@ public:
 		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
 	}
 
-//	detail::Matrix_<FPT>&       getMat()       { return _mdata; }
-//	const detail::Matrix_<FPT>& getMat() const { return _mdata; }
-
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
 
+	Point2d_<FPT> getCenter() const;
+	Polyline_<FPT> getBB() const;
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1000,25 +1014,106 @@ public:
 //      DATA SECTION    //
 //////////////////////////
 
-//private:
-//	mutable detail::Matrix_<FPT> _data;
+// (none)
 
 }; // class HEllipse
 
-//------------------------------------------------------------------
-/// Used in Line2d::getValue() and getOrthogonalLine()
-enum class GivenCoord: char { X, Y };
 
-enum class LineDir: char { H, V };
+#ifdef HOMOG2D_FUTURE_STUFF
+namespace ellipse {
 
-/// Used in Polyline_ constructors
-enum class IsClosed: char { Yes, No };
+std::array<HOMOG2D_INUMTYPE,6>
+getEllipseCoeffs()
+{
 
-/// Type of Root object, see Root::type()
-enum class Type : char { Line2d, Point2d };
+}
 
-/// Type of underlying floating point, see Root::dtype()
-enum class Dtype : char { Float, Double, LongDouble };
+} // namespace ellipse
+#endif // HOMOG2D_FUTURE_STUFF
+
+
+template<typename FPT>
+Point2d_<FPT>
+HEllipse_<FPT>::getCenter() const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A = m[0][0];
+	HOMOG2D_INUMTYPE C = m[1][1];
+	HOMOG2D_INUMTYPE F = m[2][2];
+	HOMOG2D_INUMTYPE B = 2. * m[0][1];
+	HOMOG2D_INUMTYPE D = 2. * m[0][2];
+	HOMOG2D_INUMTYPE E = 2. * m[1][2];
+
+	auto denom = B*B - 4. * A * C;
+	auto x0 = ( 2.*C*D - B*E ) / denom;
+	auto y0 = ( 2.*A*E - B*D ) / denom;
+	return Point2d_<FPT>( x0, y0 );
+}
+
+template<typename FPT>
+Polyline_<FPT>
+HEllipse_<FPT>::getBB() const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A = m[0][0];
+	HOMOG2D_INUMTYPE C = m[1][1];
+	HOMOG2D_INUMTYPE F = m[2][2];
+	HOMOG2D_INUMTYPE B = 2. * m[0][1];
+	HOMOG2D_INUMTYPE D = 2. * m[0][2];
+	HOMOG2D_INUMTYPE E = 2. * m[1][2];
+
+	auto denom = B*B - 4. * A * C;
+	auto x0 = ( 2.*C*D - B*E ) / denom;
+	auto y0 = ( 2.*A*E - B*D ) / denom;
+	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	auto AmC = A-C;
+	auto AmC2 = AmC*AmC;
+	auto sqr = std::sqrt(AmC2+B*B);
+	auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+	HOMOG2D_INUMTYPE theta = 0.;
+	if( std::abs(B) < 1.E-10 )
+	{
+		if( A > C )
+			theta = 90.;
+	}
+	else
+	{
+		auto t = (C - A - sqr) / B;
+		theta = std::atan( t );
+	}
+
+// step 1: build ptA using angle
+	auto pt0 = getCenter();
+	auto dy = std::sin( theta ) * a;
+	auto dx = std::cos( theta ) * a;
+	Point2d_<FPT> ptA(
+		pt0.getX() + dx,
+		pt0.getY() + dy
+	);
+
+// step 2: build main-axis line, going through center and ptA
+	Line2d_<FPT> li_H = ptA * pt0;
+
+// step 3: get ptB, using line and distance
+
+	auto ppts = li_H.getPoints( pt0, a );
+	auto ptB = ppts.first;
+
+	auto para = getParallelLines( li_H, b );
+	auto li_V1 = li_H.getOrthogonalLine( ptA );
+	auto li_V2 = li_H.getOrthogonalLine( ptB );
+
+
+	Polyline_<FPT> out( IsClosed::Yes );
+	out.add( para.first * li_V1 );
+	out.add( para.second * li_V1 );
+	out.add( para.second * li_V2 );
+	out.add( para.first * li_V2 );
+
+	return out;
+}
 
 //------------------------------------------------------------------
 
@@ -2041,10 +2136,11 @@ public:
 	{
 		return impl_getParallelLine( pt, detail::RootHelper<LP>() );
 	}
+
 	/// Returns the pair of parallel lines at a distance \c dist from line.
 	template<typename T>
 	std::pair<Line2d_<FPT>,Line2d_<FPT>>
-	getParallelLines( T dist )
+	getParallelLines( T dist ) const
 	{
 		return impl_getParallelLines( dist, detail::RootHelper<LP>() );
 	}
@@ -3495,7 +3591,6 @@ enum class PtTag: char
 };
 
 /// Returns a label characterizing point \c pt, related to \c circle
-/// \todo use HOMOG2D_INUMTYPE for computation
 template<typename FPT,typename FPT2>
 PtTag
 getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
@@ -3503,9 +3598,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 	if( pt.isInside( circle ) )
 		return PtTag::Inside;
 	if(
-		std::abs(
-			static_cast<HOMOG2D_INUMTYPE>(pt.distTo( circle.center() ) ) - circle.radius()
-		)
+		std::abs( pt.distTo( circle.center() ) - circle.radius() )
 		< Point2d_<FPT>::nullDistance()
 	)
 		return PtTag::OnEdge;
@@ -4491,10 +4584,10 @@ template<typename FPT1,typename FPT2>
 HEllipse_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
-	HEllipse_<FPT1> ell_in; //( cir );
+	HEllipse_<FPT1> ell_in( cir );
 	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
 	hm.inverse();
-	auto hmt = static_cast<detail::Matrix_<FPT2>>(hm);
+	auto hmt = hm;
 	hmt.transpose();
 
 	const auto& ell_in2 = static_cast<detail::Matrix_<FPT1>>(ell_in);
@@ -4898,7 +4991,7 @@ HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 	}
 	else
 	{
-		auto t = (C - A -sqr) / B;
+		auto t = (C - A - sqr) / B;
 		theta = std::atan( t );
 	}
 
@@ -4907,7 +5000,7 @@ HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 		mat,
 		cv::Point( x0,y0 ),
 		cv::Size( a, b ),
-		theta,
+		theta*180./M_PI,
 		0., 360.,
 		dp._dpValues._color,
 		dp._dpValues._lineThickness,

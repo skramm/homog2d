@@ -770,50 +770,19 @@ void action_H( void* param )
 	auto e_y = 360.;
 	auto e_h = 70.;
 
-//	HEllipse ell( e_x, e_y, e_h, e_h/2., 35 );
-//	ell.draw( data.img );
-
 	Circle c_ell( e_x, e_y, e_h );
 
 	c_ell.draw( data.img );
 	auto ell = H * c_ell;
 	ell.draw( data.img2 );
-#if 0
-	Circle ell( e_x, e_y, e_h );
-	auto e_r = ell.getBB();
-	ell.draw( data.img );
-	e_r.draw( data.img );
-	auto ell2 = H * ell;
-	auto e_r2 = H * e_r;
-//	ell2.draw( data.img2 );
-	e_r2.draw( data.img2 );
+	auto ecenter = ell.getCenter();
+	ecenter.draw( data.img2 );
 
-/*	auto corners = e_r2.getPts();
-	draw( data.img2, Segment( corners[0], corners[2] ) );
-	draw( data.img2, Segment( corners[1], corners[3] ) );
-*/
-	auto mid = getMiddlePoints( e_r2.getSegs() );
-	draw( data.img2, Segment( mid[0], mid[2] ) );
-	draw( data.img2, Segment( mid[1], mid[3] ) );
+	auto ell_bb = ell.getBB();
+//	ell_bb.draw( data.img2 );
 
-	auto sege_p = Segment( mid[0], mid[2] );
-	auto sege_o = Segment( mid[1], mid[3] );
-	auto center = sege_p * sege_o;
 
-/*	std::vector<float> vdist = {
-		mid[0].distTo( center ),
-		mid[1].distTo( center ),
-		mid[2].distTo( center ),
-		mid[3].distTo( center )
-	};
-	for( const auto e: vdist )
-		std::cout << "dist=" << e << '\n';
-*/
-/*	Ellipse ell3( center, mid[0].distTo( center ), mid[1].distTo( center ) );
 
-	ell3.draw( data.img2, CvDrawParams().setColor(200,80,80) );
-*/
-#endif
 	data.showImage();
 }
 
@@ -915,11 +884,6 @@ void action_CC( void* param )
 	auto& data = *reinterpret_cast<Param_CC*>(param);
 
 	data.clearImage();
-
-//	Ellipse_<float> ell( Point2d(350,100),200,80);
-//	ell.setAngle( 25.*M_PI/180. );
-//	ell.draw( data.img );
-//	std::cout << ell << '\n';
 
 	data.c1.set( data.vpt[0], 80 );
 	data.c2.set( data.vpt[1], 120 );

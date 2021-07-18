@@ -159,7 +159,7 @@ You can compute the two points that are lying on a line and at a given distance 
 
 The API provides two ways to get these.
 
-- either you provide the x or y coordinate:
+- either you provide the x or y coordinate of p0:
 ```C++
 Line2d li( ..., ... ); // some line
 auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
@@ -172,7 +172,7 @@ The drawback is same as the above paragraph: if line is vertical/horizontal (or 
 ```C++
 Line2d li( ..., ... ); // some line
 Point2d pt_on_line;
-auto ppts = li.getPoints( pt_on_line;, dist ); // returns a std::pair
+auto ppts = li.getPoints( pt_on_line, dist ); // returns a std::pair
 ```
 The drawback is that you need to be sure that this point is truely on the line.
 This will be checked for, and library will throw if not
