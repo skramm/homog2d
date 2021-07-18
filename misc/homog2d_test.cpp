@@ -1493,6 +1493,25 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getBB() == bb2 );
 }
 
+TEST_CASE( "Polygon area", "[polygon_area]" )
+{
+	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+	{
+		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
+		CHECK( pl1.size()   == 4 );
+		CHECK( pl1.nbSegs() == 4 );
+		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.area() == 2. );
+	}
+	{
+		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
+		CHECK( pl1.size()   == 6 );
+		CHECK( pl1.nbSegs() == 6 );
+		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.area() == 3. );
+	}
+}
+
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////

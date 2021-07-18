@@ -3095,6 +3095,7 @@ public:
 		return sum;
 	}
 
+	HOMOG2D_INUMTYPE area() const;
 	FRect_<FPT> getBB() const;
 
 /// Returns the number of segments
@@ -3135,6 +3136,7 @@ public:
 			out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
 		return out;
 	}
+
 
 /// Returns one point of the polyline.
 	Point2d_<FPT> getPoint( size_t idx ) const
@@ -3191,6 +3193,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 /// Set from vector of points
+/// \todo add a version using std::copy when same underlying type (faster?)
 	template<typename FPT2>
 	void set( const std::vector<Point2d_<FPT2>>& vec )
 	{
@@ -3206,8 +3209,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	{
 		if( vec.size() == 0 )
 			return;
-//			auto it = std::end( _plinevec );
-		std::cout << "resizing to " << _plinevec.size() << "+" << vec.size() << '\n';
+
 		_plinevec.reserve( _plinevec.size() + vec.size() );
 		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
 			_plinevec.push_back( pt );
@@ -3332,6 +3334,34 @@ Polyline_<FPT>::isPolygon() const
 				return false;
 	}
 	return true;
+}
+
+/// Returns area of polygon
+/**
+\todo Needs more testing !
+Conditions:
+ - must be closed
+ - no intersections (Polyline must be a polygon
+*/
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Polyline_<FPT>::area() const
+{
+	if( !_isClosed )
+		return 0.;
+	if( !isPolygon() )
+		return 0.;
+
+	HOMOG2D_INUMTYPE area = 0.;
+	for( size_t i=0; i<size(); i++ )
+	{
+		auto j = (i == size()-1 ? 0 : i+1);
+		auto pt1 = _plinevec[i];
+		auto pt2 = _plinevec[j];
+		area += pt1.getX() * pt2.getY();
+		area -= pt1.getY() * pt2.getX();
+	}
+	return std::abs(area / 2.);
 }
 
 /// Returns true if is a polygon (free function)
