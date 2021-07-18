@@ -965,56 +965,7 @@ public:
 //	const detail::Matrix_<FPT>& getMat() const { return _mdata; }
 
 #ifdef HOMOG2D_USE_OPENCV
-/// Draw ellipse using Opencv
-/*
-- see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
-*/
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
-	{
-		auto& m = detail::Matrix_<FPT>::_mdata;
-// step 1: compute x0, y0, a, b, from matrix
-//		const auto& m = _data.getRaw();
-		HOMOG2D_INUMTYPE A = m[0][0];
-		HOMOG2D_INUMTYPE C = m[1][1];
-		HOMOG2D_INUMTYPE F = m[2][2];
-		HOMOG2D_INUMTYPE B = 2. * m[0][1];
-		HOMOG2D_INUMTYPE D = 2. * m[0][2];
-		HOMOG2D_INUMTYPE E = 2. * m[1][2];
-
-		auto denom = B*B - 4. * A * C;
-		auto x0 = ( 2.*C*D - B*E ) / denom;
-		auto y0 = ( 2.*A*E - B*D ) / denom;
-		auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
-		auto AmC = A-C;
-		auto AmC2 = AmC*AmC;
-		auto sqr = std::sqrt(AmC2+B*B);
-		auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
-		auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
-
-		HOMOG2D_INUMTYPE theta = 0.;
-		if( std::abs(B) < 1.E-10 )
-		{
-			if( A > C )
-				theta = 90.;
-		}
-		else
-		{
-			auto t = (C - A -sqr) / B;
-			theta = std::atan( t );
-		}
-
-// step 2: draw
-		cv::ellipse(
-			mat,
-			cv::Point( x0,y0 ),
-			cv::Size( a, b ),
-			theta,
-			0., 360.,
-			dp._dpValues._color,
-			dp._dpValues._lineThickness,
-			dp._dpValues._lineType
-		);
-	}
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
 
 
@@ -3307,22 +3258,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const
-	{
-		if( size() < 2 ) // nothing to draw
-			return;
-
-		for( size_t i=0; i<size()-1; i++ )
-		{
-			const auto& pt1 = _plinevec[i];
-			const auto& pt2 = _plinevec[i+1];
-			Segment_<FPT>(pt1,pt2).draw( mat, dp );
-		}
-		if( size() < 3 ) // nothing to draw
-			return;
-		if( _isClosed )
-			Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
-	}
+	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
 }; // class Polyline_
 
@@ -3388,7 +3324,8 @@ Polyline_<FPT>::isPolygon() const
 	for( size_t i=0; i<nbs; i++ )
 	{
 		auto seg1 = getSegment(i);
-		for( auto j=i+2; j<nbs-1; j++ )
+		auto lastone = i==0?nbs-1:nbs;
+		for( auto j=i+2; j<lastone; j++ )
 			if( getSegment(j).intersects(seg1)() )
 				return false;
 	}
@@ -4379,7 +4316,6 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
-
 //------------------------------------------------------------------
 namespace detail {
 
@@ -4403,7 +4339,6 @@ product(
 		out._v[i] = sum;
 	}
 }
-
 
 
 } // namespace detail
@@ -4783,6 +4718,11 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 }
 
 //------------------------------------------------------------------
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - OPENCV DRAWING FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
 namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 void
@@ -4826,7 +4766,9 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawPara
 		cv::line( mat, vpt[0], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
 	}
 }
+
 } // namespace detail
+
 //------------------------------------------------------------------
 /// Draw Point on Cv::Mat. Overload for points.
 /// Returns false if point not in image
@@ -4895,6 +4837,84 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 	return false;
 }
 
+
+
+//------------------------------------------------------------------
+template<typename FPT>
+void
+Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+
+	for( size_t i=0; i<size()-1; i++ )
+	{
+		const auto& pt1 = _plinevec[i];
+		const auto& pt2 = _plinevec[i+1];
+		Segment_<FPT>(pt1,pt2).draw( mat, dp );
+//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
+	}
+	if( size() < 3 ) // nothing to draw
+		return;
+	if( _isClosed )
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
+}
+
+
+//------------------------------------------------------------------
+/// Draw ellipse using Opencv
+/*
+- see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
+*/
+template<typename FPT>
+void
+HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+// step 1: compute x0, y0, a, b, from matrix
+//		const auto& m = _data.getRaw();
+	HOMOG2D_INUMTYPE A = m[0][0];
+	HOMOG2D_INUMTYPE C = m[1][1];
+	HOMOG2D_INUMTYPE F = m[2][2];
+	HOMOG2D_INUMTYPE B = 2. * m[0][1];
+	HOMOG2D_INUMTYPE D = 2. * m[0][2];
+	HOMOG2D_INUMTYPE E = 2. * m[1][2];
+
+	auto denom = B*B - 4. * A * C;
+	auto x0 = ( 2.*C*D - B*E ) / denom;
+	auto y0 = ( 2.*A*E - B*D ) / denom;
+	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	auto AmC = A-C;
+	auto AmC2 = AmC*AmC;
+	auto sqr = std::sqrt(AmC2+B*B);
+	auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+	HOMOG2D_INUMTYPE theta = 0.;
+	if( std::abs(B) < 1.E-10 )
+	{
+		if( A > C )
+			theta = 90.;
+	}
+	else
+	{
+		auto t = (C - A -sqr) / B;
+		theta = std::atan( t );
+	}
+
+// step 2: draw
+	cv::ellipse(
+		mat,
+		cv::Point( x0,y0 ),
+		cv::Size( a, b ),
+		theta,
+		0., 360.,
+		dp._dpValues._color,
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType
+	);
+}
+
 //------------------------------------------------------------------
 /// Free function, draws any of the primitives
 template<
@@ -4936,6 +4956,7 @@ void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDr
 	ppts.first.draw( mat, dp );
 	ppts.second.draw( mat, dp );
 }
+
 
 #if 0
 template<typename FPT>

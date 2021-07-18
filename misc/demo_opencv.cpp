@@ -882,7 +882,7 @@ void action_PL( void* param )
 void demo_PL( int n )
 {
 	Param_PL data( "Polyline_demo" );
-	std::cout << "Demo " << n << ": polyline\n";
+	std::cout << "Demo " << n << ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n";
 	data.leftClicAddPoint=true;
 
 	data.setMouseCallback( mouse_CB_PL );
