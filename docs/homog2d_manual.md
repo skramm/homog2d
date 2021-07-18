@@ -185,16 +185,19 @@ Upon return, the "first" point will hold the one with smallest 'x' coordinates, 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-Line2d li2 = li.getOrthogonalLine( GivenCoord::X, 2 );
+Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
-will build `li2` so that it is orthogonal to `li` at `x=2`.
+will build `lB` so that it is orthogonal to `lA` at `x=x1`.
+
+![fig1](../docs/fig3.png)
 
 Similarly, you can also directly use as input a point on the line:
 ```C++
-Line2d li2 = li.getOrthogonalLine( some_point_on_line );
+Line2d liB = lA.getOrthogonalLine( p1 );
 ```
 Again, point is checked and this will throw if distance from point to line is above some threshold
 (see ["numerical issues"](#num_issues))
+
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
 This function takes as argument a point that the line will intersect.
