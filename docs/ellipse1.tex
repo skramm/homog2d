@@ -1,0 +1,36 @@
+\documentclass[convert]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=0.7]
+\tikzset{mark coordinate/.style={ %
+		inner sep=0pt,
+		outer sep=0pt,
+		minimum size=3pt,
+		fill=#1,
+		circle %
+	}
+}
+%\draw [help lines] (0,0) grid (6,5);
+
+\draw (4,2) ellipse [x radius=2,y radius=1];
+\draw (4,2) coordinate [mark coordinate=black,label={0:$p_0$}]   (c1);
+
+\draw(0,0) -- (7,0);
+\draw(0,0) -- (0,4);
+
+\draw[dashed] (4,2) -- (4,3);
+\draw[dashed] (4,2) -- (2,2);
+
+\node at (3,1.8)   {$a$};
+\node at (4.1,2.5) {$b$};
+
+\end{tikzpicture}
+
+\end{document}

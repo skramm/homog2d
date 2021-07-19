@@ -421,7 +421,6 @@ auto vec_segs = pl.getSegs();
 auto seg = pl.getSegment( i );   // will throw if non-existent
 ```
 
-
 Additional features: length and bounding box:
 ```C++
 Polygon pl;
@@ -431,13 +430,37 @@ FRect rect  = pl.getBB();
 FRect rect2 = getBB(pl);
 ```
 
-You can check if it fullfilths the requirement to be a polygon, and if it is, you can get its area:
+You can check if it fullfilths the requirement to be a polygon (must be closed and no intersections),
+and if it is, you can get its area:
 ```C++
 Polygon pl;
 // ... add points
 if( pl.isPolygon() )
 	std::cout << "area=" << pl.area();
 ```
+
+
+### 3.5 - Ellipse
+
+This type holds an arbitrary ellipse.
+We follow here the traditional parametrization for the API:
+center point, semi-major and semi-minor distances, and angle between main axis and horizontal axis.
+
+![ellipse1](figures_src/ellipse1.png)
+
+It can be build using several constructors:
+
+```C++
+Ellipse ell;  // centered at (0,0), with null angle, major=2 minor=1
+Ellipse ell2( x0,y0 ); // same as above, but centered at (`x0`,`y0`)
+Point pt( ..., ... );
+Ellipse ell3( pt ); // same as above, but centered at `pt`
+Ellipse ell4( pt, major, minor, angle ); // all parameters given (angle has 0 as default value)
+Circle cir;
+Ellipse ell5( cir );  // can be initialized from a circle
+```
+
+
 
 
 ## 4 - Homographies
