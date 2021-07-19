@@ -1459,6 +1459,43 @@ TEST_CASE( "FRect", "[frect]" )
 
 TEST_CASE( "Polyline", "[polyline]" )
 {
+	{
+		Polyline_<NUMTYPE> pl1( 3,4 );
+		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.size() == 1 );
+		CHECK( pl1.nbSegs() == 0 );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		Polyline_<NUMTYPE> pl1( Point2d(3,4), IsClosed::Yes );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.size() == 1 );
+		CHECK( pl1.nbSegs() == 0 );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		FRect r( 5,6, 7,8 );
+		Polyline_<NUMTYPE> pl1( r );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.size() == 4 );
+		CHECK( pl1.nbSegs() == 4 );
+		CHECK( pl1.length() == 8 );
+		CHECK( pl1.area() == 4 );
+	}
+	{
+		FRect r( 5,6, 7,8 );
+		Polyline_<NUMTYPE> pl1( r, IsClosed::No );
+		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.size() == 4 );
+		CHECK( pl1.nbSegs() == 3 );
+		CHECK( pl1.length() == 6 );
+		CHECK( pl1.area() == 0 );
+	}
 	Polyline_<NUMTYPE> pl1;
 	pl1.add(
 		std::vector<Point2d>{ {0,0}, {1,1.5}, {3,5}, {1,4} }
@@ -1536,29 +1573,29 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		cv::Mat cvmat = cv::Mat::ones(3,3, CV_32F );
 		Homogr H;
 		H = cvmat;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 1.);
-		CHECK( H.get(0,1) == 1.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 1.);
+		CHECK( H.value(0,1) == 1.);
 
 		cv::Mat cvmat2 = cv::Mat::ones(3,3, CV_32F );
 		Homogr H2 = cvmat;
-		CHECK( H2.get(0,0) == 1.);
-		CHECK( H2.get(1,1) == 1.);
-		CHECK( H2.get(1,0) == 1.);
-		CHECK( H2.get(0,1) == 1.);
+		CHECK( H2.value(0,0) == 1.);
+		CHECK( H2.value(1,1) == 1.);
+		CHECK( H2.value(1,0) == 1.);
+		CHECK( H2.value(0,1) == 1.);
 
 		H = mat_64;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 0.);
-		CHECK( H.get(0,1) == 0.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 0.);
+		CHECK( H.value(0,1) == 0.);
 
 		H = mat_32;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 0.);
-		CHECK( H.get(0,1) == 0.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 0.);
+		CHECK( H.value(0,1) == 0.);
 	}
 	INFO( "default copyTo()" )
 	{

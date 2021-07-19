@@ -369,8 +369,9 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 ### 3.4 - Polyline
 
-This class holds a set of points and models an arbitrary polygon.
+This class holds a set of points and models an arbitrary set of joined segments.
 It can be either open or closed (last points joins first one).
+If closed, and if it does not intersect itself, the it can be used to model a polygon.
 ```C++
 Polygon pl1;                  // default is open
 Polygon pl2( IsClosed::Yes ); // this one is closed
@@ -409,7 +410,7 @@ pl.add( v_pts_2 );  // add
 ```
 
 You can extract either points or segments.
-The number of segments is related to the open/closed condition.
+The number of segments is related to the open/close condition.
 For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
 ```C++
 Polygon pl;
@@ -428,6 +429,14 @@ Polygon pl;
 std::cout << "length=" << pl.length() << '\n';
 FRect rect  = pl.getBB();
 FRect rect2 = getBB(pl);
+```
+
+You can check if it fullfilths the requirement to be a polygon, and if it is, you can get its area:
+```C++
+Polygon pl;
+// ... add points
+if( pl.isPolygon() )
+	std::cout << "area=" << pl.area();
 ```
 
 

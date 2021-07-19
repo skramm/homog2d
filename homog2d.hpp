@@ -299,6 +299,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	}
 
 /// Inverse matrix
+/// \todo magic value here !
 	Matrix_& inverse()
 	{
 		auto det = determ();
@@ -3033,11 +3034,41 @@ struct Is_std_array: std::false_type {};
 template <typename V, size_t n>
 struct Is_std_array<std::array<V, n>>: std::true_type {};
 
-/// Traits class, used in free function draw()
-//Is_Primitive
-//template<typename T> struct IsDrawable              : std::false_type {};
-//template<typename T> struct IsDrawable<              : std::false_type {};
 
+//------------------------------------------------------------------
+/// A value that needs some computing, associated with its flag
+template<typename T>
+class ValueFlag
+{
+private:
+	T    _value;
+	bool _valIsCorrect = false;
+public:
+	void set( T v )
+	{
+		_value = v;
+		_valIsCorrect = true;
+	}
+	T value() const    { return _value; }
+	void setBad()      { _valIsCorrect = false; }
+	bool isBad() const { return !_valIsCorrect; }
+};
+
+
+//------------------------------------------------------------------
+/// Holds attribute of a Polyline, allows storage of last computed value, thought the use of ValueFlag
+struct PolylineAttribs
+{
+	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
+	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
+	priv::ValueFlag<bool>             _isPolygon;
+	void setBad()
+	{
+		_length.setBad();
+		_area.setBad();
+		_isPolygon.setBad();
+	}
+};
 
 } // namespace priv
 
@@ -3049,6 +3080,8 @@ class Polyline_
 private:
 	std::vector<Point2d_<FPT>> _plinevec;
 	bool _isClosed = false;
+
+	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
 public:
 /// Default constructor
@@ -3068,35 +3101,25 @@ public:
 /// Constructor for single point as x,y
 	template<typename FPT2>
 	Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
-	{
-		_plinevec.push_back( Point2d_<FPT>(x,y) );
-		if( ic == IsClosed::Yes )
-			_isClosed = true;
-	}
-/// Constructor from FRect
+		: Polyline_(Point2d_<FPT>(x,y), ic )
+	{}
+
+/// Constructor from FRect. Default behavior is closed
 	template<typename FPT2>
-	Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::No )
+	Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::Yes )
 	{
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
-		if( ic == IsClosed::Yes )
-			_isClosed = true;
+		_isClosed = ( ic == IsClosed::Yes ? true : false );
 	}
 
-/// Returns the number of points (not segments!)
+/// Returns the number of points
 	size_t size() const { return _plinevec.size(); }
 
-/// Returns length
-	HOMOG2D_INUMTYPE length() const
-	{
-		HOMOG2D_INUMTYPE sum = 0.L;
-		for( const auto& seg: getSegs() )
-			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-		return sum;
-	}
-
-	HOMOG2D_INUMTYPE area() const;
-	FRect_<FPT> getBB() const;
+	HOMOG2D_INUMTYPE length()    const;
+	HOMOG2D_INUMTYPE area()      const;
+	bool             isPolygon() const;
+	FRect_<FPT>      getBB()     const;
 
 /// Returns the number of segments
 	size_t nbSegs() const
@@ -3111,6 +3134,7 @@ public:
 /// Returns the points
 	std::vector<Point2d_<FPT>>& getPts()
 	{
+		_attribs.setBad();  // because we send the non-const reference
 		return _plinevec;
 	}
 /// Returns the points (const)
@@ -3171,12 +3195,13 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 /// Clear all
-	void clear() { _plinevec.clear(); }
+	void clear() { _plinevec.clear(); _attribs.setBad(); }
 
 /// Add single point as x,y
 	template<typename FPT1,typename FPT2>
 	void add( FPT1 x, FPT2 y )
 	{
+		_attribs.setBad();
 		add( Point2d_<FPT>( x, y ) );
 	}
 
@@ -3189,14 +3214,15 @@ Segment \c n is the one between point \c n and point \c n+1
 			if( pt == _plinevec.back() )
 				HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
 #endif
+		_attribs.setBad();
 		_plinevec.push_back( pt );
 	}
 
 /// Set from vector of points
-/// \todo add a version using std::copy when same underlying type (faster?)
 	template<typename FPT2>
 	void set( const std::vector<Point2d_<FPT2>>& vec )
 	{
+		_attribs.setBad();
 		_plinevec.resize( vec.size() );
 		auto it = std::begin( _plinevec );
 		for( const auto& pt: vec )   // copying one by one will
@@ -3209,14 +3235,18 @@ Segment \c n is the one between point \c n and point \c n+1
 	{
 		if( vec.size() == 0 )
 			return;
-
+		_attribs.setBad();
 		_plinevec.reserve( _plinevec.size() + vec.size() );
 		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
 			_plinevec.push_back( pt );
 	}
 
 	const bool& isClosed() const { return _isClosed; }
-	bool& isClosed()             { return _isClosed; }
+	bool& isClosed()
+	{
+		_attribs.setBad();
+		return _isClosed;
+	}
 
 /// Polyline intersection with Line, Segment, FRect, Circle
 	template<
@@ -3240,15 +3270,13 @@ Segment \c n is the one between point \c n and point \c n+1
 
 	template<typename T>
 	bool
-	isInside( const T& cont )
+	isInside( const T& cont ) const
 	{
 		for( const auto& pt: getPts() )
 			if( !pt.isInside( cont ) )
 				return false;
 		return true;
 	}
-
-	bool isPolygon() const;
 
 	friend std::ostream&
 	operator << ( std::ostream& f, const Polyline_<FPT>& pl )
@@ -3316,24 +3344,64 @@ getPointsBB( const T& vpts )
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Returns true if is a polygon (i.e. no segment crossing)
+/// Returns true if object is a polygon (i.e. no segment crossing)
 template<typename FPT>
 bool
 Polyline_<FPT>::isPolygon() const
 {
 	if( !_isClosed )   // cant be a polygon if
 		return false;  // it's not closed !
-
-	auto nbs = nbSegs();
-	for( size_t i=0; i<nbs; i++ )
+/* OLD VERSION
+		bool isPolygon = false;
+		auto nbs = nbSegs();
+		for( size_t i=0; i<nbs; i++ )
+		{
+			auto seg1 = getSegment(i);
+			auto lastone = i==0?nbs-1:nbs;
+			for( auto j=i+2; j<lastone; j++ )
+				if( getSegment(j).intersects(seg1)() )
+					return false;
+		}
+		return true;
+*/
+	if( _attribs._isPolygon.isBad() )
 	{
-		auto seg1 = getSegment(i);
-		auto lastone = i==0?nbs-1:nbs;
-		for( auto j=i+2; j<lastone; j++ )
-			if( getSegment(j).intersects(seg1)() )
-				return false;
+		auto nbs = nbSegs();
+		size_t i=0;
+		bool notDone = true;
+		bool hasIntersections = false;
+		do
+		{
+			auto seg1 = getSegment(i);
+			auto lastone = i==0?nbs-1:nbs;
+			for( auto j=i+2; j<lastone; j++ )
+				if( getSegment(j).intersects(seg1)() )
+				{
+					notDone = false;
+					hasIntersections = true;
+					break;
+				}
+			i++;
+		}
+		while( i<nbs && notDone );
+		_attribs._isPolygon.set( !hasIntersections );
 	}
-	return true;
+	return _attribs._isPolygon.value();
+}
+
+/// Returns length
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Polyline_<FPT>::length() const
+{
+	if( _attribs._length.isBad() )
+	{
+		HOMOG2D_INUMTYPE sum = 0.;
+		for( const auto& seg: getSegs() )
+			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
+		_attribs._length.set( sum );
+	}
+	return _attribs._length.value();
 }
 
 /// Returns area of polygon
@@ -3347,21 +3415,23 @@ template<typename FPT>
 HOMOG2D_INUMTYPE
 Polyline_<FPT>::area() const
 {
-	if( !_isClosed )
-		return 0.;
-	if( !isPolygon() )
+	if( !isPolygon() )  // implies that is both closed and has no intersections
 		return 0.;
 
-	HOMOG2D_INUMTYPE area = 0.;
-	for( size_t i=0; i<size(); i++ )
+	if( _attribs._area.isBad() )
 	{
-		auto j = (i == size()-1 ? 0 : i+1);
-		auto pt1 = _plinevec[i];
-		auto pt2 = _plinevec[j];
-		area += pt1.getX() * pt2.getY();
-		area -= pt1.getY() * pt2.getX();
+		HOMOG2D_INUMTYPE area = 0.;
+		for( size_t i=0; i<size(); i++ )
+		{
+			auto j = (i == size()-1 ? 0 : i+1);
+			auto pt1 = _plinevec[i];
+			auto pt2 = _plinevec[j];
+			area += static_cast<HOMOG2D_INUMTYPE>(pt1.getX()) * pt2.getY();
+			area -= static_cast<HOMOG2D_INUMTYPE>(pt1.getY()) * pt2.getX();
+		}
+		_attribs._area.set( std::abs(area / 2.) );
 	}
-	return std::abs(area / 2.);
+	return _attribs._area.value();
 }
 
 /// Returns true if is a polygon (free function)
