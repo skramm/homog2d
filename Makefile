@@ -138,7 +138,8 @@ doc: BUILD/html/index.html
 docall: BUILD/html/index.html doc_fig doc_fig_tex
 	xdg-open BUILD/html/index.html
 
-BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md docs/homog2d_manual.md
+DOC_MD_PAGES=$(wildcard docs/*.md)
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
 	@mkdir -p BUILD/html
 	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 

@@ -388,8 +388,8 @@ pl2.isClosed() = false;  // now open
 It can be build directly from a `FRect` object:
 ```C++
 FRect rect;
-Polygon pl1( frect );                 // open
-Polygon pl2( frect, IsClosed::Yes );  // optional argument
+Polygon pl1( frect );                // default is closed
+Polygon pl2( frect, IsClosed::No );  // optional argument
 ```
 
 
@@ -430,7 +430,7 @@ FRect rect  = pl.getBB();
 FRect rect2 = getBB(pl);
 ```
 
-You can check if it fullfilths the requirement to be a polygon (must be closed and no intersections),
+You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
 and if it is, you can get its area:
 ```C++
 Polygon pl;
@@ -439,6 +439,7 @@ if( pl.isPolygon() )
 	std::cout << "area=" << pl.area();
 ```
 
+This latter function will return 0 if not a polygon.
 
 ### 3.5 - Ellipse
 
@@ -446,7 +447,7 @@ This type holds an arbitrary ellipse.
 We follow here the traditional parametrization for the API:
 center point, semi-major and semi-minor distances, and angle between main axis and horizontal axis.
 
-![ellipse1](figures_src/ellipse1.png)
+![ellipse1](ellipse1.png)
 
 It can be build using several constructors:
 
@@ -460,6 +461,8 @@ Circle cir;
 Ellipse ell5( cir );  // can be initialized from a circle
 ```
 
+
+Additional features:
 
 
 
