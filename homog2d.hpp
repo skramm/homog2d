@@ -997,14 +997,9 @@ public:
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
 
-	Point2d_<FPT> getCenter() const;
-
-	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const
-	{
-		return std::make_pair( _semiMajor, _semiMinor );
-	}
-
-	Polyline_<FPT> getBB() const;
+	Point2d_<FPT>                          getCenter() const;
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const;
+	Polyline_<FPT>                         getBB()     const;
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1036,22 +1031,29 @@ private:
 		data[0][2] = data[2][0] = D / 2.;
 		data[1][2] = data[2][1] = E / 2.;
 
-		_eqCoeffs[0] = A;
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+		par.a = a;
+		par.b = b;
+		par.theta = theta;
+		par.x0 = x0;
+		par.y0 = y0;
+#endif
+/*		_eqCoeffs[0] = A;
 		_eqCoeffs[1] = B;
 		_eqCoeffs[2] = C;
 		_eqCoeffs[3] = D;
 		_eqCoeffs[4] = E;
-		_eqCoeffs[5] = F;
+		_eqCoeffs[5] = F;*/
 	}
 
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 
-	std::array<FPT,6> _eqCoeffs; ///< equation coefficients, A through F
-	Point2d_<FPT> _center;
-	FPT           _semiMajor, _semiMinor;
-
+//	std::array<FPT,6> _eqCoeffs; ///< equation coefficients, A through F
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+	detail::EllParams<FPT> par;
+#endif
 }; // class HEllipse
 
 //------------------------------------------------------------------
@@ -1092,6 +1094,7 @@ HEllipse_<FPT>::p_getParams() const
 		auto t = (C - A - sqr) / B;
 		par.theta = std::atan( t );
 	}
+	return par;
 }
 
 //------------------------------------------------------------------
@@ -1099,74 +1102,44 @@ template<typename FPT>
 Point2d_<FPT>
 HEllipse_<FPT>::getCenter() const
 {
-	auto& m = detail::Matrix_<FPT>::_mdata;
-	HOMOG2D_INUMTYPE A = m[0][0];
-	HOMOG2D_INUMTYPE C = m[1][1];
-	HOMOG2D_INUMTYPE F = m[2][2];
-	HOMOG2D_INUMTYPE B = 2. * m[0][1];
-	HOMOG2D_INUMTYPE D = 2. * m[0][2];
-	HOMOG2D_INUMTYPE E = 2. * m[1][2];
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return Point2d_<FPT>( par.x0, par.y0 );
+}
 
-	auto denom = B*B - 4. * A * C;
-	auto x0 = ( 2.*C*D - B*E ) / denom;
-	auto y0 = ( 2.*A*E - B*D ) / denom;
-	return Point2d_<FPT>( x0, y0 );
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+HEllipse_<FPT>::getMajMin() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return std::make_pair( par.a, par.b );
 }
 
 template<typename FPT>
 Polyline_<FPT>
 HEllipse_<FPT>::getBB() const
 {
-	auto& m = detail::Matrix_<FPT>::_mdata;
-	HOMOG2D_INUMTYPE A = m[0][0];
-	HOMOG2D_INUMTYPE C = m[1][1];
-	HOMOG2D_INUMTYPE F = m[2][2];
-	HOMOG2D_INUMTYPE B = 2. * m[0][1];
-	HOMOG2D_INUMTYPE D = 2. * m[0][2];
-	HOMOG2D_INUMTYPE E = 2. * m[1][2];
-
-	auto denom = B*B - 4. * A * C;
-	auto x0 = ( 2.*C*D - B*E ) / denom;
-	auto y0 = ( 2.*A*E - B*D ) / denom;
-	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
-	auto AmC = A-C;
-	auto AmC2 = AmC*AmC;
-	auto sqr = std::sqrt(AmC2+B*B);
-	auto a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
-	auto b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
-
-	HOMOG2D_INUMTYPE theta = 0.;
-	if( std::abs(B) < 1.E-10 )
-	{
-		if( A > C )
-			theta = 90.;
-	}
-	else
-	{
-		auto t = (C - A - sqr) / B;
-		theta = std::atan( t );
-	}
 
 // step 1: build ptA using angle
-	auto pt0 = getCenter();
-	auto dy = std::sin( theta ) * a;
-	auto dx = std::cos( theta ) * a;
+//	auto pt0 = getCenter();
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	auto dy = std::sin( par.theta ) * par.a;
+	auto dx = std::cos( par.theta ) * par.a;
 	Point2d_<FPT> ptA(
-		pt0.getX() + dx,
-		pt0.getY() + dy
+		par.x0 + dx,
+		par.y0 + dy
 	);
+	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
 
 // step 2: build main-axis line, going through center and ptA
 	Line2d_<FPT> li_H = ptA * pt0;
 
 // step 3: get ptB, using line and distance
-	auto ppts = li_H.getPoints( pt0, a );
+	auto ppts = li_H.getPoints( pt0, par.a );
 	auto ptB = ppts.first;
 
-	auto para = getParallelLines( li_H, b );
+	auto para = getParallelLines( li_H, par.b );
 	auto li_V1 = li_H.getOrthogonalLine( ptA );
 	auto li_V2 = li_H.getOrthogonalLine( ptB );
-
 
 	Polyline_<FPT> out( IsClosed::Yes );
 	out.add( para.first * li_V1 );
@@ -1191,8 +1164,8 @@ HEllipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 	auto y = pt.getY();
 
 	auto par = p_getParams();
-	auto x0 = par.x0;
-	auto y0 = par.y0;
+	const auto& x0 = par.x0;
+	const auto& y0 = par.y0;
 	auto sint = std::sin(par.theta);
 	auto cost = std::cos(par.theta);
 	auto a2 = par.a * par.a;
@@ -1395,6 +1368,12 @@ private:
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
 	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	FRect_( const FRect_<FPT2>& other )
+		: _ptR1(other._ptR1),_ptR2(other._ptR2)
+	{}
 
 	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
@@ -1649,6 +1628,12 @@ public:
 		: Circle_( Point2d_<FPT>(x,y), rad )
 	{}
 
+/// Copy-Constructor
+	template<typename FPT2>
+	Circle_( const Circle_<FPT2>& other )
+		: _radius(other._radius), _center(other._center)
+	{}
+
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
 
@@ -1656,13 +1641,13 @@ public:
 	const Point2d_<FPT> center() const { return _center; }
 
 /// Returns Bounding Box
-		FRect_<FPT> getBB() const
-		{
-			return FRect_<FPT>(
-				_center.getX()-_radius, _center.getY()-_radius,
-				_center.getX()+_radius, _center.getY()+_radius
-			);
-		}
+	FRect_<FPT> getBB() const
+	{
+		return FRect_<FPT>(
+			_center.getX()-_radius, _center.getY()-_radius,
+			_center.getX()+_radius, _center.getY()+_radius
+		);
+	}
 
 	void set( const Point2d_<FPT>& center, FPT rad )
 	{
@@ -2818,6 +2803,12 @@ public:
 		priv::fix_order( _ptS1, _ptS2 );
 	}
 
+/// Copy-Constructor
+	template<typename FPT2>
+	Segment_( const Segment_<FPT2>& other )
+		: _ptS1(other._ptS1), _ptS2(other._ptS2)
+	{}
+
 /// Setter
 	void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
 	{
@@ -3176,10 +3167,11 @@ struct PolylineAttribs
 template<typename FPT>
 class Polyline_
 {
+	template<typename T> friend class Polyline_;
+
 private:
 	std::vector<Point2d_<FPT>> _plinevec;
 	bool _isClosed = false;
-
 	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
 public:
@@ -3210,6 +3202,15 @@ public:
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
 		_isClosed = ( ic == IsClosed::Yes ? true : false );
+	}
+
+/// Copy-Constructor
+/** Can't use standard initialization, because vector might have different types */
+	template<typename FPT2>
+	Polyline_( const Polyline_<FPT2>& other )
+		: _isClosed(other._isClosed)
+	{
+		set( other._plinevec );
 	}
 
 /// Returns the number of points

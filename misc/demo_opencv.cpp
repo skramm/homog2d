@@ -178,6 +178,7 @@ void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
 void action_CC( void* param );
+void action_ELL( void* param );
 
 
 //------------------------------------------------------------------
@@ -322,6 +323,12 @@ void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_CC, param );
+}
+
+/// Mouse callback for demo_ELL
+void mouse_CB_ELL( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_ELL, param );
 }
 
 //------------------------------------------------------------------
@@ -923,6 +930,42 @@ void demo_CC( int n )
 	KeyboardLoop kbloop;
 	kbloop.start( data );
 }
+
+//------------------------------------------------------------------
+struct Param_ELL : Data
+{
+	explicit Param_ELL( std::string title ):Data(title)
+	{
+		ell = HEllipse_<float>( 200.,100.,120.,80.,20.*M_PI/180.) ;
+	}
+	HEllipse_<double> ell;
+};
+
+void action_ELL( void* param )
+{
+	auto& data = *reinterpret_cast<Param_ELL*>(param);
+
+	data.clearImage();
+	data.ell.draw( data.img );
+	data.showImage();
+}
+void demo_ELL( int n )
+{
+	Param_ELL data( "Ellipse demo" );
+	std::cout << "Demo " << n << ": Ellipse\n";
+
+	data.setMouseCallback( mouse_CB_ELL );
+	double angle = 0.;
+	double angle_delta = 5.;
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
+
+	action_ELL( &data );
+	kbloop.start( data );
+}
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -936,6 +979,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_ELL,
 		demo_CC,
 		demo_H,
 		demo_PL,
