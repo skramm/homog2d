@@ -274,7 +274,7 @@ auto a1 = l1.getAngle( s1 );
 auto a2 = s1.getAngle( l1 );
 ```
 
-You can get the point lying in the middle of the segment with:
+You can get the point lying in the middle of the segment:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
@@ -331,13 +331,15 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
-And of course, its width and height:
+And of course, its width, height, and enclosed area:
 ```C++
 FRect rect;
 auto w = rect.width();
 auto h = rect.height();
+auto a = rect.area();
 auto w2 = width(rect);
 auto h2 = height(rect);
+auto a2 = area(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -349,11 +351,20 @@ rect.translate( dx, dy );
 
 ### 3.3 - Circles
 
+Creating is straightforward:
+```C++
+Circle c1;                          // at (0,0), radius = 1
+Circle c2( center_point );          // radius = 1
+Circle c3( center_point, radius );
+```
+
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
-Circle c1( center_point, 50 );
+Circle c1;
 c1.radius() = 100;
 std::cout << c1.radius();
+c1.center() = Point2d(12,34);
+std::cout << "center=" << c1.center();
 ```
 
 Two additional free functions provide the segment (or line) between the centers of two circles,
@@ -445,7 +456,7 @@ This latter function will return 0 if not a polygon.
 
 This type holds an arbitrary ellipse.
 We follow here the traditional parametrization for the API:
-center point, semi-major and semi-minor distances, and angle between main axis and horizontal axis.
+center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
 
 ![ellipse1](ellipse1.png)
 
@@ -495,9 +506,6 @@ pl = H * pl;
 auto a = H * rect; // a is a Polyline
 ```
 It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a (closed) `Polyline`.
-
-(note: homography product not available in this release for circles)
-
 
 ### 4.2 - Homographies for lines
 <a name="line_homography"></a>

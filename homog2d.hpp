@@ -895,6 +895,19 @@ struct CvDrawParams
 #endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
+namespace detail {
+/// Holds parameter of ellipse
+template<typename T>
+struct EllParams
+{
+	T x0,y0;
+	T theta = 0.;
+	T sint, cost;
+	T a,b;
+};
+
+} // namespace detail {
+//------------------------------------------------------------------
 /// Ellipse as a conic in matrix form
 /**
 This enables its projection using homography
@@ -917,7 +930,7 @@ It can be written as a 3 x 3 matrix:
 \end{bmatrix}
 \f]
 
-Matrix coefficients:
+Matrix coefficients computed from center x0,y0, major and minor distances (a,b) and angle theta:
 \f[
 \begin{aligned}
   A &=   a^2 \sin^2\theta + b^2 \cos^2\theta \\
@@ -977,6 +990,9 @@ public:
 		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
 	}
 
+	template<typename FPT2>
+	bool pointIsInside( const Point2d_<FPT2>& ) const;
+
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
@@ -993,6 +1009,10 @@ public:
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
+private:
+	template<typename T>
+	detail::EllParams<T> p_getParams() const;
+
 	void p_init( double x0, double y0, double a, double b, double theta=0. )
 	{
 		auto& data = detail::Matrix_<FPT>::_mdata;
@@ -1034,20 +1054,47 @@ public:
 
 }; // class HEllipse
 
-
-#ifdef HOMOG2D_FUTURE_STUFF
-namespace ellipse {
-
-std::array<HOMOG2D_INUMTYPE,6>
-getEllipseCoeffs()
+//------------------------------------------------------------------
+/// Returns standard parameters from matrix coeffs
+/// \todo get rid of magic number
+template<typename FPT>
+template<typename T>
+detail::EllParams<T>
+HEllipse_<FPT>::p_getParams() const
 {
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A = m[0][0];
+	HOMOG2D_INUMTYPE C = m[1][1];
+	HOMOG2D_INUMTYPE F = m[2][2];
+	HOMOG2D_INUMTYPE B = 2. * m[0][1];
+	HOMOG2D_INUMTYPE D = 2. * m[0][2];
+	HOMOG2D_INUMTYPE E = 2. * m[1][2];
 
+	detail::EllParams<T> par;
+
+	auto denom = B*B - 4. * A * C;
+	par.x0 = ( 2.*C*D - B*E ) / denom;
+	par.y0 = ( 2.*A*E - B*D ) / denom;
+	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	auto AmC = A-C;
+	auto AmC2 = AmC*AmC;
+	auto sqr = std::sqrt(AmC2+B*B);
+	par.a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	par.b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+	if( std::abs(B) < 1.E-10 )
+	{
+		if( A > C )
+			par.theta = 90.;
+	}
+	else
+	{
+		auto t = (C - A - sqr) / B;
+		par.theta = std::atan( t );
+	}
 }
 
-} // namespace ellipse
-#endif // HOMOG2D_FUTURE_STUFF
-
-
+//------------------------------------------------------------------
 template<typename FPT>
 Point2d_<FPT>
 HEllipse_<FPT>::getCenter() const
@@ -1113,7 +1160,6 @@ HEllipse_<FPT>::getBB() const
 	Line2d_<FPT> li_H = ptA * pt0;
 
 // step 3: get ptB, using line and distance
-
 	auto ppts = li_H.getPoints( pt0, a );
 	auto ptB = ppts.first;
 
@@ -1129,6 +1175,38 @@ HEllipse_<FPT>::getBB() const
 	out.add( para.first * li_V2 );
 
 	return out;
+}
+
+//------------------------------------------------------------------
+/// Returns true if point is inside ellipse
+/**
+taken from https://stackoverflow.com/a/16814494/193789
+*/
+template<typename FPT>
+template<typename FPT2>
+bool
+HEllipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
+{
+	auto x = pt.getX();
+	auto y = pt.getY();
+
+	auto par = p_getParams();
+	auto x0 = par.x0;
+	auto y0 = par.y0;
+	auto sint = std::sin(par.theta);
+	auto cost = std::cos(par.theta);
+	auto a2 = par.a * par.a;
+	auto b2 = par.b * par.b;
+
+	auto v1 = cost * (x-x0) + sint * (y-y0);
+	HOMOG2D_INUMTYPE sum = v1*v1 / a2;
+
+	auto v2 = sint * (x-x0) - cost * (y-y0);
+	sum += v2*v2 / b2;
+	if( sum < 1. )
+		return true;
+	return false;
+
 }
 
 //------------------------------------------------------------------
@@ -1288,7 +1366,7 @@ class IntersectM
 
 
 //------------------------------------------------------------------
-/// A Flat Rectangle, modeled with its two opposite points
+/// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
 class FRect_
 {
@@ -1326,6 +1404,7 @@ private:
 	}
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
+	HOMOG2D_INUMTYPE area() const   { return height() * width(); }
 
 	Circle_<FPT> getBoundingCircle() const;
 
@@ -1522,6 +1601,12 @@ template<typename FPT>
 HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 {
 	return rect.width();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
+{
+	return rect.area();
 }
 
 //------------------------------------------------------------------
@@ -2255,6 +2340,13 @@ public:
 		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
 	}
 
+/// Point is inside Ellipse
+	template<typename FPT2>
+	bool isInside( const HEllipse_<FPT2>& ell ) const
+	{
+		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
+	}
+
 //////////////////////////
 //       OPERATORS      //
 //////////////////////////
@@ -2340,8 +2432,15 @@ public:
 		detail::IntersectM<FPT>
 		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
 */
-		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+		template<typename FPT2>
+		bool impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename FPT2>
+		bool impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+
+		template<typename FPT2>
+		bool impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+		template<typename FPT2>
+		bool impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
 		template<typename T>
 		bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
@@ -4266,8 +4365,9 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type:
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
 	auto pair_pts = rect.getPts();
 	const auto& p00 = pair_pts.first;
@@ -4275,13 +4375,15 @@ Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelp
 	return detail::ptIsInside( *this, p00, p11 );
 }
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Rectangle) with a line" );
 	return false; // to avoid a warning
 }
 
+//------------------------------------------------------------------
 template<typename LP, typename FPT>
 template<typename T>
 bool
@@ -4291,7 +4393,6 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, const 
 		return true;
 	return false;
 }
-
 template<typename LP, typename FPT>
 template<typename T>
 bool
@@ -4300,6 +4401,26 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::RootHe
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Circle) with a line" );
 	return false; // to avoid a warning
 }
+
+
+//------------------------------------------------------------------
+template<typename LP, typename FPT>
+template<typename FPT2>
+bool
+Root<LP,FPT>::impl_isInsideEllipse( const HEllipse_<FPT2>& ell, const detail::RootHelper<type::IsPoint>& ) const
+{
+	return ell.pointIsInside( *this );
+}
+
+template<typename LP, typename FPT>
+template<typename FPT2>
+bool
+Root<LP,FPT>::impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Ellipse) with a line" );
+	return false; // to avoid a warning
+}
+
 
 //------------------------------------------------------------------
 /// Intersection of line and circle: implementation for points
