@@ -936,9 +936,9 @@ struct Param_ELL : Data
 {
 	explicit Param_ELL( std::string title ):Data(title)
 	{
-		ell = HEllipse_<float>( 200.,100.,120.,80.,20.*M_PI/180.) ;
+		ell = Ellipse_<float>( 200.,100.,120.,80.,20.*M_PI/180.) ;
 	}
-	HEllipse_<double> ell;
+	Ellipse_<double> ell;
 };
 
 void action_ELL( void* param )

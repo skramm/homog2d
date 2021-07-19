@@ -166,7 +166,7 @@ template<typename FPT> class Segment_;
 template<typename FPT> class Polyline_;
 template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
-template<typename FPT> class HEllipse_;
+template<typename FPT> class Ellipse_;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
@@ -453,7 +453,7 @@ class Hmatrix_ : public detail::Matrix_<FPT>
 	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
 */
 /*	template<typename FPT1,typename FPT2>
-	friend HEllipse_<FPT1>
+	friend Ellipse_<FPT1>
 	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
 */
 	template<typename T,typename U>
@@ -945,32 +945,32 @@ Matrix coefficients computed from center x0,y0, major and minor distances (a,b) 
 Homography projection: https://math.stackexchange.com/a/2320082/133647
 */
 template<typename FPT>
-class HEllipse_: public detail::Matrix_<FPT>
+class Ellipse_: public detail::Matrix_<FPT>
 {
-	template<typename T> friend class HEllipse_;
+	template<typename T> friend class Ellipse_;
 
 	template<typename FPT1,typename FPT2>
-	friend HEllipse_<FPT1>
+	friend Ellipse_<FPT1>
 	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
 
 	template<typename FPT1,typename FPT2>
-	friend HEllipse_<FPT1>
-	operator * ( const Homogr_<FPT2>&, const HEllipse_<FPT1>& );
+	friend Ellipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Ellipse_<FPT1>& );
 
 public:
 /// Default constructor: centered at (0,0), major=2, minor=1
-	HEllipse_(): HEllipse_( 0., 0., 2., 1., 0. )
+	Ellipse_(): Ellipse_( 0., 0., 2., 1., 0. )
 	{}
 
 /// Constructor 1
 	template<typename T1,typename T2,typename T3>
-	explicit HEllipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
-		: HEllipse_( pt.getX(), pt.getY(), major, minor, angle )
+	explicit Ellipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
+		: Ellipse_( pt.getX(), pt.getY(), major, minor, angle )
 	{}
 
 /// Constructor 2
 	template<typename T1,typename T2,typename T3>
-	explicit HEllipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
+	explicit Ellipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
@@ -981,11 +981,11 @@ public:
 	}
 
 /// Constructor 3
-	explicit HEllipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
+	explicit Ellipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
 	{}
 
 /// Constructor 4, import from circle
-	explicit HEllipse_( const Circle_<FPT>& cir )
+	explicit Ellipse_( const Circle_<FPT>& cir )
 	{
 		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
 	}
@@ -1054,7 +1054,7 @@ private:
 #ifdef HOMOG2D_OPTIMIZE_SPEED
 	detail::EllParams<FPT> par;
 #endif
-}; // class HEllipse
+}; // class Ellipse
 
 //------------------------------------------------------------------
 /// Returns standard parameters from matrix coeffs
@@ -1062,7 +1062,7 @@ private:
 template<typename FPT>
 template<typename T>
 detail::EllParams<T>
-HEllipse_<FPT>::p_getParams() const
+Ellipse_<FPT>::p_getParams() const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A = m[0][0];
@@ -1100,7 +1100,7 @@ HEllipse_<FPT>::p_getParams() const
 //------------------------------------------------------------------
 template<typename FPT>
 Point2d_<FPT>
-HEllipse_<FPT>::getCenter() const
+Ellipse_<FPT>::getCenter() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return Point2d_<FPT>( par.x0, par.y0 );
@@ -1108,7 +1108,7 @@ HEllipse_<FPT>::getCenter() const
 
 template<typename FPT>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
-HEllipse_<FPT>::getMajMin() const
+Ellipse_<FPT>::getMajMin() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return std::make_pair( par.a, par.b );
@@ -1116,7 +1116,7 @@ HEllipse_<FPT>::getMajMin() const
 
 template<typename FPT>
 Polyline_<FPT>
-HEllipse_<FPT>::getBB() const
+Ellipse_<FPT>::getBB() const
 {
 
 // step 1: build ptA using angle
@@ -1158,7 +1158,7 @@ taken from https://stackoverflow.com/a/16814494/193789
 template<typename FPT>
 template<typename FPT2>
 bool
-HEllipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
+Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 {
 	auto x = pt.getX();
 	auto y = pt.getY();
@@ -1784,7 +1784,7 @@ getBoundingCircle( const FRect_<FPT>& rect )
 /// Constructor: build Ellipse from Circle
 /// \todo finish this
 template<typename FPT>
-HEllipse_<FPT>::HEllipse_( const Circle_<FPT>& cir )
+Ellipse_<FPT>::Ellipse_( const Circle_<FPT>& cir )
 {
 	p_init( cir.center().getX(), cir.center().getY(), radius(), radius(), 0. );
 }
@@ -2327,7 +2327,7 @@ public:
 
 /// Point is inside Ellipse
 	template<typename FPT2>
-	bool isInside( const HEllipse_<FPT2>& ell ) const
+	bool isInside( const Ellipse_<FPT2>& ell ) const
 	{
 		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
 	}
@@ -2423,9 +2423,9 @@ public:
 		bool impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 		template<typename FPT2>
-		bool impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
 		template<typename FPT2>
-		bool impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
+		bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
 		template<typename T>
 		bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
@@ -4408,7 +4408,7 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::RootHe
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideEllipse( const HEllipse_<FPT2>& ell, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::RootHelper<type::IsPoint>& ) const
 {
 	return ell.pointIsInside( *this );
 }
@@ -4416,7 +4416,7 @@ Root<LP,FPT>::impl_isInsideEllipse( const HEllipse_<FPT2>& ell, const detail::Ro
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideEllipse( const HEllipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Ellipse) with a line" );
 	return false; // to avoid a warning
@@ -4688,15 +4688,15 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 }
 
 
-/// Apply homography to a HEllipse_, produces an HEllipse
+/// Apply homography to a Ellipse, produces an Ellipse
 /**
 \f[
 Q' = H^{-T} \cdot Q \cdot H^{-1}
 \f]
 */
 template<typename FPT1,typename FPT2>
-HEllipse_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const HEllipse_<FPT1>& ell_in )
+Ellipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Ellipse_<FPT1>& ell_in )
 {
 	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
 	hm.inverse();
@@ -4706,17 +4706,17 @@ operator * ( const Homogr_<FPT2>& h, const HEllipse_<FPT1>& ell_in )
 	const auto& ell_in2 = static_cast<detail::Matrix_<FPT1>>(ell_in);
 	auto prod = hmt * ell_in2 * hm;
 
-	HEllipse_<FPT1> out( prod );
+	Ellipse_<FPT1> out( prod );
 	return out;
 }
 
-/// Apply homography to a Circle, produces an HEllipse
+/// Apply homography to a Circle, produces an Ellipse
 /** Converts the circle to an ellipse, then calls the corresponding code */
 template<typename FPT1,typename FPT2>
-HEllipse_<FPT1>
+Ellipse_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 {
-	HEllipse_<FPT1> ell_in( cir );
+	Ellipse_<FPT1> ell_in( cir );
 	return h * ell_in;
 }
 
@@ -5052,7 +5052,7 @@ Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
 */
 template<typename FPT>
 void
-HEllipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
+Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A = m[0][0];
@@ -5189,7 +5189,8 @@ using FRect = FRect_<double>;
 /// Default polyline type
 using Polyline = Polyline_<double>;
 
-using HEllipse = HEllipse_<double>;
+/// Default ellipse type
+using Ellipse = Ellipse_<double>;
 
 // float types
 using Line2dF  = Line2d_<float>;
@@ -5199,6 +5200,7 @@ using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
 using FRectF   = FRect_<float>;
 using PolylineF= Polyline_<float>;
+using EllipseF = Ellipse_<float>;
 
 // double types
 using Line2dD  = Line2d_<double>;
@@ -5208,6 +5210,7 @@ using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
 using FRectD   = FRect_<double>;
 using PolylineD= Polyline_<double>;
+using EllipseD = Ellipse_<double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
@@ -5217,6 +5220,7 @@ using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 using PolylineL= Polyline_<long double>;
+using EllipseL = Ellipse_<long double>;
 
 } // namespace h2d end
 

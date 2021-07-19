@@ -61,6 +61,7 @@
 		<Unit filename="../docs/figures_src/segment1.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../docs/future_stuff_doc.txt" />
 		<Unit filename="../docs/homog2d_history.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -118,8 +119,7 @@
 		<Unit filename="gitlog.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="homog2d_test.cpp">
-		</Unit>
+		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -167,9 +167,6 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

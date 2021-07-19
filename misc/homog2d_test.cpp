@@ -165,8 +165,6 @@ TEST_CASE( "types testing", "[testtypes]" )
 		pl = pf;
 		pf = pl;
 		pd = pl;
-
-
 	}
 	INFO( "numerical type conversions (constructor)" )
 	{
@@ -185,7 +183,49 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( ptD1.getX() == 2. );
 		CHECK( ptD2.getX() == 3. );
 
+		CircleF cf;
+		CircleD cd;
+		CircleL cl;
 
+		CircleL cl2 = cd;
+		CircleF cf2 = cd;
+		CircleD cd2 = cf;
+		CircleL cl3 = cf;
+		CircleF cf3 = cl;
+		CircleD cd3 = cl;
+
+		SegmentF sf;
+		SegmentD sd;
+		SegmentL sl;
+
+		SegmentL sl2 = sd;
+		SegmentF sf2 = sd;
+		SegmentD sd2 = sf;
+		SegmentL sl3 = sf;
+		SegmentF sf3 = sl;
+		SegmentD sd3 = sl;
+
+		FRectF rf;
+		FRectD rd;
+		FRectL rl;
+
+		FRectL rl2 = rd;
+		FRectF rf2 = rd;
+		FRectD rd2 = rf;
+		FRectL rl3 = rf;
+		FRectF rf3 = rl;
+		FRectD rd3 = rl;
+
+		PolylineF pf;
+		PolylineD pd;
+		PolylineL pl;
+
+		PolylineL pl2 = pd;
+		PolylineF pf2 = pd;
+		PolylineD pd2 = pf;
+		PolylineL pl3 = pf;
+		PolylineF pf3 = pl;
+		PolylineD pd3 = pl;
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
