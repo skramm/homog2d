@@ -227,6 +227,8 @@ Homogeneous (thus the 'mutable' attribute).
 template<typename FPT>
 class Matrix_
 {
+	template<typename T> friend class Matrix_;
+
 /// forward declaration of function
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
@@ -245,6 +247,16 @@ public:
 	Matrix_()
 	{
 		p_fillZero();
+	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	Matrix_( const Matrix_<FPT2>& other )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				_mdata[i][j] = other._mdata[i][j];
+		_isNormalized = other._isNormalized;
 	}
 
 	matrix_t<FPT>&       getRaw()       { return _mdata; }
@@ -317,6 +329,16 @@ See https://en.wikipedia.org/wiki/Determinant
 	const bool& isNormalized() const { return _isNormalized; }
 
 protected:
+/// Used by copy constructor
+/** \todo maybe integrate into CC ? Not used anywhere else... */
+	template<typename FPT2>
+	void p_copyTo( const Matrix_<FPT2>& other )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				other._mdata[i][j] = _mdata[i][j];
+	}
+
 	void p_divideBy( size_t r, size_t c ) const
 	{
 		HOMOG2D_CHECK_ROW_COL;
@@ -988,6 +1010,14 @@ public:
 	explicit Ellipse_( const Circle_<FPT>& cir )
 	{
 		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
+	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	Ellipse_( const Ellipse_<FPT2>& other )
+//		: static_cast<Matrix_<FPT>>(*this)( other )
+	{
+		static_cast<detail::Matrix_<FPT>>(*this) = static_cast<detail::Matrix_<FPT2>>(other);
 	}
 
 	template<typename FPT2>
