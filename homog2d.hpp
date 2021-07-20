@@ -1432,6 +1432,31 @@ private:
 		return std::make_pair( _ptR1, _ptR2 );
 	}
 
+/// Returns true if rectangles overlap
+/** \todo needs testing ! */
+	template<typename FPT2>
+	bool doesOverlap( const FRect_<FPT2>& other ) const
+	{
+		if( other._ptR1.getX() < _ptR2.getX() )
+			if( other._ptR1.getY() < _ptR2.getY() )
+				return true;
+		return false;
+	}
+
+/// Returns Rectangle of the intersection area
+/** \todo needs testing ! */
+	template<typename FPT2>
+	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const
+	{
+		return FRect_<FPT>( _ptR2, other._ptR1 );
+	}
+
+/// Returns union polygon of the two rectangles
+/** \todo needs testing ! */
+	template<typename FPT2>
+	Polyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
+
+
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
 	std::array<Point2d_<FPT>,4>
@@ -3537,6 +3562,7 @@ Polyline_<FPT>::isPolygon() const
 	return _attribs._isPolygon.value();
 }
 
+//------------------------------------------------------------------
 /// Returns length
 template<typename FPT>
 HOMOG2D_INUMTYPE
@@ -3552,6 +3578,7 @@ Polyline_<FPT>::length() const
 	return _attribs._length.value();
 }
 
+//------------------------------------------------------------------
 /// Returns area of polygon
 /**
 \todo Needs more testing !
@@ -3582,6 +3609,24 @@ Polyline_<FPT>::area() const
 	return _attribs._area.value();
 }
 
+
+
+
+//------------------------------------------------------------------
+/// Returns polygon corresponding to the union of the two rectangles (must overlap!)
+/**
+\todo finish this and write tests
+*/
+template<typename FPT>
+template<typename FPT2>
+Polyline_<FPT>
+FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
+{
+	return Polyline_<FPT>();
+}
+
+
+//------------------------------------------------------------------
 /// Returns true if is a polygon (free function)
 ///  \sa Polyline_::isPolygon()
 template<typename FPT>

@@ -971,8 +971,8 @@ void demo_ELL( int n )
 //	double angle_delta = 5.;
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
-	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
+//	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
+//	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
 
 	action_ELL( &data );
 	kbloop.start( data );
