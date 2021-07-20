@@ -149,13 +149,9 @@ namespace detail {
 
 } // namespace detail
 
-
 // forward declarations
-template<typename LP,typename FPT>
-class Root;
-
-template<typename LP,typename FPT>
-class Hmatrix_;
+template<typename LP,typename FPT> class Root;
+template<typename LP,typename FPT> class Hmatrix_;
 
 template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
@@ -593,7 +589,8 @@ Thus some assert can get triggered elsewhere.
 
 /// Copy-constructor
 	Hmatrix_( const Hmatrix_<M,FPT>& other )
-		: _hasChanged   ( true )
+		: detail::Matrix_<FPT>( other)
+		, _hasChanged   ( true )
 		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
 	{
@@ -742,7 +739,10 @@ Thus some assert can get triggered elsewhere.
 #endif
 
 /// Matrix normalisation
-/** \todo replace magic number with something else */
+/**
+\todo replace magic number with something else
+*/
+
 	void normalize() const
 	{
 		auto eps = std::numeric_limits<FPT>::epsilon()*10;
@@ -1015,9 +1015,9 @@ public:
 /// Copy-Constructor
 	template<typename FPT2>
 	Ellipse_( const Ellipse_<FPT2>& other )
-//		: static_cast<Matrix_<FPT>>(*this)( other )
+		: detail::Matrix_<FPT>( other )
 	{
-		static_cast<detail::Matrix_<FPT>>(*this) = static_cast<detail::Matrix_<FPT2>>(other);
+//		static_cast<detail::Matrix_<FPT>>(*this) = static_cast<detail::Matrix_<FPT2>>(other);
 	}
 
 	template<typename FPT2>
@@ -1074,6 +1074,7 @@ private:
 		_eqCoeffs[3] = D;
 		_eqCoeffs[4] = E;
 		_eqCoeffs[5] = F;*/
+		std::cout << "init:" << *this << '\n';
 	}
 
 //////////////////////////
@@ -1877,7 +1878,6 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 } // namespace priv
 
-
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
@@ -1983,7 +1983,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_2( v1, v2, detail::RootHelper<LP>() );
 	}
 
-/// Constructor of line from 3 values
+/// Constructor of line/point from 3 values
 	template<typename T>
 	Root( T v0, T v1, T v2 )
 	{
@@ -1991,6 +1991,14 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		_v[0] = v0;
 		_v[1] = v1;
 		_v[2] = v2;
+	}
+
+/// Constructor of line from 4 values x1,y1,x2,y2
+	template<typename T>
+	Root( T x1, T y1, T x2, T y2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		impl_init_4( x1, y1, x2, y2, detail::RootHelper<LP>() );
 	}
 
 /// Default constructor, depends on the type
@@ -2059,6 +2067,17 @@ private:
 		{
 			_v[0] = 0.; _v[1] = 1.;
 		}
+	}
+
+	template<typename T>
+	void impl_init_4( T x1, T y1, T x2, T y2, const detail::RootHelper<type::IsPoint>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from 4 values" );
+	}
+	template<typename T>
+	void impl_init_4( T x1, T y1, T x2, T y2, const detail::RootHelper<type::IsLine>& )
+	{
+		*this = Point2d_<HOMOG2D_INUMTYPE>(x1, y1) * Point2d_<HOMOG2D_INUMTYPE>(x2, y2);
 	}
 
 public:
@@ -2526,7 +2545,6 @@ public:
 		template<typename T1,typename T2>
 		void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsLine>& );
 };
-
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>

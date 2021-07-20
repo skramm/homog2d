@@ -936,9 +936,17 @@ struct Param_ELL : Data
 {
 	explicit Param_ELL( std::string title ):Data(title)
 	{
-		ell = Ellipse_<float>( 200.,100.,120.,80.,20.*M_PI/180.) ;
+		auto x0=200;
+		auto y0=100;
+		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
+		liH = Line2d( 0,y0, 300,y0 );
+		liV = Line2d( x0,0, x0,300 );
+		H = Homogr(-x0,-y0).addRotation( 15. * M_PI / 180. ).addTranslation(x0,y0);
 	}
+
 	Ellipse_<double> ell;
+	Line2d liH, liV;
+	Homogr H;
 };
 
 void action_ELL( void* param )
@@ -946,7 +954,11 @@ void action_ELL( void* param )
 	auto& data = *reinterpret_cast<Param_ELL*>(param);
 
 	data.clearImage();
+	std::cout << data.ell << '\n';
 	data.ell.draw( data.img );
+	data.liH.draw( data.img );
+	data.liV.draw( data.img );
+	data.ell = data.H * data.ell;
 	data.showImage();
 }
 void demo_ELL( int n )
@@ -955,8 +967,8 @@ void demo_ELL( int n )
 	std::cout << "Demo " << n << ": Ellipse\n";
 
 	data.setMouseCallback( mouse_CB_ELL );
-	double angle = 0.;
-	double angle_delta = 5.;
+//	double angle = 0.;
+//	double angle_delta = 5.;
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
