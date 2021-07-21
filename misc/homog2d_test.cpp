@@ -1176,11 +1176,14 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,0 ) );
 		CHECK( vpts[1] == Point2d( 3,2 ) );
+		CHECK_THROWS( r1.intersection(r2) ); // no intersection
 
 		r2.translate( 0.000001, 0 );         // move it a bit left
 		inters = r1.intersects(r2);          // => no more intersection
 		CHECK( inters() == false );
 		CHECK( inters.size() == 0 );
+		CHECK_THROWS( r1.intersection(r2) ); // still no intersection
+
 	}
 	{     // two rectangles joined by corner at 3,2
 #include "figures_test/frect_intersect_6.code"

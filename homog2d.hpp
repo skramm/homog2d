@@ -52,7 +52,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
-#if 1
+#if 0
 	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -1963,6 +1963,20 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
+#if 0
+// debug function, useless at present
+template<typename T>
+void printVector( const std::vector<T>& v, std::string msg=std::string() )
+{
+	std::cout << "vector: ";
+	if( msg.empty() )
+		std::cout << msg;
+	std::cout << '\n';
+	for( const auto& elem: v )
+		std::cout << elem << "-";
+	std::cout << '\n';
+}
+#endif
 } // namespace priv
 
 //------------------------------------------------------------------
@@ -3689,9 +3703,8 @@ FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
 	return Polyline_<FPT>();
 }
 
-/// Returns Rectangle of the intersection area
-/** \todo needs testing !
-
+/// Returns Rectangle of the intersection area, will throw if no intersection area
+/**
 3 situations need to be considered:
 
 - A: 2 points on same segment => 2 points inside
@@ -3700,7 +3713,7 @@ FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
   |      |                   |      |
   |   +--+-----+          +--+----+ |
   |   |  |     |          |  |    | |
-  |   |  |     |    or    |  |    | |
+  |   |  |     |    or    |  |    | |  or ...
   |   +--+-----+          +--+----+ |
   |      |                   |      |
   +------+                   +------+
@@ -3712,10 +3725,10 @@ FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
   |      |
   |      |
   |   +--+-----+
-  |   |  |     |
+  |   |  |     |   or ...
   +---+--+     |
       |        |
-      +--+-----+
+      +--------+
 \endverbatim
 
 C: 4 points
@@ -3729,13 +3742,6 @@ C: 4 points
      |      |
      +------+
 \endverbatim
-
-For A and B: steps
-- if 1 point inside: return rectangle made of intersection points
-- if 2 point inside:
-  - identify which one one of the 2 rectangles has points inside the other => Rint
-
-
 */
 template<typename FPT>
 template<typename FPT2>
@@ -3750,11 +3756,10 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	if( inter.size() < 2 )
 		HOMOG2D_THROW_ERROR_1( "unable, only one intersection point" );
 #endif
-	std::cout << "inter.size=" << inter.size() << '\n';
-	std::cout << "inter.get().at(0)="<<inter.get().at(0) <<" inter.get().at(1)=" << inter.get().at(1) << '\n';
+	std::cout << "inter.size=" << inter.size() << '\n' << inter.get() << '\n';
 
 	if( inter.size() == 4 )
-		return FRect_<FPT>( inter.get().at(0), inter.get().at(2) );
+		return FRect_<FPT>( inter.get().at(0), inter.get().at(3) );
 
 	assert( inter.size() == 2 );
 	const auto& r1 = *this;
@@ -3765,7 +3770,10 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	auto c1 = v1.size();
 	auto c2 = v2.size();
 	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
-// some checking:
+
+	if( c1==0 && c2==0 )
+		HOMOG2D_THROW_ERROR_1( "unable, rectangles share a segment" );
+
 	assert(
 		( c1==1 && c2==1 )
 		||
@@ -3774,7 +3782,7 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 		( c2==0 && c1==2 )
 	);
 	if( c1==1 || c2==1 ) // only 1 point inside
-		return FRect_<FPT>( inter.get().at(0), inter.get().at(2) );
+		return FRect_<FPT>( inter.get().at(0), inter.get().at(1) );
 
 // here: 2 points inside, then build rectangle using the 4 points
 	assert( c1 == 2 || c2 == 2 );
