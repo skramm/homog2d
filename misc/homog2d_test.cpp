@@ -1113,6 +1113,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( !r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
+		CHECK_THROWS( r1.intersection(r2) ); // no intersection !
 	}
 	{
 #include "figures_test/frect_intersect_2.code"
@@ -1179,8 +1180,21 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 1 );
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,2 ) );
+		CHECK_THROWS( r1.intersection(r2) ); // only one point !
+	}
+	{     // two rectangles
+#include "figures_test/frect_intersect_7.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 2,2 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(2,2, 4,3) );
 	}
 }
+
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {
@@ -1539,6 +1553,16 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( pts[2] == Point2d(6,5) );
 		CHECK( pts[3] == Point2d(6,2) );
 	}
+	{
+		FRect_<NUMTYPE> r;
+		auto s = r.getSegs();
+		auto s2 = getSegs( r );
+		CHECK( s == s2 );
+		CHECK( s[0] == Segment(0,0, 0,1) );
+		CHECK( s[1] == Segment(0,1, 1,1) );
+		CHECK( s[2] == Segment(1,1, 1,0) );
+		CHECK( s[3] == Segment(1,0, 0,0) );
+	}
 }
 
 TEST_CASE( "Polyline", "[polyline]" )
@@ -1571,7 +1595,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.length() == 8 );
 		CHECK( pl1.area() == 4 );
 	}
-	{
+	{                         // build Polyline from FRect
 		FRect r( 5,6, 7,8 );
 		Polyline_<NUMTYPE> pl1( r, IsClosed::No );
 		CHECK( pl1.isClosed() == false );

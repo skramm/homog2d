@@ -1329,41 +1329,41 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 template<typename FPT>
 class IntersectM
 {
-	private:
-		mutable std::vector<Point2d_<FPT>> _vecInters;
-	public:
-		IntersectM() {}
+private:
+	mutable std::vector<Point2d_<FPT>> _vecInters; ///< mutable, because it can get sorted in const functions
+public:
+	IntersectM() {}
 /// To enable conversions from different floating-point types
-		template<typename FPT2>
-		IntersectM( const IntersectM<FPT2>& other )
-		{
-			_vecInters.resize( other.size() );
-			auto it = _vecInters.begin();
-			for( const auto& elem: other.get() )
-				*it++ = elem; // automatic type conversion
-		}
+	template<typename FPT2>
+	IntersectM( const IntersectM<FPT2>& other )
+	{
+		_vecInters.resize( other.size() );
+		auto it = _vecInters.begin();
+		for( const auto& elem: other.get() )
+			*it++ = elem; // automatic type conversion
+	}
 
-		bool operator()() const
-		{
-			return !_vecInters.empty();
-		}
-		size_t size() const { return _vecInters.size(); }
-		void add( const Point2d_<FPT>& pt )
-		{
+	bool operator()() const
+	{
+		return !_vecInters.empty();
+	}
+	size_t size() const { return _vecInters.size(); }
+	void add( const Point2d_<FPT>& pt )
+	{
+		_vecInters.push_back(pt);
+	}
+
+	void add( const std::vector<Point2d_<FPT>>& vpt )
+	{
+		for( const auto& pt: vpt )
 			_vecInters.push_back(pt);
-		}
+	}
 
-		void add( const std::vector<Point2d_<FPT>>& vpt )
-		{
-			for( const auto& pt: vpt )
-				_vecInters.push_back(pt);
-		}
-
-		std::vector<Point2d_<FPT>> get() const
-		{
-			std::sort( std::begin(_vecInters), std::end(_vecInters) );
-			return _vecInters;
-		}
+	std::vector<Point2d_<FPT>> get() const
+	{
+		std::sort( std::begin(_vecInters), std::end(_vecInters) );
+		return _vecInters;
+	}
 };
 
 } // namespace detail
@@ -1380,7 +1380,9 @@ class FRect_
 private:
 	Point2d_<FPT> _ptR1,_ptR2;
 
-	public:
+public:
+/** \name Constructors */
+///@{
 /// Default constructor, initialize rectangle to (0,0)-(1,1)
 	FRect_()
 	{
@@ -1405,6 +1407,7 @@ private:
 	FRect_( const FRect_<FPT2>& other )
 		: _ptR1(other._ptR1),_ptR2(other._ptR2)
 	{}
+///@}
 
 	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
@@ -1426,39 +1429,32 @@ private:
 	}
 
 /// Returns the 2 major points of the rectangle
+/// \sa getPts( const FRect_<FPT>& )
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
 	getPts() const
 	{
 		return std::make_pair( _ptR1, _ptR2 );
 	}
 
-/// Returns true if rectangles overlap
-/** \todo needs testing ! */
 	template<typename FPT2>
-	bool doesOverlap( const FRect_<FPT2>& other ) const
-	{
-		if( other._ptR1.getX() < _ptR2.getX() )
-			if( other._ptR1.getY() < _ptR2.getY() )
-				return true;
-		return false;
-	}
-
-/// Returns Rectangle of the intersection area
-/** \todo needs testing ! */
+	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const
-	{
-		return FRect_<FPT>( _ptR2, other._ptR1 );
-	}
-
-/// Returns union polygon of the two rectangles
-/** \todo needs testing ! */
-	template<typename FPT2>
-	Polyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
-
+	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
+/**
+\verbatim
+
+ p1 +------+ p2
+    |      |
+    |      |
+    |      |
+ p0 +------+ p3
+
+\endverbatim
+\sa get4Pts( const FRect_<FPT>& )
+*/
 	std::array<Point2d_<FPT>,4>
 	get4Pts() const
 	{
@@ -1469,8 +1465,20 @@ private:
 		arr[3] = Point2d_<FPT>( _ptR2.getX(), _ptR1.getY() );
 		return arr;
 	}
-/// Returns the 4 segments of the rectangle
-/// \sa h2d::getSegs( const FRect& );
+
+/// Returns the 4 segments of the rectangle, starting with the first vertical one
+/**
+\verbatim
+      s1
+   +------+p2
+   |      |
+s0 |      | s2
+   |      |
+ p1+------+
+      s3
+\endverbatim
+\sa \ref h2d::getSegs( const FRect_& )
+*/
 	std::array<Segment_<FPT>,4>
 	getSegs() const
 	{
@@ -1493,6 +1501,8 @@ private:
 		return true;
 	}
 
+/** \name Intersection functions */
+///@{
 /// FRect/Line intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
@@ -1526,32 +1536,6 @@ private:
 		return out;
 	}
 
-private:
-/// Intersection of FRect vs FRect or Circle
-	template<typename T>
-	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
-	{
-		std::set<Point2d_<FPT>> pts;
-		for( const auto& rseg: getSegs() )
-		{
-			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
-			if( inters() )
-			{
-				auto vpts = inters.get();
-				assert( vpts.size() < 3 );
-				if( vpts.size() > 0 )
-					pts.insert( vpts[0] );
-				if( vpts.size() > 1 )
-					pts.insert( vpts[1] );
-			}
-		}
-		detail::IntersectM<FPT> out;
-		for( const auto& elem: pts )
-			out.add( elem );
-		return out;
-	}
-
-public:
 /// FRect/Circle intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
@@ -1569,6 +1553,7 @@ public:
 			return detail::IntersectM<FPT>();
 		return p_intersects_R_C( rect );
 	}
+///@}
 
 	template<typename FPT2>
 	bool operator == ( const FRect_<FPT2>& other ) const
@@ -1605,7 +1590,36 @@ public:
 		);
 	}
 #endif
-};
+
+private:
+/// Intersection of FRect vs FRect or Circle
+/**
+- We use a \c std::set to avoid having multiple times the same point.
+- second arg is used to fetch the indexes of intersecting segments, when needed
+*/
+	template<typename T>
+	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
+	{
+		std::set<Point2d_<FPT>> pts;
+		for( const auto& rseg: getSegs() )
+		{
+			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
+			if( inters() )
+			{
+				auto vpts = inters.get();
+				assert( vpts.size() < 3 );
+				if( vpts.size() > 0 )
+					pts.insert( vpts[0] );
+				if( vpts.size() > 1 )
+					pts.insert( vpts[1] );
+			}
+		}
+		detail::IntersectM<FPT> out;
+		for( const auto& elem: pts )
+			out.add( elem );
+		return out;
+	}
+}; // class FRect_
 
 /// Returns the 4 points of the rectangle (free function)
 /// \sa FRect_::get4Pts()
@@ -3609,9 +3623,6 @@ Polyline_<FPT>::area() const
 	return _attribs._area.value();
 }
 
-
-
-
 //------------------------------------------------------------------
 /// Returns polygon corresponding to the union of the two rectangles (must overlap!)
 /**
@@ -3620,9 +3631,34 @@ Polyline_<FPT>::area() const
 template<typename FPT>
 template<typename FPT2>
 Polyline_<FPT>
-FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
+FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
 {
+	std::pair<int,int> p_idx_seg;
+	auto inter = this->intersects( other );
+	if( !inter() )
+		HOMOG2D_THROW_ERROR_1( "unable, rectangles do not intersect" );
+
 	return Polyline_<FPT>();
+}
+
+/// Returns Rectangle of the intersection area
+/** \todo needs testing ! */
+template<typename FPT>
+template<typename FPT2>
+FRect_<FPT>
+FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
+{
+	auto inter = this->intersects( other );
+#ifndef HOMOG2D_NOCHECKS
+	if( !inter() )
+		HOMOG2D_THROW_ERROR_1( "unable, rectangles do not intersect" );
+
+	if( inter.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "unable, only one intersection point" );
+#endif
+	std::cout << "inter.size=" << inter.size() << '\n';
+	std::cout << "inter.get().at(0)="<<inter.get().at(0) <<" inter.get().at(1)=" << inter.get().at(1) << '\n';
+	return FRect_<FPT>( inter.get().at(0), inter.get().at(1) );
 }
 
 
