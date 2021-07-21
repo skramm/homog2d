@@ -113,6 +113,7 @@
 		<Unit filename="figures_test/frect_intersect_6.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="figures_test/frect_intersect_7.code" />
 		<Unit filename="figures_test/header.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

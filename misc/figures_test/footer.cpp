@@ -1,6 +1,6 @@
 
 	Homogr H;
-	H.addScale( 25 );
+	H.addScale( 100 );
 	H.addTranslation( 20,20 );
 	auto r1b = H*r1;
 	auto r2b = H*r2;

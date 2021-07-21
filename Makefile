@@ -117,13 +117,16 @@ doc_fig_tex: $(TEX_FIG_PNG)
 #=======================================================================
 # Generation of figures for the test samples
 $(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
+	@echo "Running $<"
 	@./$<
 	@mogrify -flip $<.png
 
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
+	@echo "Building $<"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
+	@echo "generating $<"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
