@@ -3,14 +3,13 @@
 
 See [Release page](https://github.com/skramm/homog2d/releases).
 
-- Planned:
-  - add conic homography (circle=>ellipse)
-
 - current master branch
   - switch to C++14 (so we can use `auto` return types!)
   - added generalised `getBB()` and `FRect::getBoundingCircle()`
   - added constructor to build horizontal of vertical lines
-  - Polyline: added `length()`, `area()`, `isPolygon()`, `getBB()`
+  - `Polyline`: added `length()`, `area()`, `isPolygon()`, `getBB()`
+  - added `FRect::intersection`, to get the  intersection area
+  - added `Ellipse` type, and associated homography (circle=>ellipse and ellipse=>ellipse)
 
 - [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**

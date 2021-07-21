@@ -348,6 +348,21 @@ FRect rect;
 rect.translate( dx, dy );
 ```
 
+Get the rectangle corresponding to the intersection of two rectangles:
+```C++
+try
+{
+	auto r_inters = r1.intersection(r2);
+}
+catch( const std::runtime_error& err )
+{
+	std::cerr << "rectangle do not intersect": << err.what();
+}
+```
+
+The "try/catch" is recommended in user code because this function will throw il there is no intersection area.
+This can happen **even** if there are some intersection points found, because these can be due to a shared segment.
+
 
 ### 3.3 - Circles
 
