@@ -939,8 +939,8 @@ struct Param_ELL : Data
 		auto x0=200;
 		auto y0=100;
 		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
-		liH = Line2d( 0,y0, 300,y0 );
-		liV = Line2d( x0,0, x0,300 );
+		liH = Line2d( LineDir::H, y0 );
+		liV = Line2d( LineDir::V, x0 );
 		H = Homogr(-x0,-y0).addRotation( 15. * M_PI / 180. ).addTranslation(x0,y0);
 	}
 
@@ -949,6 +949,7 @@ struct Param_ELL : Data
 	Homogr H;
 };
 
+/// Ellipse demo
 void action_ELL( void* param )
 {
 	auto& data = *reinterpret_cast<Param_ELL*>(param);

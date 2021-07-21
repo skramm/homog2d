@@ -1475,8 +1475,8 @@ public:
 
 	template<typename FPT2>
 	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const;
-	template<typename FPT2>
-	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
+//	template<typename FPT2>
+//	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
@@ -3685,87 +3685,6 @@ Polyline_<FPT>::area() const
 	return _attribs._area.value();
 }
 
-//------------------------------------------------------------------
-#ifdef HOMOG2D_FUTURE_STUFF
-/// Returns polygon corresponding to the union of the two rectangles (must overlap!)
-/**
-\todo finish this and write tests
-
-\verbatim
-  +------+              +------+
-  |      |              |      |
-  |   +--+-----+        |      +-----+
-  |   |  |     |        |            |
-  |   |  |     |   =>   |            |
-  |   +--+-----+        |      +-----+
-  |      |              |      |
-  +------+              +------+
-\endverbatim
-
-*/
-template<typename FPT>
-template<typename FPT2>
-Polyline_<FPT>
-FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
-{
-	std::pair<int,int> p_idx_seg;
-	auto inter = this->intersects( other );
-	if( !inter() )
-		HOMOG2D_THROW_ERROR_1( "unable, rectangles do not intersect" );
-
-	HOMOG2D_LOG( "nb inters pts=" << inter.size() );
-
-	struct IndexEntry
-	{
-		int rect_idx;
-		FPT pos;
-		int pt_idx
-	};
-	struct IndexStruct
-	{
-		std::vector<IndexEntry> v_idx;
-		void add( const Point2d_<FPT>& pt, int ridx, int pidx )
-		{
-			v_idx.push_back( IndexEntry{pt.getX(), ridx, pidx } );
-		}
-		void sort()
-		{
-		}
-		size_t size() const { return v_idx.size(); }
-
-	};
-
-	IndexStruct index;
-	std::array<FRect_<FPT>,2> r12;
-	r12[0] = *this;
-	r12[1] = other;
-
-// step 1: build index structure, holding horizontal positions
-	for( int i=0; i<4; i++ )
-	{
-		auto& pt1 = r1.getPt(i);
-		auto& pt2 = r2.getPt(i);
-		index.add( pt1, 0, i );
-		index.add( pt2, 1, i );
-	}
-	index.sort();
-
-// step 2: parse index
-	Polyline_<FPT> out;
-	for( int i=0; i<index.size(); i++ )
-	{
-		auto elem = index.vidx.at(i);
-		if( i == 0 )                   // if first on, add it
-		{
-			r_idx = elem.rect_idx;
-			auto pt_idx = elem.pt_idx;
-			out.add( r12[r_idx].getPt(pt_idx) )
-		}
-	}
-
-	return Polyline_<FPT>();
-}
-#endif
 
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area, will throw if no intersection area
