@@ -49,8 +49,8 @@ pt1.set( 5, 6 );
 ```C++
 Line2d li1;             // vertical line at x=0
 Line2d li2( 3, 4 );     // line passing through (0,0) and (3,4)
-Line2d( LineDir::H, 15 ); // horizontal line at y=15
-Line2d( LineDir::V, -2 ); // vertical line at x=-2
+Line2d li3( LineDir::H, 15 ); // horizontal line at y=15
+Line2d li4( LineDir::V, -2 ); // vertical line at x=-2
 ```
 
 - Create a point from two lines, and a line from two points:
@@ -738,6 +738,9 @@ You can quickly check if a point lies within a flat rectangle (`FRect`) or a cir
 bool b1 = pt.isInside( rect );
 bool b2 = pt.isInside( circle );
 ```
+
+**Note**: this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
+
 For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
 ```C++
 bool b1 = pt.isInside( pt1, pt2 );

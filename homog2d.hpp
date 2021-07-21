@@ -48,9 +48,13 @@ See https://github.com/skramm/homog2d
 
 #if 0
 	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
-	#define HOMOG2D_LOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_START
+#endif
+
+#if 1
+	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
+#else
 	#define HOMOG2D_LOG(a) {;}
 #endif
 
@@ -176,6 +180,7 @@ using Line2d_  = Root<type::IsLine,T>;
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: char { X, Y };
 
+/// Used in line constructor, to instanciate a H or V line, see \ref Root( LineDir, T )
 enum class LineDir: char { H, V };
 
 /// Used in Polyline_ constructors
@@ -1412,7 +1417,6 @@ public:
 
 private:
 /// Private constructor from 4 points, used in intersection( const FRect_& )
-/// \todo finish this !!!
 	template<typename T>
 	FRect_(
 		const Point2d_<T>& pt1,
@@ -1421,7 +1425,24 @@ private:
 		const Point2d_<T>& pt4
 	)
 	{
+		HOMOG2D_LOG( "pt1" << pt1 << " pt2="<< pt2 << " pt3=" << pt3 << " pt4=" << pt4 );
+		auto x0 = std::min( pt1.getX(), pt2.getX() );
+		x0 = std::min( x0, pt3.getX() );
+		x0 = std::min( x0, pt4.getX() );
+		auto y0 = std::min( pt1.getY(), pt2.getY() );
+		y0 = std::min( x0, pt3.getY() );
+		y0 = std::min( x0, pt4.getY() );
 
+		auto x1 = std::max( pt1.getX(), pt2.getX() );
+		x1 = std::max( x1, pt3.getX() );
+		x1 = std::max( x1, pt4.getX() );
+		auto y1 = std::max( pt1.getY(), pt2.getY() );
+		y1 = std::max( y1, pt3.getY() );
+		y1 = std::max( y1, pt4.getY() );
+
+		_ptR1 = Point2d_<FPT>(x0,y0);
+		_ptR2 = Point2d_<FPT>(x1,y1);
+		HOMOG2D_LOG( "ptR1=" <<_ptR1 << " _ptR2=" << _ptR2 );
 	}
 
 public:
@@ -3685,7 +3706,7 @@ FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
   +------+                   +------+
 \endverbatim
 
-- B: 2 points on different segments => 1 point inside
+- B: 2 points on different segments => 1 point inside, for each rectangle
 \verbatim
   +------+
   |      |
@@ -3738,20 +3759,24 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	assert( inter.size() == 2 );
 	const auto& r1 = *this;
 	const auto& r2 = other;
+	HOMOG2D_LOG( "r1="<<r1 << " r2="<<r2 );
 	auto v1 = r1.p_pointsInside( r2 );
 	auto v2 = r2.p_pointsInside( r1 );
 	auto c1 = v1.size();
 	auto c2 = v2.size();
+	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
 // some checking:
 	assert(
-		(c1==0 && (c2 == 1 || c2 == 2) )
+		( c1==1 && c2==1 )
 		||
-		(c2==0 && (c1 == 1 || c1 == 2) )
+		( c1==0 && c2==2 )
+		||
+		( c2==0 && c1==2 )
 	);
 	if( c1==1 || c2==1 ) // only 1 point inside
 		return FRect_<FPT>( inter.get().at(0), inter.get().at(2) );
 
-// here: 2 point inside, then buikd rectangle using the 4 points
+// here: 2 points inside, then build rectangle using the 4 points
 	assert( c1 == 2 || c2 == 2 );
 
 	if( c1 == 2 )

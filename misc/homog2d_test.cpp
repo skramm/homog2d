@@ -1126,6 +1126,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d(2,2) );
 		CHECK( vpts[1] == Point2d(3,1) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter == FRect(2,1, 3,2) );
 	}
 
 	{      // 4 intersection points
@@ -1139,6 +1142,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[1] == Point2d(2,4) );
 		CHECK( vpts[2] == Point2d(4,2) );
 		CHECK( vpts[3] == Point2d(4,4) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter == FRect(2,2, 4,4) );
 	}
 
 	{     // horizontal segment overlap
@@ -1154,6 +1160,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[1] == Point2d(2,2) );
 		CHECK( vpts[2] == Point2d(3,0) );
 		CHECK( vpts[3] == Point2d(3,2) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter == FRect(2,0, 3,2) );
 	}
 	{     // common vertical segment
 #include "figures_test/frect_intersect_5.code"
@@ -1190,8 +1199,8 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 2,2 ) );
 		CHECK( vpts[1] == Point2d( 4,2 ) );
-//		auto rect_inter = r1.intersection(r2);
-//		CHECK( rect_inter == FRect(2,2, 4,3) );
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter == FRect(2,2, 4,3) );
 	}
 }
 
