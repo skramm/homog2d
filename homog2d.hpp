@@ -1359,6 +1359,7 @@ public:
 			_vecInters.push_back(pt);
 	}
 
+/// Returns the intersection points, sorted
 	std::vector<Point2d_<FPT>> get() const
 	{
 		std::sort( std::begin(_vecInters), std::end(_vecInters) );
@@ -1409,6 +1410,21 @@ public:
 	{}
 ///@}
 
+private:
+/// Private constructor from 4 points, used in intersection( const FRect_& )
+/// \todo finish this !!!
+	template<typename T>
+	FRect_(
+		const Point2d_<T>& pt1,
+		const Point2d_<T>& pt2,
+		const Point2d_<T>& pt3,
+		const Point2d_<T>& pt4
+	)
+	{
+
+	}
+
+public:
 	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
@@ -1592,6 +1608,16 @@ s0 |      | s2
 #endif
 
 private:
+	template<typename FPT2>
+	std::vector<Point2d_<FPT>> p_pointsInside( const FRect_<FPT2>& other ) const
+	{
+		std::vector<Point2d_<FPT>> out;
+		for( const auto& pt: get4Pts() )
+			if( pt.isInside( other ) )
+				out.push_back( pt );
+		return out;
+	}
+
 /// Intersection of FRect vs FRect or Circle
 /**
 - We use a \c std::set to avoid having multiple times the same point.
@@ -1617,6 +1643,7 @@ private:
 		detail::IntersectM<FPT> out;
 		for( const auto& elem: pts )
 			out.add( elem );
+		assert( out.size()==0 || out.size()==1 || out.size()==2 || out.size()==4 );
 		return out;
 	}
 }; // class FRect_
@@ -3642,7 +3669,53 @@ FRect_<FPT>::unionRect( const FRect_<FPT2>& other ) const
 }
 
 /// Returns Rectangle of the intersection area
-/** \todo needs testing ! */
+/** \todo needs testing !
+
+3 situations need to be considered:
+
+- A: 2 points on same segment => 2 points inside
+\verbatim
+  +------+                   +------+
+  |      |                   |      |
+  |   +--+-----+          +--+----+ |
+  |   |  |     |          |  |    | |
+  |   |  |     |    or    |  |    | |
+  |   +--+-----+          +--+----+ |
+  |      |                   |      |
+  +------+                   +------+
+\endverbatim
+
+- B: 2 points on different segments => 1 point inside
+\verbatim
+  +------+
+  |      |
+  |      |
+  |   +--+-----+
+  |   |  |     |
+  +---+--+     |
+      |        |
+      +--+-----+
+\endverbatim
+
+C: 4 points
+\verbatim
+     +------+
+     |      |
+  +--+------+-----+
+  |  |      |     |
+  |  |      |     |
+  +--+------+-----+
+     |      |
+     +------+
+\endverbatim
+
+For A and B: steps
+- if 1 point inside: return rectangle made of intersection points
+- if 2 point inside:
+  - identify which one one of the 2 rectangles has points inside the other => Rint
+
+
+*/
 template<typename FPT>
 template<typename FPT2>
 FRect_<FPT>
@@ -3658,7 +3731,42 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 #endif
 	std::cout << "inter.size=" << inter.size() << '\n';
 	std::cout << "inter.get().at(0)="<<inter.get().at(0) <<" inter.get().at(1)=" << inter.get().at(1) << '\n';
-	return FRect_<FPT>( inter.get().at(0), inter.get().at(1) );
+
+	if( inter.size() == 4 )
+		return FRect_<FPT>( inter.get().at(0), inter.get().at(2) );
+
+	assert( inter.size() == 2 );
+	const auto& r1 = *this;
+	const auto& r2 = other;
+	auto v1 = r1.p_pointsInside( r2 );
+	auto v2 = r2.p_pointsInside( r1 );
+	auto c1 = v1.size();
+	auto c2 = v2.size();
+// some checking:
+	assert(
+		(c1==0 && (c2 == 1 || c2 == 2) )
+		||
+		(c2==0 && (c1 == 1 || c1 == 2) )
+	);
+	if( c1==1 || c2==1 ) // only 1 point inside
+		return FRect_<FPT>( inter.get().at(0), inter.get().at(2) );
+
+// here: 2 point inside, then buikd rectangle using the 4 points
+	assert( c1 == 2 || c2 == 2 );
+
+	if( c1 == 2 )
+		return FRect_<FPT>(
+			inter.get().at(0),
+			inter.get().at(1),
+			v1.at(0),
+			v1.at(1)
+		);
+	return FRect_<FPT>(
+		inter.get().at(0),
+		inter.get().at(1),
+		v2.at(0),
+		v2.at(1)
+	);
 }
 
 
