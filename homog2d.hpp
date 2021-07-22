@@ -46,13 +46,13 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/imgproc.hpp"
 #endif
 
-#if 1
+#if 0
 	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
 #endif
 
-#if 0
+#if 1
 	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -387,6 +387,7 @@ protected:
 	{
 		HOMOG2D_START;
 		Matrix_ out;
+		HOMOG2D_LOG( "matrix 1=" << out );
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
@@ -394,6 +395,7 @@ protected:
 						static_cast<HOMOG2D_INUMTYPE>(   h1._mdata[i][k] )
 						* static_cast<HOMOG2D_INUMTYPE>( h2._mdata[k][j] );
 		out._isNormalized = false;
+		HOMOG2D_LOG( "matrix 2=" << out );
 		return out;
 	}
 
@@ -775,14 +777,18 @@ public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication
+/// \todo remove, should be handled by inherited class Matrix
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
+		out.p_fillZero();
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				for( int k=0; k<3; k++ )
 					out.value(i,j) +=
 						static_cast<HOMOG2D_INUMTYPE>( h1.value(i,k) ) * h2.value(k,j);
+
+//		Hmatrix_ out = static_cast<detail::Matrix_<FPT>>(h1) * h2;
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -4038,7 +4044,7 @@ detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
 	HOMOG2D_START;
-	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
+//	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
 
@@ -4051,14 +4057,11 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	const auto& ptA1 = getPts().first;
 	const auto& ptA2 = getPts().second;
 
-	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
+//	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
 	if( detail::isInArea( pi, ptA1, ptA2, detail::Rounding::Yes ) )
-	{
-		HOMOG2D_LOG( "Is in area" );
 		out._doesIntersect = true;
-	}
-	else
-		HOMOG2D_LOG( "Is NOT in area" );
+//	else
+//		HOMOG2D_LOG( "Is NOT in area" );
 	return out;
 }
 

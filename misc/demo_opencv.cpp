@@ -428,10 +428,7 @@ void demo_B( int n )
 		{
 			data.clearImage();
 			Homogr H;
-			H.addRotation( angle*K );
-			std::cout << "angle=" << angle << " H=" << H << '\n';
-
-			H.addTranslation( tx, ty ).addScale( scale );
+			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
 			data.initPts();
 			H.applyTo(data.vpt);
 			data.drawLines();
@@ -1005,12 +1002,12 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_B,
 		demo_ELL,
 		demo_CC,
 		demo_H,
 		demo_PL,
 		demo_1,
-		demo_B,
 		demo_C,
 		demo_SI,
 		demo_6
