@@ -46,7 +46,7 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/imgproc.hpp"
 #endif
 
-#if 0
+#if 1
 	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -385,6 +385,7 @@ protected:
 /// Matrix multiplication
 	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
 	{
+		HOMOG2D_START;
 		Matrix_ out;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )

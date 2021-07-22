@@ -428,7 +428,10 @@ void demo_B( int n )
 		{
 			data.clearImage();
 			Homogr H;
-			H.addRotation( angle*K ).addTranslation( tx, ty ).addScale( scale );
+			H.addRotation( angle*K );
+			std::cout << "angle=" << angle << " H=" << H << '\n';
+
+			H.addTranslation( tx, ty ).addScale( scale );
 			data.initPts();
 			H.applyTo(data.vpt);
 			data.drawLines();
