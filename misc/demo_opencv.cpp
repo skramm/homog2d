@@ -941,11 +941,14 @@ struct Param_ELL : Data
 		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
 		liH = Line2d( LineDir::H, y0 );
 		liV = Line2d( LineDir::V, x0 );
-		H = Homogr(-x0,-y0).addRotation( 15. * M_PI / 180. ).addTranslation(x0,y0);
+		H = Homogr(x0,y0).addRotation( 15. * M_PI / 180. ).addTranslation(-x0,-y0);
+//		H = Homogr( 15. * M_PI / 180. );
+		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
 	}
 
 	Ellipse_<double> ell;
 	Line2d liH, liV;
+	Polyline pl;
 	Homogr H;
 };
 
@@ -959,7 +962,9 @@ void action_ELL( void* param )
 	data.ell.draw( data.img );
 	data.liH.draw( data.img );
 	data.liV.draw( data.img );
-	data.ell = data.H * data.ell;
+	data.pl.draw( data.img );
+//	data.pl =  data.H * data.pl;
+//	data.ell = data.H * data.ell;
 	data.showImage();
 }
 void demo_ELL( int n )
@@ -967,13 +972,18 @@ void demo_ELL( int n )
 	Param_ELL data( "Ellipse demo" );
 	std::cout << "Demo " << n << ": Ellipse\n";
 
-	data.setMouseCallback( mouse_CB_ELL );
-//	double angle = 0.;
-//	double angle_delta = 5.;
+//	data.setMouseCallback( mouse_CB_ELL );
 
 	KeyboardLoop kbloop;
-//	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
-//	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
+	kbloop.addKeyAction(
+		'm',
+		[&]{
+			data.pl =  data.H * data.pl;
+			data.ell = data.H * data.ell;
+			action_ELL( &data );
+		},
+		"rotate CW"
+	);
 
 	action_ELL( &data );
 	kbloop.start( data );

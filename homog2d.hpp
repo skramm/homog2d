@@ -1395,9 +1395,20 @@ public:
 		_ptR2.set( 1., 1. );
 	}
 /// Constructor from 2 points
-	FRect_( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
+	template<typename FPT2>
+	FRect_( const Point2d_<FPT2>& pa, const Point2d_<FPT2>& pb )
 	{
 		set( pa, pb );
+	}
+
+/// Constructor from center point, width and height
+	template<typename FPT2,typename T>
+	FRect_( const Point2d_<FPT2>& p0, T w, T h )
+	{
+		set(
+			Point2d_<FPT>( p0.getX()-0.5L*w, p0.getY()-0.5L*h ),
+			Point2d_<FPT>( p0.getX()+0.5L*w, p0.getY()+0.5L*h )
+		);
 	}
 
 /// Constructor from x1, y1, x2, y2
@@ -3742,7 +3753,7 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 #endif
 	std::cout << "inter.size=" << inter.size() << '\n' << inter.get() << '\n';
 
-	if( inter.size() == 4 )
+	if( inter.size() == 4 )  // 4 intersection points => case "C"
 		return FRect_<FPT>( inter.get().at(0), inter.get().at(3) );
 
 	assert( inter.size() == 2 );
@@ -3765,10 +3776,11 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 		||
 		( c2==0 && c1==2 )
 	);
-	if( c1==1 || c2==1 ) // only 1 point inside
+	if( c1==1 || c2==1 ) // only 1 point inside => the rectangle is defined by the intersection points
 		return FRect_<FPT>( inter.get().at(0), inter.get().at(1) );
 
-// here: 2 points inside, then build rectangle using the 4 points
+// here: 2 points inside, then build rectangle using the 4 points:
+// the 2 inside, and the two intersection points
 	assert( c1 == 2 || c2 == 2 );
 
 	if( c1 == 2 )
@@ -3785,7 +3797,6 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 		v2.at(1)
 	);
 }
-
 
 //------------------------------------------------------------------
 /// Returns true if is a polygon (free function)

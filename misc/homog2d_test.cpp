@@ -1575,6 +1575,11 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( s[2] == Segment(1,1, 1,0) );
 		CHECK( s[3] == Segment(1,0, 0,0) );
 	}
+	{
+		FRect_<NUMTYPE> r( Point2d(0,0), 100, 50 );
+		CHECK( r.width()  == 100. );
+		CHECK( r.height() == 50. );
+	}
 }
 
 TEST_CASE( "Polyline", "[polyline]" )

@@ -307,13 +307,19 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 ![fig2](../docs/fig2.png)
 
 The only constraint is that no coordinate can be equal.
-The library will throw if it is not enforced.
+The function will throw if it is not enforced.
 
 You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2, y2.
 The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
 ```
+
+Or by giving the center point and width and height:
+```C++
+FRect r1( p0, w, h );
+```
+
 
 You can get the points with two different member functions:
 ```C++
