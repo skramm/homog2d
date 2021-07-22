@@ -13,14 +13,15 @@ However, all the additional stuff here (Opencv graphical demo, test files, ...) 
 </dd>
 
 <dt>
-Q: I have an unexpected assert that gets triggered when I use this in my code.
+Q: I have an unexpected assert that gets triggered when I use this library in my code.
 What shall I do?
 </dt>
 <dd>
 A: Unfortunately, this can still happen at this time, and it is probably due to some numerical issue.
-The best thing to do is to add `#define HOMOG2D_DEBUGMODE` just above `#include "homog2d.hpp"` before and log the error stream of your program:<br>
+It is difficult to consider all the possible situations in test cases, so just one just got through.
+To get this solved, please add `#define HOMOG2D_DEBUGMODE` just above `#include "homog2d.hpp"`, and log the error stream of your program:<br>
 `./myapp 2>stderr` <br>
-and open an issue [here](https://github.com/skramm/homog2d/issues) with this output (after removing non relevant parts), so this can be checked and corrected.
+then open an issue [here](https://github.com/skramm/homog2d/issues) and include that output (after removing non relevant parts), so this can be checked and corrected.
 </dd>
 
 <dt>

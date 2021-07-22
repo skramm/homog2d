@@ -107,6 +107,8 @@ struct IsEpipmat {};
 
 namespace detail {
 
+	template<typename FPT> class Matrix_;
+
 	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename> struct RootHelper {};
 
@@ -195,6 +197,11 @@ enum class Dtype : char { Float, Double, LongDouble };
 
 namespace detail {
 
+// forward declaration
+template<typename FPT1,typename FPT2,typename FPT3>
+void product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
+
+
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 template<typename FPT>
@@ -230,14 +237,17 @@ class Matrix_
 {
 	template<typename T> friend class Matrix_;
 
-/// forward declaration of function
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
-	product(
-		Root<T1,FPT1>&        out,
-		const detail::Matrix_<FPT2>&  h,
-		const Root<T2,FPT1>&  in
-	);
+	product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	friend void
+	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
+
+//	template<typename T>
+//	friend Hmatrix_<T> operator * ( const Hmatrix_<T>& h1, const Hmatrix_<T>& h2 );
+
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -387,6 +397,8 @@ protected:
 	{
 		HOMOG2D_START;
 		Matrix_ out;
+		product( out, h1, h2 );
+/*
 		HOMOG2D_LOG( "matrix 1=" << out );
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -396,6 +408,7 @@ protected:
 						* static_cast<HOMOG2D_INUMTYPE>( h2._mdata[k][j] );
 		out._isNormalized = false;
 		HOMOG2D_LOG( "matrix 2=" << out );
+*/
 		return out;
 	}
 
@@ -591,7 +604,7 @@ Thus some assert can get triggered elsewhere.
 	{
 		if( this != &other )
 			detail::Matrix_<FPT>::getRaw() = other.getRaw();
-
+		_hasChanged = true;
 		return *this;
 	}
 
@@ -776,19 +789,12 @@ Thus some assert can get triggered elsewhere.
 public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
-/// Matrix multiplication
-/// \todo remove, should be handled by inherited class Matrix
+/// Matrix multiplication, call the base class product
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
-		out.p_fillZero();
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				for( int k=0; k<3; k++ )
-					out.value(i,j) +=
-						static_cast<HOMOG2D_INUMTYPE>( h1.value(i,k) ) * h2.value(k,j);
-
-//		Hmatrix_ out = static_cast<detail::Matrix_<FPT>>(h1) * h2;
+		HOMOG2D_LOG( "h1="<< h1 << "h2=" << h2 );
+		detail::product( out, static_cast<detail::Matrix_<FPT>>(h1), static_cast<detail::Matrix_<FPT>>(h2) ) ;
 		out.normalize();
 		out._hasChanged = true;
 		return out;
@@ -1682,9 +1688,9 @@ private:
 		detail::IntersectM<FPT> out;
 		for( const auto& elem: pts )
 			out.add( elem );
-		assert( out.size()==0 || out.size()==1 || out.size()==2 || out.size()==4 );
 		return out;
 	}
+
 }; // class FRect_
 
 /// Returns the 4 points of the rectangle (free function)
@@ -4796,6 +4802,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	HOMOG2D_DEBUG_ASSERT(
 		( pti.size() == 0 || pti.size() == 2 ),
 		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
+						<< "\n -pti.size()=" << pti.size()
 	);
 #endif
 
@@ -4808,6 +4815,24 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 
 //------------------------------------------------------------------
 namespace detail {
+
+/// Implementation of product 3x3 by 3x3
+
+template<typename FPT1,typename FPT2,typename FPT3>
+void
+product(
+	Matrix_<FPT1>&       out,
+	const Matrix_<FPT2>& h1,
+	const Matrix_<FPT3>& h2
+)
+{
+	out.p_fillZero();
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			for( int k=0; k<3; k++ )
+				out.value(i,j) +=
+					static_cast<HOMOG2D_INUMTYPE>( h1.value(i,k) ) * h2.value(k,j);
+}
 
 /// Implementation of product 3x3 by 3x1
 /**
