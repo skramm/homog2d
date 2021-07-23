@@ -98,6 +98,21 @@ precision_test2: misc/precision_test.cpp
 	$(CXX) $(CFLAGS) -I. -o $@ $<
 
 #=======================================================================
+# speed test
+speed_test: BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+	@time BUILD/ellipse_speed_test_SY
+	@time BUILD/ellipse_speed_test_SN
+
+BUILD/ellipse_speed_test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+
+BUILD/ellipse_speed_test_SY: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
+
+BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_NY.stderr
+
+
+#=======================================================================
 # Generation of the doc figures from code
 
 

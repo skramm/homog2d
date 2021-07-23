@@ -340,6 +340,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	const bool& isNormalized() const { return _isNormalized; }
 
 protected:
+#if 0
 /// Used by copy constructor
 /** \todo maybe integrate into CC ? Not used anywhere else... */
 	template<typename FPT2>
@@ -349,6 +350,7 @@ protected:
 			for( int j=0; j<3; j++ )
 				other._mdata[i][j] = _mdata[i][j];
 	}
+#endif
 
 	void p_divideBy( size_t r, size_t c ) const
 	{
@@ -946,6 +948,18 @@ struct EllParams
 	T sint, cost;
 	T a, b;
 	T a2, b2; // squared values of a and b
+
+	template<typename U>
+	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
+	{
+		f << "origin=" << par.x0 << "," << par.y0
+			<< " angle=" << par.theta *180./M_PI
+			<< " a=" << par.a << " b=" << par.b
+			<< '\n';
+		return f;
+
+	}
+
 };
 
 } // namespace detail
@@ -1053,6 +1067,13 @@ public:
 	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const;
 	Polyline_<FPT>                         getBB()     const;
 
+	template<typename T>
+	friend std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell )
+	{
+		auto par = ell.template p_getParams<HOMOG2D_INUMTYPE>();
+		f << par;
+		return f;
+	}
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
@@ -1219,16 +1240,20 @@ Ellipse_<FPT>::getMajMin() const
 }
 
 /// Returns bounding box of ellipse
+/**
+Algorithm:
+ - build line going through major axis
+
+*/
 template<typename FPT>
 Polyline_<FPT>
 Ellipse_<FPT>::getBB() const
 {
 
 // step 1: build ptA using angle
-//	auto pt0 = getCenter();
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
-	auto dy = std::sin( par.theta ) * par.a;
-	auto dx = std::cos( par.theta ) * par.a;
+	auto dy = par.sint * par.a;
+	auto dx = par.cost * par.a;
 	Point2d_<FPT> ptA(
 		par.x0 + dx,
 		par.y0 + dy
@@ -1247,11 +1272,25 @@ Ellipse_<FPT>::getBB() const
 	auto li_V2 = li_H.getOrthogonalLine( ptB );
 
 	Polyline_<FPT> out( IsClosed::Yes );
+#ifndef	HOMOG2D_DEBUGMODE
 	out.add( para.first * li_V1 );
 	out.add( para.second * li_V1 );
 	out.add( para.second * li_V2 );
 	out.add( para.first * li_V2 );
-
+#else
+	auto p1 = para.first * li_V1;
+	auto p2 = para.second * li_V1;
+	auto p3 = para.second * li_V2;
+	auto p4 = para.first * li_V2;
+	HOMOG2D_DEBUG_ASSERT(
+		( p2 != p1 && p3!=p2 && p4 != p3 ),
+		"p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
+	);
+	out.add( p1 );
+	out.add( p2 );
+	out.add( p3 );
+	out.add( p4 );
+#endif
 	return out;
 }
 
@@ -1265,10 +1304,10 @@ template<typename FPT2>
 bool
 Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 {
-	auto x = pt.getX();
-	auto y = pt.getY();
+	HOMOG2D_INUMTYPE x = pt.getX();
+	HOMOG2D_INUMTYPE y = pt.getY();
 
-	auto par = p_getParams();
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	const auto& x0 = par.x0;
 	const auto& y0 = par.y0;
 
@@ -3382,7 +3421,7 @@ public:
 
 
 //------------------------------------------------------------------
-/// Holds attribute of a Polyline, allows storage of last computed value, thought the use of ValueFlag
+/// Holds attribute of a Polyline, allows storage of last computed value, through the use of ValueFlag
 struct PolylineAttribs
 {
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
@@ -3548,7 +3587,9 @@ Segment \c n is the one between point \c n and point \c n+1
 #ifndef HOMOG2D_NOCHECKS
 		if( size() )
 			if( pt == _plinevec.back() )
-				HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
+				HOMOG2D_THROW_ERROR_1(
+					"cannot add a point identical to previous one, " + std::to_string(size())
+				);
 #endif
 		_attribs.setBad();
 		_plinevec.push_back( pt );
@@ -4730,7 +4771,9 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 	HOMOG2D_INUMTYPE fres = std::abs(res);
 	if( fres > 1.0 )
 	{
-		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << ", truncated to 1.0\n";
+		std::cerr << "homog2d: angle computation overflow detected, value "
+			<< std::scientific << std::setprecision(20)
+			<< fres << ", truncated to 1.0\n";
 		fres = 1.0;
 	}
 	return std::acos( fres );
