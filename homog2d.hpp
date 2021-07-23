@@ -936,19 +936,22 @@ struct CvDrawParams
 
 //------------------------------------------------------------------
 namespace detail {
-/// Holds parameter of ellipse
+
+/// Holds 9 parameters of ellipse
 template<typename T>
 struct EllParams
 {
-	T x0,y0;
+	T x0, y0; // center
 	T theta = 0.;
 	T sint, cost;
-	T a,b;
+	T a, b;
+	T a2, b2; // squared values of a and b
 };
 
-} // namespace detail {
+} // namespace detail
+
 //------------------------------------------------------------------
-/// Ellipse as a conic in matrix form
+/// Ellipse as a conic in matrix form.
 /**
 This enables its projection using homography
 
@@ -960,7 +963,6 @@ General equation of an ellipse:
 \f[
 A x^2 + B x y + C y^2 + D x + E y + F = 0
 \f]
-
 It can be written as a 3 x 3 matrix:
 \f[
 \begin{bmatrix}
@@ -983,6 +985,11 @@ Matrix coefficients computed from center x0,y0, major and minor distances (a,b) 
 \f]
 
 Homography projection: https://math.stackexchange.com/a/2320082/133647
+
+\f[
+Q' = H^{-T} \cdot Q \cdot H^{-1}
+\f]
+
 */
 template<typename FPT>
 class Ellipse_: public detail::Matrix_<FPT>
@@ -1020,11 +1027,7 @@ public:
 		p_init( x, y, major, minor, angle );
 	}
 
-/// Constructor 3
-	explicit Ellipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
-	{}
-
-/// Constructor 4, import from circle
+/// Constructor 3, import from circle
 	explicit Ellipse_( const Circle_<FPT>& cir )
 	{
 		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
@@ -1040,6 +1043,7 @@ public:
 
 	template<typename FPT2>
 	bool pointIsInside( const Point2d_<FPT2>& ) const;
+	bool isCircle() const;
 
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
@@ -1053,14 +1057,27 @@ public:
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 private:
+/// private constructor, needed in friend function only
+/**
+This is not public, because: 1-useless 2-not guarantee would be given that the input
+is indeed a valid ellipse
+*/
+	explicit Ellipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
+	{}
+
 	template<typename T>
 	detail::EllParams<T> p_getParams() const;
+	template<typename T>
+	detail::EllParams<T> p_computeParams() const;
 
+/// Called by all the constructors, fills the matrix.
 	void p_init( double x0, double y0, double a, double b, double theta=0. )
 	{
 		auto& data = detail::Matrix_<FPT>::_mdata;
-		HOMOG2D_INUMTYPE sin2 = std::sin(theta) * std::sin(theta);
-		HOMOG2D_INUMTYPE cos2 = std::cos(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE sin1 = std::sin(theta);
+		HOMOG2D_INUMTYPE cos1 = std::cos(theta);
+		HOMOG2D_INUMTYPE sin2 = sin1 * sin1;
+		HOMOG2D_INUMTYPE cos2 = cos1 * cos1;
 		HOMOG2D_INUMTYPE a2   = a*a;
 		HOMOG2D_INUMTYPE b2   = b*b;
 
@@ -1080,38 +1097,55 @@ private:
 		data[1][2] = data[2][1] = E / 2.;
 
 #ifdef HOMOG2D_OPTIMIZE_SPEED
-		par.a = a;
-		par.b = b;
-		par.theta = theta;
-		par.x0 = x0;
-		par.y0 = y0;
+		_hasChanged = false;
+		_par.a = a;
+		_par.b = b;
+		_par.a2 = a2;
+		_par.b2 = b2;
+		_par.theta = theta;
+		_par.sint = sin1;
+		_par.cost = cos1;
+		_par.x0 = x0;
+		_par.y0 = y0;
 #endif
-/*		_eqCoeffs[0] = A;
-		_eqCoeffs[1] = B;
-		_eqCoeffs[2] = C;
-		_eqCoeffs[3] = D;
-		_eqCoeffs[4] = E;
-		_eqCoeffs[5] = F;*/
-		std::cout << "init:" << *this << '\n';
+//		std::cout << "init:" << *this << '\n';
 	}
 
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
-
-//	std::array<FPT,6> _eqCoeffs; ///< equation coefficients, A through F
+// (matrix is inherited from base class)
 #ifdef HOMOG2D_OPTIMIZE_SPEED
-	detail::EllParams<FPT> par;
+	mutable bool _hasChanged = true;   ///< if true, means we need to recompute parameters
+	mutable detail::EllParams<FPT> _par;
 #endif
 }; // class Ellipse
 
 //------------------------------------------------------------------
 /// Returns standard parameters from matrix coeffs
-/// \todo get rid of magic number
 template<typename FPT>
 template<typename T>
 detail::EllParams<T>
 Ellipse_<FPT>::p_getParams() const
+{
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+	if( _hasChanged )
+	{
+		_par = p_computeParams<T>();
+		_hasChanged = false;
+	}
+	return _par;
+#else
+	return p_computeParams<T>();
+#endif // HOMOG2D_OPTIMIZE_SPEED
+}
+//------------------------------------------------------------------
+/// Compute and returns standard parameters from matrix coeffs
+/// \todo get rid of magic number
+template<typename FPT>
+template<typename T>
+detail::EllParams<T>
+Ellipse_<FPT>::p_computeParams() const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A = m[0][0];
@@ -1121,7 +1155,7 @@ Ellipse_<FPT>::p_getParams() const
 	HOMOG2D_INUMTYPE D = 2. * m[0][2];
 	HOMOG2D_INUMTYPE E = 2. * m[1][2];
 
-	detail::EllParams<T> par;
+	detail::EllParams<T> par;  // theta already set to zero
 
 	auto denom = B*B - 4. * A * C;
 	par.x0 = ( 2.*C*D - B*E ) / denom;
@@ -1133,6 +1167,8 @@ Ellipse_<FPT>::p_getParams() const
 	par.a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
 	par.b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
 
+	par.a2 = par.a * par.a;
+	par.b2 = par.b * par.b;
 	if( std::abs(B) < 1.E-10 )
 	{
 		if( A > C )
@@ -1143,10 +1179,29 @@ Ellipse_<FPT>::p_getParams() const
 		auto t = (C - A - sqr) / B;
 		par.theta = std::atan( t );
 	}
+	par.sint = std::sin( par.theta );
+	par.cost = std::cos( par.theta );
 	return par;
 }
 
 //------------------------------------------------------------------
+/// Returns true if ellipse is a circle
+/** \todo remove those ugly magic numbers with something meaningful */
+template<typename FPT>
+bool
+Ellipse_<FPT>::isCircle() const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A  = m[0][0];
+	HOMOG2D_INUMTYPE C  = m[1][1];
+	HOMOG2D_INUMTYPE B2 = m[0][1];
+	if( std::abs(A-C) < 1E-10 )
+		if( std::abs(B2) < 1E-10 )
+			return true;
+	return false;
+}
+
+/// Returns center of ellipse
 template<typename FPT>
 Point2d_<FPT>
 Ellipse_<FPT>::getCenter() const
@@ -1163,6 +1218,7 @@ Ellipse_<FPT>::getMajMin() const
 	return std::make_pair( par.a, par.b );
 }
 
+/// Returns bounding box of ellipse
 template<typename FPT>
 Polyline_<FPT>
 Ellipse_<FPT>::getBB() const
@@ -1215,16 +1271,12 @@ Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 	auto par = p_getParams();
 	const auto& x0 = par.x0;
 	const auto& y0 = par.y0;
-	auto sint = std::sin(par.theta);
-	auto cost = std::cos(par.theta);
-	auto a2 = par.a * par.a;
-	auto b2 = par.b * par.b;
 
-	auto v1 = cost * (x-x0) + sint * (y-y0);
-	HOMOG2D_INUMTYPE sum = v1*v1 / a2;
+	auto v1 = par.cost * (x-x0) + par.sint * (y-y0);
+	HOMOG2D_INUMTYPE sum = v1*v1 / par.a2;
 
-	auto v2 = sint * (x-x0) - cost * (y-y0);
-	sum += v2*v2 / b2;
+	auto v2 = par.sint * (x-x0) - par.cost * (y-y0);
+	sum += v2*v2 / par.b2;
 	if( sum < 1. )
 		return true;
 	return false;

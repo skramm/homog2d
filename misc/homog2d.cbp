@@ -37,9 +37,7 @@
 		<Unit filename="../README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../docs/build_gif.sh">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="../docs/build_gif.sh" />
 		<Unit filename="../docs/fig1.tex">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

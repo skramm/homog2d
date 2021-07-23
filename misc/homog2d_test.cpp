@@ -45,8 +45,23 @@ using namespace h2d;
 
 int main( int argc, char* argv[] )
 {
-	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type, internal numerical type=" << XSTR(HOMOG2D_INUMTYPE) << '\n';
-	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
+	std::cout << "START TESTS:\n - numerical type: " << XSTR(NUMTYPE)
+		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
+		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
+		<< "\n - build option:"
+		<< "\n  - HOMOG2D_OPTIMIZE_SPEED: "
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_OPTIMIZE_SPEED
+		<< "\n  - HOMOG2D_USE_OPENCV: "
+#ifdef HOMOG2D_USE_OPENCV
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_USE_OPENCV
+		<< '\n';
 
   // global setup...
 	Catch::StringMaker<float>::precision = 25;

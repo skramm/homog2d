@@ -44,17 +44,22 @@ show:
 	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
 	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
 
-test: BUILD/homog2d_test nobuild #demo_check
+
+test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+
+test_SY: BUILD/homog2d_test_SY
+
+test_SN: BUILD/homog2d_test_SN
+
+
+test: test_SY test_SN nobuild
 	@echo "Make: run test, build using $(CXX)"
-	BUILD/homog2d_test
+	BUILD/homog2d_test_SY
+	BUILD/homog2d_test_SN
 
 testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
-
-# compute code coverage (EXPERIMENTAL !)
-cov:
-	gcov -m -f -r -i homog2d_test.cpp >gcov_stdout
 
 check:
 	cppcheck . --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
@@ -64,19 +69,21 @@ check:
 demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
 
-# 2019-11-15: added options for code coverage with gcov
-BUILD/homog2d_test: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS)
-#	$(CXX) $(CFLAGS) -O0 -g --coverage -o homog2d_test $< $(LDFLAGS)
+BUILD/homog2d_test_SY: misc/homog2d_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SY.stderr
+
+BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
+
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
 
 BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_d.stderr
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 ptest1: precision_test1
 	./precision_test1
