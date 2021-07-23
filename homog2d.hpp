@@ -1499,8 +1499,8 @@ public:
 
 	template<typename FPT2>
 	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const;
-//	template<typename FPT2>
-//	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
+	template<typename FPT2>
+	Polyline_<FPT> unionPolygon( const FRect_<FPT2>& other ) const;
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
@@ -3809,6 +3809,48 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 		v2.at(0),
 		v2.at(1)
 	);
+}
+
+template<typename T>
+struct Index
+{
+	bool isFilled = false;
+	bool isParsed = false;
+	int rect_idx;
+	T value;
+	friend bool operator < ( const Index& i1, const Index& i2 )
+	{
+
+		if( i1.value == i2.value )
+			return i1.rect_idx < i2.rect_idx;
+		return i1.value < i2.value;
+	}
+};
+
+//------------------------------------------------------------------
+template<typename FPT>
+template<typename FPT2>
+Polyline_<FPT>
+FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
+{
+
+// step 1: build table
+	const auto& r1 = *this;
+	const auto& r2 = other;
+	std::vector<Index<FPT>> vx, vy;
+	vx.push_back( r1.getPts().first.getX() );
+	vx.push_back( r1.getPts().second.getX() );
+	vx.push_back( r2.getPts().first.getX() );
+	vx.push_back( r2.getPts().second.getX() );
+	vx.sort();
+	vy.push_back( r1.getPts().first.getY() );
+	vy.push_back( r1.getPts().second.getY() );
+	vy.push_back( r2.getPts().first.getY() );
+	vy.push_back( r2.getPts().second.getY() );
+	vy.sort();
+
+
+// step 2: parse table
 }
 
 //------------------------------------------------------------------
