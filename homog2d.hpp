@@ -1068,12 +1068,8 @@ public:
 	Polyline_<FPT>                         getBB()     const;
 
 	template<typename T>
-	friend std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell )
-	{
-		auto par = ell.template p_getParams<HOMOG2D_INUMTYPE>();
-		f << par;
-		return f;
-	}
+	friend
+	std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell );
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
@@ -1141,6 +1137,15 @@ is indeed a valid ellipse
 	mutable detail::EllParams<FPT> _par;
 #endif
 }; // class Ellipse
+
+
+template<typename T>
+std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell )
+{
+	auto par = ell.template p_getParams<HOMOG2D_INUMTYPE>();
+	f << par;
+	return f;
+}
 
 //------------------------------------------------------------------
 /// Returns standard parameters from matrix coeffs
@@ -1242,7 +1247,11 @@ Ellipse_<FPT>::getMajMin() const
 /// Returns bounding box of ellipse
 /**
 Algorithm:
- - build line going through major axis
+ - build line \c liH going through major axis, by using center point and
+ point on semi-major axis, intersecting ellipse
+ - get opposite point \x ptB, lying on line and at distance \c a
+ - get the two parallel lines to \c liH, at a distance \c b
+ - get the two orthogonal lines at \c ptA and \c ptB
 
 */
 template<typename FPT>
@@ -1273,18 +1282,20 @@ Ellipse_<FPT>::getBB() const
 
 	Polyline_<FPT> out( IsClosed::Yes );
 #ifndef	HOMOG2D_DEBUGMODE
-	out.add( para.first * li_V1 );
+	out.add( para.first  * li_V1 );
 	out.add( para.second * li_V1 );
 	out.add( para.second * li_V2 );
-	out.add( para.first * li_V2 );
+	out.add( para.first  * li_V2 );
 #else
-	auto p1 = para.first * li_V1;
+	auto p1 = para.first  * li_V1;
 	auto p2 = para.second * li_V1;
 	auto p3 = para.second * li_V2;
-	auto p4 = para.first * li_V2;
+	auto p4 = para.first  * li_V2;
 	HOMOG2D_DEBUG_ASSERT(
-		( p2 != p1 && p3!=p2 && p4 != p3 ),
+		( p2!=p1 && p3!=p2 && p4!=p3 ),
 		"p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
+		<< "\npara.1=" << para.first
+		<< "\npara.2=" << para.second
 	);
 	out.add( p1 );
 	out.add( p2 );
