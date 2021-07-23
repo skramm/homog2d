@@ -1424,16 +1424,18 @@ public:
 	}
 
 /// Constructor from center point, width and height
-	template<typename FPT2,typename T>
-	FRect_( const Point2d_<FPT2>& p0, T w, T h )
+	template<typename FPT2,typename T1, typename T2>
+	FRect_( const Point2d_<FPT2>& p0, T1 w, T2 h )
 	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		set(
 			Point2d_<FPT>( p0.getX()-0.5L*w, p0.getY()-0.5L*h ),
 			Point2d_<FPT>( p0.getX()+0.5L*w, p0.getY()+0.5L*h )
 		);
 	}
 
-/// Constructor from x1, y1, x2, y2
+/// Constructor from x1, y1, x2, y2 (need to be all the same type)
 	template<typename T>
 	FRect_( T x1, T y1, T x2, T y2 )
 	{
@@ -3722,9 +3724,9 @@ Polyline_<FPT>::area() const
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area, will throw if no intersection area
 /**
-3 situations need to be considered:
+3 situations need to be considered, depending on the number of intersection points:
 
-- A: 2 points on same segment => 2 points inside
+- A: 2 points on same segment => 2 points inside.
 \verbatim
   +------+                   +------+
   |      |                   |      |
@@ -3736,7 +3738,7 @@ Polyline_<FPT>::area() const
   +------+                   +------+
 \endverbatim
 
-- B: 2 points on different segments => 1 point inside, for each rectangle
+- B: 2 points on different segments => for each rectangle, 1 point is inside the other.
 \verbatim
   +------+
   |      |
@@ -3748,7 +3750,17 @@ Polyline_<FPT>::area() const
       +--------+
 \endverbatim
 
-C: 4 points
+- C: 3 points
+\verbatim
+  +------+-----+
+  |      |     |
+  |      |     |
+  +------+-----+
+  |      |
+  +------+
+\endverbatim
+
+- D: 4 points: the intersection rectangle is made of these 4 points
 \verbatim
      +------+
      |      |
@@ -3773,10 +3785,36 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	if( inter.size() < 2 )
 		HOMOG2D_THROW_ERROR_1( "unable, only one intersection point" );
 #endif
-	std::cout << "inter.size=" << inter.size() << '\n' << inter.get() << '\n';
 
-	if( inter.size() == 4 )  // 4 intersection points => case "C"
+	if( inter.size() == 4 )  // 4 intersection points => case "D"
 		return FRect_<FPT>( inter.get().at(0), inter.get().at(3) );
+
+	if( inter.size() == 3 )  // 3 intersection points => case "C"
+	{
+		auto v = inter.get();
+
+		auto xmin = std::min( v[0].getX(), std::min( v[1].getX(),v[2].getX() ) );
+		auto ymin = std::min( v[0].getY(), std::min( v[1].getY(),v[2].getY() ) );
+		auto xmax = std::max( v[0].getX(), std::max( v[1].getX(),v[2].getX() ) );
+		auto ymax = std::max( v[0].getY(), std::max( v[1].getY(),v[2].getY() ) );
+#ifndef HOMOG2D_DEBUGMODE
+		assert( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() );
+		assert( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() );
+#else
+		HOMOG2D_DEBUG_ASSERT(
+			( ( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() )
+			&&
+			( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() )) ,
+			std::scientific
+			<< "this=" << *this << " other=" << other
+			<< "\nxmax=" << xmax << " xmin=" << xmin
+			<< "\nymax=" << ymax << " ymin=" << ymin
+			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
+	);
+#endif
+		return FRect_<FPT>( xmin, ymin, xmax,ymax );
+	}
+
 
 #ifndef HOMOG2D_DEBUGMODE
 	assert( inter.size() == 2 );

@@ -3,7 +3,8 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild
 
-.PRECIOUS: BUILD/figures_test/%.cpp
+.PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png
+#.SECONDARY:
 
 CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
@@ -29,15 +30,6 @@ ifeq ($(DEBUG),Y)
 endif
 
 #=======================================================================
-
-TEX_FIG_LOC=docs
-TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
-TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,$(TEX_FIG_LOC)/%.png, $(TEX_FIG_SRC))
-
-DOC_IMAGES_LOC:=docs/figures_src
-DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
-
 show:
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
 	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
@@ -47,6 +39,8 @@ show:
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
 	@echo "SHOWCASE_SRC=$(SHOWCASE_SRC)"
 	@echo "SHOWCASE_BIN=$(SHOWCASE_BIN)"
+	@echo "SHOWCASE_PNG=$(SHOWCASE_PNG)"
+	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
 	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
 	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
 
@@ -98,6 +92,12 @@ precision_test2: misc/precision_test.cpp
 
 #=======================================================================
 # Generation of the doc figures from code
+
+
+DOC_IMAGES_LOC:=docs/figures_src
+DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
+DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
+
 .PRECIOUS: docs/figures_src/%
 
 # run the program
@@ -113,6 +113,10 @@ doc_fig: $(DOC_IMAGES_PNG)
 
 #=======================================================================
 # Generation of the doc figures from LaTeX sources
+
+TEX_FIG_LOC=docs
+TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
+TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,$(TEX_FIG_LOC)/%.png, $(TEX_FIG_SRC))
 
 $(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
 	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
@@ -211,22 +215,35 @@ rm_nb:
 
 SHOWCASE_SRC=$(wildcard misc/showcase*.cpp)
 SHOWCASE_BIN=$(patsubst misc/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
+SHOWCASE_GIF=$(patsubst misc/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
+SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 
 sc: $(SHOWCASE_BIN)
 	@echo "done target $<"
 
+#BUILD/%.gif: BUILD/%.png
+#	@echo "done target $<"
+
+#BUILD/showcase%_*.png: BUILD/showcase/showcase%
+#	@echo "done target $<"
+
+#$(SHOWCASE_PNG):
+#	BUILD/showcase/showcase1
+
+# compile program that will generate the set of png files
 BUILD/showcase/showcase%: misc/showcase%.cpp homog2d.hpp
 	@mkdir -p BUILD/showcase/
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	$@
 
-
-showcase: BUILD/showcase1
-	$<
+showcase: $(SHOWCASE_BIN)
+#	$<
 	docs/build_gif.sh
+	@echo "done target $@ $<"
 
-BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
-
+#BUILD/showcase%: misc/showcase%.cpp homog2d.hpp
+#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+#	$@
 
 #=================================================================
 clean:

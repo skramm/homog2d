@@ -3,7 +3,7 @@
 \brief Generates showcase images
 */
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #include "../homog2d.hpp"
 
 #include "opencv2/highgui.hpp"
@@ -12,10 +12,10 @@ using namespace h2d;
 
 int main( int argc, const char** argv )
 {
-	int n=20;
+	int n=10;
 	cv::Mat img;
-	auto im_w = 400;
-	auto im_h = 240;
+	auto im_w = 350;
+	auto im_h = 180;
 	img.create( im_h, im_w, CV_8UC3 );
 
 	FRect r1(40,30, 130,90 );
