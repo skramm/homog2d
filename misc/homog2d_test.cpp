@@ -1205,6 +1205,30 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto rect_inter = r1.intersection(r2);
 		CHECK( rect_inter == FRect(2,2, 4,3) );
 	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_8.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
+	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_9.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
+	}
 }
 
 

@@ -7,6 +7,10 @@
 
 CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
+
+#=======================================================================
+# makefile options
+
 ifeq "$(USE_OPENCV)" ""
 	USE_OPENCV=N
 endif
@@ -24,10 +28,7 @@ ifeq ($(DEBUG),Y)
 	CFLAGS += -g
 endif
 
-
-TEST_FIG_LOC=misc/figures_test
-TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
-TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,$(TEST_FIG_LOC)/%.png, $(TEST_FIG_SRC))
+#=======================================================================
 
 TEX_FIG_LOC=docs
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
@@ -44,6 +45,10 @@ show:
 	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
 	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
+	@echo "SHOWCASE_SRC=$(SHOWCASE_SRC)"
+	@echo "SHOWCASE_BIN=$(SHOWCASE_BIN)"
+	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
+	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
 
 test: BUILD/homog2d_test nobuild #demo_check
 	@echo "Make: run test, build using $(CXX)"
@@ -116,21 +121,30 @@ doc_fig_tex: $(TEX_FIG_PNG)
 
 #=======================================================================
 # Generation of figures for the test samples
-$(TEST_FIG_LOC)/%.png: BUILD/figures_test/%
+
+TEST_FIG_LOC=misc/figures_test
+TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
+TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.png, $(TEST_FIG_SRC))
+
+test_fig: $(TEST_FIG_PNG)
+
+# run the program to produce image, and flip it vertically (so vertical axis is going up)
+BUILD/figures_test/%.png: BUILD/figures_test/%
 	@echo "Running $<"
 	@./$<
 	@mogrify -flip $<.png
 
+# build the program from source
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@echo "Building $<"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
+# build source file
 BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/header.cpp $(TEST_FIG_LOC)/footer.cpp
 	@echo "generating $<"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/header.cpp $< $(TEST_FIG_LOC)/footer.cpp >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
-test_fig: $(TEST_FIG_PNG)
 #=======================================================================
 
 
@@ -193,6 +207,19 @@ rm_nb:
 	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 #=================================================================
+# SHOWCASE: generates gif images of some situations
+
+SHOWCASE_SRC=$(wildcard misc/showcase*.cpp)
+SHOWCASE_BIN=$(patsubst misc/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
+
+sc: $(SHOWCASE_BIN)
+	@echo "done target $<"
+
+BUILD/showcase/showcase%: misc/showcase%.cpp homog2d.hpp
+	@mkdir -p BUILD/showcase/
+	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+
 showcase: BUILD/showcase1
 	$<
 	docs/build_gif.sh
@@ -201,6 +228,7 @@ BUILD/showcase1: misc/showcase1.cpp homog2d.hpp
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 
+#=================================================================
 clean:
 	@-rm -r BUILD/*
 	@-rm homog2d_test

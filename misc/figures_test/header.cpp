@@ -9,4 +9,4 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 	cv::Mat img;
-	img.create( 200, 250, CV_8UC3 );
+	img.create( 350, 400, CV_8UC3 );

@@ -1,6 +1,6 @@
 
 	Homogr H;
-	H.addScale( 100 );
+	H.addScale( 50 );
 	H.addTranslation( 20,20 );
 
 	img = cv::Scalar(255,255,255);
@@ -14,7 +14,7 @@
 		auto li2 = H*li;
 		li2.draw( img, colgrid );
 	}
-	for (int i=0; i<6; i++ )
+	for (int i=0; i<7; i++ )
 	{
 		Line2d li( LineDir::V, i );
 		auto li2 = H*li;

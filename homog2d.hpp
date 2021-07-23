@@ -52,7 +52,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
-#if 1
+#if 0
 	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -793,7 +793,7 @@ public:
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
-		HOMOG2D_LOG( "h1="<< h1 << "h2=" << h2 );
+//		HOMOG2D_LOG( "h1="<< h1 << "h2=" << h2 );
 		detail::product( out, static_cast<detail::Matrix_<FPT>>(h1), static_cast<detail::Matrix_<FPT>>(h2) ) ;
 		out.normalize();
 		out._hasChanged = true;
@@ -1254,10 +1254,11 @@ struct IntersectCommon
 		}
 };
 
-/// Base class for intersection
+/// Base class for intersection, gets specialized
 template<typename T,typename FPT>
 struct Intersect {};
 
+//------------------------------------------------------------------
 /// One point intersection
 template<typename FPT>
 class Intersect<Inters_1,FPT>: public IntersectCommon
@@ -1298,6 +1299,7 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		Point2d_<FPT> _ptIntersect;
 };
 
+//------------------------------------------------------------------
 /// Two points intersection
 template<typename FPT>
 class Intersect<Inters_2,FPT>: public IntersectCommon
@@ -1343,6 +1345,7 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 	}
 };
 
+//------------------------------------------------------------------
 /// Multiple points intersections
 template<typename FPT>
 class IntersectM
@@ -1382,6 +1385,12 @@ public:
 	{
 		std::sort( std::begin(_vecInters), std::end(_vecInters) );
 		return _vecInters;
+	}
+	friend std::ostream&
+	operator << ( std::ostream& f, IntersectM i )
+	{
+		f << "IntersectM: size=" << i.size() << '\n' << i._vecInters;
+		return f;
 	}
 };
 
@@ -3769,7 +3778,15 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	if( inter.size() == 4 )  // 4 intersection points => case "C"
 		return FRect_<FPT>( inter.get().at(0), inter.get().at(3) );
 
+#ifndef HOMOG2D_DEBUGMODE
 	assert( inter.size() == 2 );
+#else
+	HOMOG2D_DEBUG_ASSERT(
+		inter.size() == 2,
+		"inter.size()=" << inter.size() << "\n-this=" << *this << "\n-other=" << other
+		<<"\n-inter:" << inter
+	);
+#endif
 	const auto& r1 = *this;
 	const auto& r2 = other;
 	HOMOG2D_LOG( "r1="<<r1 << " r2="<<r2 );
