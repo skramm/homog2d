@@ -12,7 +12,7 @@ int main()
 	cv::Mat img;
 	img.create( 200, 350, CV_8UC3 );
 	img = cv::Scalar(255,255,255);
-	s1.draw( img, CvDrawParams().setColor(250,0,20) );
-	s2.draw( img, CvDrawParams().setColor(20,0,250) );
+	s1.draw( img, DrawParams().setColor(250,0,20) );
+	s2.draw( img, DrawParams().setColor(20,0,250) );
 	cv::imwrite( "segment1.png", img );
 }

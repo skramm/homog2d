@@ -885,10 +885,10 @@ c.draw( mat );
 pl.draw( mat );
 ```
 
-All these drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+All these drawing functions support a second optional argument of type `DrawParams` that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
+li.draw( mat, DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -896,21 +896,21 @@ The drawing parameters default values can be changed anytime with a call to `set
 and values will be retained, unless explicitely changed, as showed in the example below;
 
 ```C++
-CvDrawParams dp;                                        // default line thickness is 1
+DrawParams dp;                                        // default line thickness is 1
 dp.setColor( 0,  0, 250 ).setThickness(3);
 dp.setDefault();                                        // default is now blue, with thickness=3
 line.draw( some_img );                                  // use default settings (blue,...)
-line.draw( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+line.draw( some_img. DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
 ```C++
-CvDrawParams::resetDefault();
+DrawParams::resetDefault();
 ```
 
 You can also save a style in a variable, to avoid lengthy lines:
 ```C++
-auto color_red = CvDrawParams().setColor( 250, 0, 0 );
+auto color_red = DrawParams().setColor( 250, 0, 0 );
 something.draw( img, color_red );
 ```
 

@@ -21,8 +21,8 @@ int main( int argc, const char** argv )
 	FRect r1(40,30, 130,90 );
 	FRect r2(160,45, 210,130 );
 
-	auto color_red = CvDrawParams().setColor(200,20,20);
-	auto color_green = CvDrawParams().setColor(20,220,20);
+	auto color_red = DrawParams().setColor(200,20,20);
+	auto color_green = DrawParams().setColor(20,220,20);
 	int mul = 1;
 	for( int i=0; i<n; i++ )
 	{

@@ -344,6 +344,24 @@ See https://en.wikipedia.org/wiki/Determinant
 	const bool& isNormalized() const { return _isNormalized; }
 
 protected:
+	void p_normalize( int r, int c ) const
+	{
+		auto eps = std::numeric_limits<FPT>::epsilon()*1000;
+
+		if( std::fabs(_mdata[r][c]) < eps )
+			HOMOG2D_THROW_ERROR_1(
+				"Unable to normalize matrix, value at "
+				+ std::to_string(r) + "," +std::to_string(c)
+				+ " is too small"
+			);
+		p_divideBy( r, c );
+		if( std::signbit( _mdata[r][c] ) )
+			for( auto& li: _mdata )
+				for( auto& e: li )
+					e = -e;
+		_isNormalized = true;
+	}
+
 #if 0
 /// Used by copy constructor
 /** \todo maybe integrate into CC ? Not used anywhere else... */
@@ -356,10 +374,11 @@ protected:
 	}
 #endif
 
+/// Divide all elements by the value at (r,c) (useful for normalization)
 	void p_divideBy( size_t r, size_t c ) const
 	{
-		HOMOG2D_CHECK_ROW_COL;
-		assert( std::fabs( _mdata[r][c] ) > 100*std::numeric_limits<FPT>::epsilon() );
+//		HOMOG2D_CHECK_ROW_COL;
+		assert( std::fabs( _mdata[r][c] ) > 1000*std::numeric_limits<FPT>::epsilon() );
 		for( auto& li: _mdata )
 			for( auto& e: li )
 				e /= _mdata[r][c];
@@ -404,17 +423,6 @@ protected:
 		HOMOG2D_START;
 		Matrix_ out;
 		product( out, h1, h2 );
-/*
-		HOMOG2D_LOG( "matrix 1=" << out );
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				for( int k=0; k<3; k++ )
-					out._mdata[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1._mdata[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2._mdata[k][j] );
-		out._isNormalized = false;
-		HOMOG2D_LOG( "matrix 2=" << out );
-*/
 		return out;
 	}
 
@@ -661,8 +669,6 @@ Thus some assert can get triggered elsewhere.
 
 	detail::Matrix_<FPT>&       getMat()       { return static_cast<detail::Matrix_<FPT>>(*this); }
 	const detail::Matrix_<FPT>& getMat() const { return static_cast<detail::Matrix_<FPT>>(*this); }
-//	detail::matrix_t<FPT>&       getRawMat()       { return _data._mdata; }
-//	const detail::matrix_t<FPT>& getRawMat() const { return _data._mdata; }
 #endif // 0
 
 
@@ -730,7 +736,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
-		normalize();
 		_hasChanged = true;
 		return *this;
 	}
@@ -752,7 +757,6 @@ Thus some assert can get triggered elsewhere.
 		mat[0][0] = kx;
 		mat[1][1] = ky;
 		_isNormalized = true;
-
 		_hasChanged = true;
 		return *this;
 	}
@@ -765,31 +769,11 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& operator = ( const cv::Mat& );
 #endif
 
-/// Matrix normalisation
-/**
-\todo replace magic number with something else
-*/
-
+/// Homography normalisation
 	void normalize() const
 	{
-		auto eps = std::numeric_limits<FPT>::epsilon()*10;
-		auto& data = detail::Matrix_<FPT>::_mdata;
-
-		if( std::fabs(data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
-			detail::Matrix_<FPT>::p_divideBy( 2, 2 );
-		else
-		{
-			if( std::fabs(data[2][1]) > eps )
-				detail::Matrix_<FPT>::p_divideBy( 2, 1 );
-			else
-				detail::Matrix_<FPT>::p_divideBy( 2, 0 );
-		}
-		if( std::signbit( data[2][2] ) )
-			for( auto& li: data )
-				for( auto& e: li )
-					e = -e;
+		detail::Matrix_<FPT>::p_normalize(2,2);
 		_hasChanged = true;
-		_isNormalized = true;
 	}
 
 public:
@@ -799,7 +783,6 @@ public:
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
-//		HOMOG2D_LOG( "h1="<< h1 << "h2=" << h2 );
 		detail::product( out, static_cast<detail::Matrix_<FPT>>(h1), static_cast<detail::Matrix_<FPT>>(h2) ) ;
 		out.normalize();
 		out._hasChanged = true;
@@ -817,7 +800,7 @@ public:
 		if( !h._isNormalized )
 			h.normalize();
 
-		auto eps = std::numeric_limits<FPT>::epsilon();
+		auto eps = std::numeric_limits<FPT>::epsilon()*100;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
@@ -844,7 +827,6 @@ public:
 //      DATA SECTION    //
 //////////////////////////
 private:
-//	mutable detail::Matrix_<FPT> _data;
 	mutable bool _hasChanged   = true;
 	mutable bool _isNormalized = false;
 	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
@@ -860,9 +842,9 @@ private:
 }; // class Hmatrix_
 
 
-#ifdef HOMOG2D_USE_OPENCV
+//#ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
-/// Point drawing style
+/// Point drawing style, see DrawParams
 enum class PtStyle
 {
 	Plus,   ///< "+" symbol
@@ -871,20 +853,32 @@ enum class PtStyle
 	Diam    ///< diamond
 };
 
+namespace priv {
+/// Color drawing (internal use), see DrawParams
+struct Color
+{
+	uint8_t r = 80;
+	uint8_t g = 80;
+	uint8_t b = 80;
+};
+
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Draw parameters for Opencv binding, only available if HOMOG2D_USE_OPENCV defined,
 /// see Root::draw()
-struct CvDrawParams
+struct DrawParams
 {
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
-		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
-		int        _lineThickness = 1;
-		int        _lineType      = cv::LINE_AA; ///< or cv::LINE_8
-		int        _ptDelta       = 8;           ///< pixels, used for drawing points
-		PtStyle    _ptStyle       = PtStyle::Plus;
-		bool       _enhancePoint  = false;       ///< to draw selected points
+//		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
+		priv::Color _color;
+		int         _lineThickness = 1;
+		int         _lineType      = cv::LINE_AA; ///< or cv::LINE_8
+		int         _ptDelta       = 8;           ///< pixels, used for drawing points
+		PtStyle     _ptStyle       = PtStyle::Plus;
+		bool        _enhancePoint  = false;       ///< to draw selected points
 	};
 	Dp_values _dpValues;
 
@@ -896,7 +890,7 @@ struct CvDrawParams
 	}
 
 	public:
-	CvDrawParams()
+	DrawParams()
 	{
 		_dpValues = p_getDefault();
 	}
@@ -908,37 +902,37 @@ struct CvDrawParams
 	{
 		p_getDefault() = Dp_values();
 	}
-	CvDrawParams& setPointStyle( PtStyle ps )
+	DrawParams& setPointStyle( PtStyle ps )
 	{
 		if( (int)ps > (int)PtStyle::Diam )
 			throw std::runtime_error( "Error: invalid value for point style");
 		_dpValues._ptStyle = ps;
 		return *this;
 	}
-	CvDrawParams& setPointSize( int ps )
+	DrawParams& setPointSize( int ps )
 	{
 		assert( ps>1 );
 		_dpValues._ptDelta = ps;
 		return *this;
 	}
-	CvDrawParams& setThickness( int t )
+	DrawParams& setThickness( int t )
 	{
 		assert( t>0 );
 		_dpValues._lineThickness = t;
 		return *this;
 	}
-	CvDrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
 	{
-		_dpValues._color = cv::Scalar(b,g,r);
+		_dpValues._color = priv::Color{r,g,b};
 		return *this;
 	}
-	CvDrawParams& selectPoint()
+	DrawParams& selectPoint()
 	{
 		_dpValues._enhancePoint = true;
 		return *this;
 	}
 };
-#endif // HOMOG2D_USE_OPENCV
+//#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 namespace detail {
@@ -1066,7 +1060,7 @@ public:
 	bool isCircle() const;
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
+	void draw( cv::Mat& mat, DrawParams dp=DrawParams() ) const;
 #endif
 
 	Point2d_<FPT>    center() const;
@@ -1121,7 +1115,7 @@ is indeed a valid ellipse
 		data[1][2] = data[2][1] = E / 2.;
 
 #ifdef HOMOG2D_OPTIMIZE_SPEED
-		_hasChanged = false;
+		_epHasChanged = false;
 		_par.a = a;
 		_par.b = b;
 		_par.a2 = a2;
@@ -1132,7 +1126,6 @@ is indeed a valid ellipse
 		_par.x0 = x0;
 		_par.y0 = y0;
 #endif
-//		std::cout << "init:" << *this << '\n';
 	}
 
 //////////////////////////
@@ -1140,7 +1133,7 @@ is indeed a valid ellipse
 //////////////////////////
 // (matrix is inherited from base class)
 #ifdef HOMOG2D_OPTIMIZE_SPEED
-	mutable bool _hasChanged = true;   ///< if true, means we need to recompute parameters
+	mutable bool _epHasChanged = true;   ///< if true, means we need to recompute parameters
 	mutable detail::EllParams<FPT> _par;
 #endif
 }; // class Ellipse
@@ -1162,10 +1155,10 @@ detail::EllParams<T>
 Ellipse_<FPT>::p_getParams() const
 {
 #ifdef HOMOG2D_OPTIMIZE_SPEED
-	if( _hasChanged )
+	if( _epHasChanged )
 	{
 		_par = p_computeParams<T>();
-		_hasChanged = false;
+		_epHasChanged = false;
 	}
 	return _par;
 #else
@@ -1809,7 +1802,7 @@ s0 |      | s2
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	void draw( cv::Mat& mat, DrawParams dp=DrawParams() )  const
 	{
 		cv::rectangle(
 			mat,
@@ -2059,7 +2052,7 @@ public:
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	void draw( cv::Mat& mat, DrawParams dp=DrawParams() )  const
 	{
 		cv::circle(
 			mat,
@@ -2701,7 +2694,7 @@ public:
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	bool draw( cv::Mat& mat, DrawParams dp=DrawParams() )  const
 	{
 		return impl_draw( mat, dp, detail::RootHelper<LP>() );
 	}
@@ -2825,8 +2818,8 @@ public:
 			impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 		}
 
-		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsLine>& )  const;
+		bool impl_draw( cv::Mat&, const DrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
+		bool impl_draw( cv::Mat&, const DrawParams&, const detail::RootHelper<type::IsLine>& )  const;
 #endif
 
 		/// Called by default constructor, overload for lines
@@ -3277,7 +3270,7 @@ the one with smallest y-coordinate will be returned first */
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const
+	void draw( cv::Mat& mat, DrawParams dp=DrawParams() ) const
 	{
 		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
 	}
@@ -3746,7 +3739,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
+	void draw( cv::Mat& mat, DrawParams dp=DrawParams() ) const;
 #endif
 }; // class Polyline_
 
@@ -5476,7 +5469,7 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 void
-drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
+drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams& dp, bool drawDiag=false )
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
@@ -5524,7 +5517,7 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawPara
 /// Returns false if point not in image
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& )  const
+Root<LP,FPT>::impl_draw( cv::Mat& mat, const DrawParams& dp, const detail::RootHelper<type::IsPoint>& )  const
 {
 	if( getX()<0 || getX()>=mat.cols )
 		return false;
@@ -5568,7 +5561,7 @@ Steps:
 */
 template<typename LP, typename FPT>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_draw( cv::Mat& mat, const DrawParams& dp, const detail::RootHelper<type::IsLine>& ) const
 {
 	assert( mat.rows > 2 );
 	assert( mat.cols > 2 );
@@ -5591,7 +5584,7 @@ Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::Roo
 /// Draw Polyline
 template<typename FPT>
 void
-Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
+Polyline_<FPT>::draw( cv::Mat& mat, DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;
@@ -5616,7 +5609,7 @@ Polyline_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
 */
 template<typename FPT>
 void
-Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp )  const
+Ellipse_<FPT>::draw( cv::Mat& mat, DrawParams dp )  const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A = m[0][0];
@@ -5669,7 +5662,7 @@ template<
 		Prim
 	>::type* = nullptr
 >
-void draw( cv::Mat& mat, const Prim& prim, const CvDrawParams& dp=CvDrawParams() )
+void draw( cv::Mat& mat, const Prim& prim, const DrawParams& dp=DrawParams() )
 {
 	prim.draw( mat, dp );
 }
@@ -5685,7 +5678,7 @@ template<
 		T
 	>::type* = nullptr
 >
-void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
+void draw( cv::Mat& mat, const T& cont, const DrawParams& dp=DrawParams() )
 {
 	for( const auto& elem: cont )
 		elem.draw( mat, dp );
@@ -5696,7 +5689,7 @@ void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
 Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
 */
 template<typename T>
-void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDrawParams() )
+void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const DrawParams& dp=DrawParams() )
 {
 	ppts.first.draw( mat, dp );
 	ppts.second.draw( mat, dp );
@@ -5706,7 +5699,7 @@ void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDr
 #if 0
 template<typename FPT>
 void
-Ellipse_<FPT>::draw( cv::Mat& mat, CvDrawParams dp ) const
+Ellipse_<FPT>::draw( cv::Mat& mat, DrawParams dp ) const
 {
 	cv::ellipse(
 		mat,

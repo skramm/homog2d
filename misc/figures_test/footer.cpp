@@ -7,7 +7,7 @@
 
 // grid
 	int g=220;
-	auto colgrid = CvDrawParams().setColor(g,g,g);
+	auto colgrid = DrawParams().setColor(g,g,g);
 	for (int i=0; i<6; i++ )
 	{
 		Line2d li( LineDir::H, i );
@@ -23,8 +23,8 @@
 
 	auto r1b = H*r1;
 	auto r2b = H*r2;
-	r1b.draw( img, CvDrawParams().setColor(250,0,20) );
-	r2b.draw( img, CvDrawParams().setColor(20,0,250) );
+	r1b.draw( img, DrawParams().setColor(250,0,20) );
+	r2b.draw( img, DrawParams().setColor(20,0,250) );
 
 	cv::imwrite( std::string(argv[0])+ ".png", img );
 }

@@ -28,8 +28,8 @@ int main( int argc, const char** argv )
 
 	FRect_<double> rect( 0,0,200,80 );
 	Polyline pl( rect, IsClosed::Yes );
-	auto color_red = CvDrawParams().setColor(200,20,20);
-	auto color_green = CvDrawParams().setColor(20,220,20);
+	auto color_red = DrawParams().setColor(200,20,20);
+	auto color_green = DrawParams().setColor(20,220,20);
 
 // move rectangle dx=100, dy=60
 	pl = Homogr().addTranslation(100, 60) * pl;
@@ -44,7 +44,7 @@ int main( int argc, const char** argv )
 		lih.draw( img );
 		liv.draw( img );
 		li.draw( img, color_green );
-		pl.draw( img, CvDrawParams().setColor(20,0,250) );
+		pl.draw( img, DrawParams().setColor(20,0,250) );
 		auto inters = li.intersects( pl );
 		if( inters() )
 			draw( img, inters.get(), color_red );
