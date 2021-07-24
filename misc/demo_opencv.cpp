@@ -34,7 +34,8 @@ using namespace h2d;
 /// General data struct used in demos
 struct Data
 {
-	cv::Mat img;
+//	cv::Mat img;
+	img::Image<cv::Mat> img;
 	int width = 700;
 	int height = 500;
 
@@ -48,7 +49,7 @@ struct Data
 	{
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
-		img.create( height, width, CV_8UC3 );
+		img.getReal().create( height, width, CV_8UC3 );
 		vpt.resize(4);
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
@@ -79,11 +80,11 @@ struct Data
 	}
 	void clearImage()
 	{
-		img = cv::Scalar(255,255,255);
+		img.getReal() = cv::Scalar(255,255,255);
 	}
-	void showImage() const
+	void showImage()
 	{
-		cv::imshow( win1, img );
+		cv::imshow( win1, img.getReal() );
 	}
 
 	void drawLines()
@@ -233,7 +234,8 @@ struct KeyboardLoop
 				std::cout << elem;
 		}
 	}
-	void start( const Data& data )
+//	void start( const Data& data )
+	void start( Data& data )
 	{
 		showAvailableKeys();
 
@@ -668,24 +670,25 @@ void demo_6(int n)
 struct Param_H: public Data
 {
 	int hmethod = 1;
-	cv::Mat img2;
+//	cv::Mat img2;
+	img::Image<cv::Mat> img2;
 	std::string win2 = "Computed_projection";
 
 	explicit Param_H(std::string wname): Data(wname)
 	{
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, width, 50 );
-		img2.create( height, width, CV_8UC3 );
+		img2.getReal().create( height, width, CV_8UC3 );
 	}
-	void showImage() const
+	void showImage()
 	{
-		cv::imshow( win1, img );
-		cv::imshow( win2, img2 );
+		cv::imshow( win1, img.getReal() );
+		cv::imshow( win2, img2.getReal() );
 	}
 	void clearImage()
 	{
-		img = cv::Scalar(255,255,255);
-		img2 = cv::Scalar(255,255,255);
+		img.getReal() = cv::Scalar(255,255,255);
+		img2.getReal() = cv::Scalar(255,255,255);
 	}
 	void reset()
 	{
@@ -743,8 +746,8 @@ void action_H( void* param )
 	sa1.draw( data.img, DrawParams().setColor( 0,100,100) );
 	sb1.draw( data.img, DrawParams().setColor( 0,100,100) );
 
-	cv::putText(  data.img, "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
-	cv::putText(  data.img, "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
+	cv::putText(  data.img.getReal(), "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+	cv::putText(  data.img.getReal(), "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
 
 	Homogr H;
 	H.buildFrom4Points( v1, v2, data.hmethod );

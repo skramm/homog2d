@@ -868,27 +868,35 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 6.2 - Drawing functions using OpenCv
+### 6.2 - Drawing functions
 
-All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` type), using their `draw()` member function:
+Generic drawing functions are provided for all the types, using an "opaque" image datatype:
 
 ```C++
-Point2d pt( ... );
-Line2d li( ... );
-Segment seg( ... );
-Circle c;
-Polyline pl;
-li.draw( mat );
-pt.draw( mat );
-seg.draw( mat );
-c.draw( mat );
-pl.draw( mat );
+template<typename T>
+void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
 ```
 
-All these drawing functions support a second optional argument of type `DrawParams` that holds various parameters for drawing.
+At present, this templated image datatype only implements drawing on a OpenCv image (`cv::Mat` type),
+but the idea is to make it easily adaptable for other back-end graphical libraries.
+
+To use it in a program linked with Opencv:
+```C++
+cv::Mat cvmat;
+cvmat.create( 300, 400, CV_8UC3 );
+cvmat = cv::Scalar(255,255,255);   // fill white
+img::Image<cv::Mat> img( cvmat );
+
+Circle c( 100,100,80 );
+c.draw( img );
+```
+
+
+All these drawing functions support a second optional argument of type `DrawParams` (also back-end library independent)
+that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.draw( mat, DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
+li.draw( img, DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -899,8 +907,8 @@ and values will be retained, unless explicitely changed, as showed in the exampl
 DrawParams dp;                                        // default line thickness is 1
 dp.setColor( 0,  0, 250 ).setThickness(3);
 dp.setDefault();                                        // default is now blue, with thickness=3
-line.draw( some_img );                                  // use default settings (blue,...)
-line.draw( some_img. DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+line.draw( img );                                  // use default settings (blue,...)
+line.draw( img. DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
@@ -930,17 +938,21 @@ draw( img, prim, dp );
 ```
 
 Additionaly, if you have a container filled with one of the primitives (`std::vector`, `std::array` or `std::list`),
+or a `std::pair` of primitives,
 you can draw them at once with a call to the same function:
 ```C++
 std::vector<Segment> vseg;
 // ... fill vseg with data
+std::pair<Circle,Circle> p_cir;
+// ... fill the pair
 draw( img, vseg );      // use default parameters
 draw( img, vseg, dp );  // or pass some
+draw( p_cir ); // draw the pair of circles
 ```
 
 
 A demo demonstrating this Opencv binding is provided, try it with
-`make demo` (requires of course that Opencv is installed on your machine).
+`make demo` (requires that Opencv is installed on your machine).
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 

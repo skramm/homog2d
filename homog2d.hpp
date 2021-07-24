@@ -175,15 +175,16 @@ using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
 
+//------------------------------------------------------------------
 namespace img {
 
-//------------------------------------------------------------------
 /// Opaque data structure, will hold the image type, depending on back-end library
 template<typename T>
 struct Image
 {
 #ifdef HOMOG2D_USE_OPENCV
 	T real_img;
+	Image() = default;
 	Image( T& m ): real_img(m)
 	{}
 	T& getReal()
@@ -892,8 +893,7 @@ struct Color
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Draw parameters for Opencv binding, only available if HOMOG2D_USE_OPENCV defined,
-/// see Root::draw()
+/// Draw parameters, independent of back-end library
 struct DrawParams
 {
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
@@ -902,7 +902,7 @@ struct DrawParams
 //		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
 		priv::Color _color;
 		int         _lineThickness = 1;
-		int         _lineType      = cv::LINE_AA; ///< or cv::LINE_8
+		int         _lineType      = 1; // 1 for cv::LINE_AA, 2 for cv::LINE_8
 		int         _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
@@ -913,8 +913,8 @@ struct DrawParams
 			return cv::Scalar( _color.b, _color.g, _color.r );
 		}
 #endif // HOMOG2D_USE_OPENCV
-
 	};
+
 	Dp_values _dpValues;
 
 	private:
@@ -5640,7 +5640,14 @@ Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHe
     	auto ppts = ri.get();
 		cv::Point2d ptcv1 = ppts.first.getCvPtd();
 		cv::Point2d ptcv2 = ppts.second.getCvPtd();
-		cv::line( img.getReal(), ptcv1, ptcv2, dp._dpValues.color(), dp._dpValues._lineThickness, dp._dpValues._lineType );
+		cv::line(
+			img.getReal(),
+			ptcv1,
+			ptcv2,
+			dp._dpValues.color(),
+			dp._dpValues._lineThickness,
+			dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+		);
 		return true;
 	}
 	return false;
@@ -5659,7 +5666,7 @@ FRect_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 		_ptR2.getCvPti(),
 		dp._dpValues.color(),
 		dp._dpValues._lineThickness,
-		dp._dpValues._lineType
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
 }
 
@@ -5670,7 +5677,14 @@ template<typename T>
 void
 Segment_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 {
-	cv::line( img.getReal(), _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues.color(), dp._dpValues._lineThickness, dp._dpValues._lineType );
+	cv::line(
+		img.getReal(),
+		_ptS1.getCvPtd(),
+		_ptS2.getCvPtd(),
+		dp._dpValues.color(),
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+	);
 }
 
 //------------------------------------------------------------------
@@ -5686,7 +5700,7 @@ Circle_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 		static_cast<int>(_radius),
 		dp._dpValues.color(),
 		dp._dpValues._lineThickness,
-		dp._dpValues._lineType
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
 }
 
@@ -5762,7 +5776,7 @@ Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
 		0., 360.,
 		dp._dpValues.color(),
 		dp._dpValues._lineThickness,
-		dp._dpValues._lineType
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
 }
 
