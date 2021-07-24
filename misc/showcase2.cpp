@@ -13,10 +13,11 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 	int n=20;
-	cv::Mat img;
+	cv::Mat cvmat;
 	auto im_w = 350;
 	auto im_h = 180;
-	img.create( im_h, im_w, CV_8UC3 );
+	cvmat.create( im_h, im_w, CV_8UC3 );
+	img::Image<cv::Mat> img( cvmat );
 
 	FRect r1(40,30, 130,90 );
 	FRect r2(160,45, 210,130 );
@@ -26,7 +27,7 @@ int main( int argc, const char** argv )
 	int mul = 1;
 	for( int i=0; i<n; i++ )
 	{
-		img = cv::Scalar(255,255,255);
+		cvmat = cv::Scalar(255,255,255);
 		r1.draw( img, color_green );
 		r2.draw( img, color_green );
 
@@ -40,7 +41,7 @@ int main( int argc, const char** argv )
 		}
 		std::ostringstream oss;
 		oss << "BUILD/showcase2_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( oss.str(), img );
+		cv::imwrite( oss.str(), cvmat );
 
 		r1.translate( mul*20,0);
 	}

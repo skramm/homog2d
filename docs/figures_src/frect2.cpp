@@ -11,7 +11,9 @@ int main()
 	cv::Mat img;
 	img.create( 250, 450, CV_8UC3 );
 	img = cv::Scalar(255,255,255);
-	r1.draw( img, DrawParams().setColor(250,0,20) );
-	r2.draw( img, DrawParams().setColor(20,0,250) );
+	img::Image<cv::Mat> img2( img );
+
+	r1.draw( img2, DrawParams().setColor(250,0,20) );
+	r2.draw( img2, DrawParams().setColor(20,0,250) );
 	cv::imwrite( "frect2.png", img );
 }

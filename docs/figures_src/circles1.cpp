@@ -14,10 +14,13 @@ int main()
 	cv::Mat img;
 	img.create( 300, 450, CV_8UC3 );
 	img = cv::Scalar(255,255,255);
-	c1.draw( img, DrawParams().setColor(0,0,100) );
-	c2.draw( img, DrawParams().setColor(0,0,100) );
-	seg.draw( img, DrawParams().setColor(250,0,0) );
-	pseg.first.draw( img,  DrawParams().setColor(0,200,100) );
-	pseg.second.draw( img, DrawParams().setColor(0,100,200) );
+
+	img::Image<cv::Mat> img2( img );
+
+	c1.draw( img2, DrawParams().setColor(0,0,100) );
+	c2.draw( img2, DrawParams().setColor(0,0,100) );
+	seg.draw( img2, DrawParams().setColor(250,0,0) );
+	pseg.first.draw( img2,  DrawParams().setColor(0,200,100) );
+	pseg.second.draw( img2, DrawParams().setColor(0,100,200) );
 	cv::imwrite( "circles1.png", img );
 }

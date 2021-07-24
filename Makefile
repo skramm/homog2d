@@ -1,7 +1,7 @@
 # Makefile for homog2d library
 # see https://github.com/skramm/homog2d
 
-.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild
+.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase
 
 .PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png
 #.SECONDARY:
