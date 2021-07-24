@@ -179,10 +179,13 @@ using Line2d_  = Root<type::IsLine,T>;
 namespace img {
 
 /// Opaque data structure, will hold the image type, depending on back-end library
+/**
+To expand it, you need to add code for the other library for the
+two function cols() and rows(), bounded in a "#define" block, and define the drawing functions
+*/
 template<typename T>
 struct Image
 {
-#ifdef HOMOG2D_USE_OPENCV
 	T real_img;
 	Image() = default;
 	Image( T& m ): real_img(m)
@@ -191,12 +194,14 @@ struct Image
 	{
 		return real_img;
 	}
+#ifdef HOMOG2D_USE_OPENCV
 	int cols() const { return real_img.cols; }
 	int rows() const { return real_img.rows; }
 #endif
 
 //#ifdef HOMOG2D_SOME_OTHER_LIB
-// other image
+//	int cols() const { return real_img.???; }
+//	int rows() const { return real_img.???; }
 //#endif
 
 };
@@ -870,7 +875,6 @@ private:
 }; // class Hmatrix_
 
 
-//#ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
 enum class PtStyle
@@ -899,7 +903,6 @@ struct DrawParams
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
-//		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
 		priv::Color _color;
 		int         _lineThickness = 1;
 		int         _lineType      = 1; // 1 for cv::LINE_AA, 2 for cv::LINE_8
@@ -2720,7 +2723,7 @@ public:
 	{
 		impl_init_opencv( pt, detail::RootHelper<LP>() );
 	}
-#endif
+#endif // HOMOG2D_USE_OPENCV
 
 	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
 	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
@@ -2825,7 +2828,8 @@ private:
 		Point2d_<FPT> p(pt);
 		impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 	}
-#endif
+#endif // HOMOG2D_USE_OPENCV
+
 	template<typename T>
 	bool impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename T>
@@ -5385,6 +5389,55 @@ isCircle(const Ellipse_<FPT>& ell )
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// SECTION  - GENERIC DRAWING FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------
+/// Free function, draws any of the primitives
+template<
+	typename U,
+	typename Prim,
+	typename std::enable_if<
+		priv::IsShape<Prim>::value,
+		Prim
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const Prim& prim, const DrawParams& dp=DrawParams() )
+{
+	prim.draw( img, dp );
+}
+
+/// Free function, draws a set of points or lines
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<
+	typename U,
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const T& cont, const DrawParams& dp=DrawParams() )
+{
+	for( const auto& elem: cont )
+		elem.draw( img, dp );
+}
+//------------------------------------------------------------------
+/// Free function, draws a pair of points
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<typename T,typename U>
+void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const DrawParams& dp=DrawParams() )
+{
+	ppts.first.draw( img, dp );
+	ppts.second.draw( img, dp );
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING
 /////////////////////////////////////////////////////////////////////////////
 
@@ -5516,50 +5569,6 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams
 }
 
 } // namespace detail
-
-
-//------------------------------------------------------------------
-/// Free function, draws any of the primitives
-template<
-	typename Prim,
-	typename std::enable_if<
-		priv::IsShape<Prim>::value,
-		Prim
-	>::type* = nullptr
->
-void draw( cv::Mat& mat, const Prim& prim, const DrawParams& dp=DrawParams() )
-{
-	prim.draw( mat, dp );
-}
-
-/// Free function, draws a set of points or lines
-/**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
-*/
-template<
-	typename U,
-	typename T,
-	typename std::enable_if<
-		priv::Is_Container<T>::value,
-		T
-	>::type* = nullptr
->
-void draw( img::Image<U>& img, const T& cont, const DrawParams& dp=DrawParams() )
-{
-	for( const auto& elem: cont )
-		elem.draw( img, dp );
-}
-//------------------------------------------------------------------
-/// Free function, draws a pair of points
-/**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
-*/
-template<typename T,typename U>
-void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const DrawParams& dp=DrawParams() )
-{
-	ppts.first.draw( img, dp );
-	ppts.second.draw( img, dp );
-}
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -5730,7 +5739,7 @@ Polyline_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 
 //------------------------------------------------------------------
 /// Draw ellipse using Opencv
-/*
+/**
 - see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
 */
 template<typename FPT>
@@ -5738,41 +5747,12 @@ template<typename T>
 void
 Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
 {
-	auto& m = detail::Matrix_<FPT>::_mdata;
-	HOMOG2D_INUMTYPE A = m[0][0];
-	HOMOG2D_INUMTYPE C = m[1][1];
-	HOMOG2D_INUMTYPE F = m[2][2];
-	HOMOG2D_INUMTYPE B = 2. * m[0][1];
-	HOMOG2D_INUMTYPE D = 2. * m[0][2];
-	HOMOG2D_INUMTYPE E = 2. * m[1][2];
-
-	auto denom = B*B - 4. * A * C;
-	auto x0 = ( 2.*C*D - B*E ) / denom;
-	auto y0 = ( 2.*A*E - B*D ) / denom;
-	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
-	auto AmC = A-C;
-	auto AmC2 = AmC*AmC;
-	auto sqr = std::sqrt(AmC2+B*B);
-	auto a = -std::sqrt( common_ab * ( A+C+sqr ) ) / denom;
-	auto b = -std::sqrt( common_ab * ( A+C-sqr ) ) / denom;
-
-	HOMOG2D_INUMTYPE theta = 0.;
-	if( std::abs(B) < 1.E-10 )
-	{
-		if( A > C )
-			theta = 90.;
-	}
-	else
-	{
-		auto t = (C - A - sqr) / B;
-		theta = std::atan( t );
-	}
-
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	cv::ellipse(
 		img.getReal(),
-		cv::Point( x0,y0 ),
-		cv::Size( a, b ),
-		theta*180./M_PI,
+		cv::Point( par.x0,par.y0 ),
+		cv::Size( par.a, par.b ),
+		par.theta*180./M_PI,
 		0., 360.,
 		dp._dpValues.color(),
 		dp._dpValues._lineThickness,
@@ -5780,10 +5760,8 @@ Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
 	);
 }
 
-
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
-
 
 
 /////////////////////////////////////////////////////////////////////////////

@@ -947,9 +947,8 @@ std::pair<Circle,Circle> p_cir;
 // ... fill the pair
 draw( img, vseg );      // use default parameters
 draw( img, vseg, dp );  // or pass some
-draw( p_cir ); // draw the pair of circles
+draw( p_cir );          // draw the pair of circles
 ```
-
 
 A demo demonstrating this Opencv binding is provided, try it with
 `make demo` (requires that Opencv is installed on your machine).
