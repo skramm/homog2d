@@ -4,6 +4,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - planned:
   - compute FRect union
+  - add inversion of a Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
 
 - current master branch
   - switch to C++14 (so we can use `auto` return types!)

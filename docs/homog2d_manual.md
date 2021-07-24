@@ -354,20 +354,6 @@ FRect rect;
 rect.translate( dx, dy );
 ```
 
-Get the rectangle corresponding to the intersection of two rectangles:
-```C++
-auto r_inters = r1.intersection(r2);
-if( r_inters() )
-{
-	std::cout << "common area is " << r_inters.get();
-}
-```
-
-![showcase2](showcase2.gif)
-
-Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
-or a single intersection point.
-
 
 ### 3.3 - Circles
 
@@ -477,6 +463,7 @@ This latter function will return 0 if not a polygon.
 This type holds an arbitrary ellipse.
 We follow here the traditional parametrization for the API:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
+Internally, it is stored as a conic in its matrix form (see [build_options](#build_options) for details).
 
 ![ellipse1](ellipse1.png)
 
@@ -493,7 +480,17 @@ Ellipse ell5( cir );  // can be initialized from a circle
 ```
 
 
-Additional features:
+Retrieving attributes:
+```C++
+Ellipse ell;
+auto center  = ell.center();
+auto center2 = center(ell);    // or use the free function
+auto angle = ell.angle();
+auto angle2 = angle(ell);    // or use the free function
+auto majmin = ell.getMajMin();  // returns a pair of loating point values
+```
+
+
 
 
 
@@ -785,6 +782,22 @@ bool bc2 = seg.isInside( ell );
 ```
 
 (note: not yet available for ellipse type.)
+
+### 5.3 - Intersection area
+
+Get the rectangle corresponding to the intersection of two rectangles:
+```C++
+auto r_inters = r1.intersection(r2);
+if( r_inters() )
+{
+	std::cout << "common area is " << r_inters.get();
+}
+```
+
+![showcase2](showcase2.gif)
+
+Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
+or a single intersection point.
 
 
 ## 6 - Bindings with other libraries
