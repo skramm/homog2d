@@ -48,9 +48,13 @@ See https://github.com/skramm/homog2d
 
 #if 0
 	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
-	#define HOMOG2D_LOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_START
+#endif
+
+#if 0
+	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
+#else
 	#define HOMOG2D_LOG(a) {;}
 #endif
 
@@ -103,6 +107,8 @@ struct IsEpipmat {};
 
 namespace detail {
 
+	template<typename FPT> class Matrix_;
+
 	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename> struct RootHelper {};
 
@@ -141,8 +147,6 @@ namespace detail {
         using OtherType = type::IsPoint;
     };
 
-//	template<typename> class Matrix_;
-
 	/// A trick used in static_assert, so it aborts only if function is instanciated
 	template<typename T>
 	struct AlwaysFalse {
@@ -151,13 +155,9 @@ namespace detail {
 
 } // namespace detail
 
-
 // forward declarations
-template<typename LP,typename FPT>
-class Root;
-
-template<typename LP,typename FPT>
-class Hmatrix_;
+template<typename LP,typename FPT> class Root;
+template<typename LP,typename FPT> class Hmatrix_;
 
 template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
@@ -168,26 +168,76 @@ template<typename FPT> class Segment_;
 template<typename FPT> class Polyline_;
 template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
+template<typename FPT> class Ellipse_;
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
 
+//------------------------------------------------------------------
+namespace img {
+
+/// Opaque data structure, will hold the image type, depending on back-end library
+/**
+To expand it, you need to add code for the other library for the
+two function cols() and rows(), bounded in a "#define" block, and define the drawing functions
+*/
+template<typename T>
+struct Image
+{
+	T real_img;
+	Image() = default;
+	Image( T& m ): real_img(m)
+	{}
+	T& getReal()
+	{
+		return real_img;
+	}
+#ifdef HOMOG2D_USE_OPENCV
+	int cols() const { return real_img.cols; }
+	int rows() const { return real_img.rows; }
+#endif
+
+//#ifdef HOMOG2D_SOME_OTHER_LIB
+//	int cols() const { return real_img.???; }
+//	int rows() const { return real_img.???; }
+//#endif
+
+};
+
+} // namespace img
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - PUBLIC ENUM DECLARATIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/// Used in Line2d::getValue() and getOrthogonalLine()
+enum class GivenCoord: char { X, Y };
+
+/// Used in line constructor, to instanciate a H or V line, see \ref Root( LineDir, T )
+enum class LineDir: char { H, V };
+
+/// Used in Polyline_ constructors
+enum class IsClosed: char { Yes, No };
+
+/// Type of Root object, see Root::type()
+enum class Type : char { Line2d, Point2d };
+
+/// Type of underlying floating point, see Root::dtype()
+enum class Dtype : char { Float, Double, LongDouble };
+
+const char* getString( Type t )
+{
+	return t==Type::Line2d ? "Line2d" : "Point2d";
+}
 
 namespace detail {
 
-template<typename FPT>
-using Matrix_ = std::array<std::array<FPT,3>,3> ;
+// forward declaration
+template<typename FPT1,typename FPT2,typename FPT3>
+void product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
-/// forward declaration of function
-template<typename T1,typename T2,typename FPT1,typename FPT2>
-void
-product(
-	Root<T1,FPT1>&        out,
-	const Matrix_<FPT2>&  h,
-	const Root<T2,FPT1>&  in
-);
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
@@ -211,13 +261,252 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	return std::make_pair( p00, p11 );
 }
 
-template<typename FPT1, typename FPT2>
-void divideAll( detail::Matrix_<FPT1>& mat, FPT2 value )
+template<typename T>
+using matrix_t = std::array<std::array<T,3>,3>;
+
+//------------------------------------------------------------------
+/// A simple wrapper over a 3x3 matrix, provides root functionalities
+/**
+Homogeneous (thus the 'mutable' attribute).
+*/
+template<typename FPT>
+class Matrix_
 {
-	for( int i=0; i<3; i++ )
-		for( int j=0; j<3; j++ )
-			mat[i][j] /= value;
-}
+	template<typename T> friend class Matrix_;
+
+	template<typename T1,typename T2,typename FPT1,typename FPT2>
+	friend void
+	product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	friend void
+	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
+
+//	template<typename T>
+//	friend Hmatrix_<T> operator * ( const Hmatrix_<T>& h1, const Hmatrix_<T>& h2 );
+
+
+protected:
+	mutable matrix_t<FPT> _mdata;
+	mutable bool          _isNormalized = false;
+
+public:
+/// Constructor
+	Matrix_()
+	{
+		p_fillZero();
+	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	Matrix_( const Matrix_<FPT2>& other )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				_mdata[i][j] = other._mdata[i][j];
+		_isNormalized = other._isNormalized;
+	}
+
+	matrix_t<FPT>&       getRaw()       { return _mdata; }
+	const matrix_t<FPT>& getRaw() const { return _mdata; }
+
+/*	template<typename T>
+	void set( size_t r, size_t c, T v )
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		_mdata[r][c] = v;
+	}*/
+
+	const FPT& value( size_t r, size_t c ) const
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		return _mdata[r][c];
+	}
+	FPT& value( size_t r, size_t c )
+	{
+		#ifndef HOMOG2D_NOCHECKS
+			HOMOG2D_CHECK_ROW_COL;
+		#endif
+		return _mdata[r][c];
+	}
+
+/// Return determinant of matrix
+/**
+See https://en.wikipedia.org/wiki/Determinant
+*/
+	HOMOG2D_INUMTYPE determ() const
+	{
+		auto det = _mdata[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		det     -= _mdata[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		det     += _mdata[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		return det;
+	}
+
+/// Transpose and return matrix
+	Matrix_& transpose()
+	{
+		matrix_t<FPT> out;
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				out[i][j] = _mdata[j][i];
+		_mdata = out;
+		_isNormalized = false;
+		return *this;
+	}
+
+/// Inverse matrix
+/// \todo magic value here !
+	Matrix_& inverse()
+	{
+		auto det = determ();
+		if( std::abs(det) <= 1E-10 )
+//	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
+			throw std::runtime_error( "matrix is not invertible" );
+
+		auto adjugate = p_adjugate();
+		p_divideAll(adjugate, det);
+		_mdata = adjugate._mdata;
+		_isNormalized = false;
+		return *this;
+	}
+	bool& isNormalized() { return _isNormalized; }
+	const bool& isNormalized() const { return _isNormalized; }
+
+protected:
+	void p_normalize( int r, int c ) const
+	{
+		auto eps = std::numeric_limits<FPT>::epsilon()*1000;
+
+		if( std::fabs(_mdata[r][c]) < eps )
+			HOMOG2D_THROW_ERROR_1(
+				"Unable to normalize matrix, value at "
+				+ std::to_string(r) + "," +std::to_string(c)
+				+ " is too small"
+			);
+		p_divideBy( r, c );
+		if( std::signbit( _mdata[r][c] ) )
+			for( auto& li: _mdata )
+				for( auto& e: li )
+					e = -e;
+		_isNormalized = true;
+	}
+
+#if 0
+/// Used by copy constructor
+/** \todo maybe integrate into CC ? Not used anywhere else... */
+	template<typename FPT2>
+	void p_copyTo( const Matrix_<FPT2>& other )
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				other._mdata[i][j] = _mdata[i][j];
+	}
+#endif
+
+/// Divide all elements by the value at (r,c) (useful for normalization)
+	void p_divideBy( size_t r, size_t c ) const
+	{
+//		HOMOG2D_CHECK_ROW_COL;
+		assert( std::fabs( _mdata[r][c] ) > 1000*std::numeric_limits<FPT>::epsilon() );
+		for( auto& li: _mdata )
+			for( auto& e: li )
+				e /= _mdata[r][c];
+	}
+
+	void p_fillZero()
+	{
+		for( auto& li: _mdata )
+			for( auto& e: li )
+				e = 0.;
+	}
+	void p_fillEye()
+	{
+		p_fillZero();
+		_mdata[0][0] = 1.;
+		_mdata[1][1] = 1.;  // "eye" matrix => unit transformation
+		_mdata[2][2] = 1.;
+	}
+
+	template<typename T>
+	void p_fillWith( const T& in )
+	{
+		for( auto i=0; i<3; i++ )
+			for( auto j=0; j<3; j++ )
+				_mdata[i][j] = in[i][j];
+		_isNormalized = false;
+	}
+
+/// Divide all elements of \c mat by \v value (free function)
+	template<typename FPT2>
+	void p_divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
+	{
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				mat._mdata[i][j] /= value;
+		_isNormalized = false;
+	}
+
+/// Matrix multiplication
+	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
+	{
+		HOMOG2D_START;
+		Matrix_ out;
+		product( out, h1, h2 );
+		return out;
+	}
+
+private:
+	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
+	{
+		auto det = static_cast<HOMOG2D_INUMTYPE>( _mdata[v[0]][v[1]] ) * _mdata[v[6]][v[7]];
+		det -=     static_cast<HOMOG2D_INUMTYPE>( _mdata[v[2]][v[3]] ) * _mdata[v[4]][v[5]];
+		return det;
+	}
+/// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
+	detail::Matrix_<FPT> p_adjugate() const
+	{
+		detail::Matrix_<FPT> mat_out;
+		matrix_t<FPT>& out = mat_out._mdata;
+
+		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
+		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
+		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
+
+		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
+		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
+		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
+
+		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
+		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
+		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
+
+		return mat_out;
+	}
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Matrix_& h )
+	{
+		for( const auto& li: h._mdata )
+		{
+			f << "| ";
+			for( const auto& e: li )
+				f << std::setw(6) << e << ' ';
+			f << " |\n";
+		}
+		return f;
+	}
+
+}; // class Matrix_
+
+template<typename T1,typename T2,typename FPT1,typename FPT2>
+void
+product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
+
+
 
 } // namespace detail
 
@@ -241,14 +530,18 @@ Implemented as a 3x3 matrix
 Templated by Floating-Point Type (FPT) and by type M (type::IsEpipmat or type::IsHomogr)
  */
 template<typename M,typename FPT>
-class Hmatrix_
+class Hmatrix_ : public detail::Matrix_<FPT>
 {
 	template<typename T1,typename T2> friend class Root;
 
-	template<typename T1,typename T2,typename FPT1,typename FPT2>
+/*	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
 	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
-
+*/
+/*	template<typename FPT1,typename FPT2>
+	friend Ellipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
+*/
 	template<typename T,typename U>
 	friend Line2d_<T>
 	operator * ( const Homogr_<U>&, const Line2d_<T>& );
@@ -270,7 +563,7 @@ public:
 
 /// Constructor, set homography to a rotation matrix of angle \c val
 	template<typename T>
-	Hmatrix_( T val )
+	explicit Hmatrix_( T val )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		init();
@@ -279,7 +572,7 @@ public:
 
 /// Constructor, set homography to a translation matrix ( see Hmatrix_( T ) )
 	template<typename T1,typename T2>
-	Hmatrix_( T1 tx, T2 ty )
+	explicit Hmatrix_( T1 tx, T2 ty )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
@@ -293,23 +586,22 @@ private:
 		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
+#ifdef HOMOG2D_FUTURE_STUFF
 /// Implementation for epipolar matrices: initialize to aligned axis
 	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
 	{
-		p_zero();
+		_data.fillZero();
 		_data[2][1] = 1.;
 		_data[1][2] = 1.;
 		_isNormalized = true;
 	}
+#endif
 
 /// Implementation for homographies: initialize to unit transformation
 	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
 	{
-		p_zero();
-		_data[0][0] = 1.;
-		_data[1][1] = 1.;  // "eye" matrix => unit transformation
-		_data[2][2] = 1.;
-		_isNormalized = true;
+		detail::Matrix_<FPT>::p_fillEye();
+		detail::Matrix_<FPT>::isNormalized() = true;
 	}
 
 public:
@@ -320,6 +612,7 @@ public:
 - no checking is done on validity of matrix as an homography.
 Thus some assert can get triggered elsewhere.
 */
+
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
@@ -331,15 +624,17 @@ Thus some assert can get triggered elsewhere.
 			if( li.size() != 3 )
 				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
 #endif
-		p_fillWith( in );
+		detail::Matrix_<FPT>::p_fillWith( in );
+		normalize();
 	}
+
 
 /// Constructor, used to fill with a std::array
 	template<typename T>
 	Hmatrix_( const std::array<std::array<T,3>,3>& in )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		p_fillWith( in );
+		detail::Matrix_<FPT>::p_fillWith( in );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -354,21 +649,31 @@ Thus some assert can get triggered elsewhere.
 /// Assignment operator
 	Hmatrix_& operator = ( const Hmatrix_<M,FPT>& other )
 	{
-		_data         = other._data;
-		_hasChanged   = true;
-		_isNormalized = false;
-		_hmt          = nullptr;
+		if( this != &other )
+			detail::Matrix_<FPT>::getRaw() = other.getRaw();
+		_hasChanged = true;
 		return *this;
 	}
 
 /// Copy-constructor
 	Hmatrix_( const Hmatrix_<M,FPT>& other )
-		:_data          ( other._data )
+		: detail::Matrix_<FPT>( other)
 		, _hasChanged   ( true )
 		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
-	{}
+	{
+		detail::Matrix_<FPT>::getRaw() = other.getRaw();
+	}
 
+/// Inverse matrix
+	Hmatrix_& inverse()
+	{
+		detail::Matrix_<FPT>::inverse();
+		normalize();
+		return *this;
+	}
+
+#if 0
 /// Setter \warning No normalization is done, as this can be done
 /// several times to store values, we therefore must not normalize in between
 	template<typename T>
@@ -385,6 +690,7 @@ Thus some assert can get triggered elsewhere.
 		_isNormalized = false;
 		_hasChanged = true;
 	}
+
 /// Getter
 	FPT get( size_t r, size_t c ) const
 	{
@@ -393,6 +699,12 @@ Thus some assert can get triggered elsewhere.
 		#endif
 		return _data[r][c];
 	}
+
+	detail::Matrix_<FPT>&       getMat()       { return static_cast<detail::Matrix_<FPT>>(*this); }
+	const detail::Matrix_<FPT>& getMat() const { return static_cast<detail::Matrix_<FPT>>(*this); }
+#endif // 0
+
+
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
 	Hmatrix_& addTranslation( T tx, T ty )
@@ -410,8 +722,9 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		_data[0][2] = tx;
-		_data[1][2] = ty;
+		auto& mat = detail::Matrix_<FPT>::_mdata;
+		mat[0][2] = tx;
+		mat[1][2] = ty;
 		_isNormalized = true;
 		_hasChanged = true;
 		return *this;
@@ -431,10 +744,11 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_& setRotation( T theta )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
+		auto& mat = detail::Matrix_<FPT>::_mdata;
 		init();
-		_data[0][0] = _data[1][1] = std::cos(theta);
-		_data[1][0] = std::sin(theta);
-		_data[0][1] = -_data[1][0];
+		mat[0][0] = mat[1][1] = std::cos(theta);
+		mat[1][0] = std::sin(theta);
+		mat[0][1] = -mat[1][0];
 		_isNormalized = true;
 		_hasChanged = true;
 		return *this;
@@ -455,7 +769,6 @@ Thus some assert can get triggered elsewhere.
 		Hmatrix_ out;
 		out.setScale( kx, ky );
 		*this = out * *this;
-		normalize();
 		_hasChanged = true;
 		return *this;
 	}
@@ -473,117 +786,58 @@ Thus some assert can get triggered elsewhere.
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 		init();
-		_data[0][0] = kx;
-		_data[1][1] = ky;
+		auto& mat = detail::Matrix_<FPT>::_mdata;
+		mat[0][0] = kx;
+		mat[1][1] = ky;
 		_isNormalized = true;
-
 		_hasChanged = true;
 		return *this;
 	}
 
 	template<typename T>
-	void
-	applyTo( T& ) const;
+	void applyTo( T& ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
 	void copyTo( cv::Mat&, int type=CV_64F ) const;
 	Hmatrix_& operator = ( const cv::Mat& );
 #endif
 
-/// Matrix normalisation
+/// Homography normalisation
 	void normalize() const
 	{
-		auto eps = std::numeric_limits<FPT>::epsilon()*10;
-
-		if( std::fabs(_data[2][2]) > eps ) // if [2][2] is null, then we use [2][1]
-			p_divideBy( 2, 2 );
-		else
-		{
-			if( std::fabs(_data[2][1]) > eps )
-				p_divideBy( 2, 1 );
-			else
-				p_divideBy( 2, 0 );
-		}
-		if( std::signbit(_data[2][2]) )
-			for( auto& li: _data )
-				for( auto& e: li )
-					e = -e;
+		detail::Matrix_<FPT>::p_normalize(2,2);
 		_hasChanged = true;
-		_isNormalized = true;
-	}
-
-private:
-	detail::Matrix_<FPT> p_transpose( const detail::Matrix_<FPT>& m_in ) const
-	{
-		detail::Matrix_<FPT> m_out;
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				m_out[i][j] = m_in[j][i];
-		return m_out;
-	}
-
-	detail::Matrix_<FPT> p_inverse() const // const detail::Matrix_<FPT>& m_in ) const
-	{
-		auto det = p_det();
-		if( std::abs(det) <= Hmatrix_<M,FPT>::nullDeterValue() )
-			throw std::runtime_error( "matrix is not invertible" );
-
-		auto adjugate = p_adjugate();
-		detail::divideAll(adjugate, det);
-		return adjugate;
 	}
 
 public:
-/// Transpose matrix
-	Hmatrix_& transpose()
-	{
-		detail::Matrix_<FPT> out = p_transpose( _data );
-		_data = out;
-		_hasChanged = true;
-		return *this;
-	}
-
-/// Inverse matrix
-	Hmatrix_& inverse()
-	{
-		_data = p_inverse();
-		normalize();
-		_hasChanged = true;
-		return *this;
-	}
-
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
-/// Matrix multiplication
+/// Matrix multiplication, call the base class product
 	friend Hmatrix_ operator * ( const Hmatrix_& h1, const Hmatrix_& h2 )
 	{
 		Hmatrix_ out;
-		out.p_zero();
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				for( int k=0; k<3; k++ )
-					out._data[i][j] +=
-						static_cast<HOMOG2D_INUMTYPE>(   h1._data[i][k] )
-						* static_cast<HOMOG2D_INUMTYPE>( h2._data[k][j] );
+		detail::product( out, static_cast<detail::Matrix_<FPT>>(h1), static_cast<detail::Matrix_<FPT>>(h2) ) ;
 		out.normalize();
 		out._hasChanged = true;
 		return out;
 	}
 
-	public:
+public:
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Hmatrix_& h ) const
 	{
+		auto& data = detail::Matrix_<FPT>::_mdata;
+
 		if( !_isNormalized )
 			normalize();
 		if( !h._isNormalized )
 			h.normalize();
 
-		auto eps = std::numeric_limits<FPT>::epsilon();
+		auto eps = std::numeric_limits<FPT>::epsilon()*100;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
-					static_cast<HOMOG2D_INUMTYPE>( _data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h._data[i][j] ) )
+					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h.value(i,j) ) )
 					>= eps
 				)
 					return false;
@@ -599,97 +853,30 @@ public:
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
-	private:
-	void p_zero()
-	{
-		for( auto& li: _data )
-			for( auto& e: li )
-				e = 0.;
-		_hasChanged = true;
-	}
-	template<typename T>
-	void p_fillWith( const T& in )
-	{
-		for( auto i=0; i<3; i++ )
-			for( auto j=0; j<3; j++ )
-				_data[i][j] = in[i][j];
-		normalize();
-		_hasChanged = true;
-	}
-	void p_divideBy( size_t r, size_t c ) const
-	{
-		assert( std::fabs( _data[r][c] ) > std::numeric_limits<FPT>::epsilon() );
-		for( auto& li: _data )
-			for( auto& e: li )
-				e /= _data[r][c];
-		_hasChanged = true;
-	}
 
-/// Return determinant of matrix
-/**
-See https://en.wikipedia.org/wiki/Determinant
-*/
-	HOMOG2D_INUMTYPE p_det() const
-	{
-		auto det = _data[0][0] * p_det2x2( {1,1, 1,2, 2,1, 2,2} );
-		det     -= _data[0][1] * p_det2x2( {1,0, 1,2, 2,0, 2,2} );
-		det     += _data[0][2] * p_det2x2( {1,0, 1,1, 2,0, 2,1} );
-		return det;
-	}
-	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
-	{
-		auto det = static_cast<HOMOG2D_INUMTYPE>( _data[v[0]][v[1]] ) * _data[v[6]][v[7]];
-		det -=     static_cast<HOMOG2D_INUMTYPE>( _data[v[2]][v[3]] ) * _data[v[4]][v[5]];
-		return det;
-	}
-/// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
-	detail::Matrix_<FPT> p_adjugate() const
-	{
-		detail::Matrix_<FPT> out;
-
-		out[ 0 ][ 0 ] =  p_det2x2( {1,1, 1,2, 2,1, 2,2} );
-		out[ 0 ][ 1 ] = -p_det2x2( {0,1, 0,2, 2,1, 2,2} );
-		out[ 0 ][ 2 ] =  p_det2x2( {0,1, 0,2, 1,1, 1,2} );
-
-		out[ 1 ][ 0 ] = -p_det2x2( {1,0, 1,2, 2,0, 2,2} );
-		out[ 1 ][ 1 ] =  p_det2x2( {0,0, 0,2, 2,0, 2,2} );
-		out[ 1 ][ 2 ] = -p_det2x2( {0,0, 0,2, 1,0, 1,2} );
-
-		out[ 2 ][ 0 ] =  p_det2x2( {1,0, 1,1, 2,0, 2,1} );
-		out[ 2 ][ 1 ] = -p_det2x2( {0,0, 0,1, 2,0, 2,1} );
-		out[ 2 ][ 2 ] =  p_det2x2( {0,0, 0,1, 1,0, 1,1} );
-
-		return out;
-	}
+// (none )
 
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
-	private:
-	mutable detail::Matrix_<FPT> _data;
+private:
 	mutable bool _hasChanged   = true;
 	mutable bool _isNormalized = false;
 	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
-		for( const auto& li: h._data )
-		{
-			f << "| ";
-			for( const auto& e: li )
-				f << std::setw(6) << e << ' ';
-			f << " |\n";
-		}
+		f << "Hmatrix:\n"
+			<< static_cast<const detail::Matrix_<FPT>&>(h);
 		return f;
 	}
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-};
+
+}; // class Hmatrix_
+
 
 //------------------------------------------------------------------
-
-#ifdef HOMOG2D_USE_OPENCV
-//------------------------------------------------------------------
-/// Point drawing style
+/// Point drawing style, see DrawParams
 enum class PtStyle
 {
 	Plus,   ///< "+" symbol
@@ -698,21 +885,39 @@ enum class PtStyle
 	Diam    ///< diamond
 };
 
+namespace priv {
+/// Color drawing (internal use), see DrawParams
+struct Color
+{
+	uint8_t r = 80;
+	uint8_t g = 80;
+	uint8_t b = 80;
+};
+
+} // namespace priv
+
 //------------------------------------------------------------------
-/// Draw parameters for Opencv binding, only available if HOMOG2D_USE_OPENCV defined,
-/// see Root::draw()
-struct CvDrawParams
+/// Draw parameters, independent of back-end library
+struct DrawParams
 {
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
-		cv::Scalar _color         = cv::Scalar(80,80,80); // gray
-		int        _lineThickness = 1;
-		int        _lineType      = cv::LINE_AA; ///< or cv::LINE_8
-		int        _ptDelta       = 8;           ///< pixels, used for drawing points
-		PtStyle    _ptStyle       = PtStyle::Plus;
-		bool       _enhancePoint  = false;       ///< to draw selected points
+		priv::Color _color;
+		int         _lineThickness = 1;
+		int         _lineType      = 1; // 1 for cv::LINE_AA, 2 for cv::LINE_8
+		int         _ptDelta       = 8;           ///< pixels, used for drawing points
+		PtStyle     _ptStyle       = PtStyle::Plus;
+		bool        _enhancePoint  = false;       ///< to draw selected points
+
+#ifdef HOMOG2D_USE_OPENCV
+		cv::Scalar color() const
+		{
+			return cv::Scalar( _color.b, _color.g, _color.r );
+		}
+#endif // HOMOG2D_USE_OPENCV
 	};
+
 	Dp_values _dpValues;
 
 	private:
@@ -723,7 +928,7 @@ struct CvDrawParams
 	}
 
 	public:
-	CvDrawParams()
+	DrawParams()
 	{
 		_dpValues = p_getDefault();
 	}
@@ -735,42 +940,451 @@ struct CvDrawParams
 	{
 		p_getDefault() = Dp_values();
 	}
-	CvDrawParams& setPointStyle( PtStyle ps )
+	DrawParams& setPointStyle( PtStyle ps )
 	{
 		if( (int)ps > (int)PtStyle::Diam )
 			throw std::runtime_error( "Error: invalid value for point style");
 		_dpValues._ptStyle = ps;
 		return *this;
 	}
-	CvDrawParams& setPointSize( int ps )
+	DrawParams& setPointSize( int ps )
 	{
 		assert( ps>1 );
 		_dpValues._ptDelta = ps;
 		return *this;
 	}
-	CvDrawParams& setThickness( int t )
+	DrawParams& setThickness( int t )
 	{
 		assert( t>0 );
 		_dpValues._lineThickness = t;
 		return *this;
 	}
-	CvDrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
 	{
-		_dpValues._color = cv::Scalar(b,g,r);
+		_dpValues._color = priv::Color{r,g,b};
 		return *this;
 	}
-	CvDrawParams& selectPoint()
+	DrawParams& selectPoint()
 	{
 		_dpValues._enhancePoint = true;
 		return *this;
 	}
 };
-#endif // HOMOG2D_USE_OPENCV
+
+
 //------------------------------------------------------------------
+namespace detail {
 
-/// Used in Line2d::getValue() and getOrthogonalLine()
-enum class GivenCoord { X, Y };
+/// Holds 9 parameters of ellipse
+template<typename T>
+struct EllParams
+{
+	T x0, y0; // center
+	T theta = 0.;
+	T sint, cost;
+	T a, b;
+	T a2, b2; // squared values of a and b
 
+	template<typename U>
+	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
+	{
+		f << "EllParams: origin=" << par.x0 << "," << par.y0
+			<< " angle=" << par.theta *180./M_PI
+			<< " a=" << par.a << " b=" << par.b
+			<< '\n';
+		return f;
+
+	}
+}; // struct EllParams
+
+} // namespace detail
+
+//------------------------------------------------------------------
+/// Ellipse as a conic in matrix form.
+/**
+This enables its projection using homography
+
+See:
+- https://en.wikipedia.org/wiki/Ellipse#General_ellipse
+- https://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
+
+General equation of an ellipse:
+\f[
+A x^2 + B x y + C y^2 + D x + E y + F = 0
+\f]
+It can be written as a 3 x 3 matrix:
+\f[
+\begin{bmatrix}
+  A & B/2 & D/2 \\
+  B/2 & C & E/2 \\
+  D/2 & E/2 & F
+\end{bmatrix}
+\f]
+
+Matrix coefficients computed from center x0,y0, major and minor distances (a,b) and angle theta:
+\f[
+\begin{aligned}
+  A &=   a^2 \sin^2\theta + b^2 \cos^2\theta \\
+  B &=  2\left(b^2 - a^2\right) \sin\theta \cos\theta \\
+  C &=   a^2 \cos^2\theta + b^2 \sin^2\theta \\
+  D &= -2A x_\circ   -  B y_\circ \\
+  E &= - B x_\circ   - 2C y_\circ \\
+  F &=   A x_\circ^2 +  B x_\circ y_\circ + C y_\circ^2 - a^2 b^2
+\end{aligned}
+\f]
+
+Homography projection: https://math.stackexchange.com/a/2320082/133647
+
+\f[
+Q' = H^{-T} \cdot Q \cdot H^{-1}
+\f]
+
+*/
+template<typename FPT>
+class Ellipse_: public detail::Matrix_<FPT>
+{
+public:
+	using FType = FPT;
+
+	template<typename T> friend class Ellipse_;
+
+	template<typename FPT1,typename FPT2>
+	friend Ellipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
+
+	template<typename FPT1,typename FPT2>
+	friend Ellipse_<FPT1>
+	operator * ( const Homogr_<FPT2>&, const Ellipse_<FPT1>& );
+
+public:
+/// Default constructor: centered at (0,0), major=2, minor=1
+	Ellipse_(): Ellipse_( 0., 0., 2., 1., 0. )
+	{}
+
+/// Constructor 1
+	template<typename T1,typename T2=double,typename T3=double>
+	Ellipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
+		: Ellipse_( pt.getX(), pt.getY(), major, minor, angle )
+	{}
+
+/// Constructor 2
+	template<typename T1,typename T2=double,typename T3=double>
+	explicit Ellipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		HOMOG2D_CHECK_IS_NUMBER(T3);
+		if( major<minor )
+			std::swap( major, minor );
+		p_init( x, y, major, minor, angle );
+	}
+
+/// Constructor 3, import from circle
+	explicit Ellipse_( const Circle_<FPT>& cir )
+	{
+		p_init( cir.center().getX(), cir.center().getY(), cir.radius(), cir.radius(), 0. );
+	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	Ellipse_( const Ellipse_<FPT2>& other )
+		: detail::Matrix_<FPT>( other )
+	{}
+
+	template<typename FPT2>
+	bool pointIsInside( const Point2d_<FPT2>& ) const;
+	bool isCircle() const;
+
+	template<typename T>
+	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+
+	Point2d_<FPT>    center() const;
+	Polyline_<FPT>   getBB()  const;
+	HOMOG2D_INUMTYPE angle()  const;
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
+
+	template<typename T>
+	friend
+	std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell );
+//////////////////////////
+//   PRIVATE FUNCTIONS  //
+//////////////////////////
+private:
+/// private constructor, needed in friend function only
+/**
+This is not public, because: 1-useless 2-not guarantee would be given that the input
+is indeed a valid ellipse
+*/
+	explicit Ellipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
+	{}
+
+	template<typename T>
+	detail::EllParams<T> p_getParams() const;
+	template<typename T>
+	detail::EllParams<T> p_computeParams() const;
+
+/// Called by all the constructors, fills the matrix.
+	void p_init( double x0, double y0, double a, double b, double theta=0. )
+	{
+		auto& data = detail::Matrix_<FPT>::_mdata;
+		HOMOG2D_INUMTYPE sin1 = std::sin(theta);
+		HOMOG2D_INUMTYPE cos1 = std::cos(theta);
+		HOMOG2D_INUMTYPE sin2 = sin1 * sin1;
+		HOMOG2D_INUMTYPE cos2 = cos1 * cos1;
+		HOMOG2D_INUMTYPE a2   = a*a;
+		HOMOG2D_INUMTYPE b2   = b*b;
+
+		HOMOG2D_INUMTYPE A = a2*sin2 + b2*cos2;
+		HOMOG2D_INUMTYPE B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE C = a2 * cos2 + b2 * sin2;
+		HOMOG2D_INUMTYPE D = -2.*A * x0 -    B * y0;
+		HOMOG2D_INUMTYPE E =   - B * x0 - 2.*C * y0;
+		HOMOG2D_INUMTYPE F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
+
+		data[0][0] = A;
+		data[1][1] = C;
+		data[2][2] = F;
+
+		data[0][1] = data[1][0] = B / 2.;
+		data[0][2] = data[2][0] = D / 2.;
+		data[1][2] = data[2][1] = E / 2.;
+
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+		_epHasChanged = false;
+		_par.a = a;
+		_par.b = b;
+		_par.a2 = a2;
+		_par.b2 = b2;
+		_par.theta = theta;
+		_par.sint = sin1;
+		_par.cost = cos1;
+		_par.x0 = x0;
+		_par.y0 = y0;
+#endif
+	}
+
+//////////////////////////
+//      DATA SECTION    //
+//////////////////////////
+// (matrix is inherited from base class)
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+	mutable bool _epHasChanged = true;   ///< if true, means we need to recompute parameters
+	mutable detail::EllParams<FPT> _par;
+#endif
+}; // class Ellipse
+
+
+template<typename T>
+std::ostream& operator << ( std::ostream& f, const Ellipse_<T>& ell )
+{
+	auto par = ell.template p_getParams<HOMOG2D_INUMTYPE>();
+	f << par;
+	return f;
+}
+
+//------------------------------------------------------------------
+/// Returns standard parameters from matrix coeffs
+template<typename FPT>
+template<typename T>
+detail::EllParams<T>
+Ellipse_<FPT>::p_getParams() const
+{
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+	if( _epHasChanged )
+	{
+		_par = p_computeParams<T>();
+		_epHasChanged = false;
+	}
+	return _par;
+#else
+	return p_computeParams<T>();
+#endif // HOMOG2D_OPTIMIZE_SPEED
+}
+//------------------------------------------------------------------
+/// Compute and returns standard parameters from matrix coeffs
+/// \todo get rid of magic number
+template<typename FPT>
+template<typename T>
+detail::EllParams<T>
+Ellipse_<FPT>::p_computeParams() const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A = m[0][0];
+	HOMOG2D_INUMTYPE C = m[1][1];
+	HOMOG2D_INUMTYPE F = m[2][2];
+	HOMOG2D_INUMTYPE B = 2. * m[0][1];
+	HOMOG2D_INUMTYPE D = 2. * m[0][2];
+	HOMOG2D_INUMTYPE E = 2. * m[1][2];
+
+	detail::EllParams<T> par;  // theta already set to zero
+
+	auto denom = B*B - 4. * A * C;
+	par.x0 = ( 2.*C*D - B*E ) / denom;
+	par.y0 = ( 2.*A*E - B*D ) / denom;
+	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	auto AmC = A-C;
+	auto AmC2 = AmC*AmC;
+	auto sqr = std::sqrt(AmC2+B*B);
+	par.a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	par.b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+	par.a2 = par.a * par.a;
+	par.b2 = par.b * par.b;
+	if( std::abs(B) < 1.E-10 )
+	{
+		if( A > C )
+			par.theta = 90.;
+	}
+	else
+	{
+		auto t = (C - A - sqr) / B;
+		par.theta = std::atan( t );
+	}
+	par.sint = std::sin( par.theta );
+	par.cost = std::cos( par.theta );
+	return par;
+}
+
+//------------------------------------------------------------------
+/// Returns true if ellipse is a circle
+/** \todo remove those ugly magic numbers with something meaningful */
+template<typename FPT>
+bool
+Ellipse_<FPT>::isCircle() const
+{
+	auto& m = detail::Matrix_<FPT>::_mdata;
+	HOMOG2D_INUMTYPE A  = m[0][0];
+	HOMOG2D_INUMTYPE C  = m[1][1];
+	HOMOG2D_INUMTYPE B2 = m[0][1];
+	if( std::abs(A-C) < 1E-10 )
+		if( std::abs(B2) < 1E-10 )
+			return true;
+	return false;
+}
+
+/// Returns center of ellipse
+/// \sa center( const T& )
+template<typename FPT>
+Point2d_<FPT>
+Ellipse_<FPT>::center() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return Point2d_<FPT>( par.x0, par.y0 );
+}
+
+template<typename FPT>
+std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+Ellipse_<FPT>::getMajMin() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return std::make_pair( par.a, par.b );
+}
+
+/// Returns angle of ellipse
+/// \sa angle( const Ellipse_& )
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Ellipse_<FPT>::angle() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return par.theta;
+}
+
+/// Returns bounding box of ellipse
+/**
+Algorithm:
+ - build line \c liH going through major axis, by using center point and
+ point on semi-major axis, intersecting ellipse
+ - get opposite point \x ptB, lying on line and at distance \c a
+ - get the two parallel lines to \c liH, at a distance \c b
+ - get the two orthogonal lines at \c ptA and \c ptB
+
+*/
+template<typename FPT>
+Polyline_<FPT>
+Ellipse_<FPT>::getBB() const
+{
+
+// step 1: build ptA using angle
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	auto dy = par.sint * par.a;
+	auto dx = par.cost * par.a;
+	Point2d_<FPT> ptA(
+		par.x0 + dx,
+		par.y0 + dy
+	);
+	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
+
+// step 2: build main-axis line, going through center and ptA
+	Line2d_<FPT> li_H = ptA * pt0;
+
+// step 3: get ptB, using line and distance
+	auto ppts = li_H.getPoints( pt0, par.a );
+	auto ptB = ppts.first;
+	if( ptB == ptA )
+		ptB = ppts.second;
+
+	auto para = getParallelLines( li_H, par.b );
+	auto li_V1 = li_H.getOrthogonalLine( ptA );
+	auto li_V2 = li_H.getOrthogonalLine( ptB );
+
+	Polyline_<FPT> out( IsClosed::Yes );
+#ifndef	HOMOG2D_DEBUGMODE
+	out.add( para.first  * li_V1 );
+	out.add( para.second * li_V1 );
+	out.add( para.second * li_V2 );
+	out.add( para.first  * li_V2 );
+#else
+	auto p1 = para.first  * li_V1;
+	auto p2 = para.second * li_V1;
+	auto p3 = para.second * li_V2;
+	auto p4 = para.first  * li_V2;
+	HOMOG2D_DEBUG_ASSERT(
+		( p2!=p1 && p3!=p2 && p4!=p3 ),
+		"p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
+		<< "\n para.1=" << para.first
+		<< "\n li_V1=" << li_V1
+		<< "\n ptA=" << ptA
+		<< "\n ptB=" << ptB
+		<< "\n " << ppts
+	);
+	out.add( p1 );
+	out.add( p2 );
+	out.add( p3 );
+	out.add( p4 );
+#endif
+	return out;
+}
+
+//------------------------------------------------------------------
+/// Returns true if point is inside ellipse
+/**
+taken from https://stackoverflow.com/a/16814494/193789
+*/
+template<typename FPT>
+template<typename FPT2>
+bool
+Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
+{
+	HOMOG2D_INUMTYPE x = pt.getX();
+	HOMOG2D_INUMTYPE y = pt.getY();
+
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	const auto& x0 = par.x0;
+	const auto& y0 = par.y0;
+
+	auto v1 = par.cost * (x-x0) + par.sint * (y-y0);
+	HOMOG2D_INUMTYPE sum = v1*v1 / par.a2;
+
+	auto v2 = par.sint * (x-x0) - par.cost * (y-y0);
+	sum += v2*v2 / par.b2;
+	if( sum < 1. )
+		return true;
+	return false;
+
+}
+
+//------------------------------------------------------------------
 namespace detail {
 
 // forward declaration of template instanciation
@@ -783,19 +1397,20 @@ struct Inters_2 {};
 /// Common stuff for intersection code
 struct IntersectCommon
 {
-	protected:
-		bool _doesIntersect = false;
-	public:
-		bool operator()() const
-		{
-			return _doesIntersect;
-		}
+protected:
+	bool _doesIntersect = false;
+public:
+	bool operator()() const
+	{
+		return _doesIntersect;
+	}
 };
 
-/// Base class for intersection
+/// Base class for intersection, gets specialized
 template<typename T,typename FPT>
 struct Intersect {};
 
+//------------------------------------------------------------------
 /// One point intersection
 template<typename FPT>
 class Intersect<Inters_1,FPT>: public IntersectCommon
@@ -836,6 +1451,7 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		Point2d_<FPT> _ptIntersect;
 };
 
+//------------------------------------------------------------------
 /// Two points intersection
 template<typename FPT>
 class Intersect<Inters_2,FPT>: public IntersectCommon
@@ -881,74 +1497,126 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 	}
 };
 
+//------------------------------------------------------------------
 /// Multiple points intersections
 template<typename FPT>
 class IntersectM
 {
-	private:
-		mutable std::vector<Point2d_<FPT>> _vecInters;
-	public:
-		IntersectM() {}
+private:
+	mutable std::vector<Point2d_<FPT>> _vecInters; ///< mutable, because it can get sorted in const functions
+public:
+	IntersectM() {}
 /// To enable conversions from different floating-point types
-		template<typename FPT2>
-		IntersectM( const IntersectM<FPT2>& other )
-		{
-			_vecInters.resize( other.size() );
-			auto it = _vecInters.begin();
-			for( const auto& elem: other.get() )
-				*it++ = elem; // automatic type conversion
-		}
+	template<typename FPT2>
+	IntersectM( const IntersectM<FPT2>& other )
+	{
+		_vecInters.resize( other.size() );
+		auto it = _vecInters.begin();
+		for( const auto& elem: other.get() )
+			*it++ = elem; // automatic type conversion
+	}
 
-		bool operator()() const
-		{
-			return !_vecInters.empty();
-		}
-		size_t size() const { return _vecInters.size(); }
-		void add( const Point2d_<FPT>& pt )
-		{
+	bool operator()() const
+	{
+		return !_vecInters.empty();
+	}
+	size_t size() const { return _vecInters.size(); }
+	void add( const Point2d_<FPT>& pt )
+	{
+		_vecInters.push_back(pt);
+	}
+
+	void add( const std::vector<Point2d_<FPT>>& vpt )
+	{
+		for( const auto& pt: vpt )
 			_vecInters.push_back(pt);
-		}
+	}
 
-		void add( const std::vector<Point2d_<FPT>>& vpt )
-		{
-			for( const auto& pt: vpt )
-				_vecInters.push_back(pt);
-		}
-
-		std::vector<Point2d_<FPT>> get() const
-		{
-			std::sort( std::begin(_vecInters), std::end(_vecInters) );
-			return _vecInters;
-		}
+/// Returns the intersection points, sorted
+	std::vector<Point2d_<FPT>> get() const
+	{
+		std::sort( std::begin(_vecInters), std::end(_vecInters) );
+		return _vecInters;
+	}
+	friend std::ostream&
+	operator << ( std::ostream& f, IntersectM i )
+	{
+		f << "IntersectM: size=" << i.size() << '\n' << i._vecInters;
+		return f;
+	}
 };
+
+//------------------------------------------------------------------
+/// Small class to hold result of intersections of two FRect_
+/// \sa FRect_::intersection()
+template<typename T>
+class RectArea
+{
+private:
+	bool      _success = false;
+	FRect_<T> _area;
+
+public:
+	RectArea() = default;
+	RectArea( const FRect_<T>& r ) : _success(true), _area(r)
+	{}
+	bool operator()() const
+	{
+		return _success;
+	}
+
+	FRect_<T> get() const
+	{
+		assert( _success );
+		return _area;
+	}
+};
+
 
 } // namespace detail
 
 
 //------------------------------------------------------------------
-/// A Flat Rectangle, modeled with its two opposite points
+/// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
 class FRect_
 {
+public:
 	using FType = FPT;
+
 	template<typename T> friend class FRect_;
 
 private:
 	Point2d_<FPT> _ptR1,_ptR2;
 
-	public:
+public:
+/** \name Constructors */
+///@{
 /// Default constructor, initialize rectangle to (0,0)-(1,1)
 	FRect_()
 	{
 		_ptR2.set( 1., 1. );
 	}
 /// Constructor from 2 points
-	FRect_( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
+	template<typename FPT2>
+	FRect_( const Point2d_<FPT2>& pa, const Point2d_<FPT2>& pb )
 	{
 		set( pa, pb );
 	}
 
-/// Constructor from x1, y1, x2, y2
+/// Constructor from center point, width and height
+	template<typename FPT2,typename T1, typename T2>
+	FRect_( const Point2d_<FPT2>& p0, T1 w, T2 h )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		set(
+			Point2d_<FPT>( p0.getX()-0.5L*w, p0.getY()-0.5L*h ),
+			Point2d_<FPT>( p0.getX()+0.5L*w, p0.getY()+0.5L*h )
+		);
+	}
+
+/// Constructor from x1, y1, x2, y2 (need to be all the same type)
 	template<typename T>
 	FRect_( T x1, T y1, T x2, T y2 )
 	{
@@ -956,6 +1624,44 @@ private:
 		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
 	}
 
+/// Copy-Constructor
+	template<typename FPT2>
+	FRect_( const FRect_<FPT2>& other )
+		: _ptR1(other._ptR1),_ptR2(other._ptR2)
+	{}
+///@}
+
+private:
+/// Private constructor from 4 points, used in intersection( const FRect_& )
+	template<typename T>
+	FRect_(
+		const Point2d_<T>& pt1,
+		const Point2d_<T>& pt2,
+		const Point2d_<T>& pt3,
+		const Point2d_<T>& pt4
+	)
+	{
+		HOMOG2D_LOG( "pt1" << pt1 << " pt2="<< pt2 << " pt3=" << pt3 << " pt4=" << pt4 );
+		auto x0 = std::min( pt1.getX(), pt2.getX() );
+		x0 = std::min( x0, pt3.getX() );
+		x0 = std::min( x0, pt4.getX() );
+		auto y0 = std::min( pt1.getY(), pt2.getY() );
+		y0 = std::min( x0, pt3.getY() );
+		y0 = std::min( x0, pt4.getY() );
+
+		auto x1 = std::max( pt1.getX(), pt2.getX() );
+		x1 = std::max( x1, pt3.getX() );
+		x1 = std::max( x1, pt4.getX() );
+		auto y1 = std::max( pt1.getY(), pt2.getY() );
+		y1 = std::max( y1, pt3.getY() );
+		y1 = std::max( y1, pt4.getY() );
+
+		_ptR1 = Point2d_<FPT>(x0,y0);
+		_ptR2 = Point2d_<FPT>(x1,y1);
+		HOMOG2D_LOG( "ptR1=" <<_ptR1 << " _ptR2=" << _ptR2 );
+	}
+
+public:
 	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
@@ -964,6 +1670,7 @@ private:
 	}
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
+	HOMOG2D_INUMTYPE area() const   { return height() * width(); }
 
 	Circle_<FPT> getBoundingCircle() const;
 
@@ -975,14 +1682,37 @@ private:
 	}
 
 /// Returns the 2 major points of the rectangle
+/// \sa getPts( const FRect_<FPT>& )
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
 	getPts() const
 	{
 		return std::make_pair( _ptR1, _ptR2 );
 	}
 
+	template<typename FPT2>
+	detail::RectArea<FPT> intersection( const FRect_<FPT2>& other ) const;
+	template<typename FPT2>
+	detail::RectArea<FPT> operator & ( const FRect_<FPT2>& other ) const
+	{
+		return this->intersection( other );
+	}
+//	template<typename FPT2>
+//	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
+
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
+/**
+\verbatim
+
+ p1 +------+ p2
+    |      |
+    |      |
+    |      |
+ p0 +------+ p3
+
+\endverbatim
+\sa get4Pts( const FRect_<FPT>& )
+*/
 	std::array<Point2d_<FPT>,4>
 	get4Pts() const
 	{
@@ -993,8 +1723,20 @@ private:
 		arr[3] = Point2d_<FPT>( _ptR2.getX(), _ptR1.getY() );
 		return arr;
 	}
-/// Returns the 4 segments of the rectangle
-/// \sa h2d::getSegs( const FRect& );
+
+/// Returns the 4 segments of the rectangle, starting with the first vertical one
+/**
+\verbatim
+      s1
+   +------+p2
+   |      |
+s0 |      | s2
+   |      |
+ p1+------+
+      s3
+\endverbatim
+\sa \ref h2d::getSegs( const FRect_& )
+*/
 	std::array<Segment_<FPT>,4>
 	getSegs() const
 	{
@@ -1017,6 +1759,8 @@ private:
 		return true;
 	}
 
+/** \name Intersection functions */
+///@{
 /// FRect/Line intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
@@ -1050,32 +1794,6 @@ private:
 		return out;
 	}
 
-private:
-/// Intersection of FRect vs FRect or Circle
-	template<typename T>
-	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
-	{
-		std::set<Point2d_<FPT>> pts;
-		for( const auto& rseg: getSegs() )
-		{
-			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
-			if( inters() )
-			{
-				auto vpts = inters.get();
-				assert( vpts.size() < 3 );
-				if( vpts.size() > 0 )
-					pts.insert( vpts[0] );
-				if( vpts.size() > 1 )
-					pts.insert( vpts[1] );
-			}
-		}
-		detail::IntersectM<FPT> out;
-		for( const auto& elem: pts )
-			out.add( elem );
-		return out;
-	}
-
-public:
 /// FRect/Circle intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
@@ -1093,6 +1811,7 @@ public:
 			return detail::IntersectM<FPT>();
 		return p_intersects_R_C( rect );
 	}
+///@}
 
 	template<typename FPT2>
 	bool operator == ( const FRect_<FPT2>& other ) const
@@ -1116,20 +1835,49 @@ public:
 		return f;
 	}
 
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
+	template<typename T>
+	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+
+private:
+	template<typename FPT2>
+	std::vector<Point2d_<FPT>> p_pointsInside( const FRect_<FPT2>& other ) const
 	{
-		cv::rectangle(
-			mat,
-			_ptR1.getCvPti(),
-			_ptR2.getCvPti(),
-			dp._dpValues._color,
-			dp._dpValues._lineThickness,
-			dp._dpValues._lineType
-		);
+		std::vector<Point2d_<FPT>> out;
+		for( const auto& pt: get4Pts() )
+			if( pt.isInside( other ) )
+				out.push_back( pt );
+		return out;
 	}
-#endif
-};
+
+/// Intersection of FRect vs FRect or Circle
+/**
+- We use a \c std::set to avoid having multiple times the same point.
+- second arg is used to fetch the indexes of intersecting segments, when needed
+*/
+	template<typename T>
+	detail::IntersectM<FPT> p_intersects_R_C( const T& other ) const
+	{
+		std::set<Point2d_<FPT>> pts;
+		for( const auto& rseg: getSegs() )
+		{
+			auto inters = rseg.intersects( other ); // call of Segment/FRect => FRect/Segment, or Segment/Circle
+			if( inters() )
+			{
+				auto vpts = inters.get();
+				assert( vpts.size() < 3 );
+				if( vpts.size() > 0 )
+					pts.insert( vpts[0] );
+				if( vpts.size() > 1 )
+					pts.insert( vpts[1] );
+			}
+		}
+		detail::IntersectM<FPT> out;
+		for( const auto& elem: pts )
+			out.add( elem );
+		return out;
+	}
+
+}; // class FRect_
 
 /// Returns the 4 points of the rectangle (free function)
 /// \sa FRect_::get4Pts()
@@ -1161,12 +1909,21 @@ HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 {
 	return rect.width();
 }
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
+{
+	return rect.area();
+}
 
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
 class Circle_
 {
+public:
+	using FType = FPT;
+
 	template<typename T> friend class Circle_;
 
 private:
@@ -1180,7 +1937,7 @@ public:
 
 /// Constructor, given radius circle at (0,0)
 	template<typename T>
-	Circle_( T rad ) : _radius(rad)
+	explicit Circle_( T rad ) : _radius(rad)
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
@@ -1202,6 +1959,12 @@ public:
 		: Circle_( Point2d_<FPT>(x,y), rad )
 	{}
 
+/// Copy-Constructor
+	template<typename FPT2>
+	Circle_( const Circle_<FPT2>& other )
+		: _radius(other._radius), _center(other._center)
+	{}
+
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
 
@@ -1209,13 +1972,13 @@ public:
 	const Point2d_<FPT> center() const { return _center; }
 
 /// Returns Bounding Box
-		FRect_<FPT> getBB() const
-		{
-			return FRect_<FPT>(
-				_center.getX()-_radius, _center.getY()-_radius,
-				_center.getX()+_radius, _center.getY()+_radius
-			);
-		}
+	FRect_<FPT> getBB() const
+	{
+		return FRect_<FPT>(
+			_center.getX()-_radius, _center.getY()-_radius,
+			_center.getX()+_radius, _center.getY()+_radius
+		);
+	}
 
 	void set( const Point2d_<FPT>& center, FPT rad )
 	{
@@ -1311,19 +2074,8 @@ public:
 		return f;
 	}
 
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
-	{
-		cv::circle(
-			mat,
-			_center.getCvPti(),
-			static_cast<int>(_radius),
-			dp._dpValues._color,
-			dp._dpValues._lineThickness,
-			dp._dpValues._lineType
-		);
-	}
-#endif // HOMOG2D_USE_OPENCV
+	template<typename T>
+	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
 };
 
 //------------------------------------------------------------------
@@ -1347,6 +2099,17 @@ getBoundingCircle( const FRect_<FPT>& rect )
 {
 	return rect.getBoundingCircle();
 }
+
+/*
+/// Constructor: build Ellipse from Circle
+/// \todo finish this
+template<typename FPT>
+Ellipse_<FPT>::Ellipse_( const Circle_<FPT>& cir )
+{
+	p_init( cir.center().getX(), cir.center().getY(), radius(), radius(), 0. );
+}
+*/
+
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
@@ -1356,12 +2119,17 @@ template<typename FPT>
 void
 fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 {
+#if 0
 	if( ptA.getX() > ptB.getX() )
 		std::swap( ptA, ptB );
 	else
 		if( ptA.getX() == ptB.getX() )
 			if( ptA.getY() > ptB.getY() )
 				std::swap( ptA, ptB );
+#else
+	if( !(ptA < ptB) )
+		std::swap( ptA, ptB );
+#endif
 }
 
 
@@ -1402,19 +2170,21 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
+#if 0
+// debug function, useless at present
+template<typename T>
+void printVector( const std::vector<T>& v, std::string msg=std::string() )
+{
+	std::cout << "vector: ";
+	if( msg.empty() )
+		std::cout << msg;
+	std::cout << '\n';
+	for( const auto& elem: v )
+		std::cout << elem << "-";
+	std::cout << '\n';
+}
+#endif
 } // namespace priv
-
-/// Type of Root object, see Root::type()
-enum class Type : char
-{
-	Line2d,Point2d
-};
-
-/// Type of underlying floating point, see Root::dtype()
-enum class Dtype : char
-{
-	Float,Double,LongDouble
-};
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -1463,42 +2233,42 @@ private:
 	friend Line2d_<T1>
 	priv::getOrthogonalLine_B2( const Root<type::IsPoint,T2>&, const Line2d_<T1>& );
 
-	public:
+public:
 
 /// Constructor: build a point from two lines
-		template<typename FPT2>
-		Root( const Line2d_<FPT2>& v1, const Line2d_<FPT2>& v2 )
-		{
+	template<typename FPT2>
+	Root( const Line2d_<FPT2>& v1, const Line2d_<FPT2>& v2 )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( v1.isParallelTo(v2) )
-				HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
+		if( v1.isParallelTo(v2) )
+			HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
 #endif
-			*this = detail::crossProduct<type::IsPoint>( v1, v2 );
-		}
+		*this = detail::crossProduct<type::IsPoint>( v1, v2 );
+	}
 
 /// Constructor: build a line from two points
-		template<typename FPT2>
-		Root( const Point2d_<FPT2>& v1, const Point2d_<FPT2>& v2 )
-		{
+	template<typename FPT2>
+	Root( const Point2d_<FPT2>& v1, const Point2d_<FPT2>& v2 )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( v1 == v2 )
-				HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same" );
+		if( v1 == v2 )
+			HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same" );
 #endif
-			*this = detail::crossProduct<type::IsLine>( v1, v2 );
-			p_normalizeLine();
-		}
+		*this = detail::crossProduct<type::IsLine>( v1, v2 );
+		p_normalizeLine();
+	}
 
 /// Constructor: copy-constructor for lines
 /**
 \todo We should be able to declare this "explicit". This fails at present when attempting
 to convert a line (or point) from double to float, but I don't get why...
 */
-		template<typename T>
+	template<typename T>
 //		explicit
-		Root( const Line2d_<T>& li )
-		{
-			impl_init_1_Line<T>( li, detail::RootHelper<LP>() );
-		}
+	Root( const Line2d_<T>& li )
+	{
+		impl_init_1_Line<T>( li, detail::RootHelper<LP>() );
+	}
 
 /// Constructor with single arg of type "Point"
 /**
@@ -1506,402 +2276,453 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 - if type is a point, then it can be seen as a copy-constructor
 - if type is a line, this will build a line from (0,0] to \c pt
 */
-		template<typename T>
-		Root( const Point2d_<T>& pt )
-		{
-			impl_init_1_Point<T>( pt, detail::RootHelper<LP>() );
-		}
+	template<typename T>
+	Root( const Point2d_<T>& pt )
+	{
+		impl_init_1_Point<T>( pt, detail::RootHelper<LP>() );
+	}
 
 /// Constructor: build from two numerical values, depends on the type
-		template<typename T1,typename T2>
-		Root( const T1& v1, const T2& v2 )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T1);
-			HOMOG2D_CHECK_IS_NUMBER(T2);
-			impl_init_2( v1, v2, detail::RootHelper<LP>() );
-		}
+	template<typename T1,typename T2>
+	Root( const T1& v1, const T2& v2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		impl_init_2( v1, v2, detail::RootHelper<LP>() );
+	}
 
-/// Constructor of line from 3 values
-		template<typename T>
-		Root( T v0, T v1, T v2 )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			_v[0] = v0;
-			_v[1] = v1;
-			_v[2] = v2;
-		}
+/// Constructor of line/point from 3 values
+	template<typename T>
+	Root( T v0, T v1, T v2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		_v[0] = v0;
+		_v[1] = v1;
+		_v[2] = v2;
+	}
+
+/// Constructor of line from 4 values x1,y1,x2,y2
+	template<typename T>
+	Root( T x1, T y1, T x2, T y2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		impl_init_4( x1, y1, x2, y2, detail::RootHelper<LP>() );
+	}
 
 /// Default constructor, depends on the type
-		Root()
-		{
-			impl_init( detail::RootHelper<LP>() );
-		}
+	Root()
+	{
+		impl_init( detail::RootHelper<LP>() );
+	}
 
-	private:
-		template<typename T,typename U>
-		void p_copyFrom( const Root<T,U>& other )
-		{
-			_v[0] = static_cast<FPT>(other._v[0]);
-			_v[1] = static_cast<FPT>(other._v[1]);
-			_v[2] = static_cast<FPT>(other._v[2]);
-		}
-		/// Arg is a point, object is a point => copy-constructor
-		template<typename T>
-		void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsPoint>& )
-		{
-			p_copyFrom( pt );
-		}
-		/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
-		template<typename T>
-		void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsLine>& )
-		{
-			*this = detail::crossProduct<type::IsLine>( pt, Point2d_<FPT>() );
-			p_normalizeLine();
-		}
+/// Constructor of horizontal/vertical line
+	template<typename T>
+	Root( LineDir orient, T value )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		impl_init_or( orient, value, detail::RootHelper<LP>() );
+	}
 
-		/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
-		template<typename T>
-		void impl_init_1_Line( const Line2d_<T>&, const detail::RootHelper<type::IsPoint>& )
-		{
-			static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
-		}
-		/// Arg is a line, object is a line => copy-constructor
-		template<typename T>
-		void impl_init_1_Line( const Line2d_<T>& li, const detail::RootHelper<type::IsLine>& )
-		{
-			p_copyFrom( li );
-		}
+private:
+	template<typename T,typename U>
+	void p_copyFrom( const Root<T,U>& other )
+	{
+		_v[0] = static_cast<FPT>(other._v[0]);
+		_v[1] = static_cast<FPT>(other._v[1]);
+		_v[2] = static_cast<FPT>(other._v[2]);
+	}
+	/// Arg is a point, object is a point => copy-constructor
+	template<typename T>
+	void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsPoint>& )
+	{
+		p_copyFrom( pt );
+	}
+	/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
+	template<typename T>
+	void impl_init_1_Point( const Point2d_<T>& pt, const detail::RootHelper<type::IsLine>& )
+	{
+		*this = detail::crossProduct<type::IsLine>( pt, Point2d_<FPT>() );
+		p_normalizeLine();
+	}
 
-	public:
-		Type type() const
-		{
-			return impl_type( detail::RootHelper<LP>() );
-		}
-		Dtype dtype() const
-		{
-			return impl_dtype( detail::RootDataType<FPT>() );
-		}
+	/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
+	template<typename T>
+	void impl_init_1_Line( const Line2d_<T>&, const detail::RootHelper<type::IsPoint>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
+	}
+	/// Arg is a line, object is a line => copy-constructor
+	template<typename T>
+	void impl_init_1_Line( const Line2d_<T>& li, const detail::RootHelper<type::IsLine>& )
+	{
+		p_copyFrom( li );
+	}
 
-	private:
-		Type impl_type( const detail::RootHelper<type::IsPoint>& ) const
+	template<typename T>
+	void impl_init_or( LineDir, T, const detail::RootHelper<type::IsPoint>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a horiz/vertical point" );
+	}
+	template<typename T>
+	void impl_init_or( LineDir dir, T value, const detail::RootHelper<type::IsLine>& )
+	{
+		_v[2] = -value;
+		if( dir == LineDir::V )
 		{
-			return Type::Point2d;
+			_v[0] = 1.; _v[1] = 0.;
 		}
-		Type impl_type( const detail::RootHelper<type::IsLine>& ) const
+		else  // = LineDir::H
 		{
-			return Type::Line2d;
+			_v[0] = 0.; _v[1] = 1.;
 		}
+	}
 
-		Dtype impl_dtype( const detail::RootDataType<float>& ) const
-		{
-			return Dtype::Float;
-		}
-		Dtype impl_dtype( const detail::RootDataType<double>& ) const
-		{
-			return Dtype::Double;
-		}
-		Dtype impl_dtype( const detail::RootDataType<long double>& ) const
-		{
-			return Dtype::LongDouble;
-		}
+	template<typename T>
+	void impl_init_4( T x1, T y1, T x2, T y2, const detail::RootHelper<type::IsPoint>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from 4 values" );
+	}
+	template<typename T>
+	void impl_init_4( T x1, T y1, T x2, T y2, const detail::RootHelper<type::IsLine>& )
+	{
+		*this = Point2d_<HOMOG2D_INUMTYPE>(x1, y1) * Point2d_<HOMOG2D_INUMTYPE>(x2, y2);
+	}
 
-	public:
-		FPT
-		getCoord( GivenCoord gc, FPT other ) const
-		{
-			return impl_getCoord( gc, other, detail::RootHelper<LP>() );
-		}
+public:
+	Type type() const
+	{
+		return impl_type( detail::RootHelper<LP>() );
+	}
+	Dtype dtype() const
+	{
+		return impl_dtype( detail::RootDataType<FPT>() );
+	}
 
-		Point2d_<FPT>
-		getPoint( GivenCoord gc, FPT other ) const
-		{
-			return impl_getPoint( gc, other, detail::RootHelper<LP>() );
-		}
+private:
+	Type impl_type( const detail::RootHelper<type::IsPoint>& ) const
+	{
+		return Type::Point2d;
+	}
+	Type impl_type( const detail::RootHelper<type::IsLine>& ) const
+	{
+		return Type::Line2d;
+	}
 
-		/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
-		{
-			return impl_getPoints_A( gc, coord, dist, detail::RootHelper<LP>() );
-		}
+	Dtype impl_dtype( const detail::RootDataType<float>& ) const
+	{
+		return Dtype::Float;
+	}
+	Dtype impl_dtype( const detail::RootDataType<double>& ) const
+	{
+		return Dtype::Double;
+	}
+	Dtype impl_dtype( const detail::RootDataType<long double>& ) const
+	{
+		return Dtype::LongDouble;
+	}
 
-		/// Returns a pair of points that are lying on line at distance \c dist from point \c pt, assuming that one is lying on the line.
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		getPoints( const Point2d_<FPT>& pt, FPT2 dist ) const
-		{
-			return impl_getPoints_B( pt, dist, detail::RootHelper<LP>() );
-		}
+public:
+	FPT
+	getCoord( GivenCoord gc, FPT other ) const
+	{
+		return impl_getCoord( gc, other, detail::RootHelper<LP>() );
+	}
 
-		/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
-		Line2d_<FPT>
-		getOrthogonalLine( GivenCoord gc, FPT other ) const
-		{
-			return impl_getOrthogonalLine_A( gc, other, detail::RootHelper<LP>() );
-		}
+	Point2d_<FPT>
+	getPoint( GivenCoord gc, FPT other ) const
+	{
+		return impl_getPoint( gc, other, detail::RootHelper<LP>() );
+	}
 
-		/// Returns an orthogonal line to the one it is called on, at point \c pt, assuming that one is lying on the line.
-		Line2d_<FPT>
-		getOrthogonalLine( const Point2d_<FPT>& pt ) const
-		{
-			return impl_getOrthogonalLine_B( pt, detail::RootHelper<LP>() );
-		}
+	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
+	{
+		return impl_getPoints_A( gc, coord, dist, detail::RootHelper<LP>() );
+	}
 
-		/// Returns an parallel line to the one it is called on, with \c pt lying on it.
-		Line2d_<FPT>
-		getParallelLine( const Point2d_<FPT>& pt ) const
-		{
-			return impl_getParallelLine( pt, detail::RootHelper<LP>() );
-		}
-		/// Returns the pair of parallel lines at a distance \c dist from line.
-		template<typename T>
-		std::pair<Line2d_<FPT>,Line2d_<FPT>>
-		getParallelLines( T dist )
-		{
-			return impl_getParallelLines( dist, detail::RootHelper<LP>() );
-		}
+	/// Returns a pair of points that are lying on line at distance \c dist from point \c pt, assuming that one is lying on the line.
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPoints( const Point2d_<FPT>& pt, FPT2 dist ) const
+	{
+		return impl_getPoints_B( pt, dist, detail::RootHelper<LP>() );
+	}
 
-		FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
-		FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
-		std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
+	/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
+	Line2d_<FPT>
+	getOrthogonalLine( GivenCoord gc, FPT other ) const
+	{
+		return impl_getOrthogonalLine_A( gc, other, detail::RootHelper<LP>() );
+	}
 
-		template<typename T1,typename T2>
-		void set( T1 x, T2 y ) { impl_set( x, y, detail::RootHelper<LP>() ); }
+	/// Returns an orthogonal line to the one it is called on, at point \c pt, assuming that one is lying on the line.
+	Line2d_<FPT>
+	getOrthogonalLine( const Point2d_<FPT>& pt ) const
+	{
+		return impl_getOrthogonalLine_B( pt, detail::RootHelper<LP>() );
+	}
 
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>& pt ) const
-		{
-			return impl_distToPoint( pt, detail::RootHelper<LP>() );
-		}
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE distTo( const Line2d_<FPT2>& li ) const
-		{
-			return impl_distToLine( li, detail::RootHelper<LP>() );
-		}
+	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
+	Line2d_<FPT>
+	getParallelLine( const Point2d_<FPT>& pt ) const
+	{
+		return impl_getParallelLine( pt, detail::RootHelper<LP>() );
+	}
 
-		template<typename T,typename FPT2>
-		bool isParallelTo( const Root<T,FPT2>& li ) const
-		{
-			return impl_isParallelTo( li, detail::RootHelper<T>() );
-		}
-		template<typename T>
-		bool isParallelTo( const Segment_<T>& seg ) const
-		{
-			return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
-		}
+	/// Returns the pair of parallel lines at a distance \c dist from line.
+	template<typename T>
+	std::pair<Line2d_<FPT>,Line2d_<FPT>>
+	getParallelLines( T dist ) const
+	{
+		return impl_getParallelLines( dist, detail::RootHelper<LP>() );
+	}
+
+	FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
+	FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
+	std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
+
+	template<typename T1,typename T2>
+	void set( T1 x, T2 y ) { impl_set( x, y, detail::RootHelper<LP>() ); }
+
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>& pt ) const
+	{
+		return impl_distToPoint( pt, detail::RootHelper<LP>() );
+	}
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Line2d_<FPT2>& li ) const
+	{
+		return impl_distToLine( li, detail::RootHelper<LP>() );
+	}
+
+	template<typename T,typename FPT2>
+	bool isParallelTo( const Root<T,FPT2>& li ) const
+	{
+		return impl_isParallelTo( li, detail::RootHelper<T>() );
+	}
+	template<typename T>
+	bool isParallelTo( const Segment_<T>& seg ) const
+	{
+		return impl_isParallelTo( seg.getLine(), detail::RootHelper<LP>() );
+	}
 /// Returns angle in rad. between the lines. \sa h2d::getAngle()
 /**
 Please check out warning described in impl_getAngle()
 */
-		template<typename T,typename FPT2>
-		HOMOG2D_INUMTYPE getAngle( const Root<T,FPT2>& other ) const
-		{
-			return impl_getAngle( other, detail::RootHelper<T>() );
-		}
+	template<typename T,typename FPT2>
+	HOMOG2D_INUMTYPE getAngle( const Root<T,FPT2>& other ) const
+	{
+		return impl_getAngle( other, detail::RootHelper<T>() );
+	}
 
 /// Returns angle in rad. between line and segment \c seg. \sa  h2d::getAngle()
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
-		{
-			return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
-		}
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
+	{
+		return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
+	}
 
-	private:
-		FPT impl_getX( const detail::RootHelper<type::IsPoint>& ) const
-		{
-			return _v[0]/_v[2];
-		}
-		FPT impl_getY( const detail::RootHelper<type::IsPoint>& ) const
-		{
-			return _v[1]/_v[2];
-		}
+private:
+	FPT impl_getX( const detail::RootHelper<type::IsPoint>& ) const
+	{
+		return _v[0]/_v[2];
+	}
+	FPT impl_getY( const detail::RootHelper<type::IsPoint>& ) const
+	{
+		return _v[1]/_v[2];
+	}
 
-		std::array<FPT,3> impl_get( const detail::RootHelper<type::IsPoint>& ) const
-		{
-			static_assert( detail::AlwaysFalse<LP>::value, "illegal for points" );
-		}
-		std::array<FPT,3> impl_get( const detail::RootHelper<type::IsLine>& ) const
-		{
-			return std::array<FPT,3> { _v[0], _v[1], _v[2] };
-		}
-		template<typename T1,typename T2>
-		void impl_set( T1 x, T2 y, const detail::RootHelper<type::IsPoint>& )
-		{
-			_v[0] = x;
-			_v[1] = y;
-			_v[2] = 1.;
-		}
-		template<typename T1,typename T2>
-		void impl_set( T1, T2, const detail::RootHelper<type::IsLine>& )
-		{
-			static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
-		}
+	std::array<FPT,3> impl_get( const detail::RootHelper<type::IsPoint>& ) const
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "illegal for points" );
+	}
+	std::array<FPT,3> impl_get( const detail::RootHelper<type::IsLine>& ) const
+	{
+		return std::array<FPT,3> { _v[0], _v[1], _v[2] };
+	}
+	template<typename T1,typename T2>
+	void impl_set( T1 x, T2 y, const detail::RootHelper<type::IsPoint>& )
+	{
+		_v[0] = x;
+		_v[1] = y;
+		_v[2] = 1.;
+	}
+	template<typename T1,typename T2>
+	void impl_set( T1, T2, const detail::RootHelper<type::IsLine>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+	}
 
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsPoint>& ) const;
-		template<typename FPT2>
-		HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&,  const detail::RootHelper<type::IsLine>&  ) const;
 
-		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+	HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	HOMOG2D_INUMTYPE impl_getAngle(     const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
-		template<typename FPT2>
-		bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
-		template<typename FPT2>
-		bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename FPT2>
+	bool impl_isParallelTo( const Root<LP,FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
 
-		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
-		FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const;
+	FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
+	FPT impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const;
 
-		Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
-		Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const;
+	Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsLine>& ) const;
+	Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::RootHelper<type::IsPoint>& ) const;
 
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
-		template<typename FPT2>
-		std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const;
+	template<typename FPT2>
+	std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2 dist, const detail::RootHelper<type::IsPoint>& ) const;
 
-		void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
-		void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
+	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
+	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
 
-	public:
+public:
 /// Line/Line intersection
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>& other ) const
-		{
-			detail::Intersect<detail::Inters_1,FPT> out;
-			if( this->isParallelTo( other ) )
-				return out;
-			 out.set( *this * other );
-			 return out;
-		}
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>& other ) const
+	{
+		detail::Intersect<detail::Inters_1,FPT> out;
+		if( this->isParallelTo( other ) )
+			return out;
+		 out.set( *this * other );
+		 return out;
+	}
 /// Line/FRect intersection
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
-		{
-			HOMOG2D_START;
-			return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
-		}
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
+	{
+		HOMOG2D_START;
+		return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
+	}
 /// Line/FRect intersection
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
-		{
-			HOMOG2D_START;
-			return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
-		}
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
+	{
+		HOMOG2D_START;
+		return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
+	}
 
 /// Line/Segment intersection
 /** \warning no implementation for points */
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
-		{
-			HOMOG2D_START;
-			return seg.intersects( *this );
-		}
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
+	{
+		HOMOG2D_START;
+		return seg.intersects( *this );
+	}
 
 /// Line/Circle intersection
 /** <br>The Sfinae below is needed to avoid ambiguity with the other 2 args function (with 2 points defining a FRect, see above) */
-		template<
-			typename T,
-			typename std::enable_if<
-				(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
-				,T
-			>::type* = nullptr
-		>
-		detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT>& pt0, T radius ) const
-		{
-			HOMOG2D_START;
-			return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
-		}
+	template<
+		typename T,
+		typename std::enable_if<
+			(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
+			,T
+		>::type* = nullptr
+	>
+	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT>& pt0, T radius ) const
+	{
+		HOMOG2D_START;
+		return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
+	}
 /// Line/Circle intersection
-		template<typename T>
-		detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
-		{
-			HOMOG2D_START;
-			return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
-		}
+	template<typename T>
+	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
+	{
+		HOMOG2D_START;
+		return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
+	}
 /// Line/Polyline intersection
-		template<typename FPT2>
-		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
-		{
-			HOMOG2D_START;
-//			return impl_intersectsPolyline( pl, detail::RootHelper<LP>() );
-			return pl.intersects( *this );
-		}
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	{
+		HOMOG2D_START;
+		return pl.intersects( *this );
+	}
 
 /// Point is inside flat rectangle
-		bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
-		{
-			return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::RootHelper<LP>() );
-		}
+	bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
+	{
+		return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::RootHelper<LP>() );
+	}
 
 /// Point is inside FRect
-		template<typename FPT2>
-		bool isInside( const FRect_<FPT2>& rect ) const
-		{
-			return impl_isInsideRect( rect, detail::RootHelper<LP>() );
-		}
+	template<typename FPT2>
+	bool isInside( const FRect_<FPT2>& rect ) const
+	{
+		return impl_isInsideRect( rect, detail::RootHelper<LP>() );
+	}
 
 /// Point is inside circle
-		template<typename T>
-		bool isInside( const Point2d_<FPT>& center, T radius ) const
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
-		}
+	template<typename T>
+	bool isInside( const Point2d_<FPT>& center, T radius ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
+	}
 /// Point is inside Circle
-		template<typename T>
-		bool isInside( Circle_<T> cir ) const
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
-		}
+	template<typename T>
+	bool isInside( Circle_<T> cir ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
+	}
+
+/// Point is inside Ellipse
+	template<typename FPT2>
+	bool isInside( const Ellipse_<FPT2>& ell ) const
+	{
+		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
+	}
 
 //////////////////////////
 //       OPERATORS      //
 //////////////////////////
-		bool operator == ( const Root<LP,FPT>& other ) const
-		{
-			return impl_op_equal( other, detail::RootHelper<LP>() );
-		}
-		bool operator != ( const Root<LP,FPT>& other ) const
-		{
-			return !(*this == other);
-		}
-		bool operator < ( const Root<LP,FPT>& other ) const
-		{
-			return impl_op_sort( other, detail::RootHelper<LP>() );
-		}
+	bool operator == ( const Root<LP,FPT>& other ) const
+	{
+		return impl_op_equal( other, detail::RootHelper<LP>() );
+	}
+	bool operator != ( const Root<LP,FPT>& other ) const
+	{
+		return !(*this == other);
+	}
+	bool operator < ( const Root<LP,FPT>& other ) const
+	{
+		return impl_op_sort( other, detail::RootHelper<LP>() );
+	}
+
+	template<typename T>
+	bool draw( img::Image<T>& img, DrawParams dp=DrawParams() ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-		bool draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )  const
-		{
-			return impl_draw( mat, dp, detail::RootHelper<LP>() );
-		}
+	template<typename RT>
+	RT getCvPt() const { return RT( getX(), getY() ); }
 
-		template<typename RT>
-		RT getCvPt() const { return RT( getX(), getY() ); }
-
-		cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
-		cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
-		cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
+	cv::Point2i getCvPti() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2i() ); }
+	cv::Point2d getCvPtd() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2d() ); }
+	cv::Point2f getCvPtf() const { return impl_getCvPt( detail::RootHelper<LP>(), cv::Point2f() ); }
 
 /// Constructor: build from a single OpenCv point.
-		template<typename T>
-		Root( cv::Point_<T> pt )
-		{
-			impl_init_opencv( pt, detail::RootHelper<LP>() );
-		}
-#endif
+	template<typename T>
+	Root( cv::Point_<T> pt )
+	{
+		impl_init_opencv( pt, detail::RootHelper<LP>() );
+	}
+#endif // HOMOG2D_USE_OPENCV
 
 	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
 	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
@@ -1913,117 +2734,125 @@ Please check out warning described in impl_getAngle()
 //      DATA SECTION    //
 //////////////////////////
 
-	private:
-		std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
+private:
+	std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-		static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
-		static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
-		static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
-		static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
-		static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
+	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
+	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
+	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
+	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see Root::getCorrectPoints()
+	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
-	private:
-		void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
+private:
+	void p_normalizeLine() const { impl_normalizeLine( detail::RootHelper<LP>() ); }
 
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT>
+	impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const;
 
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_2,FPT>
+	impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const;
 
-		template<typename T>
-		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsLine>& ) const;
+	template<typename T>
+	detail::Intersect<detail::Inters_2,FPT>
+	impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsLine>& ) const;
 
-		template<typename T>
-		detail::Intersect<detail::Inters_2,FPT>
-		impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename T>
+	detail::Intersect<detail::Inters_2,FPT>
+	impl_intersectsCircle( const Point2d_<FPT>& pt, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
 /*		template<typename FPT2>
-		detail::IntersectM<FPT>
-		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const;
-		template<typename FPT2>
-		detail::IntersectM<FPT>
-		impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
+	detail::IntersectM<FPT>
+	impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsLine>& ) const;
+	template<typename FPT2>
+	detail::IntersectM<FPT>
+	impl_intersectsPolyline( const Polyline_<FPT2>& pl, const detail::RootHelper<type::IsPoint>& ) const;
 */
-		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename FPT2>
+	bool impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	bool impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
 
-		template<typename T>
-		bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
-		template<typename T>
-		bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
-		void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
+	template<typename T>
+	bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename T>
+	bool impl_isInsideCircle( const Point2d_<FPT>&, T radius, const detail::RootHelper<type::IsPoint>& ) const;
 
-		Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>&  ) const;
-		Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsPoint>& ) const;
-		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsLine>&  ) const;
-		Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsPoint>& ) const;
-		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+	void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
-		template<typename T>
-		std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsLine>&  ) const;
-		template<typename T>
-		std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>& ) const;
+	Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsLine>&  ) const;
+	Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::RootHelper<type::IsPoint>& ) const;
+	Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsLine>&  ) const;
+	Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&,   const detail::RootHelper<type::IsPoint>& ) const;
+	Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
-		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename T>
+	std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename T>
+	std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::RootHelper<type::IsPoint>& ) const;
 
-		bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
-		bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	bool impl_op_equal( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
-		Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::RootHelper<type::IsPoint>& ) const;
-		Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	bool impl_op_sort( const Root<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+	Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::RootHelper<type::IsPoint>& ) const;
+	Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
-		template<typename OPENCVT>
-		OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
+	template<typename OPENCVT>
+	OPENCVT impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const;
 
 /// Build point from Opencv point
-		template<typename T>
-		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsPoint>& )
-		{
-			impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
-		}
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsPoint>& )
+	{
+		impl_init_2( pt.x, pt.y, detail::RootHelper<type::IsPoint>() );
+	}
 /// Build line from Opencv point
-		template<typename T>
-		void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsLine>& )
-		{
-			Point2d_<FPT> p(pt);
-			impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
-		}
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::RootHelper<type::IsLine>& )
+	{
+		Point2d_<FPT> p(pt);
+		impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
+	}
+#endif // HOMOG2D_USE_OPENCV
 
-		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsPoint>& ) const;
-		bool impl_draw( cv::Mat&, const CvDrawParams&, const detail::RootHelper<type::IsLine>& )  const;
-#endif
+	template<typename T>
+	bool impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename T>
+	bool impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsLine>& ) const;
 
-		/// Called by default constructor, overload for lines
-		void impl_init( const detail::RootHelper<type::IsLine>& )
-		{
-			_v[0] = 1.;
-			_v[1] = 0.;
-			_v[2] = 0.;
-		}
-		/// Called by default constructor, overload for points. Initialize to (0,0)
-		void impl_init( const detail::RootHelper<type::IsPoint>& )
-		{
-			_v[0] = 0.;
-			_v[1] = 0.;
-			_v[2] = 1.;
-		}
-		template<typename T1,typename T2>
-		void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsPoint>& );
-		template<typename T1,typename T2>
-		void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsLine>& );
+	/// Called by default constructor, overload for lines
+	void impl_init( const detail::RootHelper<type::IsLine>& )
+	{
+		_v[0] = 1.;
+		_v[1] = 0.;
+		_v[2] = 0.;
+	}
+	/// Called by default constructor, overload for points. Initialize to (0,0)
+	void impl_init( const detail::RootHelper<type::IsPoint>& )
+	{
+		_v[0] = 0.;
+		_v[1] = 0.;
+		_v[2] = 1.;
+	}
+	template<typename T1,typename T2>
+	void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsPoint>& );
+	template<typename T1,typename T2>
+	void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsLine>& );
 };
-
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
@@ -2296,163 +3125,171 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 template<typename FPT>
 class Segment_
 {
+public:
+	using FType = FPT;
+
 	template<typename T> friend class Segment_;
 
-	private:
-		Point2d_<FPT> _ptS1, _ptS2;
+private:
+	Point2d_<FPT> _ptS1, _ptS2;
 
-	public:
+public:
 /// Default constructor: initializes segment to (0,0)--(1,1)
-		Segment_(): _ptS2(1.,1.)
-		{}
+	Segment_(): _ptS2(1.,1.)
+	{}
 /// Contructor 2: build segment from two points
-		Segment_( Point2d_<FPT> p1, Point2d_<FPT> p2 ):
-			_ptS1(p1), _ptS2(p2)
-		{
+	Segment_( Point2d_<FPT> p1, Point2d_<FPT> p2 )
+		: _ptS1(p1), _ptS2(p2)
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( p1 == p2 )
-				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+		if( p1 == p2 )
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		priv::fix_order( _ptS1, _ptS2 );
+	}
 
 /// Contructor 3: build segment from two points coordinates
-		template<typename T>
-		Segment_( T x1, T y1, T x2, T y2 )
-		{
-			HOMOG2D_CHECK_IS_NUMBER(T);
-			_ptS1.set( x1, y1 );
-			_ptS2.set( x2, y2 );
+	template<typename T>
+	Segment_( T x1, T y1, T x2, T y2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		_ptS1.set( x1, y1 );
+		_ptS2.set( x2, y2 );
 #ifndef HOMOG2D_NOCHECKS
-			if( _ptS1 == _ptS2 )
-				HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+		if( _ptS1 == _ptS2 )
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
 #endif
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		priv::fix_order( _ptS1, _ptS2 );
+	}
+
+/// Copy-Constructor
+	template<typename FPT2>
+	Segment_( const Segment_<FPT2>& other )
+		: _ptS1(other._ptS1), _ptS2(other._ptS2)
+	{}
 
 /// Setter
-		void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
-		{
+	void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( p1 == p2 )
-				HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
+		if( p1 == p2 )
+			HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
 #endif
-			_ptS1 = p1;
-			_ptS2 = p2;
-			priv::fix_order( _ptS1, _ptS2 );
-		}
+		_ptS1 = p1;
+		_ptS2 = p2;
+		priv::fix_order( _ptS1, _ptS2 );
+	}
 
 /// Get segment length
-		HOMOG2D_INUMTYPE length() const
-		{
-			return _ptS1.distTo( _ptS2 );
-		}
+	HOMOG2D_INUMTYPE length() const
+	{
+		return _ptS1.distTo( _ptS2 );
+	}
 
 /// Returns Bounding Box
-		FRect_<FPT> getBB() const
-		{
-			return FRect_<FPT>(	_ptS1. _ptS2 );
-		}
+	FRect_<FPT> getBB() const
+	{
+		return FRect_<FPT>(	_ptS1. _ptS2 );
+	}
 
 /// Get angle between segment and other segment/line
-		template<typename U>
-		HOMOG2D_INUMTYPE getAngle( const U& other ) const
-		{
-			return other.getAngle( this->getLine() );
-		}
+	template<typename U>
+	HOMOG2D_INUMTYPE getAngle( const U& other ) const
+	{
+		return other.getAngle( this->getLine() );
+	}
 
 /// Comparison operator
-		bool operator == ( const Segment_& s2 ) const
-		{
-			if( _ptS1 != s2._ptS1 )
-				return false;
-			if( _ptS2 != s2._ptS2 )
-				return false;
-			return true;
-		}
-		bool operator != ( const Segment_& s2 ) const
-		{
-			return !(*this == s2);
-		}
-
-		template<typename U>
-		friend std::ostream&
-		operator << ( std::ostream& f, const Segment_<U>& seg );
+	bool operator == ( const Segment_& s2 ) const
+	{
+		if( _ptS1 != s2._ptS1 )
+			return false;
+		if( _ptS2 != s2._ptS2 )
+			return false;
+		return true;
+	}
+	bool operator != ( const Segment_& s2 ) const
+	{
+		return !(*this == s2);
+	}
 
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
-		getPts() const
-		{
-			return std::make_pair( _ptS1, _ptS2 );
-		}
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPts() const
+	{
+		return std::make_pair( _ptS1, _ptS2 );
+	}
 
 /// Segment "isInside", S can be Circle or FRect
-		template<typename S>
-		bool isInside( const S& shape ) const
-		{
-			if( !_ptS1.isInside( shape ) )
-				return false;
-			if( !_ptS2.isInside( shape ) )
-				return false;
-			return true;
-		}
+	template<typename S>
+	bool isInside( const S& shape ) const
+	{
+		if( !_ptS1.isInside( shape ) )
+			return false;
+		if( !_ptS2.isInside( shape ) )
+			return false;
+		return true;
+	}
 
 /// Returns supporting line
-		Line2d_<FPT> getLine() const
-		{
-			return _ptS1 * _ptS2;
-		}
+	Line2d_<FPT> getLine() const
+	{
+		return _ptS1 * _ptS2;
+	}
 
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
-		template<typename FPT2>
-		detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
-		template<typename FPT2>
-		detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
+	template<typename FPT2>
+	detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
 /// Segment/FRect intersection
-		template<typename FPT2>
-		detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
-		{
-			HOMOG2D_START;
-			return r.intersects( *this );
-		}
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
+	{
+		HOMOG2D_START;
+		return r.intersects( *this );
+	}
 
 /// Segment/Polyline intersection
-		template<typename FPT2>
-		detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
-		{
-			HOMOG2D_START;
-			return other.intersects( *this );
-		}
-
-		template<typename T>
-		bool isParallelTo( const T& other ) const
-		{
-			static_assert(
-				std::is_same<T,Segment_<FPT>>::value ||
-				std::is_same<T,Line2d_<FPT>>::value,
-				"type needs to be a segment or a line" );
-			return getLine().isParallelTo( other );
-		}
-
-		/// Returns point that at middle distance between \c p1 and \c p2
-		Point2d_<FPT>
-		getMiddlePoint() const
-		{
-			return Point2d_<FPT>(
-				( _ptS1.getX() + _ptS2.getX() ) / 2.,
-				( _ptS1.getY() + _ptS2.getY() ) / 2.
-			);
-		}
-
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
 	{
-		cv::line( mat, _ptS1.getCvPtd(), _ptS2.getCvPtd(), dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
+		HOMOG2D_START;
+		return other.intersects( *this );
 	}
-#endif
+
+	template<typename T>
+	bool isParallelTo( const T& other ) const
+	{
+		static_assert(
+			std::is_same<T,Segment_<FPT>>::value ||
+			std::is_same<T,Line2d_<FPT>>::value,
+			"type needs to be a segment or a line" );
+		return getLine().isParallelTo( other );
+	}
+
+	/// Returns point that at middle distance between \c p1 and \c p2
+	Point2d_<FPT>
+	getMiddlePoint() const
+	{
+		return Point2d_<FPT>(
+			( _ptS1.getX() + _ptS2.getX() ) / 2.,
+			( _ptS1.getY() + _ptS2.getY() ) / 2.
+		);
+	}
+
+	template<typename T>
+	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+
+	friend std::ostream&
+	operator << ( std::ostream& f, const Segment_<FPT>& seg )
+	{
+		f << seg._ptS1 << "-" << seg._ptS2;
+		return f;
+	}
 };
 
 //------------------------------------------------------------------
@@ -2470,16 +3307,6 @@ template<typename FPT>
 Line2d_<FPT> getLine( const Segment_<FPT>& seg )
 {
 	return seg.getLine();
-}
-
-//------------------------------------------------------------------
-template<typename U>
-inline
-std::ostream&
-operator << ( std::ostream& f, const Segment_<U>& seg )
-{
-	f << seg._ptS1 << "-" << seg._ptS2;
-	return f;
 }
 
 //------------------------------------------------------------------
@@ -2506,6 +3333,25 @@ Point2d_<FPT>
 getMiddlePoint( const Segment_<FPT>& seg )
 {
 	return seg.getMiddlePoint();
+}
+
+/// Free function, returns middle point of set of segments
+/**
+\sa Segment_::getMiddlePoint()
+- input: set of segments
+- output: set of points (same container)
+*/
+
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
+{
+	std::vector<Point2d_<FPT>> vout( vsegs.size() );
+
+	auto it = std::begin( vout );
+	for( const auto& seg: vsegs )
+		*it++ = getMiddlePoint( seg );
+	return vout;
 }
 
 /// Free function, returns segments of the rectangle
@@ -2633,240 +3479,277 @@ struct Is_std_array: std::false_type {};
 template <typename V, size_t n>
 struct Is_std_array<std::array<V, n>>: std::true_type {};
 
-} // namespace priv
 
 //------------------------------------------------------------------
-/// Used in Polyline_ constructors
-enum class IsClosed: char
+/// A value that needs some computing, associated with its flag
+template<typename T>
+class ValueFlag
 {
-	Yes, No
+private:
+	T    _value;
+	bool _valIsCorrect = false;
+public:
+	void set( T v )
+	{
+		_value = v;
+		_valIsCorrect = true;
+	}
+	T value() const    { return _value; }
+	void setBad()      { _valIsCorrect = false; }
+	bool isBad() const { return !_valIsCorrect; }
 };
+
+
+//------------------------------------------------------------------
+/// Holds attribute of a Polyline, allows storage of last computed value, through the use of ValueFlag
+struct PolylineAttribs
+{
+	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
+	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
+	priv::ValueFlag<bool>             _isPolygon;
+	void setBad()
+	{
+		_length.setBad();
+		_area.setBad();
+		_isPolygon.setBad();
+	}
+};
+
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Polyline, can be closed or not
 template<typename FPT>
 class Polyline_
 {
-	private:
-		std::vector<Point2d_<FPT>> _plinevec;
-		bool _isClosed = false;
+	template<typename T> friend class Polyline_;
 
-	public:
+private:
+	std::vector<Point2d_<FPT>> _plinevec;
+	bool _isClosed = false;
+	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
+
+public:
 /// Default constructor
-		Polyline_( IsClosed ic = IsClosed::No )
-		{
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	Polyline_( IsClosed ic = IsClosed::No )
+	{
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 /// Constructor for single point
-		template<typename FPT2>
-		Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
-		{
-			_plinevec.push_back( pt );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	template<typename FPT2>
+	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
+	{
+		_plinevec.push_back( pt );
+		if( ic == IsClosed::Yes )
+			_isClosed = true;
+	}
 /// Constructor for single point as x,y
-		template<typename FPT2>
-		Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
-		{
-			_plinevec.push_back( Point2d_<FPT>(x,y) );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
-/// Constructor from FRect
-		template<typename FPT2>
-		Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::No )
-		{
-			for( const auto& pt: rect.get4Pts() )
-				_plinevec.push_back( pt );
-			if( ic == IsClosed::Yes )
-				_isClosed = true;
-		}
+	template<typename FPT2>
+	Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
+		: Polyline_(Point2d_<FPT>(x,y), ic )
+	{}
 
-/// Returns the number of points (not segments!)
-		size_t size() const { return _plinevec.size(); }
+/// Constructor from FRect. Default behavior is closed
+	template<typename FPT2>
+	Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::Yes )
+	{
+		for( const auto& pt: rect.get4Pts() )
+			_plinevec.push_back( pt );
+		_isClosed = ( ic == IsClosed::Yes ? true : false );
+	}
 
-/// Returns length
-		HOMOG2D_INUMTYPE length() const
-		{
-			HOMOG2D_INUMTYPE sum = 0.L;
-			for( const auto& seg: getSegs() )
-				sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-			return sum;
-		}
+/// Copy-Constructor
+/** Can't use standard initialization, because vector might have different types */
+	template<typename FPT2>
+	Polyline_( const Polyline_<FPT2>& other )
+		: _isClosed(other._isClosed)
+	{
+		set( other._plinevec );
+	}
 
-		FRect_<FPT> getBB() const;
+/// Returns the number of points
+	size_t size() const { return _plinevec.size(); }
+
+	HOMOG2D_INUMTYPE length()    const;
+	HOMOG2D_INUMTYPE area()      const;
+	bool             isPolygon() const;
+	FRect_<FPT>      getBB()     const;
 
 /// Returns the number of segments
-		size_t nbSegs() const
-		{
-			if( size() == 0 )
-				return 0;
-			if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
-				return size() - 1;
-			return size() - 1 + (size_t)_isClosed;
-		}
+	size_t nbSegs() const
+	{
+		if( size() == 0 )
+			return 0;
+		if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
+			return size() - 1;
+		return size() - 1 + (size_t)_isClosed;
+	}
 
 /// Returns the points
-		std::vector<Point2d_<FPT>>& getPts()
-		{
-			return _plinevec;
-		}
+	std::vector<Point2d_<FPT>>& getPts()
+	{
+		_attribs.setBad();  // because we send the non-const reference
+		return _plinevec;
+	}
 /// Returns the points (const)
-		const std::vector<Point2d_<FPT>>& getPts() const
-		{
-			return _plinevec;
-		}
+	const std::vector<Point2d_<FPT>>& getPts() const
+	{
+		return _plinevec;
+	}
 
 /// Returns the segments of the polyline
-		std::vector<Segment_<FPT>> getSegs() const
-		{
-			std::vector<Segment_<FPT>> out;
-			if( size() < 2 ) // nothing to draw
-				return out;
-
-			for( size_t i=0; i<size()-1; i++ )
-			{
-				const auto& pt1 = _plinevec[i];
-				const auto& pt2 = _plinevec[i+1];
-				out.push_back( Segment_<FPT>( pt1,pt2) );
-			}
-			if( _isClosed )
-				out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+	std::vector<Segment_<FPT>> getSegs() const
+	{
+		std::vector<Segment_<FPT>> out;
+		if( size() < 2 ) // nothing to draw
 			return out;
+
+		for( size_t i=0; i<size()-1; i++ )
+		{
+			const auto& pt1 = _plinevec[i];
+			const auto& pt2 = _plinevec[i+1];
+			out.push_back( Segment_<FPT>( pt1,pt2) );
 		}
+		if( _isClosed )
+			out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+		return out;
+	}
+
+
+/// Returns one point of the polyline.
+	Point2d_<FPT> getPoint( size_t idx ) const
+	{
+#ifndef HOMOG2D_NOCHECKS
+		if( idx >= size() )
+			HOMOG2D_THROW_ERROR_1( "requesting point " + std::to_string(idx)
+				+ ", only has "  + std::to_string(size()) );
+#endif
+		return _plinevec[idx];
+	}
 
 /// Returns one segment of the polyline.
 /**
 Segment \c n is the one between point \c n and point \c n+1
 */
-		Segment_<FPT> getSegment( size_t idx ) const
-		{
+	Segment_<FPT> getSegment( size_t idx ) const
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( idx >= nbSegs() )
-				HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
-					+ ", only has "  + std::to_string(nbSegs()) );
+		if( idx >= nbSegs() )
+			HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
+				+ ", only has "  + std::to_string(nbSegs()) );
 
-			if( size() < 2 ) // nothing to draw
-				HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
+		if( size() < 2 ) // nothing to draw
+			HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
 #endif
 //			auto lastPoint = _isClosed?
-			return Segment_<FPT>(
-				_plinevec[idx],
-				_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
-			);
-		}
+		return Segment_<FPT>(
+			_plinevec[idx],
+			_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
+		);
+	}
 
 /// Clear all
-		void clear() { _plinevec.clear(); }
+	void clear() { _plinevec.clear(); _attribs.setBad(); }
 
 /// Add single point as x,y
-		template<typename FPT1,typename FPT2>
-		void add( FPT1 x, FPT2 y )
-		{
-			add( Point2d_<FPT>( x, y ) );
-		}
+	template<typename FPT1,typename FPT2>
+	void add( FPT1 x, FPT2 y )
+	{
+		_attribs.setBad();
+		add( Point2d_<FPT>( x, y ) );
+	}
 
 /// Add single point
-		template<typename FPT2>
-		void add( const Point2d_<FPT2>& pt )
-		{
+	template<typename FPT2>
+	void add( const Point2d_<FPT2>& pt )
+	{
 #ifndef HOMOG2D_NOCHECKS
-			if( size() )
-				if( pt == _plinevec.back() )
-					HOMOG2D_THROW_ERROR_1( "cannot add a point identical to previous one" );
+		if( size() )
+			if( pt == _plinevec.back() )
+				HOMOG2D_THROW_ERROR_1(
+					"cannot add a point identical to previous one, " + std::to_string(size())
+				);
 #endif
-			_plinevec.push_back( pt );
-		}
+		_attribs.setBad();
+		_plinevec.push_back( pt );
+	}
 
 /// Set from vector of points
-		template<typename FPT2>
-		void set( const std::vector<Point2d_<FPT2>>& vec )
-		{
-			_plinevec.resize( vec.size() );
-			auto it = std::begin( _plinevec );
-			for( const auto& pt: vec )   // copying one by one will
-				*it++ = pt;              // allow type conversions (std::copy implies same type)
-		}
+	template<typename FPT2>
+	void set( const std::vector<Point2d_<FPT2>>& vec )
+	{
+		_attribs.setBad();
+		_plinevec.resize( vec.size() );
+		auto it = std::begin( _plinevec );
+		for( const auto& pt: vec )   // copying one by one will
+			*it++ = pt;              // allow type conversions (std::copy implies same type)
+	}
 
 /// Add vector of points
-		template<typename FPT2>
-		void add( const std::vector<Point2d_<FPT2>>& vec )
-		{
-			if( vec.size() == 0 )
-				return;
-//			auto it = std::end( _plinevec );
-			std::cout << "resizing to " << _plinevec.size() << "+" << vec.size() << '\n';
-			_plinevec.reserve( _plinevec.size() + vec.size() );
-			for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
-				_plinevec.push_back( pt );
-		}
+	template<typename FPT2>
+	void add( const std::vector<Point2d_<FPT2>>& vec )
+	{
+		if( vec.size() == 0 )
+			return;
+		_attribs.setBad();
+		_plinevec.reserve( _plinevec.size() + vec.size() );
+		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
+			_plinevec.push_back( pt );
+	}
 
-		const bool& isClosed() const { return _isClosed; }
-		bool& isClosed()             { return _isClosed; }
+	const bool& isClosed() const { return _isClosed; }
+	bool& isClosed()
+	{
+		_attribs.setBad();
+		return _isClosed;
+	}
 
 /// Polyline intersection with Line, Segment, FRect, Circle
-		template<
-			typename T,
-			typename std::enable_if<
-				priv::IsShape<T>::value,
-				T
-			>::type* = nullptr
-		>
-		detail::IntersectM<FPT> intersects( const T& other ) const
+	template<
+		typename T,
+		typename std::enable_if<
+			priv::IsShape<T>::value,
+			T
+		>::type* = nullptr
+	>
+	detail::IntersectM<FPT> intersects( const T& other ) const
+	{
+		detail::IntersectM<FPT> out;
+		for( const auto& pseg: getSegs() )
 		{
-			detail::IntersectM<FPT> out;
-			for( const auto& pseg: getSegs() )
-			{
-				auto inters = pseg.intersects( other );
-				if( inters() )
-					out.add( inters.get() );
-			}
-			return out;
+			auto inters = pseg.intersects( other );
+			if( inters() )
+				out.add( inters.get() );
 		}
+		return out;
+	}
 
-		template<typename T>
-		bool
-		isInside( const T& cont )
-		{
-			for( const auto& pt: getPts() )
-				if( !pt.isInside( cont ) )
-					return false;
-			return true;
-		}
+	template<typename T>
+	bool
+	isInside( const T& cont ) const
+	{
+		for( const auto& pt: getPts() )
+			if( !pt.isInside( cont ) )
+				return false;
+		return true;
+	}
 
-		bool isPolygon() const;
+	friend std::ostream&
+	operator << ( std::ostream& f, const Polyline_<FPT>& pl )
+	{
+		f << "Polyline: ";
+		for( const auto& pt: pl._plinevec )
+			f << pt << "-";
+		f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
 
-		friend std::ostream&
-		operator << ( std::ostream& f, const Polyline_<FPT>& pl )
-		{
-			f << "Polyline: ";
-			for( const auto& pt: pl._plinevec )
-				f << pt << "-";
-			f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
+		return f;
+	}
 
-			return f;
-		}
+	template<typename T>
+	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
 
-#ifdef HOMOG2D_USE_OPENCV
-		void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() )
-		{
-			if( size() < 2 ) // nothing to draw
-				return;
-
-			for( size_t i=0; i<size()-1; i++ )
-			{
-				const auto& pt1 = _plinevec[i];
-				const auto& pt2 = _plinevec[i+1];
-				Segment_<FPT>(pt1,pt2).draw( mat, dp );
-			}
-			if( size() < 3 ) // nothing to draw
-				return;
-			if( _isClosed )
-				Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( mat, dp );
-		}
-#endif
-};
+}; // class Polyline_
 
 //------------------------------------------------------------------
 namespace priv {
@@ -2918,25 +3801,246 @@ getPointsBB( const T& vpts )
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Returns true if is a polygon (i.e. no segment crossing)
+/// Returns true if object is a polygon (i.e. no segment crossing)
 template<typename FPT>
 bool
 Polyline_<FPT>::isPolygon() const
 {
 	if( !_isClosed )   // cant be a polygon if
 		return false;  // it's not closed !
-
-	auto nbs = nbSegs();
-	for( size_t i=0; i<nbs; i++ )
+/* OLD VERSION
+		bool isPolygon = false;
+		auto nbs = nbSegs();
+		for( size_t i=0; i<nbs; i++ )
+		{
+			auto seg1 = getSegment(i);
+			auto lastone = i==0?nbs-1:nbs;
+			for( auto j=i+2; j<lastone; j++ )
+				if( getSegment(j).intersects(seg1)() )
+					return false;
+		}
+		return true;
+*/
+	if( _attribs._isPolygon.isBad() )
 	{
-		auto seg1 = getSegment(i);
-		for( auto j=i+2; j<nbs-1; j++ )
-			if( getSegment(j).intersects(seg1)() )
-				return false;
+		auto nbs = nbSegs();
+		size_t i=0;
+		bool notDone = true;
+		bool hasIntersections = false;
+		do
+		{
+			auto seg1 = getSegment(i);
+			auto lastone = i==0?nbs-1:nbs;
+			for( auto j=i+2; j<lastone; j++ )
+				if( getSegment(j).intersects(seg1)() )
+				{
+					notDone = false;
+					hasIntersections = true;
+					break;
+				}
+			i++;
+		}
+		while( i<nbs && notDone );
+		_attribs._isPolygon.set( !hasIntersections );
 	}
-	return true;
+	return _attribs._isPolygon.value();
 }
 
+//------------------------------------------------------------------
+/// Returns length
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Polyline_<FPT>::length() const
+{
+	if( _attribs._length.isBad() )
+	{
+		HOMOG2D_INUMTYPE sum = 0.;
+		for( const auto& seg: getSegs() )
+			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
+		_attribs._length.set( sum );
+	}
+	return _attribs._length.value();
+}
+
+//------------------------------------------------------------------
+/// Returns area of polygon
+/**
+\todo Needs more testing !
+Conditions:
+ - must be closed
+ - no intersections (Polyline must be a polygon
+*/
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Polyline_<FPT>::area() const
+{
+	if( !isPolygon() )  // implies that is both closed and has no intersections
+		return 0.;
+
+	if( _attribs._area.isBad() )
+	{
+		HOMOG2D_INUMTYPE area = 0.;
+		for( size_t i=0; i<size(); i++ )
+		{
+			auto j = (i == size()-1 ? 0 : i+1);
+			auto pt1 = _plinevec[i];
+			auto pt2 = _plinevec[j];
+			area += static_cast<HOMOG2D_INUMTYPE>(pt1.getX()) * pt2.getY();
+			area -= static_cast<HOMOG2D_INUMTYPE>(pt1.getY()) * pt2.getX();
+		}
+		_attribs._area.set( std::abs(area / 2.) );
+	}
+	return _attribs._area.value();
+}
+
+//------------------------------------------------------------------
+/// Returns Rectangle of the intersection area, will throw if no intersection area
+/**
+3 situations need to be considered, depending on the number of intersection points:
+
+- A: 2 points on same segment => 2 points inside.
+\verbatim
+  +------+                   +------+
+  |      |                   |      |
+  |   +--+-----+          +--+----+ |
+  |   |  |     |          |  |    | |
+  |   |  |     |    or    |  |    | |  or ...
+  |   +--+-----+          +--+----+ |
+  |      |                   |      |
+  +------+                   +------+
+\endverbatim
+
+- B: 2 points on different segments => for each rectangle, 1 point is inside the other.
+\verbatim
+  +------+
+  |      |
+  |      |
+  |   +--+-----+
+  |   |  |     |   or ...
+  +---+--+     |
+      |        |
+      +--------+
+\endverbatim
+
+- C: 3 points
+\verbatim
+  +------+-----+
+  |      |     |
+  |      |     |
+  +------+-----+
+  |      |
+  +------+
+\endverbatim
+
+- D: 4 points: the intersection rectangle is made of these 4 points
+\verbatim
+     +------+
+     |      |
+  +--+------+-----+
+  |  |      |     |
+  |  |      |     |
+  +--+------+-----+
+     |      |
+     +------+
+\endverbatim
+*/
+template<typename FPT>
+template<typename FPT2>
+detail::RectArea<FPT>
+FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
+{
+	auto inter = this->intersects( other );
+
+	if( !inter() )                        // rectangles do not intersect
+		return detail::RectArea<FPT>();
+
+	if( inter.size() < 2 )                // only one intersection point
+		return detail::RectArea<FPT>();
+
+	if( inter.size() == 4 )  // 4 intersection points => case "D"
+		return detail::RectArea<FPT>(FRect_<FPT>( inter.get().at(0), inter.get().at(3) ) );
+
+	if( inter.size() == 3 )  // 3 intersection points => case "C"
+	{
+		auto v = inter.get();
+
+		auto xmin = std::min( v[0].getX(), std::min( v[1].getX(),v[2].getX() ) );
+		auto ymin = std::min( v[0].getY(), std::min( v[1].getY(),v[2].getY() ) );
+		auto xmax = std::max( v[0].getX(), std::max( v[1].getX(),v[2].getX() ) );
+		auto ymax = std::max( v[0].getY(), std::max( v[1].getY(),v[2].getY() ) );
+#ifndef HOMOG2D_DEBUGMODE
+		assert( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() );
+		assert( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() );
+#else
+		HOMOG2D_DEBUG_ASSERT(
+			( ( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() )
+			&&
+			( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() )) ,
+			std::scientific
+			<< "this=" << *this << " other=" << other
+			<< "\nxmax=" << xmax << " xmin=" << xmin
+			<< "\nymax=" << ymax << " ymin=" << ymin
+			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
+	);
+#endif
+		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
+	}
+
+#ifndef HOMOG2D_DEBUGMODE
+	assert( inter.size() == 2 );
+#else
+	HOMOG2D_DEBUG_ASSERT(
+		inter.size() == 2,
+		"inter.size()=" << inter.size() << "\n-this=" << *this << "\n-other=" << other
+		<<"\n-inter:" << inter
+	);
+#endif
+	const auto& r1 = *this;
+	const auto& r2 = other;
+	HOMOG2D_LOG( "r1="<<r1 << " r2="<<r2 );
+	auto v1 = r1.p_pointsInside( r2 );
+	auto v2 = r2.p_pointsInside( r1 );
+	auto c1 = v1.size();
+	auto c2 = v2.size();
+	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
+
+	if( c1==0 && c2==0 ) // unable, rectangles share a segment
+		return detail::RectArea<FPT>();
+
+	assert(
+		( c1==1 && c2==1 )
+		||
+		( c1==0 && c2==2 )
+		||
+		( c2==0 && c1==2 )
+	);
+	if( c1==1 || c2==1 ) // only 1 point inside => the rectangle is defined by the intersection points
+		return detail::RectArea<FPT>( FRect_<FPT>( inter.get().at(0), inter.get().at(1) ) );
+
+// here: 2 points inside, then build rectangle using the 4 points:
+// the 2 inside, and the two intersection points
+	assert( c1 == 2 || c2 == 2 );
+
+	if( c1 == 2 )
+		return detail::RectArea<FPT>(
+			FRect_<FPT>(
+				inter.get().at(0),
+				inter.get().at(1),
+				v1.at(0),
+				v1.at(1)
+			)
+		);
+	return detail::RectArea<FPT>(
+		FRect_<FPT>(
+			inter.get().at(0),
+			inter.get().at(1),
+			v2.at(0),
+			v2.at(1)
+		)
+	);
+}
+
+//------------------------------------------------------------------
 /// Returns true if is a polygon (free function)
 ///  \sa Polyline_::isPolygon()
 template<typename FPT>
@@ -3100,7 +4204,6 @@ enum class PtTag: char
 };
 
 /// Returns a label characterizing point \c pt, related to \c circle
-/// \todo use HOMOG2D_INUMTYPE for computation
 template<typename FPT,typename FPT2>
 PtTag
 getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
@@ -3108,9 +4211,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 	if( pt.isInside( circle ) )
 		return PtTag::Inside;
 	if(
-		std::abs(
-			static_cast<HOMOG2D_INUMTYPE>(pt.distTo( circle.center() ) ) - circle.radius()
-		)
+		std::abs( pt.distTo( circle.center() ) - circle.radius() )
 		< Point2d_<FPT>::nullDistance()
 	)
 		return PtTag::OnEdge;
@@ -3178,7 +4279,7 @@ detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
 	HOMOG2D_START;
-	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
+//	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
 
@@ -3191,14 +4292,11 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	const auto& ptA1 = getPts().first;
 	const auto& ptA2 = getPts().second;
 
-	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
+//	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
 	if( detail::isInArea( pi, ptA1, ptA2, detail::Rounding::Yes ) )
-	{
-		HOMOG2D_LOG( "Is in area" );
 		out._doesIntersect = true;
-	}
-	else
-		HOMOG2D_LOG( "Is NOT in area" );
+//	else
+//		HOMOG2D_LOG( "Is NOT in area" );
 	return out;
 }
 
@@ -3320,6 +4418,19 @@ operator << ( std::ostream& f, const T& vec )
 		f << elem << '\n';
 	return f;
 }
+
+/// Stream operator for a pair of points/lines, free function
+template<typename LP1,typename LP2,typename FPT>
+std::ostream&
+operator << ( std::ostream& f, const std::pair<Root<LP1,FPT>,Root<LP2,FPT>>& pr )
+{
+	f << "std::pair (" << getString(pr.first.type()) << "-" << getString(pr.second.type())
+		<< "):\n -first="  << pr.first
+		<< "\n -second=" << pr.second
+		<< ' ';
+	return f;
+}
+
 
 //------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0
@@ -3754,7 +4865,9 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>& li, const detail::RootHelper<ty
 	HOMOG2D_INUMTYPE fres = std::abs(res);
 	if( fres > 1.0 )
 	{
-		std::cerr << "homog2d: angle computation overflow detected, value " << std::setprecision(20) << fres << ", truncated to 1.0\n";
+		std::cerr << "homog2d: angle computation overflow detected, value "
+			<< std::scientific << std::setprecision(20)
+			<< fres << ", truncated to 1.0\n";
 		fres = 1.0;
 	}
 	return std::acos( fres );
@@ -3772,8 +4885,9 @@ Root<LP,FPT>::impl_getAngle( const Root<LP,FPT>&, const detail::RootHelper<type:
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsPoint>& ) const
 {
 	auto pair_pts = rect.getPts();
 	const auto& p00 = pair_pts.first;
@@ -3781,13 +4895,15 @@ Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>& rect, const detail::RootHelp
 	return detail::ptIsInside( *this, p00, p11 );
 }
 template<typename LP, typename FPT>
+template<typename FPT2>
 bool
-Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT>&, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Rectangle) with a line" );
 	return false; // to avoid a warning
 }
 
+//------------------------------------------------------------------
 template<typename LP, typename FPT>
 template<typename T>
 bool
@@ -3797,7 +4913,6 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, const 
 		return true;
 	return false;
 }
-
 template<typename LP, typename FPT>
 template<typename T>
 bool
@@ -3806,6 +4921,26 @@ Root<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::RootHe
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Circle) with a line" );
 	return false; // to avoid a warning
 }
+
+
+//------------------------------------------------------------------
+template<typename LP, typename FPT>
+template<typename FPT2>
+bool
+Root<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::RootHelper<type::IsPoint>& ) const
+{
+	return ell.pointIsInside( *this );
+}
+
+template<typename LP, typename FPT>
+template<typename FPT2>
+bool
+Root<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Ellipse) with a line" );
+	return false; // to avoid a warning
+}
+
 
 //------------------------------------------------------------------
 /// Intersection of line and circle: implementation for points
@@ -3911,6 +5046,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	HOMOG2D_DEBUG_ASSERT(
 		( pti.size() == 0 || pti.size() == 2 ),
 		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
+						<< "\n -pti.size()=" << pti.size()
 	);
 #endif
 
@@ -3921,13 +5057,30 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
-
 //------------------------------------------------------------------
 namespace detail {
 
+/// Implementation of product 3x3 by 3x3
+
+template<typename FPT1,typename FPT2,typename FPT3>
+void
+product(
+	Matrix_<FPT1>&       out,
+	const Matrix_<FPT2>& h1,
+	const Matrix_<FPT3>& h2
+)
+{
+	out.p_fillZero();
+	for( int i=0; i<3; i++ )
+		for( int j=0; j<3; j++ )
+			for( int k=0; k<3; k++ )
+				out.value(i,j) +=
+					static_cast<HOMOG2D_INUMTYPE>( h1.value(i,k) ) * h2.value(k,j);
+}
+
 /// Implementation of product 3x3 by 3x1
 /**
-- T1 and T2: type::IsLine or type::IsPoint
+- T1 and T2: type::IsLine or type::IsPoint (same but also different)
 */
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
@@ -3939,12 +5092,13 @@ product(
 {
 	for( int i=0; i<3; i++ )
 	{
-		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h[i][0]) * in._v[0];
-		sum      += h[i][1] * in._v[1];
-		sum      += h[i][2] * in._v[2];
+		auto sum  = static_cast<HOMOG2D_INUMTYPE>(h._mdata[i][0]) * in._v[0];
+		sum      += h._mdata[i][1] * in._v[1];
+		sum      += h._mdata[i][2] * in._v[2];
 		out._v[i] = sum;
 	}
 }
+
 
 } // namespace detail
 
@@ -3966,6 +5120,14 @@ operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
 	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
 }
 
+/// Free function template, product of two segments, returns a point
+template<typename FPT,typename FPT2>
+Point2d_<FPT>
+operator * ( const Segment_<FPT>& lhs, const Segment_<FPT2>& rhs )
+{
+	return lhs.getLine() * rhs.getLine();
+}
+
 /// Free function template, product of two points, returns a line
 template<typename FPT,typename FPT2>
 Line2d_<FPT>
@@ -3980,6 +5142,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 	return line;
 }
 
+#if 0
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
 template<typename T,typename U,typename V>
@@ -3990,6 +5153,7 @@ operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in )
 	detail::product( out, h._data, in );
 	return out;
 }
+#endif
 
 /// Free function, apply homography to a point.
 template<typename T,typename U>
@@ -3997,7 +5161,7 @@ Point2d_<T>
 operator * ( const Homogr_<U>& h, const Point2d_<T>& in )
 {
 	Point2d_<T> out;
-	detail::product( out, h._data, in );
+	detail::product( out, h, in );
 	return out;
 }
 
@@ -4014,8 +5178,9 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 
 	if( h._hasChanged )                  // if homography has changed, recompute inverse and transposed
 	{
-		auto mat_inv = h.p_inverse();
-		*h._hmt = h.p_transpose( mat_inv );
+		auto hi = h;
+		auto mat_inv = hi.inverse().transpose();
+		*h._hmt = mat_inv;
 		h._hasChanged = false;
 	}
 
@@ -4058,6 +5223,39 @@ operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 	for( const auto& pt: rin.get4Pts() )
 		out.add( h * pt );
 	return out;
+}
+
+
+/// Apply homography to a Ellipse, produces an Ellipse
+/**
+\f[
+Q' = H^{-T} \cdot Q \cdot H^{-1}
+\f]
+*/
+template<typename FPT1,typename FPT2>
+Ellipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Ellipse_<FPT1>& ell_in )
+{
+	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
+	hm.inverse();
+	auto hmt = hm;
+	hmt.transpose();
+
+	const auto& ell_in2 = static_cast<detail::Matrix_<FPT1>>(ell_in);
+	auto prod = hmt * ell_in2 * hm;
+
+	Ellipse_<FPT1> out( prod );
+	return out;
+}
+
+/// Apply homography to a Circle, produces an Ellipse
+/** Converts the circle to an ellipse, then calls the corresponding code */
+template<typename FPT1,typename FPT2>
+Ellipse_<FPT1>
+operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
+{
+	Ellipse_<FPT1> ell_in( cir );
+	return h * ell_in;
 }
 
 //------------------------------------------------------------------
@@ -4161,6 +5359,82 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
 }
 
+/// Return angle of ellipse (free function)
+/// \sa Ellipse_::angle()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+angle( const Ellipse_<FPT>& ell )
+{
+	return ell.angle();
+}
+
+/// Return center of Circle_ or Ellipse_ (free function)
+/// \sa Ellipse_::center()
+/// \sa Circle_::center()
+template<typename T>
+Point2d_<typename T::FType>
+center(const T& other )
+{
+	return other.center();
+}
+
+/// Returns true if ellipse is a circle
+/// \sa Ellipse_::isCircle()
+template<typename FPT>
+bool
+isCircle(const Ellipse_<FPT>& ell )
+{
+	return ell.isCircle();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - GENERIC DRAWING FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------
+/// Free function, draws any of the primitives
+template<
+	typename U,
+	typename Prim,
+	typename std::enable_if<
+		priv::IsShape<Prim>::value,
+		Prim
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const Prim& prim, const DrawParams& dp=DrawParams() )
+{
+	prim.draw( img, dp );
+}
+
+/// Free function, draws a set of points or lines
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<
+	typename U,
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const T& cont, const DrawParams& dp=DrawParams() )
+{
+	for( const auto& elem: cont )
+		elem.draw( img, dp );
+}
+//------------------------------------------------------------------
+/// Free function, draws a pair of points
+/**
+Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+*/
+template<typename T,typename U>
+void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const DrawParams& dp=DrawParams() )
+{
+	ppts.first.draw( img, dp );
+	ppts.second.draw( img, dp );
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING
@@ -4188,6 +5462,7 @@ template<typename W,typename FPT>
 void
 Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 {
+	auto& data = detail::Matrix_<FPT>::_mdata;
 #ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid OpenCv matrix type" );
@@ -4198,11 +5473,11 @@ Hmatrix_<W,FPT>::copyTo( cv::Mat& mat, int type ) const
 	{
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
-				*it = _data[i/3][i%3];
+				*it = data[i/3][i%3];
 			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
-				*it = _data[i/3][i%3];
+				*it = data[i/3][i%3];
 			break;
 		default: assert(0);
 	}
@@ -4225,15 +5500,17 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 		throw std::runtime_error( "invalid matrix type" );
 #endif
 	size_t i=0;
+
+	auto& data = detail::Matrix_<FPT>::_mdata;
 	switch( type )
 	{
 		case CV_64F:
 			for( auto it = mat.begin<double>(); it != mat.end<double>(); it++, i++ )
-				_data[i/3][i%3] = *it;
+				data[i/3][i%3] = *it;
 			break;
 		case CV_32F:
 			for( auto it = mat.begin<float>(); it != mat.end<float>(); it++, i++ )
-				_data[i/3][i%3] = *it;
+				data[i/3][i%3] = *it;
 			break;
 		default: assert(0);
 	}
@@ -4241,10 +5518,15 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 }
 
 //------------------------------------------------------------------
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - OPENCV DRAWING FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
 namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 void
-drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawParams& dp, bool drawDiag=false )
+drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams& dp, bool drawDiag=false )
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
@@ -4273,56 +5555,74 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const CvDrawPara
 	}
 	if( !drawDiag )
 	{
-		cv::line( mat, vpt[0], vpt[1], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[2], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[0], vpt[1], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[2], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
 	}
 	else // draw 4 diagonal lines
 	{
-		cv::line( mat, vpt[0], vpt[2], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[2], vpt[1], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[1], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[0], vpt[3], dp._dpValues._color, dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[0], vpt[2], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[2], vpt[1], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[1], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		cv::line( mat, vpt[0], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
 	}
 }
+
 } // namespace detail
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - CLASS DRAWING MEMBER FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
 //------------------------------------------------------------------
-/// Draw Point on Cv::Mat. Overload for points.
+/// Draw lines or points
+template<typename LP,typename FPT>
+template<typename T>
+bool Root<LP,FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+{
+	return impl_draw( img, dp, detail::RootHelper<LP>() );
+}
+
+//------------------------------------------------------------------
+/// Draw points on Cv::Mat: implementation
 /// Returns false if point not in image
 template<typename LP, typename FPT>
+template<typename T>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsPoint>& )  const
+Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
-	if( getX()<0 || getX()>=mat.cols )
+	if( getX()<0 || getX()>=img.cols() )
 		return false;
-	if( getY()<0 || getY()>=mat.rows )
+	if( getY()<0 || getY()>=img.rows() )
 		return false;
 
 	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
 	switch( dp._dpValues._ptStyle )
 	{
 		case PtStyle::Plus:   // "+" symbol
-			detail::drawPt( mat, PtStyle::Plus,  vpt, dp );
+			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp );
 		break;
 
 		case PtStyle::Star:
-			detail::drawPt( mat, PtStyle::Plus,  vpt, dp );
-			detail::drawPt( mat, PtStyle::Times, vpt, dp );
+			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp );
+			detail::drawPt( img.getReal(), PtStyle::Times, vpt, dp );
 		break;
 
 		case PtStyle::Diam:
-			detail::drawPt( mat, PtStyle::Plus,  vpt, dp, true );
+			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp, true );
 		break;
 
 		case PtStyle::Times:      // "times" symbol
-			detail::drawPt( mat, PtStyle::Times, vpt, dp );
+			detail::drawPt( img.getReal(), PtStyle::Times, vpt, dp );
 		break;
 
 		default: assert(0);
 	}
 	return true;
 }
+
 //------------------------------------------------------------------
-/// Draw line on Cv::Mat. Overload for lines.
+/// Draw Lines on Cv::Mat: implementation
 /**
 Returns false if line is not in image.
 
@@ -4333,71 +5633,134 @@ Steps:
  -# draw a line between these 2 points
 */
 template<typename LP, typename FPT>
+template<typename T>
 bool
-Root<LP,FPT>::impl_draw( cv::Mat& mat, const CvDrawParams& dp, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
 {
-	assert( mat.rows > 2 );
-	assert( mat.cols > 2 );
+	assert( img.rows() > 2 );
+	assert( img.cols() > 2 );
 
 	Point2d_<FPT> pt1; // 0,0
-	Point2d_<FPT> pt2( mat.cols-1, mat.rows-1 );
+	Point2d_<FPT> pt2( img.cols()-1, img.rows()-1 );
     auto ri = this->intersects( pt1,  pt2 );
     if( ri() )
     {
     	auto ppts = ri.get();
 		cv::Point2d ptcv1 = ppts.first.getCvPtd();
 		cv::Point2d ptcv2 = ppts.second.getCvPtd();
-		cv::line( mat, ptcv1, ptcv2, dp._dpValues._color, dp._dpValues._lineThickness, dp._dpValues._lineType );
+		cv::line(
+			img.getReal(),
+			ptcv1,
+			ptcv2,
+			dp._dpValues.color(),
+			dp._dpValues._lineThickness,
+			dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+		);
 		return true;
 	}
 	return false;
 }
 
-//------------------------------------------------------------------
-/// Free function, draws any of the primitives
-template<
-	typename Prim,
-	typename std::enable_if<
-		priv::IsShape<Prim>::value,
-		Prim
-	>::type* = nullptr
->
-void draw( cv::Mat& mat, const Prim& prim, const CvDrawParams& dp=CvDrawParams() )
-{
-	prim.draw( mat, dp );
-}
-
-/// Free function, draws a set of points or lines
-/**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
-*/
-template<
-	typename T,
-	typename std::enable_if<
-		priv::Is_Container<T>::value,
-		T
-	>::type* = nullptr
->
-void draw( cv::Mat& mat, const T& cont, const CvDrawParams& dp=CvDrawParams() )
-{
-	for( const auto& elem: cont )
-		elem.draw( mat, dp );
-}
-//------------------------------------------------------------------
-/// Free function, draws a pair of points
-/**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
-*/
+/// Draw FRect_
+template<typename FPT>
 template<typename T>
-void draw( cv::Mat& mat, const std::pair<T,T>& ppts, const CvDrawParams& dp=CvDrawParams() )
+void
+FRect_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 {
-	ppts.first.draw( mat, dp );
-	ppts.second.draw( mat, dp );
+	cv::rectangle(
+		img.getReal(),
+		_ptR1.getCvPti(),
+		_ptR2.getCvPti(),
+		dp._dpValues.color(),
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+	);
 }
 
+//------------------------------------------------------------------
+/// Draw Segment_
+template<typename FPT>
+template<typename T>
+void
+Segment_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+{
+	cv::line(
+		img.getReal(),
+		_ptS1.getCvPtd(),
+		_ptS2.getCvPtd(),
+		dp._dpValues.color(),
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+	);
+}
+
+//------------------------------------------------------------------
+/// Draw Circle_
+template<typename FPT>
+template<typename T>
+void
+Circle_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+{
+	cv::circle(
+		img.getReal(),
+		_center.getCvPti(),
+		static_cast<int>(_radius),
+		dp._dpValues.color(),
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+	);
+}
+
+
+//------------------------------------------------------------------
+/// Draw Polyline (calls the segment drawing function)
+template<typename FPT>
+template<typename T>
+void
+Polyline_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+
+	for( size_t i=0; i<size()-1; i++ )
+	{
+		const auto& pt1 = _plinevec[i];
+		const auto& pt2 = _plinevec[i+1];
+		Segment_<FPT>(pt1,pt2).draw( img, dp );
+//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
+	}
+	if( size() < 3 ) // no last segment
+		return;
+	if( _isClosed )
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
+}
+
+//------------------------------------------------------------------
+/// Draw ellipse using Opencv
+/**
+- see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
+*/
+template<typename FPT>
+template<typename T>
+void
+Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	cv::ellipse(
+		img.getReal(),
+		cv::Point( par.x0,par.y0 ),
+		cv::Size( par.a, par.b ),
+		par.theta*180./M_PI,
+		0., 360.,
+		dp._dpValues.color(),
+		dp._dpValues._lineThickness,
+		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+	);
+}
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
+
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - TYPEDEFS
@@ -4427,6 +5790,9 @@ using FRect = FRect_<double>;
 /// Default polyline type
 using Polyline = Polyline_<double>;
 
+/// Default ellipse type
+using Ellipse = Ellipse_<double>;
+
 // float types
 using Line2dF  = Line2d_<float>;
 using Point2dF = Root<type::IsPoint,float>;
@@ -4435,6 +5801,7 @@ using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
 using FRectF   = FRect_<float>;
 using PolylineF= Polyline_<float>;
+using EllipseF = Ellipse_<float>;
 
 // double types
 using Line2dD  = Line2d_<double>;
@@ -4444,6 +5811,7 @@ using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
 using FRectD   = FRect_<double>;
 using PolylineD= Polyline_<double>;
+using EllipseD = Ellipse_<double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
@@ -4453,6 +5821,7 @@ using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 using PolylineL= Polyline_<long double>;
+using EllipseL = Ellipse_<long double>;
 
 } // namespace h2d end
 

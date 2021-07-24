@@ -12,10 +12,11 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 	int n=20;
-	cv::Mat img;
+	cv::Mat cvmat;
 	auto im_w = 400;
 	auto im_h = 250;
-	img.create( im_h, im_w, CV_8UC3 );
+	cvmat.create( im_h, im_w, CV_8UC3 );
+	img::Image<cv::Mat> myImg( cvmat );
 
 	int offset_h = 100;
 	int offset_v = 60;
@@ -28,8 +29,8 @@ int main( int argc, const char** argv )
 
 	FRect_<double> rect( 0,0,200,80 );
 	Polyline pl( rect, IsClosed::Yes );
-	auto color_red = CvDrawParams().setColor(200,20,20);
-	auto color_green = CvDrawParams().setColor(20,220,20);
+	auto color_red = DrawParams().setColor(200,20,20);
+	auto color_green = DrawParams().setColor(20,220,20);
 
 // move rectangle dx=100, dy=60
 	pl = Homogr().addTranslation(100, 60) * pl;
@@ -39,23 +40,24 @@ int main( int argc, const char** argv )
 	Line2d li( Point2d(0,0), Point2d(200,80) );
 	for( int i=0; i<n; i++ )
 	{
-		img = cv::Scalar(255,255,255);
-		c.draw( img, color_green );
-		lih.draw( img );
-		liv.draw( img );
-		li.draw( img, color_green );
-		pl.draw( img, CvDrawParams().setColor(20,0,250) );
+		cvmat = cv::Scalar(255,255,255);
+
+		c.draw( myImg, color_green );
+		lih.draw( myImg );
+		liv.draw( myImg );
+		li.draw( myImg, color_green );
+		pl.draw( myImg, DrawParams().setColor(20,0,250) );
 		auto inters = li.intersects( pl );
 		if( inters() )
-			draw( img, inters.get(), color_red );
+			draw( myImg, inters.get(), color_red );
 
 		auto intersc = pl.intersects( c );
 		if( intersc() )
-			draw( img, intersc.get(), color_red );
+			draw( myImg, intersc.get(), color_red );
 
 		std::ostringstream oss;
 		oss << "BUILD/showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( oss.str(), img );
+		cv::imwrite( oss.str(), cvmat );
 
 		pl = H * pl;
 		lih = H*lih;

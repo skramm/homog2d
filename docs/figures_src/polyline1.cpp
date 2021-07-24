@@ -30,7 +30,9 @@ int main()
 	cv::Mat img;
 	img.create( 250, 300, CV_8UC3 );
 	img = cv::Scalar(255,255,255);
-	pl.draw( img, CvDrawParams().setColor(250,0,20) );
+	img::Image<cv::Mat> img2( img );
+
+	pl.draw( img2, DrawParams().setColor(250,0,20) );
 
 	cv::imwrite( "polyline1.png", img );
 }

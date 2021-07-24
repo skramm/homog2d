@@ -49,6 +49,8 @@ pt1.set( 5, 6 );
 ```C++
 Line2d li1;             // vertical line at x=0
 Line2d li2( 3, 4 );     // line passing through (0,0) and (3,4)
+Line2d li3( LineDir::H, 15 ); // horizontal line at y=15
+Line2d li4( LineDir::V, -2 ); // vertical line at x=-2
 ```
 
 - Create a point from two lines, and a line from two points:
@@ -71,13 +73,10 @@ If you are unsure, you can check first:
 ```C++
 if( li1.isParallelTo(li2) )
 	cout << "Lines are parallel !\n";
-```
-
-For points, it is as easy as:
-```C++
 if( pt1 == pt2  )
 	cout << "Points are identical !\n";
 ```
+
 For the numerical considerations on this,
 check below, section [Numerical data types](#numdt).
 
@@ -160,7 +159,7 @@ You can compute the two points that are lying on a line and at a given distance 
 
 The API provides two ways to get these.
 
-- either you provide the x or y coordinate:
+- either you provide the x or y coordinate of p0:
 ```C++
 Line2d li( ..., ... ); // some line
 auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
@@ -173,7 +172,7 @@ The drawback is same as the above paragraph: if line is vertical/horizontal (or 
 ```C++
 Line2d li( ..., ... ); // some line
 Point2d pt_on_line;
-auto ppts = li.getPoints( pt_on_line;, dist ); // returns a std::pair
+auto ppts = li.getPoints( pt_on_line, dist ); // returns a std::pair
 ```
 The drawback is that you need to be sure that this point is truely on the line.
 This will be checked for, and library will throw if not
@@ -186,16 +185,19 @@ Upon return, the "first" point will hold the one with smallest 'x' coordinates, 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-Line2d li2 = li.getOrthogonalLine( GivenCoord::X, 2 );
+Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
-will build `li2` so that it is orthogonal to `li` at `x=2`.
+will build `lB` so that it is orthogonal to `lA` at `x=x1`.
+
+![fig3](../docs/fig3.png)
 
 Similarly, you can also directly use as input a point on the line:
 ```C++
-Line2d li2 = li.getOrthogonalLine( some_point_on_line );
+Line2d liB = lA.getOrthogonalLine( p1 );
 ```
 Again, point is checked and this will throw if distance from point to line is above some threshold
 (see ["numerical issues"](#num_issues))
+
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
 This function takes as argument a point that the line will intersect.
@@ -229,12 +231,6 @@ auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 );
 ```
 
-You can check if a line is parallel to another line:
-```C++
-Line2d l1,l2; // some lines
-bool it_is = l1.isParallelTo( l2 );
-```
-
 ## 3 - Other geometric primitives
 <a name="shapes"></a>
 
@@ -259,11 +255,11 @@ The only constraint is that they must be all of the same type (no int/float/doub
 Segment s1( x1, y1, x2, y2 );
 ```
 
-You can get the pair of points (as an `std::pair`) with `get()`.
+You can get the pair of points (as an `std::pair`) with `getPts()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
 Segment s1( Point2d(100,100), Point2d(10,10) );
-auto pair= s1.get();
+auto pair= s1.getPts();
 std::cout << pair.first; // will print (10,10)
 ```
 
@@ -278,7 +274,7 @@ auto a1 = l1.getAngle( s1 );
 auto a2 = s1.getAngle( l1 );
 ```
 
-You can get the point lying in the middle of the segment with:
+You can get the point lying in the middle of the segment:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
@@ -311,13 +307,19 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 ![fig2](../docs/fig2.png)
 
 The only constraint is that no coordinate can be equal.
-The library will throw if it is not enforced.
+The function will throw if it is not enforced.
 
 You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2, y2.
 The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
 ```
+
+Or by giving the center point and width and height:
+```C++
+FRect r1( p0, w, h );
+```
+
 
 You can get the points with two different member functions:
 ```C++
@@ -335,13 +337,15 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
-And of course, its width and height:
+And of course, its width, height, and enclosed area:
 ```C++
 FRect rect;
 auto w = rect.width();
 auto h = rect.height();
+auto a = rect.area();
 auto w2 = width(rect);
 auto h2 = height(rect);
+auto a2 = area(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -353,11 +357,20 @@ rect.translate( dx, dy );
 
 ### 3.3 - Circles
 
+Creation is straightforward:
+```C++
+Circle c1;                          // at (0,0), radius = 1
+Circle c2( center_point );          // radius = 1
+Circle c3( center_point, radius );
+```
+
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
-Circle c1( center_point, 50 );
+Circle c1;
 c1.radius() = 100;
 std::cout << c1.radius();
+c1.center() = Point2d(12,34);
+std::cout << "center=" << c1.center();
 ```
 
 Two additional free functions provide the segment (or line) between the centers of two circles,
@@ -373,8 +386,9 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 ### 3.4 - Polyline
 
-This class holds a set of points and models an arbitrary polygon.
+This class holds a set of points and models an arbitrary set of joined segments.
 It can be either open or closed (last points joins first one).
+If closed, and if it does not intersect itself, the it can be used to model a polygon.
 ```C++
 Polygon pl1;                  // default is open
 Polygon pl2( IsClosed::Yes ); // this one is closed
@@ -391,8 +405,8 @@ pl2.isClosed() = false;  // now open
 It can be build directly from a `FRect` object:
 ```C++
 FRect rect;
-Polygon pl1( frect );                 // open
-Polygon pl2( frect, IsClosed::Yes );  // optional argument
+Polygon pl1( frect );                // default is closed
+Polygon pl2( frect, IsClosed::No );  // optional argument
 ```
 
 
@@ -413,8 +427,8 @@ pl.add( v_pts_2 );  // add
 ```
 
 You can extract either points or segments.
-The number of segments is related to the open/closed condition.
-For example, if we have 4 points, that will generate 4 segments if closed, but only 3 is open.
+The number of segments is related to the open/close condition.
+For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
 ```C++
 Polygon pl;
 // ... add points
@@ -424,7 +438,6 @@ auto vec_segs = pl.getSegs();
 auto seg = pl.getSegment( i );   // will throw if non-existent
 ```
 
-
 Additional features: length and bounding box:
 ```C++
 Polygon pl;
@@ -433,6 +446,52 @@ std::cout << "length=" << pl.length() << '\n';
 FRect rect  = pl.getBB();
 FRect rect2 = getBB(pl);
 ```
+
+You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
+and if it is, you can get its area:
+```C++
+Polygon pl;
+// ... add points
+if( pl.isPolygon() )
+	std::cout << "area=" << pl.area();
+```
+
+This latter function will return 0 if not a polygon.
+
+### 3.5 - Ellipse
+
+This type holds an arbitrary ellipse.
+We follow here the traditional parametrization for the API:
+center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
+Internally, it is stored as a conic in its matrix form (see [build_options](#build_options) for details).
+
+![ellipse1](ellipse1.png)
+
+It can be build using several constructors:
+
+```C++
+Ellipse ell;  // centered at (0,0), with null angle, major=2 minor=1
+Ellipse ell2( x0,y0 ); // same as above, but centered at (`x0`,`y0`)
+Point pt( ..., ... );
+Ellipse ell3( pt ); // same as above, but centered at `pt`
+Ellipse ell4( pt, major, minor, angle ); // all parameters given (angle has 0 as default value)
+Circle cir;
+Ellipse ell5( cir );  // can be initialized from a circle
+```
+
+
+Retrieving attributes:
+```C++
+Ellipse ell;
+auto center  = ell.center();
+auto center2 = center(ell);    // or use the free function
+auto angle = ell.angle();
+auto angle2 = angle(ell);    // or use the free function
+auto majmin = ell.getMajMin();  // returns a pair of loating point values
+```
+
+
+
 
 
 ## 4 - Homographies
@@ -451,7 +510,7 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-This can be used with some of other types too:
+This can also be used with the types `Segment`, `FRect` and `Polyline`:
 ```C++
 Homogr h;
  ... assign some planar transformation
@@ -460,17 +519,10 @@ auto s2 = H * s1;
 
 Polyline pl;
 pl = H * pl;
-```
 
-It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `Polyline`.
-```C++
-Homogr h( 100, 200 );
-FRect rect( 0,0, 50,20 );
 auto a = H * rect; // a is a Polyline
 ```
-
-(note: homography product not available in this release for circles)
-
+It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a (closed) `Polyline`.
 
 ### 4.2 - Homographies for lines
 <a name="line_homography"></a>
@@ -625,6 +677,7 @@ The two options available are:
 - Eigen (https://eigen.tuxfamily.org/)
 
 The default is Opencv, thus it will fail to build if not installed on system (check out [bindings](#bind) for more on this).
+However, if none of these are installed on you system, the easiest to install is with no doubt Eigen, as it is a header-only library.
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
@@ -697,11 +750,15 @@ Similarly, in the situation as in the figure below, we will have **2** intersect
 
 ### 5.2 - Enclosing determination
 
-You can quickly check if a points lies within a flat rectangle (FRect) or a circle
+You can quickly check if a point lies within a flat rectangle (`FRect`), a circle, or an Ellipse:
 ```C++
 bool b1 = pt.isInside( rect );
 bool b2 = pt.isInside( circle );
+bool b3 = pt.isInside( ellipse );
 ```
+
+**Note**: this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
+
 For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
 ```C++
 bool b1 = pt.isInside( pt1, pt2 );
@@ -716,11 +773,33 @@ Segment seg;
 
 bool ba1 = rect2.isInside( rect );
 bool ba2 = rect2.isInside( circle );
+bool ba2 = rect2.isInside( ell );
 bool bb1 = c2.isInside( rect );
 bool bb2 = c2.isInside( circle );
 bool bc1 = seg.isInside( rect );
 bool bc2 = seg.isInside( circle );
+bool bc2 = seg.isInside( ell );
 ```
+
+(note: not yet available for ellipse type.)
+
+### 5.3 - Intersection area
+
+Get the rectangle corresponding to the intersection of two rectangles:
+one can use either the named function, or the `&` operator:
+```C++
+auto r_inters = r1.intersection(r2);
+auto r_inters2 = r1 & r2;
+if( r_inters() )
+{
+	std::cout << "common area is " << r_inters.get();
+}
+```
+
+![showcase2](showcase2.gif)
+
+Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
+or a single intersection point.
 
 
 ## 6 - Bindings with other libraries
@@ -789,27 +868,35 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 6.2 - Drawing functions using OpenCv
+### 6.2 - Drawing functions
 
-All the provided primitives can be drawn directly on an OpenCv image (`cv::Mat` type), using their `draw()` member function:
+Generic drawing functions are provided for all the types, using an "opaque" image datatype:
 
 ```C++
-Point2d pt( ... );
-Line2d li( ... );
-Segment seg( ... );
-Circle c;
-Polyline pl;
-li.draw( mat );
-pt.draw( mat );
-seg.draw( mat );
-c.draw( mat );
-pl.draw( mat );
+template<typename T>
+void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
 ```
 
-All these drawing functions support a second optional argument of type `CvDrawParams` that holds various parameters for drawing.
+At present, this templated image datatype only implements drawing on a OpenCv image (`cv::Mat` type),
+but the idea is to make it easily adaptable for other back-end graphical libraries.
+
+To use it in a program linked with Opencv:
+```C++
+cv::Mat cvmat;
+cvmat.create( 300, 400, CV_8UC3 );
+cvmat = cv::Scalar(255,255,255);   // fill white
+img::Image<cv::Mat> img( cvmat );
+
+Circle c( 100,100,80 );
+c.draw( img );
+```
+
+
+All these drawing functions support a second optional argument of type `DrawParams` (also back-end library independent)
+that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.draw( mat, CvDrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
+li.draw( img, DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -817,24 +904,23 @@ The drawing parameters default values can be changed anytime with a call to `set
 and values will be retained, unless explicitely changed, as showed in the example below;
 
 ```C++
-CvDrawParams dp;                                        // default line thickness is 1
+DrawParams dp;                                        // default line thickness is 1
 dp.setColor( 0,  0, 250 ).setThickness(3);
 dp.setDefault();                                        // default is now blue, with thickness=3
-line.draw( some_img );                                  // use default settings (blue,...)
-line.draw( some_img. CvDrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+line.draw( img );                                  // use default settings (blue,...)
+line.draw( img. DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
 ```C++
-CvDrawParams::resetDefault();
+DrawParams::resetDefault();
 ```
 
 You can also save a style in a variable, to avoid lengthy lines:
 ```C++
-auto color_red = CvDrawParams().setColor( 250, 0, 0 );
+auto color_red = DrawParams().setColor( 250, 0, 0 );
 something.draw( img, color_red );
 ```
-
 
 The available functions are given in the table below:
      Function     |    Arguments     |
@@ -844,10 +930,31 @@ The available functions are given in the table below:
 `setPointSize()`  |  1 int (pixels)  |
 `setThickness()`  |  1 int (pixels)  |
 
+Free function are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
+This means any graphical primitive `prim` can be drawn with:
+```C++
+draw( img, prim );
+draw( img, prim, dp );
+```
+
+Additionaly, if you have a container filled with one of the primitives (`std::vector`, `std::array` or `std::list`),
+or a `std::pair` of primitives,
+you can draw them at once with a call to the same function:
+```C++
+std::vector<Segment> vseg;
+// ... fill vseg with data
+std::pair<Circle,Circle> p_cir;
+// ... fill the pair
+draw( img, vseg );      // use default parameters
+draw( img, vseg, dp );  // or pass some
+draw( p_cir );          // draw the pair of circles
+```
+
 A demo demonstrating this Opencv binding is provided, try it with
-`make demo` (requires of course that Opencv is installed on your machine).
+`make demo` (requires that Opencv is installed on your machine).
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).
+
 
 ## 7 - Numerical data types
 <a name="numdt"></a>
@@ -937,11 +1044,13 @@ However, due to numerical issues, this can fail: for example, say we want to che
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
 Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
 
-To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates:
-<br>value = std::round( value * coeff ) / coeff
-<br>so that the value stays at "99".
+To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates,
+so that the value stays at "99":
+```
+value = std::round( value * coeff ) / coeff
+```
 
-At present the cefficient value is not adjustable, but will in the future.
+At present the coefficient value is not adjustable, but will in the future.
 
 
 ## 8 - Technical details
@@ -970,7 +1079,7 @@ The test target also attempts to build the files in the folder `misc/no_build`.
 These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
 
 ### Build options
-<a name="options"></a>
+<a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
 You can do that in the makefile or just add a `#define` on top of your program,
@@ -981,6 +1090,19 @@ You can do that in the makefile or just add a `#define` on top of your program,
 (see [here](#H_4points)).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash.
+- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
+The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
+This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
+With this option activated, each ellipse will store both representations, so access to values is immediate.
+To have an idea, the memory footprint for class `Ellipse` is 80/152 bytes, whether this option is activated or not.
+<br>
+The speed improvment can be checked with the demo file [`misc/ellipse_speed_test.cpp`](../misc/ellipse_speed_test.cpp),
+that you can run with<br>
+`$ make speed_test`
+
+- `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
+While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
+[read this for details](homog2d_qa.md#assert_trigger).
 
 ### Inner details
 

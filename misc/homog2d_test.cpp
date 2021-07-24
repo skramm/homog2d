@@ -45,8 +45,23 @@ using namespace h2d;
 
 int main( int argc, char* argv[] )
 {
-	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type, internal numerical type=" << XSTR(HOMOG2D_INUMTYPE) << '\n';
-	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
+	std::cout << "START TESTS:\n - numerical type: " << XSTR(NUMTYPE)
+		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
+		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
+		<< "\n - build option:"
+		<< "\n  - HOMOG2D_OPTIMIZE_SPEED: "
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_OPTIMIZE_SPEED
+		<< "\n  - HOMOG2D_USE_OPENCV: "
+#ifdef HOMOG2D_USE_OPENCV
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_USE_OPENCV
+		<< '\n';
 
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
@@ -125,6 +140,46 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( ptD.getX() == 2. );
 		ptD = ptL0;
 		CHECK( ptD.getX() == 3. );
+
+		CircleF cf;
+		CircleD cd;
+		CircleL cl;
+		cl = cd;
+		cf = cd;
+		cd = cf;
+		cl = cf;
+		cf = cl;
+		cd = cl;
+
+		SegmentF sf;
+		SegmentD sd;
+		SegmentL sl;
+		sl = sd;
+		sf = sd;
+		sd = sf;
+		sl = sf;
+		sf = sl;
+		sd = sl;
+
+		FRectF rf;
+		FRectD rd;
+		FRectL rl;
+		rl = rd;
+		rf = rd;
+		rd = rf;
+		rl = rf;
+		rf = rl;
+		rd = rl;
+
+		PolylineF pf;
+		PolylineD pd;
+		PolylineL pl;
+		pl = pd;
+		pf = pd;
+		pd = pf;
+		pl = pf;
+		pf = pl;
+		pd = pl;
 	}
 	INFO( "numerical type conversions (constructor)" )
 	{
@@ -142,6 +197,50 @@ TEST_CASE( "types testing", "[testtypes]" )
 		Point2dD ptD2 = ptL0;
 		CHECK( ptD1.getX() == 2. );
 		CHECK( ptD2.getX() == 3. );
+
+		CircleF cf;
+		CircleD cd;
+		CircleL cl;
+
+		CircleL cl2 = cd;
+		CircleF cf2 = cd;
+		CircleD cd2 = cf;
+		CircleL cl3 = cf;
+		CircleF cf3 = cl;
+		CircleD cd3 = cl;
+
+		SegmentF sf;
+		SegmentD sd;
+		SegmentL sl;
+
+		SegmentL sl2 = sd;
+		SegmentF sf2 = sd;
+		SegmentD sd2 = sf;
+		SegmentL sl3 = sf;
+		SegmentF sf3 = sl;
+		SegmentD sd3 = sl;
+
+		FRectF rf;
+		FRectD rd;
+		FRectL rl;
+
+		FRectL rl2 = rd;
+		FRectF rf2 = rd;
+		FRectD rd2 = rf;
+		FRectL rl3 = rf;
+		FRectF rf3 = rl;
+		FRectD rd3 = rl;
+
+		PolylineF pf;
+		PolylineD pd;
+		PolylineL pl;
+
+		PolylineL pl2 = pd;
+		PolylineF pf2 = pd;
+		PolylineD pd2 = pf;
+		PolylineL pl3 = pf;
+		PolylineF pf3 = pl;
+		PolylineD pd3 = pl;
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
@@ -259,6 +358,14 @@ TEST_CASE( "test1", "[test1]" )
 		CHECK( li.getCoord( GivenCoord::Y, 1 ) == 2 );
 		CHECK( li.getPoint( GivenCoord::X, 2 ) == Point2d_<NUMTYPE>(2,1) );
 		CHECK( li.getPoint( GivenCoord::Y, 1 ) == Point2d_<NUMTYPE>(2,1) );
+	}
+	{
+		Line2d_<NUMTYPE> liv1( LineDir::V, 10. );
+		Line2d_<NUMTYPE> liv2( Point2d(10,0), Point2d(10,20) );
+		CHECK( liv1 == liv2 );
+		Line2d_<NUMTYPE> lih1( LineDir::H, 10. );
+		Line2d_<NUMTYPE> lih2( Point2d(0,10), Point2d(20,10) );
+		CHECK( lih1 == lih2 );
 	}
 }
 
@@ -436,6 +543,7 @@ TEST_CASE( "offset test", "[test3]" )
 }
 #endif
 
+#ifdef HOMOG2D_FUTURE_STUFF
 TEST_CASE( "test Epipmat", "[t_epipmat]" )
 {
 	Epipmat m;
@@ -451,6 +559,7 @@ TEST_CASE( "test Epipmat", "[t_epipmat]" )
 	CHECK( p2.type() == Type::Point2d );
 	CHECK( p2.getY() == 10. );
 }
+#endif
 
 TEST_CASE( "Homogr constructors", "[testHC]" )
 {
@@ -466,8 +575,8 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 	}
 	{
 		Homogr H0( 4. , 7. );
-		CHECK( H0.get( 0, 2 ) == 4. );
-		CHECK( H0.get( 1, 2 ) == 7. );
+		CHECK( H0.value( 0, 2 ) == 4. );
+		CHECK( H0.value( 1, 2 ) == 7. );
 	}
 }
 
@@ -558,6 +667,13 @@ TEST_CASE( "test Homogr", "[testH]" )
 	}
 }
 
+/*
+Online inverse:
+| 1 -1  2 | -1     |   3/16  -1/32   3/16 |    | -3/2    1/4  -3/2 |
+| 4  0  6 |     =  | -17/16  11/32  -1/16 | =  | 17/2  -11/4   1/2 |
+| 5  1  1 |        |  -1/8    3/16  -1/8  |    |  1     -3/2   1   |
+
+*/
 TEST_CASE( "matrix inversion", "[testH3]" )
 {
 	Homogr_<NUMTYPE> H;
@@ -590,6 +706,12 @@ TEST_CASE( "matrix inversion", "[testH3]" )
 
 		H2 = H;        // inverting twice = original matrix
 		H2.inverse();
+		Homogr_<NUMTYPE> HI = std::vector<std::vector<NUMTYPE>>{
+				{ -3./2,   1./4,  -3./2 },
+				{ 17./2, -11./4,   1./2 },
+				{  1.  ,  -3./2,   1.   }
+			};
+		CHECK( H2 == HI );
 		H2.inverse();
 		CHECK( H == H2 );
 
@@ -766,13 +888,16 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	Circle circle;
 	Circle c2;
 	Segment seg;
+	Ellipse ell(5.,5.);
 
 	CHECK( !rect2.isInside( rect ) );
 	CHECK( !rect2.isInside( circle ) );
+	CHECK( !rect2.isInside( ell ) );
 	CHECK( !c2.isInside( rect ) );
 	CHECK( !c2.isInside( circle ) );
 	CHECK( !seg.isInside( rect ) );
 	CHECK( !seg.isInside( circle ) );
+	CHECK( !seg.isInside( ell ) );
 }
 
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
@@ -1006,6 +1131,11 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( !r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
+
+		auto a = r1.intersection(r2);
+		CHECK( a() == false );       // no intersection !
+		auto b = r1&r2;
+		CHECK( b() == false );       // no intersection !
 	}
 	{
 #include "figures_test/frect_intersect_2.code"
@@ -1018,6 +1148,13 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d(2,2) );
 		CHECK( vpts[1] == Point2d(3,1) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,1, 3,2) );
+		auto rect_inter2 = r1&r2;
+		CHECK( rect_inter2() == true );
+		CHECK( rect_inter2.get() == FRect(2,1, 3,2) );
 	}
 
 	{      // 4 intersection points
@@ -1031,6 +1168,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[1] == Point2d(2,4) );
 		CHECK( vpts[2] == Point2d(4,2) );
 		CHECK( vpts[3] == Point2d(4,4) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,2, 4,4) );
 	}
 
 	{     // horizontal segment overlap
@@ -1046,6 +1187,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[1] == Point2d(2,2) );
 		CHECK( vpts[2] == Point2d(3,0) );
 		CHECK( vpts[3] == Point2d(3,2) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,0, 3,2) );
 	}
 	{     // common vertical segment
 #include "figures_test/frect_intersect_5.code"
@@ -1059,11 +1204,14 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,0 ) );
 		CHECK( vpts[1] == Point2d( 3,2 ) );
+		CHECK( r1.intersection(r2)() == false ); // no intersection
 
 		r2.translate( 0.000001, 0 );         // move it a bit left
 		inters = r1.intersects(r2);          // => no more intersection
 		CHECK( inters() == false );
 		CHECK( inters.size() == 0 );
+		CHECK( r1.intersection(r2)() == false ); // still no intersection
+
 	}
 	{     // two rectangles joined by corner at 3,2
 #include "figures_test/frect_intersect_6.code"
@@ -1072,8 +1220,47 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 1 );
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,2 ) );
+		CHECK( r1.intersection(r2)() == false ); // only one point !
+	}
+	{     // two rectangles
+#include "figures_test/frect_intersect_7.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 2,2 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+
+		auto rect_inter = r1.intersection(r2);
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,2, 4,3) );
+	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_8.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
+	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_9.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
 	}
 }
+
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {
@@ -1352,8 +1539,85 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 /////               MISC. TESTS                          /////
 //////////////////////////////////////////////////////////////
 
+TEST_CASE( "Circle", "[cir1]" )
+{
+	Circle c1;
+	CHECK( c1.center() == Point2d(0,0) );
+	CHECK( center(c1)  == Point2d(0,0) );
+}
+
+
+TEST_CASE( "Ellipse", "[ell1]" )
+{
+	{
+		Ellipse_<NUMTYPE> el;
+		CHECK( el.center() == Point2d(0,0) );
+		CHECK( center(el)  == Point2d(0,0) );
+		CHECK( el.getMajMin().first == 2.0 );
+		CHECK( el.getMajMin().second == 1.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == false );
+		CHECK( isCircle(el) == false );
+	//	CHECK( el.getBB() == Point2d(0,0) );
+	}
+	{
+		Circle c(1,2,3);
+		Ellipse_<NUMTYPE> el(c);
+		CHECK( el.center() == Point2d(1,2) );
+		CHECK( center(el)  == Point2d(1,2) );
+		CHECK( el.getMajMin().first == 3.0 );
+		CHECK( el.getMajMin().second == 3.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == true );
+		CHECK( isCircle(el) == true );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5,6,7);
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == 0.0 );
+		CHECK( el.isCircle() == false );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5, 6, 7, 1 /*rad.*/ );
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == Approx(1.0) );
+		CHECK( el.isCircle() == false );
+	}
+}
+
 TEST_CASE( "Segment", "[seg1]" )
 {
+	{                              // test order of points
+		Point2d p1(43,8);
+		Point2d p2(43,18);
+		Point2d p3(5,55);
+		{
+			Segment_<NUMTYPE> s( p1, p2 );   // same x value
+			CHECK( s.getPts().first == p1 );
+			CHECK( s.getPts().second == p2 );
+		}
+		{
+			Segment_<NUMTYPE> s( p2, p1 );   // same x value
+			CHECK( s.getPts().first == p1 );
+			CHECK( s.getPts().second == p2 );
+		}
+		{
+			Segment_<NUMTYPE> s( p1, p3 );
+			CHECK( s.getPts().first == p3 );
+			CHECK( s.getPts().second == p1 );
+		}
+		{
+			Segment_<NUMTYPE> s( p3, p1 );
+			CHECK( s.getPts().first == p3 );
+			CHECK( s.getPts().second == p1 );
+		}
+	}
 	{
 		Line2d_<NUMTYPE> li( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
@@ -1432,10 +1696,62 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( pts[2] == Point2d(6,5) );
 		CHECK( pts[3] == Point2d(6,2) );
 	}
+	{
+		FRect_<NUMTYPE> r;
+		auto s = r.getSegs();
+		auto s2 = getSegs( r );
+		CHECK( s == s2 );
+		CHECK( s[0] == Segment(0,0, 0,1) );
+		CHECK( s[1] == Segment(0,1, 1,1) );
+		CHECK( s[2] == Segment(1,1, 1,0) );
+		CHECK( s[3] == Segment(1,0, 0,0) );
+	}
+	{
+		FRect_<NUMTYPE> r( Point2d(0,0), 100, 50 );
+		CHECK( r.width()  == 100. );
+		CHECK( r.height() == 50. );
+	}
 }
 
 TEST_CASE( "Polyline", "[polyline]" )
 {
+	{
+		Polyline_<NUMTYPE> pl1( 3,4 );
+		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.size() == 1 );
+		CHECK( pl1.nbSegs() == 0 );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		Polyline_<NUMTYPE> pl1( Point2d(3,4), IsClosed::Yes );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.size() == 1 );
+		CHECK( pl1.nbSegs() == 0 );
+		CHECK( pl1.length() == 0 );
+	}
+	{
+		FRect r( 5,6, 7,8 );
+		Polyline_<NUMTYPE> pl1( r );
+		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.size() == 4 );
+		CHECK( pl1.nbSegs() == 4 );
+		CHECK( pl1.length() == 8 );
+		CHECK( pl1.area() == 4 );
+	}
+	{                         // build Polyline from FRect
+		FRect r( 5,6, 7,8 );
+		Polyline_<NUMTYPE> pl1( r, IsClosed::No );
+		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.size() == 4 );
+		CHECK( pl1.nbSegs() == 3 );
+		CHECK( pl1.length() == 6 );
+		CHECK( pl1.area() == 0 );
+	}
 	Polyline_<NUMTYPE> pl1;
 	pl1.add(
 		std::vector<Point2d>{ {0,0}, {1,1.5}, {3,5}, {1,4} }
@@ -1470,6 +1786,25 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getBB() == bb2 );
 }
 
+TEST_CASE( "Polygon area", "[polygon_area]" )
+{
+	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+	{
+		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
+		CHECK( pl1.size()   == 4 );
+		CHECK( pl1.nbSegs() == 4 );
+		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.area() == 2. );
+	}
+	{
+		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
+		CHECK( pl1.size()   == 6 );
+		CHECK( pl1.nbSegs() == 6 );
+		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.area() == 3. );
+	}
+}
+
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////
@@ -1494,29 +1829,29 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 		cv::Mat cvmat = cv::Mat::ones(3,3, CV_32F );
 		Homogr H;
 		H = cvmat;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 1.);
-		CHECK( H.get(0,1) == 1.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 1.);
+		CHECK( H.value(0,1) == 1.);
 
 		cv::Mat cvmat2 = cv::Mat::ones(3,3, CV_32F );
 		Homogr H2 = cvmat;
-		CHECK( H2.get(0,0) == 1.);
-		CHECK( H2.get(1,1) == 1.);
-		CHECK( H2.get(1,0) == 1.);
-		CHECK( H2.get(0,1) == 1.);
+		CHECK( H2.value(0,0) == 1.);
+		CHECK( H2.value(1,1) == 1.);
+		CHECK( H2.value(1,0) == 1.);
+		CHECK( H2.value(0,1) == 1.);
 
 		H = mat_64;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 0.);
-		CHECK( H.get(0,1) == 0.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 0.);
+		CHECK( H.value(0,1) == 0.);
 
 		H = mat_32;
-		CHECK( H.get(0,0) == 1.);
-		CHECK( H.get(1,1) == 1.);
-		CHECK( H.get(1,0) == 0.);
-		CHECK( H.get(0,1) == 0.);
+		CHECK( H.value(0,0) == 1.);
+		CHECK( H.value(1,1) == 1.);
+		CHECK( H.value(1,0) == 0.);
+		CHECK( H.value(0,1) == 0.);
 	}
 	INFO( "default copyTo()" )
 	{

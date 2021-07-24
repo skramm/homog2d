@@ -25,17 +25,17 @@ Short preview:
 using namespace h2d;
 int main()
 {
-	Line2d l1( Point2d(10,10) );                 // a line passing through (0,0) and (10,10)
-	Line2d l2( Point2d(0,10), Point2d(10,0) );   // a line passing through (0,10) and (10,0)
-	Point2d pt = l1 * l2;                        // intersection point (5,5)
-	Homogr H(2,3);                               // a translation matrix
-	std::cout << H * pt;                         // prints [7,8]
+	Line2d l1( Point2d(10,10) );               // a line passing through (0,0) and (10,10)
+	Line2d l2( Point2d(0,10), Point2d(10,0) ); // a line passing through (0,10) and (10,0)
+	Point2d pt = l1 * l2;                      // intersection point (5,5)
+	Homogr H(2,3);                             // a translation matrix
+	std::cout << H * pt;                       // prints [7,8]
 }
 ```
 
 :new: Fresh 2.4 release! : https://github.com/skramm/homog2d/releases
 
-To install on your machine, copy file `homog2d.hpp` somewhere, or `sudo make install` after cloning repo.
+To install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.
 
 
@@ -49,13 +49,20 @@ This will copy that file in `/usr/local/include`.
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
 - **Contributing**: at present, the best you can do is testing and bug/issue reporting.
-Don't hesitate, this is still beta but stable release expected soon!
+Don't hesitate, this is still beta but stable release expected soon.
 
 - Rationale:
   - Usage simplicity, max flexibility
   - No dependency [(*)](#rm_fn)
-  - Modern C++, using policy-based design and tag dispatching
+  - Modern C++, using policy-based design, tag dispatching, sfinae, ...
   - Direct bindings with [OpenCv](https://opencv.org/) (optional)
+
+- Geometric features:
+  - basic primitives: points, lines, segments, circles, rectangles, polygons, ellipse,
+  - planar transformation of any of these (rotation, translation, ...),
+  - computing of intersection points between these,
+  - easy binding with other libs,
+  - ...
 
 - Related libraries:
   - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.

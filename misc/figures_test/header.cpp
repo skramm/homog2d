@@ -9,6 +9,4 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 	cv::Mat img;
-	img.create( 200, 250, CV_8UC3 );
-//	std::cout << "homog2d: version " << HOMOG2D_VERSION << '\n';
-//	std::cout << "file: " << argv[0] << '\n';
+	img.create( 350, 400, CV_8UC3 );
