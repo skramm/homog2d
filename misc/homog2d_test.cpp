@@ -888,13 +888,16 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	Circle circle;
 	Circle c2;
 	Segment seg;
+	Ellipse ell(5.,5.);
 
 	CHECK( !rect2.isInside( rect ) );
 	CHECK( !rect2.isInside( circle ) );
+	CHECK( !rect2.isInside( ell ) );
 	CHECK( !c2.isInside( rect ) );
 	CHECK( !c2.isInside( circle ) );
 	CHECK( !seg.isInside( rect ) );
 	CHECK( !seg.isInside( circle ) );
+	CHECK( !seg.isInside( ell ) );
 }
 
 TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
@@ -1530,6 +1533,58 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 //////////////////////////////////////////////////////////////
 /////               MISC. TESTS                          /////
 //////////////////////////////////////////////////////////////
+
+TEST_CASE( "Circle", "[cir1]" )
+{
+	Circle c1;
+	CHECK( c1.center() == Point2d(0,0) );
+	CHECK( center(c1)  == Point2d(0,0) );
+}
+
+
+TEST_CASE( "Ellipse", "[ell1]" )
+{
+	{
+		Ellipse_<NUMTYPE> el;
+		CHECK( el.center() == Point2d(0,0) );
+		CHECK( center(el)  == Point2d(0,0) );
+		CHECK( el.getMajMin().first == 2.0 );
+		CHECK( el.getMajMin().second == 1.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == false );
+		CHECK( isCircle(el) == false );
+	//	CHECK( el.getBB() == Point2d(0,0) );
+	}
+	{
+		Circle c(1,2,3);
+		Ellipse_<NUMTYPE> el(c);
+		CHECK( el.center() == Point2d(1,2) );
+		CHECK( center(el)  == Point2d(1,2) );
+		CHECK( el.getMajMin().first == 3.0 );
+		CHECK( el.getMajMin().second == 3.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == true );
+		CHECK( isCircle(el) == true );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5,6,7);
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == 0.0 );
+		CHECK( el.isCircle() == false );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5, 6, 7, 1 /*rad.*/ );
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == 1.0 );
+		CHECK( el.isCircle() == false );
+	}
+}
 
 TEST_CASE( "Segment", "[seg1]" )
 {

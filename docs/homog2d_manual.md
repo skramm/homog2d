@@ -363,13 +363,15 @@ if( r_inters() )
 }
 ```
 
+![showcase2](showcase2.gif)
+
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.
 
 
 ### 3.3 - Circles
 
-Creating is straightforward:
+Creation is straightforward:
 ```C++
 Circle c1;                          // at (0,0), radius = 1
 Circle c2( center_point );          // radius = 1
@@ -751,10 +753,11 @@ Similarly, in the situation as in the figure below, we will have **2** intersect
 
 ### 5.2 - Enclosing determination
 
-You can quickly check if a point lies within a flat rectangle (`FRect`) or a circle:
+You can quickly check if a point lies within a flat rectangle (`FRect`), a circle, or an Ellipse:
 ```C++
 bool b1 = pt.isInside( rect );
 bool b2 = pt.isInside( circle );
+bool b3 = pt.isInside( ellipse );
 ```
 
 **Note**: this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
@@ -773,11 +776,15 @@ Segment seg;
 
 bool ba1 = rect2.isInside( rect );
 bool ba2 = rect2.isInside( circle );
+bool ba2 = rect2.isInside( ell );
 bool bb1 = c2.isInside( rect );
 bool bb2 = c2.isInside( circle );
 bool bc1 = seg.isInside( rect );
 bool bc2 = seg.isInside( circle );
+bool bc2 = seg.isInside( ell );
 ```
+
+(note: not yet available for ellipse type.)
 
 
 ## 6 - Bindings with other libraries

@@ -1011,6 +1011,9 @@ Q' = H^{-T} \cdot Q \cdot H^{-1}
 template<typename FPT>
 class Ellipse_: public detail::Matrix_<FPT>
 {
+public:
+	using FType = FPT;
+
 	template<typename T> friend class Ellipse_;
 
 	template<typename FPT1,typename FPT2>
@@ -1027,13 +1030,13 @@ public:
 	{}
 
 /// Constructor 1
-	template<typename T1,typename T2,typename T3>
-	explicit Ellipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
+	template<typename T1,typename T2=double,typename T3=double>
+	Ellipse_( const Point2d_<T1>& pt, T2 major=2., T2 minor=1., T3 angle=0. )
 		: Ellipse_( pt.getX(), pt.getY(), major, minor, angle )
 	{}
 
 /// Constructor 2
-	template<typename T1,typename T2,typename T3>
+	template<typename T1,typename T2=double,typename T3=double>
 	explicit Ellipse_( T1 x, T1 y, T2 major=2., T2 minor=1., T3 angle=0. )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
@@ -1066,9 +1069,10 @@ public:
 	void draw( cv::Mat& mat, CvDrawParams dp=CvDrawParams() ) const;
 #endif
 
-	Point2d_<FPT>                          getCenter() const;
-	std::pair<Point2d_<FPT>,Point2d_<FPT>> getMajMin() const;
-	Polyline_<FPT>                         getBB()     const;
+	Point2d_<FPT>    center() const;
+	Polyline_<FPT>   getBB()  const;
+	HOMOG2D_INUMTYPE angle()  const;
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 
 	template<typename T>
 	friend
@@ -1231,20 +1235,31 @@ Ellipse_<FPT>::isCircle() const
 }
 
 /// Returns center of ellipse
+/// \sa center( const T& )
 template<typename FPT>
 Point2d_<FPT>
-Ellipse_<FPT>::getCenter() const
+Ellipse_<FPT>::center() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return Point2d_<FPT>( par.x0, par.y0 );
 }
 
 template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 Ellipse_<FPT>::getMajMin() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return std::make_pair( par.a, par.b );
+}
+
+/// Returns angle of ellipse
+/// \sa angle( const Ellipse_& )
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Ellipse_<FPT>::angle() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	return par.theta;
 }
 
 /// Returns bounding box of ellipse
@@ -1539,7 +1554,9 @@ public:
 template<typename FPT>
 class FRect_
 {
+public:
 	using FType = FPT;
+
 	template<typename T> friend class FRect_;
 
 private:
@@ -1883,6 +1900,9 @@ HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
 template<typename FPT>
 class Circle_
 {
+public:
+	using FType = FPT;
+
 	template<typename T> friend class Circle_;
 
 private:
@@ -3095,6 +3115,9 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 template<typename FPT>
 class Segment_
 {
+public:
+	using FType = FPT;
+
 	template<typename T> friend class Segment_;
 
 private:
@@ -5330,6 +5353,33 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
 }
 
+/// Return angle of ellipse (free function)
+/// \sa Ellipse_::angle()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+angle( const Ellipse_<FPT>& ell )
+{
+	return ell.angle();
+}
+
+/// Return center of Circle_ or Ellipse_ (free function)
+/// \sa Ellipse_::center()
+/// \sa Circle_::center()
+template<typename T>
+Point2d_<typename T::FType>
+center(const T& other )
+{
+	return other.center();
+}
+
+/// Returns true if ellipse is a circle
+/// \sa Ellipse_::isCircle()
+template<typename FPT>
+bool
+isCircle(const Ellipse_<FPT>& ell )
+{
+	return ell.isCircle();
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING

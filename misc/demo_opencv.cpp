@@ -782,7 +782,7 @@ void action_H( void* param )
 	c_ell.draw( data.img );
 	auto ell = H * c_ell;
 	ell.draw( data.img2 );
-	auto ecenter = ell.getCenter();
+	auto ecenter = ell.center();
 	ecenter.draw( data.img2 );
 
 	auto ell_bb = ell.getBB();

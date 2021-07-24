@@ -44,7 +44,7 @@ int main()
 		c2 += bb.size();
 //		if( dummy_pt.isInside(bb) )
 //			c2++;
-		auto center = ell.getCenter();
+		auto center = ell.center();
 		if( dummy_pt.distTo(center) < range_center )
 			c3++;
 
