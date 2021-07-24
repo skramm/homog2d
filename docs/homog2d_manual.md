@@ -255,11 +255,11 @@ The only constraint is that they must be all of the same type (no int/float/doub
 Segment s1( x1, y1, x2, y2 );
 ```
 
-You can get the pair of points (as an `std::pair`) with `get()`.
+You can get the pair of points (as an `std::pair`) with `getPts()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
 Segment s1( Point2d(100,100), Point2d(10,10) );
-auto pair= s1.get();
+auto pair= s1.getPts();
 std::cout << pair.first; // will print (10,10)
 ```
 
@@ -356,18 +356,15 @@ rect.translate( dx, dy );
 
 Get the rectangle corresponding to the intersection of two rectangles:
 ```C++
-try
+auto r_inters = r1.intersection(r2);
+if( r_inters() )
 {
-	auto r_inters = r1.intersection(r2);
-}
-catch( const std::runtime_error& err )
-{
-	std::cerr << "rectangle do not intersect": << err.what();
+	std::cout << "common area is " << r_inters.get();
 }
 ```
 
-The "try/catch" is recommended in user code because this function will throw il there is no intersection area.
-This can happen **even** if there are some intersection points found, because these can be due to a shared segment.
+Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
+or a single intersection point.
 
 
 ### 3.3 - Circles

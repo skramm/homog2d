@@ -29,16 +29,9 @@ int main( int argc, const char** argv )
 		r1.draw( img, color_green );
 		r2.draw( img, color_green );
 
-		try
-		{
-			auto a = r1.intersection(r2);
-			a.draw( img, color_red );
-		}
-		catch(...)
-		{
-			std::cout <<"no intersection area\n";
-		}
-
+		auto a = r1.intersection(r2);
+		if( a() )
+			a.get().draw( img, color_red );
 
 		std::ostringstream oss;
 		oss << "BUILD/showcase2_" << std::setfill('0') << std::setw(2) <<i << ".png";

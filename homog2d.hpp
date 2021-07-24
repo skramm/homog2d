@@ -1355,13 +1355,13 @@ struct Inters_2 {};
 /// Common stuff for intersection code
 struct IntersectCommon
 {
-	protected:
-		bool _doesIntersect = false;
-	public:
-		bool operator()() const
-		{
-			return _doesIntersect;
-		}
+protected:
+	bool _doesIntersect = false;
+public:
+	bool operator()() const
+	{
+		return _doesIntersect;
+	}
 };
 
 /// Base class for intersection, gets specialized
@@ -1504,6 +1504,33 @@ public:
 	}
 };
 
+//------------------------------------------------------------------
+/// Small class to hold result of intersections of two FRect_
+/// \sa FRect_::intersection()
+template<typename T>
+class RectArea
+{
+private:
+	bool      _success = false;
+	FRect_<T> _area;
+
+public:
+	RectArea() = default;
+	RectArea( const FRect_<T>& r ) : _success(true), _area(r)
+	{}
+	bool operator()() const
+	{
+		return _success;
+	}
+
+	FRect_<T> get() const
+	{
+		assert( _success );
+		return _area;
+	}
+};
+
+
 } // namespace detail
 
 
@@ -1619,7 +1646,7 @@ public:
 	}
 
 	template<typename FPT2>
-	FRect_<FPT> intersection( const FRect_<FPT2>& other ) const;
+	detail::RectArea<FPT> intersection( const FRect_<FPT2>& other ) const;
 //	template<typename FPT2>
 //	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
 
@@ -2062,12 +2089,17 @@ template<typename FPT>
 void
 fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 {
+#if 0
 	if( ptA.getX() > ptB.getX() )
 		std::swap( ptA, ptB );
 	else
 		if( ptA.getX() == ptB.getX() )
 			if( ptA.getY() > ptB.getY() )
 				std::swap( ptA, ptB );
+#else
+	if( !(ptA < ptB) )
+		std::swap( ptA, ptB );
+#endif
 }
 
 
@@ -3832,7 +3864,6 @@ Polyline_<FPT>::area() const
 	return _attribs._area.value();
 }
 
-
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area, will throw if no intersection area
 /**
@@ -3886,20 +3917,19 @@ Polyline_<FPT>::area() const
 */
 template<typename FPT>
 template<typename FPT2>
-FRect_<FPT>
+detail::RectArea<FPT>
 FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 {
 	auto inter = this->intersects( other );
-#ifndef HOMOG2D_NOCHECKS
-	if( !inter() )
-		HOMOG2D_THROW_ERROR_1( "unable, rectangles do not intersect" );
 
-	if( inter.size() < 2 )
-		HOMOG2D_THROW_ERROR_1( "unable, only one intersection point" );
-#endif
+	if( !inter() )                        // rectangles do not intersect
+		return detail::RectArea<FPT>();
+
+	if( inter.size() < 2 )                // only one intersection point
+		return detail::RectArea<FPT>();
 
 	if( inter.size() == 4 )  // 4 intersection points => case "D"
-		return FRect_<FPT>( inter.get().at(0), inter.get().at(3) );
+		return detail::RectArea<FPT>(FRect_<FPT>( inter.get().at(0), inter.get().at(3) ) );
 
 	if( inter.size() == 3 )  // 3 intersection points => case "C"
 	{
@@ -3924,9 +3954,8 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
 	);
 #endif
-		return FRect_<FPT>( xmin, ymin, xmax,ymax );
+		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
 	}
-
 
 #ifndef HOMOG2D_DEBUGMODE
 	assert( inter.size() == 2 );
@@ -3946,8 +3975,8 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	auto c2 = v2.size();
 	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
 
-	if( c1==0 && c2==0 )
-		HOMOG2D_THROW_ERROR_1( "unable, rectangles share a segment" );
+	if( c1==0 && c2==0 ) // unable, rectangles share a segment
+		return detail::RectArea<FPT>();
 
 	assert(
 		( c1==1 && c2==1 )
@@ -3957,24 +3986,28 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 		( c2==0 && c1==2 )
 	);
 	if( c1==1 || c2==1 ) // only 1 point inside => the rectangle is defined by the intersection points
-		return FRect_<FPT>( inter.get().at(0), inter.get().at(1) );
+		return detail::RectArea<FPT>( FRect_<FPT>( inter.get().at(0), inter.get().at(1) ) );
 
 // here: 2 points inside, then build rectangle using the 4 points:
 // the 2 inside, and the two intersection points
 	assert( c1 == 2 || c2 == 2 );
 
 	if( c1 == 2 )
-		return FRect_<FPT>(
+		return detail::RectArea<FPT>(
+			FRect_<FPT>(
+				inter.get().at(0),
+				inter.get().at(1),
+				v1.at(0),
+				v1.at(1)
+			)
+		);
+	return detail::RectArea<FPT>(
+		FRect_<FPT>(
 			inter.get().at(0),
 			inter.get().at(1),
-			v1.at(0),
-			v1.at(1)
-		);
-	return FRect_<FPT>(
-		inter.get().at(0),
-		inter.get().at(1),
-		v2.at(0),
-		v2.at(1)
+			v2.at(0),
+			v2.at(1)
+		)
 	);
 }
 
