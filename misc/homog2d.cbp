@@ -87,6 +87,7 @@
 		<Unit filename="doxyfile_opencv">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="ellipse_speed_test.cpp" />
 		<Unit filename="extra_style_sheet.css">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

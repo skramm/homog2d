@@ -6,6 +6,7 @@
 .PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png
 #.SECONDARY:
 
+SHELL=bash
 CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
@@ -115,7 +116,6 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
 #=======================================================================
 # Generation of the doc figures from code
 
-
 DOC_IMAGES_LOC:=docs/figures_src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
 DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
@@ -123,12 +123,13 @@ DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DO
 .PRECIOUS: docs/figures_src/%
 
 # run the program
-$(DOC_IMAGES_LOC)/%.png: $(DOC_IMAGES_LOC)/%
+$(DOC_IMAGES_LOC)/%.png: BUILD/figures_src/%
 	$<
 	mv $(notdir $@) $(DOC_IMAGES_LOC)/
 
 # build the program
-$(DOC_IMAGES_LOC)/%: $(DOC_IMAGES_LOC)/%.cpp
+BUILD/figures_src/%: $(DOC_IMAGES_LOC)/%.cpp
+	@mkdir -p BUILD/figures_src/
 	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 doc_fig: $(DOC_IMAGES_PNG)

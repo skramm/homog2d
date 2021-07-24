@@ -194,6 +194,10 @@ enum class Type : char { Line2d, Point2d };
 /// Type of underlying floating point, see Root::dtype()
 enum class Dtype : char { Float, Double, LongDouble };
 
+const char* getString( Type t )
+{
+	return t==Type::Line2d ? "Line2d" : "Point2d";
+}
 
 namespace detail {
 
@@ -952,15 +956,14 @@ struct EllParams
 	template<typename U>
 	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
 	{
-		f << "origin=" << par.x0 << "," << par.y0
+		f << "EllParams: origin=" << par.x0 << "," << par.y0
 			<< " angle=" << par.theta *180./M_PI
 			<< " a=" << par.a << " b=" << par.b
 			<< '\n';
 		return f;
 
 	}
-
-};
+}; // struct EllParams
 
 } // namespace detail
 
@@ -1275,6 +1278,8 @@ Ellipse_<FPT>::getBB() const
 // step 3: get ptB, using line and distance
 	auto ppts = li_H.getPoints( pt0, par.a );
 	auto ptB = ppts.first;
+	if( ptB == ptA )
+		ptB = ppts.second;
 
 	auto para = getParallelLines( li_H, par.b );
 	auto li_V1 = li_H.getOrthogonalLine( ptA );
@@ -1294,8 +1299,11 @@ Ellipse_<FPT>::getBB() const
 	HOMOG2D_DEBUG_ASSERT(
 		( p2!=p1 && p3!=p2 && p4!=p3 ),
 		"p1=" << p1 << " p2=" << p2 << " p3=" << p3 << " p4=" << p4
-		<< "\npara.1=" << para.first
-		<< "\npara.2=" << para.second
+		<< "\n para.1=" << para.first
+		<< "\n li_V1=" << li_V1
+		<< "\n ptA=" << ptA
+		<< "\n ptB=" << ptB
+		<< "\n " << ppts
 	);
 	out.add( p1 );
 	out.add( p2 );
@@ -4348,6 +4356,19 @@ operator << ( std::ostream& f, const T& vec )
 		f << elem << '\n';
 	return f;
 }
+
+/// Stream operator for a pair of points/lines, free function
+template<typename LP1,typename LP2,typename FPT>
+std::ostream&
+operator << ( std::ostream& f, const std::pair<Root<LP1,FPT>,Root<LP2,FPT>>& pr )
+{
+	f << "std::pair (" << getString(pr.first.type()) << "-" << getString(pr.second.type())
+		<< "):\n -first="  << pr.first
+		<< "\n -second=" << pr.second
+		<< ' ';
+	return f;
+}
+
 
 //------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0

@@ -1014,11 +1014,13 @@ However, due to numerical issues, this can fail: for example, say we want to che
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
 Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
 
-To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates:
-<br>value = std::round( value * coeff ) / coeff
-<br>so that the value stays at "99".
+To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates,
+so that the value stays at "99":
+```
+value = std::round( value * coeff ) / coeff
+```
 
-At present the cefficient value is not adjustable, but will in the future.
+At present the coefficient value is not adjustable, but will in the future.
 
 
 ## 8 - Technical details
@@ -1058,6 +1060,14 @@ You can do that in the makefile or just add a `#define` on top of your program,
 (see [here](#H_4points)).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash.
+- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
+The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
+This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
+With this option activated, each ellipse will store both representations, so access to values is immediate.
+To have an idea, the memory footprint for class `Ellipse` is 80/152 bytes, whether this option is activated or not.
+- `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
+While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
+[read this for details](homog2d_qa.md#assert_trigger).
 
 ### Inner details
 
