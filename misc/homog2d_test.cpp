@@ -1134,6 +1134,8 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 		auto a = r1.intersection(r2);
 		CHECK( a() == false );       // no intersection !
+		auto b = r1&r2;
+		CHECK( b() == false );       // no intersection !
 	}
 	{
 #include "figures_test/frect_intersect_2.code"
@@ -1150,6 +1152,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto rect_inter = r1.intersection(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,1, 3,2) );
+		auto rect_inter2 = r1&r2;
+		CHECK( rect_inter2() == true );
+		CHECK( rect_inter2.get() == FRect(2,1, 3,2) );
 	}
 
 	{      // 4 intersection points

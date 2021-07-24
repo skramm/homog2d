@@ -786,8 +786,10 @@ bool bc2 = seg.isInside( ell );
 ### 5.3 - Intersection area
 
 Get the rectangle corresponding to the intersection of two rectangles:
+one can use either the named function, or the `&` operator:
 ```C++
 auto r_inters = r1.intersection(r2);
+auto r_inters2 = r1 & r2;
 if( r_inters() )
 {
 	std::cout << "common area is " << r_inters.get();

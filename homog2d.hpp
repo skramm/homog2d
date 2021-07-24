@@ -1664,6 +1664,11 @@ public:
 
 	template<typename FPT2>
 	detail::RectArea<FPT> intersection( const FRect_<FPT2>& other ) const;
+	template<typename FPT2>
+	detail::RectArea<FPT> operator & ( const FRect_<FPT2>& other ) const
+	{
+		return this->intersection( other );
+	}
 //	template<typename FPT2>
 //	Polyline_<FPT> unionRect( const FRect_<FPT2>& other ) const;
 
