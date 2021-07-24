@@ -1586,7 +1586,7 @@ TEST_CASE( "Ellipse", "[ell1]" )
 		CHECK( el.center() == Point2d(4,5) );
 		CHECK( el.getMajMin().first  == Approx(7.0) );
 		CHECK( el.getMajMin().second == Approx(6.0) );
-		CHECK( el.angle() == 1.0 );
+		CHECK( el.angle() == Approx(1.0) );
 		CHECK( el.isCircle() == false );
 	}
 }

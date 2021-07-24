@@ -1068,7 +1068,7 @@ The test target also attempts to build the files in the folder `misc/no_build`.
 These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
 
 ### Build options
-<a name="options"></a>
+<a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
 You can do that in the makefile or just add a `#define` on top of your program,
@@ -1084,6 +1084,11 @@ The default behavior for class `Ellipse` is to store only the homogeneous matrix
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is immediate.
 To have an idea, the memory footprint for class `Ellipse` is 80/152 bytes, whether this option is activated or not.
+<br>
+The speed improvment can be checked with the demo file [`misc/ellipse_speed_test.cpp`](../misc/ellipse_speed_test.cpp),
+that you can run with<br>
+`$ make speed_test`
+
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).

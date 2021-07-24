@@ -31,27 +31,7 @@ ifeq ($(DEBUG),Y)
 endif
 
 #=======================================================================
-show:
-	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
-	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
-	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
-	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
-	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
-	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
-	@echo "SHOWCASE_SRC=$(SHOWCASE_SRC)"
-	@echo "SHOWCASE_BIN=$(SHOWCASE_BIN)"
-	@echo "SHOWCASE_PNG=$(SHOWCASE_PNG)"
-	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
-	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
-	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
-
-
-test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
-
-test_SY: BUILD/homog2d_test_SY
-
-test_SN: BUILD/homog2d_test_SN
-
+# general/common targets
 
 test: test_SY test_SN nobuild
 	@echo "Make: run test, build using $(CXX)"
@@ -66,6 +46,48 @@ check:
 	cppcheck . --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
 	xdg-open cppcheck.log
 
+doc: BUILD/html/index.html
+	xdg-open BUILD/html/index.html
+
+# also (re)builds the figures, but requires Opencv AND Latex!
+docall: BUILD/html/index.html doc_fig doc_fig_tex
+	xdg-open BUILD/html/index.html
+
+install:
+	cp homog2d.hpp /usr/local/include
+
+demo: BUILD/demo_opencv
+	BUILD/demo_opencv
+
+clean:
+	@-rm -r BUILD/*
+	@-rm homog2d_test
+	@-rm demo_opencv
+	@-rm *.gcov
+
+# just a debug target...
+show:
+	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
+	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
+	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
+	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
+	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
+	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
+	@echo "SHOWCASE_SRC=$(SHOWCASE_SRC)"
+	@echo "SHOWCASE_BIN=$(SHOWCASE_BIN)"
+	@echo "SHOWCASE_PNG=$(SHOWCASE_PNG)"
+	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
+	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
+	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
+
+#=======================================================================
+# testing targets
+
+test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+
+test_SY: BUILD/homog2d_test_SY
+
+test_SN: BUILD/homog2d_test_SN
 
 demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
@@ -86,17 +108,17 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
-ptest1: precision_test1
-	./precision_test1
+#ptest1: precision_test1
+#	./precision_test1
 
-ptest2: precision_test2
-	./precision_test2
+#ptest2: precision_test2
+#	./precision_test2
 
-precision_test1: misc/precision_test_opencv.cpp
-	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+#precision_test1: misc/precision_test_opencv.cpp
+#	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-precision_test2: misc/precision_test.cpp
-	$(CXX) $(CFLAGS) -I. -o $@ $<
+#precision_test2: misc/precision_test.cpp
+#	$(CXX) $(CFLAGS) -I. -o $@ $<
 
 #=======================================================================
 # speed test
@@ -174,24 +196,11 @@ BUILD/figures_test/%.cpp: $(TEST_FIG_LOC)/%.code homog2d.hpp $(TEST_FIG_LOC)/hea
 
 #=======================================================================
 
-
-doc: BUILD/html/index.html
-	xdg-open BUILD/html/index.html
-
-# also (re)builds the figures, but requires Opencv AND Latex!
-docall: BUILD/html/index.html doc_fig doc_fig_tex
-	xdg-open BUILD/html/index.html
-
 DOC_MD_PAGES=$(wildcard docs/*.md)
 BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
 	@mkdir -p BUILD/html
 	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
-install:
-	cp homog2d.hpp /usr/local/include
-
-demo: BUILD/demo_opencv
-	BUILD/demo_opencv
 
 # this target REQUIRES Opencv
 BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
@@ -241,8 +250,6 @@ SHOWCASE_BIN=$(patsubst misc/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_
 SHOWCASE_GIF=$(patsubst misc/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
 SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 
-sc: $(SHOWCASE_BIN)
-	@echo "done target $<"
 
 #BUILD/%.gif: BUILD/%.png
 #	@echo "done target $<"
@@ -260,17 +267,11 @@ BUILD/showcase/showcase%: misc/showcase%.cpp homog2d.hpp
 	$@
 
 showcase: $(SHOWCASE_BIN)
-#	$<
 	docs/build_gif.sh
-	@echo "done target $@ $<"
+	@echo "done target $@"
 
 #BUILD/showcase%: misc/showcase%.cpp homog2d.hpp
 #	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 #	$@
 
 #=================================================================
-clean:
-	@-rm -r BUILD/*
-	@-rm homog2d_test
-	@-rm demo_opencv
-	@-rm *.gcov
