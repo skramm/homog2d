@@ -25,12 +25,14 @@ int main( int argc, const char** argv )
 	Homogr HT2( -im_w/2, -100 );
 	Homogr H = HT1 * Hr * HT2;
 
-	Circle c( Point2d( 265,195), 40 );
+	Circle cir( Point2d( 265,195), 40 );
+	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
 
 	FRect_<double> rect( 0,0,200,80 );
 	Polyline pl( rect, IsClosed::Yes );
 	auto color_red = DrawParams().setColor(200,20,20);
 	auto color_green = DrawParams().setColor(20,220,20);
+	auto color_blue = DrawParams().setColor(20,20,220);
 
 // move rectangle dx=100, dy=60
 	pl = Homogr().addTranslation(100, 60) * pl;
@@ -42,19 +44,26 @@ int main( int argc, const char** argv )
 	{
 		cvmat = cv::Scalar(255,255,255);
 
-		c.draw( myImg, color_green );
+		cir.draw( myImg, color_green );
+		ell.draw( myImg, color_green );
 		lih.draw( myImg );
 		liv.draw( myImg );
 		li.draw( myImg, color_green );
 		pl.draw( myImg, DrawParams().setColor(20,0,250) );
+
 		auto inters = li.intersects( pl );
 		if( inters() )
 			draw( myImg, inters.get(), color_red );
 
-		auto intersc = pl.intersects( c );
+		auto intersc = pl.intersects( cir );
 		if( intersc() )
 			draw( myImg, intersc.get(), color_red );
 
+/* NOT YET IMPLEMENTED !
+		auto interse = pl.intersects( ell );
+		if( interse() )
+			draw( myImg, interse.get(), color_red );
+*/
 		std::ostringstream oss;
 		oss << "BUILD/showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( oss.str(), cvmat );
@@ -63,7 +72,5 @@ int main( int argc, const char** argv )
 		lih = H*lih;
 		liv = H*liv;
 	}
-
 }
-
 

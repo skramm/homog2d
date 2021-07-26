@@ -1698,10 +1698,10 @@ TEST_CASE( "FRect", "[frect]" )
 {
 	{
 		FRect_<NUMTYPE> r1;
-		CHECK( r1.width() == 1. );
+		CHECK( r1.width()  == 1. );
 		CHECK( r1.height() == 1. );
 		CHECK( r1.length() == 4 );
-		CHECK( r1.area() == 1 );
+		CHECK( r1.area()   == 1 );
 		CHECK( r1.center() == Point2d(0.5,0.5) );
 
 		auto p_pts = r1.getPts();

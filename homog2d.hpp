@@ -3272,6 +3272,7 @@ template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<Polyline_<T>>: std::true_type  {};
+//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
