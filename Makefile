@@ -3,8 +3,12 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase
 
-.PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png
-#.SECONDARY:
+.PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png BUILD/no_build/%.cpp
+.SECONDARY:
+
+#Disabling the built-in rules is done by writing an empty rule for .SUFFIXES:
+.SUFFIXES:
+
 
 SHELL=bash
 CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
@@ -217,7 +221,7 @@ diff:
 # The following is used to make sure that some constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
-NOBUILD_OBJ_FILES := $(patsubst %.cxx, /tmp/%.o, $(NOBUILD_SRC_FILES))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx, BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
 #.PRECIOUS: /tmp/no_build_%.cpp
 
@@ -227,17 +231,18 @@ nobuild: $(NOBUILD_OBJ_FILES)
 $(NOBUILD_OBJ_FILES): rm_nb
 
 rm_nb:
-	-rm BUILD/*.stdout
-	-rm BUILD/*.stderr
+	@-rm BUILD/no_build.stdout
+	@-rm BUILD/no_build.stderr
 
 # assemble file to create a cpp program holding a main()
-/tmp/no_build_%.cpp: misc/no_build/no_build_%.cxx
-	@cat misc/no_build/header.txt >/tmp/$(notdir $@)
-	@cat $< >>/tmp/$(notdir $@)
-	@cat misc/no_build/footer.txt >>/tmp/$(notdir $@)
+BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
+	@mkdir -p BUILD/no_build/
+	@cat misc/no_build/header.txt >BUILD/no_build/$(notdir $@)
+	@cat $< >>BUILD/no_build/$(notdir $@)
+	@cat misc/no_build/footer.txt >>BUILD/no_build/$(notdir $@)
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
-/tmp/no_build_%.o: /tmp/no_build_%.cpp
+BUILD/no_build_%.o: BUILD/no_build/no_build_%.cpp
 	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
 	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
 	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr

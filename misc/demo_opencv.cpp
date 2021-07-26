@@ -234,7 +234,7 @@ struct KeyboardLoop
 				std::cout << elem;
 		}
 	}
-//	void start( const Data& data )
+
 	void start( Data& data )
 	{
 		showAvailableKeys();

@@ -337,15 +337,17 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
-And of course, its width, height, and enclosed area:
+And of course, its width, height, length, and enclosed area:
 ```C++
 FRect rect;
 auto w = rect.width();
 auto h = rect.height();
-auto a = rect.area();
+auto a = rect.area();   // w * h
+auto l = rect.length(); // 2*w + 2*h
 auto w2 = width(rect);
 auto h2 = height(rect);
 auto a2 = area(rect);
+auto l2 = length(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -463,7 +465,7 @@ This latter function will return 0 if not a polygon.
 This type holds an arbitrary ellipse.
 We follow here the traditional parametrization for the API:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
-Internally, it is stored as a conic in its matrix form (see [build_options](#build_options) for details).
+Internally, it is stored as a conic in its matrix form (see [build options](#build_options) for details).
 
 ![ellipse1](ellipse1.png)
 

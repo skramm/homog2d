@@ -881,6 +881,11 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 	}
 }
 
+//////////////////////////////////////////////////////////////
+/////           ISINSIDE TESTS                       /////
+//////////////////////////////////////////////////////////////
+
+// this test only makes sure that all theses situations compile
 TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 {
 	FRect rect;
@@ -900,7 +905,7 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	CHECK( !seg.isInside( ell ) );
 }
 
-TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
+TEST_CASE( "IsInside Rectangle", "[test_IsInside]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
 	Point2d_<NUMTYPE> pt2(10,2);
@@ -925,10 +930,37 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == false );
+
+	FRect_<NUMTYPE> r(2,3, 10,10);
+	CHECK( r.length() == 30 );
+	CHECK( r.area()   == 56 );
+	CHECK( r.width()  == 8 );
+	CHECK( r.height() == 7 );
+
+	CHECK( Segment( 2,5, 4,5 ).isInside( r )           == false ); // on the contour
+	CHECK( Segment( 2.00001, 5., 4.,5. ).isInside( r ) == true );
+	CHECK( Segment( 3,5, 4,5 ).isInside( r )           == true );
+
+	CHECK( Circle( 5,5, 2 ).isInside( r ) == false );   // touches rectangle at (5,3)
+	CHECK( Circle( 5,5, 1 ).isInside( r ) == true );
+	CHECK( Circle( 6,6, 2 ).isInside( r ) == true );
+	CHECK( Circle().isInside( r )         == false );
+
+	CHECK( Circle( 6,6, 22 ).isInside( r ) == false);
+	CHECK( r.isInside( Circle( 6,6, 22 ) ) == true );
+
+	Polyline pl( IsClosed::Yes );
+	pl.add( 3,3 );
+	CHECK( pl.isInside( r ) == false );  // on contour
+	Polyline pl2( IsClosed::Yes );
+	pl2.add( 4,4 );
+	CHECK( pl2.isInside( r ) == true );
+	pl2.add( 4,5 );
+	CHECK( pl2.isInside( r ) == true );
 }
 
 
-TEST_CASE( "inside circle", "[tic]" )
+TEST_CASE( "IsInside circle", "[tic]" )
 {
 	Circle_<NUMTYPE> c1(10.);
 	Circle_<NUMTYPE> c2(2.);
@@ -1668,6 +1700,10 @@ TEST_CASE( "FRect", "[frect]" )
 		FRect_<NUMTYPE> r1;
 		CHECK( r1.width() == 1. );
 		CHECK( r1.height() == 1. );
+		CHECK( r1.length() == 4 );
+		CHECK( r1.area() == 1 );
+		CHECK( r1.center() == Point2d(0.5,0.5) );
+
 		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
 		CHECK( p_pts.second == Point2d(1.,1.) );
@@ -1708,8 +1744,11 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 	{
 		FRect_<NUMTYPE> r( Point2d(0,0), 100, 50 );
-		CHECK( r.width()  == 100. );
-		CHECK( r.height() == 50. );
+		CHECK( r.width()  == 100 );
+		CHECK( r.height() == 50 );
+		CHECK( r.length() == 300 );
+		CHECK( r.area() == 5000 );
+		CHECK( r.center() == Point2d(0,0) );
 	}
 }
 

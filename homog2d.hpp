@@ -969,7 +969,7 @@ struct DrawParams
 		_dpValues._enhancePoint = true;
 		return *this;
 	}
-};
+}; // class DrawParams
 
 
 //------------------------------------------------------------------
@@ -1461,7 +1461,16 @@ public:
 	}
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
-	HOMOG2D_INUMTYPE area() const   { return height() * width(); }
+	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
+	HOMOG2D_INUMTYPE length() const { return 2.*height() + 2.*width(); }
+
+	Point2d_<FPT> center() const
+	{
+		return Point2d_<FPT>(
+			(static_cast<HOMOG2D_INUMTYPE>(_ptR1.getX() ) + _ptR2.getX() ) * 0.5,
+			(static_cast<HOMOG2D_INUMTYPE>(_ptR1.getY() ) + _ptR2.getY() ) * 0.5
+		);
+	}
 
 	Circle_<FPT> getBoundingCircle() const;
 
@@ -1702,6 +1711,12 @@ template<typename FPT>
 HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
 {
 	return rect.area();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
+{
+	return rect.length();
 }
 
 //------------------------------------------------------------------
