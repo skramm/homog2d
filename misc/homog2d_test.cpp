@@ -45,8 +45,23 @@ using namespace h2d;
 
 int main( int argc, char* argv[] )
 {
-	std::cout << "START TESTS, using " << XSTR(NUMTYPE) << " as numerical type, internal numerical type=" << XSTR(HOMOG2D_INUMTYPE) << '\n';
-	std::cout << "Running tests with catch " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH << '\n';
+	std::cout << "START TESTS:\n - numerical type: " << XSTR(NUMTYPE)
+		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
+		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
+		<< "\n - build option:"
+		<< "\n  - HOMOG2D_OPTIMIZE_SPEED: "
+#ifdef HOMOG2D_OPTIMIZE_SPEED
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_OPTIMIZE_SPEED
+		<< "\n  - HOMOG2D_USE_OPENCV: "
+#ifdef HOMOG2D_USE_OPENCV
+		<< "YES"
+#else
+		<< "NO"
+#endif // HOMOG2D_USE_OPENCV
+		<< '\n';
 
   // global setup...
 	Catch::StringMaker<float>::precision = 25;
@@ -866,6 +881,11 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 	}
 }
 
+//////////////////////////////////////////////////////////////
+/////           ISINSIDE TESTS                       /////
+//////////////////////////////////////////////////////////////
+
+// this test only makes sure that all theses situations compile
 TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 {
 	FRect rect;
@@ -873,16 +893,19 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	Circle circle;
 	Circle c2;
 	Segment seg;
+	Ellipse ell(5.,5.);
 
 	CHECK( !rect2.isInside( rect ) );
 	CHECK( !rect2.isInside( circle ) );
+	CHECK( !rect2.isInside( ell ) );
 	CHECK( !c2.isInside( rect ) );
 	CHECK( !c2.isInside( circle ) );
 	CHECK( !seg.isInside( rect ) );
 	CHECK( !seg.isInside( circle ) );
+	CHECK( !seg.isInside( ell ) );
 }
 
-TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
+TEST_CASE( "IsInside Rectangle", "[test_IsInside]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
 	Point2d_<NUMTYPE> pt2(10,2);
@@ -907,10 +930,37 @@ TEST_CASE( "IsInsideRectangle", "[test_IsInside]" )
 	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == false );
+
+	FRect_<NUMTYPE> r(2,3, 10,10);
+	CHECK( r.length() == 30 );
+	CHECK( r.area()   == 56 );
+	CHECK( r.width()  == 8 );
+	CHECK( r.height() == 7 );
+
+	CHECK( Segment( 2,5, 4,5 ).isInside( r )           == false ); // on the contour
+	CHECK( Segment( 2.00001, 5., 4.,5. ).isInside( r ) == true );
+	CHECK( Segment( 3,5, 4,5 ).isInside( r )           == true );
+
+	CHECK( Circle( 5,5, 2 ).isInside( r ) == false );   // touches rectangle at (5,3)
+	CHECK( Circle( 5,5, 1 ).isInside( r ) == true );
+	CHECK( Circle( 6,6, 2 ).isInside( r ) == true );
+	CHECK( Circle().isInside( r )         == false );
+
+	CHECK( Circle( 6,6, 22 ).isInside( r ) == false);
+	CHECK( r.isInside( Circle( 6,6, 22 ) ) == true );
+
+	Polyline pl( IsClosed::Yes );
+	pl.add( 3,3 );
+	CHECK( pl.isInside( r ) == false );  // on contour
+	Polyline pl2( IsClosed::Yes );
+	pl2.add( 4,4 );
+	CHECK( pl2.isInside( r ) == true );
+	pl2.add( 4,5 );
+	CHECK( pl2.isInside( r ) == true );
 }
 
 
-TEST_CASE( "inside circle", "[tic]" )
+TEST_CASE( "IsInside circle", "[tic]" )
 {
 	Circle_<NUMTYPE> c1(10.);
 	Circle_<NUMTYPE> c2(2.);
@@ -1113,7 +1163,11 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( !r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
-		CHECK_THROWS( r1.intersection(r2) ); // no intersection !
+
+		auto a = r1.intersection(r2);
+		CHECK( a() == false );       // no intersection !
+		auto b = r1&r2;
+		CHECK( b() == false );       // no intersection !
 	}
 	{
 #include "figures_test/frect_intersect_2.code"
@@ -1128,7 +1182,11 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[1] == Point2d(3,1) );
 
 		auto rect_inter = r1.intersection(r2);
-		CHECK( rect_inter == FRect(2,1, 3,2) );
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,1, 3,2) );
+		auto rect_inter2 = r1&r2;
+		CHECK( rect_inter2() == true );
+		CHECK( rect_inter2.get() == FRect(2,1, 3,2) );
 	}
 
 	{      // 4 intersection points
@@ -1144,7 +1202,8 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[3] == Point2d(4,4) );
 
 		auto rect_inter = r1.intersection(r2);
-		CHECK( rect_inter == FRect(2,2, 4,4) );
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,2, 4,4) );
 	}
 
 	{     // horizontal segment overlap
@@ -1162,7 +1221,8 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[3] == Point2d(3,2) );
 
 		auto rect_inter = r1.intersection(r2);
-		CHECK( rect_inter == FRect(2,0, 3,2) );
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,0, 3,2) );
 	}
 	{     // common vertical segment
 #include "figures_test/frect_intersect_5.code"
@@ -1176,13 +1236,13 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,0 ) );
 		CHECK( vpts[1] == Point2d( 3,2 ) );
-		CHECK_THROWS( r1.intersection(r2) ); // no intersection
+		CHECK( r1.intersection(r2)() == false ); // no intersection
 
 		r2.translate( 0.000001, 0 );         // move it a bit left
 		inters = r1.intersects(r2);          // => no more intersection
 		CHECK( inters() == false );
 		CHECK( inters.size() == 0 );
-		CHECK_THROWS( r1.intersection(r2) ); // still no intersection
+		CHECK( r1.intersection(r2)() == false ); // still no intersection
 
 	}
 	{     // two rectangles joined by corner at 3,2
@@ -1192,7 +1252,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 1 );
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,2 ) );
-		CHECK_THROWS( r1.intersection(r2) ); // only one point !
+		CHECK( r1.intersection(r2)() == false ); // only one point !
 	}
 	{     // two rectangles
 #include "figures_test/frect_intersect_7.code"
@@ -1202,8 +1262,34 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 2,2 ) );
 		CHECK( vpts[1] == Point2d( 4,2 ) );
+
 		auto rect_inter = r1.intersection(r2);
-		CHECK( rect_inter == FRect(2,2, 4,3) );
+		CHECK( rect_inter() == true );
+		CHECK( rect_inter.get() == FRect(2,2, 4,3) );
+	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_8.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
+	}
+	{     // two rectangles with a single common segment
+#include "figures_test/frect_intersect_9.code"
+		CHECK( r1.intersects(r2)() );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,3 ) );
+		CHECK( vpts[1] == Point2d( 4,2 ) );
+		CHECK( vpts[2] == Point2d( 4,3 ) );
+//		auto rect_inter = r1.intersection(r2);
+//		CHECK( rect_inter == FRect(3,2, 4,3) );
 	}
 }
 
@@ -1485,8 +1571,85 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 /////               MISC. TESTS                          /////
 //////////////////////////////////////////////////////////////
 
+TEST_CASE( "Circle", "[cir1]" )
+{
+	Circle c1;
+	CHECK( c1.center() == Point2d(0,0) );
+	CHECK( center(c1)  == Point2d(0,0) );
+}
+
+
+TEST_CASE( "Ellipse", "[ell1]" )
+{
+	{
+		Ellipse_<NUMTYPE> el;
+		CHECK( el.center() == Point2d(0,0) );
+		CHECK( center(el)  == Point2d(0,0) );
+		CHECK( el.getMajMin().first == 2.0 );
+		CHECK( el.getMajMin().second == 1.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == false );
+		CHECK( isCircle(el) == false );
+	//	CHECK( el.getBB() == Point2d(0,0) );
+	}
+	{
+		Circle c(1,2,3);
+		Ellipse_<NUMTYPE> el(c);
+		CHECK( el.center() == Point2d(1,2) );
+		CHECK( center(el)  == Point2d(1,2) );
+		CHECK( el.getMajMin().first == 3.0 );
+		CHECK( el.getMajMin().second == 3.0 );
+		CHECK( el.angle() == 0.0 );
+		CHECK( angle(el)  == 0.0 );
+		CHECK( el.isCircle() == true );
+		CHECK( isCircle(el) == true );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5,6,7);
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == 0.0 );
+		CHECK( el.isCircle() == false );
+	}
+	{
+		Ellipse_<NUMTYPE> el(4,5, 6, 7, 1 /*rad.*/ );
+		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getMajMin().first  == Approx(7.0) );
+		CHECK( el.getMajMin().second == Approx(6.0) );
+		CHECK( el.angle() == Approx(1.0) );
+		CHECK( el.isCircle() == false );
+	}
+}
+
 TEST_CASE( "Segment", "[seg1]" )
 {
+	{                              // test order of points
+		Point2d p1(43,8);
+		Point2d p2(43,18);
+		Point2d p3(5,55);
+		{
+			Segment_<NUMTYPE> s( p1, p2 );   // same x value
+			CHECK( s.getPts().first == p1 );
+			CHECK( s.getPts().second == p2 );
+		}
+		{
+			Segment_<NUMTYPE> s( p2, p1 );   // same x value
+			CHECK( s.getPts().first == p1 );
+			CHECK( s.getPts().second == p2 );
+		}
+		{
+			Segment_<NUMTYPE> s( p1, p3 );
+			CHECK( s.getPts().first == p3 );
+			CHECK( s.getPts().second == p1 );
+		}
+		{
+			Segment_<NUMTYPE> s( p3, p1 );
+			CHECK( s.getPts().first == p3 );
+			CHECK( s.getPts().second == p1 );
+		}
+	}
 	{
 		Line2d_<NUMTYPE> li( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
@@ -1535,8 +1698,12 @@ TEST_CASE( "FRect", "[frect]" )
 {
 	{
 		FRect_<NUMTYPE> r1;
-		CHECK( r1.width() == 1. );
+		CHECK( r1.width()  == 1. );
 		CHECK( r1.height() == 1. );
+		CHECK( r1.length() == 4 );
+		CHECK( r1.area()   == 1 );
+		CHECK( r1.center() == Point2d(0.5,0.5) );
+
 		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
 		CHECK( p_pts.second == Point2d(1.,1.) );
@@ -1577,8 +1744,11 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 	{
 		FRect_<NUMTYPE> r( Point2d(0,0), 100, 50 );
-		CHECK( r.width()  == 100. );
-		CHECK( r.height() == 50. );
+		CHECK( r.width()  == 100 );
+		CHECK( r.height() == 50 );
+		CHECK( r.length() == 300 );
+		CHECK( r.area() == 5000 );
+		CHECK( r.center() == Point2d(0,0) );
 	}
 }
 

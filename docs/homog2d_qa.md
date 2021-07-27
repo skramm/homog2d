@@ -12,6 +12,7 @@ A: I don't see any reason why that would not be the case, as long as you are abl
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 </dd>
 
+<a name="assert_trigger"></a>
 <dt>
 Q: I have an unexpected assert that gets triggered when I use this library in my code.
 What shall I do?
