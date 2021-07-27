@@ -34,7 +34,6 @@ using namespace h2d;
 /// General data struct used in demos
 struct Data
 {
-//	cv::Mat img;
 	img::Image<cv::Mat> img;
 	int width = 700;
 	int height = 500;
@@ -180,6 +179,7 @@ void action_H(  void* param );
 void action_PL( void* param );
 void action_CC( void* param );
 void action_ELL( void* param );
+void action_RU( void* param );
 
 
 //------------------------------------------------------------------
@@ -331,6 +331,12 @@ void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_ELL( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_ELL, param );
+}
+
+/// Mouse callback for demo_ELL
+void mouse_CB_RU( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_RU, param );
 }
 
 //------------------------------------------------------------------
@@ -993,6 +999,45 @@ void demo_ELL( int n )
 }
 
 //------------------------------------------------------------------
+/// Ellipse demo
+void action_RU( void* param )
+{
+	auto& data = *reinterpret_cast<Data*>(param);
+
+	data.clearImage();
+	FRect r1( data.vpt[0], data.vpt[1] );
+	FRect r2( data.vpt[2], data.vpt[3] );
+
+	std::cout << "\n------------------------------\nr1=" << r1 << '\n';
+	std::cout << "r2=" << r2 << '\n';
+	r1.draw( data.img );
+	r2.draw( data.img );
+	auto pl = r1.unionPolygon( r2 );
+
+	data.showImage();
+}
+
+void demo_RU( int n )
+{
+	Data data( "Rectangle UNION demo" );
+	std::cout << "Demo " << n << ": Rectangle UNION\n";
+
+	data.setMouseCallback( mouse_CB_RU );
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction(
+		'm',
+		[&]{
+			action_RU( &data );
+		},
+		"rotate CW"
+	);
+
+	action_RU( &data );
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos
@@ -1005,6 +1050,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_RU,
 		demo_B,
 		demo_ELL,
 		demo_CC,

@@ -1971,7 +1971,7 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
-#if 0
+#if 1
 // debug function, useless at present
 template<typename T>
 void printVector( const std::vector<T>& v, std::string msg=std::string() )
@@ -3834,8 +3834,6 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 template<typename T>
 struct Index
 {
-	bool isFilled = false;
-	bool isParsed = false;
 	int rect_idx=0;   // 0 means none
 	T value;
 	Index() = default;
@@ -3849,6 +3847,11 @@ struct Index
 			return i1.rect_idx < i2.rect_idx;
 		return i1.value < i2.value;
 	}
+	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
+	{
+		f << idx.value << " ";
+		return f;
+	}
 };
 
 struct Cell
@@ -3859,21 +3862,16 @@ struct Cell
 	template<typename T>
 	Cell( const Index<T>& ix, const Index<T>& iy )
 	{
-//		if( i1.isFilled || i2.isFilled )
-//			isFilled = true;
 		if( ix.rect_idx == iy.rect_idx )
 			isFilled = true;
-
 	}
 };
 
 
 //template<typename T>
-using Table = std::array<std::array<Cell,4>,4>;
+using Table  = std::array<std::array<Cell,4>,4>;
 using TableB = std::array<std::array<bool,4>,4>;
-
 using PCoord = std::pair<int,int>;
-
 
 TableB getBoolArray( const Table& table )
 {
@@ -3884,23 +3882,72 @@ TableB getBoolArray( const Table& table )
 	return out;
 }
 
-//template<typename T>
-void
-recurseTable( Table& table, int row, int col, std::vector<PCoord>& v_pts )
-{
-	if( row == 4 )
-		return;
-	if( col == 4 )
-		return;
+enum class ParseDirection { N, E, S, W };
 
-	if( !table[row][col].isParsed )
+const char* getString( ParseDirection dir )
+{
+	switch( dir )
 	{
-		table[row][col].isParsed = true;
-		if( table[row][col].isFilled )
-			v_pts.push_back( std::make_pair(row,col) );
-		recurseTable( table, row+1, col,   v_pts );
-		recurseTable( table, row,   col+1, v_pts );
+		case ParseDirection::W: return "W"; break;
+		case ParseDirection::S: return "S"; break;
+		case ParseDirection::E: return "E"; break;
+		case ParseDirection::N: return "N"; break;
 	}
+}
+
+void changeDirection( ParseDirection& dir )
+{
+	switch( dir )
+	{
+		case ParseDirection::W: dir = ParseDirection::N; break;
+		case ParseDirection::S: dir = ParseDirection::W; break;
+		case ParseDirection::E: dir = ParseDirection::S; break;
+		case ParseDirection::N: dir = ParseDirection::E; break;
+	}
+}
+
+void moveToNextCell( int& row, int& col, const ParseDirection& dir )
+{
+	switch( dir )
+	{
+		case ParseDirection::N: row--; break;
+		case ParseDirection::S: row++; break;
+		case ParseDirection::E: col++; break;
+		case ParseDirection::W: col--; break;
+	}
+	std::cout << __FUNCTION__ << "(): new r=" << row << " c=" << col
+		<< '\n';
+}
+
+void
+recurseTable( Table& table, int row, int col, ParseDirection& dir, std::vector<PCoord>& vpts )
+{
+	static bool firstTime = true;
+
+	std::cout <<"recurseTable(): r=" << row << " c=" << col
+		<< " dir=" << getString( dir )
+		<< "\n";
+	if( table[row][col].isFilled )
+	{
+		std::cout<< "corner!\n";
+		vpts.push_back( std::make_pair(row,col) );
+		if( vpts.back() == vpts.front() && vpts.size() > 2 )
+		{
+			std::cout<< __FUNCTION__  << "(): Finished!\n";
+			return;
+		}
+		if( firstTime )
+			firstTime = false;
+		else
+		{
+			changeDirection( dir );
+			std::cout<< "change dir to " << getString(dir) << "\n";
+		}
+	}
+	else
+		std::cout<< "NOT a corner, move on\n";
+	moveToNextCell( row, col, dir );
+	recurseTable( table, row, col, dir, vpts );
 }
 
 void
@@ -3946,55 +3993,6 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v, std::string msg=std
 }
 
 //------------------------------------------------------------------
-///
-/**
-\verbatim
-   A         B
-F . F .   . F . F
-. F . F   F . F .
-F . F .   . F . F
-. F . F   F . F .
-
-
-   C          D
-. F F .    F . . F
-F . . F    . F F .
-. F F .    F . . F
-F . . F    . F F .
-
-   E
-. F F .
-F . . F
-F . . F
-. F F .
-\endverbatim
-*/
-int checkSituation( const Table& table )
-{
-	auto t2 = getBoolArray( table );
-	printBoolArray( t2 );
-	std::array<TableB,5> tarray;
-
-	tarray[0] = {{
-		{ 1,0,1,0 },
-		{ 0,1,0,1 },
-		{ 1,0,1,0 },
-		{ 0,1,0,1 }
-	}};
-
-	tarray[1] = {{
-		{ 0,1,0,1 },
-		{ 1,0,1,0 },
-		{ 0,1,0,1 },
-		{ 1,0,1,0 }
-	}};
-
-	for( int i=0; i<5; i++ )
-		if( t2 == tarray[i] )
-			return i;
-	std::cout << "NOT FOUND!\n";
-	return -1;
-}
 
 
 template<typename FPT>
@@ -4018,14 +4016,16 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 	vx.push_back( Index<FPT>( r2.getPts().first.getX(),  2) );
 	vx.push_back( Index<FPT>( r2.getPts().second.getX(), 2) );
 	std::sort( vx.begin(), vx.end() );
+	priv::printVector( vx, "vx");
 
 	vy.push_back( Index<FPT>( r1.getPts().first.getY(),  1) );
 	vy.push_back( Index<FPT>( r1.getPts().second.getY(), 1) );
 	vy.push_back( Index<FPT>( r2.getPts().first.getY(),  2) );
 	vy.push_back( Index<FPT>( r2.getPts().second.getY(), 2) );
 	std::sort( vy.begin(), vy.end() );
+	priv::printVector( vy, "vy");
 
-std::cout <<"step 1b: fill table\n";
+//std::cout <<"step 1b: fill table\n";
 	Table table;
 	for( int r=0;r<4; r++ )
 		for( int c=0;c<4; c++ )
@@ -4063,20 +4063,27 @@ std::cout <<"step 1b: fill table\n";
 
 	printTable( table, "after 1c" );
 */
-
+/*
 	auto a = checkSituation( table );
 //	if( a == -1 )
 		std::cout << "a=" << a << "\n";
+	auto v_coord = getCoords(a);
+	printVectorPairs( v_coord );
+*/
+
 // step 2: parse table
-/*
+
 std::cout <<" step 2: parse table\n";
 
 	std::vector<PCoord> v_pts;
 	int row = 0;
 	int col = 0;
-	recurseTable( table, row, col, v_pts );
+	ParseDirection dir = ParseDirection::E;
+	recurseTable( table, row, col, dir, v_pts );
+
 	printVectorPairs( v_pts );
-*/
+
+	return Polyline_<FPT>();
 }
 
 //------------------------------------------------------------------
