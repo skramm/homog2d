@@ -3771,7 +3771,7 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 			<< "\nxmax=" << xmax << " xmin=" << xmin
 			<< "\nymax=" << ymax << " ymin=" << ymin
 			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
-	);
+		);
 #endif
 		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
 	}
@@ -3830,13 +3830,18 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	);
 }
 
+//------------------------------------------------------------------
 template<typename T>
 struct Index
 {
 	bool isFilled = false;
 	bool isParsed = false;
-	int rect_idx;
+	int rect_idx=0;   // 0 means none
 	T value;
+	Index() = default;
+	Index( T v, int r )
+		: value(v), rect_idx(r)
+	{}
 	friend bool operator < ( const Index& i1, const Index& i2 )
 	{
 
@@ -3846,30 +3851,232 @@ struct Index
 	}
 };
 
+struct Cell
+{
+	bool isFilled = false;
+	bool isParsed = false;
+	Cell() = default;
+	template<typename T>
+	Cell( const Index<T>& ix, const Index<T>& iy )
+	{
+//		if( i1.isFilled || i2.isFilled )
+//			isFilled = true;
+		if( ix.rect_idx == iy.rect_idx )
+			isFilled = true;
+
+	}
+};
+
+
+//template<typename T>
+using Table = std::array<std::array<Cell,4>,4>;
+using TableB = std::array<std::array<bool,4>,4>;
+
+using PCoord = std::pair<int,int>;
+
+
+TableB getBoolArray( const Table& table )
+{
+	TableB out;
+	for( int r=0;r<4; r++ )
+		for( int c=0;c<4; c++ )
+			out[r][c] = table[r][c].isFilled;
+	return out;
+}
+
+//template<typename T>
+void
+recurseTable( Table& table, int row, int col, std::vector<PCoord>& v_pts )
+{
+	if( row == 4 )
+		return;
+	if( col == 4 )
+		return;
+
+	if( !table[row][col].isParsed )
+	{
+		table[row][col].isParsed = true;
+		if( table[row][col].isFilled )
+			v_pts.push_back( std::make_pair(row,col) );
+		recurseTable( table, row+1, col,   v_pts );
+		recurseTable( table, row,   col+1, v_pts );
+	}
+}
+
+void
+printTable( const Table& t, std::string msg )
+{
+	std::cout << "Table: " << msg << "\n  | ";
+	for( int r=0;r<4; r++ )
+		std::cout << r << " ";
+	std::cout << "\n--|---------|\n";
+	for( int r=0;r<4; r++ )
+	{
+		std::cout << r << " | ";
+		for( int c=0;c<4; c++ )
+			std::cout << (t[r][c].isFilled?'F':'.') << " ";
+		std::cout << "|\n";
+	}
+}
+void printBoolArray( const TableB& t )
+{
+	std::cout << "Bool Table: \n  | ";
+	for( int r=0;r<4; r++ )
+		std::cout << r << " ";
+	std::cout << "\n--|---------|\n";
+	for( int r=0;r<4; r++ )
+	{
+		std::cout << r << " | ";
+		for( int c=0;c<4; c++ )
+			std::cout << t[r][c] << " ";
+		std::cout << "|\n";
+	}
+}
+//----------v--------------------------------------------------------
+template<typename T>
+void printVectorPairs( const std::vector<std::pair<T,T>>& v, std::string msg=std::string() )
+{
+	std::cout << "vector: ";
+	if( msg.empty() )
+		std::cout << msg;
+	std::cout << '\n';
+	for( const auto& elem: v )
+		std::cout << " [" << elem.first << "-" << elem.second << "] ";
+	std::cout << '\n';
+}
+
 //------------------------------------------------------------------
+///
+/**
+\verbatim
+   A         B
+F . F .   . F . F
+. F . F   F . F .
+F . F .   . F . F
+. F . F   F . F .
+
+
+   C          D
+. F F .    F . . F
+F . . F    . F F .
+. F F .    F . . F
+F . . F    . F F .
+
+   E
+. F F .
+F . . F
+F . . F
+. F F .
+\endverbatim
+*/
+int checkSituation( const Table& table )
+{
+	auto t2 = getBoolArray( table );
+	printBoolArray( t2 );
+	std::array<TableB,5> tarray;
+
+	tarray[0] = {{
+		{ 1,0,1,0 },
+		{ 0,1,0,1 },
+		{ 1,0,1,0 },
+		{ 0,1,0,1 }
+	}};
+
+	tarray[1] = {{
+		{ 0,1,0,1 },
+		{ 1,0,1,0 },
+		{ 0,1,0,1 },
+		{ 1,0,1,0 }
+	}};
+
+	for( int i=0; i<5; i++ )
+		if( t2 == tarray[i] )
+			return i;
+	std::cout << "NOT FOUND!\n";
+	return -1;
+}
+
+
 template<typename FPT>
 template<typename FPT2>
 Polyline_<FPT>
 FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 {
+	assert( this->intersects(other)() );
 
-// step 1: build table
+// step 1a: build vectors
 	const auto& r1 = *this;
 	const auto& r2 = other;
+
+	if( r1 == r2 )
+		return Polyline_<FPT>( r1 );
+
 	std::vector<Index<FPT>> vx, vy;
-	vx.push_back( r1.getPts().first.getX() );
-	vx.push_back( r1.getPts().second.getX() );
-	vx.push_back( r2.getPts().first.getX() );
-	vx.push_back( r2.getPts().second.getX() );
-	vx.sort();
-	vy.push_back( r1.getPts().first.getY() );
-	vy.push_back( r1.getPts().second.getY() );
-	vy.push_back( r2.getPts().first.getY() );
-	vy.push_back( r2.getPts().second.getY() );
-	vy.sort();
 
+	vx.push_back( Index<FPT>( r1.getPts().first.getX(),  1) );
+	vx.push_back( Index<FPT>( r1.getPts().second.getX(), 1) );
+	vx.push_back( Index<FPT>( r2.getPts().first.getX(),  2) );
+	vx.push_back( Index<FPT>( r2.getPts().second.getX(), 2) );
+	std::sort( vx.begin(), vx.end() );
 
+	vy.push_back( Index<FPT>( r1.getPts().first.getY(),  1) );
+	vy.push_back( Index<FPT>( r1.getPts().second.getY(), 1) );
+	vy.push_back( Index<FPT>( r2.getPts().first.getY(),  2) );
+	vy.push_back( Index<FPT>( r2.getPts().second.getY(), 2) );
+	std::sort( vy.begin(), vy.end() );
+
+std::cout <<"step 1b: fill table\n";
+	Table table;
+	for( int r=0;r<4; r++ )
+		for( int c=0;c<4; c++ )
+			table[r][c] = Cell( vx[r], vy[c] );
+	printTable( table, "after 1b" );
+
+/*std::cout <<" step 1c: fill empty\n";
+
+	bool tagF = false;
+	for( int r=0;r<4; r++ )
+		for( int c=0;c<4; c++ )
+		{
+			auto& cell = table[r][c];
+			if( cell.isFilled )
+				tagF = !tagF;
+			else
+			{
+				if( tagF )
+					cell.isFilled = true;
+			}
+		}
+	tagF = false;
+	for( int c=0;c<4; c++ )
+		for( int r=0;r<4; r++ )
+		{
+			auto& cell = table[r][c];
+			if( cell.isFilled )
+				tagF = !tagF;
+			else
+			{
+				if( tagF )
+					cell.isFilled = true;
+			}
+		}
+
+	printTable( table, "after 1c" );
+*/
+
+	auto a = checkSituation( table );
+//	if( a == -1 )
+		std::cout << "a=" << a << "\n";
 // step 2: parse table
+/*
+std::cout <<" step 2: parse table\n";
+
+	std::vector<PCoord> v_pts;
+	int row = 0;
+	int col = 0;
+	recurseTable( table, row, col, v_pts );
+	printVectorPairs( v_pts );
+*/
 }
 
 //------------------------------------------------------------------
