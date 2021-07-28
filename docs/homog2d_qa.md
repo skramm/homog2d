@@ -20,8 +20,10 @@ What shall I do?
 <dd>
 A: Unfortunately, this can still happen at this time, and it is probably due to some numerical issue.
 It is difficult to consider all the possible situations in test cases, so that one just got through.<br>
-To get this solved, please add <code>#define HOMOG2D_DEBUGMODE</code> just above `#include "homog2d.hpp"`, and log the error stream of your program:<br>
-`./myapp 2>stderr` <br>
+To get this solved,
+please add <code>#define HOMOG2D_DEBUGMODE</code> just above <code>#include "homog2d.hpp"</code>,
+and log the error stream of your program:<br>
+<code>./myapp 2>stderr</code><br>
 then open an issue [here](https://github.com/skramm/homog2d/issues) and include that output (after removing non relevant parts), so this can be checked and corrected.
 </dd>
 
@@ -36,13 +38,13 @@ A: This seems to be an issue whith Catch, regular program shouldn't issue those,
 
 <dt>
 Q: why do
-`unionArea()` and `intersectArea()` not return the same data type?
+<code>unionArea()</code> and <code>intersectArea()</code> not return the same data type?
 </dt>
 <dd>
-A: because the first function returns a (flat) rectangle, and the second returns a polygon (as a closed Polyline object).
-However, both can fail (is there is no common part of course), but you cannot return an invalid FRect object.
+A: because the first function returns a (flat) rectangle, and the second returns a polygon (as a closed <code>Polyline</code> object).
+However, both can fail (is there is no common part of course), but you cannot return an invalid <code>FRect</code> object.
 Thus the first function returns a type that can be checked for success.
-A contrario, the second function will return a Polyline, and in case of failure, it will just be empty, which is perfectly valid.
+A contrario, the second function will return a <code>Polyline</code>, and in case of failure, it will just be empty, which is perfectly valid.
 </dd>
 
 </dl>
