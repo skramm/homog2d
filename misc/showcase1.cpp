@@ -1,6 +1,6 @@
 /**
-\file showcase1.cpp
-\brief Generates showcase images
+\file
+\brief Generates general showcase image
 */
 #define HOMOG2D_USE_OPENCV
 #include "../homog2d.hpp"

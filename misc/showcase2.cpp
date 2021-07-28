@@ -1,6 +1,6 @@
 /**
-\file showcase1.cpp
-\brief Generates showcase images
+\file
+\brief Generates area of intersection and union of two rectangles
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
@@ -36,11 +36,17 @@ int main( int argc, const char** argv )
 		r1.draw( imgb, color_green );
 		r2.draw( imgb, color_green );
 
-		auto a = r1.intersection(r2);
+#if 0                                  // either way is the same
+		auto a = r1.intersectArea(r2);
+		auto b = r1.unionArea(r2);
+#else
+		auto a = r1&r2;
+		auto b = r1|r2;
+#endif
+
 		if( a() )
 			a.get().draw( imga, color_red );
 
-		auto b = r1.unionPolygon(r2);
 		b.draw( imgb, color_red );
 		if( (i+1)%10 == 0 )
 		{

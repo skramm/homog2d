@@ -183,6 +183,7 @@ template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
 
 //------------------------------------------------------------------
+/// Holds drawing related code, independent of back-end library
 namespace img {
 
 /// Opaque data structure, will hold the image type, depending on back-end library
@@ -876,6 +877,8 @@ private:
 }; // class Hmatrix_
 
 
+namespace img {
+
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
 enum class PtStyle
@@ -972,6 +975,7 @@ struct DrawParams
 	}
 }; // class DrawParams
 
+} // namespace img
 
 //------------------------------------------------------------------
 namespace detail {
@@ -1097,7 +1101,7 @@ public:
 	bool isCircle() const;
 
 	template<typename T>
-	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 	Point2d_<FPT>    center() const;
 	Polyline_<FPT>   getBB()  const;
@@ -1340,7 +1344,7 @@ public:
 
 //------------------------------------------------------------------
 /// Small class to hold result of intersections of two FRect_
-/// \sa FRect_::intersection()
+/// \sa FRect_::intersectArea()
 template<typename T>
 class RectArea
 {
@@ -1424,7 +1428,7 @@ public:
 ///@}
 
 private:
-/// Private constructor from 4 points, used in intersection( const FRect_& )
+/// Private constructor from 4 points, used in intersectArea( const FRect_& )
 	template<typename T>
 	FRect_(
 		const Point2d_<T>& pt1,
@@ -1491,18 +1495,18 @@ public:
 	}
 
 	template<typename FPT2>
-	Polyline_<FPT> unionPolygon( const FRect_<FPT2>& other ) const;
+	Polyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	detail::RectArea<FPT> intersection( const FRect_<FPT2>& other ) const;
+	detail::RectArea<FPT> intersectArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
 	detail::RectArea<FPT> operator & ( const FRect_<FPT2>& other ) const
 	{
-		return this->intersection( other );
+		return this->intersectArea( other );
 	}
 	template<typename FPT2>
-	detail::RectArea<FPT> operator | ( const FRect_<FPT2>& other ) const
+	Polyline_<FPT> operator | ( const FRect_<FPT2>& other ) const
 	{
-		return this->unionPolygon( other );
+		return this->unionArea( other );
 	}
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
@@ -1639,7 +1643,7 @@ s0 |      | s2
 	operator << ( std::ostream& f, const FRect_<T>& r );
 
 	template<typename T>
-	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 private:
 	template<typename FPT2>
@@ -1881,7 +1885,7 @@ public:
 	operator << ( std::ostream& f, const Circle_<T>& r );
 
 	template<typename T>
-	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class Circle_
 
@@ -2531,7 +2535,7 @@ public:
 	}
 
 	template<typename T>
-	bool draw( img::Image<T>& img, DrawParams dp=DrawParams() ) const;
+	bool draw( img::Image<T>& img, img::DrawParams dp=img::DrawParams() ) const;
 
 #ifdef HOMOG2D_USE_OPENCV
 	template<typename RT>
@@ -2655,9 +2659,9 @@ private:
 #endif // HOMOG2D_USE_OPENCV
 
 	template<typename T>
-	bool impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const;
+	bool impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename T>
-	bool impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsLine>& ) const;
+	bool impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const;
 
 	/// Called by default constructor, overload for lines
 	void impl_init( const detail::RootHelper<type::IsLine>& )
@@ -3109,7 +3113,7 @@ the one with smallest y-coordinate will be returned first */
 	}
 
 	template<typename T>
-	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 	template<typename T>
 	friend std::ostream&
@@ -3579,7 +3583,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	operator << ( std::ostream& f, const Polyline_<T>& pl );
 
 	template<typename T>
-	void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class Polyline_
 
@@ -3767,7 +3771,7 @@ Polyline_<FPT>::area() const
 template<typename FPT>
 template<typename FPT2>
 detail::RectArea<FPT>
-FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
+FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 {
 	auto inter = this->intersects( other );
 
@@ -3861,7 +3865,7 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 }
 
 namespace priv {
-/// Common stuff for FRect_ union, see h2d::unionPolygon()
+/// Common stuff for FRect_ union, see h2d::unionArea()
 namespace runion {
 //------------------------------------------------------------------
 template<typename T>
@@ -4047,7 +4051,7 @@ Algorithm:
 template<typename FPT>
 template<typename FPT2>
 Polyline_<FPT>
-FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
+FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
 
@@ -5398,7 +5402,7 @@ Root<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Root
 /// Draw lines or points
 template<typename LP,typename FPT>
 template<typename T>
-bool Root<LP,FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+bool Root<LP,FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
 	return impl_draw( img, dp, detail::RootHelper<LP>() );
 }
@@ -5753,7 +5757,7 @@ template<
 		Prim
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const Prim& prim, const DrawParams& dp=DrawParams() )
+void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::DrawParams() )
 {
 	prim.draw( img, dp );
 }
@@ -5770,7 +5774,7 @@ template<
 		T
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const T& cont, const DrawParams& dp=DrawParams() )
+void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
 {
 	for( const auto& elem: cont )
 		elem.draw( img, dp );
@@ -5781,7 +5785,7 @@ void draw( img::Image<U>& img, const T& cont, const DrawParams& dp=DrawParams() 
 Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
 */
 template<typename T,typename U>
-void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const DrawParams& dp=DrawParams() )
+void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams& dp=img::DrawParams() )
 {
 	ppts.first.draw( img, dp );
 	ppts.second.draw( img, dp );
@@ -5877,13 +5881,13 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 void
-drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams& dp, bool drawDiag=false )
+drawPt( cv::Mat& mat, img::PtStyle ps, std::vector<cv::Point2d> vpt, const img::DrawParams& dp, bool drawDiag=false )
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
 	switch( ps )
 	{
-		case PtStyle::Times:
+		case img::PtStyle::Times:
 			vpt[0].x -= delta2;
 			vpt[0].y += delta2;
 			vpt[1].x += delta2;
@@ -5895,8 +5899,8 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams
 			vpt[3].y -= delta2;
 		break;
 
-		case PtStyle::Plus:
-		case PtStyle::Diam:
+		case img::PtStyle::Plus:
+		case img::PtStyle::Diam:
 			vpt[0].x -= delta;
 			vpt[1].x += delta;
 			vpt[2].y -= delta;
@@ -5930,7 +5934,7 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams
 template<typename LP, typename FPT>
 template<typename T>
 bool
-Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
 	if( getX()<0 || getX()>=img.cols() )
 		return false;
@@ -5940,21 +5944,21 @@ Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHe
 	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
 	switch( dp._dpValues._ptStyle )
 	{
-		case PtStyle::Plus:   // "+" symbol
-			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp );
+		case img::PtStyle::Plus:   // "+" symbol
+			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp );
 		break;
 
-		case PtStyle::Star:
-			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp );
-			detail::drawPt( img.getReal(), PtStyle::Times, vpt, dp );
+		case img::PtStyle::Star:
+			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( img.getReal(), img::PtStyle::Times, vpt, dp );
 		break;
 
-		case PtStyle::Diam:
-			detail::drawPt( img.getReal(), PtStyle::Plus,  vpt, dp, true );
+		case img::PtStyle::Diam:
+			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp, true );
 		break;
 
-		case PtStyle::Times:      // "times" symbol
-			detail::drawPt( img.getReal(), PtStyle::Times, vpt, dp );
+		case img::PtStyle::Times:      // "times" symbol
+			detail::drawPt( img.getReal(), img::PtStyle::Times, vpt, dp );
 		break;
 
 		default: assert(0);
@@ -5976,7 +5980,7 @@ Steps:
 template<typename LP, typename FPT>
 template<typename T>
 bool
-Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
+Root<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
 {
 	assert( img.rows() > 2 );
 	assert( img.cols() > 2 );
@@ -6006,7 +6010,7 @@ Root<LP,FPT>::impl_draw( img::Image<T>& img, DrawParams dp, const detail::RootHe
 template<typename FPT>
 template<typename T>
 void
-FRect_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
 	cv::rectangle(
 		img.getReal(),
@@ -6023,7 +6027,7 @@ FRect_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 template<typename FPT>
 template<typename T>
 void
-Segment_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
 	cv::line(
 		img.getReal(),
@@ -6040,7 +6044,7 @@ Segment_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 template<typename FPT>
 template<typename T>
 void
-Circle_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+Circle_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
 	cv::circle(
 		img.getReal(),
@@ -6060,7 +6064,7 @@ Circle_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 template<typename FPT>
 template<typename T>
 void
-Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
+Ellipse_<FPT>::draw( img::Image<T>& img, img::DrawParams dp )  const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	cv::ellipse(
@@ -6083,7 +6087,7 @@ Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
 template<typename FPT>
 template<typename T>
 void
-Polyline_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;

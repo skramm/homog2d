@@ -1,9 +1,5 @@
-#define HOMOG2D_USE_OPENCV
+#include "fig_src.header"
 
-#include "homog2d.hpp"
-#include "opencv2/highgui.hpp"
-
-using namespace h2d;
 int main()
 {
 	Circle c1( Point2d(120,100), 80 );

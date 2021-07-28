@@ -30,6 +30,7 @@
 #include <functional>
 
 using namespace h2d;
+using namespace h2d::img;
 
 /// General data struct used in demos
 struct Data
@@ -858,8 +859,13 @@ void action_PL( void* param )
 
 	auto bb = data.polyline.getBB();
 	bb.draw( data.img );
+
+	cv::putText(
+		data.img.getReal(),
+		std::string("length=")+ std::to_string(data.polyline.length()),
+		cv::Point2i( 20,20), 0, 0.8, cv::Scalar( 250,0,0 ), 2
+	);
 	data.showImage();
-	std::cout << "length=" << data.polyline.length() << '\n';
 }
 
 void demo_PL( int n )
@@ -1010,7 +1016,7 @@ void action_RU( void* param )
 
 	r1.draw( data.img );
 	r2.draw( data.img );
-	auto pl = r1.unionPolygon( r2 );
+	auto pl = r1.unionArea( r2 );
 	pl.draw( data.img, DrawParams().setColor( 250,10,10) );
 
 	data.showImage();

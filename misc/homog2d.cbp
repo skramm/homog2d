@@ -81,6 +81,7 @@
 		<Unit filename="demo_opencv.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="docs/figures_src/fig_src.header" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

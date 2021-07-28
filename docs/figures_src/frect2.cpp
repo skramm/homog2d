@@ -1,9 +1,5 @@
-#define HOMOG2D_USE_OPENCV
+#include "fig_src.header"
 
-#include "homog2d.hpp"
-#include "opencv2/highgui.hpp"
-
-using namespace h2d;
 int main()
 {
 	FRect r1( 50,50, 200,200 );

@@ -1164,7 +1164,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
 
-		auto a = r1.intersection(r2);
+		auto a = r1.intersectArea(r2);
 		CHECK( a() == false );       // no intersection !
 		auto b = r1&r2;
 		CHECK( b() == false );       // no intersection !
@@ -1181,7 +1181,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[0] == Point2d(2,2) );
 		CHECK( vpts[1] == Point2d(3,1) );
 
-		auto rect_inter = r1.intersection(r2);
+		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,1, 3,2) );
 		auto rect_inter2 = r1&r2;
@@ -1201,7 +1201,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[2] == Point2d(4,2) );
 		CHECK( vpts[3] == Point2d(4,4) );
 
-		auto rect_inter = r1.intersection(r2);
+		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,2, 4,4) );
 	}
@@ -1220,7 +1220,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[2] == Point2d(3,0) );
 		CHECK( vpts[3] == Point2d(3,2) );
 
-		auto rect_inter = r1.intersection(r2);
+		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,0, 3,2) );
 	}
@@ -1236,13 +1236,13 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,0 ) );
 		CHECK( vpts[1] == Point2d( 3,2 ) );
-		CHECK( r1.intersection(r2)() == false ); // no intersection
+		CHECK( r1.intersectArea(r2)() == false ); // no intersection
 
 		r2.translate( 0.000001, 0 );         // move it a bit left
 		inters = r1.intersects(r2);          // => no more intersection
 		CHECK( inters() == false );
 		CHECK( inters.size() == 0 );
-		CHECK( r1.intersection(r2)() == false ); // still no intersection
+		CHECK( r1.intersectArea(r2)() == false ); // still no intersection
 
 	}
 	{     // two rectangles joined by corner at 3,2
@@ -1252,7 +1252,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 1 );
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,2 ) );
-		CHECK( r1.intersection(r2)() == false ); // only one point !
+		CHECK( r1.intersectArea(r2)() == false ); // only one point !
 	}
 	{     // two rectangles
 #include "figures_test/frect_intersect_7.code"
@@ -1263,7 +1263,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[0] == Point2d( 2,2 ) );
 		CHECK( vpts[1] == Point2d( 4,2 ) );
 
-		auto rect_inter = r1.intersection(r2);
+		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,2, 4,3) );
 	}
@@ -1276,7 +1276,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[0] == Point2d( 3,3 ) );
 		CHECK( vpts[1] == Point2d( 4,2 ) );
 		CHECK( vpts[2] == Point2d( 4,3 ) );
-//		auto rect_inter = r1.intersection(r2);
+//		auto rect_inter = r1.intersectArea(r2);
 //		CHECK( rect_inter == FRect(3,2, 4,3) );
 	}
 	{     // two rectangles with a single common segment
@@ -1288,7 +1288,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[0] == Point2d( 3,3 ) );
 		CHECK( vpts[1] == Point2d( 4,2 ) );
 		CHECK( vpts[2] == Point2d( 4,3 ) );
-//		auto rect_inter = r1.intersection(r2);
+//		auto rect_inter = r1.intersectArea(r2);
 //		CHECK( rect_inter == FRect(3,2, 4,3) );
 	}
 }

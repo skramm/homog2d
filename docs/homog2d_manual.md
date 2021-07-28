@@ -792,13 +792,12 @@ one can use either the named function, or the `&` operator.
 For the union of two rectangles, the operation is similar, but it will return a (closed) `Polyline` object.
 
 ```C++
-auto r_inters = r1.intersection(r2);
+auto r_inters = r1.intersectArea(r2);
 auto r_inters2 = r1 & r2;
 if( r_inters() )
-{
 	std::cout << "common area is " << r_inters.get();
-}
-auto runion = r1.unionPolygon( r2 );
+auto runion = r1.unionArea( r2 );
+auto runion2 = r1 | r2;
 ```
 
 ![showcase2a](showcase2a.gif)
@@ -880,7 +879,7 @@ Generic drawing functions are provided for all the types, using an "opaque" imag
 
 ```C++
 template<typename T>
-void draw( img::Image<T>&, DrawParams dp=DrawParams() ) const;
+void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 ```
 
 At present, this templated image datatype only implements drawing on a OpenCv image (`cv::Mat` type),
@@ -902,7 +901,7 @@ All these drawing functions support a second optional argument of type `DrawPara
 that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
-li.draw( img, DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
+li.draw( img, img::DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
@@ -914,7 +913,7 @@ DrawParams dp;                                        // default line thickness 
 dp.setColor( 0,  0, 250 ).setThickness(3);
 dp.setDefault();                                        // default is now blue, with thickness=3
 line.draw( img );                                  // use default settings (blue,...)
-line.draw( img. DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
+line.draw( img. img::DrawParams().setColor( 0,0,0) ); // warning, black, but line thickness=3 !
 ```
 
 You can at any time return to the "factory" settings with a call to a static function:
@@ -924,7 +923,7 @@ DrawParams::resetDefault();
 
 You can also save a style in a variable, to avoid lengthy lines:
 ```C++
-auto color_red = DrawParams().setColor( 250, 0, 0 );
+auto color_red = img::DrawParams().setColor( 250, 0, 0 );
 something.draw( img, color_red );
 ```
 
