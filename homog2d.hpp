@@ -221,19 +221,19 @@ struct Image
 /////////////////////////////////////////////////////////////////////////////
 
 /// Used in Line2d::getValue() and getOrthogonalLine()
-enum class GivenCoord: char { X, Y };
+enum class GivenCoord: uint8_t { X, Y };
 
 /// Used in line constructor, to instanciate a H or V line, see \ref Root( LineDir, T )
-enum class LineDir: char { H, V };
+enum class LineDir: uint8_t { H, V };
 
 /// Used in Polyline_ constructors
-enum class IsClosed: char { Yes, No };
+enum class IsClosed: uint8_t { Yes, No };
 
 /// Type of Root object, see Root::type()
-enum class Type : char { Line2d, Point2d };
+enum class Type: uint8_t { Line2d, Point2d };
 
 /// Type of underlying floating point, see Root::dtype()
-enum class Dtype : char { Float, Double, LongDouble };
+enum class Dtype: uint8_t { Float, Double, LongDouble };
 
 const char* getString( Type t )
 {
@@ -881,7 +881,7 @@ namespace img {
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
-enum class PtStyle
+enum class PtStyle: uint8_t
 {
 	Plus,   ///< "+" symbol
 	Times,  ///< "times" symbol
@@ -3908,7 +3908,7 @@ struct Cell
 using Table  = std::array<std::array<Cell,4>,4>;
 using PCoord = std::pair<uint8_t,uint8_t>;
 
-enum class Direction { N, E, S, W };
+enum class Direction: uint8_t { N, E, S, W };
 
 /* NEEDED TO DEBUG
 const char* getString( Direction dir )
@@ -4225,7 +4225,7 @@ Polyline_<FPT>::getBB() const
 namespace detail {
 
 /// Used in isBetween()
-enum class Rounding: char { Yes, No };
+enum class Rounding: uint8_t { Yes, No };
 
 /// Helper function
 template<typename T1,typename T2>
@@ -4273,7 +4273,7 @@ isInArea(
 
 //------------------------------------------------------------------
 /// See getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
-enum class PtTag: char
+enum class PtTag: uint8_t
 {
 	Inside, Outside, OnEdge
 };

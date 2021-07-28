@@ -875,7 +875,8 @@ H = m;        // or call assignment operator
 
 ### 6.2 - Drawing functions
 
-Generic drawing functions are provided for all the types, using an "opaque" image datatype:
+Generic drawing functions are provided for all the types, using an "opaque" image datatype and some other classes,
+all lying in the sub-namespace `img` :
 
 ```C++
 template<typename T>
@@ -897,7 +898,7 @@ c.draw( img );
 ```
 
 
-All these drawing functions support a second optional argument of type `DrawParams` (also back-end library independent)
+All these drawing functions support a second optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
@@ -909,7 +910,7 @@ The drawing parameters default values can be changed anytime with a call to `set
 and values will be retained, unless explicitely changed, as showed in the example below;
 
 ```C++
-DrawParams dp;                                        // default line thickness is 1
+img::DrawParams dp;                                        // default line thickness is 1
 dp.setColor( 0,  0, 250 ).setThickness(3);
 dp.setDefault();                                        // default is now blue, with thickness=3
 line.draw( img );                                  // use default settings (blue,...)
@@ -918,7 +919,7 @@ line.draw( img. img::DrawParams().setColor( 0,0,0) ); // warning, black, but lin
 
 You can at any time return to the "factory" settings with a call to a static function:
 ```C++
-DrawParams::resetDefault();
+img::DrawParams::resetDefault();
 ```
 
 You can also save a style in a variable, to avoid lengthy lines:
