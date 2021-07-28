@@ -608,7 +608,6 @@ public:
 - no checking is done on validity of matrix as an homography.
 Thus some assert can get triggered elsewhere.
 */
-
 	template<typename T>
 	Hmatrix_( const std::vector<std::vector<T>>& in )
 	{
@@ -1679,48 +1678,6 @@ private:
 
 }; // class FRect_
 
-/// Returns the 4 points of the rectangle (free function)
-/// \sa FRect_::get4Pts()
-template<typename FPT>
-std::array<Point2d_<FPT>,4>
-get4Pts( const FRect_<FPT>& rect )
-{
-	return rect.get4Pts();
-}
-
-/// Returns the 2 major points of the rectangle (free function)
-/// \sa FRect_::getPts()
-template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
-getPts( const FRect_<FPT>& rect )
-{
-	return rect.getPts();
-}
-
-/// Free function
-template<typename FPT>
-HOMOG2D_INUMTYPE height( const FRect_<FPT>& rect )
-{
-	return rect.height();
-}
-/// Free function
-template<typename FPT>
-HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
-{
-	return rect.width();
-}
-/// Free function
-template<typename FPT>
-HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
-{
-	return rect.area();
-}
-/// Free function
-template<typename FPT>
-HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
-{
-	return rect.length();
-}
 
 //------------------------------------------------------------------
 /// A circle
@@ -1898,13 +1855,6 @@ FRect_<FPT>::getBoundingCircle() const
 	return Circle_<FPT>( middle_pt, middle_pt.distTo( pts[0] ) );
 }
 
-/// Return circle passing through 4 points of flat rectangle (free function)
-template<typename FPT>
-Circle_<FPT>
-getBoundingCircle( const FRect_<FPT>& rect )
-{
-	return rect.getBoundingCircle();
-}
 
 /*
 /// Constructor: build Ellipse from Circle
@@ -3136,103 +3086,6 @@ the one with smallest y-coordinate will be returned first */
 
 }; // class Segment_
 
-//------------------------------------------------------------------
-/// Returns the points of Segment as a std::pair (free function)
-/// \sa Segment_::getPts()
-template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
-getPts( const Segment_<FPT>& seg )
-{
-	return seg.getPts();
-}
-
-/// Returns Segment supporting line (free function)
-/// \sa Segment_::getLine()
-template<typename FPT>
-Line2d_<FPT> getLine( const Segment_<FPT>& seg )
-{
-	return seg.getLine();
-}
-
-//------------------------------------------------------------------
-/// Free function, returns segment between two circle centers
-template<typename FPT1,typename FPT2>
-Segment_<FPT1>
-getSegment( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
-{
-	return Segment_<FPT1>( c1.center(), c2.center() );
-}
-
-/// Free function, returns line between two circle centers
-template<typename FPT1,typename FPT2,typename FPT3>
-Line2d_<FPT1>
-getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
-{
-	return Line2d_<FPT1>( c1.center(), c2.center() );
-}
-
-/// Free function, returns middle point of segment
-/// \sa Segment_::getMiddlePoint()
-template<typename FPT>
-Point2d_<FPT>
-getMiddlePoint( const Segment_<FPT>& seg )
-{
-	return seg.getMiddlePoint();
-}
-
-/// Free function, returns middle point of set of segments
-/**
-\sa Segment_::getMiddlePoint()
-- input: set of segments
-- output: set of points (same container)
-*/
-
-template<typename FPT>
-std::vector<Point2d_<FPT>>
-getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
-{
-	std::vector<Point2d_<FPT>> vout( vsegs.size() );
-
-	auto it = std::begin( vout );
-	for( const auto& seg: vsegs )
-		*it++ = getMiddlePoint( seg );
-	return vout;
-}
-
-/// Free function, returns segments of the rectangle
-/// \sa FRect_::getSegs()
-template<typename FPT>
-std::array<Segment_<FPT>,4>
-getSegs( const FRect_<FPT>& seg )
-{
-	return seg.getSegs();
-}
-
-/// Free function, returns the pair of segments tangential to the two circles
-template<typename FPT1,typename FPT2>
-std::pair<Segment_<FPT1>,Segment_<FPT1>>
-getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if( c1 == c2 )
-		HOMOG2D_THROW_ERROR_1B( "c1 and c2 identical" );
-#endif
-
-	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
-	auto li1 = li0.getOrthogonalLine( c1.center() );
-	auto li2 = li0.getOrthogonalLine( c2.center() );
-
-	const auto ri1 = li1.intersects( c1 );
-	const auto ri2 = li2.intersects( c2 );
-	assert( ri1() && ri2() );
-	const auto& ppts1 = ri1.get();
-	const auto& ppts2 = ri2.get();
-
-	return std::make_pair(
-		Segment_<FPT1>( ppts1.first,  ppts2.first  ),
-		Segment_<FPT1>( ppts1.second, ppts2.second )
-	);
-}
 
 /// Circle/Circle intersection
 /**
@@ -4125,103 +3978,6 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 // step 4: convert back vector of coordinates indexes into vector of coordinates
 	return convertToCoord( vpts, vx, vy );
 }
-
-//------------------------------------------------------------------
-/// Returns true if is a polygon (free function)
-///  \sa Polyline_::isPolygon()
-template<typename FPT>
-bool
-isPolygon( const Polyline_<FPT>& pl )
-{
-	return pl.isPolygon();
-}
-
-/// Returns the number of segments (free function)
-/// \sa Polyline_::nbSegs()
-template<typename FPT>
-size_t nbSegs( const Polyline_<FPT>& pl )
-{
-	return pl.nbSegs();
-}
-
-/// Get segment length (free function)
-/// \sa Segment_::length()
-template<typename FPT>
-HOMOG2D_INUMTYPE
-length( const Segment_<FPT>& seg )
-{
-	return seg.length();
-}
-
-/// Returns length (free function)
-/// \sa Polyline_::length()
-template<typename FPT>
-HOMOG2D_INUMTYPE
-length( const Polyline_<FPT>& pl )
-{
-	return pl.length();
-}
-
-/// Returns the segments of the polyline (free function)
-/// \sa Polyline_::getSegs()
-template<typename FPT>
-std::vector<Segment_<FPT>>
-getSegs( const Polyline_<FPT>& pl )
-{
-	return pl.getSegs();
-}
-
-/// Returns the number of points (free function)
-/// \sa Polyline_::size()
-template<typename FPT>
-size_t size( const Polyline_<FPT>& pl )
-{
-	return pl.size();
-}
-
-
-/// Returns Bounding Box (free function)
-/// \sa Segment_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Segment_<FPT>& seg )
-{
-	return seg.getBB();
-}
-
-/// Returns Bounding Box (free function)
-/// \sa Circle_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Circle_<FPT>& cir )
-{
-	return cir.getBB();
-}
-
-/// Returns Bounding Box (free function)
-/// \sa FRect_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Polyline_<FPT>& pl )
-{
-	return pl.getBB();
-}
-
-/// Returns Bounding Box of arbitrary container holding points (free function)
-template<
-	typename T,
-	typename std::enable_if<
-		priv::Is_Container<T>::value,
-		T
-	>::type* = nullptr
->
-//FRect_<typename T::value_type::FType> // if we dont have C++14 but only C++11
-auto
-getBB( const T& vpts )
-{
-	return priv::getPointsBB( vpts );
-}
-
 
 /// Returns Bounding Box
 template<typename FPT>
@@ -5518,7 +5274,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 	return line;
 }
 
-#if 0
+#ifdef HOMOG2D_FUTURE_STUFF
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
 template<typename T,typename U,typename V>
@@ -5683,10 +5439,253 @@ operator * (
 	return vout;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
+
+/// Returns circle passing through 4 points of flat rectangle (free function)
+template<typename FPT>
+Circle_<FPT>
+getBoundingCircle( const FRect_<FPT>& rect )
+{
+	return rect.getBoundingCircle();
+}
+
+/// Returns true if is a polygon (free function)
+///  \sa Polyline_::isPolygon()
+template<typename FPT>
+bool
+isPolygon( const Polyline_<FPT>& pl )
+{
+	return pl.isPolygon();
+}
+
+/// Returns the number of segments (free function)
+/// \sa Polyline_::nbSegs()
+template<typename FPT>
+size_t nbSegs( const Polyline_<FPT>& pl )
+{
+	return pl.nbSegs();
+}
+
+/// Get segment length (free function)
+/// \sa Segment_::length()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+length( const Segment_<FPT>& seg )
+{
+	return seg.length();
+}
+
+/// Returns length (free function)
+/// \sa Polyline_::length()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+length( const Polyline_<FPT>& pl )
+{
+	return pl.length();
+}
+
+/// Returns the segments of the polyline (free function)
+/// \sa Polyline_::getSegs()
+template<typename FPT>
+std::vector<Segment_<FPT>>
+getSegs( const Polyline_<FPT>& pl )
+{
+	return pl.getSegs();
+}
+
+/// Returns the number of points (free function)
+/// \sa Polyline_::size()
+template<typename FPT>
+size_t size( const Polyline_<FPT>& pl )
+{
+	return pl.size();
+}
+
+
+/// Returns Bounding Box (free function)
+/// \sa Segment_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Segment_<FPT>& seg )
+{
+	return seg.getBB();
+}
+
+/// Returns Bounding Box (free function)
+/// \sa Circle_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Circle_<FPT>& cir )
+{
+	return cir.getBB();
+}
+
+/// Returns Bounding Box (free function)
+/// \sa FRect_::getBB()
+template<typename FPT>
+FRect_<FPT>
+getBB( const Polyline_<FPT>& pl )
+{
+	return pl.getBB();
+}
+
+/// Returns Bounding Box of arbitrary container holding points (free function)
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+//FRect_<typename T::value_type::FType> // if we dont have C++14 but only C++11
+auto
+getBB( const T& vpts )
+{
+	return priv::getPointsBB( vpts );
+}
+
+//------------------------------------------------------------------
+/// Returns the points of Segment as a std::pair (free function)
+/// \sa Segment_::getPts()
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+getPts( const Segment_<FPT>& seg )
+{
+	return seg.getPts();
+}
+
+/// Returns Segment supporting line (free function)
+/// \sa Segment_::getLine()
+template<typename FPT>
+Line2d_<FPT> getLine( const Segment_<FPT>& seg )
+{
+	return seg.getLine();
+}
+
+//------------------------------------------------------------------
+/// Free function, returns segment between two circle centers
+template<typename FPT1,typename FPT2>
+Segment_<FPT1>
+getSegment( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
+{
+	return Segment_<FPT1>( c1.center(), c2.center() );
+}
+
+/// Free function, returns line between two circle centers
+template<typename FPT1,typename FPT2,typename FPT3>
+Line2d_<FPT1>
+getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
+{
+	return Line2d_<FPT1>( c1.center(), c2.center() );
+}
+
+/// Free function, returns middle point of segment
+/// \sa Segment_::getMiddlePoint()
+template<typename FPT>
+Point2d_<FPT>
+getMiddlePoint( const Segment_<FPT>& seg )
+{
+	return seg.getMiddlePoint();
+}
+
+/// Free function, returns middle point of set of segments
+/**
+\sa Segment_::getMiddlePoint()
+- input: set of segments
+- output: set of points (same container)
+*/
+
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
+{
+	std::vector<Point2d_<FPT>> vout( vsegs.size() );
+
+	auto it = std::begin( vout );
+	for( const auto& seg: vsegs )
+		*it++ = getMiddlePoint( seg );
+	return vout;
+}
+
+/// Free function, returns segments of the rectangle
+/// \sa FRect_::getSegs()
+template<typename FPT>
+std::array<Segment_<FPT>,4>
+getSegs( const FRect_<FPT>& seg )
+{
+	return seg.getSegs();
+}
+
+/// Free function, returns the pair of segments tangential to the two circles
+template<typename FPT1,typename FPT2>
+std::pair<Segment_<FPT1>,Segment_<FPT1>>
+getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( c1 == c2 )
+		HOMOG2D_THROW_ERROR_1B( "c1 and c2 identical" );
+#endif
+
+	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
+	auto li1 = li0.getOrthogonalLine( c1.center() );
+	auto li2 = li0.getOrthogonalLine( c2.center() );
+
+	const auto ri1 = li1.intersects( c1 );
+	const auto ri2 = li2.intersects( c2 );
+	assert( ri1() && ri2() );
+	const auto& ppts1 = ri1.get();
+	const auto& ppts2 = ri2.get();
+
+	return std::make_pair(
+		Segment_<FPT1>( ppts1.first,  ppts2.first  ),
+		Segment_<FPT1>( ppts1.second, ppts2.second )
+	);
+}
+
+/// Returns the 4 points of the rectangle (free function)
+/// \sa FRect_::get4Pts()
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+get4Pts( const FRect_<FPT>& rect )
+{
+	return rect.get4Pts();
+}
+
+/// Returns the 2 major points of the rectangle (free function)
+/// \sa FRect_::getPts()
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+getPts( const FRect_<FPT>& rect )
+{
+	return rect.getPts();
+}
+
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE height( const FRect_<FPT>& rect )
+{
+	return rect.height();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
+{
+	return rect.width();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
+{
+	return rect.area();
+}
+/// Free function
+template<typename FPT>
+HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
+{
+	return rect.length();
+}
 
 //------------------------------------------------------------------
 /// Returns the 2 parallel lines at distance \c dist from \c li
@@ -5757,7 +5756,7 @@ isCircle(const Ellipse_<FPT>& ell )
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - GENERIC DRAWING FREE FUNCTIONS
+// SECTION  - GENERIC DRAWING FREE FUNCTIONS (BACK-END INDEPENDENT)
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
@@ -5803,6 +5802,76 @@ void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams
 	ppts.first.draw( img, dp );
 	ppts.second.draw( img, dp );
 }
+
+namespace detail {
+
+/// Private helper function, used by Root<IsPoint>::draw()
+template<typename T>
+void
+drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, const img::DrawParams& dp, bool drawDiag=false )
+{
+	auto delta  = dp._dpValues._ptDelta;
+	auto delta2 = std::round( 0.85 * delta);
+	switch( ps )
+	{
+		case img::PtStyle::Times:
+			vpt[0].move( -delta2, +delta2 );
+			vpt[1].move( +delta2, -delta2 );
+			vpt[2].move( +delta2, +delta2 );
+			vpt[3].move( -delta2, -delta2 );
+		break;
+
+		case img::PtStyle::Plus:
+		case img::PtStyle::Diam:
+			vpt[0].move( -delta2, 0.      );
+			vpt[1].move( +delta2, 0.      );
+			vpt[2].move( 0.,      -delta2 );
+			vpt[3].move( 0.,      +delta2 );
+		break;
+		default: assert(0);
+	}
+	if( !drawDiag )
+	{
+		Segment_<float> s1( vpt[0], vpt[1] );
+		Segment_<float> s2( vpt[2], vpt[3] );
+		s1.draw( img, dp );
+		s2.draw( img, dp );
+	}
+	else // draw 4 diagonal lines
+	{
+		Segment_<float>( vpt[0], vpt[2] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[2], vpt[1] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[1], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[0], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+	}
+}
+
+} // namespace detail
+
+//------------------------------------------------------------------
+/// Draw Polyline, independent of back-end library (calls the segment drawing function)
+template<typename FPT>
+template<typename T>
+void
+Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+
+	for( size_t i=0; i<size()-1; i++ )
+	{
+		const auto& pt1 = _plinevec[i];
+		const auto& pt2 = _plinevec[i+1];
+		assert( pt1 != pt2 );
+		Segment_<FPT>(pt1,pt2).draw( img, dp );
+//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
+	}
+	if( size() < 3 ) // no last segment
+		return;
+	if( _isClosed )
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING - GENERAL
@@ -5885,81 +5954,6 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 	return *this;
 }
 #endif // HOMOG2D_USE_OPENCV
-//------------------------------------------------------------------
-
-/////////////////////////////////////////////////////////////////////////////
-// SECTION  - DRAWING CODE, BACK-END INDEPENDENT
-/////////////////////////////////////////////////////////////////////////////
-
-namespace detail {
-
-/// Private helper function, used by Root<IsPoint>::draw()
-template<typename T>
-void
-drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, const img::DrawParams& dp, bool drawDiag=false )
-{
-	auto delta  = dp._dpValues._ptDelta;
-	auto delta2 = std::round( 0.85 * delta);
-	switch( ps )
-	{
-		case img::PtStyle::Times:
-			vpt[0].move( -delta2, +delta2 );
-			vpt[1].move( +delta2, -delta2 );
-			vpt[2].move( +delta2, +delta2 );
-			vpt[3].move( -delta2, -delta2 );
-		break;
-
-		case img::PtStyle::Plus:
-		case img::PtStyle::Diam:
-			vpt[0].move( -delta2, 0.      );
-			vpt[1].move( +delta2, 0.      );
-			vpt[2].move( 0.,      -delta2 );
-			vpt[3].move( 0.,      +delta2 );
-		break;
-		default: assert(0);
-	}
-	if( !drawDiag )
-	{
-		Segment_<float> s1( vpt[0], vpt[1] );
-		Segment_<float> s2( vpt[2], vpt[3] );
-		s1.draw( img, dp );
-		s2.draw( img, dp );
-	}
-	else // draw 4 diagonal lines
-	{
-		Segment_<float>( vpt[0], vpt[2] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[2], vpt[1] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[1], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[0], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-	}
-}
-
-} // namespace detail
-
-//------------------------------------------------------------------
-/// Draw Polyline, independent of back-end library (calls the segment drawing function)
-template<typename FPT>
-template<typename T>
-void
-Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
-{
-	if( size() < 2 ) // nothing to draw
-		return;
-
-	for( size_t i=0; i<size()-1; i++ )
-	{
-		const auto& pt1 = _plinevec[i];
-		const auto& pt2 = _plinevec[i+1];
-		assert( pt1 != pt2 );
-		Segment_<FPT>(pt1,pt2).draw( img, dp );
-//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
-	}
-	if( size() < 3 ) // no last segment
-		return;
-	if( _isClosed )
-		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
-}
-
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
