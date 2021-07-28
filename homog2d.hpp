@@ -623,10 +623,10 @@ Thus some assert can get triggered elsewhere.
 #ifndef HOMOG2D_NOCHECKS
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
-			HOMOG2D_THROW_ERROR_1( "Invalid line size for input: " + std::to_string(in.size()) );
+			HOMOG2D_THROW_ERROR_1B( "Invalid line size for input: " << in.size() );
 		for( auto li: in )
 			if( li.size() != 3 )
-				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " + std::to_string(li.size()) );
+				HOMOG2D_THROW_ERROR_1B( "Invalid column size for input: " << li.size() );
 #endif
 		detail::Matrix_<FPT>::p_fillWith( in );
 		normalize();
@@ -901,8 +901,9 @@ struct Color
 
 //------------------------------------------------------------------
 /// Draw parameters, independent of back-end library
-struct DrawParams
+class DrawParams
 {
+
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
@@ -921,16 +922,17 @@ struct DrawParams
 #endif // HOMOG2D_USE_OPENCV
 	};
 
+public:
 	Dp_values _dpValues;
 
-	private:
+private:
 	static Dp_values& p_getDefault()
 	{
 		static Dp_values s_defValue;
 		return s_defValue;
 	}
 
-	public:
+public:
 	DrawParams()
 	{
 		_dpValues = p_getDefault();
@@ -1218,7 +1220,7 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				HOMOG2D_THROW_ERROR_1( "No intersection points!" );
+				HOMOG2D_THROW_ERROR_1B( "No intersection points" );
 			return _ptIntersect;
 		}
 		void set( const Point2d_<FPT>& pt )
@@ -1276,7 +1278,7 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				HOMOG2D_THROW_ERROR_1( "No intersection points!" );
+				HOMOG2D_THROW_ERROR_1B( "No intersection points" );
 			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
 		}
 
@@ -2071,7 +2073,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( v1.isParallelTo(v2) )
-			HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
+			HOMOG2D_THROW_ERROR_1B( "unable to build point from these two lines, are parallel" );
 #endif
 		*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 	}
@@ -2082,7 +2084,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( v1 == v2 )
-			HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same" );
+			HOMOG2D_THROW_ERROR_1B( "unable to build line from these two points, are the same: " << v1 );
 #endif
 		*this = detail::crossProduct<type::IsLine>( v1, v2 );
 		p_normalizeLine();
@@ -2723,8 +2725,8 @@ template<typename FPT>
 FRect_<FPT> getFRect( cv::Mat& mat )
 {
 	if(  mat.cols == 0 || mat.rows == 0 )
-		throw HOMOG2D_THROW_ERROR_1(
-			"Illegal values: cols=" + std::to_string(mat.cols) + ", rows=" + std::to_string(mat.rows)
+		HOMOG2D_THROW_ERROR_1B(
+			"Illegal values: cols=" << mat.cols << ", rows=" << mat.rows
 		);
 
 	return FRect_<FPT>(
@@ -2932,9 +2934,9 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 )
 {
 	if( vpt1.size() != 4 )
-		HOMOG2D_THROW_ERROR_1( "invalid vector size for source points, should be 4, value=" + std::to_string(vpt1.size()) );
+		HOMOG2D_THROW_ERROR_1B( "invalid vector size for source points, should be 4, value=" << vpt1.size() );
 	if( vpt2.size() != 4 )
-		HOMOG2D_THROW_ERROR_1( "invalid vector size for dest points, should be 4, value=" + std::to_string(vpt2.size()) );
+		HOMOG2D_THROW_ERROR_1B( "invalid vector size for dest points, should be 4, value=" << vpt2.size() );
 	assert( method == 0 || method == 1 );
 
 	if( method == 0 )
@@ -3201,7 +3203,7 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( c1 == c2 )
-		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
+		HOMOG2D_THROW_ERROR_1B( "c1 and c2 identical" );
 #endif
 
 	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
@@ -3466,8 +3468,9 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( idx >= size() )
-			HOMOG2D_THROW_ERROR_1( "requesting point " + std::to_string(idx)
-				+ ", only has "  + std::to_string(size()) );
+			HOMOG2D_THROW_ERROR_1B( "requesting point " << idx
+				<< ", only has "  << size()
+			);
 #endif
 		return _plinevec[idx];
 	}
@@ -3480,11 +3483,12 @@ Segment \c n is the one between point \c n and point \c n+1
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( idx >= nbSegs() )
-			HOMOG2D_THROW_ERROR_1( "requesting segment " + std::to_string(idx)
-				+ ", only has "  + std::to_string(nbSegs()) );
+			HOMOG2D_THROW_ERROR_1B( "requesting segment " << idx
+				<< ", only has "  << nbSegs()
+			);
 
 		if( size() < 2 ) // nothing to draw
-			HOMOG2D_THROW_ERROR_1( "no segment "  + std::to_string(idx) );
+			HOMOG2D_THROW_ERROR_1B( "no segment " << idx );
 #endif
 //			auto lastPoint = _isClosed?
 		return Segment_<FPT>(
@@ -3511,8 +3515,8 @@ Segment \c n is the one between point \c n and point \c n+1
 #ifndef HOMOG2D_NOCHECKS
 		if( size() )
 			if( pt == _plinevec.back() )
-				HOMOG2D_THROW_ERROR_1(
-					"cannot add a point identical to previous one, " + std::to_string(size())
+				HOMOG2D_THROW_ERROR_1B(
+					"cannot add a point identical to previous one: pt=" << pt << " size=" << size()
 				);
 #endif
 		_attribs.setBad();
@@ -3608,7 +3612,7 @@ getPointsBB( const T& vpts )
 	using FPT = typename T::value_type::FType;
 #ifndef HOMOG2D_NOCHECKS
 	if( vpts.empty() )
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set !"	);
+		HOMOG2D_THROW_ERROR_1B( "cannot get bounding box of empty set" );
 #endif
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
@@ -5472,7 +5476,9 @@ operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs.isParallelTo(rhs) )
-		HOMOG2D_THROW_ERROR_1( "lines are parallel, unable to compute product" );
+		HOMOG2D_THROW_ERROR_1B( "lines are parallel, unable to compute product:\nlhs="
+			<< lhs << " rhs=" << rhs
+		);
 #endif
 
 	return detail::crossProduct<type::IsPoint,type::IsLine,FPT>(lhs, rhs);
@@ -5493,7 +5499,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs == rhs )
-		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product" );
+		HOMOG2D_THROW_ERROR_1B( "points are identical, unable to compute product:" << lhs );
 #endif
 	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
 	line.p_normalizeLine();
@@ -5694,7 +5700,7 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( !li1.isParallelTo(li2) )
-		HOMOG2D_THROW_ERROR_1( "lines are not parallel" );
+		HOMOG2D_THROW_ERROR_1B( "lines are not parallel" );
 #endif
 	const auto ar1 = li1.get();
 	const auto ar2 = li2.get();

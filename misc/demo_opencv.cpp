@@ -820,13 +820,13 @@ void demo_H( int n )
 	kbloop.addKeyAction( 'r', [&] { data.reset(); } );
 	kbloop.addKeyAction( 'a', [&]
 		{
-				data.hmethod = data.hmethod?0:1;
+			data.hmethod = data.hmethod?0:1;
 #if !defined(HOMOG2D_USE_EIGEN)
-				if( data.hmethod == 0 )
-				{
-					std::cout << "Unable, build without Eigen support, see manual, switch to Opencv\n";
-					data.hmethod = 1;
-				}
+			if( data.hmethod == 0 )
+			{
+				std::cout << "Unable, build without Eigen support, see manual, switch to Opencv\n";
+				data.hmethod = 1;
+			}
 #endif
 		}
 	);
@@ -965,7 +965,6 @@ struct Param_ELL : Data
 		liH = Line2d( LineDir::H, y0 );
 		liV = Line2d( LineDir::V, x0 );
 		H = Homogr(x0,y0).addRotation( 15. * M_PI / 180. ).addTranslation(-x0,-y0);
-//		H = Homogr( 15. * M_PI / 180. );
 		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
 	}
 
