@@ -538,14 +538,6 @@ class Hmatrix_ : public detail::Matrix_<FPT>
 {
 	template<typename T1,typename T2> friend class Root;
 
-/*	template<typename T1,typename T2,typename FPT1,typename FPT2>
-	friend void
-	detail::product( Root<T1,FPT1>&, const detail::Matrix_<FPT2>&, const Root<T2,FPT1>& );
-*/
-/*	template<typename FPT1,typename FPT2>
-	friend Ellipse_<FPT1>
-	operator * ( const Homogr_<FPT2>&, const Circle_<FPT1>& );
-*/
 	template<typename T,typename U>
 	friend Line2d_<T>
 	operator * ( const Homogr_<U>&, const Line2d_<T>& );
@@ -2311,8 +2303,15 @@ public:
 		return impl_getParallelLines( dist, detail::RootHelper<LP>() );
 	}
 
-	FPT getX() const         { return impl_getX( detail::RootHelper<LP>() ); }
-	FPT getY() const         { return impl_getY( detail::RootHelper<LP>() ); }
+	FPT getX() const { return impl_getX( detail::RootHelper<LP>() ); }
+	FPT getY() const { return impl_getY( detail::RootHelper<LP>() ); }
+
+	template<typename FPT2>
+	void move( FPT2 dx, FPT2 dy )
+	{
+		impl_move( dx, dy, detail::RootHelper<LP>() );
+	}
+
 	std::array<FPT,3> get() const { return impl_get( detail::RootHelper<LP>() ); }
 
 	template<typename T1,typename T2>
@@ -2383,6 +2382,19 @@ private:
 	}
 	template<typename T1,typename T2>
 	void impl_set( T1, T2, const detail::RootHelper<type::IsLine>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+	}
+
+	template<typename FPT2>
+	void impl_move( FPT2 dx, FPT2 dy, const detail::RootHelper<type::IsPoint>& )
+	{
+		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
+		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
+		_v[2] = 1.;
+	}
+	template<typename FPT2>
+	void impl_move( FPT2 dx, FPT2 dy, const detail::RootHelper<type::IsLine>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
@@ -5793,7 +5805,7 @@ void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - OPENCV BINDING
+// SECTION  - OPENCV BINDING - GENERAL
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
@@ -5872,63 +5884,88 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 	}
 	return *this;
 }
-
+#endif // HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - OPENCV DRAWING FUNCTIONS
+// SECTION  - DRAWING CODE, BACK-END INDEPENDENT
 /////////////////////////////////////////////////////////////////////////////
 
 namespace detail {
+
 /// Private helper function, used by Root<IsPoint>::draw()
+template<typename T>
 void
-drawPt( cv::Mat& mat, img::PtStyle ps, std::vector<cv::Point2d> vpt, const img::DrawParams& dp, bool drawDiag=false )
+drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, const img::DrawParams& dp, bool drawDiag=false )
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
 	switch( ps )
 	{
 		case img::PtStyle::Times:
-			vpt[0].x -= delta2;
-			vpt[0].y += delta2;
-			vpt[1].x += delta2;
-			vpt[1].y -= delta2;
-
-			vpt[2].x += delta2;
-			vpt[2].y += delta2;
-			vpt[3].x -= delta2;
-			vpt[3].y -= delta2;
+			vpt[0].move( -delta2, +delta2 );
+			vpt[1].move( +delta2, -delta2 );
+			vpt[2].move( +delta2, +delta2 );
+			vpt[3].move( -delta2, -delta2 );
 		break;
 
 		case img::PtStyle::Plus:
 		case img::PtStyle::Diam:
-			vpt[0].x -= delta;
-			vpt[1].x += delta;
-			vpt[2].y -= delta;
-			vpt[3].y += delta;
+			vpt[0].move( -delta2, 0.      );
+			vpt[1].move( +delta2, 0.      );
+			vpt[2].move( 0.,      -delta2 );
+			vpt[3].move( 0.,      +delta2 );
 		break;
 		default: assert(0);
 	}
 	if( !drawDiag )
 	{
-		cv::line( mat, vpt[0], vpt[1], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[2], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float> s1( vpt[0], vpt[1] );
+		Segment_<float> s2( vpt[2], vpt[3] );
+		s1.draw( img, dp );
+		s2.draw( img, dp );
 	}
 	else // draw 4 diagonal lines
 	{
-		cv::line( mat, vpt[0], vpt[2], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[2], vpt[1], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[1], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		cv::line( mat, vpt[0], vpt[3], dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[0], vpt[2] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[2], vpt[1] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[1], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[0], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
 	}
 }
 
 } // namespace detail
 
+//------------------------------------------------------------------
+/// Draw Polyline, independent of back-end library (calls the segment drawing function)
+template<typename FPT>
+template<typename T>
+void
+Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+
+	for( size_t i=0; i<size()-1; i++ )
+	{
+		const auto& pt1 = _plinevec[i];
+		const auto& pt2 = _plinevec[i+1];
+		assert( pt1 != pt2 );
+		Segment_<FPT>(pt1,pt2).draw( img, dp );
+//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
+	}
+	if( size() < 3 ) // no last segment
+		return;
+	if( _isClosed )
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - CLASS DRAWING MEMBER FUNCTIONS
+// SECTION  - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
 /// Draw points on Cv::Mat: implementation
 /// Returns false if point not in image
@@ -5942,24 +5979,24 @@ Root<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::R
 	if( getY()<0 || getY()>=img.rows() )
 		return false;
 
-	std::vector<cv::Point2d> vpt( 4, getCvPtd() );
+	std::vector<Point2d_<float>> vpt( 4, *this );
 	switch( dp._dpValues._ptStyle )
 	{
 		case img::PtStyle::Plus:   // "+" symbol
-			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp );
 		break;
 
 		case img::PtStyle::Star:
-			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp );
-			detail::drawPt( img.getReal(), img::PtStyle::Times, vpt, dp );
+			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( img, img::PtStyle::Times, vpt, dp );
 		break;
 
 		case img::PtStyle::Diam:
-			detail::drawPt( img.getReal(), img::PtStyle::Plus,  vpt, dp, true );
+			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp, true );
 		break;
 
 		case img::PtStyle::Times:      // "times" symbol
-			detail::drawPt( img.getReal(), img::PtStyle::Times, vpt, dp );
+			detail::drawPt( img, img::PtStyle::Times, vpt, dp );
 		break;
 
 		default: assert(0);
@@ -6082,30 +6119,6 @@ Ellipse_<FPT>::draw( img::Image<T>& img, img::DrawParams dp )  const
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
-
-//------------------------------------------------------------------
-/// Draw Polyline, independent of back-end library (calls the segment drawing function)
-template<typename FPT>
-template<typename T>
-void
-Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
-{
-	if( size() < 2 ) // nothing to draw
-		return;
-
-	for( size_t i=0; i<size()-1; i++ )
-	{
-		const auto& pt1 = _plinevec[i];
-		const auto& pt2 = _plinevec[i+1];
-		assert( pt1 != pt2 );
-		Segment_<FPT>(pt1,pt2).draw( img, dp );
-//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
-	}
-	if( size() < 3 ) // no last segment
-		return;
-	if( _isClosed )
-		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
-}
 
 
 /////////////////////////////////////////////////////////////////////////////
