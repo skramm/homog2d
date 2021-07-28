@@ -1013,7 +1013,8 @@ void action_RU( void* param )
 	r1.draw( data.img );
 	r2.draw( data.img );
 	auto pl = r1.unionPolygon( r2 );
-
+	pl.draw( data.img, DrawParams().setColor( 250,10,10) );
+	std::cout << pl << '\n';
 	data.showImage();
 }
 

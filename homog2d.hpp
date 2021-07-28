@@ -88,6 +88,13 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_THROW_ERROR_1( msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + std::string(__FUNCTION__) + "(): " + msg )
 
+#define HOMOG2D_THROW_ERROR_1B( msg ) \
+	{ \
+		std::ostringstream oss; \
+		oss << "homog2d: line " <<  __LINE__  << ", " << + __FUNCTION__ << "(): " << msg; \
+		throw std::runtime_error( oss.str() ); \
+	}
+
 /// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_2( f, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
@@ -250,10 +257,8 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 		   std::fabs( p0.getX() - p1.getX() ) < Point2d_<FPT>::nullOrthogDistance()
 		|| std::fabs( p0.getY() - p1.getY() ) < Point2d_<FPT>::nullOrthogDistance()
 	)
-		throw std::runtime_error(
-			std::string("error: a coordinate of the 2 points is identical, does not define a rectangle: \n ")
-			+ " p0.getX()=" + std::to_string(p0.getX()) + " p1.getX()=" + std::to_string(p1.getX())
-			+ " p0.getY()=" + std::to_string(p0.getY()) + " p1.getY()=" + std::to_string(p1.getY())
+		HOMOG2D_THROW_ERROR_1B(
+			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
 		);
 #endif
 	Point2d_<FPT> p00( std::min(p0.getX(), p1.getX()), std::min(p0.getY(), p1.getY()) );
@@ -281,10 +286,6 @@ class Matrix_
 	template<typename FPT1,typename FPT2,typename FPT3>
 	friend void
 	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
-
-//	template<typename T>
-//	friend Hmatrix_<T> operator * ( const Hmatrix_<T>& h1, const Hmatrix_<T>& h2 );
-
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -2952,7 +2953,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+			HOMOG2D_THROW_ERROR_1B( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
 #endif
 		priv::fix_order( _ptS1, _ptS2 );
 	}
@@ -2960,15 +2961,16 @@ public:
 /// Contructor 3: build segment from two points coordinates
 	template<typename T>
 	Segment_( T x1, T y1, T x2, T y2 )
+		: Segment_( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		_ptS1.set( x1, y1 );
+/*		_ptS1.set( x1, y1 );
 		_ptS2.set( x2, y2 );
 #ifndef HOMOG2D_NOCHECKS
 		if( _ptS1 == _ptS2 )
-			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points" );
+			HOMOG2D_THROW_ERROR_1B( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
 #endif
-		priv::fix_order( _ptS1, _ptS2 );
+		priv::fix_order( _ptS1, _ptS2 );*/
 	}
 
 /// Copy-Constructor
@@ -3339,15 +3341,18 @@ private:
 	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
 public:
+/** \name Constructors */
+///@{
+
 /// Default constructor
-	Polyline_( IsClosed ic = IsClosed::No )
+	Polyline_( IsClosed ic=IsClosed::No )
 	{
 		if( ic == IsClosed::Yes )
 			_isClosed = true;
 	}
 /// Constructor for single point
 	template<typename FPT2>
-	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic = IsClosed::No )
+	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic=IsClosed::No )
 	{
 		_plinevec.push_back( pt );
 		if( ic == IsClosed::Yes )
@@ -3361,10 +3366,18 @@ public:
 
 /// Constructor from FRect. Default behavior is closed
 	template<typename FPT2>
-	Polyline_( const FRect_<FPT2>& rect, IsClosed ic = IsClosed::Yes )
+	Polyline_( const FRect_<FPT2>& rect, IsClosed ic=IsClosed::Yes )
 	{
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
+		_isClosed = ( ic == IsClosed::Yes ? true : false );
+	}
+
+/// Constructor from a vector of points. Default: Open
+	template<typename FPT2>
+	Polyline_( const std::vector<Point2d_<FPT2>>& vec, IsClosed ic=IsClosed::No )
+	{
+		set( vec );
 		_isClosed = ( ic == IsClosed::Yes ? true : false );
 	}
 
@@ -3376,6 +3389,7 @@ public:
 	{
 		set( other._plinevec );
 	}
+///@}
 
 /// Returns the number of points
 	size_t size() const { return _plinevec.size(); }
@@ -3830,14 +3844,16 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 	);
 }
 
+namespace priv {
 //------------------------------------------------------------------
 template<typename T>
 struct Index
 {
-	int rect_idx=0;   // 0 means none
-	T value;
+	T       value;
+	uint8_t rect_idx=0;   // 0 means none
+
 	Index() = default;
-	Index( T v, int r )
+	Index( T v, uint8_t r )
 		: value(v), rect_idx(r)
 	{}
 	friend bool operator < ( const Index& i1, const Index& i2 )
@@ -3847,17 +3863,16 @@ struct Index
 			return i1.rect_idx < i2.rect_idx;
 		return i1.value < i2.value;
 	}
-	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
+/*	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
 	{
 		f << idx.value << " ";
 		return f;
-	}
+	}*/
 };
 
 struct Cell
 {
 	bool isCorner = false;
-	bool isParsed = false;
 	Cell() = default;
 	template<typename T>
 	Cell( const Index<T>& ix, const Index<T>& iy )
@@ -3868,19 +3883,9 @@ struct Cell
 };
 
 
-//template<typename T>
 using Table  = std::array<std::array<Cell,4>,4>;
 using TableB = std::array<std::array<bool,4>,4>;
-using PCoord = std::pair<int,int>;
-
-TableB getBoolArray( const Table& table )
-{
-	TableB out;
-	for( int r=0;r<4; r++ )
-		for( int c=0;c<4; c++ )
-			out[r][c] = table[r][c].isCorner;
-	return out;
-}
+using PCoord = std::pair<uint8_t,uint8_t>;
 
 enum class Direction { N, E, S, W };
 
@@ -3893,6 +3898,7 @@ const char* getString( Direction dir )
 		case Direction::E: return "E"; break;
 		case Direction::N: return "N"; break;
 	}
+	return 0; // to avoid a warning
 }
 
 enum class Turn: uint8_t { Left, Right };
@@ -3910,19 +3916,10 @@ Direction turn( Direction dir, Turn turn )
 		case Direction::N:
 			return turn == Turn::Left ? Direction::W : Direction::E;
 	}
+	return Direction::N; // to avoid a warning
 }
 
-/* void turnRight( ParseDirection& dir )
-{
-	switch( dir )
-	{
-		case ParseDirection::W: dir = ParseDirection::N; break;
-		case ParseDirection::S: dir = ParseDirection::W; break;
-		case ParseDirection::E: dir = ParseDirection::S; break;
-		case ParseDirection::N: dir = ParseDirection::E; break;
-	}
-} */
-void moveToNextCell( int& row, int& col, const Direction& dir )
+void moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 {
 	switch( dir )
 	{
@@ -3931,8 +3928,6 @@ void moveToNextCell( int& row, int& col, const Direction& dir )
 		case Direction::E: col++; break;
 		case Direction::W: col--; break;
 	}
-	std::cout << __FUNCTION__ << "(): new r=" << row << " c=" << col
-		<< '\n';
 }
 
 std::vector<PCoord>
@@ -3940,38 +3935,31 @@ parseTable( Table& table)
 {
 	bool firstTime = true;
 	bool done = false;
-	int row = 0;
-	int col = 0;
+	uint8_t row = 0;
+	uint8_t col = 0;
 	Direction dir = Direction::E;
 	std::vector<PCoord> out;
 	do
 	{
-		std::cout << __FUNCTION__ << "(): r=" << row << " c=" << col
-			<< " dir=" << getString( dir )
-			<< "\n";
-
+//		std::cout << __FUNCTION__ << "(): r=" << (int)row << " c=" << (int)col << " dir=" << getString( dir ) << "\n";
 		if( table[row][col].isCorner )
 		{
-			std::cout<< "corner!\n";
-			out.push_back( std::make_pair(row,col) );
-			if( out.back() == out.front() && out.size() > 2 )
-			{
-				std::cout<< __FUNCTION__  << "(): Finished!\n";
-				done = true;
-			}
+			auto new_pair = std::make_pair(row,col);
+			if( out.size() > 0 )
+				if( new_pair == out.front() && out.size() > 2 )
+					done = true;
+			if( !done )
+				out.push_back( new_pair );
 			if( firstTime )
 				firstTime = false;
 			else
-			{
 				dir = turn( dir, Turn::Right );
-				std::cout<< "change dir to " << getString(dir) << "\n";
-			}
 		}
 		else
 		{
-			std::cout<< "NOT a corner\n";
 			if( ( row==2 || row==1 ) && ( col==2 || col==1 ) )
 			{
+//				std::cout << "adding NAC pair:\n";
 				out.push_back( std::make_pair(row,col) );
 				dir = turn( dir, Turn::Left );
 			}
@@ -3986,53 +3974,75 @@ void
 printTable( const Table& t, std::string msg )
 {
 	std::cout << "Table: " << msg << "\n  | ";
-	for( int r=0;r<4; r++ )
-		std::cout << r << " ";
+	for( uint8_t r=0;r<4; r++ )
+		std::cout << (int)r << " ";
 	std::cout << "\n--|---------|\n";
-	for( int r=0;r<4; r++ )
+	for( uint8_t r=0;r<4; r++ )
 	{
-		std::cout << r << " | ";
-		for( int c=0;c<4; c++ )
+		std::cout << (int)r << " | ";
+		for( uint8_t c=0;c<4; c++ )
 			std::cout << (t[r][c].isCorner?'F':'.') << " ";
 		std::cout << "|\n";
 	}
 }
-void printBoolArray( const TableB& t )
-{
-	std::cout << "Bool Table: \n  | ";
-	for( int r=0;r<4; r++ )
-		std::cout << r << " ";
-	std::cout << "\n--|---------|\n";
-	for( int r=0;r<4; r++ )
-	{
-		std::cout << r << " | ";
-		for( int c=0;c<4; c++ )
-			std::cout << t[r][c] << " ";
-		std::cout << "|\n";
-	}
-}
-//----------v--------------------------------------------------------
+
+//------------------------------------------------------------------
 template<typename T>
-void printVectorPairs( const std::vector<std::pair<T,T>>& v, std::string msg=std::string() )
+void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 {
-	std::cout << "vector: ";
-	if( msg.empty() )
-		std::cout << msg;
-	std::cout << '\n';
+	std::cout << "vector of pairs: #=" << v.size() << '\n';
 	for( const auto& elem: v )
-		std::cout << " [" << elem.first << "-" << elem.second << "] ";
+		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
 	std::cout << '\n';
 }
 
 //------------------------------------------------------------------
+template<typename FPT>
+Polyline_<FPT>
+convertToCoord(
+	const std::vector<PCoord>&      v_coord,
+	const std::array<Index<FPT>,4>& vx,
+	const std::array<Index<FPT>,4>& vy
+)
+{
+//	std::cout << "vcoord #=" << v_coord.size() << '\n';
+	std::vector<Point2d_<FPT>> v_pts;
+	for( const auto& elem: v_coord )
+	{
+		auto id_x = elem.first;
+		auto id_y = elem.second;
+/*		std::cout << "elem: x=" << (int)id_x << " y=" << (int)id_y
+			<< " vx=" << vx[id_x].value
+			<< " vy=" << vy[id_y].value
+			<< '\n';*/
+		assert( id_x<4 && id_y<4 );
+		auto pt = Point2d_<FPT>( vx[id_x].value, vy[id_y].value );
+		if( v_pts.empty() )
+			v_pts.push_back( pt );
+		else
+		{
+			if( v_pts.back() != pt )
+				v_pts.push_back( pt );
+		}
+	}
+//	std::cout << "v_pts #=" << v_pts.size() << '\n';
+	return Polyline_<FPT>( v_pts, IsClosed::Yes );
+}
 
+} // namespace priv
 
+//------------------------------------------------------------------
+/// Computes the polygon of the union of two rectangles
+/**
+
+*/
 template<typename FPT>
 template<typename FPT2>
 Polyline_<FPT>
 FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 {
-	assert( this->intersects(other)() );
+	if( !this->intersects(other)() )  // if no intersection,
+		return Polyline_<FPT>();      // return empty polygon
 
 /* step 0: make sure the rect with highest x is first.
  This is needed to avoid this kind of situation in table:
@@ -4044,8 +4054,7 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 
   That would happen if we have an identical x in the two rect
   (thus,they DO intersect), because when sorting, the rect with smallest index
-  (1 or 2) is placed first in the vector of coordinates
-*/
+  (1 or 2) is placed first in the vector of coordinates */
 	const auto* pr1 = this;
 	const auto* pr2 = &other;
 	if( pr1->getPts().first.getX() < pr2->getPts().first.getX() )
@@ -4056,81 +4065,41 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 //	std::cout << "r2=" << r2 << "\n";
 // STEP 0 END
 
-	if( r1 == r2 )
-		return Polyline_<FPT>( r1 );
+	if( r1 == r2 )                    // if identical rectangles,
+		return Polyline_<FPT>( r1 );  // return one of them as a polygon
 
-// step 1a: build vectors
-	std::vector<Index<FPT>> vx, vy;
+// step 1: build vectors of coordinates and sort them
+	std::array<priv::Index<FPT>,4> vx, vy;
+	int i=0;
+	vx[i++] = priv::Index<FPT>( r1.getPts().first.getX(),  1);
+	vx[i++] = priv::Index<FPT>( r1.getPts().second.getX(), 1 );
+	vx[i++] = priv::Index<FPT>( r2.getPts().first.getX(),  2 );
+	vx[i++] = priv::Index<FPT>( r2.getPts().second.getX(), 2 );
 
-	vx.push_back( Index<FPT>( r1.getPts().first.getX(),  1) );
-	vx.push_back( Index<FPT>( r1.getPts().second.getX(), 1) );
-	vx.push_back( Index<FPT>( r2.getPts().first.getX(),  2) );
-	vx.push_back( Index<FPT>( r2.getPts().second.getX(), 2) );
+	i=0;
+	vy[i++] = priv::Index<FPT>( r1.getPts().first.getY(),  1 );
+	vy[i++] = priv::Index<FPT>( r1.getPts().second.getY(), 1 );
+	vy[i++] = priv::Index<FPT>( r2.getPts().first.getY(),  2 );
+	vy[i++] = priv::Index<FPT>( r2.getPts().second.getY(), 2 );
+
 	std::sort( vx.begin(), vx.end() );
-	priv::printVector( vx, "vx");
-
-	vy.push_back( Index<FPT>( r1.getPts().first.getY(),  1) );
-	vy.push_back( Index<FPT>( r1.getPts().second.getY(), 1) );
-	vy.push_back( Index<FPT>( r2.getPts().first.getY(),  2) );
-	vy.push_back( Index<FPT>( r2.getPts().second.getY(), 2) );
 	std::sort( vy.begin(), vy.end() );
-	priv::printVector( vy, "vy");
+//	priv::printVector( vx, "vx");
+//	priv::printVector( vy, "vy");
 
-//std::cout <<"step 1b: fill table\n";
-	Table table;
+// step 2: fill table\n";
+	priv::Table table;
 	for( int r=0;r<4; r++ )
 		for( int c=0;c<4; c++ )
-			table[r][c] = Cell( vx[r], vy[c] );
-	printTable( table, "after 1b" );
+			table[r][c] = priv::Cell( vx[r], vy[c] );
+	priv::printTable( table, "after step 2" );
 
-/*std::cout <<" step 1c: fill empty\n";
+// step 3: parse table
+	auto vpts = priv::parseTable( table );
+//	printVectorPairs( vpts );
 
-	bool tagF = false;
-	for( int r=0;r<4; r++ )
-		for( int c=0;c<4; c++ )
-		{
-			auto& cell = table[r][c];
-			if( cell.isCorner )
-				tagF = !tagF;
-			else
-			{
-				if( tagF )
-					cell.isCorner = true;
-			}
-		}
-	tagF = false;
-	for( int c=0;c<4; c++ )
-		for( int r=0;r<4; r++ )
-		{
-			auto& cell = table[r][c];
-			if( cell.isCorner )
-				tagF = !tagF;
-			else
-			{
-				if( tagF )
-					cell.isCorner = true;
-			}
-		}
-
-	printTable( table, "after 1c" );
-*/
-/*
-	auto a = checkSituation( table );
-//	if( a == -1 )
-		std::cout << "a=" << a << "\n";
-	auto v_coord = getCoords(a);
-	printVectorPairs( v_coord );
-*/
-
-// step 2: parse table
-
-std::cout <<" step 2: parse table\n";
-
-	auto vpts = parseTable( table );
-
-	printVectorPairs( vpts );
-
-	return Polyline_<FPT>();
+// step 4: convert back vector of coordinates indexes into vector of coordinates
+	return priv::convertToCoord( vpts, vx, vy );
 }
 
 //------------------------------------------------------------------
@@ -4557,10 +4526,15 @@ std::ostream&
 operator << ( std::ostream& f, const Polyline_<T>& pl )
 {
 	f << "Polyline: ";
-	for( const auto& pt: pl._plinevec )
-		f << pt << "-";
-	f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
-
+	if( !pl.size() )
+		f << "empty";
+	else
+	{
+		for( const auto& pt: pl._plinevec )
+			f << pt << "-";
+		f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
+	}
+	f << '\n';
 	return f;
 }
 
