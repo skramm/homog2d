@@ -787,8 +787,10 @@ bool bc2 = seg.isInside( ell );
 
 ### 5.3 - Intersection area
 
-Get the rectangle corresponding to the intersection of two rectangles:
-one can use either the named function, or the `&` operator:
+You can compute the rectangle corresponding to the intersection of two rectangles:
+one can use either the named function, or the `&` operator.
+For the union of two rectangles, the operation is similar, but it will return a (closed) `Polyline` object.
+
 ```C++
 auto r_inters = r1.intersection(r2);
 auto r_inters2 = r1 & r2;
@@ -796,9 +798,11 @@ if( r_inters() )
 {
 	std::cout << "common area is " << r_inters.get();
 }
+auto runion = r1.unionPolygon( r2 );
 ```
 
-![showcase2](showcase2.gif)
+![showcase2a](showcase2a.gif)
+![showcase2b](showcase2b.gif)
 
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.

@@ -1008,13 +1008,11 @@ void action_RU( void* param )
 	FRect r1( data.vpt[0], data.vpt[1] );
 	FRect r2( data.vpt[2], data.vpt[3] );
 
-	std::cout << "\n------------------------------\nr1=" << r1 << '\n';
-	std::cout << "r2=" << r2 << '\n';
 	r1.draw( data.img );
 	r2.draw( data.img );
 	auto pl = r1.unionPolygon( r2 );
 	pl.draw( data.img, DrawParams().setColor( 250,10,10) );
-	std::cout << pl << '\n';
+
 	data.showImage();
 }
 

@@ -12,36 +12,48 @@ using namespace h2d;
 
 int main( int argc, const char** argv )
 {
-	int n=20;
-	cv::Mat cvmat;
+	int n=30;
+	cv::Mat cvmata, cvmatb;
 	auto im_w = 350;
 	auto im_h = 180;
-	cvmat.create( im_h, im_w, CV_8UC3 );
-	img::Image<cv::Mat> img( cvmat );
+	cvmata.create( im_h, im_w, CV_8UC3 );
+	cvmatb.create( im_h, im_w, CV_8UC3 );
+	img::Image<cv::Mat> imga( cvmata );
+	img::Image<cv::Mat> imgb( cvmatb );
 
 	FRect r1(40,30, 130,90 );
-	FRect r2(160,45, 210,130 );
+	FRect r2(160,45, 210,150 );
 
 	auto color_red = DrawParams().setColor(200,20,20);
 	auto color_green = DrawParams().setColor(20,220,20);
 	int mul = 1;
 	for( int i=0; i<n; i++ )
 	{
-		cvmat = cv::Scalar(255,255,255);
-		r1.draw( img, color_green );
-		r2.draw( img, color_green );
+		cvmata = cv::Scalar(255,255,255);
+		cvmatb = cv::Scalar(255,255,255);
+		r1.draw( imga, color_green );
+		r2.draw( imga, color_green );
+		r1.draw( imgb, color_green );
+		r2.draw( imgb, color_green );
 
 		auto a = r1.intersection(r2);
 		if( a() )
-			a.get().draw( img, color_red );
+			a.get().draw( imga, color_red );
+
+		auto b = r1.unionPolygon(r2);
+		b.draw( imgb, color_red );
 		if( (i+1)%10 == 0 )
 		{
-			mul = -1;
-			r1.translate(0,40);
+			mul = mul*-1;
+			r1.translate(0,30);
 		}
-		std::ostringstream oss;
-		oss << "BUILD/showcase2_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( oss.str(), cvmat );
+		std::ostringstream ossa;
+		ossa << "BUILD/showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		cv::imwrite( ossa.str(), cvmata );
+
+		std::ostringstream ossb;
+		ossb << "BUILD/showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		cv::imwrite( ossb.str(), cvmatb );
 
 		r1.translate( mul*20,0);
 	}

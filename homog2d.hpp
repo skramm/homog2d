@@ -1499,6 +1499,11 @@ public:
 	{
 		return this->intersection( other );
 	}
+	template<typename FPT2>
+	detail::RectArea<FPT> operator | ( const FRect_<FPT2>& other ) const
+	{
+		return this->unionPolygon( other );
+	}
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
@@ -1972,17 +1977,35 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
-#if 1
-// debug function, useless at present
+#ifdef HOMOG2D_DEBUGMODE
 template<typename T>
 void printVector( const std::vector<T>& v, std::string msg=std::string() )
 {
 	std::cout << "vector: ";
 	if( msg.empty() )
 		std::cout << msg;
-	std::cout << '\n';
+	std::cout << " #=" << v.size() << '\n';
 	for( const auto& elem: v )
 		std::cout << elem << "-";
+	std::cout << '\n';
+}
+template<typename T,size_t N>
+void printArray( const std::array<T,N>& v, std::string msg=std::string() )
+{
+	std::cout << "array: ";
+	if( msg.empty() )
+		std::cout << msg;
+	std::cout << " #=" << N<< '\n';
+	for( const auto& elem: v )
+		std::cout << elem << "-";
+	std::cout << '\n';
+}
+template<typename T>
+void printVectorPairs( const std::vector<std::pair<T,T>>& v )
+{
+	std::cout << "vector of pairs: #=" << v.size() << '\n';
+	for( const auto& elem: v )
+		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
 	std::cout << '\n';
 }
 #endif
@@ -2958,19 +2981,12 @@ public:
 		priv::fix_order( _ptS1, _ptS2 );
 	}
 
-/// Contructor 3: build segment from two points coordinates
+/// Contructor 3: build segment from two points coordinates, call constructor 2
 	template<typename T>
 	Segment_( T x1, T y1, T x2, T y2 )
 		: Segment_( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-/*		_ptS1.set( x1, y1 );
-		_ptS2.set( x2, y2 );
-#ifndef HOMOG2D_NOCHECKS
-		if( _ptS1 == _ptS2 )
-			HOMOG2D_THROW_ERROR_1B( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
-#endif
-		priv::fix_order( _ptS1, _ptS2 );*/
 	}
 
 /// Copy-Constructor
@@ -2984,7 +3000,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" );
+			HOMOG2D_THROW_ERROR_1B( "cannot define a segment with two identical points" << p1 << " and " << p2 );
 #endif
 		_ptS1 = p1;
 		_ptS2 = p2;
@@ -3845,6 +3861,8 @@ FRect_<FPT>::intersection( const FRect_<FPT2>& other ) const
 }
 
 namespace priv {
+/// Common stuff for FRect_ union, see h2d::unionPolygon()
+namespace runion {
 //------------------------------------------------------------------
 template<typename T>
 struct Index
@@ -3863,11 +3881,11 @@ struct Index
 			return i1.rect_idx < i2.rect_idx;
 		return i1.value < i2.value;
 	}
-/*	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
+	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
 	{
 		f << idx.value << " ";
 		return f;
-	}*/
+	}
 };
 
 struct Cell
@@ -3884,11 +3902,11 @@ struct Cell
 
 
 using Table  = std::array<std::array<Cell,4>,4>;
-using TableB = std::array<std::array<bool,4>,4>;
 using PCoord = std::pair<uint8_t,uint8_t>;
 
 enum class Direction { N, E, S, W };
 
+/* NEEDED TO DEBUG
 const char* getString( Direction dir )
 {
 	switch( dir )
@@ -3899,7 +3917,7 @@ const char* getString( Direction dir )
 		case Direction::N: return "N"; break;
 	}
 	return 0; // to avoid a warning
-}
+}*/
 
 enum class Turn: uint8_t { Left, Right };
 
@@ -3919,7 +3937,8 @@ Direction turn( Direction dir, Turn turn )
 	return Direction::N; // to avoid a warning
 }
 
-void moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
+void
+moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 {
 	switch( dir )
 	{
@@ -3941,7 +3960,6 @@ parseTable( Table& table)
 	std::vector<PCoord> out;
 	do
 	{
-//		std::cout << __FUNCTION__ << "(): r=" << (int)row << " c=" << (int)col << " dir=" << getString( dir ) << "\n";
 		if( table[row][col].isCorner )
 		{
 			auto new_pair = std::make_pair(row,col);
@@ -3959,7 +3977,6 @@ parseTable( Table& table)
 		{
 			if( ( row==2 || row==1 ) && ( col==2 || col==1 ) )
 			{
-//				std::cout << "adding NAC pair:\n";
 				out.push_back( std::make_pair(row,col) );
 				dir = turn( dir, Turn::Left );
 			}
@@ -3970,6 +3987,7 @@ parseTable( Table& table)
 	return out;
 }
 
+#ifdef HOMOG2D_DEBUGMODE
 void
 printTable( const Table& t, std::string msg )
 {
@@ -3985,62 +4003,54 @@ printTable( const Table& t, std::string msg )
 		std::cout << "|\n";
 	}
 }
-
-//------------------------------------------------------------------
-template<typename T>
-void printVectorPairs( const std::vector<std::pair<T,T>>& v )
-{
-	std::cout << "vector of pairs: #=" << v.size() << '\n';
-	for( const auto& elem: v )
-		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
-	std::cout << '\n';
-}
-
+#endif
 //------------------------------------------------------------------
 template<typename FPT>
 Polyline_<FPT>
 convertToCoord(
-	const std::vector<PCoord>&      v_coord,
-	const std::array<Index<FPT>,4>& vx,
-	const std::array<Index<FPT>,4>& vy
+	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
+	const std::array<Index<FPT>,4>& vx,      ///< holds x-coordinates
+	const std::array<Index<FPT>,4>& vy       ///< holds y-coordinates
 )
 {
-//	std::cout << "vcoord #=" << v_coord.size() << '\n';
 	std::vector<Point2d_<FPT>> v_pts;
 	for( const auto& elem: v_coord )
 	{
 		auto id_x = elem.first;
 		auto id_y = elem.second;
-/*		std::cout << "elem: x=" << (int)id_x << " y=" << (int)id_y
-			<< " vx=" << vx[id_x].value
-			<< " vy=" << vy[id_y].value
-			<< '\n';*/
 		assert( id_x<4 && id_y<4 );
+//		std::cout << "[" << (int)id_x << "-" << (int)id_y
+//			<< "]: value=" << vx[id_x].value << "," << vy[id_y].value << '\n';
 		auto pt = Point2d_<FPT>( vx[id_x].value, vy[id_y].value );
 		if( v_pts.empty() )
 			v_pts.push_back( pt );
-		else
-		{
-			if( v_pts.back() != pt )
+		else                             // add to vector only  if not same as previous
+		{                                // and not same as first
+			if( v_pts.back() != pt && v_pts.front() != pt )
 				v_pts.push_back( pt );
 		}
 	}
-//	std::cout << "v_pts #=" << v_pts.size() << '\n';
+//	printVector( v_pts, "polyline" );
 	return Polyline_<FPT>( v_pts, IsClosed::Yes );
 }
 
 } // namespace priv
-
+} // namespace runion
 //------------------------------------------------------------------
 /// Computes the polygon of the union of two rectangles
 /**
-
+Algorithm:
+ - build vectors of x and y coordinates (4 elements)
+ - build table x-y (4x4), with corners tagged
+ - parse the table by turning right at each corner, and left if position is not one the outside row/col
 */
 template<typename FPT>
 template<typename FPT2>
 Polyline_<FPT>
 FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 {
+	using namespace priv::runion;
+
 	if( !this->intersects(other)() )  // if no intersection,
 		return Polyline_<FPT>();      // return empty polygon
 
@@ -4069,37 +4079,36 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 		return Polyline_<FPT>( r1 );  // return one of them as a polygon
 
 // step 1: build vectors of coordinates and sort them
-	std::array<priv::Index<FPT>,4> vx, vy;
+	std::array<Index<FPT>,4> vx, vy;
 	int i=0;
-	vx[i++] = priv::Index<FPT>( r1.getPts().first.getX(),  1);
-	vx[i++] = priv::Index<FPT>( r1.getPts().second.getX(), 1 );
-	vx[i++] = priv::Index<FPT>( r2.getPts().first.getX(),  2 );
-	vx[i++] = priv::Index<FPT>( r2.getPts().second.getX(), 2 );
+	vx[i++] = Index<FPT>( r1.getPts().first.getX(),  1);
+	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1 );
+	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2 );
+	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2 );
 
 	i=0;
-	vy[i++] = priv::Index<FPT>( r1.getPts().first.getY(),  1 );
-	vy[i++] = priv::Index<FPT>( r1.getPts().second.getY(), 1 );
-	vy[i++] = priv::Index<FPT>( r2.getPts().first.getY(),  2 );
-	vy[i++] = priv::Index<FPT>( r2.getPts().second.getY(), 2 );
+	vy[i++] = Index<FPT>( r1.getPts().first.getY(),  1 );
+	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1 );
+	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2 );
+	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2 );
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );
-//	priv::printVector( vx, "vx");
-//	priv::printVector( vy, "vy");
+//	priv::printArray( vx, "vx"); priv::printArray( vy, "vy");
 
 // step 2: fill table\n";
-	priv::Table table;
+	Table table;
 	for( int r=0;r<4; r++ )
 		for( int c=0;c<4; c++ )
-			table[r][c] = priv::Cell( vx[r], vy[c] );
-	priv::printTable( table, "after step 2" );
+			table[r][c] = Cell( vx[r], vy[c] );
+//	printTable( table, "after step 2" );
 
 // step 3: parse table
-	auto vpts = priv::parseTable( table );
-//	printVectorPairs( vpts );
+	auto vpts = parseTable( table );
+//	priv::printVectorPairs( vpts );
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
-	return priv::convertToCoord( vpts, vx, vy );
+	return convertToCoord( vpts, vx, vy );
 }
 
 //------------------------------------------------------------------
@@ -5911,7 +5920,6 @@ drawPt( cv::Mat& mat, PtStyle ps, std::vector<cv::Point2d> vpt, const DrawParams
 
 } // namespace detail
 
-
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - CLASS DRAWING MEMBER FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
@@ -6045,29 +6053,6 @@ Circle_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw Polyline (calls the segment drawing function)
-template<typename FPT>
-template<typename T>
-void
-Polyline_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
-{
-	if( size() < 2 ) // nothing to draw
-		return;
-
-	for( size_t i=0; i<size()-1; i++ )
-	{
-		const auto& pt1 = _plinevec[i];
-		const auto& pt2 = _plinevec[i+1];
-		Segment_<FPT>(pt1,pt2).draw( img, dp );
-//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
-	}
-	if( size() < 3 ) // no last segment
-		return;
-	if( _isClosed )
-		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
-}
-
-//------------------------------------------------------------------
 /// Draw ellipse using Opencv
 /**
 - see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
@@ -6092,6 +6077,30 @@ Ellipse_<FPT>::draw( img::Image<T>& img, DrawParams dp )  const
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
+
+//------------------------------------------------------------------
+/// Draw Polyline, independent of back-end library (calls the segment drawing function)
+template<typename FPT>
+template<typename T>
+void
+Polyline_<FPT>::draw( img::Image<T>& img, DrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+
+	for( size_t i=0; i<size()-1; i++ )
+	{
+		const auto& pt1 = _plinevec[i];
+		const auto& pt2 = _plinevec[i+1];
+		assert( pt1 != pt2 );
+		Segment_<FPT>(pt1,pt2).draw( img, dp );
+//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
+	}
+	if( size() < 3 ) // no last segment
+		return;
+	if( _isClosed )
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
+}
 
 
 /////////////////////////////////////////////////////////////////////////////
