@@ -3856,14 +3856,14 @@ struct Index
 
 struct Cell
 {
-	bool isFilled = false;
+	bool isCorner = false;
 	bool isParsed = false;
 	Cell() = default;
 	template<typename T>
 	Cell( const Index<T>& ix, const Index<T>& iy )
 	{
 		if( ix.rect_idx == iy.rect_idx )
-			isFilled = true;
+			isCorner = true;
 	}
 };
 
@@ -3878,24 +3878,41 @@ TableB getBoolArray( const Table& table )
 	TableB out;
 	for( int r=0;r<4; r++ )
 		for( int c=0;c<4; c++ )
-			out[r][c] = table[r][c].isFilled;
+			out[r][c] = table[r][c].isCorner;
 	return out;
 }
 
-enum class ParseDirection { N, E, S, W };
+enum class Direction { N, E, S, W };
 
-const char* getString( ParseDirection dir )
+const char* getString( Direction dir )
 {
 	switch( dir )
 	{
-		case ParseDirection::W: return "W"; break;
-		case ParseDirection::S: return "S"; break;
-		case ParseDirection::E: return "E"; break;
-		case ParseDirection::N: return "N"; break;
+		case Direction::W: return "W"; break;
+		case Direction::S: return "S"; break;
+		case Direction::E: return "E"; break;
+		case Direction::N: return "N"; break;
 	}
 }
 
-void changeDirection( ParseDirection& dir )
+enum class Turn: uint8_t { Left, Right };
+
+Direction turn( Direction dir, Turn turn )
+{
+	switch( dir )
+	{
+		case Direction::W:
+			return turn == Turn::Left ? Direction::S : Direction::N;
+		case Direction::S:
+			return turn == Turn::Left ? Direction::E : Direction::W;
+		case Direction::E:
+			return turn == Turn::Left ? Direction::N : Direction::S;
+		case Direction::N:
+			return turn == Turn::Left ? Direction::W : Direction::E;
+	}
+}
+
+/* void turnRight( ParseDirection& dir )
 {
 	switch( dir )
 	{
@@ -3904,50 +3921,65 @@ void changeDirection( ParseDirection& dir )
 		case ParseDirection::E: dir = ParseDirection::S; break;
 		case ParseDirection::N: dir = ParseDirection::E; break;
 	}
-}
-
-void moveToNextCell( int& row, int& col, const ParseDirection& dir )
+} */
+void moveToNextCell( int& row, int& col, const Direction& dir )
 {
 	switch( dir )
 	{
-		case ParseDirection::N: row--; break;
-		case ParseDirection::S: row++; break;
-		case ParseDirection::E: col++; break;
-		case ParseDirection::W: col--; break;
+		case Direction::N: row--; break;
+		case Direction::S: row++; break;
+		case Direction::E: col++; break;
+		case Direction::W: col--; break;
 	}
 	std::cout << __FUNCTION__ << "(): new r=" << row << " c=" << col
 		<< '\n';
 }
 
-void
-recurseTable( Table& table, int row, int col, ParseDirection& dir, std::vector<PCoord>& vpts )
+std::vector<PCoord>
+parseTable( Table& table)
 {
-	static bool firstTime = true;
-
-	std::cout <<"recurseTable(): r=" << row << " c=" << col
-		<< " dir=" << getString( dir )
-		<< "\n";
-	if( table[row][col].isFilled )
+	bool firstTime = true;
+	bool done = false;
+	int row = 0;
+	int col = 0;
+	Direction dir = Direction::E;
+	std::vector<PCoord> out;
+	do
 	{
-		std::cout<< "corner!\n";
-		vpts.push_back( std::make_pair(row,col) );
-		if( vpts.back() == vpts.front() && vpts.size() > 2 )
+		std::cout << __FUNCTION__ << "(): r=" << row << " c=" << col
+			<< " dir=" << getString( dir )
+			<< "\n";
+
+		if( table[row][col].isCorner )
 		{
-			std::cout<< __FUNCTION__  << "(): Finished!\n";
-			return;
+			std::cout<< "corner!\n";
+			out.push_back( std::make_pair(row,col) );
+			if( out.back() == out.front() && out.size() > 2 )
+			{
+				std::cout<< __FUNCTION__  << "(): Finished!\n";
+				done = true;
+			}
+			if( firstTime )
+				firstTime = false;
+			else
+			{
+				dir = turn( dir, Turn::Right );
+				std::cout<< "change dir to " << getString(dir) << "\n";
+			}
 		}
-		if( firstTime )
-			firstTime = false;
 		else
 		{
-			changeDirection( dir );
-			std::cout<< "change dir to " << getString(dir) << "\n";
+			std::cout<< "NOT a corner\n";
+			if( ( row==2 || row==1 ) && ( col==2 || col==1 ) )
+			{
+				out.push_back( std::make_pair(row,col) );
+				dir = turn( dir, Turn::Left );
+			}
 		}
+		moveToNextCell( row, col, dir );
 	}
-	else
-		std::cout<< "NOT a corner, move on\n";
-	moveToNextCell( row, col, dir );
-	recurseTable( table, row, col, dir, vpts );
+	while( !done );
+	return out;
 }
 
 void
@@ -3961,7 +3993,7 @@ printTable( const Table& t, std::string msg )
 	{
 		std::cout << r << " | ";
 		for( int c=0;c<4; c++ )
-			std::cout << (t[r][c].isFilled?'F':'.') << " ";
+			std::cout << (t[r][c].isCorner?'F':'.') << " ";
 		std::cout << "|\n";
 	}
 }
@@ -4002,13 +4034,32 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 {
 	assert( this->intersects(other)() );
 
-// step 1a: build vectors
-	const auto& r1 = *this;
-	const auto& r2 = other;
+/* step 0: make sure the rect with highest x is first.
+ This is needed to avoid this kind of situation in table:
+
+  F F . .
+  . . F F
+  . . F F
+  F F . .
+
+  That would happen if we have an identical x in the two rect
+  (thus,they DO intersect), because when sorting, the rect with smallest index
+  (1 or 2) is placed first in the vector of coordinates
+*/
+	const auto* pr1 = this;
+	const auto* pr2 = &other;
+	if( pr1->getPts().first.getX() < pr2->getPts().first.getX() )
+		std::swap( pr1, pr2 );
+	const auto& r1 = *pr1;
+	const auto& r2 = *pr2;
+//	std::cout << "r1=" << r1 << "\n";
+//	std::cout << "r2=" << r2 << "\n";
+// STEP 0 END
 
 	if( r1 == r2 )
 		return Polyline_<FPT>( r1 );
 
+// step 1a: build vectors
 	std::vector<Index<FPT>> vx, vy;
 
 	vx.push_back( Index<FPT>( r1.getPts().first.getX(),  1) );
@@ -4039,12 +4090,12 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 		for( int c=0;c<4; c++ )
 		{
 			auto& cell = table[r][c];
-			if( cell.isFilled )
+			if( cell.isCorner )
 				tagF = !tagF;
 			else
 			{
 				if( tagF )
-					cell.isFilled = true;
+					cell.isCorner = true;
 			}
 		}
 	tagF = false;
@@ -4052,12 +4103,12 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 		for( int r=0;r<4; r++ )
 		{
 			auto& cell = table[r][c];
-			if( cell.isFilled )
+			if( cell.isCorner )
 				tagF = !tagF;
 			else
 			{
 				if( tagF )
-					cell.isFilled = true;
+					cell.isCorner = true;
 			}
 		}
 
@@ -4075,13 +4126,9 @@ FRect_<FPT>::unionPolygon( const FRect_<FPT2>& other ) const
 
 std::cout <<" step 2: parse table\n";
 
-	std::vector<PCoord> v_pts;
-	int row = 0;
-	int col = 0;
-	ParseDirection dir = ParseDirection::E;
-	recurseTable( table, row, col, dir, v_pts );
+	auto vpts = parseTable( table );
 
-	printVectorPairs( v_pts );
+	printVectorPairs( vpts );
 
 	return Polyline_<FPT>();
 }
