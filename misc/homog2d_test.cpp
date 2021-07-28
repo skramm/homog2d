@@ -1573,9 +1573,28 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 
 TEST_CASE( "Circle", "[cir1]" )
 {
-	Circle c1;
-	CHECK( c1.center() == Point2d(0,0) );
-	CHECK( center(c1)  == Point2d(0,0) );
+	{
+		Circle_<NUMTYPE> c1;       // Default constructor
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( center(c1)  == Point2d(0,0) );
+		CHECK( c1.radius() == 1. );
+	}
+	{
+		Circle_<NUMTYPE> c1(444);  // Constructor 2
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 444. );
+	}
+	{
+		Point2d pt( 4,5);
+		Circle_<NUMTYPE> c1(pt,3);  // Constructor 3
+		CHECK( c1.center() == Point2d(4,5) );
+		CHECK( c1.radius() == 3 );
+	}
+	{
+		Circle_<NUMTYPE> c1(1,2,3);  // Constructor 4
+		CHECK( c1.center() == Point2d(1,2) );
+		CHECK( c1.radius() == 3 );
+	}
 }
 
 

@@ -334,12 +334,13 @@ void mouse_CB_ELL( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_ELL, param );
 }
 
-/// Mouse callback for demo_ELL
+#if 0
+/// Mouse callback for demo_RU
 void mouse_CB_RU( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_RU, param );
 }
-
+#endif
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -863,8 +864,15 @@ void action_PL( void* param )
 	cv::putText(
 		data.img.getReal(),
 		std::string("length=")+ std::to_string(data.polyline.length()),
-		cv::Point2i( 20,20), 0, 0.8, cv::Scalar( 250,0,0 ), 2
+		cv::Point2i( 20,20), 0, 0.6, cv::Scalar( 250,0,0 ), 2
 	);
+	if( data.polyline.isPolygon() )
+		cv::putText(
+			data.img.getReal(),
+			std::string("area=")+ std::to_string(data.polyline.area()),
+			cv::Point2i( 20,40), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+		);
+
 	data.showImage();
 }
 
@@ -1005,7 +1013,8 @@ void demo_ELL( int n )
 }
 
 //------------------------------------------------------------------
-/// Ellipse demo
+#if 0
+/// rectangle Union
 void action_RU( void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
@@ -1041,7 +1050,7 @@ void demo_RU( int n )
 	action_RU( &data );
 	kbloop.start( data );
 }
-
+#endif
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -1055,7 +1064,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
-		demo_RU,
+//		demo_RU,
 		demo_B,
 		demo_ELL,
 		demo_CC,

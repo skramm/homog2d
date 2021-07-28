@@ -288,6 +288,9 @@ class Matrix_
 	friend void
 	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
+private:
+	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
+
 protected:
 	mutable matrix_t<FPT> _mdata;
 	mutable bool          _isNormalized = false;
@@ -361,13 +364,11 @@ See https://en.wikipedia.org/wiki/Determinant
 	}
 
 /// Inverse matrix
-/// \todo magic value here !
 	Matrix_& inverse()
 	{
 		auto det = determ();
-		if( std::abs(det) <= 1E-10 )
-//	if( std::abs(det) <= Hmatrix_<FPT>::nullDeterValue() )
-			throw std::runtime_error( "matrix is not invertible" );
+		if( std::abs(det) < nullDeterValue() )
+			HOMOG2D_THROW_ERROR_1B( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
 
 		auto adjugate = p_adjugate();
 		p_divideAll(adjugate, det);
@@ -381,13 +382,10 @@ See https://en.wikipedia.org/wiki/Determinant
 protected:
 	void p_normalize( int r, int c ) const
 	{
-		auto eps = std::numeric_limits<FPT>::epsilon()*1000;
-
-		if( std::fabs(_mdata[r][c]) < eps )
-			HOMOG2D_THROW_ERROR_1(
-				"Unable to normalize matrix, value at "
-				+ std::to_string(r) + "," +std::to_string(c)
-				+ " is too small"
+		if( std::fabs(_mdata[r][c]) < nullDeterValue() )
+			HOMOG2D_THROW_ERROR_1B(
+				"Unable to normalize matrix, value at ("
+					<< r << ',' << c << ") less than " << nullDeterValue()
 			);
 		p_divideBy( r, c );
 		if( std::signbit( _mdata[r][c] ) )
@@ -502,6 +500,10 @@ private:
 		return f;
 	}
 
+public:
+	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
+
+private:
 
 }; // class Matrix_
 
@@ -661,7 +663,6 @@ Thus some assert can get triggered elsewhere.
 	Hmatrix_( const Hmatrix_<M,FPT>& other )
 		: detail::Matrix_<FPT>( other)
 		, _hasChanged   ( true )
-		, _isNormalized ( other._isNormalized )
 		, _hmt          (  nullptr )
 	{
 		detail::Matrix_<FPT>::getRaw() = other.getRaw();
@@ -727,7 +728,7 @@ Thus some assert can get triggered elsewhere.
 		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][2] = tx;
 		mat[1][2] = ty;
-		_isNormalized = true;
+		detail::Matrix_<FPT>::isNormalized() = true;
 		_hasChanged = true;
 		return *this;
 	}
@@ -751,7 +752,7 @@ Thus some assert can get triggered elsewhere.
 		mat[0][0] = mat[1][1] = std::cos(theta);
 		mat[1][0] = std::sin(theta);
 		mat[0][1] = -mat[1][0];
-		_isNormalized = true;
+		detail::Matrix_<FPT>::isNormalized() = true;
 		_hasChanged = true;
 		return *this;
 	}
@@ -791,7 +792,7 @@ Thus some assert can get triggered elsewhere.
 		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][0] = kx;
 		mat[1][1] = ky;
-		_isNormalized = true;
+		detail::Matrix_<FPT>::isNormalized() = true;
 		_hasChanged = true;
 		return *this;
 	}
@@ -830,9 +831,9 @@ public:
 	{
 		auto& data = detail::Matrix_<FPT>::_mdata;
 
-		if( !_isNormalized )
+		if( !detail::Matrix_<FPT>::isNormalized() )
 			normalize();
-		if( !h._isNormalized )
+		if( !h.isNormalized() )
 			h.normalize();
 
 		auto eps = std::numeric_limits<FPT>::epsilon()*100;
@@ -840,7 +841,7 @@ public:
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
 					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h.value(i,j) ) )
-					>= eps
+					>= detail::Matrix_<FPT>::nullDeterValue()
 				)
 					return false;
 		return true;
@@ -850,7 +851,6 @@ public:
 	{
 		return !(*this == h);
 	}
-	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -863,7 +863,7 @@ public:
 //////////////////////////
 private:
 	mutable bool _hasChanged   = true;
-	mutable bool _isNormalized = false;
+//	mutable bool _isNormalized = false;
 	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
@@ -872,7 +872,6 @@ private:
 			<< static_cast<const detail::Matrix_<FPT>&>(h);
 		return f;
 	}
-	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
 
 }; // class Hmatrix_
 
@@ -1748,29 +1747,31 @@ public:
 	Circle_() : _radius(1.)
 	{}
 
-/// Constructor, given radius circle at (0,0)
+/// Constructor 2, given radius circle at (0,0)
 	template<typename T>
-	explicit Circle_( T rad ) : _radius(rad)
+	explicit Circle_( T rad )
+		: Circle_( Point2d_<FPT>(), rad )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
 
-/// Constructor
+/// Constructor 3: point and radius
 	template<typename T1, typename T2>
 	Circle_( const Point2d_<T1>& center, T2 rad )
 		: _radius(rad), _center(center)
 	{
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+			HOMOG2D_THROW_ERROR_1B( "radius must not be 0" );
 	}
 
-/// Constructor
+/// Constructor 4: x, y, radius
 	template<typename T1, typename T2>
 	Circle_( T1 x, T1 y, T2 rad )
 		: Circle_( Point2d_<FPT>(x,y), rad )
-	{}
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+	}
 
 /// Copy-Constructor
 	template<typename FPT2>
@@ -2690,10 +2691,6 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radia
 
 /// Instanciation of static variable
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE Hmatrix_<LP,FPT>::_zeroDeterminantValue = 1E-20;
-
-/// Instanciation of static variable
-template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-8;
 
 /// Instanciation of static variable
@@ -2706,6 +2703,10 @@ HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDenom = 1E-10;
 /// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
+
+/// Instanciation of static variable
+template<typename FPT>
+HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
 
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
@@ -3688,12 +3689,6 @@ Polyline_<FPT>::length() const
 
 //------------------------------------------------------------------
 /// Returns area of polygon
-/**
-\todo Needs more testing !
-Conditions:
- - must be closed
- - no intersections (Polyline must be a polygon
-*/
 template<typename FPT>
 HOMOG2D_INUMTYPE
 Polyline_<FPT>::area() const
@@ -3865,7 +3860,7 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 }
 
 namespace priv {
-/// Common stuff for FRect_ union, see h2d::unionArea()
+/// Common stuff for FRect_ union, see FRect_::unionArea()
 namespace runion {
 //------------------------------------------------------------------
 template<typename T>
