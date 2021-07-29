@@ -440,7 +440,7 @@ protected:
 		_isNormalized = false;
 	}
 
-/// Divide all elements of \c mat by \v value (free function)
+/// Divide all elements of \c mat by \v value
 	template<typename FPT2>
 	void p_divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
 	{
@@ -5055,8 +5055,6 @@ getAngle( const T1& li1, const T2& li2 )
 	return li1.getAngle( li2 );
 }
 
-
-
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
@@ -5581,6 +5579,21 @@ operator * (
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
+
+
+template<typename FPT1,typename FPT2>
+Polyline_<FPT1>
+unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+{
+	return r1.unionArea(r2);
+}
+
+template<typename FPT1,typename FPT2>
+detail::RectArea<FPT>
+intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+{
+	return r1.intersectArea(r2);
+}
 
 /// Returns circle passing through 4 points of flat rectangle (free function)
 template<typename FPT>

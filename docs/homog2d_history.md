@@ -16,7 +16,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `Ellipse` type, and associated homography (circle=>ellipse and ellipse=>ellipse)
   - added speed test to compare Ellipse code with and without memory/speed tradeoff (see [build_options](homog2d_manual#build_options) for details).
   - renamed `CvDrawParams` => `DrawParams` (intent: planning multiple graphics back-end)
-  - added Frect union and intersection areas: `unionArea()` and `intersectArea()`, and associated operators
+  - added `Frect` union and intersection areas: `unionArea()` and `intersectArea()`, associated operators and free functions
   - added normalization to closed `Polyline` so that they can be compared
   - classe `Point2d`, `FRect`, `Circle`  and `Ellipse` now all have a `translate(dx,dy)` member function
 

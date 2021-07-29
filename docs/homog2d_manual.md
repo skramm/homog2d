@@ -785,26 +785,30 @@ bool bc2 = seg.isInside( ell );
 
 (note: not yet available for ellipse type.)
 
-### 5.3 - Intersection area
+### 5.3 - Union and Intersection area of two rectangles
 
 You can compute the rectangle corresponding to the intersection of two rectangles:
 one can use either the named function, or the `&` operator.
-For the union of two rectangles, the operation is similar, but it will return a (closed) `Polyline` object.
+For the union of two rectangles, the operation is similar, but it will return a (closed) `Polyline` object.<br>
+Corresponding free function are also available.
 
 ```C++
-auto r_inters = r1.intersectArea(r2);
-auto r_inters2 = r1 & r2;
-if( r_inters() )
-	std::cout << "common area is " << r_inters.get();
-auto runion = r1.unionArea( r2 );
-auto runion2 = r1 | r2;
+auto a1 = r1.intersectArea(r2);
+auto a2 = r1 & r2;
+auto a3 = intersectArea( r1, r2 );
+if( a1() )
+	std::cout << "common area is " << a1.get();
+auto b1 = r1.unionArea( r2 );
+auto b2 = r1 | r2;
+auto b3 = unionArea( r1, r2 );
 ```
 
 ![showcase2a](showcase2a.gif)
 ![showcase2b](showcase2b.gif)
 
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
-or a single intersection point.
+or a single intersection point.<br>
+For the union, if there is no intersection, the function will return an empty `Polyline` object.
 
 
 ## 6 - Bindings with other libraries
