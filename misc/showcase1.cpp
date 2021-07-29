@@ -26,7 +26,9 @@ int main( int argc, const char** argv )
 	Homogr HT2( -im_w/2, -100 );
 	Homogr H = HT1 * Hr * HT2;
 
-	Circle cir( Point2d( 265,195), 40 );
+	Circle cir_fixed( Point2d( 265,195), 40 );
+	Circle cir( Point2d( 43,55), 55 );
+
 //	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
 	FRect r_fixed( 40,100,130,155 );
 	Segment seg( 85,210, 335, 25 );
@@ -52,10 +54,11 @@ int main( int argc, const char** argv )
 		liv.draw( myImg );
 		li.draw( myImg, color_green );
 		pl.draw( myImg, DrawParams().setColor(20,0,250) );
+		cir.draw( myImg, DrawParams().setColor(20,0,250) );
 
 		r_fixed.draw( myImg, color_green );
 		seg.draw( myImg, color_green );
-		cir.draw( myImg, color_green );
+		cir_fixed.draw( myImg, color_green );
 
 		auto inters = pl.intersects( li );
 		if( inters() )
@@ -65,13 +68,14 @@ int main( int argc, const char** argv )
 		if( inters2() )
 			draw( myImg, inters2.get(), color_red );
 
-		auto inters3 = pl.intersects( cir );
+		auto inters3 = pl.intersects( cir_fixed );
 		if( inters3() )
 			draw( myImg, inters3.get(), color_red );
 
 		auto inters4 = pl.intersects( seg );
 		if( inters4() )
 			draw( myImg, inters4.get(), color_red );
+
 
 
 /* NOT YET IMPLEMENTED !
@@ -86,6 +90,8 @@ int main( int argc, const char** argv )
 		pl = H * pl;
 		lih = H*lih;
 		liv = H*liv;
+
+		cir.translate( 12,8);
 	}
 }
 

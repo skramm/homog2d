@@ -1775,6 +1775,13 @@ public:
 		_radius = rad;
 		_center = center;
 	}
+
+	template<typename T1, typename T2>
+	void translate( T1 dx, T2 dy )
+	{
+		_center.translate( dx, dy );
+	}
+
 /// Returns true if circle is inside \c other circle
 	template<typename FPT2>
 	bool isInside( const Circle_<FPT2>& other ) const
@@ -2288,7 +2295,7 @@ public:
 	FPT getY() const { return impl_getY( detail::RootHelper<LP>() ); }
 
 	template<typename FPT2>
-	void move( FPT2 dx, FPT2 dy )
+	void translate( FPT2 dx, FPT2 dy )
 	{
 		impl_move( dx, dy, detail::RootHelper<LP>() );
 	}
@@ -5940,18 +5947,18 @@ drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, c
 	switch( ps )
 	{
 		case img::PtStyle::Times:
-			vpt[0].move( -delta2, +delta2 );
-			vpt[1].move( +delta2, -delta2 );
-			vpt[2].move( +delta2, +delta2 );
-			vpt[3].move( -delta2, -delta2 );
+			vpt[0].translate( -delta2, +delta2 );
+			vpt[1].translate( +delta2, -delta2 );
+			vpt[2].translate( +delta2, +delta2 );
+			vpt[3].translate( -delta2, -delta2 );
 		break;
 
 		case img::PtStyle::Plus:
 		case img::PtStyle::Diam:
-			vpt[0].move( -delta2, 0.      );
-			vpt[1].move( +delta2, 0.      );
-			vpt[2].move( 0.,      -delta2 );
-			vpt[3].move( 0.,      +delta2 );
+			vpt[0].translate( -delta2, 0.      );
+			vpt[1].translate( +delta2, 0.      );
+			vpt[2].translate( 0.,      -delta2 );
+			vpt[3].translate( 0.,      +delta2 );
 		break;
 		default: assert(0);
 	}
