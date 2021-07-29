@@ -5589,7 +5589,7 @@ unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 }
 
 template<typename FPT1,typename FPT2>
-detail::RectArea<FPT>
+detail::RectArea<FPT1>
 intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 {
 	return r1.intersectArea(r2);
