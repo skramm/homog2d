@@ -27,7 +27,7 @@ int main( int argc, const char** argv )
 	Homogr H = HT1 * Hr * HT2;
 
 	Circle cir_fixed( Point2d( 265,195), 40 );
-	Circle cir( Point2d( 43,55), 55 );
+	Circle cir( Point2d( 43,55), 25 );
 
 //	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
 	FRect r_fixed( 40,100,130,155 );

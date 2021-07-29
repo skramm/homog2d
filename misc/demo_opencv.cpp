@@ -961,14 +961,14 @@ struct Param_ELL : Data
 	{
 		auto x0=200;
 		auto y0=100;
-		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
+//		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
 		liH = Line2d( LineDir::H, y0 );
 		liV = Line2d( LineDir::V, x0 );
 		H = Homogr(x0,y0).addRotation( 15. * M_PI / 180. ).addTranslation(-x0,-y0);
 		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
 	}
 
-	Ellipse_<double> ell;
+//	Ellipse_<double> ell;
 	Line2d liH, liV;
 	Polyline pl;
 	Homogr H;
@@ -980,8 +980,8 @@ void action_ELL( void* param )
 	auto& data = *reinterpret_cast<Param_ELL*>(param);
 
 	data.clearImage();
-	std::cout << data.ell << '\n';
-	data.ell.draw( data.img );
+//	std::cout << data.ell << '\n';
+//	data.ell.draw( data.img );
 	data.liH.draw( data.img );
 	data.liV.draw( data.img );
 	data.pl.draw( data.img );
@@ -996,8 +996,15 @@ void demo_ELL( int n )
 
 //	data.setMouseCallback( mouse_CB_ELL );
 
+	double tx = 0;
+	double ty = 0;
+	double trans_delta = 20;
+
+	auto x0=200;
+	auto y0=100;
+
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction(
+/*	kbloop.addKeyAction(
 		'm',
 		[&]{
 			data.pl =  data.H * data.pl;
@@ -1006,7 +1013,23 @@ void demo_ELL( int n )
 		},
 		"rotate CW"
 	);
+*/
+	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
+	kbloop.addKeyAction( 'a', [&]{ tx -= trans_delta;    }, "decrement tx" );
+	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
+	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
 
+	kbloop.addCommonAction( [&]
+		{
+			data.clearImage();
+			Ellipse_<float> ell( x0, y0, 120.,60.,0) ;
+			ell.translate(tx,ty );
+			ell.draw( data.img );
+			auto bb = ell.getBB();
+			bb.draw( data.img );
+			data.showImage();
+		}
+	);
 	action_ELL( &data );
 	kbloop.start( data );
 }

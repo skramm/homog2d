@@ -18,7 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `CvDrawParams` => `DrawParams` (intent: planning multiple graphics back-end)
   - added Frect union and intersection areas: `unionArea()` and `intersectArea()`, and associated operators
   - added normalization to closed `Polyline` so that they can be compared
-  - classe `Point2d`, `FRect` and `Circle` now all have a `translate(dx,dy)` member function
+  - classe `Point2d`, `FRect`, `Circle`  and `Ellipse` now all have a `translate(dx,dy)` member function
 
 - [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**

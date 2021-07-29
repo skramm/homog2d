@@ -1091,6 +1091,13 @@ public:
 	{}
 ///@}
 
+	template<typename T1, typename T2>
+	void translate( T1 dx, T2 dy )
+	{
+		auto par = p_getParams<HOMOG2D_INUMTYPE>();
+		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
+	}
+
 	template<typename FPT2>
 	bool pointIsInside( const Point2d_<FPT2>& ) const;
 
