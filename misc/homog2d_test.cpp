@@ -1875,28 +1875,35 @@ TEST_CASE( "Polygon area", "[polygon_area]" )
 
 TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 {
+	Polyline_<NUMTYPE> pl1(IsClosed::No);
+	pl1.add( 3,4 );
+	pl1.add( 5,6 );
+	pl1.add( 7,8 );
+
+	Polyline_<NUMTYPE> pl2(IsClosed::No);
+	pl2.add( 7,8 );
+	pl2.add( 3,4 );
+	pl2.add( 5,6 );
+
 	{
-		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
-		pl1.add( 3,4 );
-		pl1.add( 5,6 );
-		pl1.add( 7,8 );
-		std::cout << "pl1:" << pl1;
-		CHECK( pl1.isNormalized() == false );
+		Polyline_<NUMTYPE> p1 = pl1;
+		Polyline_<NUMTYPE> p2 = pl2;
 
-		Polyline_<NUMTYPE> pl2(IsClosed::No);
-		pl2.add( 7,8 );
-		pl2.add( 3,4 );
-		pl2.add( 5,6 );
-		std::cout << "pl2:" << pl2;
-		CHECK( pl1.isNormalized() == false );
+		CHECK( p1.isNormalized() == false );
+		CHECK( p2.isNormalized() == false );
+		CHECK( (p1==p2) == false );
+	}
+	{
+		Polyline_<NUMTYPE> p1 = pl1;
+		Polyline_<NUMTYPE> p2 = pl2;
+		p1.isClosed() = true;
+		CHECK( p1.isNormalized() == false );
+		CHECK( p2.isNormalized() == false );
+		p2.isClosed() = true;
+		CHECK( (p1==p2) == true );
+		CHECK( p1.isNormalized() == true );
+		CHECK( p2.isNormalized() == true );
 
-		CHECK( (pl1==pl2) == false );
-		CHECK( pl1.isNormalized() == false ); // not same closes status, so no need for normalization
-
-		pl2.isClosed() = true;
-//		CHECK( pl1.isNormalized() == true );
-		std::cout << "pl2B:" << pl2;
-		CHECK( (pl1==pl2) == true );
 	}
 }
 

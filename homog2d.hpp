@@ -3263,7 +3263,10 @@ struct PolylineAttribs
 //------------------------------------------------------------------
 /// Polyline, can be closed or not
 /**
-\warning When adding points, please check out the warning in the add() function
+\warning When closed, In order to be able to compare two objects describing the same structure
+but potentially in different order, the comparison operator will proceed a sorting.<br>
+The consequence is that when adding points, if you have done a comparison before, you might not
+add point after the one you thought!
 */
 template<typename FPT>
 class Polyline_
@@ -3432,7 +3435,7 @@ Segment \c n is the one between point \c n and point \c n+1
 /// Add single point as x,y
 /**
 \warning this will add the new point after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you a comparision (== or !=)
+been normalized. This normalizing operation will happen if you a comparison (== or !=)
 */
 	template<typename FPT1,typename FPT2>
 	void add( FPT1 x, FPT2 y )
@@ -3442,6 +3445,10 @@ been normalized. This normalizing operation will happen if you a comparision (==
 	}
 
 /// Add single point
+/**
+\warning this will add the new point after the previous one \b only if the object has \b not
+been normalized. This normalizing operation will happen if you a comparison (== or !=)
+*/
 	template<typename FPT2>
 	void add( const Point2d_<FPT2>& pt )
 	{
@@ -3457,7 +3464,7 @@ been normalized. This normalizing operation will happen if you a comparision (==
 		_plinevec.push_back( pt );
 	}
 
-/// Set from vector of points
+/// Set from vector of points (discards previous points)
 	template<typename FPT2>
 	void set( const std::vector<Point2d_<FPT2>>& vec )
 	{
@@ -3469,7 +3476,12 @@ been normalized. This normalizing operation will happen if you a comparision (==
 			*it++ = pt;              // allow type conversions (std::copy implies same type)
 	}
 
+
 /// Add vector of points
+/**
+\warning this will add the new points after the previous one \b only if the object has \b not
+been normalized. This normalizing operation will happen if you a comparison (== or !=)
+*/
 	template<typename FPT2>
 	void add( const std::vector<Point2d_<FPT2>>& vec )
 	{
@@ -3493,8 +3505,11 @@ been normalized. This normalizing operation will happen if you a comparision (==
 		if( isClosed() != other.isClosed() )  // for quick exit
 			return false;
 
-		p_normalizePL();
-		other.p_normalizePL();
+		if( isClosed() )          // if operating on a closed polygon, we
+		{                         // first "normalize" the points (i.e. sort them)
+			p_normalizePL();
+			other.p_normalizePL();
+		}
 
 		auto it = other._plinevec.begin();
 		for( const auto& elem: _plinevec )
@@ -3554,11 +3569,10 @@ been normalized. This normalizing operation will happen if you a comparision (==
 private:
 	void p_normalizePL() const
 	{
+		assert( isClosed() );   // should not do this if not closed !
 		if( !_plIsNormalized )
 		{
-			priv::printVector(_plinevec, "BEFORE" );
 			std::sort( _plinevec.begin(), _plinevec.end() );
-			priv::printVector(_plinevec, "AFTER" );
 			_plIsNormalized=true;
 		}
 	}
