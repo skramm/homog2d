@@ -9,6 +9,7 @@
 #include "opencv2/highgui.hpp"
 
 using namespace h2d;
+using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {

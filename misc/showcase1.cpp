@@ -8,6 +8,7 @@
 #include "opencv2/highgui.hpp"
 
 using namespace h2d;
+using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
@@ -16,7 +17,7 @@ int main( int argc, const char** argv )
 	auto im_w = 400;
 	auto im_h = 250;
 	cvmat.create( im_h, im_w, CV_8UC3 );
-	img::Image<cv::Mat> myImg( cvmat );
+	Image<cv::Mat> myImg( cvmat );
 
 	int offset_h = 100;
 	int offset_v = 60;
@@ -26,7 +27,9 @@ int main( int argc, const char** argv )
 	Homogr H = HT1 * Hr * HT2;
 
 	Circle cir( Point2d( 265,195), 40 );
-	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
+//	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
+	FRect r_fixed( 40,100,130,155 );
+	Segment seg( 85,210, 335, 25 );
 
 	FRect_<double> rect( 0,0,200,80 );
 	Polyline pl( rect, IsClosed::Yes );
@@ -44,20 +47,32 @@ int main( int argc, const char** argv )
 	{
 		cvmat = cv::Scalar(255,255,255);
 
-		cir.draw( myImg, color_green );
-		ell.draw( myImg, color_green );
+//		ell.draw( myImg, color_green );
 		lih.draw( myImg );
 		liv.draw( myImg );
 		li.draw( myImg, color_green );
 		pl.draw( myImg, DrawParams().setColor(20,0,250) );
 
-		auto inters = li.intersects( pl );
+		r_fixed.draw( myImg, color_green );
+		seg.draw( myImg, color_green );
+		cir.draw( myImg, color_green );
+
+		auto inters = pl.intersects( li );
 		if( inters() )
 			draw( myImg, inters.get(), color_red );
 
-		auto intersc = pl.intersects( cir );
-		if( intersc() )
-			draw( myImg, intersc.get(), color_red );
+		auto inters2 = pl.intersects( r_fixed );
+		if( inters2() )
+			draw( myImg, inters2.get(), color_red );
+
+		auto inters3 = pl.intersects( cir );
+		if( inters3() )
+			draw( myImg, inters3.get(), color_red );
+
+		auto inters4 = pl.intersects( seg );
+		if( inters4() )
+			draw( myImg, inters4.get(), color_red );
+
 
 /* NOT YET IMPLEMENTED !
 		auto interse = pl.intersects( ell );
