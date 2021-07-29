@@ -30,6 +30,8 @@ run with "make test"
 	#define NUMTYPE double
 #endif
 
+#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
 #include <list>
@@ -1776,26 +1778,33 @@ TEST_CASE( "Polyline", "[polyline]" )
 	{
 		Polyline_<NUMTYPE> pl1( 3,4 );
 		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.isPolygon() == false );
 		CHECK( pl1.size() == 1 );
 		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
+		CHECK( pl1.area() == 0 );
 	}
 	{
 		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
 		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.isPolygon() == false );
 		CHECK( pl1.length() == 0 );
+		CHECK( pl1.area() == 0 );
 	}
 	{
 		Polyline_<NUMTYPE> pl1( Point2d(3,4), IsClosed::Yes );
 		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.isPolygon() == false );
 		CHECK( pl1.size() == 1 );
 		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
+		CHECK( pl1.area() == 0 );
 	}
 	{
 		FRect r( 5,6, 7,8 );
 		Polyline_<NUMTYPE> pl1( r );
 		CHECK( pl1.isClosed() == true );
+		CHECK( pl1.isPolygon() == true );
 		CHECK( pl1.size() == 4 );
 		CHECK( pl1.nbSegs() == 4 );
 		CHECK( pl1.length() == 8 );
@@ -1805,6 +1814,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		FRect r( 5,6, 7,8 );
 		Polyline_<NUMTYPE> pl1( r, IsClosed::No );
 		CHECK( pl1.isClosed() == false );
+		CHECK( pl1.isPolygon() == false );
 		CHECK( pl1.size() == 4 );
 		CHECK( pl1.nbSegs() == 3 );
 		CHECK( pl1.length() == 6 );
@@ -1860,6 +1870,33 @@ TEST_CASE( "Polygon area", "[polygon_area]" )
 		CHECK( pl1.nbSegs() == 6 );
 		CHECK( pl1.isPolygon() == true );
 		CHECK( pl1.area() == 3. );
+	}
+}
+
+TEST_CASE( "Polyline comparison", "[polyline_comp]" )
+{
+	{
+		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+		pl1.add( 3,4 );
+		pl1.add( 5,6 );
+		pl1.add( 7,8 );
+		std::cout << "pl1:" << pl1;
+		CHECK( pl1.isNormalized() == false );
+
+		Polyline_<NUMTYPE> pl2(IsClosed::No);
+		pl2.add( 7,8 );
+		pl2.add( 3,4 );
+		pl2.add( 5,6 );
+		std::cout << "pl2:" << pl2;
+		CHECK( pl1.isNormalized() == false );
+
+		CHECK( (pl1==pl2) == false );
+		CHECK( pl1.isNormalized() == false ); // not same closes status, so no need for normalization
+
+		pl2.isClosed() = true;
+//		CHECK( pl1.isNormalized() == true );
+		std::cout << "pl2B:" << pl2;
+		CHECK( (pl1==pl2) == true );
 	}
 }
 

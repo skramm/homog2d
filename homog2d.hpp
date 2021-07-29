@@ -827,7 +827,6 @@ public:
 		if( !h.isNormalized() )
 			h.normalize();
 
-		auto eps = std::numeric_limits<FPT>::epsilon()*100;
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
@@ -1054,6 +1053,9 @@ public:
 	operator * ( const Homogr_<FPT2>&, const Ellipse_<FPT1>& );
 
 public:
+/// \name Constructors
+///@{
+
 /// Default constructor: centered at (0,0), major=2, minor=1
 	Ellipse_(): Ellipse_( 0., 0., 2., 1., 0. )
 	{}
@@ -1087,18 +1089,22 @@ public:
 	Ellipse_( const Ellipse_<FPT2>& other )
 		: detail::Matrix_<FPT>( other )
 	{}
+///@}
 
 	template<typename FPT2>
 	bool pointIsInside( const Point2d_<FPT2>& ) const;
-	bool isCircle() const;
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
+/// \name attributes
+///@{
+	bool isCircle() const;
 	Point2d_<FPT>    center() const;
 	Polyline_<FPT>   getBB()  const;
 	HOMOG2D_INUMTYPE angle()  const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
+///@}
 
 	template<typename T>
 	friend std::ostream&
@@ -1456,10 +1462,21 @@ public:
 		_ptR1 = ppts.first;
 		_ptR2 = ppts.second;
 	}
+
+/// \name Attributes access
+///@{
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
 	HOMOG2D_INUMTYPE length() const { return 2.*height() + 2.*width(); }
+
+/// Returns the 2 major points of the rectangle
+/// \sa getPts( const FRect_<FPT>& )
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPts() const
+	{
+		return std::make_pair( _ptR1, _ptR2 );
+	}
 
 	Point2d_<FPT> center() const
 	{
@@ -1470,6 +1487,7 @@ public:
 	}
 
 	Circle_<FPT> getBoundingCircle() const;
+///@}
 
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
@@ -1478,28 +1496,24 @@ public:
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
 	}
 
-/// Returns the 2 major points of the rectangle
-/// \sa getPts( const FRect_<FPT>& )
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
-	getPts() const
-	{
-		return std::make_pair( _ptR1, _ptR2 );
-	}
 
+/// \name Union/intersection area
+///@{
 	template<typename FPT2>
 	Polyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
 	detail::RectArea<FPT> intersectArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	detail::RectArea<FPT> operator & ( const FRect_<FPT2>& other ) const
-	{
-		return this->intersectArea( other );
-	}
-	template<typename FPT2>
 	Polyline_<FPT> operator | ( const FRect_<FPT2>& other ) const
 	{
 		return this->unionArea( other );
 	}
+	template<typename FPT2>
+	detail::RectArea<FPT> operator & ( const FRect_<FPT2>& other ) const
+	{
+		return this->intersectArea( other );
+	}
+///@}
 
 /// Returns the 4 points of the rectangle, starting from "smallest" one, and
 /// in clockwise order
@@ -1561,8 +1575,9 @@ s0 |      | s2
 		return true;
 	}
 
-/** \name Intersection functions */
+/// \name Intersection functions
 ///@{
+
 /// FRect/Line intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
@@ -1615,6 +1630,8 @@ s0 |      | s2
 	}
 ///@}
 
+/// \name Operators
+///@{
 	template<typename FPT2>
 	bool operator == ( const FRect_<FPT2>& other ) const
 	{
@@ -1629,6 +1646,7 @@ s0 |      | s2
 	{
 		return !( *this == other );
 	}
+///@}
 
 	template<typename T>
 	friend std::ostream&
@@ -1694,6 +1712,9 @@ private:
 	Point2d_<FPT> _center;
 
 public:
+/// \name Constructors
+///@{
+
 /// Default constructor, unit-radius circle at (0,0)
 	Circle_() : _radius(1.)
 	{}
@@ -1729,7 +1750,10 @@ public:
 	Circle_( const Circle_<FPT2>& other )
 		: _radius(other._radius), _center(other._center)
 	{}
+///@}
 
+/// \name Attributes access
+///@{
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
 
@@ -1744,6 +1768,7 @@ public:
 			_center.getX()+_radius, _center.getY()+_radius
 		);
 	}
+///@}
 
 	void set( const Point2d_<FPT>& center, FPT rad )
 	{
@@ -1770,6 +1795,9 @@ public:
 	{
 		return implC_isInside( rect.getPts() );
 	}
+
+/// \name Intersection
+///@{
 
 /// Circle/Line intersection
 	template<typename FPT2>
@@ -1801,7 +1829,7 @@ public:
 		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
-
+///@}
 private:
 	template<typename FPT2>
 	bool implC_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const
@@ -1817,6 +1845,8 @@ private:
 	}
 
 public:
+/// \name Operators
+///@{
 	template<typename FPT2>
 	bool operator == ( const Circle_<FPT2>& other ) const
 	{
@@ -1831,6 +1861,7 @@ public:
 	{
 		return !( *this == other );
 	}
+///@}
 
 	template<typename T>
 	friend std::ostream&
@@ -1931,7 +1962,7 @@ template<typename T>
 void printVector( const std::vector<T>& v, std::string msg=std::string() )
 {
 	std::cout << "vector: ";
-	if( msg.empty() )
+	if( !msg.empty() )
 		std::cout << msg;
 	std::cout << " #=" << v.size() << '\n';
 	for( const auto& elem: v )
@@ -2936,6 +2967,9 @@ private:
 	Point2d_<FPT> _ptS1, _ptS2;
 
 public:
+/// \name Constructors
+///@{
+
 /// Default constructor: initializes segment to (0,0)--(1,1)
 	Segment_(): _ptS2(1.,1.)
 	{}
@@ -2963,6 +2997,7 @@ public:
 	Segment_( const Segment_<FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
 	{}
+///@}
 
 /// Setter
 	void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
@@ -2975,6 +3010,9 @@ public:
 		_ptS2 = p2;
 		priv::fix_order( _ptS1, _ptS2 );
 	}
+
+/// \name Attributes access
+///@{
 
 /// Get segment length
 	HOMOG2D_INUMTYPE length() const
@@ -2994,8 +3032,10 @@ public:
 	{
 		return other.getAngle( this->getLine() );
 	}
+///@}
 
-/// Comparison operator
+/// \name Operators
+///@{
 	bool operator == ( const Segment_& s2 ) const
 	{
 		if( _ptS1 != s2._ptS1 )
@@ -3008,6 +3048,7 @@ public:
 	{
 		return !(*this == s2);
 	}
+///@}
 
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
@@ -3035,6 +3076,8 @@ the one with smallest y-coordinate will be returned first */
 		return _ptS1 * _ptS2;
 	}
 
+/// \name Intersection functions
+///@{
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
 	template<typename FPT2>
@@ -3056,6 +3099,7 @@ the one with smallest y-coordinate will be returned first */
 		HOMOG2D_START;
 		return other.intersects( *this );
 	}
+///@}
 
 	template<typename T>
 	bool isParallelTo( const T& other ) const
@@ -3218,18 +3262,22 @@ struct PolylineAttribs
 
 //------------------------------------------------------------------
 /// Polyline, can be closed or not
+/**
+\warning When adding points, please check out the warning in the add() function
+*/
 template<typename FPT>
 class Polyline_
 {
 	template<typename T> friend class Polyline_;
 
 private:
-	std::vector<Point2d_<FPT>> _plinevec;
+	mutable std::vector<Point2d_<FPT>> _plinevec;
 	bool _isClosed = false;
+	mutable bool _plIsNormalized = false;
 	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
 public:
-/** \name Constructors */
+/// \name Constructors
 ///@{
 
 /// Default constructor
@@ -3279,6 +3327,9 @@ public:
 	}
 ///@}
 
+/// \name Attributes access
+///@{
+
 /// Returns the number of points
 	size_t size() const { return _plinevec.size(); }
 
@@ -3297,13 +3348,21 @@ public:
 		return size() - 1 + (size_t)_isClosed;
 	}
 
-/// Returns the points
+	const bool& isClosed() const { return _isClosed; }
+	bool&       isClosed()       { _attribs.setBad(); return _isClosed; }
+///@}
+
+/// \name Data access
+///@{
+
+/// Returns the points (reference)
 	std::vector<Point2d_<FPT>>& getPts()
 	{
 		_attribs.setBad();  // because we send the non-const reference
+		_plIsNormalized=false;
 		return _plinevec;
 	}
-/// Returns the points (const)
+/// Returns the points (const reference)
 	const std::vector<Point2d_<FPT>>& getPts() const
 	{
 		return _plinevec;
@@ -3363,9 +3422,18 @@ Segment \c n is the one between point \c n and point \c n+1
 	}
 
 /// Clear all
-	void clear() { _plinevec.clear(); _attribs.setBad(); }
+	void clear()
+	{
+		_plinevec.clear();
+		_plIsNormalized=false;
+		_attribs.setBad();
+	}
 
 /// Add single point as x,y
+/**
+\warning this will add the new point after the previous one \b only if the object has \b not
+been normalized. This normalizing operation will happen if you a comparision (== or !=)
+*/
 	template<typename FPT1,typename FPT2>
 	void add( FPT1 x, FPT2 y )
 	{
@@ -3385,6 +3453,7 @@ Segment \c n is the one between point \c n and point \c n+1
 				);
 #endif
 		_attribs.setBad();
+		_plIsNormalized=false;
 		_plinevec.push_back( pt );
 	}
 
@@ -3393,6 +3462,7 @@ Segment \c n is the one between point \c n and point \c n+1
 	void set( const std::vector<Point2d_<FPT2>>& vec )
 	{
 		_attribs.setBad();
+		_plIsNormalized=false;
 		_plinevec.resize( vec.size() );
 		auto it = std::begin( _plinevec );
 		for( const auto& pt: vec )   // copying one by one will
@@ -3406,17 +3476,39 @@ Segment \c n is the one between point \c n and point \c n+1
 		if( vec.size() == 0 )
 			return;
 		_attribs.setBad();
+		_plIsNormalized=false;
 		_plinevec.reserve( _plinevec.size() + vec.size() );
 		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
 			_plinevec.push_back( pt );
 	}
+///@}
 
-	const bool& isClosed() const { return _isClosed; }
-	bool& isClosed()
+/// \name Operators
+///@{
+	template<typename FPT2>
+	bool operator == ( const Polyline_<FPT2>& other ) const
 	{
-		_attribs.setBad();
-		return _isClosed;
+		if( size() != other.size() )          // for quick exit
+			return false;
+		if( isClosed() != other.isClosed() )  // for quick exit
+			return false;
+
+		p_normalizePL();
+		other.p_normalizePL();
+
+		auto it = other._plinevec.begin();
+		for( const auto& elem: _plinevec )
+			if( *it++ != elem )
+				return false;
+		return true;
 	}
+
+	template<typename FPT2>
+	bool operator != ( const Polyline_<FPT2>& other ) const
+	{
+		return !( *this == other );
+	}
+///@}
 
 /// Polyline intersection with Line, Segment, FRect, Circle
 	template<
@@ -3454,6 +3546,22 @@ Segment \c n is the one between point \c n and point \c n+1
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
+
+#ifdef HOMOG2D_TEST_MODE
+	bool isNormalized() const { return _plIsNormalized; }
+#endif
+
+private:
+	void p_normalizePL() const
+	{
+		if( !_plIsNormalized )
+		{
+			priv::printVector(_plinevec, "BEFORE" );
+			std::sort( _plinevec.begin(), _plinevec.end() );
+			priv::printVector(_plinevec, "AFTER" );
+			_plIsNormalized=true;
+		}
+	}
 
 }; // class Polyline_
 
@@ -3512,6 +3620,9 @@ template<typename FPT>
 bool
 Polyline_<FPT>::isPolygon() const
 {
+	if( size()<3 )       // needs at least 3 points to be a polygon
+		return false;
+
 	if( !_isClosed )   // cant be a polygon if
 		return false;  // it's not closed
 

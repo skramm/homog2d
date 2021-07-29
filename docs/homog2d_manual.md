@@ -24,6 +24,7 @@ All the code is in the namespace `h2d`, so either add `using namespace h2d;`, ei
 This library provides several main data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
 It is implemented as a homogeneous 3x3 matrix.
 It also provides some additional types, derived from these.
+All these implement a comparison operator ( `==` and  `!=`).
 
 A large part of the API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
@@ -33,7 +34,6 @@ AAA myvar;
 auto v1 = myvar.foo();
 auto v2 = foo(myvar);
 ```
-
 
 ## 2 - Lines and points
 <a name="basic"></a>
