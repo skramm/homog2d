@@ -1853,12 +1853,13 @@ private:
 	template<typename FPT2>
 	bool implC_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const
 	{
-		auto p1 = ppts.first;
-		auto p2 = ppts.second;
-		if( _center.getX() + _radius < p2.getX() )
-			if( _center.getX() - _radius > p1.getX() )
-				if( _center.getY() + _radius < p2.getY() )
-					if( _center.getY() - _radius > p1.getY() )
+		const auto& p1 = ppts.first;
+		const auto& p2 = ppts.second;
+		HOMOG2D_INUMTYPE rad = _radius;   // convert to highest precision
+		if( _center.getX() + rad < p2.getX() )
+			if( _center.getX() - rad > p1.getX() )
+				if( _center.getY() + rad < p2.getY() )
+					if( _center.getY() - rad > p1.getY() )
 						return true;
 		return false;
 	}

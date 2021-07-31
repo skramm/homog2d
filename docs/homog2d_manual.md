@@ -176,7 +176,7 @@ auto ppts = li.getPoints( pt_on_line, dist ); // returns a std::pair
 ```
 The drawback is that you need to be sure that this point is truely on the line.
 This will be checked for, and library will throw if not
-(except if error checking is disabled, see [build options](#options)).
+(except if error checking is disabled, see [build options](#build_options)).
 
 Upon return, the "first" point will hold the one with smallest 'x' coordinates, or the smallest 'y' coordinates if x coordinates are equal.
 
