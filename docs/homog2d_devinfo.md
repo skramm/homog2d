@@ -19,6 +19,11 @@ Figures that appear in the manual are of two types
  They are generated with<br>
  `$ make doc_fig`
 
+
+The showcase gif images are generated with<br>
+ `$ make showcase`<br>
+ and require Opencv installed on the system.
+
 ## Coding style
 
 - TABS, not spaces (1 byte per level)
