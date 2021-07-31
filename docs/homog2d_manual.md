@@ -450,7 +450,7 @@ FRect rect2 = getBB(pl);
 ```
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
-and if it is, you can get its area:
+If it is, you can get its area:
 ```C++
 Polygon pl;
 // ... add points
@@ -460,9 +460,19 @@ if( pl.isPolygon() )
 
 This latter function will return 0 if not a polygon.
 
+It can be compared, however, the behavior differs whether it is closed or not.
+Consider these two sets:
+```
+(0,0)--(2,3)--(0,2)
+(2,3)--(0,2)--(0,0)
+```
+
+If they are not closed, then the `==` operator will return `false`.
+But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
+
+
 ### 3.5 - Ellipse
 
-This type holds an arbitrary ellipse.
 We follow here the traditional parametrization for the API:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
 Internally, it is stored as a conic in its matrix form (see [build options](#build_options) for details).

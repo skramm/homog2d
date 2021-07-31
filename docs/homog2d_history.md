@@ -6,6 +6,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add inversion of a Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - provide clear interface to extend drawing using other back-ends
+  - add (optional) common root class, to be able to store heterogenous objects in container
 
 - current master branch
   - switch to C++14 (so we can use `auto` return types!)
@@ -18,7 +19,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `CvDrawParams` => `DrawParams` (intent: planning multiple graphics back-end)
   - added `Frect` union and intersection areas: `unionArea()` and `intersectArea()`, associated operators and free functions
   - added normalization to closed `Polyline` so that they can be compared
-  - classe `Point2d`, `FRect`, `Circle`  and `Ellipse` now all have a `translate(dx,dy)` member function
+  - classe `Point2d`, `FRect`, `Circle`, `Polyline` and `Ellipse` now all have a `translate(dx,dy)` member function
 
 - [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**

@@ -7,6 +7,7 @@ Current test status:
 A single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D planar transformations),
 using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
+Also handles other geometric primitives.
 
 ![showcase1](docs/showcase1.gif)
 

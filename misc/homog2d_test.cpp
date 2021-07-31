@@ -1809,6 +1809,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.nbSegs() == 4 );
 		CHECK( pl1.length() == 8 );
 		CHECK( pl1.area() == 4 );
+		pl1.translate(1,2);
 	}
 	{                         // build Polyline from FRect
 		FRect r( 5,6, 7,8 );
@@ -1852,6 +1853,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 	FRect bb2( 0,0, 1,1);
 	CHECK( getBB(pl1)  == bb2 );
 	CHECK( pl1.getBB() == bb2 );
+	pl1.translate(2,1.);
+	CHECK( pl1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
 }
 
 TEST_CASE( "Polygon area", "[polygon_area]" )
@@ -1903,7 +1906,6 @@ TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 		CHECK( (p1==p2) == true );
 		CHECK( p1.isNormalized() == true );
 		CHECK( p2.isNormalized() == true );
-
 	}
 }
 

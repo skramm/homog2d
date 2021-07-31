@@ -4,12 +4,6 @@ int main()
 {
 	std::srand(time(0));
 	Polyline pl(IsClosed::Yes);
-/*	for( int i=0; i<7; i++ )
-		pl.add(
-			400.*rand()/RAND_MAX+20,
-			300.*rand()/RAND_MAX+20
-		);
-*/
 
 	pl.add( 5,5);
 	pl.add( 7,3);

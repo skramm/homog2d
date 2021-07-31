@@ -853,7 +853,6 @@ public:
 //////////////////////////
 private:
 	mutable bool _hasChanged   = true;
-//	mutable bool _isNormalized = false;
 	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
@@ -1094,6 +1093,8 @@ public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		auto par = p_getParams<HOMOG2D_INUMTYPE>();
 		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
 	}
@@ -1499,6 +1500,8 @@ public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
 	}
@@ -1786,6 +1789,8 @@ public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_center.translate( dx, dy );
 	}
 
@@ -2301,9 +2306,11 @@ public:
 	FPT getX() const { return impl_getX( detail::RootHelper<LP>() ); }
 	FPT getY() const { return impl_getY( detail::RootHelper<LP>() ); }
 
-	template<typename FPT2>
-	void translate( FPT2 dx, FPT2 dy )
+	template<typename T1,typename T2>
+	void translate( T1 dx, T2 dy )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		impl_move( dx, dy, detail::RootHelper<LP>() );
 	}
 
@@ -2381,15 +2388,15 @@ private:
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
 
-	template<typename FPT2>
-	void impl_move( FPT2 dx, FPT2 dy, const detail::RootHelper<type::IsPoint>& )
+	template<typename T1,typename T2>
+	void impl_move( T1 dx, T2 dy, const detail::RootHelper<type::IsPoint>& )
 	{
 		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
 		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
 		_v[2] = 1.;
 	}
-	template<typename FPT2>
-	void impl_move( FPT2 dx, FPT2 dy, const detail::RootHelper<type::IsLine>& )
+	template<typename T1,typename T2>
+	void impl_move( T1 dx, T2 dy, const detail::RootHelper<type::IsLine>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
@@ -3446,6 +3453,15 @@ Segment \c n is the one between point \c n and point \c n+1
 		_attribs.setBad();
 	}
 
+	template<typename T1,typename T2>
+	void translate( T1 dx, T2 dy )
+	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		for( auto& pt: _plinevec )
+			pt.translate( dx, dy );
+	}
+
 /// Add single point as x,y
 /**
 \warning this will add the new point after the previous one \b only if the object has \b not
@@ -3577,6 +3593,7 @@ been normalized. This normalizing operation will happen if you a comparison (== 
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 #ifdef HOMOG2D_TEST_MODE
+/// this is only needed for testing
 	bool isNormalized() const { return _plIsNormalized; }
 #endif
 
