@@ -34,9 +34,7 @@ int main()
 }
 ```
 
-:new: Fresh 2.4 release! : https://github.com/skramm/homog2d/releases
-
-**Warning**: current code has been through a lot of improvements since 2.4, release 2.5 expected soon!
+:new: 2021-07-31: Fresh 2.5 release! : https://github.com/skramm/homog2d/releases
 
 
 To install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
