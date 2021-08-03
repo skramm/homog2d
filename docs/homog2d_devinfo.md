@@ -27,8 +27,8 @@ The showcase gif images are generated with<br>
 ## Coding style
 
 - TABS, not spaces (1 byte per level)
-- types have first character upper case, variables lowercas
+- types have first character upper case, variables lowercase
 - `camelCase` for identifiers
 - spaces after braces (`if( someBool )`)
-
+- private member function are prefixed with `p_` (or `impl_` for tag dispatch implementation for points/lines)
 

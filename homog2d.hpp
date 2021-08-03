@@ -86,9 +86,6 @@ See https://github.com/skramm/homog2d
 
 /// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_1( msg ) \
-	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + std::string(__FUNCTION__) + "(): " + msg )
-
-#define HOMOG2D_THROW_ERROR_1B( msg ) \
 	{ \
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", " << + __FUNCTION__ << "(): " << msg; \
@@ -122,7 +119,7 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
 	template<typename> struct RootDataType {};
 
-#if 0
+#ifdef HOMOG2D_FUTURE_STUFF
 	/// Helper class for Matrix type
 	template<typename T1>
 	struct HelperMat {};
@@ -168,8 +165,10 @@ template<typename LP,typename FPT> class Hmatrix_;
 
 template<typename T>
 using Homogr_  =  Hmatrix_<type::IsHomogr,T>;
+#ifdef HOMOG2D_FUTURE_STUFF
 template<typename T>
 using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
+#endif
 
 template<typename FPT> class Segment_;
 template<typename FPT> class Polyline_;
@@ -258,7 +257,7 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 		   std::fabs( p0.getX() - p1.getX() ) < Point2d_<FPT>::nullOrthogDistance()
 		|| std::fabs( p0.getY() - p1.getY() ) < Point2d_<FPT>::nullOrthogDistance()
 	)
-		HOMOG2D_THROW_ERROR_1B(
+		HOMOG2D_THROW_ERROR_1(
 			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
 		);
 #endif
@@ -368,7 +367,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	{
 		auto det = determ();
 		if( std::abs(det) < nullDeterValue() )
-			HOMOG2D_THROW_ERROR_1B( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
+			HOMOG2D_THROW_ERROR_1( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
 
 		auto adjugate = p_adjugate();
 		p_divideAll(adjugate, det);
@@ -376,14 +375,13 @@ See https://en.wikipedia.org/wiki/Determinant
 		_isNormalized = false;
 		return *this;
 	}
-	bool& isNormalized() { return _isNormalized; }
-	const bool& isNormalized() const { return _isNormalized; }
+	bool isNormalized() const { return _isNormalized; }
 
 protected:
 	void p_normalize( int r, int c ) const
 	{
 		if( std::fabs(_mdata[r][c]) < nullDeterValue() )
-			HOMOG2D_THROW_ERROR_1B(
+			HOMOG2D_THROW_ERROR_1(
 				"Unable to normalize matrix, value at ("
 					<< r << ',' << c << ") less than " << nullDeterValue()
 			);
@@ -551,6 +549,10 @@ class Hmatrix_ : public detail::Matrix_<FPT>
 	operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const Root<T,V>& in );
 
 public:
+
+/// \name Constructors
+///@{
+
 	/// Default constructor, initialize to unit transformation
 	Hmatrix_()
 	{
@@ -576,32 +578,6 @@ public:
 		setTranslation( tx, ty );
 	}
 
-private:
-	void init()
-	{
-		impl_mat_init0( detail::RootHelper<M>() );
-	}
-
-#ifdef HOMOG2D_FUTURE_STUFF
-/// Implementation for epipolar matrices: initialize to aligned axis
-	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
-	{
-		_data.fillZero();
-		_data[2][1] = 1.;
-		_data[1][2] = 1.;
-		_isNormalized = true;
-	}
-#endif
-
-/// Implementation for homographies: initialize to unit transformation
-	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
-	{
-		detail::Matrix_<FPT>::p_fillEye();
-		detail::Matrix_<FPT>::isNormalized() = true;
-	}
-
-public:
-
 /// Constructor, used to fill with a vector of vector matrix
 /** \warning
 - Input matrix \b must be 3 x 3, but type can be anything that can be copied to \c double
@@ -614,15 +590,14 @@ Thus some assert can get triggered elsewhere.
 #ifndef HOMOG2D_NOCHECKS
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		if( in.size() != 3 )
-			HOMOG2D_THROW_ERROR_1B( "Invalid line size for input: " << in.size() );
+			HOMOG2D_THROW_ERROR_1( "Invalid line size for input: " << in.size() );
 		for( auto li: in )
 			if( li.size() != 3 )
-				HOMOG2D_THROW_ERROR_1B( "Invalid column size for input: " << li.size() );
+				HOMOG2D_THROW_ERROR_1( "Invalid column size for input: " << li.size() );
 #endif
 		detail::Matrix_<FPT>::p_fillWith( in );
 		normalize();
 	}
-
 
 /// Constructor, used to fill with a std::array
 	template<typename T>
@@ -632,14 +607,23 @@ Thus some assert can get triggered elsewhere.
 		detail::Matrix_<FPT>::p_fillWith( in );
 	}
 
+/// Copy-constructor
+	Hmatrix_( const Hmatrix_<M,FPT>& other )
+		: detail::Matrix_<FPT>( other)
+		, _hasChanged   ( true )
+		, _hmt          (  nullptr )
+	{
+		detail::Matrix_<FPT>::getRaw() = other.getRaw();
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 /// Constructor used to initialise with a cv::Mat, call the assignment operator
 	Hmatrix_( const cv::Mat& mat )
 	{
 		*this = mat;
 	}
-
 #endif
+///@}
 
 /// Assignment operator
 	Hmatrix_& operator = ( const Hmatrix_<M,FPT>& other )
@@ -648,15 +632,6 @@ Thus some assert can get triggered elsewhere.
 			detail::Matrix_<FPT>::getRaw() = other.getRaw();
 		_hasChanged = true;
 		return *this;
-	}
-
-/// Copy-constructor
-	Hmatrix_( const Hmatrix_<M,FPT>& other )
-		: detail::Matrix_<FPT>( other)
-		, _hasChanged   ( true )
-		, _hmt          (  nullptr )
-	{
-		detail::Matrix_<FPT>::getRaw() = other.getRaw();
 	}
 
 /// Inverse matrix
@@ -698,6 +673,33 @@ Thus some assert can get triggered elsewhere.
 	const detail::Matrix_<FPT>& getMat() const { return static_cast<detail::Matrix_<FPT>>(*this); }
 #endif // 0
 
+private:
+	void init()
+	{
+		impl_mat_init0( detail::RootHelper<M>() );
+	}
+
+#ifdef HOMOG2D_FUTURE_STUFF
+/// Implementation for epipolar matrices: initialize to aligned axis
+	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
+	{
+		_data.fillZero();
+		_data[2][1] = 1.;
+		_data[1][2] = 1.;
+		_isNormalized = true;
+	}
+#endif
+
+/// Implementation for homographies: initialize to unit transformation
+	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
+	{
+		detail::Matrix_<FPT>::p_fillEye();
+		detail::Matrix_<FPT>::_isNormalized = true;
+	}
+
+public:
+/// \name Adding/assigning a transformation
+///@{
 
 /// Adds a translation \c tx,ty to the matrix
 	template<typename T>
@@ -719,7 +721,7 @@ Thus some assert can get triggered elsewhere.
 		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][2] = tx;
 		mat[1][2] = ty;
-		detail::Matrix_<FPT>::isNormalized() = true;
+		detail::Matrix_<FPT>::_isNormalized = true;
 		_hasChanged = true;
 		return *this;
 	}
@@ -743,7 +745,7 @@ Thus some assert can get triggered elsewhere.
 		mat[0][0] = mat[1][1] = std::cos(theta);
 		mat[1][0] = std::sin(theta);
 		mat[0][1] = -mat[1][0];
-		detail::Matrix_<FPT>::isNormalized() = true;
+		detail::Matrix_<FPT>::_isNormalized = true;
 		_hasChanged = true;
 		return *this;
 	}
@@ -783,10 +785,11 @@ Thus some assert can get triggered elsewhere.
 		auto& mat = detail::Matrix_<FPT>::_mdata;
 		mat[0][0] = kx;
 		mat[1][1] = ky;
-		detail::Matrix_<FPT>::isNormalized() = true;
+		detail::Matrix_<FPT>::_isNormalized = true;
 		_hasChanged = true;
 		return *this;
 	}
+///@}
 
 	template<typename T>
 	void applyTo( T& ) const;
@@ -853,7 +856,7 @@ public:
 //////////////////////////
 private:
 	mutable bool _hasChanged   = true;
-	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt;
+	mutable std::unique_ptr<detail::Matrix_<FPT>> _hmt; ///< used to store \f$ H^{-1} \f$, but only if required
 
 	friend std::ostream& operator << ( std::ostream& f, const Hmatrix_& h )
 	{
@@ -974,11 +977,11 @@ namespace detail {
 template<typename T>
 struct EllParams
 {
-	T x0, y0; // center
-	T theta = 0.;
+	T x0, y0; ///< center
+	T theta = 0.; ///< angle
 	T sint, cost;
 	T a, b;
-	T a2, b2; // squared values of a and b
+	T a2, b2; ///< squared values of a and b
 
 	template<typename U>
 	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
@@ -1225,7 +1228,7 @@ class Intersect<Inters_1,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				HOMOG2D_THROW_ERROR_1B( "No intersection points" );
+				HOMOG2D_THROW_ERROR_1( "No intersection points" );
 			return _ptIntersect;
 		}
 		void set( const Point2d_<FPT>& pt )
@@ -1283,7 +1286,7 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		get() const
 		{
 			if( !_doesIntersect )
-				HOMOG2D_THROW_ERROR_1B( "No intersection points" );
+				HOMOG2D_THROW_ERROR_1( "No intersection points" );
 			return std::make_pair( _ptIntersect_1, _ptIntersect_2 );
 		}
 
@@ -1743,7 +1746,7 @@ public:
 		: _radius(rad), _center(center)
 	{
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
-			HOMOG2D_THROW_ERROR_1B( "radius must not be 0" );
+			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 	}
 
 /// Constructor 4: x, y, radius
@@ -2066,7 +2069,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( v1.isParallelTo(v2) )
-			HOMOG2D_THROW_ERROR_1B( "unable to build point from these two lines, are parallel" );
+			HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
 #endif
 		*this = detail::crossProduct<type::IsPoint>( v1, v2 );
 	}
@@ -2077,7 +2080,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( v1 == v2 )
-			HOMOG2D_THROW_ERROR_1B( "unable to build line from these two points, are the same: " << v1 );
+			HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same: " << v1 );
 #endif
 		*this = detail::crossProduct<type::IsLine>( v1, v2 );
 		p_normalizeLine();
@@ -2740,7 +2743,7 @@ template<typename FPT>
 FRect_<FPT> getFRect( cv::Mat& mat )
 {
 	if(  mat.cols == 0 || mat.rows == 0 )
-		HOMOG2D_THROW_ERROR_1B(
+		HOMOG2D_THROW_ERROR_1(
 			"Illegal values: cols=" << mat.cols << ", rows=" << mat.rows
 		);
 
@@ -2949,9 +2952,9 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 )
 {
 	if( vpt1.size() != 4 )
-		HOMOG2D_THROW_ERROR_1B( "invalid vector size for source points, should be 4, value=" << vpt1.size() );
+		HOMOG2D_THROW_ERROR_1( "invalid vector size for source points, should be 4, value=" << vpt1.size() );
 	if( vpt2.size() != 4 )
-		HOMOG2D_THROW_ERROR_1B( "invalid vector size for dest points, should be 4, value=" << vpt2.size() );
+		HOMOG2D_THROW_ERROR_1( "invalid vector size for dest points, should be 4, value=" << vpt2.size() );
 	assert( method == 0 || method == 1 );
 
 	if( method == 0 )
@@ -3001,7 +3004,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1B( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
 #endif
 		priv::fix_order( _ptS1, _ptS2 );
 	}
@@ -3026,7 +3029,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1B( "cannot define a segment with two identical points" << p1 << " and " << p2 );
+			HOMOG2D_THROW_ERROR_1( "cannot define a segment with two identical points" << p1 << " and " << p2 );
 #endif
 		_ptS1 = p1;
 		_ptS2 = p2;
@@ -3417,7 +3420,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( idx >= size() )
-			HOMOG2D_THROW_ERROR_1B( "requesting point " << idx
+			HOMOG2D_THROW_ERROR_1( "requesting point " << idx
 				<< ", only has "  << size()
 			);
 #endif
@@ -3432,12 +3435,12 @@ Segment \c n is the one between point \c n and point \c n+1
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( idx >= nbSegs() )
-			HOMOG2D_THROW_ERROR_1B( "requesting segment " << idx
+			HOMOG2D_THROW_ERROR_1( "requesting segment " << idx
 				<< ", only has "  << nbSegs()
 			);
 
 		if( size() < 2 ) // nothing to draw
-			HOMOG2D_THROW_ERROR_1B( "no segment " << idx );
+			HOMOG2D_THROW_ERROR_1( "no segment " << idx );
 #endif
 //			auto lastPoint = _isClosed?
 		return Segment_<FPT>(
@@ -3486,7 +3489,7 @@ been normalized. This normalizing operation will happen if you a comparison (== 
 #ifndef HOMOG2D_NOCHECKS
 		if( size() )
 			if( pt == _plinevec.back() )
-				HOMOG2D_THROW_ERROR_1B(
+				HOMOG2D_THROW_ERROR_1(
 					"cannot add a point identical to previous one: pt=" << pt << " size=" << size()
 				);
 #endif
@@ -3631,7 +3634,7 @@ getPointsBB( const T& vpts )
 	using FPT = typename T::value_type::FType;
 #ifndef HOMOG2D_NOCHECKS
 	if( vpts.empty() )
-		HOMOG2D_THROW_ERROR_1B( "cannot get bounding box of empty set" );
+		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set" );
 #endif
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
@@ -5399,7 +5402,7 @@ operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs.isParallelTo(rhs) )
-		HOMOG2D_THROW_ERROR_1B( "lines are parallel, unable to compute product:\nlhs="
+		HOMOG2D_THROW_ERROR_1( "lines are parallel, unable to compute product:\nlhs="
 			<< lhs << " rhs=" << rhs
 		);
 #endif
@@ -5422,7 +5425,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( lhs == rhs )
-		HOMOG2D_THROW_ERROR_1B( "points are identical, unable to compute product:" << lhs );
+		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product:" << lhs );
 #endif
 	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
 	line.p_normalizeLine();
@@ -5795,7 +5798,7 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( c1 == c2 )
-		HOMOG2D_THROW_ERROR_1B( "c1 and c2 identical" );
+		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
 #endif
 
 	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
@@ -5881,7 +5884,7 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( !li1.isParallelTo(li2) )
-		HOMOG2D_THROW_ERROR_1B( "lines are not parallel" );
+		HOMOG2D_THROW_ERROR_1( "lines are not parallel" );
 #endif
 	const auto ar1 = li1.get();
 	const auto ar2 = li2.get();
