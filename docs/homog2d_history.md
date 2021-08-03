@@ -8,6 +8,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - provide clear interface to extend drawing capabilities using other back-ends
   - add (optional) common root class, to be able to store heterogenous objects in container
 
+- current master branch
+  - added threshold as default argument to Ellipse::isCircle()
+
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)
   - added generalised `getBB()` and `FRect::getBoundingCircle()`

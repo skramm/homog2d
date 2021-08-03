@@ -673,31 +673,11 @@ Thus some assert can get triggered elsewhere.
 	const detail::Matrix_<FPT>& getMat() const { return static_cast<detail::Matrix_<FPT>>(*this); }
 #endif // 0
 
-private:
 	void init()
 	{
 		impl_mat_init0( detail::RootHelper<M>() );
 	}
 
-#ifdef HOMOG2D_FUTURE_STUFF
-/// Implementation for epipolar matrices: initialize to aligned axis
-	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
-	{
-		_data.fillZero();
-		_data[2][1] = 1.;
-		_data[1][2] = 1.;
-		_isNormalized = true;
-	}
-#endif
-
-/// Implementation for homographies: initialize to unit transformation
-	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
-	{
-		detail::Matrix_<FPT>::p_fillEye();
-		detail::Matrix_<FPT>::_isNormalized = true;
-	}
-
-public:
 /// \name Adding/assigning a transformation
 ///@{
 
@@ -806,7 +786,6 @@ public:
 		_hasChanged = true;
 	}
 
-public:
 	void buildFrom4Points( const std::vector<Point2d_<FPT>>&, const std::vector<Point2d_<FPT>>&, int method=1 );
 
 /// Matrix multiplication, call the base class product
@@ -819,7 +798,6 @@ public:
 		return out;
 	}
 
-public:
 /// Comparison operator. Does normalization if required
 	bool operator == ( const Hmatrix_& h ) const
 	{
@@ -849,7 +827,24 @@ public:
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 
-// (none )
+private:
+#ifdef HOMOG2D_FUTURE_STUFF
+/// Implementation for epipolar matrices: initialize to aligned axis
+	void impl_mat_init0( const detail::RootHelper<type::IsEpipmat>& )
+	{
+		_data.fillZero();
+		_data[2][1] = 1.;
+		_data[1][2] = 1.;
+		_isNormalized = true;
+	}
+#endif
+
+/// Implementation for homographies: initialize to unit transformation
+	void impl_mat_init0( const detail::RootHelper<type::IsHomogr>& )
+	{
+		detail::Matrix_<FPT>::p_fillEye();
+		detail::Matrix_<FPT>::_isNormalized = true;
+	}
 
 //////////////////////////
 //      DATA SECTION    //
@@ -1110,12 +1105,18 @@ public:
 
 /// \name attributes
 ///@{
-	bool isCircle() const;
+	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 ) const;
 	Point2d_<FPT>    center() const;
 	Polyline_<FPT>   getBB()  const;
 	HOMOG2D_INUMTYPE angle()  const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 ///@}
+
+	HOMOG2D_INUMTYPE area() const
+	{
+		auto par = p_getParams();
+		return M_PI * par.a * par.b;
+	}
 
 	template<typename T>
 	friend std::ostream&
@@ -4557,17 +4558,21 @@ Ellipse_<FPT>::p_computeParams() const
 
 //------------------------------------------------------------------
 /// Returns true if ellipse is a circle
-/** \todo remove those ugly magic numbers with something meaningful */
+/**
+Using the matrix represention, if A = C and B = 0, then the ellipse is a circle
+
+You can provide the 0 threshold as and argument
+*/
 template<typename FPT>
 bool
-Ellipse_<FPT>::isCircle() const
+Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 {
 	auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A  = m[0][0];
 	HOMOG2D_INUMTYPE C  = m[1][1];
 	HOMOG2D_INUMTYPE B2 = m[0][1];
-	if( std::abs(A-C) < 1E-10 )
-		if( std::abs(B2) < 1E-10 )
+	if( std::abs(A-C) < thres )
+		if( std::abs(B2)*2. < thres )
 			return true;
 	return false;
 }
@@ -5923,9 +5928,9 @@ center(const T& other )
 /// \sa Ellipse_::isCircle()
 template<typename FPT>
 bool
-isCircle(const Ellipse_<FPT>& ell )
+isCircle(const Ellipse_<FPT>& ell, HOMOG2D_INUMTYPE thres=1.E-10 )
 {
-	return ell.isCircle();
+	return ell.isCircle( thres );
 }
 
 /////////////////////////////////////////////////////////////////////////////

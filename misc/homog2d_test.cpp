@@ -1626,6 +1626,17 @@ TEST_CASE( "Ellipse", "[ell1]" )
 		CHECK( el.isCircle() == true );
 		CHECK( isCircle(el) == true );
 	}
+
+	{
+		Ellipse_<NUMTYPE> el(1,2,3.0,3.00001);
+		CHECK( el.center() == Point2d(1,2) );
+		CHECK( el.isCircle() == false );       // using default threshold
+		CHECK( isCircle(el) == false );
+
+		CHECK( el.isCircle(1E-3) == true );    // using arbitrary threshold
+		CHECK( isCircle(el,1E-3) == true );
+	}
+
 	{
 		Ellipse_<NUMTYPE> el(4,5,6,7);
 		CHECK( el.center() == Point2d(4,5) );

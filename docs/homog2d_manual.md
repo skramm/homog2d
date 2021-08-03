@@ -491,7 +491,6 @@ Circle cir;
 Ellipse ell5( cir );  // can be initialized from a circle
 ```
 
-
 Retrieving attributes:
 ```C++
 Ellipse ell;
@@ -499,10 +498,27 @@ auto center  = ell.center();
 auto center2 = center(ell);    // or use the free function
 auto angle = ell.angle();
 auto angle2 = angle(ell);    // or use the free function
-auto majmin = ell.getMajMin();  // returns a pair of loating point values
+auto majmin = ell.getMajMin();  // returns a pair of floating point values
 ```
 
+To check if the ellipse is a circle:
+```C++
+Ellipse ell;
+bool b = ell.isCircle();
+```
+(An ellipse will be a circle if a=b, but as it is stored basically in the matrix form we check here if \f$ A=C \f$ and \f$ B=0 \f$
 
+This will use a threshold, but you can provide the one you want, depending on your applications constraints:
+```C++
+Ellipse ell;
+bool b = ell.isCircle(1E-15);
+```
+
+There is also a free function available:
+```C++
+bool b1 = isCircle( ell );
+bool b2 = isCircle( ell, 1E-15 );
+```
 
 
 
