@@ -289,6 +289,7 @@ class Matrix_
 
 private:
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
+	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -380,11 +381,13 @@ See https://en.wikipedia.org/wiki/Determinant
 protected:
 	void p_normalize( int r, int c ) const
 	{
-		if( std::fabs(_mdata[r][c]) < nullDeterValue() )
+#ifndef HOMOG2D_NOCHECKS
+		if( std::fabs(_mdata[r][c]) < nullDenomValue() )
 			HOMOG2D_THROW_ERROR_1(
 				"Unable to normalize matrix, value at ("
-					<< r << ',' << c << ") less than " << nullDeterValue()
+					<< r << ',' << c << ") less than " << nullDenomValue()
 			);
+#endif
 		p_divideBy( r, c );
 		if( std::signbit( _mdata[r][c] ) )
 			for( auto& li: _mdata )
@@ -405,11 +408,11 @@ protected:
 	}
 #endif
 
-/// Divide all elements by the value at (r,c) (useful for normalization)
+/// Divide all elements by the value at (r,c), used for normalization.
+/** No need to check value, done by caller */
 	void p_divideBy( size_t r, size_t c ) const
 	{
-//		HOMOG2D_CHECK_ROW_COL;
-		assert( std::fabs( _mdata[r][c] ) > 1000*std::numeric_limits<FPT>::epsilon() );
+//		assert( std::fabs( _mdata[r][c] ) > 1000*std::numeric_limits<FPT>::epsilon() );
 		for( auto& li: _mdata )
 			for( auto& e: li )
 				e /= _mdata[r][c];
@@ -500,6 +503,7 @@ private:
 
 public:
 	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
+	static HOMOG2D_INUMTYPE& nullDenomValue() { return _zeroDenomValue; }
 
 private:
 
@@ -799,6 +803,10 @@ Thus some assert can get triggered elsewhere.
 	}
 
 /// Comparison operator. Does normalization if required
+/**
+This does an absolute comparison of all matrix elements, one by one,
+and if one differs more than the threshold, it will return false
+*/
 	bool operator == ( const Hmatrix_& h ) const
 	{
 		auto& data = detail::Matrix_<FPT>::_mdata;
@@ -811,7 +819,7 @@ Thus some assert can get triggered elsewhere.
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
-					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - static_cast<HOMOG2D_INUMTYPE>( h.value(i,j) ) )
+					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - h.value(i,j) )
 					>= detail::Matrix_<FPT>::nullDeterValue()
 				)
 					return false;
@@ -2706,33 +2714,29 @@ private:
 
 }; // class Root
 
-/// Instanciation of static variable
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - INSTANCIATION OF STATIC VARIABLES
+/////////////////////////////////////////////////////////////////////////////
+
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
-/// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDistance = 1E-8;
 
-/// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroDenom = 1E-10;
 
-/// Instanciation of static variable
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE Root<LP,FPT>::_zeroOffset = 1E-15;
 
-/// Instanciation of static variable
 template<typename FPT>
 HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
-
 template<typename FPT>
-FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
-template<typename FPT>
-FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
+HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -4513,7 +4517,11 @@ Ellipse_<FPT>::p_getParams() const
 }
 //------------------------------------------------------------------
 /// Compute and returns standard parameters from matrix coeffs
-/// \todo get rid of magic number
+/**
+\note In the checking below, we **cannot** print the matrix using the
+<< operator, because it call this function, thus it would enter
+an infinite loop (an eventually SO).
+*/
 template<typename FPT>
 template<typename T>
 detail::EllParams<T>
@@ -4530,6 +4538,14 @@ Ellipse_<FPT>::p_computeParams() const
 	detail::EllParams<T> par;  // theta already set to zero
 
 	auto denom = B*B - 4. * A * C;
+
+#ifndef HOMOG2D_NOCHECKS
+	if( std::abs(denom) < detail::Matrix_<FPT>::nullDenomValue() )
+		HOMOG2D_THROW_ERROR_1(
+			"unable to compute parameters, denom=" << std::scientific << std::setprecision(15) << denom
+		);
+#endif
+
 	par.x0 = ( 2.*C*D - B*E ) / denom;
 	par.y0 = ( 2.*A*E - B*D ) / denom;
 	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
@@ -4541,7 +4557,7 @@ Ellipse_<FPT>::p_computeParams() const
 
 	par.a2 = par.a * par.a;
 	par.b2 = par.b * par.b;
-	if( std::abs(B) < 1.E-10 )
+	if( std::abs(B) < detail::Matrix_<FPT>::nullDenomValue() )
 	{
 		if( A > C )
 			par.theta = 90.;
@@ -5605,6 +5621,11 @@ operator * (
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
+
+template<typename FPT>
+FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
+template<typename FPT>
+FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
 
 template<typename FPT1,typename FPT2>

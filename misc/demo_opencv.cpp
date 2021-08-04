@@ -180,7 +180,7 @@ void action_H(  void* param );
 void action_PL( void* param );
 void action_CC( void* param );
 void action_ELL( void* param );
-void action_RU( void* param );
+//void action_RU( void* param );
 
 
 //------------------------------------------------------------------
@@ -334,13 +334,6 @@ void mouse_CB_ELL( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_ELL, param );
 }
 
-#if 0
-/// Mouse callback for demo_RU
-void mouse_CB_RU( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_RU, param );
-}
-#endif
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -789,7 +782,6 @@ void action_H( void* param )
 	auto e_h = 70.;
 
 	Circle c_ell( e_x, e_y, e_h );
-
 	c_ell.draw( data.img );
 	auto ell = H * c_ell;
 	ell.draw( data.img2 );
@@ -1035,45 +1027,6 @@ void demo_ELL( int n )
 }
 
 //------------------------------------------------------------------
-#if 0
-/// rectangle Union
-void action_RU( void* param )
-{
-	auto& data = *reinterpret_cast<Data*>(param);
-
-	data.clearImage();
-	FRect r1( data.vpt[0], data.vpt[1] );
-	FRect r2( data.vpt[2], data.vpt[3] );
-
-	r1.draw( data.img );
-	r2.draw( data.img );
-	auto pl = r1.unionArea( r2 );
-	pl.draw( data.img, DrawParams().setColor( 250,10,10) );
-
-	data.showImage();
-}
-
-void demo_RU( int n )
-{
-	Data data( "Rectangle UNION demo" );
-	std::cout << "Demo " << n << ": Rectangle UNION\n";
-
-	data.setMouseCallback( mouse_CB_RU );
-
-	KeyboardLoop kbloop;
-	kbloop.addKeyAction(
-		'm',
-		[&]{
-			action_RU( &data );
-		},
-		"rotate CW"
-	);
-
-	action_RU( &data );
-	kbloop.start( data );
-}
-#endif
-//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos
@@ -1086,7 +1039,6 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
-//		demo_RU,
 		demo_B,
 		demo_ELL,
 		demo_CC,

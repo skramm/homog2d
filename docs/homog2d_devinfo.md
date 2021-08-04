@@ -37,5 +37,6 @@ This is done by pasting together the considered file and `misc/figures_test/head
 - types have first character upper case, variables lowercase
 - `camelCase` for identifiers
 - spaces after parenthesis (`if( someBool )`)
-- private member function are prefixed with `p_` (or `impl_` for tag dispatch implementation for points/lines)
+- private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation for points/lines)
+- all symbols start with `HOMOG2D_`, to avoid name collisions
 
