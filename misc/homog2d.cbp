@@ -71,6 +71,7 @@
 		<Unit filename="../docs/homog2d_qa.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../docs/homog2d_speed.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -173,6 +174,9 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

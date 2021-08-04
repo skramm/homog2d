@@ -47,5 +47,14 @@ Thus the first function returns a type that can be checked for success.
 A contrario, the second function will return a <code>Polyline</code>, and in case of failure, it will just be empty, which is perfectly valid.
 </dd>
 
+<dt>
+Q: I notice the repo has a lot of branches. Whats the point with all these branches?
+</dt>
+<dd>
+Probably bad branch managment...
+As "branching is free", I tend to create branches on the fly, but sometimes forget, and/or they are too different to sync up, so I just let them go.
+But the point to remember is that "master" will always stay clean (build and tests ok).
+</dd>
+
 </dl>
 

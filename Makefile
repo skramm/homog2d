@@ -1,7 +1,7 @@
 # Makefile for homog2d library
 # see https://github.com/skramm/homog2d
 
-.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase
+.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase speed_test
 
 .PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png BUILD/no_build/%.cpp BUILD/showcase/%
 .SECONDARY:
@@ -126,13 +126,20 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 
 #=======================================================================
 # speed test
-speed_test: BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+speed_test: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
 
 BUILD/ellipse_speed_test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
+# No Checking
+BUILD/ellipse_speed_test_SYCN: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED -DHOMOG2D_NOCHECKS
+
 BUILD/ellipse_speed_test_SY: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
+
+BUILD/ellipse_speed_test_SYCN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
 	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
 
 BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile

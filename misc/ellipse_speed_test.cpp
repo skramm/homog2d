@@ -7,7 +7,7 @@
 
 using namespace h2d;
 
-int main()
+int main( int argc, const char** argv )
 {
 	size_t c1 = 0;
 	size_t c2 = 0;
@@ -16,17 +16,25 @@ int main()
 	double esize = 500;
 
 	size_t nb_runs = 1E7;
-//	size_t nb_runs = 10;
+	if( argc > 1 )
+		nb_runs = std::atoi( argv[1] );
 
 	std::srand( time(0));
 	Point2d dummy_pt( range_center * std::rand() / RAND_MAX, range_center * std::rand() / RAND_MAX );
 
-	std::cout << "-Running with n=" << nb_runs << "\n-HOMOG2D_OPTIMIZE_SPEED: "
+	std::cout << "-Running with n=" << nb_runs
+	<< "\n-HOMOG2D_OPTIMIZE_SPEED: "
 #ifdef HOMOG2D_OPTIMIZE_SPEED
 		<< "YES"
 #else
 		<< "NO"
-#endif // HOMOG2D_OPTIMIZE_SPEED
+#endif
+	<< "\n-HOMOG2D_NOCHECKS: "
+#ifdef HOMOG2D_NOCHECKS
+		<< "YES"
+#else
+		<< "NO"
+#endif
 		<< "\n Ellipse memory footprint=" << sizeof( Ellipse ) << '\n';
 
 	for( size_t i=0; i<nb_runs; i++ )
