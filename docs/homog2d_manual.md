@@ -498,6 +498,8 @@ auto center  = ell.center();
 auto center2 = center(ell);    // or use the free function
 auto angle   = ell.angle();
 auto angle2  = angle(ell);    // or use the free function
+auto area    = ell.area();
+auto area2   = area(ell);    // or use the free function
 auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
 You can get the pair of axis lines:

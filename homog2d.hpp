@@ -1363,7 +1363,7 @@ public:
 };
 
 //------------------------------------------------------------------
-/// Small class to hold result of intersections of two FRect_
+/// Helper class, holds result of intersections of two FRect_
 /// \sa FRect_::intersectArea()
 template<typename T>
 class RectArea
@@ -5903,12 +5903,23 @@ HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 {
 	return rect.width();
 }
+
 /// Free function
+/// \sa FRect_::area()
 template<typename FPT>
 HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
 {
 	return rect.area();
 }
+
+/// Free function
+/// \sa Ellipse_::area()
+template<typename FPT>
+HOMOG2D_INUMTYPE area( const Ellipse_<FPT>& ell )
+{
+	return ell.area();
+}
+
 /// Free function
 template<typename FPT>
 HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
