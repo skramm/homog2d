@@ -496,17 +496,24 @@ Retrieving attributes:
 Ellipse ell;
 auto center  = ell.center();
 auto center2 = center(ell);    // or use the free function
-auto angle = ell.angle();
-auto angle2 = angle(ell);    // or use the free function
-auto majmin = ell.getMajMin();  // returns a pair of floating point values
+auto angle   = ell.angle();
+auto angle2  = angle(ell);    // or use the free function
+auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
+You can get the pair of axis lines:
+```C++
+Ellipse ell;
+auto pair_lines  = ell.getAxisLines();
+auto pair_lines2 = getAxisLines( ell ); // or use the free function
+```
+
 
 To check if the ellipse is a circle:
 ```C++
 Ellipse ell;
 bool b = ell.isCircle();
 ```
-(An ellipse will be a circle if a=b, but as it is stored basically in the matrix form we check here if \f$ A=C \f$ and \f$ B=0 \f$
+(An ellipse will be a circle if a=b, but as it is stored basically in the matrix form we check here if A=C and B=0.
 
 This will use a threshold, but you can provide the one you want, depending on your applications constraints:
 ```C++

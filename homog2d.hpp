@@ -5979,9 +5979,18 @@ center(const T& other )
 /// \sa Ellipse_::isCircle()
 template<typename FPT>
 bool
-isCircle(const Ellipse_<FPT>& ell, HOMOG2D_INUMTYPE thres=1.E-10 )
+isCircle( const Ellipse_<FPT>& ell, HOMOG2D_INUMTYPE thres=1.E-10 )
 {
 	return ell.isCircle( thres );
+}
+
+/// Returns ellipse axis lines
+/// \sa Ellipse_::getAxisLines()
+template<typename FPT>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+getAxisLines( const Ellipse_<FPT>& ell )
+{
+	return ell.getAxisLines();
 }
 
 /////////////////////////////////////////////////////////////////////////////
