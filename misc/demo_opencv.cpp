@@ -953,15 +953,22 @@ struct Param_ELL : Data
 	{
 		auto x0=200;
 		auto y0=100;
-//		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
-		liH = Line2d( LineDir::H, y0 );
-		liV = Line2d( LineDir::V, x0 );
+		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
+//		liH = Line2d( LineDir::H, y0 );
+//		liV = Line2d( LineDir::V, x0 );
 		H = Homogr(x0,y0).addRotation( 15. * M_PI / 180. ).addTranslation(-x0,-y0);
-		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
+//		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
+		pl = getBB(ell);
 	}
-
-//	Ellipse_<double> ell;
-	Line2d liH, liV;
+	void draw()
+	{
+		clearImage();
+		pl.draw( img );
+		ell.draw( img );
+		showImage();
+	}
+	Ellipse_<double> ell;
+//	Line2d liH, liV;
 	Polyline pl;
 	Homogr H;
 };
@@ -969,17 +976,19 @@ struct Param_ELL : Data
 /// Ellipse demo
 void action_ELL( void* param )
 {
-	auto& data = *reinterpret_cast<Param_ELL*>(param);
+//	auto& data = *reinterpret_cast<Param_ELL*>(param);
 
-	data.clearImage();
+//	data.clearImage();
 //	std::cout << data.ell << '\n';
 //	data.ell.draw( data.img );
-	data.liH.draw( data.img );
-	data.liV.draw( data.img );
-	data.pl.draw( data.img );
+//	data.liH.draw( data.img );
+//	data.liV.draw( data.img );
+//	data.pl.draw( data.img );
+//	data.pl.draw( data.img );
 //	data.pl =  data.H * data.pl;
 //	data.ell = data.H * data.ell;
-	data.showImage();
+//	data.showImage();
+//	data.draw();
 }
 void demo_ELL( int n )
 {
@@ -991,38 +1000,34 @@ void demo_ELL( int n )
 	double tx = 0;
 	double ty = 0;
 	double trans_delta = 20;
+	double angle = 0.;
+	double angle_delta = 5.;
 
-	auto x0=200;
-	auto y0=100;
+//	auto x0=200;	auto y0=100;
 
 	KeyboardLoop kbloop;
-/*	kbloop.addKeyAction(
-		'm',
-		[&]{
-			data.pl =  data.H * data.pl;
-			data.ell = data.H * data.ell;
-			action_ELL( &data );
-		},
-		"rotate CW"
-	);
-*/
 	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
 	kbloop.addKeyAction( 'a', [&]{ tx -= trans_delta;    }, "decrement tx" );
 	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
 	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
+	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
 
 	kbloop.addCommonAction( [&]
 		{
+			Homogr H;
+			H.addTranslation(-tx, -ty).addRotation( angle * M_PI/180.).addTranslation(tx, ty);
 			data.clearImage();
-			Ellipse_<float> ell( x0, y0, 120.,60.,0) ;
-			ell.translate(tx,ty );
+			auto ell = H * data.ell;
+			auto bb = getBB(ell);
 			ell.draw( data.img );
-			auto bb = ell.getBB();
 			bb.draw( data.img );
+			auto axis = ell.getAxisLines();
+			draw( data.img, axis );
 			data.showImage();
 		}
 	);
-	action_ELL( &data );
+//	action_ELL( &data );
 	kbloop.start( data );
 }
 

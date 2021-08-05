@@ -1126,6 +1126,8 @@ public:
 		return M_PI * par.a * par.b;
 	}
 
+	std::pair<Line2d_<FPT>,Line2d_<FPT>> getAxisLines() const;
+
 	template<typename T>
 	friend std::ostream&
 	operator << ( std::ostream& f, const Ellipse_<T>& ell );
@@ -4622,6 +4624,26 @@ Ellipse_<FPT>::angle() const
 }
 
 //------------------------------------------------------------------
+/// Returns pair of axis lines of ellipse
+template<typename FPT>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+Ellipse_<FPT>::getAxisLines() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	auto dy = par.sint * par.a;
+	auto dx = par.cost * par.a;
+	Point2d_<FPT> ptA(
+		par.x0 + dx,
+		par.y0 + dy
+	);
+	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
+
+	auto li_H = ptA * pt0;
+	auto li_V = li_H.getOrthogonalLine( pt0 );
+	return std::make_pair( li_H, li_V );
+}
+
+//------------------------------------------------------------------
 /// Returns bounding box of ellipse
 /**
 Algorithm:
@@ -4636,7 +4658,6 @@ template<typename FPT>
 Polyline_<FPT>
 Ellipse_<FPT>::getBB() const
 {
-
 // step 1: build ptA using angle
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	auto dy = par.sint * par.a;
@@ -4648,7 +4669,7 @@ Ellipse_<FPT>::getBB() const
 	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
 
 // step 2: build main-axis line, going through center and ptA
-	Line2d_<FPT> li_H = ptA * pt0;
+	auto li_H = ptA * pt0;
 
 // step 3: get ptB, using line and distance
 	auto ppts = li_H.getPoints( pt0, par.a );
@@ -5702,8 +5723,17 @@ size_t size( const Polyline_<FPT>& pl )
 	return pl.size();
 }
 
+/// Returns Bounding Box of Ellipse_ (free function)
+/// \sa Ellipse_::getBB()
+template<typename FPT>
+Polyline_<FPT>
+getBB( const Ellipse_<FPT>& ell )
+{
+	return ell.getBB();
+}
 
-/// Returns Bounding Box (free function)
+
+/// Returns Bounding Box of Segment_ (free function)
 /// \sa Segment_::getBB()
 template<typename FPT>
 FRect_<FPT>
@@ -5712,7 +5742,7 @@ getBB( const Segment_<FPT>& seg )
 	return seg.getBB();
 }
 
-/// Returns Bounding Box (free function)
+/// Returns Bounding Box of Circle_ (free function)
 /// \sa Circle_::getBB()
 template<typename FPT>
 FRect_<FPT>
@@ -5721,7 +5751,7 @@ getBB( const Circle_<FPT>& cir )
 	return cir.getBB();
 }
 
-/// Returns Bounding Box (free function)
+/// Returns Bounding Box of Polyline_ (free function)
 /// \sa FRect_::getBB()
 template<typename FPT>
 FRect_<FPT>

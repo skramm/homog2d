@@ -473,7 +473,7 @@ But is they are (both) closed, it will return `true`, as they obviously describe
 
 ### 3.5 - Ellipse
 
-We follow here the traditional parametrization for the API:
+We follow here the traditional parametrization of ellipses:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
 Internally, it is stored as a conic in its matrix form (see [build options](#build_options) for details).
 
