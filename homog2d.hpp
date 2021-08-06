@@ -1862,7 +1862,16 @@ public:
 		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
+
+/// Circle/Polyline intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	{
+		HOMOG2D_START;
+		return pl.intersects( * this );
+	}
 ///@}
+
 private:
 	template<typename FPT2>
 	bool implC_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const

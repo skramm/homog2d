@@ -41,7 +41,7 @@ set output "docs/gitlog_2.svg"
 #set terminal png size 1400,500
 #set output "docs/gitlog_2.png"
 
-plot "BUILD/git_log_2.dat" using (timecolumn(2, '%Y-%m-%d')):(timecolumn(3, '%H:%M:%S')) with linespoints pt 6 lw 2 notitle
+plot "BUILD/git_log_2.dat" using (timecolumn(1, '%Y-%m-%d')):(timecolumn(2, '%H:%M:%S')) with linespoints pt 6 lw 2 notitle
 
 #set terminal pngcairo size 1200,600
 #set output "obj/gitlog_2.png"

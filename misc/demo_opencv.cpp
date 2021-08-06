@@ -180,18 +180,18 @@ void action_H(  void* param );
 void action_PL( void* param );
 void action_CC( void* param );
 void action_ELL( void* param );
-//void action_RU( void* param );
-
 
 //------------------------------------------------------------------
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
 struct KeyboardLoop
 {
+	using FuncType = void();
+	/// Holds link between key, function, and description
 	struct KbLoopAction
 	{
-		char                  _key;
-		std::function<void()> _action;
-		std::string           _msg;
+		char                    _key;     ///< what key
+		std::function<FuncType> _action;  ///< what do do
+		std::string             _msg;     ///< message describing key action
 		friend std::ostream& operator << ( std::ostream& f, const KbLoopAction& action )
 		{
 			if( !action._msg.empty() )
@@ -202,11 +202,11 @@ struct KeyboardLoop
 
 	private:
 	std::vector<KbLoopAction> _actions;
-	std::function<void()> _common = nullptr;
+	std::function<FuncType> _common = nullptr;
 
 	public:
 /// Add \c action when key \c key is hit
-	void addKeyAction( char key, const std::function<void()>& action, std::string text=std::string() )
+	void addKeyAction( char key, const std::function<FuncType>& action, std::string text=std::string() )
 	{
 		auto it = std::find_if(
 			_actions.begin(),
@@ -222,7 +222,7 @@ struct KeyboardLoop
 		_actions.push_back( KbLoopAction{ key, action, text } );
 	}
 /// Add common \c action when a valid key is hit
-	void addCommonAction( const std::function<void()>& action )
+	void addCommonAction( const std::function<FuncType>& action )
 	{
 		_common = action;
 	}
@@ -328,12 +328,6 @@ void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_CC, param );
 }
 
-/// Mouse callback for demo_ELL
-void mouse_CB_ELL( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_ELL, param );
-}
-
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -418,7 +412,7 @@ void demo_B( int n )
 	data.showImage();
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; } );
+	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; }, "reset" );
 	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
 	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
 	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
@@ -842,13 +836,19 @@ void action_PL( void* param )
 	auto color = DrawParams().setColor( 0,10,200);
 	if( data.polyline.isPolygon() )
 		color = DrawParams().setColor( 250,10,20);
-
 	data.polyline.draw( data.img, color );
+
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img );
 	auto intersPts = li.intersects(data.polyline);
 	for( const auto& pt: intersPts.get() )
 		pt.draw( data.img  );
+
+	Circle cir( 350,180,50);
+	cir.draw( data.img );
+	auto i_cir = cir.intersects( data.polyline );
+	if( i_cir() )
+		draw( data.img, i_cir.get()	);
 
 	auto bb = data.polyline.getBB();
 	bb.draw( data.img );
@@ -974,7 +974,7 @@ struct Param_ELL : Data
 };
 
 /// Ellipse demo
-void action_ELL( void* param )
+void action_ELL()
 {
 //	auto& data = *reinterpret_cast<Param_ELL*>(param);
 
@@ -989,21 +989,18 @@ void action_ELL( void* param )
 //	data.ell = data.H * data.ell;
 //	data.showImage();
 //	data.draw();
+
 }
 void demo_ELL( int n )
 {
 	Param_ELL data( "Ellipse demo" );
 	std::cout << "Demo " << n << ": Ellipse\n";
 
-//	data.setMouseCallback( mouse_CB_ELL );
-
 	double tx = 0;
 	double ty = 0;
 	double trans_delta = 20;
 	double angle = 0.;
 	double angle_delta = 5.;
-
-//	auto x0=200;	auto y0=100;
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
@@ -1016,7 +1013,10 @@ void demo_ELL( int n )
 	kbloop.addCommonAction( [&]
 		{
 			Homogr H;
-			H.addTranslation(-tx, -ty).addRotation( angle * M_PI/180.).addTranslation(tx, ty);
+		auto x0=200;
+		auto y0=100;
+
+			H.addTranslation(-x0, -y0).addRotation( angle * M_PI/180.).addTranslation(x0+tx, y0+ty);
 			data.clearImage();
 			auto ell = H * data.ell;
 			auto bb = getBB(ell);
