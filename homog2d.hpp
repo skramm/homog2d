@@ -40,7 +40,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.5
+#define HOMOG2D_VERSION 2.6
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -4796,7 +4796,7 @@ Root<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelper<
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
 	if( std::abs(denom) < nullDenom() )
-		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encoutered" );
+		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
 		return ( -a * other - _v[2] ) / b;

@@ -22,6 +22,7 @@
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_DEBUGMODE
+#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1034,7 +1035,7 @@ void demo_ELL( int n )
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
-- if called with no arguments, will switch through all the demos
+- if called with no arguments, will switch through all the demos, with SPC
 - if called with an (integer) argument, will launch only that demo
 */
 int main( int argc, const char** argv )
