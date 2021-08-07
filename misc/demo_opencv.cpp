@@ -186,7 +186,7 @@ void action_ELL( void* param );
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
 struct KeyboardLoop
 {
-	using FuncType = void();
+	using FuncType = void(void*);
 	/// Holds link between key, function, and description
 	struct KbLoopAction
 	{
@@ -276,9 +276,9 @@ struct KeyboardLoop
 						std::cout << ": " << it->_msg;
 					std::cout << '\n';
 
-					it->_action();
+					it->_action(&data);
 					if( _common )
-						_common();
+						_common(&data);
 					data.showImage();
 				}
 			}
@@ -413,16 +413,16 @@ void demo_B( int n )
 	data.showImage();
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'r', [&]{ scale = 1.; angle = tx = ty = 0.; }, "reset" );
-	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
-	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
-	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
-	kbloop.addKeyAction( 'a', [&]{ tx -= trans_delta;    }, "decrement tx" );
-	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
-	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
-	kbloop.addKeyAction( 'p', [&]{ scale *= scale_delta; }, "increment scale" );
-	kbloop.addKeyAction( 'o', [&]{ scale /= scale_delta; }, "reduce scale" );
-	kbloop.addCommonAction( [&]
+	kbloop.addKeyAction( 'r', [&](void*){ scale = 1.; angle = tx = ty = 0.; }, "reset" );
+	kbloop.addKeyAction( 'm', [&](void*){ angle += angle_delta; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&](void*){ angle -= angle_delta; }, "decrement angle" );
+	kbloop.addKeyAction( 'z', [&](void*){ tx += trans_delta;    }, "increment tx" );
+	kbloop.addKeyAction( 'a', [&](void*){ tx -= trans_delta;    }, "decrement tx" );
+	kbloop.addKeyAction( 'b', [&](void*){ ty += trans_delta;    }, "increment ty" );
+	kbloop.addKeyAction( 'y', [&](void*){ ty -= trans_delta;    }, "decrement ty" );
+	kbloop.addKeyAction( 'p', [&](void*){ scale *= scale_delta; }, "increment scale" );
+	kbloop.addKeyAction( 'o', [&](void*){ scale /= scale_delta; }, "reduce scale" );
+	kbloop.addCommonAction( [&](void*)
 		{
 			data.clearImage();
 			Homogr H;
@@ -539,9 +539,9 @@ void demo_C( int n )
 	data.setMouseCallback( mouse_CB_C );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'l', [&] { data.radius += 10; }, "increment radius" );
-	kbloop.addKeyAction( 'm', [&] { data.radius -= 10; }, "decrement radius" );
-	kbloop.addKeyAction( 'r', [&] { data.radius = 80;  }, "reset radius" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.radius += 10; }, "increment radius" );
+	kbloop.addKeyAction( 'm', [&](void*){ data.radius -= 10; }, "decrement radius" );
+	kbloop.addKeyAction( 'r', [&](void*){ data.radius = 80;  }, "reset radius" );
 	kbloop.start( data );
 }
 
@@ -656,9 +656,9 @@ void demo_6(int n)
 	data.showImage();
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'm', [&] { data.angle += angle_delta; } );
-	kbloop.addKeyAction( 'l', [&] { data.angle -= angle_delta; } );
-	kbloop.addCommonAction( [&]{ action_6(&data);} );
+	kbloop.addKeyAction( 'm', [&](void*){ data.angle += angle_delta; } );
+	kbloop.addKeyAction( 'l', [&](void*){ data.angle -= angle_delta; } );
+	kbloop.addCommonAction( [&](void*){ action_6(&data);} );
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
@@ -804,8 +804,8 @@ void demo_H( int n )
 	action_H( &data );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'r', [&] { data.reset(); } );
-	kbloop.addKeyAction( 'a', [&]
+	kbloop.addKeyAction( 'r', [&](void*){ data.reset(); } );
+	kbloop.addKeyAction( 'a', [&](void*)
 		{
 			data.hmethod = data.hmethod?0:1;
 #if !defined(HOMOG2D_USE_EIGEN)
@@ -880,13 +880,13 @@ void demo_PL( int n )
 	action_PL( &data );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&]
+	kbloop.addKeyAction( 'a', [&](void*)
 		{
 			data.polyline.isClosed() = !data.polyline.isClosed();
 		},
 		"switch close"
 	);
-	kbloop.addCommonAction( [&] { action_PL(&data); } );
+	kbloop.addCommonAction( [&](void*){ action_PL(&data); } );
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
@@ -952,83 +952,64 @@ struct Param_ELL : Data
 {
 	explicit Param_ELL( std::string title ):Data(title)
 	{
-		auto x0=200;
-		auto y0=100;
 		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
-//		liH = Line2d( LineDir::H, y0 );
-//		liV = Line2d( LineDir::V, x0 );
-		H = Homogr(x0,y0).addRotation( 15. * M_PI / 180. ).addTranslation(-x0,-y0);
-//		pl = FRect( x0-100,y0-50, x0+100, y0+50 );
-		pl = getBB(ell);
 	}
 	void draw()
 	{
+		std::cout << __FUNCTION__ << "()\n";
+
 		clearImage();
-		pl.draw( img );
-		ell.draw( img );
+		auto ell2 = H * ell;
+		ell2.draw( img );
+
+		auto bb1 = ell2.getBB();
+		bb1.draw( img, DrawParams().setColor(0,0,250) );
+
+		auto bb2 = bb1.getBB();
+		bb2.draw( img, DrawParams().setColor(0,250,0) );
+
+		auto axis = ell2.getAxisLines();
+		h2d::draw( img, axis );
+
 		showImage();
 	}
 	Ellipse_<double> ell;
-//	Line2d liH, liV;
-	Polyline pl;
 	Homogr H;
+	double angle = 5.;
+	double tx = 0;
+	double ty = 0;
+	double x0=200;
+	double y0=100;
 };
 
-/// Ellipse demo
-void action_ELL()
+/// action for Ellipse demo (run on keyboard hit)
+void action_ELL( void* param )
 {
-//	auto& data = *reinterpret_cast<Param_ELL*>(param);
-
-//	data.clearImage();
-//	std::cout << data.ell << '\n';
-//	data.ell.draw( data.img );
-//	data.liH.draw( data.img );
-//	data.liV.draw( data.img );
-//	data.pl.draw( data.img );
-//	data.pl.draw( data.img );
-//	data.pl =  data.H * data.pl;
-//	data.ell = data.H * data.ell;
-//	data.showImage();
-//	data.draw();
-
+	auto& data = *reinterpret_cast<Param_ELL*>(param);
+	data.H.init();
+	data.H.addTranslation(-data.x0, -data.y0).addRotation( data.angle * M_PI/180.).addTranslation(data.x0+data.tx, data.y0+data.ty);
+	data.draw();
 }
+
+/// Ellipse demo
 void demo_ELL( int n )
 {
 	Param_ELL data( "Ellipse demo" );
 	std::cout << "Demo " << n << ": Ellipse\n";
 
-	double tx = 0;
-	double ty = 0;
 	double trans_delta = 20;
-	double angle = 0.;
 	double angle_delta = 5.;
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'z', [&]{ tx += trans_delta;    }, "increment tx" );
-	kbloop.addKeyAction( 'a', [&]{ tx -= trans_delta;    }, "decrement tx" );
-	kbloop.addKeyAction( 'b', [&]{ ty += trans_delta;    }, "increment ty" );
-	kbloop.addKeyAction( 'y', [&]{ ty -= trans_delta;    }, "decrement ty" );
-	kbloop.addKeyAction( 'm', [&]{ angle += angle_delta; }, "increment angle" );
-	kbloop.addKeyAction( 'l', [&]{ angle -= angle_delta; }, "decrement angle" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.tx += trans_delta;    }, "increment tx" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.tx -= trans_delta;    }, "decrement tx" );
+	kbloop.addKeyAction( 'b', [&](void*){ data.ty += trans_delta;    }, "increment ty" );
+	kbloop.addKeyAction( 'y', [&](void*){ data.ty -= trans_delta;    }, "decrement ty" );
+	kbloop.addKeyAction( 'm', [&](void*){ data.angle += angle_delta; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.angle -= angle_delta; }, "decrement angle" );
 
-	kbloop.addCommonAction( [&]
-		{
-			Homogr H;
-		auto x0=200;
-		auto y0=100;
-
-			H.addTranslation(-x0, -y0).addRotation( angle * M_PI/180.).addTranslation(x0+tx, y0+ty);
-			data.clearImage();
-			auto ell = H * data.ell;
-			auto bb = getBB(ell);
-			ell.draw( data.img );
-			bb.draw( data.img );
-			auto axis = ell.getAxisLines();
-			draw( data.img, axis );
-			data.showImage();
-		}
-	);
-//	action_ELL( &data );
+	kbloop.addCommonAction( action_ELL );
+	action_ELL( &data );
 	kbloop.start( data );
 }
 
