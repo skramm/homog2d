@@ -109,9 +109,10 @@ struct Data
 		lC.draw( img, dp );
 		lD.draw( img, dp );
 		auto rect = getBB( vpt );
-		rect.draw( img );
+		rect.draw( img, DrawParams().setColor(0,250,0) );
+
 		auto cbb = rect.getBoundingCircle();
-		cbb.draw( img,  DrawParams().setColor( 150, 150, 0) );
+		cbb.draw( img,  DrawParams().setColor( 0,0,250) );
 	}
 };
 
@@ -179,7 +180,6 @@ void action_SI(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
-void action_CC( void* param );
 void action_ELL( void* param );
 
 //------------------------------------------------------------------
@@ -321,12 +321,6 @@ void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_PL, param );
-}
-
-/// Mouse callback for demo_CC
-void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_CC, param );
 }
 
 //------------------------------------------------------------------
@@ -896,63 +890,6 @@ void demo_PL( int n )
 	kbloop.addCommonAction( [&](void*){ action_PL(&data); } );
 	kbloop.start( data );
 }
-//------------------------------------------------------------------
-struct Param_CC : Data
-{
-	explicit Param_CC( std::string title ):Data(title)
-	{
-		c1.set( vpt[0], 80 );
-		c2.set( vpt[1], 120 );
-	}
-	Circle_<float> c1,c2;
-};
-
-void action_CC( void* param )
-{
-	auto& data = *reinterpret_cast<Param_CC*>(param);
-
-	data.clearImage();
-
-	data.c1.set( data.vpt[0], 80 );
-	data.c2.set( data.vpt[1], 120 );
-
-	Segment seg( data.vpt[2], data.vpt[3] );
-	seg.draw( data.img, DrawParams().setColor( 200,0,50) );
-
-	data.c1.draw( data.img );
-	data.c2.draw( data.img );
-	data.c1.center().draw( data.img );
-	data.c2.center().draw( data.img );
-
-	auto intersSeg = data.c1.intersects(seg);
-//	auto intersSeg = seg.intersects(data.c1);
-	if( intersSeg() )
-	{
-		auto pts = intersSeg.get();
-		draw( data.img, pts );
-	}
-	auto intersCir = data.c1.intersects(data.c2);
-	if( intersCir() )
-	{
-//		std::cout << "intersection !\n";
-		auto ppts = intersCir.get();
-		ppts.first.draw( data.img );
-		ppts.second.draw( data.img );
-	}
-	data.showImage();
-}
-
-void demo_CC( int n )
-{
-	Param_CC data( "Circle-circle intersection" );
-	std::cout << "Demo " << n << ": Circle-circle intersection\n";
-
-	data.setMouseCallback( mouse_CB_CC );
-
-	action_CC( &data );
-	KeyboardLoop kbloop;
-	kbloop.start( data );
-}
 
 //------------------------------------------------------------------
 struct Param_ELL : Data
@@ -1000,7 +937,10 @@ void action_ELL( void* param )
 void demo_ELL( int n )
 {
 	Param_ELL data( "Ellipse demo" );
-	std::cout << "Demo " << n << ": Ellipse\n";
+	std::cout << "Demo " << n
+		<< ": Ellipse (no mouse, enter 'h' for valid keys)\n"
+		<< " -blue rectangle: ellipse bounding box\n"
+		<< " -green rectangle: blue rectangle bounding box\n";
 
 	double trans_delta = 20;
 	double angle_delta = 5.;
@@ -1033,7 +973,6 @@ int main( int argc, const char** argv )
 	std::vector<std::function<void(int)>> v_demo{
 		demo_B,
 		demo_ELL,
-		demo_CC,
 		demo_H,
 		demo_PL,
 		demo_1,
