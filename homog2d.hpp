@@ -1643,6 +1643,14 @@ s0 |      | s2
 		return p_intersects_R_C( circle );
 	}
 
+/// FRect/Polyline intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	{
+		HOMOG2D_START;
+		return pl.intersects( *this );
+	}
+
 /// FRect/FRect intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const

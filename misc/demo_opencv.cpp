@@ -839,17 +839,24 @@ void action_PL( void* param )
 		color = DrawParams().setColor( 250,10,20);
 	data.polyline.draw( data.img, color );
 
+	auto col_green = DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
-	li.draw( data.img );
+	li.draw( data.img, col_green );
 	auto intersPts = li.intersects(data.polyline);
 	for( const auto& pt: intersPts.get() )
 		pt.draw( data.img  );
 
-	Circle cir( 350,180,50);
-	cir.draw( data.img );
+	Circle cir( 350,180,65);
+	cir.draw( data.img, col_green );
 	auto i_cir = cir.intersects( data.polyline );
 	if( i_cir() )
 		draw( data.img, i_cir.get()	);
+
+	FRect rect( 90,160,205,245);
+	rect.draw( data.img, col_green );
+	auto i_rect = rect.intersects( data.polyline );
+	if( i_rect() )
+		draw( data.img, i_rect.get() );
 
 	auto bb = data.polyline.getBB();
 	bb.draw( data.img );
@@ -956,8 +963,6 @@ struct Param_ELL : Data
 	}
 	void draw()
 	{
-		std::cout << __FUNCTION__ << "()\n";
-
 		clearImage();
 		auto ell2 = H * ell;
 		ell2.draw( img );
@@ -1051,7 +1056,6 @@ int main( int argc, const char** argv )
 		std::cout << "----------------------------------\n";
 		v_demo[i](i+1);
 	}
-
 	std::cout << "Demo end\n";
 }
 
