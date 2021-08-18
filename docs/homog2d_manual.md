@@ -515,7 +515,7 @@ To check if the ellipse is a circle:
 Ellipse ell;
 bool b = ell.isCircle();
 ```
-(An ellipse will be a circle if a=b, but as it is stored basically in the matrix form we check here if A=C and B=0.
+(An ellipse will be a circle if a=b, but as it is stored in the matrix form, we check here if A=C and B=0.
 
 This will use a threshold, but you can provide the one you want, depending on your applications constraints:
 ```C++
