@@ -179,7 +179,7 @@ void action_SI(  void* param );
 void action_6(  void* param );
 void action_H(  void* param );
 void action_PL( void* param );
-void action_CC( void* param );
+//void action_CC( void* param );
 void action_ELL( void* param );
 
 //------------------------------------------------------------------
@@ -323,12 +323,13 @@ void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_PL, param );
 }
 
-/// Mouse callback for demo_CC
+#if 0
+// Mouse callback for demo_CC
 void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_CC, param );
 }
-
+#endif
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -890,6 +891,7 @@ void demo_PL( int n )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
+#if 0
 struct Param_CC : Data
 {
 	explicit Param_CC( std::string title ):Data(title)
@@ -946,7 +948,7 @@ void demo_CC( int n )
 	KeyboardLoop kbloop;
 	kbloop.start( data );
 }
-
+#endif
 //------------------------------------------------------------------
 struct Param_ELL : Data
 {
@@ -1047,7 +1049,7 @@ int main( int argc, const char** argv )
 	std::vector<std::function<void(int)>> v_demo{
 		demo_B,
 		demo_ELL,
-		demo_CC,
+//		demo_CC,
 		demo_H,
 		demo_PL,
 		demo_1,
