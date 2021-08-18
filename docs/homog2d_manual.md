@@ -28,7 +28,7 @@ All these implement a comparison operator ( `==` and  `!=`).
 
 A large part of the API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
-Both of these is possible:
+Both of these are possible:
 ```C++
 AAA myvar;
 auto v1 = myvar.foo();
@@ -290,6 +290,7 @@ auto length2 = length(s1);
 
 
 ### 3.2 - Flat rectangles
+<a name="frect"></a>
 
 A flat rectangle is provided through the template class `FRect`.
 It is modeled by its two opposite points.
@@ -319,7 +320,6 @@ Or by giving the center point and width and height:
 ```C++
 FRect r1( p0, w, h );
 ```
-
 
 You can get the points with two different member functions:
 ```C++
@@ -391,13 +391,14 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 This class holds a set of points and models an arbitrary set of joined segments.
 It can be either open or closed (last points joins first one).
 If closed, and if it does not intersect itself, the it can be used to model a polygon.
+It can be seen as a wrapper over a vector of points.
 ```C++
-Polygon pl1;                  // default is open
-Polygon pl2( IsClosed::Yes ); // this one is closed
+Polyline pl1;                  // default is open
+Polyline pl2( IsClosed::Yes ); // this one is closed
 pl1.add( pt );       // add a point
 pl1.add( 66,77 );    // add a point as (x,y)
 std::vector<Point2d> vpts;
-// fill vpt
+// fill vpts
 pl1.add( vpt );      // add a vector of points
 pl2.isClosed() = false;  // now open
 ```
@@ -407,21 +408,22 @@ pl2.isClosed() = false;  // now open
 It can be build directly from a `FRect` object:
 ```C++
 FRect rect;
-Polygon pl1( frect );                // default is closed
-Polygon pl2( frect, IsClosed::No );  // optional argument
+Polyline pl1( frect );                // default is closed
+Polyline pl2( frect, IsClosed::No );  // optional argument
 ```
-
+If the latter line is used, then this will produce a polyline without the segment from `p3` to `p0`
+(see (above figure for `FRect`)[#frect]).
 
 The open/close attribute can be read/written:
 ```C++
-Polygon pl1;
+Polyline pl1;
 std::cout << "IsClosed=" << pl1.isClosed() << '\n';
 pl1.isClosed() = true;
 ```
 
 It is possible to replace all the points with the ones contained in a vector, or just add them:
 ```C++
-Polygon pl;
+Polyline pl;
 std::vector<Point2d> v_pts_2;
 std::vector<Point2d> v_pts_2;
 pl.set( v_pts_1 );  // replace
@@ -432,7 +434,7 @@ You can extract either points or segments.
 The number of segments is related to the open/close condition.
 For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
 ```C++
-Polygon pl;
+Polyline pl;
 // ... add points
 std::cout << "nbpts=" << pl.size() << " nb segments=" << pl.nbSegs() << '\n';
 auto vec_pts  = pl.getPts();
@@ -442,7 +444,7 @@ auto seg = pl.getSegment( i );   // will throw if non-existent
 
 Additional features: length and bounding box:
 ```C++
-Polygon pl;
+Polyline pl;
 // ... add points
 std::cout << "length=" << pl.length() << '\n';
 FRect rect  = pl.getBB();
@@ -452,7 +454,7 @@ FRect rect2 = getBB(pl);
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
 If it is, you can get its area:
 ```C++
-Polygon pl;
+Polyline pl;
 // ... add points
 if( pl.isPolygon() )
 	std::cout << "area=" << pl.area();

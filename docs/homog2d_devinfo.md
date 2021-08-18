@@ -34,8 +34,9 @@ This is done by pasting together the considered file and `misc/figures_test/head
 ## Coding style
 
 - TABS, not spaces (1 byte per level)
-- types have first character upper case, variables lowercase
+- types have first character upper case, variables are lowercase
 - `camelCase` for identifiers
+- class member variables are prefixed with an underscore (`_`)
 - spaces after parenthesis (`if( someBool )`)
 - private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation for points/lines)
 - all symbols start with `HOMOG2D_`, to avoid name collisions

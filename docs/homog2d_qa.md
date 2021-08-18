@@ -31,7 +31,7 @@ then open an issue [here](https://github.com/skramm/homog2d/issues) and include 
 Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite with GCC, why?
 </dt>
 <dd>
-A: This seems to be an issue whith Catch, regular program shouldn't issue those, no worry
+A: This seems to be an issue with Catch, regular program shouldn't issue those, no worry
 (this doesn't seem to happen with clang).
 </dd>
 
@@ -53,7 +53,7 @@ Q: I notice the repo has a lot of branches. Whats the point with all these branc
 <dd>
 Probably bad branch managment...
 As "branching is free", I tend to create branches on the fly, but sometimes forget, and/or they are too different to sync up, so I just let them go.
-But the point to remember is that "master" will always stay clean (build and tests ok).
+But the point to remember is that "master" will always stay clean (build and tests ok), and will regularly be updated with bugfixes and new features.
 </dd>
 
 </dl>
