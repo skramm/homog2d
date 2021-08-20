@@ -84,6 +84,13 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_INUMTYPE double
 #endif
 
+#if !defined(HOMOG2D_BIND_X)
+	#define HOMOG2D_BIND_X x
+#endif
+#if !defined(HOMOG2D_BIND_Y)
+	#define HOMOG2D_BIND_Y y
+#endif
+
 /// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_1( msg ) \
 	{ \
@@ -2163,6 +2170,13 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		impl_init_4( x1, y1, x2, y2, detail::RootHelper<LP>() );
+	}
+
+/// Constructor of Point/Line from random type
+	template<typename T>
+	Root( T val )
+	{
+		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::RootHelper<LP>() );
 	}
 
 /// Default constructor, depends on the type

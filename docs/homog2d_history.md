@@ -6,13 +6,16 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add inversion of a Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - provide clear interface to extend drawing capabilities using other back-ends
-  - add (optional) common root class, to be able to store heterogenous objects in container
+  - add (optional) common root class, to be able to store heterogeneous objects in container
+  - clarify thresholds usage and manual
+  - add precision evaluation
 
 - current master branch
   - added threshold as default argument to Ellipse::isCircle()
   - fixed manual typos, added "dev" doc page
   - added speed test, manual edits
   - added missing intersection function (FRect/Polyline)
+  - added binding template constructor for points/lines
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)

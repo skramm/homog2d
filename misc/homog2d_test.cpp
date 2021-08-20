@@ -21,6 +21,8 @@
 run with "make test"
 */
 
+#define HOMOG2D_BIND_X xxx
+
 //#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
@@ -1918,6 +1920,19 @@ TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 		CHECK( p1.isNormalized() == true );
 		CHECK( p2.isNormalized() == true );
 	}
+}
+
+TEST_CASE( "general binding", "[gen_bind]" )
+{
+
+	struct MyType
+	{
+		float xxx,y;
+	};
+	MyType mtpt{3,4};
+	Point2d pt( mtpt );
+	CHECK( pt.getX() == 3 );
+	Line2d li (mtpt); // ???
 }
 
 //////////////////////////////////////////////////////////////

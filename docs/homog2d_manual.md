@@ -26,6 +26,8 @@ It is implemented as a homogeneous 3x3 matrix.
 It also provides some additional types, derived from these.
 All these implement a comparison operator ( `==` and  `!=`).
 
+It does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
+
 A large part of the API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
 Both of these are possible:
@@ -853,6 +855,22 @@ For the union, if there is no intersection, the function will return an empty `P
 
 Import from other types is pretty much straight forward.
 For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
+For example, say you have a point type:
+```C++
+struct MyPoint
+{
+	float x,y;
+};
+```
+Then you can build a point (or a line going through (0,0) and that point) with:
+```C++
+MyPoint myPoint;
+Point2d pt(myPoint);
+Line2d li(myPoint);
+```
+But in case your type uses other identifiers than `x` and `x`, no problem:
+just define the symbol `HOMOG2D_BIND_X` and `HOMOG2D_BIND_Y` with the ones you use and the above code will be ok.
+
 For homographies, you can import directly from
 `std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`.
 
