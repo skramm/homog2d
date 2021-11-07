@@ -1127,6 +1127,7 @@ public:
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 ///@}
 
+/// Area of ellipse
 	HOMOG2D_INUMTYPE area() const
 	{
 		auto par = p_getParams();
@@ -3307,17 +3308,20 @@ public:
 
 
 //------------------------------------------------------------------
-/// Holds attribute of a Polyline, allows storage of last computed value, through the use of ValueFlag
+/// Holds attribute of a Polyline, allows storage of last computed value through the use of ValueFlag
 struct PolylineAttribs
 {
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
 	priv::ValueFlag<bool>             _isPolygon;
+	priv::ValueFlag<Root<type::IsPoint,HOMOG2D_INUMTYPE>> _centroid;
+
 	void setBad()
 	{
 		_length.setBad();
 		_area.setBad();
 		_isPolygon.setBad();
+		_centroid.setBad();
 	}
 };
 
@@ -3403,7 +3407,12 @@ public:
 	HOMOG2D_INUMTYPE area()      const;
 	bool             isPolygon() const;
 	FRect_<FPT>      getBB()     const;
+	Root<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
 
+private:
+	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
+
+public:
 /// Returns the number of segments
 	size_t nbSegs() const
 	{
@@ -3415,6 +3424,7 @@ public:
 	}
 
 	const bool& isClosed() const { return _isClosed; }
+/// Non const version, used to change the attribute value
 	bool&       isClosed()       { _attribs.setBad(); return _isClosed; }
 ///@}
 
@@ -3755,7 +3765,7 @@ Polyline_<FPT>::length() const
 }
 
 //------------------------------------------------------------------
-/// Returns area of polygon
+/// Returns area of polygon (computed only if necessary)
 template<typename FPT>
 HOMOG2D_INUMTYPE
 Polyline_<FPT>::area() const
@@ -3764,19 +3774,66 @@ Polyline_<FPT>::area() const
 		return 0.;
 
 	if( _attribs._area.isBad() )
+		_attribs._area.set( std::abs( p_ComputeSignedArea() ) );
+	return _attribs._area.value();
+}
+
+//------------------------------------------------------------------
+/// Compute and returns signed area (used in area() and in centroid() )
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Polyline_<FPT>::p_ComputeSignedArea() const
+{
+	HOMOG2D_INUMTYPE area = 0.;
+	for( size_t i=0; i<size(); i++ )
 	{
-		HOMOG2D_INUMTYPE area = 0.;
+		auto j = (i == size()-1 ? 0 : i+1);
+		auto pt1 = _plinevec[i];
+		auto pt2 = _plinevec[j];
+		area += static_cast<HOMOG2D_INUMTYPE>(pt1.getX()) * pt2.getY();
+		area -= static_cast<HOMOG2D_INUMTYPE>(pt1.getY()) * pt2.getX();
+	}
+	return area / 2.;
+}
+
+//------------------------------------------------------------------
+/// Compute centroid of polygon
+/**
+ref: https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
+*/
+template<typename FPT>
+Root<type::IsPoint,HOMOG2D_INUMTYPE>
+Polyline_<FPT>::centroid() const
+{
+	if( !isPolygon() )
+		throw "UNABLE!"; /// \todo 2021-11-07: clean that out
+
+	if( _attribs._centroid.isBad() )
+	{
+		HOMOG2D_INUMTYPE cx = 0.;
+		HOMOG2D_INUMTYPE cy = 0.;
 		for( size_t i=0; i<size(); i++ )
 		{
 			auto j = (i == size()-1 ? 0 : i+1);
-			auto pt1 = _plinevec[i];
-			auto pt2 = _plinevec[j];
-			area += static_cast<HOMOG2D_INUMTYPE>(pt1.getX()) * pt2.getY();
-			area -= static_cast<HOMOG2D_INUMTYPE>(pt1.getY()) * pt2.getX();
+			const auto& pt1 = _plinevec[i];
+			const auto& pt2 = _plinevec[j];
+			auto x1 = pt1.getX();
+			auto x2 = pt2.getX();
+			auto y1 = pt1.getY();
+			auto y2 = pt2.getY();
+
+			auto prod = x1*y2 - x2*y1;
+			cx += (x1+x2) * prod;
+			cy += (y1+y2) * prod;
 		}
-		_attribs._area.set( std::abs(area / 2.) );
+		auto signedArea = p_ComputeSignedArea();
+		cx /= (6*signedArea);
+		cy /= (6*signedArea);
+
+		auto c = Root<type::IsPoint,HOMOG2D_INUMTYPE>( cx, cy );
+		_attribs._centroid.set( c );
 	}
-	return _attribs._area.value();
+	return _attribs._centroid.value();
 }
 
 //------------------------------------------------------------------

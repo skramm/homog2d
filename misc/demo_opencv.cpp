@@ -862,6 +862,19 @@ void action_PL( void* param )
 	auto bb = data.polyline.getBB();
 	bb.draw( data.img );
 
+	if( data.polyline.isPolygon() )
+	{
+		auto centroid = data.polyline.centroid();
+		centroid.draw( data.img, DrawParams().setColor(40,20,250) );
+		cv::putText(
+			data.img.getReal(),
+			"centroid",
+			centroid.getCvPti(),
+			0, 0.6,
+			cv::Scalar( 250,0,0 )
+		);
+	}
+
 	cv::putText(
 		data.img.getReal(),
 		std::string("length=")+ std::to_string(data.polyline.length()),

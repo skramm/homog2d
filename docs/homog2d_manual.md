@@ -423,6 +423,16 @@ std::cout << "IsClosed=" << pl1.isClosed() << '\n';
 pl1.isClosed() = true;
 ```
 
+Number of points and number of segments (member function or free function)::
+```C++
+Polyline pl;
+// ... add points
+auto n1 = pl.size();  // nb of points
+auto n2 = size(pl);
+auto s1 = pl.nbSegs();
+auto s2 = nbSegs(s2);
+```
+
 It is possible to replace all the points with the ones contained in a vector, or just add them:
 ```C++
 Polyline pl;
@@ -444,12 +454,13 @@ auto vec_segs = pl.getSegs();
 auto seg = pl.getSegment( i );   // will throw if non-existent
 ```
 
-Additional features: length and bounding box:
+Additional features: length and bounding box (member function or free function):
 ```C++
 Polyline pl;
 // ... add points
-std::cout << "length=" << pl.length() << '\n';
-FRect rect  = pl.getBB();
+auto length1 = pl.length();
+auto length2 = length(pl);
+FRect rect1 = pl.getBB();
 FRect rect2 = getBB(pl);
 ```
 

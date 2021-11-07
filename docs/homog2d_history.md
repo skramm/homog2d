@@ -16,6 +16,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added speed test, manual edits
   - added missing intersection function (FRect/Polyline)
   - added binding template constructor for points/lines
+  - added centroid computation to Polyline
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)
