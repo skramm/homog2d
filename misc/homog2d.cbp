@@ -94,9 +94,6 @@
 		<Unit filename="extra_style_sheet.css">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="figures_test/footer.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -118,10 +115,9 @@
 		<Unit filename="figures_test/frect_intersect_7.code" />
 		<Unit filename="figures_test/frect_intersect_8.code" />
 		<Unit filename="figures_test/frect_intersect_9.code" />
-		<Unit filename="figures_test/header.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="figures_test/readme.txt" />
+		<Unit filename="figures_test/t_footer.cxx" />
+		<Unit filename="figures_test/t_header.cxx" />
 		<Unit filename="gitlog.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -174,9 +170,6 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

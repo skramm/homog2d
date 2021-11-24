@@ -1,3 +1,6 @@
+// file t_header.cxx
+// used in makefile target test_fig
+
 #define HOMOG2D_USE_OPENCV
 
 #include "../../homog2d.hpp"

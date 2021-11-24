@@ -1,3 +1,6 @@
+// this file is part of homog2d
+// used to build the figures that are included in manual
+
 #define HOMOG2D_USE_OPENCV
 
 #include "homog2d.hpp"
