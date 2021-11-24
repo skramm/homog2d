@@ -32,7 +32,7 @@ run with "make test"
 	#define NUMTYPE double
 #endif
 
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -884,6 +884,28 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 		CHECK( p1.second == Point2d(5,5) );
 	}
 }
+
+//////////////////////////////////////////////////////////////
+/////           AREA INTERSECTION TESTS                       /////
+//////////////////////////////////////////////////////////////
+
+TEST_CASE( "FRect - intersectArea()", "[FRect_intersectA]" )
+{
+	{
+		FRect r1,r2;
+		auto u1 = intersectArea(r1,r2);
+		CHECK( u1() == true );
+		CHECK( u1.get() == r1 );
+	}
+	{
+		FRect r1(0,0,2,2);
+		FRect r2 (3,3,5,5);
+		auto u1 = intersectArea(r1,r2);
+		CHECK( u1() == false );
+//		CHECK_THROWS( u1.get() );
+	}
+}
+
 
 //////////////////////////////////////////////////////////////
 /////           ISINSIDE TESTS                       /////

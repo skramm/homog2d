@@ -15,7 +15,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed manual typos, added "dev" doc page
   - added speed test, manual edits
   - added missing intersection function (FRect/Polyline)
-  - added binding template constructor for points/lines
+  - added binding template constructor for points/lines (see HOMOG2D_BIND_X)
   - added centroid computation to Polyline
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
@@ -29,7 +29,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - renamed `CvDrawParams` => `DrawParams` (intent: planning multiple graphics back-end)
   - added `Frect` union and intersection areas: `unionArea()` and `intersectArea()`, associated operators and free functions
   - added normalization to closed `Polyline` so that they can be compared
-  - classe `Point2d`, `FRect`, `Circle`, `Polyline` and `Ellipse` now all have a `translate(dx,dy)` member function
+  - classes `Point2d`, `FRect`, `Circle`, `Polyline` and `Ellipse` now all have a `translate(dx,dy)` member function
 
 - [v2.4](https://github.com/skramm/homog2d/releases/tag/v2.4), released on 2021-07-12
   - **Major release, some API changes**

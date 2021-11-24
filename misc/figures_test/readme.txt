@@ -1,4 +1,4 @@
-This file holds some code use in the test app.
+This folder holds some code use in the test app.
 The goal is to both:
 - include these lines in the test app, followed by some checkings
 - use these lines to build the associated figure, to make it more understandable

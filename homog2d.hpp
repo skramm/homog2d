@@ -3839,9 +3839,9 @@ Polyline_<FPT>::centroid() const
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area, will throw if no intersection area
 /**
-3 situations need to be considered, depending on the number of intersection points:
+4 situations need to be considered, depending on the number of intersection points:
 
-- A: 2 points on same segment => 2 points inside.
+- A: A: 2 intersection points on same segment => we have 2 points inside.
 \verbatim
   +------+                   +------+
   |      |                   |      |
@@ -3853,7 +3853,7 @@ Polyline_<FPT>::centroid() const
   +------+                   +------+
 \endverbatim
 
-- B: 2 points on different segments => for each rectangle, 1 point is inside the other.
+- B: 2 intersection points on different segments => for each rectangle, 1 point is inside the other.
 \verbatim
   +------+
   |      |
@@ -3875,7 +3875,7 @@ Polyline_<FPT>::centroid() const
   +------+
 \endverbatim
 
-- D: 4 points: the intersection rectangle is made of these 4 points
+- D: 4 intersection points: the intersection rectangle is made of these 4 points
 \verbatim
      +------+
      |      |
@@ -3892,6 +3892,9 @@ template<typename FPT2>
 detail::RectArea<FPT>
 FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 {
+	if( *this == other )                      // if same rectangles, then
+		return detail::RectArea<FPT>(other);  // the intersection area is the rectangle
+
 	auto inter = this->intersects( other );
 
 	if( !inter() )                        // rectangles do not intersect
@@ -5736,7 +5739,7 @@ FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
-
+/// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
 Polyline_<FPT1>
 unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
@@ -5744,6 +5747,7 @@ unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 	return r1.unionArea(r2);
 }
 
+/// Free function, see FRect_::intersectArea()
 template<typename FPT1,typename FPT2>
 detail::RectArea<FPT1>
 intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )

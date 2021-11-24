@@ -1,6 +1,6 @@
 # Computation time information
 
-A detailed [in manual](homog2d_manual.md#build_options), the
+As detailed [in manual](homog2d_manual.md#build_options), the
 `HOMOG2D_OPTIMIZE_SPEED` build option will favor speed over memory footprint.
 
 With current commit (2021-08-04), and using the

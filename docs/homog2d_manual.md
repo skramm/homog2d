@@ -837,20 +837,22 @@ bool bc2 = seg.isInside( ell );
 
 ### 5.3 - Union and Intersection area of two rectangles
 
-You can compute the rectangle corresponding to the intersection of two rectangles:
-one can use either the named function, or the `&` operator.
-For the union of two rectangles, the operation is similar, but it will return a (closed) `Polyline` object.<br>
-Corresponding free function are also available.
+You can compute the rectangle corresponding to the intersection of two (flat) rectangles:
+one can use either the `intersectArea()` member function or (same name) free function, or the `&` operator.
+This will return an object that can be checked for with the `()` operator (returns a bool).
+It will return `false` if there is no intersection.
+
+For the union of two rectangles, the usage is similar, but it will return a (closed) `Polyline` object.
 
 ```C++
 auto a1 = r1.intersectArea(r2);
 auto a2 = r1 & r2;
-auto a3 = intersectArea( r1, r2 );
+auto a3 = intersectArea( r1, r2 ); // free function
 if( a1() )
-	std::cout << "common area is " << a1.get();
+	std::cout << "common area is " << a1.get(); // prints the FRect object of the intersection
 auto b1 = r1.unionArea( r2 );
 auto b2 = r1 | r2;
-auto b3 = unionArea( r1, r2 );
+auto b3 = unionArea( r1, r2 ); // free function
 ```
 
 ![showcase2a](showcase2a.gif)
@@ -1170,7 +1172,7 @@ If defined, program will very likely crash.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is immediate.
-For more on this, [see this page](homog2d_speed.md).
+For more on this, [see this page](docs/homog2d_speed.md).
 
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
