@@ -32,7 +32,7 @@ run with "make test"
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 

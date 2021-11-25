@@ -2031,10 +2031,7 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 template<typename T,size_t N>
 void printArray( const std::array<T,N>& v, std::string msg=std::string() )
 {
-	std::cout << "array: ";
-	if( msg.empty() )
-		std::cout << msg;
-	std::cout << " #=" << N<< '\n';
+	std::cout << "array: " << msg << " #=" << N<< '\n';
 	for( const auto& elem: v )
 		std::cout << elem << "-";
 	std::cout << '\n';
@@ -4209,9 +4206,6 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 //	std::cout << "r2=" << r2 << "\n";
 // STEP 0 END
 
-	if( r1 == r2 )                    // if identical rectangles,
-		return Polyline_<FPT>( r1 );  // return one of them as a polygon
-
 // step 1: build vectors of coordinates and sort them
 	std::array<Index<FPT>,4> vx, vy;
 	int i=0;
@@ -4228,18 +4222,18 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );
-//	priv::printArray( vx, "vx"); priv::printArray( vy, "vy");
+	priv::printArray( vx, "vx" ); priv::printArray( vy, "vy");
 
 // step 2: fill table\n";
 	Table table;
 	for( int r=0;r<4; r++ )
 		for( int c=0;c<4; c++ )
 			table[r][c] = Cell( vx[r], vy[c] );
-//	printTable( table, "after step 2" );
+	printTable( table, "after step 2" );
 
 // step 3: parse table
 	auto vpts = parseTable( table );
-//	priv::printVectorPairs( vpts );
+	priv::printVectorPairs( vpts );
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
 	return convertToCoord( vpts, vx, vy );
