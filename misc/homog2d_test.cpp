@@ -1165,9 +1165,13 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
 
-		auto u1 = intersectArea(r1,r2);
-		CHECK( u1() == true );
-		CHECK( u1.get() == r1 );
+		auto i1 = intersectArea(r1,r2);
+		CHECK( i1() == true );
+		CHECK( i1.get() == r1 );
+
+		auto u1 = unionArea(r1,r2);
+		CHECK( u1.size() == 4 );      // 4 points
+		CHECK( u1 == Polyline(r1) );  // same
 	}
 	{
 #include "figures_test/frect_intersect_1.code"
@@ -1181,6 +1185,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( a() == false );       // no intersection !
 		auto b = r1&r2;
 		CHECK( b() == false );       // no intersection !
+
+		auto u1 = unionArea(r1,r2);
+		CHECK( u1.size() == 0 );     // empty
 	}
 	{
 #include "figures_test/frect_intersect_2.code"
@@ -1200,6 +1207,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto rect_inter2 = r1&r2;
 		CHECK( rect_inter2() == true );
 		CHECK( rect_inter2.get() == FRect(2,1, 3,2) );
+
+		auto u1 = unionArea(r1,r2);
+//		Polyline p{ [0,0],[1,1] };
+		CHECK( u1.size() == 8 );
 	}
 
 	{      // 4 intersection points
@@ -1217,6 +1228,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,2, 4,4) );
+
+		auto u1 = unionArea(r1,r2);
+//		Polyline p{ [0,0],[1,1] };
+		CHECK( u1.size() == 12 );
 	}
 
 	{     // horizontal segment overlap
@@ -1236,6 +1251,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
 		CHECK( rect_inter.get() == FRect(2,0, 3,2) );
+
+		auto u1 = unionArea(r1,r2);
+//		Polyline p{ [0,0],[1,1] };
+		CHECK( u1.size() == 4 );
 	}
 	{     // common vertical segment
 #include "figures_test/frect_intersect_5.code"
@@ -1257,6 +1276,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( inters.size() == 0 );
 		CHECK( r1.intersectArea(r2)() == false ); // still no intersection
 
+		auto u1 = unionArea(r1,r2);
+//		Polyline p{ [0,0],[1,1] };
+		CHECK( u1.size() == 4 );
+
 	}
 	{     // two rectangles joined by corner at 3,2
 #include "figures_test/frect_intersect_6.code"
@@ -1266,6 +1289,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,2 ) );
 		CHECK( r1.intersectArea(r2)() == false ); // only one point !
+
+		auto u1 = unionArea(r1,r2);
+		CHECK( u1.size() == 8 );
 	}
 	{     // two rectangles
 #include "figures_test/frect_intersect_7.code"

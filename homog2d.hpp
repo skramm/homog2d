@@ -4182,6 +4182,9 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
 
+	if( *this == other )                  // if same rectangles, then
+		return Polyline_<FPT>( other );   // returns one of them
+
 	if( !this->intersects(other)() )  // if no intersection,
 		return Polyline_<FPT>();      // return empty polygon
 
