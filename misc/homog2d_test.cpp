@@ -886,28 +886,6 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 }
 
 //////////////////////////////////////////////////////////////
-/////           AREA INTERSECTION TESTS                       /////
-//////////////////////////////////////////////////////////////
-
-TEST_CASE( "FRect - intersectArea()", "[FRect_intersectA]" )
-{
-	{
-		FRect r1,r2;
-		auto u1 = intersectArea(r1,r2);
-		CHECK( u1() == true );
-		CHECK( u1.get() == r1 );
-	}
-	{
-		FRect r1(0,0,2,2);
-		FRect r2 (3,3,5,5);
-		auto u1 = intersectArea(r1,r2);
-		CHECK( u1() == false );
-//		CHECK_THROWS( u1.get() );
-	}
-}
-
-
-//////////////////////////////////////////////////////////////
 /////           ISINSIDE TESTS                       /////
 //////////////////////////////////////////////////////////////
 
@@ -1173,14 +1151,23 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 	}
 }
 
+// This part uses externally defined rectangles, check the files
+// figures_test/frect_intersect_*.code
+// this is done so we can, for a single defined rectangle pair,
+// have both the test code here, and a graphical representation of the situation.
+// The corresponding images are built with `$ make test_fig`
 TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 {
-	{
+	{                                   // identical rectangles
 		FRect_<NUMTYPE> r1, r2;
 		CHECK( r1 == r2 );
 		CHECK( !r1.intersects(r2)() );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
+
+		auto u1 = intersectArea(r1,r2);
+		CHECK( u1() == true );
+		CHECK( u1.get() == r1 );
 	}
 	{
 #include "figures_test/frect_intersect_1.code"
@@ -1316,6 +1303,26 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( vpts[2] == Point2d( 4,3 ) );
 //		auto rect_inter = r1.intersectArea(r2);
 //		CHECK( rect_inter == FRect(3,2, 4,3) );
+	}
+
+	{ // one rectangle inside the other
+#include "figures_test/frect_intersect_10.code"
+		CHECK( r1.intersects(r2)() == false );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 0 );
+		CHECK( r1.intersectArea(r2)() == false );
+	}
+	{ // one rectangle inside the other, with a common segment
+#include "figures_test/frect_intersect_11.code"
+		CHECK( r1.intersects(r2)() == true );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 2,3 ) );
+		CHECK( vpts[1] == Point2d( 3,3 ) );
+		CHECK( r1.intersectArea(r2)() == false );
+		auto inter=r1.intersectArea(r2);
+		std::cout << inter.get();
 	}
 }
 

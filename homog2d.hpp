@@ -3839,9 +3839,14 @@ Polyline_<FPT>::centroid() const
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area, will throw if no intersection area
 /**
+\return an object of type detail::RectArea, that can be checked for success using the ()
+operator, and if success, will hold the resulting FRect_
+
+Algorithm:
+
 4 situations need to be considered, depending on the number of intersection points:
 
-- A: A: 2 intersection points on same segment => we have 2 points inside.
+- A: 2 intersection points on same segment => we have 2 points inside.
 \verbatim
   +------+                   +------+
   |      |                   |      |
