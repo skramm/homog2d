@@ -97,6 +97,8 @@
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="figures_test/frect_intersect_10.code" />
+		<Unit filename="figures_test/frect_intersect_11.code" />
 		<Unit filename="figures_test/frect_intersect_2.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -170,6 +172,9 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

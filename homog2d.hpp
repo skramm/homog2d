@@ -3906,7 +3906,7 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 		return detail::RectArea<FPT>();
 
 	if( inter.size() < 2 )                // only one intersection point
-		return detail::RectArea<FPT>();
+		return detail::RectArea<FPT>();   // => no intersection area!
 
 	if( inter.size() == 4 )  // 4 intersection points => case "D"
 		return detail::RectArea<FPT>(FRect_<FPT>( inter.get().at(0), inter.get().at(3) ) );

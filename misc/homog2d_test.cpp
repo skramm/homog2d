@@ -1320,9 +1320,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 2,3 ) );
 		CHECK( vpts[1] == Point2d( 3,3 ) );
-		CHECK( r1.intersectArea(r2)() == false );
+		CHECK( r1.intersectArea(r2)() == true );
 		auto inter=r1.intersectArea(r2);
-		std::cout << inter.get();
+		CHECK( inter.get() == r2 );
 	}
 }
 
