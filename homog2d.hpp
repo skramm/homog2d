@@ -3992,11 +3992,15 @@ namespace priv {
 /// Common stuff for FRect_ union, see FRect_::unionArea()
 namespace runion {
 //------------------------------------------------------------------
+/// Holds x or y coordinate value of rectangle during computation of intersection area
+/**
+\c T will be the floating-pont type
+*/
 template<typename T>
 struct Index
 {
 	T       value;
-	uint8_t rect_idx=0;   // 0 means none
+	uint8_t rect_idx=0;   // 0 means none, will be 1 or 2
 
 	Index() = default;
 	Index( T v, uint8_t r )
@@ -4077,6 +4081,22 @@ moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 	}
 }
 
+/*void
+cleanTable( Table& table )
+{
+	for( uint8_t r=0;r<4; r++ )
+		for( uint8_t c=0;c<4; c++ )
+		{
+			auto cell = table[r][c];
+			if( cell.isCorner )
+			{
+				if( r>0 && r<3 )
+
+			}
+		}
+
+}
+*/
 std::vector<PCoord>
 parseTable( Table& table)
 {
@@ -4226,10 +4246,11 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 // step 2: fill table\n";
 	Table table;
-	for( int r=0;r<4; r++ )
-		for( int c=0;c<4; c++ )
+	for( uint8_t r=0;r<4; r++ )
+		for( uint8_t c=0;c<4; c++ )
 			table[r][c] = Cell( vx[r], vy[c] );
 	printTable( table, "after step 2" );
+//	cleanTable( table );
 
 // step 3: parse table
 	auto vpts = parseTable( table );

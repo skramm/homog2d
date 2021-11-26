@@ -21,6 +21,7 @@
 run with "make test"
 */
 
+/// see test [gen_bind]
 #define HOMOG2D_BIND_X xxx
 
 //#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
@@ -1277,7 +1278,6 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1.intersectArea(r2)() == false ); // still no intersection
 
 		auto u1 = unionArea(r1,r2);
-//		Polyline p{ [0,0],[1,1] };
 		CHECK( u1.size() == 4 );
 
 	}
@@ -1350,6 +1350,36 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto inter=r1.intersectArea(r2);
 		CHECK( inter.get() == r2 );
 	}
+
+// this below needs to be expanded
+	{
+#include "figures_test/frect_intersect_12.code"
+		CHECK( r1.intersects(r2)() == true );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 3 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 2,0 ) );
+		CHECK( vpts[0] == Point2d( 2,2 ) );
+		CHECK( vpts[1] == Point2d( 3,0 ) );
+		CHECK( r1.intersectArea(r2)() == true );
+//		auto inter=r1.intersectArea(r2);
+//		CHECK( inter.get() == r2 );
+	}
+
+// this below needs to be expanded
+	{
+#include "figures_test/frect_intersect_13.code"
+		CHECK( r1.intersects(r2)() == true );
+		auto inters = r1.intersects(r2);
+		CHECK( inters.size() == 2 );
+		auto vpts = inters.get();
+		CHECK( vpts[0] == Point2d( 3,0 ) );
+		CHECK( vpts[1] == Point2d( 3,2 ) );
+		CHECK( r1.intersectArea(r2)() == false );
+//		auto inter=r1.intersectArea(r2);
+//		CHECK( inter.get() == r2 );
+	}
+
 }
 
 

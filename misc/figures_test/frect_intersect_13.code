@@ -1,0 +1,6 @@
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif
+
+	FRect_<NUMTYPE> r1( Point2d(0,0), Point2d(3,2) );
+	FRect_<NUMTYPE> r2( Point2d(3,0), Point2d(5,3) );
