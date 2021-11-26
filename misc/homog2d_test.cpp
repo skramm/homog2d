@@ -1383,6 +1383,19 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 }
 
+TEST_CASE( "priv: parse table", "[priv_parseTable]" )
+{
+	std::vector<std::string> v_str{".F.F","F...","F...",".F.F"};
+	auto table = priv::runion::convertStringToTable( v_str );
+	priv::runion::printTable( table, "[priv_parseTable]" );
+	auto vpts = priv::runion::parseTable( table );
+	priv::printVectorPairs( vpts );
+	CHECK( vpts == std::vector<priv::runion::PCoord>{
+			{0,1},{0,3},{3,3},{3,1},{2,1},{2,0},{1,0},{1,1}
+		}
+	);
+
+}
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {

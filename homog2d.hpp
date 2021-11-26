@@ -4035,6 +4035,10 @@ struct Cell
 {
 	bool isCorner = false;
 	Cell() = default;
+#ifdef HOMOG2D_DEBUGMODE
+	Cell( bool b ) : isCorner(b)
+	{}
+#endif
 	template<typename T>
 	Cell( const Index<T>& ix, const Index<T>& iy )
 	{
@@ -4110,6 +4114,9 @@ cleanTable( Table& table )
 */
 
 /// Helper function for FRect_<FPT>::unionArea()
+/**
+- Start from 0,0, direction East
+*/
 std::vector<PCoord>
 parseTable( Table& table)
 {
@@ -4195,6 +4202,23 @@ convertToCoord(
 	return Polyline_<FPT>( v_pts, IsClosed::Yes );
 }
 
+
+Table
+convertStringToTable( const std::vector<std::string>& v_str )
+{
+	Table table;
+	for( uint8_t r=0;r<4; r++ )
+	{
+		auto str = v_str[r];
+		for( uint8_t c=0;c<4; c++ )
+			table[r][c] = Cell( str[c] == 'F' );
+	}
+
+	printTable( table, "convertStringToTable" );
+	return table;
+}
+
+
 } // namespace priv
 } // namespace runion
 //------------------------------------------------------------------
@@ -4256,8 +4280,8 @@ But the table needs to be:
   | 0 1 2 3
 --|---------|
 0 | . F . F |
-1 | F F . . |
-2 | F F . . |
+1 | F . . . |
+2 | F . . . |
 3 | . F . F |
 \endverbatim
 
@@ -4303,15 +4327,15 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 	std::array<Index<FPT>,4> vx, vy;
 	int i=0;
 	vx[i++] = Index<FPT>( r1.getPts().first.getX(),  1 );
-	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1, vx[i-1] );
-	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2, vx[i-1] );
-	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2, vx[i-1] );
+	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1, &vx[i-1] );
+	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2, &vx[i-1] );
+	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2, &vx[i-1] );
 
 	i=0;
 	vy[i++] = Index<FPT>( r1.getPts().first.getY(),  1 );
-	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1, vy[i-1] );
-	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2, vy[i-1] );
-	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2, vy[i-1] );
+	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1, &vy[i-1] );
+	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2, &vy[i-1] );
+	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2, &vy[i-1] );
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );
