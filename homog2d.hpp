@@ -3994,18 +3994,24 @@ namespace runion {
 //------------------------------------------------------------------
 /// Holds x or y coordinate value of rectangle during computation of intersection area
 /**
-\c T will be the floating-pont type
+- \c T will be the floating-point type
+- used in FRect_<FPT>::unionArea()
 */
 template<typename T>
 struct Index
 {
 	T       value;
 	uint8_t rect_idx=0;   // 0 means none, will be 1 or 2
+	bool    isIrrelevant = false;
 
 	Index() = default;
-	Index( T v, uint8_t r )
+	Index( T v, uint8_t r, const Index* previous=0 )
 		: value(v), rect_idx(r)
-	{}
+	{
+		if( previous )
+			if( v == previous->value )
+				isIrrelevant = true;
+	}
 	friend bool operator < ( const Index& i1, const Index& i2 )
 	{
 
@@ -4020,6 +4026,11 @@ struct Index
 	}
 };
 
+/// A wrapper around a bool, that gets set if that point defined
+/// by indexes \c ix and \c iy is a corner in the table
+/**
+used in FRect_<FPT>::unionArea()
+*/
 struct Cell
 {
 	bool isCorner = false;
@@ -4097,6 +4108,8 @@ cleanTable( Table& table )
 
 }
 */
+
+/// Helper function for FRect_<FPT>::unionArea()
 std::vector<PCoord>
 parseTable( Table& table)
 {
@@ -4188,9 +4201,69 @@ convertToCoord(
 /// Computes the polygon of the union of two rectangles
 /**
 Algorithm:
- - build vectors of x and y coordinates (4 elements)
- - build table x-y (4x4), with corners tagged
- - parse the table by turning right at each corner, and left if position is not one the outside row/col
+ -# build vectors of x and y coordinates (4 elements)
+ -# build table x-y (4x4), with corners tagged
+ -# parse the table by turning right at each corner, and left if position is not one the outside row/col
+
+Two examples:
+\verbatim
+9      +----+              +-------+
+       |    |              |       |
+8  +---+----+---+      +---+---+   |
+   |   |    |   |      |   |   |   |
+7  +---+----+---+      +---+---+   |
+       |    |              |       |
+6      +----+              +-------+
+   1   2    3   4      1   2   3   4
+\endverbatim
+Step 1 will build (for both situations above):
+ - vx: 1,2,3,4
+ - vy: 6,7,8,9
+
+ Step 2 will build a table showing where the corners are:
+\verbatim
+  | 0 1 2 3             | 0 1 2 3
+--|---------|         --|---------|
+0 | . F F . |          0| . F . F
+1 | F F F F |          1| F F . .
+2 | F F F F |          2| F F . .
+3 | . F F . |          3| . F . F
+\endverbatim
+
+Step 3: parse that table and turn on each corner:
+- left if "inner" corner (row and col = 1 or = 2)
+- right if "outer" corner (row and col = 0 or = 3)
+
+Final step: convert indexes to real coordinates
+
+Special note: if the rectangles have an identical coordinate, as in this example:
+\verbatim
+9      +----+
+       |    |
+8  +---+----+
+   |   |    |
+7  +---+----+
+       |    |
+6      +----+
+   1   2    3
+\endverbatim
+Then the vectors are:
+- vx: 1,2,3,3
+- vy: 6,7,8,9
+
+But the table needs to be:
+\verbatim
+  | 0 1 2 3
+--|---------|
+0 | . F . F |
+1 | F F . . |
+2 | F F . . |
+3 | . F . F |
+\endverbatim
+
+THIS IS NOT DONE YET!!!
+
+
 */
 template<typename FPT>
 template<typename FPT2>
@@ -4229,16 +4302,16 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 // step 1: build vectors of coordinates and sort them
 	std::array<Index<FPT>,4> vx, vy;
 	int i=0;
-	vx[i++] = Index<FPT>( r1.getPts().first.getX(),  1);
-	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1 );
-	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2 );
-	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2 );
+	vx[i++] = Index<FPT>( r1.getPts().first.getX(),  1 );
+	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1, vx[i-1] );
+	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2, vx[i-1] );
+	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2, vx[i-1] );
 
 	i=0;
 	vy[i++] = Index<FPT>( r1.getPts().first.getY(),  1 );
-	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1 );
-	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2 );
-	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2 );
+	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1, vy[i-1] );
+	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2, vy[i-1] );
+	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2, vy[i-1] );
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );

@@ -1244,14 +1244,14 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 4 );
 		auto vpts = inters.get();
-		CHECK( vpts[0] == Point2d(2,0) );
-		CHECK( vpts[1] == Point2d(2,2) );
-		CHECK( vpts[2] == Point2d(3,0) );
-		CHECK( vpts[3] == Point2d(3,2) );
+		CHECK( vpts[0] == Point2d(3,1) );
+		CHECK( vpts[1] == Point2d(3,3) );
+		CHECK( vpts[2] == Point2d(4,1) );
+		CHECK( vpts[3] == Point2d(4,3) );
 
 		auto rect_inter = r1.intersectArea(r2);
 		CHECK( rect_inter() == true );
-		CHECK( rect_inter.get() == FRect(2,0, 3,2) );
+		CHECK( rect_inter.get() == FRect(3,1, 4,3) );
 
 		auto u1 = unionArea(r1,r2);
 //		Polyline p{ [0,0],[1,1] };
