@@ -1358,9 +1358,10 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 3 );
 		auto vpts = inters.get();
+		priv::printVector( vpts, "intersection points demo12" );
 		CHECK( vpts[0] == Point2d( 2,0 ) );
-		CHECK( vpts[0] == Point2d( 2,2 ) );
-		CHECK( vpts[1] == Point2d( 3,0 ) );
+		CHECK( vpts[1] == Point2d( 2,2 ) );
+		CHECK( vpts[2] == Point2d( 3,0 ) );
 		CHECK( r1.intersectArea(r2)() == true );
 //		auto inter=r1.intersectArea(r2);
 //		CHECK( inter.get() == r2 );

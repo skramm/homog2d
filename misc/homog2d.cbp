@@ -99,6 +99,8 @@
 		</Unit>
 		<Unit filename="figures_test/frect_intersect_10.code" />
 		<Unit filename="figures_test/frect_intersect_11.code" />
+		<Unit filename="figures_test/frect_intersect_12.code" />
+		<Unit filename="figures_test/frect_intersect_13.code" />
 		<Unit filename="figures_test/frect_intersect_2.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
