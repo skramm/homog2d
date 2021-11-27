@@ -52,11 +52,18 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
-#if 0
+#if 1
 	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
 #endif
+
+#define HOMOG2D_ASSERT( a ) \
+	if( !(a) ) \
+	{ \
+		std::cerr << "ASSERT FAILURE, line=" << __LINE__ << std::endl; \
+		std::exit(1); \
+	}
 
 /// Assert debug macro, used internally if \c HOMOG2D_DEBUGMODE is defined
 #define HOMOG2D_DEBUG_ASSERT(a,b) \
@@ -3493,6 +3500,10 @@ Segment \c n is the one between point \c n and point \c n+1
 			_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
 		);
 	}
+///@}
+
+/// \name Modifiers (non-const member functions)
+///@{
 
 /// Clear all
 	void clear()
@@ -3500,6 +3511,43 @@ Segment \c n is the one between point \c n and point \c n+1
 		_plinevec.clear();
 		_plIsNormalized=false;
 		_attribs.setBad();
+	}
+
+	void
+	minimize()
+	{
+		Polyline_<FPT> out;
+//		bool done = false;
+//		do
+//		{
+			auto nb = nbSegs();
+			for( size_t i=0; i<nb-1; i++ )
+			{
+				const auto& s1 = getSegment(i);
+				const auto& s2 = getSegment(i+1);
+				auto ppt1 = s1.getPts();
+				out.add( ppt1.first );
+				auto an = getAngle( s1, s2 );
+				HOMOG2D_LOG( "i=" << i );
+				if( an < Root<type::IsLine,FPT>::nullAngleValue() ) // then, remove middle point
+				{
+					auto ppt2 = s2.getPts();
+					HOMOG2D_LOG( "A: adding pts: 1:" << ppt1.first << " 2:" << ppt2.second );
+					HOMOG2D_ASSERT( ppt1.first != ppt2.second );
+					out.add( ppt2.second );
+					i++; // switch to next segment
+				}
+				else
+				{
+					HOMOG2D_LOG( "B: adding pts: 1:" << ppt1.first << " 2:" << ppt1.second );
+					HOMOG2D_ASSERT( ppt1.first != ppt1.second );
+					out.add( ppt1.second );
+				}
+				HOMOG2D_LOG( "for end i=" << i << " out size=" << out.size() );
+			}
+//		}
+//		while( !done )
+		std::swap( out, *this ); // maybe we can "move" instead?
 	}
 
 	template<typename T1,typename T2>
@@ -4343,9 +4391,11 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 // step 2: fill table\n";
 	Table table;
+#if 1
 	for( uint8_t r=0;r<4; r++ )
 		for( uint8_t c=0;c<4; c++ )
 			table[r][c] = Cell( vx[r], vy[c] );
+#endif
 	printTable( table, "after step 2" );
 //	cleanTable( table );
 
@@ -4354,7 +4404,13 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 	priv::printVectorPairs( vpts );
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
+#if 1
+	auto res1 = convertToCoord( vpts, vx, vy );
+	res1.minimize();
+	return res1;
+#else
 	return convertToCoord( vpts, vx, vy );
+#endif
 }
 
 /// Returns Bounding Box

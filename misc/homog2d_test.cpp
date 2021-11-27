@@ -1885,6 +1885,22 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 }
 
+TEST_CASE( "Polyline minimization", "[polyline-min]" )
+{
+	INFO( "Polyline pl2( IsClosed::No" );
+	{
+		Polyline_<NUMTYPE> pl1( IsClosed::No );
+		pl1.add( 0,0 );
+		pl1.add( 1,0 );
+		pl1.add( 2,0 );
+
+		CHECK( pl1.size() == 3 );
+		CHECK( pl1.nbSegs() == 2 );
+		pl1.minimize();
+		CHECK( pl1.size() == 2 );
+		CHECK( pl1.nbSegs() == 1 );
+	}
+}
 TEST_CASE( "Polyline", "[polyline]" )
 {
 	{
