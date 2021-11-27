@@ -1,0 +1,6 @@
+
+	Polyline_<NUMTYPE> pl( IsClosed::No );
+	pl.add( 0,1 );
+	pl.add( 1,1 );
+	pl.add( 2,1 );
+

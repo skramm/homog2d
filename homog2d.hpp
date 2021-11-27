@@ -922,6 +922,7 @@ class DrawParams
 		int         _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
+		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
 
 #ifdef HOMOG2D_USE_OPENCV
 		cv::Scalar color() const
@@ -983,6 +984,12 @@ public:
 		_dpValues._enhancePoint = true;
 		return *this;
 	}
+	DrawParams& showPoints( bool b )
+	{
+		_dpValues._showPoints = b;
+		return *this;
+	}
+
 }; // class DrawParams
 
 } // namespace img
@@ -3417,7 +3424,8 @@ private:
 	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
 
 public:
-/// Returns the number of segments
+/// Returns the number of segments . If "closed",
+/** the last segment (going from last to first point) is counted */
 	size_t nbSegs() const
 	{
 		if( size() < 2 )
@@ -3491,7 +3499,7 @@ Segment \c n is the one between point \c n and point \c n+1
 				<< ", only has "  << nbSegs()
 			);
 
-		if( size() < 2 ) // nothing to draw
+		if( size() < 2 )
 			HOMOG2D_THROW_ERROR_1( "no segment " << idx );
 #endif
 //			auto lastPoint = _isClosed?
@@ -3505,7 +3513,7 @@ Segment \c n is the one between point \c n and point \c n+1
 /// \name Modifiers (non-const member functions)
 ///@{
 
-/// Clear all
+/// Clear all (does not change the "open/close" status).
 	void clear()
 	{
 		_plinevec.clear();
@@ -3516,49 +3524,43 @@ Segment \c n is the one between point \c n and point \c n+1
 	void
 	minimize()
 	{
-		if( isClosed() )
-		{
-			if( nbSegs()<4 )
-				return;
-		}
-		else
+#if 0
+		if( size()<3 )
+			return;
+		HOMOG2D_LOG( "start: " << *this );
 
 		Polyline_<FPT> out;
-//		bool done = false;
-//		do
-//		{
-			auto nb = nbSegs();
-			HOMOG2D_LOG( "nb=" << nb );
-			for( size_t i=0; i<nb; i++ )
+		out._isClosed = _isClosed;
+		auto nb = nbSegs();
+		HOMOG2D_LOG( "nb=" << nb );
+//		auto s0 = getSegment(0);
+		out.add( getPoint(i) );
+		for( size_t i=1; i<nb; i++ )
+		{
+			const auto& s1 = getSegment(i);
+			auto ppt1 = s1.getPts();
+			HOMOG2D_LOG( "i=" << i << " s0=" << s0 << " s1=" << s1 ); //<< " adding pt:" << ppt1.first );
+			auto an = getAngle( s0, s1 );
+			if( an > Root<type::IsLine,FPT>::nullAngleValue() ) // then, remove middle point
 			{
-				const auto& s1 = getSegment(i);
-				const auto& s2 = getSegment(i+1);
-				auto ppt1 = s1.getPts();
-				HOMOG2D_LOG( "i=" << i << " s1=" << s1 << " s2=" << s2 << " adding pt:" << ppt1.first );
+				HOMOG2D_LOG( "angle ok, adding pt:" << ppt1.first );
 				out.add( ppt1.first );
-				auto an = getAngle( s1, s2 );
-				if( an < Root<type::IsLine,FPT>::nullAngleValue() ) // then, remove middle point
-				{
-//					auto ppt2 = s2.getPts();
-//					HOMOG2D_LOG( "A: adding pts: 1:" << ppt1.first << " 2:" << ppt2.second );
-	//				HOMOG2D_ASSERT( ppt1.first != ppt2.second );
-		//			out.add( ppt2.second );
-					i++; // switch to next segment
-				}
-/*				else
-				{
-//					HOMOG2D_LOG( "B: adding pts: 1:" << ppt1.first << " 2:" << ppt1.second );
-//					HOMOG2D_ASSERT( ppt1.first != ppt1.second );
-//					out.add( ppt1.second );
-				}*/
-				HOMOG2D_LOG( "for loop end i=" << i << " out size=" << out.size() );
 			}
-			HOMOG2D_LOG( "end, out size=" << out.size() );
-//		}
-//		while( !done )
+			HOMOG2D_LOG( "for loop end i=" << i << " out size=" << out.size() );
+			s0 = s1;
+			if( i == nb-1 )  // if end, then add final point
+			{
+
+				HOMOG2D_LOG( "end, adding last pt:" << ppt1.second );
+				out.add( ppt1.second );
+			}
+		}
+		std::cout << "out:" << out << '\n';
 		std::swap( out, *this ); // maybe we can "move" instead?
+#endif
 	}
 
+/// Translate Polyline to \c dx, \c dy
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -4059,16 +4061,11 @@ struct Index
 {
 	T       value;
 	uint8_t rect_idx=0;   // 0 means none, will be 1 or 2
-	bool    isIrrelevant = false;
 
 	Index() = default;
-	Index( T v, uint8_t r, const Index* previous=0 )
+	Index( T v, uint8_t r )
 		: value(v), rect_idx(r)
-	{
-		if( previous )
-			if( v == previous->value )
-				isIrrelevant = true;
-	}
+	{}
 	friend bool operator < ( const Index& i1, const Index& i2 )
 	{
 
@@ -4384,15 +4381,15 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 	std::array<Index<FPT>,4> vx, vy;
 	int i=0;
 	vx[i++] = Index<FPT>( r1.getPts().first.getX(),  1 );
-	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1, &vx[i-1] );
-	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2, &vx[i-1] );
-	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2, &vx[i-1] );
+	vx[i++] = Index<FPT>( r1.getPts().second.getX(), 1 );
+	vx[i++] = Index<FPT>( r2.getPts().first.getX(),  2 );
+	vx[i++] = Index<FPT>( r2.getPts().second.getX(), 2 );
 
 	i=0;
 	vy[i++] = Index<FPT>( r1.getPts().first.getY(),  1 );
-	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1, &vy[i-1] );
-	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2, &vy[i-1] );
-	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2, &vy[i-1] );
+	vy[i++] = Index<FPT>( r1.getPts().second.getY(), 1 );
+	vy[i++] = Index<FPT>( r2.getPts().first.getY(),  2 );
+	vy[i++] = Index<FPT>( r2.getPts().second.getY(), 2 );
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );
@@ -6564,6 +6561,7 @@ Root<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::R
 	return false;
 }
 
+//------------------------------------------------------------------
 /// Draw FRect_
 template<typename FPT>
 template<typename T>
@@ -6585,16 +6583,20 @@ FRect_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 template<typename FPT>
 template<typename T>
 void
-Segment_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 {
 	cv::line(
-		img.getReal(),
+		im.getReal(),
 		_ptS1.getCvPtd(),
 		_ptS2.getCvPtd(),
 		dp._dpValues.color(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
+	if( dp._dpValues._showPoints )
+	{
+//		_ptS1.draw( im, dp ); _ptS2.draw( im, dp );
+	}
 }
 
 //------------------------------------------------------------------

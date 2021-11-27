@@ -1889,18 +1889,41 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
 	{
-		Polyline_<NUMTYPE> pl1( IsClosed::No );
-		pl1.add( 0,0 );
-		pl1.add( 1,0 );
-		pl1.add( 2,0 );
+#include "figures_test/polyline_min_1.code"
 
-		CHECK( pl1.size() == 3 );
-		CHECK( pl1.nbSegs() == 2 );
-		pl1.minimize();
-		CHECK( pl1.size() == 2 );
-		CHECK( pl1.nbSegs() == 1 );
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 2 );
+		pl.minimize();
+		CHECK( pl.size() == 2 );
+		CHECK( pl.nbSegs() == 1 );
+	}
+	{
+#include "figures_test/polyline_min_2.code"
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 2 );
+		pl.minimize();
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 2 );
+	}
+	{
+#include "figures_test/polyline_min_3.code"
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 3 );
+		pl.minimize();
+		std::cout << "pl1:" << pl << '\n';
+		CHECK( pl.size() == 2 );
+		CHECK( pl.nbSegs() == 2 );
+	}
+	{
+#include "figures_test/polyline_min_4.code"
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 3 );
+		pl.minimize();
+		CHECK( pl.size() == 3 );
+		CHECK( pl.nbSegs() == 3 );
 	}
 }
+
 TEST_CASE( "Polyline", "[polyline]" )
 {
 	{
