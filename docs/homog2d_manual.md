@@ -392,7 +392,7 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 This class holds a set of points and models an arbitrary set of joined segments.
 It can be either open or closed (last points joins first one).
-If closed, and if it does not intersect itself, the it can be used to model a polygon.
+If closed, and if it does not intersect itself, then it can be used to model a polygon.
 It can be seen as a wrapper over a vector of points.
 ```C++
 Polyline pl1;                  // default is open
@@ -432,6 +432,10 @@ auto n2 = size(pl);
 auto s1 = pl.nbSegs();
 auto s2 = nbSegs(s2);
 ```
+
+Please note that for a `Polyline` of 0 or 1 point, `nbSegs()` will return 0.
+If it has 2 points, `nbSegs()` will return 1 if "open", and 2 if "closed"
+(allthough the 2 segments are identical).
 
 It is possible to replace all the points with the ones contained in a vector, or just add them:
 ```C++

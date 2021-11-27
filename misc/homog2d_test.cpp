@@ -1916,6 +1916,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
 		CHECK( pl1.isClosed() == true );
 		CHECK( pl1.isPolygon() == false );
+		CHECK( pl1.size() == 1 );
+		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
 		CHECK( pl1.area() == 0 );
 	}

@@ -53,7 +53,7 @@ See https://github.com/skramm/homog2d
 #endif
 
 #if 1
-	#define HOMOG2D_LOG(a) std::cout << "-line " << __LINE__ << ": " << a << '\n'
+	#define HOMOG2D_LOG(a) std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
 #endif
@@ -3420,10 +3420,10 @@ public:
 /// Returns the number of segments
 	size_t nbSegs() const
 	{
-		if( size() == 0 )
+		if( size() < 2 )
 			return 0;
-		if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
-			return size() - 1;
+//		if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
+//			return size() - 1;
 		return size() - 1 + (size_t)_isClosed;
 	}
 
@@ -3516,35 +3516,44 @@ Segment \c n is the one between point \c n and point \c n+1
 	void
 	minimize()
 	{
+		if( isClosed() )
+		{
+			if( nbSegs()<4 )
+				return;
+		}
+		else
+
 		Polyline_<FPT> out;
 //		bool done = false;
 //		do
 //		{
 			auto nb = nbSegs();
-			for( size_t i=0; i<nb-1; i++ )
+			HOMOG2D_LOG( "nb=" << nb );
+			for( size_t i=0; i<nb; i++ )
 			{
 				const auto& s1 = getSegment(i);
 				const auto& s2 = getSegment(i+1);
 				auto ppt1 = s1.getPts();
+				HOMOG2D_LOG( "i=" << i << " s1=" << s1 << " s2=" << s2 << " adding pt:" << ppt1.first );
 				out.add( ppt1.first );
 				auto an = getAngle( s1, s2 );
-				HOMOG2D_LOG( "i=" << i );
 				if( an < Root<type::IsLine,FPT>::nullAngleValue() ) // then, remove middle point
 				{
-					auto ppt2 = s2.getPts();
-					HOMOG2D_LOG( "A: adding pts: 1:" << ppt1.first << " 2:" << ppt2.second );
-					HOMOG2D_ASSERT( ppt1.first != ppt2.second );
-					out.add( ppt2.second );
+//					auto ppt2 = s2.getPts();
+//					HOMOG2D_LOG( "A: adding pts: 1:" << ppt1.first << " 2:" << ppt2.second );
+	//				HOMOG2D_ASSERT( ppt1.first != ppt2.second );
+		//			out.add( ppt2.second );
 					i++; // switch to next segment
 				}
-				else
+/*				else
 				{
-					HOMOG2D_LOG( "B: adding pts: 1:" << ppt1.first << " 2:" << ppt1.second );
-					HOMOG2D_ASSERT( ppt1.first != ppt1.second );
-					out.add( ppt1.second );
-				}
-				HOMOG2D_LOG( "for end i=" << i << " out size=" << out.size() );
+//					HOMOG2D_LOG( "B: adding pts: 1:" << ppt1.first << " 2:" << ppt1.second );
+//					HOMOG2D_ASSERT( ppt1.first != ppt1.second );
+//					out.add( ppt1.second );
+				}*/
+				HOMOG2D_LOG( "for loop end i=" << i << " out size=" << out.size() );
 			}
+			HOMOG2D_LOG( "end, out size=" << out.size() );
 //		}
 //		while( !done )
 		std::swap( out, *this ); // maybe we can "move" instead?
