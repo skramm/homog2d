@@ -1889,7 +1889,7 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
 	{
-#include "figures_test/polyline_min_1.code"
+#include "figures_test/polyline_min_1O.code" // open
 
 		CHECK( pl.size() == 3 );
 		CHECK( pl.nbSegs() == 2 );
@@ -1898,28 +1898,46 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 		CHECK( pl.nbSegs() == 1 );
 	}
 	{
-#include "figures_test/polyline_min_2.code"
-		CHECK( pl.size() == 3 );
-		CHECK( pl.nbSegs() == 2 );
+#include "figures_test/polyline_min_1C.code"  // closed
+		CHECK( pl.size()   == 3 );
+		CHECK( pl.nbSegs() == 3 );
 		pl.minimize();
-		CHECK( pl.size() == 3 );
+		CHECK( pl.size()   == 2 );
 		CHECK( pl.nbSegs() == 2 );
 	}
 	{
-#include "figures_test/polyline_min_3.code"
-		CHECK( pl.size() == 3 );
+#include "figures_test/polyline_min_2O.code"// open
+		CHECK( pl.size()   == 3 );
 		CHECK( pl.nbSegs() == 3 );
 		pl.minimize();
-		std::cout << "pl1:" << pl << '\n';
-		CHECK( pl.size() == 2 );
+		std::cout << "pl:" << pl << '\n';
+		CHECK( pl.size()   == 2 );
 		CHECK( pl.nbSegs() == 2 );
 	}
 	{
-#include "figures_test/polyline_min_4.code"
-		CHECK( pl.size() == 3 );
+#include "figures_test/polyline_min_2C.code" // closed
+		CHECK( pl.size()   == 3 );
 		CHECK( pl.nbSegs() == 3 );
 		pl.minimize();
-		CHECK( pl.size() == 3 );
+		CHECK( pl.size()   == 3 );   // no change !
+		CHECK( pl.nbSegs() == 3 );
+	}
+	{
+#include "figures_test/polyline_min_3O.code" // open
+		CHECK( pl.size()   == 4 );
+		CHECK( pl.nbSegs() == 3 );
+		pl.minimize();
+		std::cout << "pl:" << pl << '\n';
+		CHECK( pl.size()   == 4 );     // no change
+		CHECK( pl.nbSegs() == 3 );
+	}
+	{
+#include "figures_test/polyline_min_3C.code" // closed
+		CHECK( pl.size()   == 4 );
+		CHECK( pl.nbSegs() == 4 );
+		pl.minimize();
+		std::cout << "pl:" << pl << '\n';
+		CHECK( pl.size()   == 3 );     // no change
 		CHECK( pl.nbSegs() == 3 );
 	}
 }

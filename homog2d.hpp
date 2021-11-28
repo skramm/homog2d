@@ -3521,46 +3521,67 @@ Segment \c n is the one between point \c n and point \c n+1
 		_attribs.setBad();
 	}
 
+/// Miminize the Polyline: remove all points that lie in the middle of two segments with same angle.
+/**
+For example, if we have the following points: (0,0)-(1,0)-(2,0)<br>
+This will be replaced by: (0,0)--(2,0)
+\todo Still a bug here for closed polylines
+*/
 	void
 	minimize()
 	{
-#if 0
 		if( size()<3 )
 			return;
-		HOMOG2D_LOG( "start: " << *this );
 
 		Polyline_<FPT> out;
 		out._isClosed = _isClosed;
-		auto nb = nbSegs();
-		HOMOG2D_LOG( "nb=" << nb );
-//		auto s0 = getSegment(0);
-		out.add( getPoint(i) );
-		for( size_t i=1; i<nb; i++ )
-		{
-			const auto& s1 = getSegment(i);
-			auto ppt1 = s1.getPts();
-			HOMOG2D_LOG( "i=" << i << " s0=" << s0 << " s1=" << s1 ); //<< " adding pt:" << ppt1.first );
-			auto an = getAngle( s0, s1 );
-			if( an > Root<type::IsLine,FPT>::nullAngleValue() ) // then, remove middle point
-			{
-				HOMOG2D_LOG( "angle ok, adding pt:" << ppt1.first );
-				out.add( ppt1.first );
-			}
-			HOMOG2D_LOG( "for loop end i=" << i << " out size=" << out.size() );
-			s0 = s1;
-			if( i == nb-1 )  // if end, then add final point
-			{
 
-				HOMOG2D_LOG( "end, adding last pt:" << ppt1.second );
-				out.add( ppt1.second );
-			}
+		auto nbpts = size();
+// step 1: check each point to see if it is the middle point of two segments with same angle
+		std::vector<size_t> ptset;
+		auto istart = _isClosed ? 0 : 1;
+		auto iend   = _isClosed ? nbpts : nbpts-1;
+		for( size_t i=istart;i<iend; i++ )
+		{
+			const auto& p0 = getPoint(i);
+			const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
+			const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+			Segment_<FPT> sA( p0, pnext );
+			Segment_<FPT> sB( p0, pprev );
+			auto an = getAngle( sA, sB );
+			if( an < Root<type::IsLine,FPT>::nullAngleValue() )
+				ptset.push_back( i );
 		}
+		priv::printVector( ptset, "ptset " );
+
+		if( ptset.size() == 0 ) // if no same angle segment (no "middle point")
+		{                       // then return the same Polyline
+			out = *this;
+			return;
+		}
+
+// step 2: build new Polyline, without those points
+		size_t vec_idx = 0;
+		for( size_t i=0; i<nbpts; i++ )
+		{
+			HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+
+			if( vec_idx<ptset.size() ) // if there is more points to remove
+			{
+				if( ptset.at(vec_idx) != i ) // if regular point, add it
+					out.add( getPoint(i) );  //  to the output set
+				else                         // found a "middle point"
+					vec_idx++;               // and switch to next one
+			}
+			else                          // no more points to remove
+				out.add( getPoint(i) );   // so just add the point to the output set
+		}
+
 		std::cout << "out:" << out << '\n';
 		std::swap( out, *this ); // maybe we can "move" instead?
-#endif
 	}
 
-/// Translate Polyline to \c dx, \c dy
+/// Translate Polyline using \c dx, \c dy
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
