@@ -1279,7 +1279,6 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 		auto u1 = unionArea(r1,r2);
 		CHECK( u1.size() == 4 );
-
 	}
 	{     // two rectangles joined by corner at 3,2
 #include "figures_test/frect_intersect_6.code"
@@ -1908,10 +1907,10 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 	{
 #include "figures_test/polyline_min_2O.code"// open
 		CHECK( pl.size()   == 3 );
-		CHECK( pl.nbSegs() == 3 );
+		CHECK( pl.nbSegs() == 2 );
 		pl.minimize();
 		std::cout << "pl:" << pl << '\n';
-		CHECK( pl.size()   == 2 );
+		CHECK( pl.size()   == 3 ); // no change
 		CHECK( pl.nbSegs() == 2 );
 	}
 	{

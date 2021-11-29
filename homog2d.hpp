@@ -3530,6 +3530,10 @@ Segment \c n is the one between point \c n and point \c n+1
 For example, if we have the following points: (0,0)-(1,0)-(2,0)<br>
 This will be replaced by: (0,0)--(2,0)
 \todo Still a bug here for closed polylines
+
+\note We cannot use the Segment_::getAngle() function because it returns a
+value in [0,PI/2], so we would'nt be able to detect a segment going
+180° of the previous one.
 */
 	void
 	minimize()
@@ -3550,11 +3554,23 @@ This will be replaced by: (0,0)--(2,0)
 			const auto& p0 = getPoint(i);
 			const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 			const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+#if 0
 			Segment_<FPT> sA( p0, pnext );
 			Segment_<FPT> sB( p0, pprev );
 			auto an = getAngle( sA, sB );
 			if( an < Root<type::IsLine,FPT>::nullAngleValue() )
 				ptset.push_back( i );
+#else
+			auto vx1 = pnext.getX() - p0.getX();
+			auto vy1 = pnext.getY() - p0.getY();
+			auto vx2 = p0.getX() - pprev.getX();
+			auto vy2 = p0.getY() - pprev.getY();
+			auto a1 = std::atan2( vx1, vy1 );
+			auto a2 = std::atan2( vx2, vy2 );
+
+			if( std::abs(a1-a2) < Root<type::IsLine,FPT>::nullAngleValue() )
+				ptset.push_back( i );
+#endif
 		}
 		priv::printVector( ptset, "ptset " );
 
