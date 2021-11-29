@@ -119,8 +119,15 @@
 		<Unit filename="figures_test/frect_intersect_7.code" />
 		<Unit filename="figures_test/frect_intersect_8.code" />
 		<Unit filename="figures_test/frect_intersect_9.code" />
+		<Unit filename="figures_test/polyline_min_1C.code" />
+		<Unit filename="figures_test/polyline_min_1O.code" />
+		<Unit filename="figures_test/polyline_min_2C.code" />
+		<Unit filename="figures_test/polyline_min_2O.code" />
+		<Unit filename="figures_test/polyline_min_3C.code" />
+		<Unit filename="figures_test/polyline_min_3O.code" />
 		<Unit filename="figures_test/readme.txt" />
-		<Unit filename="figures_test/t_footer.cxx" />
+		<Unit filename="figures_test/t_footer_frect_1.cxx" />
+		<Unit filename="figures_test/t_footer_polyline_1.cxx" />
 		<Unit filename="figures_test/t_header.cxx" />
 		<Unit filename="gitlog.sh">
 			<Option target="&lt;{~None~}&gt;" />
@@ -174,9 +181,6 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
