@@ -2048,6 +2048,10 @@ TEST_CASE( "Polygon area", "[polygon_area]" )
 
 TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 {
+	{
+		Polyline_<NUMTYPE> pa,pb;
+		CHECK( pa == pb );
+	}
 	Polyline_<NUMTYPE> pl1(IsClosed::No);
 	pl1.add( 3,4 );
 	pl1.add( 5,6 );
@@ -2076,6 +2080,21 @@ TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 		CHECK( (p1==p2) == true );
 		CHECK( p1.isNormalized() == true );
 		CHECK( p2.isNormalized() == true );
+	}
+	{
+		Polyline_<NUMTYPE> p1( IsClosed::Yes );
+		p1.add( 1,1 );
+		p1.add( 2,1 );
+		p1.add( 1,2 );
+		Polyline_<NUMTYPE> p2( IsClosed::Yes );
+		p2.add( 1,2 );
+		p2.add( 1,1 );
+		p2.add( 2,1 );
+		CHECK( p1.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
+		CHECK( p2.getPoint(0) == Point2d_<NUMTYPE>(1,2) );
+		CHECK( p1 == p2 ); // normalizing
+		CHECK( p1.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
+		CHECK( p2.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
 	}
 }
 

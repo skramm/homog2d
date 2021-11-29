@@ -3574,13 +3574,13 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 		}
 		priv::printVector( ptset, "ptset " );
 
-		if( ptset.size() == 0 ) // if no same angle segment (no "middle point")
+		if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
 		{                       // then return the same Polyline
 			out = *this;
 			return;
 		}
 
-// step 2: build new Polyline, without those points
+// step 2: build new Polyline without those points
 		size_t vec_idx = 0;
 		for( size_t i=0; i<nbpts; i++ )
 		{
@@ -3614,19 +3614,18 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 /// Add single point as x,y
 /**
 \warning this will add the new point after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you a comparison (== or !=)
+been normalized. This normalizing operation will happen if you do a comparison (== or !=)
 */
 	template<typename FPT1,typename FPT2>
 	void add( FPT1 x, FPT2 y )
 	{
-		_attribs.setBad();
 		add( Point2d_<FPT>( x, y ) );
 	}
 
 /// Add single point
 /**
 \warning this will add the new point after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you a comparison (== or !=)
+been normalized. This normalizing operation will happen if you do a comparison (== or !=)
 */
 	template<typename FPT2>
 	void add( const Point2d_<FPT2>& pt )
@@ -3659,7 +3658,7 @@ been normalized. This normalizing operation will happen if you a comparison (== 
 /// Add vector of points
 /**
 \warning this will add the new points after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you a comparison (== or !=)
+been normalized. This normalizing operation will happen if you do a comparison (== or !=)
 */
 	template<typename FPT2>
 	void add( const std::vector<Point2d_<FPT2>>& vec )
@@ -3747,6 +3746,7 @@ been normalized. This normalizing operation will happen if you a comparison (== 
 #endif
 
 private:
+/// Normalisation of closed Polyline_
 	void p_normalizePL() const
 	{
 		assert( isClosed() );   // should not do this if not closed !
