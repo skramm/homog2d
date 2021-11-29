@@ -3102,6 +3102,10 @@ public:
 	}
 
 /// Get angle between segment and other segment/line
+/**
+This will call the line angle function, thus the returned value will be
+in the range \f$ [0,\pi/2] \f$
+*/
 	template<typename U>
 	HOMOG2D_INUMTYPE getAngle( const U& other ) const
 	{
