@@ -33,6 +33,10 @@
 
 	auto r1b = H*r1;
 	auto r2b = H*r2;
+
+	cv::putText( img, "r1", getBB(r1b).getPts().second.getCvPti(), 1, 2., cv::Scalar(20,0,250) );
+	cv::putText( img, "r2", getBB(r2b).getPts().second.getCvPti(), 1, 2., cv::Scalar(250,0,20) );
+
 	r1b.draw( img2, img::DrawParams().setColor(250,0,20) );
 	r2b.draw( img2, img::DrawParams().setColor(20,0,250) );
 

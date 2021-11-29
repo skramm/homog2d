@@ -6075,6 +6075,25 @@ getBB( const Polyline_<FPT>& pl )
 	return pl.getBB();
 }
 
+/// Returns Bounding Box of two rectangles (free function)
+/**
+whatever their intersection status
+
+\todo 20211129: fix this for rectangles of different FP type
+*/
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+getBB( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+{
+	auto ppts1 = r1.getPts();
+	auto ppts2 = r2.getPts();
+	auto min_x = std::min( ppts1.first.getX(),  ppts2.first.getX() );
+	auto min_y = std::min( ppts1.first.getY(),  ppts2.first.getY() );
+	auto max_x = std::max( ppts1.second.getX(), ppts2.second.getX() );
+	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
+	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+}
+
 /// Returns Bounding Box of arbitrary container holding points (free function)
 template<
 	typename T,

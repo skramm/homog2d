@@ -358,6 +358,12 @@ FRect rect;
 rect.translate( dx, dy );
 ```
 
+You can get the Bounding Box of two rectangles (will return a `FRect`):
+```C++
+FRect r1(...); // whatever
+FRect r2(...); // whatever
+auto bb = getBB( r1, r2 );
+```
 
 ### 3.3 - Circles
 

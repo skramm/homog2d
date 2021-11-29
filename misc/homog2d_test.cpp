@@ -1269,7 +1269,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto vpts = inters.get();
 		CHECK( vpts[0] == Point2d( 3,0 ) );
 		CHECK( vpts[1] == Point2d( 3,2 ) );
-		CHECK( r1.intersectArea(r2)() == false ); // no intersection
+		CHECK( r1.intersectArea(r2)() == false ); // no area intersection
 
 		r2.translate( 0.000001, 0 );         // move it a bit left
 		inters = r1.intersects(r2);          // => no more intersection
@@ -1278,7 +1278,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1.intersectArea(r2)() == false ); // still no intersection
 
 		auto u1 = unionArea(r1,r2);
-		CHECK( u1.size() == 4 );
+		CHECK( u1.size() == 0 );
 	}
 	{     // two rectangles joined by corner at 3,2
 #include "figures_test/frect_intersect_6.code"
@@ -1823,6 +1823,25 @@ TEST_CASE( "Segment", "[seg1]" )
 		auto ppts = li.getPoints( GivenCoord::X, 5, 1 );
 		Segment_<NUMTYPE> s1( ppts.first, ppts.second );
 		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
+	}
+}
+
+/// \todo what happens if the rectangles are of different FP type?
+TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
+{
+	{
+		FRect_<NUMTYPE> r1, r2;
+		CHECK( getBB(r1,r2) == r1 );
+	}
+	{
+		FRect_<NUMTYPE> r1(0,0, 1,1);
+		FRect_<NUMTYPE> r2(2,2, 4,4);
+		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,4,4) );
+	}
+	{
+		FRect_<NUMTYPE> r1(0,2, 1,3);
+		FRect_<NUMTYPE> r2(2,0, 4,1);
+		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,4,3) );
 	}
 }
 
