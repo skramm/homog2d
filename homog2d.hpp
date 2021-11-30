@@ -3572,7 +3572,7 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 				ptset.push_back( i );
 #endif
 		}
-		priv::printVector( ptset, "ptset " );
+//		priv::printVector( ptset, "ptset " );
 
 		if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
 		{                       // then return the same Polyline
@@ -4297,7 +4297,7 @@ convertToCoord(
 	return Polyline_<FPT>( v_pts, IsClosed::Yes );
 }
 
-
+#if 0
 Table
 convertStringToTable( const std::vector<std::string>& v_str )
 {
@@ -4309,10 +4309,10 @@ convertStringToTable( const std::vector<std::string>& v_str )
 			table[r][c] = Cell( str[c] == 'F' );
 	}
 
-	printTable( table, "convertStringToTable" );
+//	printTable( table, "convertStringToTable" );
 	return table;
 }
-
+#endif
 
 } // namespace priv
 } // namespace runion
@@ -4434,7 +4434,7 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 	std::sort( vx.begin(), vx.end() );
 	std::sort( vy.begin(), vy.end() );
-	priv::printArray( vx, "vx" ); priv::printArray( vy, "vy");
+//	priv::printArray( vx, "vx" ); priv::printArray( vy, "vy");
 
 // step 2: fill table\n";
 	Table table;
@@ -4443,12 +4443,12 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 		for( uint8_t c=0;c<4; c++ )
 			table[r][c] = Cell( vx[r], vy[c] );
 #endif
-	printTable( table, "after step 2" );
+//	printTable( table, "after step 2" );
 //	cleanTable( table );
 
 // step 3: parse table
 	auto vpts = parseTable( table );
-	priv::printVectorPairs( vpts );
+//	priv::printVectorPairs( vpts );
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
 #if 1

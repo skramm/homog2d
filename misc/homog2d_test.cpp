@@ -1381,7 +1381,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 	}
 
 }
-
+#if 0
 TEST_CASE( "priv: parse table", "[priv_parseTable]" )
 {
 	std::vector<std::string> v_str{".F.F","F...","F...",".F.F"};
@@ -1393,8 +1393,8 @@ TEST_CASE( "priv: parse table", "[priv_parseTable]" )
 			{0,1},{0,3},{3,3},{3,1},{2,1},{2,0},{1,0},{1,1}
 		}
 	);
-
 }
+#endif
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {
@@ -1829,19 +1829,29 @@ TEST_CASE( "Segment", "[seg1]" )
 /// \todo what happens if the rectangles are of different FP type?
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 {
-	{
+	{                              // two identical rectangles
 		FRect_<NUMTYPE> r1, r2;
 		CHECK( getBB(r1,r2) == r1 );
 	}
-	{
+	{                                  // one bottom left, the other top right
 		FRect_<NUMTYPE> r1(0,0, 1,1);
 		FRect_<NUMTYPE> r2(2,2, 4,4);
 		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,4,4) );
 	}
-	{
+	{                                 // one top left, the other bottom right
 		FRect_<NUMTYPE> r1(0,2, 1,3);
 		FRect_<NUMTYPE> r2(2,0, 4,1);
 		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,4,3) );
+	}
+	{                                 // one inside the other
+		FRect_<NUMTYPE> r1(0,0, 5,5);
+		FRect_<NUMTYPE> r2(1,1, 3,3);
+		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,5,5) );
+	}
+	{                                 // one inside the other, with a common edge
+		FRect_<NUMTYPE> r1(0,0, 5,5);
+		FRect_<NUMTYPE> r2(1,0, 3,3);
+		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,5,5) );
 	}
 }
 

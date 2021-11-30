@@ -27,6 +27,8 @@ int main()
 	img::Image<cv::Mat> img2( img );
 
 	pl.draw( img2, DrawParams().setColor(250,0,20) );
+	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
+
 
 	cv::imwrite( "polyline1.png", img );
 }

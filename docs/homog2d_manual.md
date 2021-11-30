@@ -411,7 +411,7 @@ pl1.add( vpt );      // add a vector of points
 pl2.isClosed() = false;  // now open
 ```
 
-![polyline1](figures_src/polyline1.png)
+![A closed Polyline and its bounding box](figures_src/polyline1.png)
 
 It can be build directly from a `FRect` object:
 ```C++
@@ -853,6 +853,9 @@ This will return an object that can be checked for with the `()` operator (retur
 It will return `false` if there is no intersection.
 
 For the union of two rectangles, the usage is similar, but it will return a (closed) `Polyline` object.
+You may use either the `intersectArea()` (member or free) function, or the `|` operator.
+
+Additionaly, the `getBB()` free function returns the bounding box holding the two rectangles, as shown in the two samples figures below.
 
 ```C++
 auto a1 = r1.intersectArea(r2);
@@ -865,8 +868,8 @@ auto b2 = r1 | r2;
 auto b3 = unionArea( r1, r2 ); // free function
 ```
 
-![showcase2a](showcase2a.gif)
-![showcase2b](showcase2b.gif)
+![Example of intersection area](showcase2a.gif)
+![Example of union area](showcase2b.gif)
 
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.<br>

@@ -32,6 +32,9 @@ int main( int argc, const char** argv )
 	{
 		cvmata = cv::Scalar(255,255,255);
 		cvmatb = cv::Scalar(255,255,255);
+		getBB(r1,r2).draw( imga, DrawParams().setColor(200,200,200) );
+		getBB(r1,r2).draw( imgb, DrawParams().setColor(200,200,200) );
+
 		r1.draw( imga, color_green );
 		r2.draw( imga, color_green );
 		r1.draw( imgb, color_green );
