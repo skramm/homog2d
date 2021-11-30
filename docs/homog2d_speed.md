@@ -5,7 +5,7 @@ As detailed [in manual](homog2d_manual.md#build_options), the
 
 With current commit (2021-08-04), and using the
 `$ make speed_test`
-command that builds and runs the program [ellipse_speed_test.cpp](misc/ellipse_speed_test.cpp) with different options, the results are as follow:
+command that builds and runs the program `ellipse_speed_test.cpp` with different options, the results are as follow:
 
 | Build Option | Ellipse footprint (bytes) | Duration (s) |
 |--------------|---------------------------|--------------|

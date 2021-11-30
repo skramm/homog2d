@@ -1,5 +1,5 @@
 // file t_footer.cxx
-// used in makefile target test_fig
+// used in makefile target doc_fig
 
 	Homogr H;
 	H.addScale( 50 );

@@ -176,6 +176,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="showcase2.cpp" />
+		<Unit filename="showcase3.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

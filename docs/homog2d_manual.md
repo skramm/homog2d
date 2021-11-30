@@ -157,7 +157,7 @@ auto y = li.getCoord( GivenCoord::X, 0 );
 
 You can compute the two points that are lying on a line and at a given distance from a point.
 
-![fig1](../docs/fig1.png)
+![Computing the 2 points at a given distance of a point on a line](fig1.png)
 
 The API provides two ways to get these.
 
@@ -191,7 +191,7 @@ Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
 will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
-![fig3](../docs/fig3.png)
+![Orthogonal lines](fig3.png)
 
 Similarly, you can also directly use as input a point on the line:
 ```C++
@@ -307,7 +307,7 @@ with the one with smallest coordinates as "first".
 
 This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored:
 
-![fig2](../docs/fig2.png)
+![A flat rectangle defined by two points](fig2.png)
 
 The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
@@ -391,7 +391,7 @@ auto seg = getSegment( c1, c2 );  // as a segment
 auto line = getLine( c1, c2 );    // as a line
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
-![circles1](figures_src/circles1.png)
+![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](figures_src/circles1.png)
 
 
 ### 3.4 - Polyline
@@ -411,7 +411,8 @@ pl1.add( vpt );      // add a vector of points
 pl2.isClosed() = false;  // now open
 ```
 
-![A closed Polyline and its bounding box](figures_src/polyline1.png)
+![An open Polyline and its bounding box](figures_src/polyline1.png)
+![The same one, but closed](figures_src/polyline2.png)
 
 It can be build directly from a `FRect` object:
 ```C++
@@ -464,7 +465,7 @@ auto vec_segs = pl.getSegs();
 auto seg = pl.getSegment( i );   // will throw if non-existent
 ```
 
-Additional features: length and bounding box (member function or free function):
+Additional features: length, and bounding box (member function or free function):
 ```C++
 Polyline pl;
 // ... add points
@@ -705,6 +706,9 @@ auto v_out = h * v_in;
 ```
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
+Once you have the desired matrix, you can apply it to about anything you want.
+For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see showcase3.cpp).
+![showcase1](docs/showcase3.gif)
 
 ### 4.4 - Constructors
 
@@ -853,9 +857,9 @@ This will return an object that can be checked for with the `()` operator (retur
 It will return `false` if there is no intersection.
 
 For the union of two rectangles, the usage is similar, but it will return a (closed) `Polyline` object.
-You may use either the `intersectArea()` (member or free) function, or the `|` operator.
+You may use either the `unionArea()` (member or free) function, or the `|` operator.
 
-Additionaly, the `getBB()` free function returns the bounding box holding the two rectangles, as shown in the two samples figures below.
+Additionaly, the `getBB()` free function returns the bounding box holding the two rectangles, as shown in gray in the two examples below.
 
 ```C++
 auto a1 = r1.intersectArea(r2);

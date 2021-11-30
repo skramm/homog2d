@@ -1,13 +1,13 @@
 // this file is part of homog2d
 // used to build a figure that is included in manual
-// see makefile target test_fig
+// see makefile target doc_fig
 
 #include "fig_src.header"
 
 int main()
 {
-	std::srand(time(0));
-	Polyline pl(IsClosed::Yes);
+//	std::srand(time(0));
+	Polyline pl(IsClosed::No);
 
 	pl.add( 5,5);
 	pl.add( 7,3);
@@ -28,7 +28,11 @@ int main()
 
 	pl.draw( img2, DrawParams().setColor(250,0,20) );
 	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-
-
 	cv::imwrite( "polyline1.png", img );
+
+	pl.isClosed() = true;
+	img = cv::Scalar(255,255,255);
+	pl.draw( img2, DrawParams().setColor(250,0,20) );
+	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
+	cv::imwrite( "polyline2.png", img );
 }
