@@ -707,8 +707,9 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 Once you have the desired matrix, you can apply it to about anything you want.
-For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see showcase3.cpp).
-![showcase1](docs/showcase3.gif)
+For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase3.cpp).
+
+![showcase3](docs/showcase3.gif)
 
 ### 4.4 - Constructors
 
