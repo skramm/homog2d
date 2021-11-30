@@ -1026,7 +1026,7 @@ The available functions are given in the table below:
 `setPointSize()`  |  1 int (pixels)  |
 `setThickness()`  |  1 int (pixels)  |
 
-Free function are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
+Free functions are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
 This means any graphical primitive `prim` can be drawn with:
 ```C++
 draw( img, prim );
@@ -1043,7 +1043,7 @@ std::pair<Circle,Circle> p_cir;
 // ... fill the pair
 draw( img, vseg );      // use default parameters
 draw( img, vseg, dp );  // or pass some
-draw( p_cir );          // draw the pair of circles
+draw( img, p_cir );     // draw the pair of circles
 ```
 
 A demo demonstrating this Opencv binding is provided, try it with
