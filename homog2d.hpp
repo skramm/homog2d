@@ -6215,6 +6215,14 @@ HOMOG2D_INUMTYPE area( const Ellipse_<FPT>& ell )
 }
 
 /// Free function
+/// \sa Polyline_::area()
+template<typename FPT>
+HOMOG2D_INUMTYPE area( const Polyline_<FPT>& pl )
+{
+	return pl.area();
+}
+
+/// Free function
 template<typename FPT>
 HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 {
