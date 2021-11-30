@@ -709,7 +709,7 @@ Thanks to templates, this works also for a set of points (or lines) stored in a 
 Once you have the desired matrix, you can apply it to about anything you want.
 For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase3.cpp).
 
-![showcase3](docs/showcase3.gif)
+![showcase3](showcase3.gif)
 
 ### 4.4 - Constructors
 
