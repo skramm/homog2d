@@ -894,7 +894,7 @@ MyPoint myPoint;
 Point2d pt(myPoint);
 Line2d li(myPoint);
 ```
-But in case your type uses other identifiers than `x` and `x`, no problem:
+But in case your type uses other identifiers than `x` and `y`, no problem:
 just define the symbol `HOMOG2D_BIND_X` and `HOMOG2D_BIND_Y` with the ones you use and the above code will be ok.
 
 For homographies, you can import directly from

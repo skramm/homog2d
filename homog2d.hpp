@@ -52,7 +52,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
-#if 1
+#ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " << a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -918,8 +918,8 @@ class DrawParams
 	{
 		priv::Color _color;
 		int         _lineThickness = 1;
-		int         _lineType      = 1; // 1 for cv::LINE_AA, 2 for cv::LINE_8
-		int         _ptDelta       = 8;           ///< pixels, used for drawing points
+		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
+		uint8_t     _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
 		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
@@ -962,9 +962,8 @@ public:
 		_dpValues._ptStyle = ps;
 		return *this;
 	}
-	DrawParams& setPointSize( int ps )
+	DrawParams& setPointSize( uint8_t ps )
 	{
-		assert( ps>1 );
 		_dpValues._ptDelta = ps;
 		return *this;
 	}
@@ -984,6 +983,7 @@ public:
 		_dpValues._enhancePoint = true;
 		return *this;
 	}
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
 	DrawParams& showPoints( bool b )
 	{
 		_dpValues._showPoints = b;
@@ -3527,13 +3527,13 @@ Segment \c n is the one between point \c n and point \c n+1
 
 /// Miminize the Polyline: remove all points that lie in the middle of two segments with same angle.
 /**
-For example, if we have the following points: (0,0)-(1,0)-(2,0)<br>
+For example, if we have the following points ("Open" polyline):
+(0,0)-(1,0)-(2,0)<br>
 This will be replaced by: (0,0)--(2,0)
-\todo Still a bug here for closed polylines
 
 \note We cannot use the Segment_::getAngle() function because it returns a
 value in [0,PI/2], so we would'nt be able to detect a segment going
-180° of the previous one.
+at 180° of the previous one.
 */
 	void
 	minimize()
@@ -3554,13 +3554,7 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 			const auto& p0 = getPoint(i);
 			const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 			const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
-#if 0
-			Segment_<FPT> sA( p0, pnext );
-			Segment_<FPT> sB( p0, pprev );
-			auto an = getAngle( sA, sB );
-			if( an < Root<type::IsLine,FPT>::nullAngleValue() )
-				ptset.push_back( i );
-#else
+
 			auto vx1 = pnext.getX() - p0.getX();
 			auto vy1 = pnext.getY() - p0.getY();
 			auto vx2 = p0.getX() - pprev.getX();
@@ -3570,7 +3564,6 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 
 			if( std::abs(a1-a2) < Root<type::IsLine,FPT>::nullAngleValue() )
 				ptset.push_back( i );
-#endif
 		}
 //		priv::printVector( ptset, "ptset " );
 
@@ -3597,7 +3590,6 @@ value in [0,PI/2], so we would'nt be able to detect a segment going
 				out.add( getPoint(i) );   // so just add the point to the output set
 		}
 
-		std::cout << "out:" << out << '\n';
 		std::swap( out, *this ); // maybe we can "move" instead?
 	}
 
@@ -4191,23 +4183,6 @@ moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 	}
 }
 
-/*void
-cleanTable( Table& table )
-{
-	for( uint8_t r=0;r<4; r++ )
-		for( uint8_t c=0;c<4; c++ )
-		{
-			auto cell = table[r][c];
-			if( cell.isCorner )
-			{
-				if( r>0 && r<3 )
-
-			}
-		}
-
-}
-*/
-
 /// Helper function for FRect_<FPT>::unionArea()
 /**
 - Start from 0,0, direction East
@@ -4282,8 +4257,7 @@ convertToCoord(
 		auto id_x = elem.first;
 		auto id_y = elem.second;
 		assert( id_x<4 && id_y<4 );
-//		std::cout << "[" << (int)id_x << "-" << (int)id_y
-//			<< "]: value=" << vx[id_x].value << "," << vy[id_y].value << '\n';
+
 		auto pt = Point2d_<FPT>( vx[id_x].value, vy[id_y].value );
 		if( v_pts.empty() )
 			v_pts.push_back( pt );
@@ -4317,12 +4291,13 @@ convertStringToTable( const std::vector<std::string>& v_str )
 } // namespace priv
 } // namespace runion
 //------------------------------------------------------------------
-/// Computes the polygon of the union of two rectangles
+/// Computes the Polyline_ of the union of two rectangles
 /**
 Algorithm:
  -# build vectors of x and y coordinates (4 elements)
  -# build table x-y (4x4), with corners tagged
  -# parse the table by turning right at each corner, and left if position is not one the outside row/col
+ -# convert back indexes to real coordinates, to build the final Polyline_
 
 Two examples:
 \verbatim
@@ -4370,19 +4345,14 @@ Then the vectors are:
 - vx: 1,2,3,3
 - vy: 6,7,8,9
 
-But the table needs to be:
-\verbatim
-  | 0 1 2 3
---|---------|
-0 | . F . F |
-1 | F . . . |
-2 | F . . . |
-3 | . F . F |
-\endverbatim
+(notice the duped coordinate)
 
-THIS IS NOT DONE YET!!!
-
-
+This will produce a Polyline_ with 2 extra points:<br>
+(1,7)-(1,8)-(2,8)-(2,9)-(3,9)-(3,8)-(3,7)-(3,6)-(2,6)-(2,7)
+<br>instead of:<br>
+(1,7)-(1,8)-(2,8)-(2,9)-(3,9)-(3,6)-(2,6)-(2,7)
+<br>We solve this by proceeding an extra Polyline minimization,
+see Polyline_::minimize()
 */
 template<typename FPT>
 template<typename FPT2>
@@ -4414,9 +4384,6 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 		std::swap( pr1, pr2 );
 	const auto& r1 = *pr1;
 	const auto& r2 = *pr2;
-//	std::cout << "r1=" << r1 << "\n";
-//	std::cout << "r2=" << r2 << "\n";
-// STEP 0 END
 
 // step 1: build vectors of coordinates and sort them
 	std::array<Index<FPT>,4> vx, vy;
@@ -4438,26 +4405,19 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 // step 2: fill table\n";
 	Table table;
-#if 1
 	for( uint8_t r=0;r<4; r++ )
 		for( uint8_t c=0;c<4; c++ )
 			table[r][c] = Cell( vx[r], vy[c] );
-#endif
 //	printTable( table, "after step 2" );
-//	cleanTable( table );
 
 // step 3: parse table
 	auto vpts = parseTable( table );
 //	priv::printVectorPairs( vpts );
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
-#if 1
 	auto res1 = convertToCoord( vpts, vx, vy );
-	res1.minimize();
+	res1.minimize(); // remove unecessary points
 	return res1;
-#else
-	return convertToCoord( vpts, vx, vy );
-#endif
 }
 
 /// Returns Bounding Box
@@ -6391,7 +6351,13 @@ namespace detail {
 /// Private helper function, used by Root<IsPoint>::draw()
 template<typename T>
 void
-drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, const img::DrawParams& dp, bool drawDiag=false )
+drawPt(
+	img::Image<T>&               img,
+	img::PtStyle                 ps,
+	std::vector<Point2d_<float>> vpt,
+	const img::DrawParams&       dp,
+	bool                         drawDiag=false
+)
 {
 	auto delta  = dp._dpValues._ptDelta;
 	auto delta2 = std::round( 0.85 * delta);
@@ -6413,26 +6379,28 @@ drawPt( img::Image<T>& img, img::PtStyle ps, std::vector<Point2d_<float>> vpt, c
 		break;
 		default: assert(0);
 	}
+	auto dp2(dp);          // we need to do this, because this is called by the
+	dp2.showPoints(false); //  segment drawing function. If not, infinite recursion
 	if( !drawDiag )
 	{
 		Segment_<float> s1( vpt[0], vpt[1] );
 		Segment_<float> s2( vpt[2], vpt[3] );
-		s1.draw( img, dp );
-		s2.draw( img, dp );
+		s1.draw( img, dp2 );
+		s2.draw( img, dp2 );
 	}
 	else // draw 4 diagonal lines
 	{
-		Segment_<float>( vpt[0], vpt[2] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[2], vpt[1] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[1], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
-		Segment_<float>( vpt[0], vpt[3] ).draw( img, dp ); //, dp._dpValues.color(), dp._dpValues._enhancePoint?2:1 );
+		Segment_<float>( vpt[0], vpt[2] ).draw( img, dp2 );
+		Segment_<float>( vpt[2], vpt[1] ).draw( img, dp2 );
+		Segment_<float>( vpt[1], vpt[3] ).draw( img, dp2 );
+		Segment_<float>( vpt[0], vpt[3] ).draw( img, dp2 );
 	}
 }
 
 } // namespace detail
 
 //------------------------------------------------------------------
-/// Draw Polyline, independent of back-end library (calls the segment drawing function)
+/// Draw Polyline_, independent of back-end library (calls the segment drawing function)
 template<typename FPT>
 template<typename T>
 void
@@ -6549,31 +6517,31 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 template<typename LP, typename FPT>
 template<typename T>
 bool
-Root<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
+Root<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
-	if( getX()<0 || getX()>=img.cols() )
+	if( getX()<0 || getX()>=im.cols() )
 		return false;
-	if( getY()<0 || getY()>=img.rows() )
+	if( getY()<0 || getY()>=im.rows() )
 		return false;
 
 	std::vector<Point2d_<float>> vpt( 4, *this );
 	switch( dp._dpValues._ptStyle )
 	{
 		case img::PtStyle::Plus:   // "+" symbol
-			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( im, img::PtStyle::Plus,  vpt, dp );
 		break;
 
 		case img::PtStyle::Star:
-			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp );
-			detail::drawPt( img, img::PtStyle::Times, vpt, dp );
+			detail::drawPt( im, img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( im, img::PtStyle::Times, vpt, dp );
 		break;
 
 		case img::PtStyle::Diam:
-			detail::drawPt( img, img::PtStyle::Plus,  vpt, dp, true );
+			detail::drawPt( im, img::PtStyle::Plus,  vpt, dp, true );
 		break;
 
 		case img::PtStyle::Times:      // "times" symbol
-			detail::drawPt( img, img::PtStyle::Times, vpt, dp );
+			detail::drawPt( im, img::PtStyle::Times, vpt, dp );
 		break;
 
 		default: assert(0);
@@ -6655,7 +6623,8 @@ Segment_<FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 	);
 	if( dp._dpValues._showPoints )
 	{
-//		_ptS1.draw( im, dp ); _ptS2.draw( im, dp );
+		_ptS1.draw( im, dp );
+		_ptS2.draw( im, dp );
 	}
 }
 

@@ -244,8 +244,9 @@ nobuild: $(NOBUILD_OBJ_FILES)
 $(NOBUILD_OBJ_FILES): rm_nb
 
 rm_nb:
-	@-rm BUILD/no_build.stdout
-	@-rm BUILD/no_build.stderr
+	@if [ -e BUILD/no_build.stdout ]; then rm BUILD/no_build.stdout; fi
+	@if [ -e BUILD/no_build.stderr ]; then rm BUILD/no_build.stderr; fi
+
 
 # assemble file to create a cpp program holding a main()
 BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx

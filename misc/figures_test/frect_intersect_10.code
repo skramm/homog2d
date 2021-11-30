@@ -1,3 +1,7 @@
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif
+
 // a rectangle inside the other, no intersection points
 	FRect_<NUMTYPE> r1( Point2d(1,1), Point2d(4,4) );
 	FRect_<NUMTYPE> r2( Point2d(2,2), Point2d(3,3) );
