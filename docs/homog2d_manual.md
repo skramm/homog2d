@@ -1023,12 +1023,14 @@ something.draw( img, color_red );
 ```
 
 The available functions are given in the table below:
-     Function     |    Arguments     |
-------------------|------------------|
-`setColor()`      | 3 ints ([0-255]) |
-`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` |
-`setPointSize()`  |  1 int (pixels)  |
-`setThickness()`  |  1 int (pixels)  |
+     Function     |    Arguments     | Comment |
+------------------|------------------|---------|
+`setColor()`      | 3 ints ([0-255]) |  |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` | +,x,*, |
+`setPointSize()`  |  1 int (pixels)  |  |
+`setThickness()`  |  1 int (pixels)  |  |
+`showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
+
 
 Free functions are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
 This means any graphical primitive `prim` can be drawn with:

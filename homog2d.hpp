@@ -967,9 +967,8 @@ public:
 		_dpValues._ptDelta = ps;
 		return *this;
 	}
-	DrawParams& setThickness( int t )
+	DrawParams& setThickness( uint8_t t )
 	{
-		assert( t>0 );
 		_dpValues._lineThickness = t;
 		return *this;
 	}
@@ -6221,6 +6220,16 @@ HOMOG2D_INUMTYPE area( const Polyline_<FPT>& pl )
 {
 	return pl.area();
 }
+
+/// Free function
+/// \sa Polyline_::centroid()
+template<typename FPT>
+Root<type::IsPoint,FPT>
+centroid( const Polyline_<FPT>& pl )
+{
+	return pl.centroid();
+}
+
 
 /// Free function
 template<typename FPT>

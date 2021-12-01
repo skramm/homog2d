@@ -1002,7 +1002,7 @@ TEST_CASE( "IsInside circle", "[tic]" )
 /////           INTERSECTION TESTS                       /////
 //////////////////////////////////////////////////////////////
 
-/// This test is there just to make sure that every combination does build
+// This test is there just to make sure that every combination does build
 TEST_CASE( "Intersection", "[int_all]" )
 {
 	FRect    r1,r2;
@@ -1978,6 +1978,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
 		CHECK( pl1.area() == 0 );
+		CHECK( area(pl1)  == 0 );
+		CHECK_THROWS( centroid(pl1) );
 	}
 	{
 		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
@@ -2006,7 +2008,11 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.nbSegs() == 4 );
 		CHECK( pl1.length() == 8 );
 		CHECK( pl1.area() == 4 );
+		CHECK( area(pl1)  == 4 );
+		CHECK( pl1.centroid() == Point2d(6,7) );
+		CHECK( centroid(pl1)  == Point2d(6,7) );
 		pl1.translate(1,2);
+		CHECK( pl1 == Polyline_<NUMTYPE>( FRect( 6,8, 8,10 ) ) );
 	}
 	{                         // build Polyline from FRect
 		FRect r( 5,6, 7,8 );
@@ -2017,6 +2023,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.nbSegs() == 3 );
 		CHECK( pl1.length() == 6 );
 		CHECK( pl1.area() == 0 );
+		CHECK_THROWS( pl1.centroid() );
 	}
 	Polyline_<NUMTYPE> pl1;
 	pl1.add(
