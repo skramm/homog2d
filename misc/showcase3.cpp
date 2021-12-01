@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates
+\brief Generates a rotating polygon
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
@@ -29,10 +29,7 @@ int main( int argc, const char** argv )
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,30);
 
 	Line2d li(1,1,6,3);
-	cv::Mat cvimg;
-	cvimg.create( 250, 300, CV_8UC3 );
-	cvimg = cv::Scalar(255,255,255);
-	img::Image<cv::Mat> img2( cvimg );
+	img::Image<cv::Mat> img2( 250, 300 );
 
 	Homogr H;
 	H.addTranslation(-4,-3).addRotation(360./n/180*M_PI ).addTranslation(4,3);
@@ -40,7 +37,7 @@ int main( int argc, const char** argv )
 	for( int i=0; i<n; i++ )
 	{
 		pl = H*pl;
-		cvimg = cv::Scalar(255,255,255);
+		img2.clear();
 		auto pl2 = Hdraw * pl;
 		pl2.draw( img2, DrawParams().setColor(250,0,20) );
 		pl2.getBB().draw( img2, DrawParams().setColor(150,150,120) );
@@ -50,7 +47,7 @@ int main( int argc, const char** argv )
 		draw( img2, pts2 );
 		std::ostringstream ossa;
 		ossa << "BUILD/showcase3_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), cvimg );
+		cv::imwrite( ossa.str(), img2.getReal() );
 	}
 }
 

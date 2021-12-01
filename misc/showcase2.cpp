@@ -14,13 +14,10 @@ using namespace h2d::img;
 int main( int argc, const char** argv )
 {
 	int n=30;
-	cv::Mat cvmata, cvmatb;
 	auto im_w = 350;
 	auto im_h = 180;
-	cvmata.create( im_h, im_w, CV_8UC3 );
-	cvmatb.create( im_h, im_w, CV_8UC3 );
-	img::Image<cv::Mat> imga( cvmata );
-	img::Image<cv::Mat> imgb( cvmatb );
+	img::Image<cv::Mat> imga( im_w, im_h );
+	img::Image<cv::Mat> imgb( im_w, im_h );
 
 	FRect r1(40,30, 130,90 );
 	FRect r2(160,45, 210,150 );
@@ -53,17 +50,17 @@ int main( int argc, const char** argv )
 
 		b.draw( imgb, color_red );
 		if( (i+1)%10 == 0 )
-		{
+		{doc:
 			mul = mul*-1;
 			r1.translate(0,30);
 		}
 		std::ostringstream ossa;
 		ossa << "BUILD/showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), cvmata );
+		cv::imwrite( ossa.str(), imga.getReal() );
 
 		std::ostringstream ossb;
 		ossb << "BUILD/showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossb.str(), cvmatb );
+		cv::imwrite( ossb.str(), imgb.getReal() );
 
 		r1.translate( mul*20,0);
 	}

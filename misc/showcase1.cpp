@@ -13,11 +13,9 @@ using namespace h2d::img;
 int main( int argc, const char** argv )
 {
 	int n=20;
-	cv::Mat cvmat;
 	auto im_w = 400;
 	auto im_h = 250;
-	cvmat.create( im_h, im_w, CV_8UC3 );
-	Image<cv::Mat> myImg( cvmat );
+	Image<cv::Mat> myImg( im_w, im_h );
 
 	int offset_h = 100;
 	int offset_v = 60;
@@ -100,7 +98,7 @@ int main( int argc, const char** argv )
 */
 		std::ostringstream oss;
 		oss << "BUILD/showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( oss.str(), cvmat );
+		cv::imwrite( oss.str(), myImg.getReal() );
 
 		pl = H * pl;
 		lih = H*lih;

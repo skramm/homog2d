@@ -21,18 +21,15 @@ int main()
 	pl.add( 1.6, 5.4);
 	pl = Homogr().setScale(30).addTranslation(10,30) * pl;
 
-	cv::Mat img;
-	img.create( 250, 300, CV_8UC3 );
-	img = cv::Scalar(255,255,255);
-	img::Image<cv::Mat> img2( img );
+	img::Image<cv::Mat> img2( 300, 450 );
 
 	pl.draw( img2, DrawParams().setColor(250,0,20) );
 	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	cv::imwrite( "polyline1.png", img );
+	cv::imwrite( "polyline1.png", img2.getReal()  );
 
 	pl.isClosed() = true;
-	img = cv::Scalar(255,255,255);
+	img2.clear();
 	pl.draw( img2, DrawParams().setColor(250,0,20) );
 	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	cv::imwrite( "polyline2.png", img );
+	cv::imwrite( "polyline2.png", img2.getReal() );
 }

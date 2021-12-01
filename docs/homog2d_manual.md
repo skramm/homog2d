@@ -982,15 +982,13 @@ but the idea is to make it easily adaptable for other back-end graphical librari
 
 To use it in a program linked with Opencv:
 ```C++
-cv::Mat cvmat;
-cvmat.create( 300, 400, CV_8UC3 );
-cvmat = cv::Scalar(255,255,255);   // fill white
-img::Image<cv::Mat> img( cvmat );
+img::Image<cv::Mat> img( 300, 400 ); // new image, white
 
 Circle c( 100,100,80 );
 c.draw( img );
+cv::imwrite( "circles1.png", img.getReal() );
 ```
-
+(the `getReal()` function returns the underlying type, here the Opencv cv:Mat)
 
 All these drawing functions support a second optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.

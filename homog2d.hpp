@@ -199,7 +199,8 @@ using Line2d_  = Root<type::IsLine,T>;
 /// Holds drawing related code, independent of back-end library
 namespace img {
 
-/// Opaque data structure, will hold the image type, depending on back-end library
+/// Opaque data structure, will hold the image type, depending on back-end library.
+/// This type is the one used in all the drawing functions.
 /**
 To expand it, you need to add code for the other library for the
 two function cols() and rows(), bounded in a "#define" block, and define the drawing functions
@@ -211,13 +212,20 @@ struct Image
 	Image() = default;
 	Image( T& m ): real_img(m)
 	{}
+/// Returns a reference on the underlying image
 	T& getReal()
 	{
 		return real_img;
 	}
 #ifdef HOMOG2D_USE_OPENCV
+	Image( size_t width, size_t height )
+	{
+		real_img.create( width, height, CV_8UC3 );
+		clear();
+	}
 	int cols() const { return real_img.cols; }
 	int rows() const { return real_img.rows; }
+	void clear() { real_img = cv::Scalar(255,255,255); }
 #endif
 
 //#ifdef HOMOG2D_SOME_OTHER_LIB
