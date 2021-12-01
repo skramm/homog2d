@@ -1002,33 +1002,45 @@ TEST_CASE( "IsInside circle", "[tic]" )
 /////           INTERSECTION TESTS                       /////
 //////////////////////////////////////////////////////////////
 
+/// This test is there just to make sure that every combination does build
 TEST_CASE( "Intersection", "[int_all]" )
 {
-	FRect r1,r2;
-	Circle c1,c2;
-	Segment s1,s2;
-	Line2d l1,l2;
+	FRect    r1,r2;
+	Circle   c1,c2;
+	Segment  s1,s2;
+	Line2d   l1,l2;
+	Polyline p1,p2;
 
-	CHECK( !r1.intersects( r2 )() );
+	CHECK( !r1.intersects( r2 )() ); // intersection with object of same type
 	CHECK( !c1.intersects( c2 )() );
 	CHECK( !s1.intersects( s2 )() );
 	CHECK( !l1.intersects( l2 )() );
+	CHECK( !p1.intersects( p2 )() );
 
 	CHECK( r1.intersects( c2 )() );
 	CHECK( r1.intersects( s2 )() );
 	CHECK( r1.intersects( l2 )() );
+	CHECK( !r1.intersects( p2 )() );  // polyline is empty !
 
 	CHECK( c1.intersects( r2 )() );
 	CHECK( c1.intersects( s2 )() );
 	CHECK( c1.intersects( l2 )() );
+	CHECK( !c1.intersects( p2 )() );  // polyline is empty !
 
 	CHECK( s1.intersects( r2 )() );
 	CHECK( s1.intersects( c2 )() );
 	CHECK( s1.intersects( l2 )() );
+	CHECK( !s1.intersects( p2 )() );  // polyline is empty !
 
 	CHECK( l1.intersects( r2 )() );
 	CHECK( l1.intersects( c2 )() );
 	CHECK( l1.intersects( s2 )() );
+	CHECK( !l1.intersects( p2 )() );  // polyline is empty !
+
+	CHECK( !p1.intersects( r2 )() );
+	CHECK( !p1.intersects( c2 )() );
+	CHECK( !p1.intersects( s2 )() );
+	CHECK( !p1.intersects( l2 )() );
 }
 
 TEST_CASE( "Line/Line intersection", "[int_LL]" )
@@ -1381,20 +1393,6 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 	}
 
 }
-#if 0
-TEST_CASE( "priv: parse table", "[priv_parseTable]" )
-{
-	std::vector<std::string> v_str{".F.F","F...","F...",".F.F"};
-	auto table = priv::runion::convertStringToTable( v_str );
-	priv::runion::printTable( table, "[priv_parseTable]" );
-	auto vpts = priv::runion::parseTable( table );
-	priv::printVectorPairs( vpts );
-	CHECK( vpts == std::vector<priv::runion::PCoord>{
-			{0,1},{0,3},{3,3},{3,1},{2,1},{2,0},{1,0},{1,1}
-		}
-	);
-}
-#endif
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {

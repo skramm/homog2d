@@ -411,6 +411,8 @@ pl1.add( vpt );      // add a vector of points
 pl2.isClosed() = false;  // now open
 ```
 
+The `getBB()` member (or free) function return the corresponding Bounding box, show here in gray, for two `Polyline` objects, one closed, the other open:
+
 ![An open Polyline and its bounding box](figures_src/polyline1.png)
 ![The same one, but closed](figures_src/polyline2.png)
 
@@ -476,18 +478,20 @@ FRect rect2 = getBB(pl);
 ```
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
-If it is, you can get its area:
+If it is, you can get its area and its centroid point:
 ```C++
 Polyline pl;
 // ... add points
-if( pl.isPolygon() )
+if( pl.isPolygon() ) {
 	std::cout << "area=" << pl.area();
+	std::cout << "centroid point=" << pl.centroid();
+}
 ```
 
-This latter function will return 0 if not a polygon.
+Please note that if not a polygon, then the `area()` function will return 0 but the the `centroid()` function will throw.
 
-It can be compared, however, the behavior differs whether it is closed or not.
-Consider these two sets:
+Polyline objects can be compared, however, the behavior differs whether it is closed or not.
+Consider these two sets of points:
 ```
 (0,0)--(2,3)--(0,2)
 (2,3)--(0,2)--(0,0)
@@ -781,13 +785,13 @@ And whatever the primitives, you can always get the number of intersection point
 
 The table below summarizes the number of intersection points to expect:
 
-|            | `Line2d` | `Segment` | `FRect`  | `Circle` |
-|------------|----------|-----------|----------|----------|
-| `Line2d`   |  0 or 1  |   0 or 1  |   0 or 2 |  0 or 2  |
-| `Segment`  |  0 or 1  |   0 or 1  |   0,1,2  |  0,1,2   |
-| `FRect`    |  0 or 2  |   0,1,2   |   0,2,4  |  0,2,4   |
-| `Circle`   |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |
-
+|            | `Line2d` | `Segment` | `FRect`  | `Circle` | `Polyline` |
+|------------|----------|-----------|----------|----------|------------|
+| `Line2d`   |  0 or 1  |           |          |          |            |
+| `Segment`  |  0 or 1  |   0 or 1  |          |          |            |
+| `FRect`    |  0 or 2  |   0,1,2   |   0,2,4  |          |            |
+| `Circle`   |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |            |
+| `Polyline` |  0 - n   |   0 - n   |   0 - n  |  0 - n   |   0 - n    |
 
 - For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
 - For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.

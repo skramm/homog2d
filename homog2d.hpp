@@ -106,9 +106,9 @@ See https://github.com/skramm/homog2d
 		throw std::runtime_error( oss.str() ); \
 	}
 
-/// Error throw wrapper macro
-#define HOMOG2D_THROW_ERROR_2( f, msg ) \
-	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + f + "(): " + msg )
+/// Error throw wrapper macro, first arg in the function name
+#define HOMOG2D_THROW_ERROR_2( func, msg ) \
+	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
 
 namespace h2d {
 
@@ -3895,7 +3895,7 @@ Root<type::IsPoint,HOMOG2D_INUMTYPE>
 Polyline_<FPT>::centroid() const
 {
 	if( !isPolygon() )
-		throw "UNABLE!"; /// \todo 2021-11-07: clean that out
+		HOMOG2D_THROW_ERROR_2( "Polyline_::centroid", "unable, is not a polygon" );
 
 	if( _attribs._centroid.isBad() )
 	{
@@ -3916,8 +3916,8 @@ Polyline_<FPT>::centroid() const
 			cy += (y1+y2) * prod;
 		}
 		auto signedArea = p_ComputeSignedArea();
-		cx /= (6*signedArea);
-		cy /= (6*signedArea);
+		cx /= (6. * signedArea);
+		cy /= (6. * signedArea);
 
 		auto c = Root<type::IsPoint,HOMOG2D_INUMTYPE>( cx, cy );
 		_attribs._centroid.set( c );
