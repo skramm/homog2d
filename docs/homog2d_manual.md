@@ -1139,7 +1139,7 @@ That same function can be used to change (or print) the current value.
 - When attempting to compute the inverse of a matrix, if the determinant is less
 than `Homogr::nullDeterValue()`, the inversion code will throw.
 
-### Additional rounding
+### 7.4 - Additional rounding
 
 In some situations, although the math is clear, some numerical issues always happen.
 The most crucial is when computing intersection points between a rectangle and a line.
