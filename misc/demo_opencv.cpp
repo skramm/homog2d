@@ -667,7 +667,6 @@ void demo_6(int n)
 struct Param_H: public Data
 {
 	int hmethod = 1;
-//	cv::Mat img2;
 	img::Image<cv::Mat> img2;
 	std::string win2 = "Computed_projection";
 

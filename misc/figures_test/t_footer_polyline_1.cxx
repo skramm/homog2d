@@ -1,12 +1,9 @@
 // file t_footer.cxx
-// used in makefile target doc_fig
+// used in makefile target test_fig
 
 	Homogr H;
 	H.addScale( 50 );
 	H.addTranslation( 20,20 );
-
-	img = cv::Scalar(255,255,255);
-	img::Image<cv::Mat> img2(img);
 
 // grid
 	int g=220, g0=g/2;
@@ -33,6 +30,6 @@
 
 	auto poly2 = H*pl;
 	poly2.draw( img2, img::DrawParams().setColor(250,0,20).showPoints(true) );
-	cv::imwrite( std::string(argv[0])+ ".png", img );
+	cv::imwrite( std::string(argv[0])+ ".png", img2.getReal()  );
 }
 

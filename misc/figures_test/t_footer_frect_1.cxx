@@ -1,12 +1,9 @@
 // file t_footer.cxx
-// used in makefile target doc_fig
+// used in makefile target test_fig
 
 	Homogr H;
 	H.addScale( 50 );
 	H.addTranslation( 20,20 );
-
-	img = cv::Scalar(255,255,255);
-	img::Image<cv::Mat> img2(img);
 
 // grid
 	int g=220, g0=g/2;
@@ -34,12 +31,12 @@
 	auto r1b = H*r1;
 	auto r2b = H*r2;
 
-	cv::putText( img, "r1", getBB(r1b).getPts().second.getCvPti(), 1, 2., cv::Scalar(20,0,250) );
-	cv::putText( img, "r2", getBB(r2b).getPts().second.getCvPti(), 1, 2., cv::Scalar(250,0,20) );
+	cv::putText( img2.getReal() , "r1", getBB(r1b).getPts().second.getCvPti(), 1, 2., cv::Scalar(20,0,250) );
+	cv::putText( img2.getReal() , "r2", getBB(r2b).getPts().second.getCvPti(), 1, 2., cv::Scalar(250,0,20) );
 
 	r1b.draw( img2, img::DrawParams().setColor(250,0,20) );
 	r2b.draw( img2, img::DrawParams().setColor(20,0,250) );
 
-	cv::imwrite( std::string(argv[0])+ ".png", img );
+	cv::imwrite( std::string(argv[0])+ ".png", img2.getReal() );
 }
 

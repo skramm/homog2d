@@ -3362,6 +3362,7 @@ private:
 	T    _value;
 	bool _valIsCorrect = false;
 public:
+	ValueFlag() = default;
 	void set( T v )
 	{
 		_value = v;
@@ -5282,7 +5283,7 @@ Root<LP,FPT>::impl_getParallelLines( T dist, const detail::RootHelper<type::IsLi
 /// Comparison operator, used for lines
 /**
 Definition: two lines will be equal:
-- if they are not parallel
+- if they are parallel
 AND
 - if their offset (3 third value) is less than nullOffsetValue()
 */

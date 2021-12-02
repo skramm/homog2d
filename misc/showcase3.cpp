@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates a rotating polygon
+\brief Generates a rotating polygon with a crossing line, computes the intersection points
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE

@@ -12,9 +12,8 @@
 using namespace h2d;
 int main( int argc, const char** argv )
 {
-	cv::Mat img;
-	img.create( 350, 400, CV_8UC3 );
+	img::Image<cv::Mat> img2(350,400);
 
-#ifdef HOMOG2D_DEBUGMODE
-	std::cout << "file: " << __FILE__ << '\n';
-#endif
+//#ifdef HOMOG2D_DEBUGMODE
+//	std::cout << "file: " << __FILE__ << '\n';
+//#endif

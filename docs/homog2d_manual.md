@@ -1098,7 +1098,7 @@ It will return an enum value of type `Dtype`, either
 
 ### 7.2 - Numerical type conversion
 
-It is of course possible to convert to/from an object templated by a different type:
+It is possible to convert to/from an object templated by a different type (at the cost of a potential precision loss):
 ```C++
 Point2dD pt_double;
 Line2dL  li_long;
@@ -1120,7 +1120,7 @@ type `std::runtime_error`) if that kind of thing happens.
 The thresholds have default values.
 They are implemented as static values, that user code can change any time.
 
-- When checking for parallel lines (see `isParallelTo()`), the "null" angle value
+- When checking for parallel lines (see Root::isParallelTo() ), the "null" angle value
 has a default value of one thousand of a radian (0.001 rad).
 You can print the current value with:
 ```C++
