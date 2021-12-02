@@ -1163,6 +1163,8 @@ Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
 
+For more details on the code, check [this page](docs/homog2d_devinfo.md).
+
 ### Testing
 
 A unit-test program is included, it is build and run with `$ make test`.
@@ -1200,24 +1202,6 @@ For more on this, [see this page](docs/homog2d_speed.md).
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
 
-### Inner details
-
-To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
-As the Root class is already templatized on the type (Point or Line),
-it would require a partial template specialization to define the behavior of each member function (or free function),
-depending on the basic type (Line or Point), and still templatize on the numerical type.
-C++ does not allow this.
-
-Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded
-by the datatype (point or line).
-To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type `RootHelper`,
-templated by the numerical type.
-In the definition of the function, this additional argument value is ignored,
-it is there just so that the compiler can select the correct overload.
-
-The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
-If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
-the implementation of that type only holds a `static_assert`, so that can be catched at build time.
 
 
 
