@@ -81,6 +81,52 @@ int main( int argc, char* argv[] )
 	return result;
 }
 
+TEST_CASE( "numerical types access", "[types-access]" )
+{
+	Point2dF ptF;
+	Point2dD ptD;
+	Point2dL ptL;
+
+	Line2dF liF;
+	Line2dD liD;
+	Line2dL liL;
+
+	HomogrF HF;
+	HomogrD HD;
+	HomogrL HL;
+
+	FRectF rF;
+	FRectD rD;
+	FRectL rL;
+
+	SegmentF sF;
+	SegmentD sD;
+	SegmentL sL;
+
+	CircleF cF;
+	CircleD cD;
+	CircleL cL;
+
+	PolylineF pF;
+	PolylineD pD;
+	PolylineL pL;
+
+	CHECK( ptF.dtype() == Dtype::Float );
+	CHECK( liF.dtype() == Dtype::Float );
+	CHECK( HF.dtype()  == Dtype::Float );
+	CHECK( rF.dtype()  == Dtype::Float );
+	CHECK( sF.dtype()  == Dtype::Float );
+	CHECK( cF.dtype()  == Dtype::Float );
+	CHECK( pF.dtype()  == Dtype::Float );
+
+	CHECK( ptD.dtype() == Dtype::Double );
+	CHECK( liD.dtype() == Dtype::Double );
+	CHECK( HD.dtype()  == Dtype::Double );
+	CHECK( rD.dtype()  == Dtype::Double );
+	CHECK( sD.dtype()  == Dtype::Double );
+	CHECK( cD.dtype()  == Dtype::Double );
+	CHECK( pD.dtype()  == Dtype::Double );
+}
 
 TEST_CASE( "types testing", "[testtypes]" )
 {
@@ -108,10 +154,8 @@ TEST_CASE( "types testing", "[testtypes]" )
 		CHECK( sizeof(Point2dD) == 24 );
 		CHECK( sizeof(Point2dL) == 48 );
 
-		CHECK( ptF.type()  == Type::Point2d );
-		CHECK( ptF.dtype() == Dtype::Float );
-		CHECK( liF.type()  == Type::Line2d );
-		CHECK( liF.dtype() == Dtype::Float );
+		CHECK( ptF.type() == Type::Point2d );
+		CHECK( liF.type() == Type::Line2d );
 	}
 
 	Point2dD ptD0(1,1);
@@ -127,9 +171,6 @@ TEST_CASE( "types testing", "[testtypes]" )
 		Point2dD ptD(4,4);
 		Point2dF ptF(5,5);
 		Point2dL ptL(6,6);
-		CHECK( ptF.dtype() == Dtype::Float );
-		CHECK( ptD.dtype() == Dtype::Double );
-		CHECK( ptL.dtype() == Dtype::LongDouble );
 
 		ptL = ptD0;
 		CHECK( ptL.getX() == 1. );

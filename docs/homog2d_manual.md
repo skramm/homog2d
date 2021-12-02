@@ -1089,6 +1089,12 @@ configure the library to use `long double` by adding this before the "include":
 or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
 <br>(don't forget the quotes!)
 
+#### Numerical type access
+
+For any object, you may know its type with the `dtype()` member function.
+It will return an enum value of type `Dtype`, either
+`Dtype::Float`, `Dtype::Double` or `Dtype::LongDouble`.
+
 
 ### 7.2 - Numerical type conversion
 

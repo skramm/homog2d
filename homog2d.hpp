@@ -261,6 +261,26 @@ const char* getString( Type t )
 	return t==Type::Line2d ? "Line2d" : "Point2d";
 }
 
+
+//------------------------------------------------------------------
+/// Holds private stuff
+namespace priv {
+
+	Dtype impl_dtype( const detail::RootDataType<float>& )
+	{
+		return Dtype::Float;
+	}
+	Dtype impl_dtype( const detail::RootDataType<double>& )
+	{
+		return Dtype::Double;
+	}
+	Dtype impl_dtype( const detail::RootDataType<long double>& )
+	{
+		return Dtype::LongDouble;
+	}
+} // namespace priv
+
+
 namespace detail {
 
 // forward declaration
@@ -702,6 +722,11 @@ Thus some assert can get triggered elsewhere.
 	void init()
 	{
 		impl_mat_init0( detail::RootHelper<M>() );
+	}
+
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
 
 /// \name Adding/assigning a transformation
@@ -1516,6 +1541,7 @@ public:
 
 /// \name Attributes access
 ///@{
+
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
@@ -1538,6 +1564,11 @@ public:
 	}
 
 	Circle_<FPT> getBoundingCircle() const;
+
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
 ///@}
 
 	template<typename T1, typename T2>
@@ -1812,6 +1843,12 @@ public:
 		: _radius(other._radius), _center(other._center)
 	{}
 ///@}
+
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
+
 
 /// \name Attributes access
 ///@{
@@ -2284,7 +2321,7 @@ public:
 	}
 	Dtype dtype() const
 	{
-		return impl_dtype( detail::RootDataType<FPT>() );
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
 
 private:
@@ -2297,6 +2334,7 @@ private:
 		return Type::Line2d;
 	}
 
+/*
 	Dtype impl_dtype( const detail::RootDataType<float>& ) const
 	{
 		return Dtype::Float;
@@ -2309,6 +2347,7 @@ private:
 	{
 		return Dtype::LongDouble;
 	}
+*/
 
 public:
 	FPT
@@ -3120,6 +3159,11 @@ in the range \f$ [0,\pi/2] \f$
 	}
 ///@}
 
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
+
 /// \name Operators
 ///@{
 	bool operator == ( const Segment_& s2 ) const
@@ -3418,6 +3462,11 @@ public:
 		set( other._plinevec );
 	}
 ///@}
+
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
 
 /// \name Attributes access
 ///@{
