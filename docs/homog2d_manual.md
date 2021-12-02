@@ -1163,7 +1163,7 @@ Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
 
-For more details on the code, check [this page](docs/homog2d_devinfo.md).
+For more details on the code, check [this page](homog2d_devinfo.md).
 
 ### Testing
 
