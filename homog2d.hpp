@@ -6095,13 +6095,14 @@ getBB( const Polyline_<FPT>& pl )
 /// Returns Bounding Box of two rectangles (free function)
 /**
 whatever their intersection status
-
-\todo 20211129: fix this for rectangles of different FP type
 */
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
-getBB( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 {
+// first, convert them to internal numerical type
+	const FRect_<HOMOG2D_INUMTYPE> r1(ra);
+	const FRect_<HOMOG2D_INUMTYPE> r2(rb);
 	auto ppts1 = r1.getPts();
 	auto ppts2 = r2.getPts();
 	auto min_x = std::min( ppts1.first.getX(),  ppts2.first.getX() );

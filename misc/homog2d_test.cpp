@@ -1892,6 +1892,16 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 		FRect_<NUMTYPE> r2(1,0, 3,3);
 		CHECK( getBB(r1,r2) == FRect_<NUMTYPE>(0,0,5,5) );
 	}
+
+// test for rectangle of different types
+	{                                 // one inside the other, with a common edge
+		FRect_<float> r1(0,0, 5,5);
+		FRect_<double> r2(1,0, 3,3);
+		auto bb = getBB(r1,r2);
+		CHECK( bb == FRect_<long double>(0,0,5,5) );
+		CHECK( bb.dtype() == Dtype::Float );
+	}
+
 }
 
 TEST_CASE( "FRect", "[frect]" )
