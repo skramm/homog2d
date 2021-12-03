@@ -111,6 +111,10 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	PolylineD pD;
 	PolylineL pL;
 
+	EllipseF eF;
+	EllipseD eD;
+	EllipseL eL;
+
 	CHECK( ptF.dtype() == Dtype::Float );
 	CHECK( liF.dtype() == Dtype::Float );
 	CHECK( HF.dtype()  == Dtype::Float );
@@ -118,6 +122,7 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( sF.dtype()  == Dtype::Float );
 	CHECK( cF.dtype()  == Dtype::Float );
 	CHECK( pF.dtype()  == Dtype::Float );
+	CHECK( eF.dtype()  == Dtype::Float );
 
 	CHECK( ptD.dtype() == Dtype::Double );
 	CHECK( liD.dtype() == Dtype::Double );
@@ -126,6 +131,12 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( sD.dtype()  == Dtype::Double );
 	CHECK( cD.dtype()  == Dtype::Double );
 	CHECK( pD.dtype()  == Dtype::Double );
+	CHECK( eD.dtype()  == Dtype::Double );
+
+	CHECK( dtype(ptD) == Dtype::Double );
+	CHECK( dtype(liD) == Dtype::Double );
+	CHECK( dtype(HF)  == Dtype::Float );
+	CHECK( dtype(rF)  == Dtype::Float );
 }
 
 TEST_CASE( "types testing", "[testtypes]" )

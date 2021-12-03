@@ -547,6 +547,11 @@ public:
 	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
 	static HOMOG2D_INUMTYPE& nullDenomValue() { return _zeroDenomValue; }
 
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
+
 private:
 
 }; // class Matrix_
@@ -1035,21 +1040,23 @@ struct EllParams
 {
 	T x0, y0; ///< center
 	T theta = 0.; ///< angle
-	T sint, cost;
+	T sint, cost; ///< \f$ \sin( \theta), \cos( \theta) \f$
 	T a, b;
 	T a2, b2; ///< squared values of a and b
 
 	template<typename U>
-	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
-	{
-		f << "EllParams: origin=" << par.x0 << "," << par.y0
-			<< " angle=" << par.theta *180./M_PI
-			<< " a=" << par.a << " b=" << par.b
-			<< '\n';
-		return f;
+	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par );
+};
 
-	}
-}; // struct EllParams
+template<typename U>
+std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
+{
+	f << "EllParams: origin=" << par.x0 << "," << par.y0
+		<< " angle=" << par.theta *180./M_PI
+		<< " a=" << par.a << " b=" << par.b
+		<< '\n';
+	return f;
+}
 
 } // namespace detail
 
@@ -2023,17 +2030,8 @@ template<typename FPT>
 void
 fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 {
-#if 0
-	if( ptA.getX() > ptB.getX() )
-		std::swap( ptA, ptB );
-	else
-		if( ptA.getX() == ptB.getX() )
-			if( ptA.getY() > ptB.getY() )
-				std::swap( ptA, ptB );
-#else
 	if( !(ptA < ptB) )
 		std::swap( ptA, ptB );
-#endif
 }
 
 
@@ -4328,23 +4326,6 @@ convertToCoord(
 	return Polyline_<FPT>( v_pts, IsClosed::Yes );
 }
 
-#if 0
-Table
-convertStringToTable( const std::vector<std::string>& v_str )
-{
-	Table table;
-	for( uint8_t r=0;r<4; r++ )
-	{
-		auto str = v_str[r];
-		for( uint8_t c=0;c<4; c++ )
-			table[r][c] = Cell( str[c] == 'F' );
-	}
-
-//	printTable( table, "convertStringToTable" );
-	return table;
-}
-#endif
-
 } // namespace priv
 } // namespace runion
 //------------------------------------------------------------------
@@ -6064,7 +6045,6 @@ getBB( const Ellipse_<FPT>& ell )
 	return ell.getBB();
 }
 
-
 /// Returns Bounding Box of Segment_ (free function)
 /// \sa Segment_::getBB()
 template<typename FPT>
@@ -6289,12 +6269,17 @@ centroid( const Polyline_<FPT>& pl )
 	return pl.centroid();
 }
 
-
 /// Free function
 template<typename FPT>
 HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 {
 	return rect.length();
+}
+
+template<typename T>
+Dtype dtype( const T& t )
+{
+	return t.dtype();
 }
 
 //------------------------------------------------------------------
