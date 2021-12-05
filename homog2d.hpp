@@ -312,12 +312,25 @@ template<typename T>
 using matrix_t = std::array<std::array<T,3>,3>;
 
 //------------------------------------------------------------------
+/// Common class for all the geometric primitives
+template<typename FPT>
+class Common
+{
+public:
+	Dtype dtype() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}
+
+};
+
+//------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
 Homogeneous (thus the 'mutable' attribute).
 */
 template<typename FPT>
-class Matrix_
+class Matrix_: public Common<FPT>
 {
 	template<typename T> friend class Matrix_;
 
@@ -547,13 +560,6 @@ public:
 	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
 	static HOMOG2D_INUMTYPE& nullDenomValue() { return _zeroDenomValue; }
 
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}
-
-private:
-
 }; // class Matrix_
 
 template<typename T1,typename T2,typename FPT1,typename FPT2>
@@ -727,11 +733,6 @@ Thus some assert can get triggered elsewhere.
 	void init()
 	{
 		impl_mat_init0( detail::RootHelper<M>() );
-	}
-
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
 
 /// \name Adding/assigning a transformation
@@ -1456,7 +1457,7 @@ public:
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
-class FRect_
+class FRect_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
@@ -1572,10 +1573,6 @@ public:
 
 	Circle_<FPT> getBoundingCircle() const;
 
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}
 ///@}
 
 	template<typename T1, typename T2>
@@ -1799,7 +1796,7 @@ private:
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
-class Circle_
+class Circle_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
@@ -1850,12 +1847,6 @@ public:
 		: _radius(other._radius), _center(other._center)
 	{}
 ///@}
-
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}
-
 
 /// \name Attributes access
 ///@{
@@ -2111,7 +2102,7 @@ Parameters:
 - FPT: Floating Point Type
 */
 template<typename LP,typename FPT>
-class Root
+class Root: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
@@ -2316,10 +2307,6 @@ public:
 	Type type() const
 	{
 		return impl_type( detail::RootHelper<LP>() );
-	}
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
 
 private:
@@ -3075,7 +3062,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 - Storage: "smallest" point is always stored as first element (see constructor)
 */
 template<typename FPT>
-class Segment_
+class Segment_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
@@ -3156,11 +3143,6 @@ in the range \f$ [0,\pi/2] \f$
 		return other.getAngle( this->getLine() );
 	}
 ///@}
-
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}
 
 /// \name Operators
 ///@{
@@ -3401,7 +3383,7 @@ The consequence is that when adding points, if you have done a comparison before
 add point after the one you thought!
 */
 template<typename FPT>
-class Polyline_
+class Polyline_: public detail::Common<FPT>
 {
 	template<typename T> friend class Polyline_;
 
@@ -3461,11 +3443,6 @@ public:
 		set( other._plinevec );
 	}
 ///@}
-
-	Dtype dtype() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}
 
 /// \name Attributes access
 ///@{
@@ -6276,6 +6253,7 @@ HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 	return rect.length();
 }
 
+/// Free function, return floating-point type
 template<typename T>
 Dtype dtype( const T& t )
 {
