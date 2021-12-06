@@ -2123,6 +2123,17 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
 }
 
+TEST_CASE( "Polygon orientation", "[polyline-orient]" )
+{
+	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+	Polyline_<NUMTYPE> pl2(IsClosed::Yes);
+	{
+		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
+		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );
+		CHECK( pl1 == pl2 );
+	}
+}
+
 TEST_CASE( "Polygon area", "[polyline-area]" )
 {
 	Polyline_<NUMTYPE> pl1(IsClosed::Yes);

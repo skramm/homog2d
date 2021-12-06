@@ -3770,12 +3770,29 @@ been normalized. This normalizing operation will happen if you do a comparison (
 
 private:
 /// Normalisation of closed Polyline_
+/**
+Two tasks:
+- rotating so that the smallest one is first
+- reverse if needed, so that the second point is smaller than the last one
+*/
 	void p_normalizePL() const
 	{
 		assert( isClosed() );   // should not do this if not closed !
+		if( size() < 3 )
+			return;
+
 		if( !_plIsNormalized )
 		{
-			std::sort( _plinevec.begin(), _plinevec.end() );
+			auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+			const auto& p1 = _plinevec[1];
+			const auto& p2 = _plinevec.back();
+			if( p2 < p1 )
+			{
+				std::reverse( _plinevec.begin(), _plinevec.end() );
+				minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+			}
 			_plIsNormalized=true;
 		}
 	}

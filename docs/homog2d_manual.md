@@ -396,7 +396,7 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 ### 3.4 - Polyline
 
-This class holds a set of points and models an arbitrary set of joined segments.
+This class holds a set of points and models an arbitrary set of joined segments, without orientation.
 It can be either open or closed (last points joins first one).
 If closed, and if it does not intersect itself, then it can be used to model a polygon.
 It can be seen as a wrapper over a vector of points.
@@ -455,6 +455,11 @@ pl.set( v_pts_1 );  // replace
 pl.add( v_pts_2 );  // add
 ```
 
+It has no orientation, meaning that the open Polyline build from this set of points:<br>
+`(0,0)-(1,0)-(1,1)`<br>
+will be identical as this one:<br>
+`(1,1)-(1,0)-(0,0)`
+
 You can extract either points or segments.
 The number of segments is related to the open/close condition.
 For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
@@ -501,15 +506,20 @@ Consider these two sets of points:
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
 
-However, this will fail in some circumstances, because a Polyline object can hold the same point several times (but not contiguous).
+However, comparison of identical objects can fail in some circumstances, because a Polyline object can hold the same point several times (but not contiguous).
 Consider these two closed Polyline objects:
 
-`(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)`<br>
+A: `(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)`<br>
 and<br>
-`(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
+B: `(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
 
 They both describe the same object:
 ![Polyline comparison](polyline_comp_1.png)
+
+When compared, they will be considered as different because they both use twice the same point `(0,0)`
+and their normalisation will produce these sets of points:<br>
+A: `(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)` (identical)<br>
+B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 
 
 ### 3.5 - Ellipse
