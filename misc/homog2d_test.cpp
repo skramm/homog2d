@@ -2087,6 +2087,14 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.area() == 0 );
 		CHECK_THROWS( pl1.centroid() );
 	}
+	{
+		Polyline_<NUMTYPE> pl1;
+		pl1.add( 0,0 );
+		pl1.add( 1,1 );
+		CHECK( pl1.size() == 2 );
+		CHECK_THROWS( pl1.add( 1,1 ) ); // cant add same point as previous one
+	}
+
 	Polyline_<NUMTYPE> pl1;
 	pl1.add(
 		std::vector<Point2d>{ {0,0}, {1,1.5}, {3,5}, {1,4} }
@@ -2125,11 +2133,28 @@ TEST_CASE( "Polyline", "[polyline]" )
 
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 {
-	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
-	Polyline_<NUMTYPE> pl2(IsClosed::Yes);
 	{
-		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
-		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );
+		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+		Polyline_<NUMTYPE> pl2(IsClosed::Yes);                               //  +-----+
+		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );       //  |     |
+		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );       //  +-----+
+		CHECK( pl1 == pl2 );   // is closed, so the points describe the same thing
+	}
+	{
+		Polyline_<NUMTYPE> pl1(IsClosed::No);
+		Polyline_<NUMTYPE> pl2(IsClosed::No);                             //  +-----+     +-----+
+		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );    //        | and |     |
+		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );    //  +-----+     +     +
+		CHECK( pl1 != pl2 ); // is open, so they are different
+	}
+	{
+		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+		Polyline_<NUMTYPE> pl2(IsClosed::Yes);
+		pl1.add( std::vector<Point2d>{ {0,0}, {1,0}, {1,1} } );
+		pl2.add( std::vector<Point2d>{ {1,1}, {1,0}, {0,0} } );
+		CHECK( pl1 == pl2 );
+		pl1.isClosed() = false;
+		pl2.isClosed() = false;
 		CHECK( pl1 == pl2 );
 	}
 }

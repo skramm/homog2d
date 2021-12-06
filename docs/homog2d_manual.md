@@ -411,7 +411,16 @@ pl1.add( vpt );      // add a vector of points
 pl2.isClosed() = false;  // now open
 ```
 
-The `getBB()` member (or free) function return the corresponding Bounding box, show here in gray, for two `Polyline` objects, one closed, the other open:
+Warning: you may not add a point identical to the previous one. This code:
+```C++
+Polyline pl1;
+pl1.add( 1,1 );
+pl1.add( 1,1 );
+```
+will trigger an exception.
+
+
+The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
 ![An open Polyline and its bounding box](figures_src/polyline1.png)
 ![The same one, but closed](figures_src/polyline2.png)
@@ -423,7 +432,7 @@ Polyline pl1( frect );                // default is closed
 Polyline pl2( frect, IsClosed::No );  // optional argument
 ```
 If the latter line is used, then this will produce a polyline without the segment from `p3` to `p0`
-(see (above figure for `FRect`)[#frect]).
+(see above figure for points of `FRect`).
 
 The open/close attribute can be read/written:
 ```C++
