@@ -432,7 +432,7 @@ std::cout << "IsClosed=" << pl1.isClosed() << '\n';
 pl1.isClosed() = true;
 ```
 
-Number of points and number of segments (member function or free function)::
+Number of points and number of segments (member or free function):
 ```C++
 Polyline pl;
 // ... add points
@@ -490,15 +490,26 @@ if( pl.isPolygon() ) {
 
 Please note that if not a polygon, then the `area()` function will return 0 but the the `centroid()` function will throw.
 
+#### Comparison of Polyline objects
+
 Polyline objects can be compared, however, the behavior differs whether it is closed or not.
 Consider these two sets of points:
 ```
 (0,0)--(2,3)--(0,2)
 (2,3)--(0,2)--(0,0)
 ```
-
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
+
+However, this will fail in some circumstances, because a Polyline object can hold the same point several times (but not contiguous).
+Consider these two closed Polyline objects:
+
+`(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)`<br>
+and<br>
+`(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
+
+They both describe the same object:
+![Polyline comparison](polyline_comp_1.png)
 
 
 ### 3.5 - Ellipse
@@ -538,7 +549,6 @@ Ellipse ell;
 auto pair_lines  = ell.getAxisLines();
 auto pair_lines2 = getAxisLines( ell ); // or use the free function
 ```
-
 
 To check if the ellipse is a circle:
 ```C++
@@ -1064,17 +1074,20 @@ In case you have some trouble building this program, please [read this](opencv_n
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
 
-The default datatype used for `Point2d`, `Line2d` or `Homogr` is `double`.
+The default datatype used for all the primitives
+(`Point2d`, `Line2d`, `Homogr`, `Segment`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
+ is `double`.
 The other types can be selected by an additional suffix letter added after the type:
 
 `F` for `float`, `D` for `double` and `L` for `long double`.
 
-For example: `Point2dF`, `Line2dF` or `HomogrF` are float types.
+For example: `Point2dF`, `Line2dF` or `SegmentF` are float types.
 
 If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`:
 
 ```C++
-Point2d_<float> pt; // this is fine
+Point2d_<float> ptf;   // float
+FRect_<double> rectd; // double
 ```
 
 However, this only applies to **storage**.
@@ -1091,10 +1104,16 @@ or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double
 
 #### Numerical type access
 
-For any object, you may know its type with the `dtype()` member function.
+For any object, you may know its type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
 `Dtype::Float`, `Dtype::Double` or `Dtype::LongDouble`.
 
+```C++
+Circle c1;
+assert( c1.dtype() == Dtype::Double );
+CircleF c2;
+assert( dtype(c2) == Dtype::Float );
+```
 
 ### 7.2 - Numerical type conversion
 
@@ -1104,6 +1123,8 @@ Point2dD pt_double;
 Line2dL  li_long;
 Point2dF pt_float  = pt_double;
 Line2dD  li_double = li_long;
+SegmentD sd;
+SegmentL sl = sd;
 ```
 
 ### 7.3 - Numerical issues
@@ -1128,7 +1149,7 @@ cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
 ```
 It can be changed any time with the same function, for example:
 ```C++
-Line2d::nullAngleValue() = 0.01;
+Line2d::nullAngleValue() = 0.01; // 1/100 radian
 ```
 This is checked for when computing an intersection point.
 

@@ -2123,7 +2123,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
 }
 
-TEST_CASE( "Polygon area", "[polygon_area]" )
+TEST_CASE( "Polygon area", "[polyline-area]" )
 {
 	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
 	{
@@ -2142,7 +2142,7 @@ TEST_CASE( "Polygon area", "[polygon_area]" )
 	}
 }
 
-TEST_CASE( "Polyline comparison", "[polyline_comp]" )
+TEST_CASE( "Polyline comparison", "[polyline-comp]" )
 {
 	{
 		Polyline_<NUMTYPE> pa,pb;
@@ -2191,6 +2191,19 @@ TEST_CASE( "Polyline comparison", "[polyline_comp]" )
 		CHECK( p1 == p2 ); // normalizing
 		CHECK( p1.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
 		CHECK( p2.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
+	}
+	{
+		Polyline pa, pb;
+		{
+#include "figures_test/polyline_comp_1a.code"
+			pa = pl;
+		}
+		{
+#include "figures_test/polyline_comp_1b.code"
+			pb = pl;
+		}
+		CHECK( pa.size() == pb.size() );
+		CHECK( pa != pb );
 	}
 }
 

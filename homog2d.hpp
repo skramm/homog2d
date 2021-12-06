@@ -3581,7 +3581,7 @@ at 180° of the previous one.
 		std::vector<size_t> ptset;
 		auto istart = _isClosed ? 0 : 1;
 		auto iend   = _isClosed ? nbpts : nbpts-1;
-		for( size_t i=istart;i<iend; i++ )
+		for( size_t i=istart; i<iend; i++ )
 		{
 			const auto& p0 = getPoint(i);
 			const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
@@ -3597,7 +3597,6 @@ at 180° of the previous one.
 			if( std::abs(a1-a2) < Root<type::IsLine,FPT>::nullAngleValue() )
 				ptset.push_back( i );
 		}
-//		priv::printVector( ptset, "ptset " );
 
 		if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
 		{                       // then return the same Polyline

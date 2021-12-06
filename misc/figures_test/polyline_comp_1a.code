@@ -1,0 +1,12 @@
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif
+
+	Polyline_<NUMTYPE> pl( IsClosed::Yes );
+	pl.add( 0,0 );
+	pl.add( 3,0 );
+	pl.add( 3,1 );
+	pl.add( 0,0 );
+	pl.add( 0,3 );
+	pl.add( 1,3 );
+
