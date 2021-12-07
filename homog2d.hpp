@@ -189,10 +189,10 @@ using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
 #endif
 
 template<typename FPT> class Segment_;
-//template<typename FPT> class Polyline_;
 template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
+template<typename PLT,typename FPT> class PolylineBase;
 
 
 template<typename T>
@@ -1185,9 +1185,9 @@ public:
 /// \name attributes
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 ) const;
-	Point2d_<FPT>    center() const;
-	Polyline_<FPT>   getBB()  const;
-	HOMOG2D_INUMTYPE angle()  const;
+	Point2d_<FPT>                            center() const;
+	PolylineBase<type::PolylineClosed,FPT>   getBB()  const;
+	HOMOG2D_INUMTYPE                         angle()  const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 ///@}
 
@@ -1598,11 +1598,11 @@ public:
 /// \name Union/intersection area
 ///@{
 	template<typename FPT2>
-	Polyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
+	PolylineBase<type::PolylineClosed,FPT> unionArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
 	detail::RectArea<FPT> intersectArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	Polyline_<FPT> operator | ( const FRect_<FPT2>& other ) const
+	PolylineBase<type::PolylineClosed,FPT> operator | ( const FRect_<FPT2>& other ) const
 	{
 		return this->unionArea( other );
 	}
@@ -1718,8 +1718,8 @@ s0 |      | s2
 	}
 
 /// FRect/Polyline intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	template<typename PLT,typename FPT2>
+	detail::IntersectM<FPT> intersects( const PolylineBase<PLT,FPT>& pl ) const
 	{
 		HOMOG2D_START;
 		return pl.intersects( *this );
@@ -1946,8 +1946,8 @@ public:
 	}
 
 /// Circle/Polyline intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	template<typename PLT,typename FPT2>
+	detail::IntersectM<FPT> intersects( const PolylineBase<PLT,FPT2>& pl ) const
 	{
 		HOMOG2D_START;
 		return pl.intersects( * this );
@@ -2592,8 +2592,8 @@ public:
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
 /// Line/Polyline intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& pl ) const
+	template<typename PLT,typename FPT2>
+	detail::IntersectM<FPT> intersects( const PolylineBase<PLT,FPT2>& pl ) const
 	{
 		HOMOG2D_START;
 		return pl.intersects( *this );
@@ -3213,8 +3213,8 @@ the one with smallest y-coordinate will be returned first */
 	}
 
 /// Segment/Polyline intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const Polyline_<FPT2>& other ) const
+	template<typename PLT,typename FPT2>
+	detail::IntersectM<FPT> intersects( const PolylineBase<PLT,FPT2>& other ) const
 	{
 		HOMOG2D_START;
 		return other.intersects( *this );
@@ -3325,7 +3325,7 @@ template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
-template<typename T> struct IsShape<Polyline_<T>>: std::true_type  {};
+template<typename T1,typename T2> struct IsShape<PolylineBase<T1,T2>>: std::true_type  {};
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
@@ -3403,7 +3403,6 @@ class PolylineBase: public detail::Common<FPT>
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
-//	bool _isClosed = false;
 	mutable bool _plIsNormalized = false;
 	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
@@ -3412,28 +3411,12 @@ public:
 ///@{
 
 /// Default constructor
-	PolylineBase()// IsClosed ic=IsClosed::No )
-	{
-//		if( ic == IsClosed::Yes )
-//			_isClosed = true;
-	}
-// Constructor for single point
-/*	template<typename FPT2>
-	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic=IsClosed::No )
-	{
-		_plinevec.push_back( pt );
-		if( ic == IsClosed::Yes )
-			_isClosed = true;
-	}
-/// Constructor for single point as x,y
-	template<typename FPT2>
-	Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
-		: Polyline_(Point2d_<FPT>(x,y), ic )
-	{}*/
+	PolylineBase()
+	{}
 
 /// Constructor from FRect.
 	template<typename FPT2>
-	PolylineBase( const FRect_<FPT2>& rect ) //, IsClosed ic=IsClosed::Yes )
+	PolylineBase( const FRect_<FPT2>& rect )
 	{
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
@@ -3441,18 +3424,17 @@ public:
 
 /// Constructor from a vector of points.
 	template<typename FPT2>
-	PolylineBase( const std::vector<Point2d_<FPT2>>& vec ) //, IsClosed ic=IsClosed::No )
+	PolylineBase( const std::vector<Point2d_<FPT2>>& vec )
 	{
 		set( vec );
 	}
 
 /// Copy-Constructor for same type (Open/Closed)
 	template<
-		typename PLT2,
 		typename FPT2,
 		typename std::enable_if<
 			(std::is_same<PLT2,PLT>::value),
-			,T
+			,PLT
 		>::type* = nullptr
 	>
 	template<typename PLT2,typename FPT2>
@@ -3497,7 +3479,7 @@ public:
 	{
 		if( size() < 2 )
 			return 0;
-		return impl_nbSegs( PolylineHelper<PLT>() );
+		return impl_nbSegs( detail::PolylineHelper<PLT>() );
 	}
 ///@}
 
@@ -3540,11 +3522,21 @@ private:
 			const auto& pt2 = _plinevec[i+1];
 			out.push_back( Segment_<FPT>( pt1,pt2) );
 		}
-		if( _isClosed )
-			out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+		impl_getSegs( out,  detail::PolylineHelper<PLT>() );
 		return out;
 	}
 
+private:
+/// empty implementation
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineOpen>& )
+	{}
+/// that one is for closed Polyline, adds the last segment
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineClosed>& )
+	{
+		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+	}
+
+public:
 
 /// Returns one point of the polyline.
 	Point2d_<FPT> getPoint( size_t idx ) const
@@ -3573,13 +3565,26 @@ Segment \c n is the one between point \c n and point \c n+1
 		if( size() < 2 )
 			HOMOG2D_THROW_ERROR_1( "no segment " << idx );
 #endif
-//			auto lastPoint = _isClosed?
-		return Segment_<FPT>(
-			_plinevec[idx],
-			_plinevec[idx+1==nbSegs()&&_isClosed?0:idx+1]
-		);
+
+		return impl_getSegment( idx, detail::PolylineHelper<PLT>() );
 	}
 ///@}
+
+private:
+//	template<typename PLT,template FPT>
+	Segment_<FPT>
+	impl_getSegment( size_t idx, const detail::PolylineHelper<type::PolylineClosed>& )
+	{
+		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
+	}
+//	template<typename PLT,template FPT>
+	Segment_<FPT>
+	impl_getSegment( size_t idx, const detail::PolylineHelper<type::PolylineOpen>& )
+	{
+		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
+	}
+
+public:
 
 /// \name Modifiers (non-const member functions)
 ///@{
@@ -3607,56 +3612,7 @@ at 180° of the previous one.
 	{
 		if( size()<3 )
 			return;
-
-		impl_minimizePL( PolylineHelper<PLT>() );
-		PolylineBase<PLT,FPT> out;
-
-		auto nbpts = size();
-// step 1: check each point to see if it is the middle point of two segments with same angle
-		std::vector<size_t> ptset;
-		auto istart = _isClosed ? 0 : 1;
-		auto iend   = _isClosed ? nbpts : nbpts-1;
-		for( size_t i=istart; i<iend; i++ )
-		{
-			const auto& p0 = getPoint(i);
-			const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
-			const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
-
-			auto vx1 = pnext.getX() - p0.getX();
-			auto vy1 = pnext.getY() - p0.getY();
-			auto vx2 = p0.getX() - pprev.getX();
-			auto vy2 = p0.getY() - pprev.getY();
-			auto a1 = std::atan2( vx1, vy1 );
-			auto a2 = std::atan2( vx2, vy2 );
-
-			if( std::abs(a1-a2) < Root<type::IsLine,FPT>::nullAngleValue() )
-				ptset.push_back( i );
-		}
-
-		if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
-		{                       // then return the same Polyline
-			out = *this;
-			return;
-		}
-
-// step 2: build new Polyline without those points
-		size_t vec_idx = 0;
-		for( size_t i=0; i<nbpts; i++ )
-		{
-			HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
-
-			if( vec_idx<ptset.size() ) // if there is more points to remove
-			{
-				if( ptset.at(vec_idx) != i ) // if regular point, add it
-					out.add( getPoint(i) );  //  to the output set
-				else                         // found a "middle point"
-					vec_idx++;               // and switch to next one
-			}
-			else                          // no more points to remove
-				out.add( getPoint(i) );   // so just add the point to the output set
-		}
-
-		std::swap( out, *this ); // maybe we can "move" instead?
+		impl_minimizePL( detail::PolylineHelper<PLT>() );
 	}
 
 /// Translate Polyline using \c dx, \c dy
@@ -3692,12 +3648,13 @@ public:
 ///@{
 
 	template<typename PLT2,typename FPT2>
-	bool operator == ( const PolylineBase<FPT2>& other ) const
+	bool operator == ( const PolylineBase<PLT2,FPT2>& other ) const
 	{
 		if( size() != other.size() )          // for quick exit
 			return false;
+		return impl_operatorComp( detail::PolylineHelper<PLT>() );
 
-
+/*
 		if( isClosed() )          // if operating on a closed polygon, we
 		{                         // first "normalize" the points (i.e. sort them)
 			p_normalizePL();
@@ -3709,6 +3666,7 @@ public:
 			if( *it++ != elem )
 				return false;
 		return true;
+*/
 	}
 
 	template<typename PLT2,typename FPT2>
@@ -3718,6 +3676,17 @@ public:
 	}
 ///@}
 
+private:
+	bool impl_operatorComp( const detail::PolylineHelper<type::PolylineOpen>& )
+	{
+
+	}
+	bool impl_operatorComp( const detail::PolylineHelper<type::PolylineClosed>& )
+	{
+
+	}
+
+public:
 /// Polyline intersection with Line, Segment, FRect, Circle
 	template<
 		typename T,
@@ -3850,6 +3819,7 @@ template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& )
 {
+	assert( size() > 2 );
 	p_minimizePL( *this, 1, size()-1 )
 }
 
