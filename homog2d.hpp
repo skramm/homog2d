@@ -119,7 +119,8 @@ struct IsLine   {};
 struct IsPoint  {};
 struct IsHomogr {};
 struct IsEpipmat {};
-
+struct PolylineClosed {};
+struct PolylineOpen {};
 } // namespace type
 
 
@@ -132,6 +133,9 @@ namespace detail {
 
 	/// Helper class for Root (Point/Line) type, used only to get the underlying floating-point type, see Dtype and Root::dtype()
 	template<typename> struct RootDataType {};
+
+	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
+	template<typename> struct PolylineHelper {};
 
 #ifdef HOMOG2D_FUTURE_STUFF
 	/// Helper class for Matrix type
@@ -185,15 +189,21 @@ using Epipmat_ =  Hmatrix_<type::IsEpipmat,T>;
 #endif
 
 template<typename FPT> class Segment_;
-template<typename FPT> class Polyline_;
+//template<typename FPT> class Polyline_;
 template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
+
 
 template<typename T>
 using Point2d_ = Root<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
+
+template<typename T>
+using CPolyline_  = PolylineBase<type::PolylineClosed,T>;
+template<typename T>
+using OPolyline_  = PolylineBase<type::PolylineOpen,T>;
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -3381,15 +3391,19 @@ struct PolylineAttribs
 but potentially in different order, the comparison operator will proceed a sorting.<br>
 The consequence is that when adding points, if you have done a comparison before, you might not
 add point after the one you thought!
+
+template args:
+ - PLT: PolyLine Type: PolylineClosed or PolylineOpen
+ - FPT: Floating Point Type
 */
-template<typename FPT>
-class Polyline_: public detail::Common<FPT>
+template<typename PLT,typename FPT>
+class PolylineBase: public detail::Common<FPT>
 {
-	template<typename T> friend class Polyline_;
+	template<typename T> friend class PolylineBase;
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
-	bool _isClosed = false;
+//	bool _isClosed = false;
 	mutable bool _plIsNormalized = false;
 	mutable priv::PolylineAttribs _attribs;    ///< Attributes. Will get stored upon computing.
 
@@ -3398,13 +3412,13 @@ public:
 ///@{
 
 /// Default constructor
-	Polyline_( IsClosed ic=IsClosed::No )
+	PolylineBase()// IsClosed ic=IsClosed::No )
 	{
-		if( ic == IsClosed::Yes )
-			_isClosed = true;
+//		if( ic == IsClosed::Yes )
+//			_isClosed = true;
 	}
-/// Constructor for single point
-	template<typename FPT2>
+// Constructor for single point
+/*	template<typename FPT2>
 	Polyline_( const Point2d_<FPT2>& pt, IsClosed ic=IsClosed::No )
 	{
 		_plinevec.push_back( pt );
@@ -3415,35 +3429,52 @@ public:
 	template<typename FPT2>
 	Polyline_( FPT2 x, FPT2 y, IsClosed ic = IsClosed::No )
 		: Polyline_(Point2d_<FPT>(x,y), ic )
-	{}
+	{}*/
 
-/// Constructor from FRect. Default behavior is closed
+/// Constructor from FRect.
 	template<typename FPT2>
-	Polyline_( const FRect_<FPT2>& rect, IsClosed ic=IsClosed::Yes )
+	PolylineBase( const FRect_<FPT2>& rect ) //, IsClosed ic=IsClosed::Yes )
 	{
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
-		_isClosed = ( ic == IsClosed::Yes ? true : false );
 	}
 
-/// Constructor from a vector of points. Default: Open
+/// Constructor from a vector of points.
 	template<typename FPT2>
-	Polyline_( const std::vector<Point2d_<FPT2>>& vec, IsClosed ic=IsClosed::No )
+	PolylineBase( const std::vector<Point2d_<FPT2>>& vec ) //, IsClosed ic=IsClosed::No )
 	{
 		set( vec );
-		_isClosed = ( ic == IsClosed::Yes ? true : false );
 	}
 
-/// Copy-Constructor
-/** Can't use standard initialization, because vector might have different types */
-	template<typename FPT2>
-	Polyline_( const Polyline_<FPT2>& other )
-		: _isClosed(other._isClosed)
+/// Copy-Constructor for same type (Open/Closed)
+	template<
+		typename PLT2,
+		typename FPT2,
+		typename std::enable_if<
+			(std::is_same<PLT2,PLT>::value),
+			,T
+		>::type* = nullptr
+	>
+	template<typename PLT2,typename FPT2>
+	PolylineBase( const PolylineBase<PLT2,FPT2>& other )
 	{
-		set( other._plinevec );
+		impl_CC( other, PolylineHelper<PLT2>() );
 	}
 ///@}
 
+private:
+/*	template<typename PLT2,typename FPT2>
+	void
+	impl_CC( const PolylineBase<PLT2,FPT2>& other, PolylineHelper<PolylineClosed>& )
+	{
+		set( other._plinevec );
+	}
+
+	 or PolylineOpen  )
+*/
+
+
+public:
 /// \name Attributes access
 ///@{
 
@@ -3466,15 +3497,19 @@ public:
 	{
 		if( size() < 2 )
 			return 0;
-//		if( size() < 3 )     // if 1 or 2, then 0 or 1 segment
-//			return size() - 1;
-		return size() - 1 + (size_t)_isClosed;
+		return impl_nbSegs( PolylineHelper<PLT>() );
 	}
-
-	const bool& isClosed() const { return _isClosed; }
-/// Non const version, used to change the attribute value
-	bool&       isClosed()       { _attribs.setBad(); return _isClosed; }
 ///@}
+
+private:
+	size_t impl_nbSegs( const detail::PolylineHelper<type::PolylineOpen>& );
+	{
+		return size() - 1;
+	}
+	size_t impl_nbSegs( const detail::PolylineHelper<type::PolylineClosed>& );
+	{
+		return size();
+	}
 
 /// \name Data access
 ///@{
@@ -3496,7 +3531,7 @@ public:
 	std::vector<Segment_<FPT>> getSegs() const
 	{
 		std::vector<Segment_<FPT>> out;
-		if( size() < 2 ) // nothing to draw
+		if( size() < 2 ) // nothing to return
 			return out;
 
 		for( size_t i=0; i<size()-1; i++ )
@@ -3573,8 +3608,8 @@ at 180° of the previous one.
 		if( size()<3 )
 			return;
 
-		Polyline_<FPT> out;
-		out._isClosed = _isClosed;
+		impl_minimizePL( PolylineHelper<PLT>() );
+		PolylineBase<PLT,FPT> out;
 
 		auto nbpts = size();
 // step 1: check each point to see if it is the middle point of two segments with same angle
@@ -3634,37 +3669,6 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
-/// Add single point as x,y
-/**
-\warning this will add the new point after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you do a comparison (== or !=)
-*/
-	template<typename FPT1,typename FPT2>
-	void add( FPT1 x, FPT2 y )
-	{
-		add( Point2d_<FPT>( x, y ) );
-	}
-
-/// Add single point
-/**
-\warning this will add the new point after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you do a comparison (== or !=)
-*/
-	template<typename FPT2>
-	void add( const Point2d_<FPT2>& pt )
-	{
-#ifndef HOMOG2D_NOCHECKS
-		if( size() )
-			if( pt == _plinevec.back() )
-				HOMOG2D_THROW_ERROR_1(
-					"cannot add a point identical to previous one: pt=" << pt << " size=" << size()
-				);
-#endif
-		_attribs.setBad();
-		_plIsNormalized=false;
-		_plinevec.push_back( pt );
-	}
-
 /// Set from vector of points (discards previous points)
 	template<typename FPT2>
 	void set( const std::vector<Point2d_<FPT2>>& vec )
@@ -3677,34 +3681,22 @@ been normalized. This normalizing operation will happen if you do a comparison (
 			*it++ = pt;              // allow type conversions (std::copy implies same type)
 	}
 
-
-/// Add vector of points
-/**
-\warning this will add the new points after the previous one \b only if the object has \b not
-been normalized. This normalizing operation will happen if you do a comparison (== or !=)
-*/
-	template<typename FPT2>
-	void add( const std::vector<Point2d_<FPT2>>& vec )
-	{
-		if( vec.size() == 0 )
-			return;
-		_attribs.setBad();
-		_plIsNormalized=false;
-		_plinevec.reserve( _plinevec.size() + vec.size() );
-		for( const auto& pt: vec )  // we cannot use std::copy because vec might not hold points of same type
-			_plinevec.push_back( pt );
-	}
 ///@}
 
+private:
+	void impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& );
+	void impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
+
+public:
 /// \name Operators
 ///@{
-	template<typename FPT2>
-	bool operator == ( const Polyline_<FPT2>& other ) const
+
+	template<typename PLT2,typename FPT2>
+	bool operator == ( const PolylineBase<FPT2>& other ) const
 	{
 		if( size() != other.size() )          // for quick exit
 			return false;
-		if( isClosed() != other.isClosed() )  // for quick exit
-			return false;
+
 
 		if( isClosed() )          // if operating on a closed polygon, we
 		{                         // first "normalize" the points (i.e. sort them)
@@ -3719,8 +3711,8 @@ been normalized. This normalizing operation will happen if you do a comparison (
 		return true;
 	}
 
-	template<typename FPT2>
-	bool operator != ( const Polyline_<FPT2>& other ) const
+	template<typename PLT2,typename FPT2>
+	bool operator != ( const PolylineBase<PLT2,FPT2>& other ) const
 	{
 		return !( *this == other );
 	}
@@ -3756,9 +3748,9 @@ been normalized. This normalizing operation will happen if you do a comparison (
 		return true;
 	}
 
-	template<typename T>
+	template<typename T1,typename T2>
 	friend std::ostream&
-	operator << ( std::ostream& f, const Polyline_<T>& pl );
+	operator << ( std::ostream& f, const PolylineBase<T1,T2>& pl );
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
@@ -3798,6 +3790,75 @@ Two tasks:
 	}
 
 }; // class Polyline_
+
+
+//------------------------------------------------------------------
+namespace priv {
+
+template<typename PLT,typename FPT>
+void
+p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
+{
+	auto nbpts = size();
+// step 1: check each point to see if it is the middle point of two segments with same angle
+	std::vector<size_t> ptset;
+	for( size_t i=istart; i<iend; i++ )
+	{
+		const auto& p0 = getPoint(i);
+		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
+		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+
+		auto vx1 = pnext.getX() - p0.getX();
+		auto vy1 = pnext.getY() - p0.getY();
+		auto vx2 = p0.getX() - pprev.getX();
+		auto vy2 = p0.getY() - pprev.getY();
+		auto a1 = std::atan2( vx1, vy1 );
+		auto a2 = std::atan2( vx2, vy2 );
+
+		if( std::abs(a1-a2) < Root<type::IsLine,FPT>::nullAngleValue() )
+			ptset.push_back( i );
+	}
+
+	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
+		return;             // then no change
+
+// step 2: build new Polyline without those points
+	PolylineBase<PLT,FPT> out;
+	size_t vec_idx = 0;
+	for( size_t i=0; i<nbpts; i++ )
+	{
+		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+
+		if( vec_idx<ptset.size() ) // if there is more points to remove
+		{
+			if( ptset.at(vec_idx) != i ) // if regular point, add it
+				out.add( getPoint(i) );  //  to the output set
+			else                         // found a "middle point"
+				vec_idx++;               // and switch to next one
+		}
+		else                          // no more points to remove
+			out.add( getPoint(i) );   // so just add the point to the output set
+	}
+
+	std::swap( out, pl ); // maybe we can "move" instead?
+}
+
+} // namespace priv
+
+
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& )
+{
+	p_minimizePL( *this, 1, size()-1 )
+}
+
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::iimpl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
+{
+	p_minimizePL( *this, 0, size() )
+}
 
 //------------------------------------------------------------------
 namespace priv {
@@ -6753,7 +6814,8 @@ using Circle = Circle_<double>;
 using FRect = FRect_<double>;
 
 /// Default polyline type
-using Polyline = Polyline_<double>;
+using CPolyline = PolylineBase<type::PolylineClosed,double>;
+using OPolyline = PolylineBase<type::PolylineOpen,double>;
 
 /// Default ellipse type
 using Ellipse = Ellipse_<double>;
@@ -6765,7 +6827,6 @@ using HomogrF  = Homogr_<float>;
 using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
 using FRectF   = FRect_<float>;
-using PolylineF= Polyline_<float>;
 using EllipseF = Ellipse_<float>;
 
 // double types
@@ -6775,7 +6836,6 @@ using HomogrD  = Homogr_<double>;
 using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
 using FRectD   = FRect_<double>;
-using PolylineD= Polyline_<double>;
 using EllipseD = Ellipse_<double>;
 
 // long double types
@@ -6785,8 +6845,11 @@ using HomogrL  = Homogr_<long double>;
 using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
-using PolylineL= Polyline_<long double>;
 using EllipseL = Ellipse_<long double>;
+
+using CPolylineF= PolylineBase<type::PolylineClosed,float>;
+using CPolylineD= PolylineBase<type::PolylineClosed,double>;
+using CPolylineL= PolylineBase<type::PolylineClosed,long double>;
 
 } // namespace h2d end
 
