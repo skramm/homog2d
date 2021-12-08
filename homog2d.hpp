@@ -257,8 +257,8 @@ enum class GivenCoord: uint8_t { X, Y };
 /// Used in line constructor, to instanciate a H or V line, see \ref Root( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
-/// Used in Polyline_ constructors
-enum class IsClosed: uint8_t { Yes, No };
+// Used in Polyline_ constructors
+//enum class IsClosed: uint8_t { Yes, No };
 
 /// Type of Root object, see Root::type()
 enum class Type: uint8_t { Line2d, Point2d };
@@ -1585,6 +1585,7 @@ public:
 
 ///@}
 
+public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -3399,7 +3400,7 @@ template args:
 template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
 {
-	template<typename T> friend class PolylineBase;
+	template<typename T1,typename T2> friend class PolylineBase;
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -3492,6 +3493,18 @@ private:
 	{
 		return size();
 	}
+	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::PolylineClosed>& ) const
+	{
+		return dist( _plinevec.front(), _plinevec.back() );
+	}
+	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::PolylineOpen>& ) const;
+	{
+		return 0.;
+	}
+
+	bool impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& )   const;
+	bool impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const;
+
 
 /// \name Data access
 ///@{
@@ -3719,10 +3732,18 @@ public:
 
 	template<typename T1,typename T2>
 	friend std::ostream&
-	operator << ( std::ostream& f, const PolylineBase<T1,T2>& pl );
+	operator << ( std::ostream&, const PolylineBase<T1,T2>& );
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
+
+private:
+	template<typename T>
+	void impl_draw( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineClosed>& ) const;
+	template<typename T>
+	void impl_draw( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineOpen>& ) const;
+
+public:
 
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
@@ -3773,7 +3794,7 @@ p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
 	{
-		const auto& p0 = getPoint(i);
+		const auto& p0 = pl._plinevec.at(i);
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
@@ -3800,15 +3821,14 @@ p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 
 		if( vec_idx<ptset.size() ) // if there is more points to remove
 		{
-			if( ptset.at(vec_idx) != i ) // if regular point, add it
-				out.add( getPoint(i) );  //  to the output set
-			else                         // found a "middle point"
-				vec_idx++;               // and switch to next one
+			if( ptset.at(vec_idx) != i )        // if regular point, add it
+				out.add( pl._plinevec.at(i) );  //  to the output set
+			else                            // else, we found a "middle point"
+				vec_idx++;                  // and switch to next one
 		}
 		else                          // no more points to remove
-			out.add( getPoint(i) );   // so just add the point to the output set
+			out.add( pl._plinevec.at(i) );   // so just add the point to the output set
 	}
-
 	std::swap( out, pl ); // maybe we can "move" instead?
 }
 
@@ -3820,14 +3840,14 @@ void
 PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& )
 {
 	assert( size() > 2 );
-	p_minimizePL( *this, 1, size()-1 )
+	p_minimizePL( *this, 1, size()-1 );
 }
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::iimpl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
 {
-	p_minimizePL( *this, 0, size() )
+	p_minimizePL( *this, 0, size() );
 }
 
 //------------------------------------------------------------------
@@ -3881,16 +3901,26 @@ getPointsBB( const T& vpts )
 
 //------------------------------------------------------------------
 /// Returns true if object is a polygon (i.e. no segment crossing)
-template<typename FPT>
+template<typename PLT,typename FPT>
 bool
-Polyline_<FPT>::isPolygon() const
+PolylineBase<PLT,FPT>::isPolygon() const
 {
 	if( size()<3 )       // needs at least 3 points to be a polygon
 		return false;
+	return impl_isPolygon( detail::PolylineHelper<PLT>() );
+}
 
-	if( !_isClosed )   // cant be a polygon if
-		return false;  // it's not closed
+template<typename PLT,typename FPT>
+bool
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& ) const
+{
+	return false;
+}
 
+template<typename PLT,typename FPT>
+bool
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const
+{
 	if( _attribs._isPolygon.isBad() )
 	{
 		auto nbs = nbSegs();
@@ -3918,15 +3948,16 @@ Polyline_<FPT>::isPolygon() const
 
 //------------------------------------------------------------------
 /// Returns length
-template<typename FPT>
+template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
-Polyline_<FPT>::length() const
+PolylineBase<PLT,FPT>::length() const
 {
 	if( _attribs._length.isBad() )
 	{
 		HOMOG2D_INUMTYPE sum = 0.;
 		for( const auto& seg: getSegs() )
 			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
+		sum += impl_length( detail::PolylineHelper<PLT>() );
 		_attribs._length.set( sum );
 	}
 	return _attribs._length.value();
@@ -3934,9 +3965,9 @@ Polyline_<FPT>::length() const
 
 //------------------------------------------------------------------
 /// Returns area of polygon (computed only if necessary)
-template<typename FPT>
+template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
-Polyline_<FPT>::area() const
+PolylineBase<PLT,FPT>::area() const
 {
 	if( !isPolygon() )  // implies that is both closed and has no intersections
 		return 0.;
@@ -3948,9 +3979,9 @@ Polyline_<FPT>::area() const
 
 //------------------------------------------------------------------
 /// Compute and returns signed area (used in area() and in centroid() )
-template<typename FPT>
+template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
-Polyline_<FPT>::p_ComputeSignedArea() const
+PolylineBase<PLT,FPT>::p_ComputeSignedArea() const
 {
 	HOMOG2D_INUMTYPE area = 0.;
 	for( size_t i=0; i<size(); i++ )
@@ -3969,12 +4000,12 @@ Polyline_<FPT>::p_ComputeSignedArea() const
 /**
 ref: https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
 */
-template<typename FPT>
+template<typename PLT,typename FPT>
 Root<type::IsPoint,HOMOG2D_INUMTYPE>
-Polyline_<FPT>::centroid() const
+PolylineBase<PLT,FPT>::centroid() const
 {
 	if( !isPolygon() )
-		HOMOG2D_THROW_ERROR_2( "Polyline_::centroid", "unable, is not a polygon" );
+		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
 
 	if( _attribs._centroid.isBad() )
 	{
@@ -4322,8 +4353,9 @@ printTable( const Table& t, std::string msg )
 }
 #endif
 //------------------------------------------------------------------
-template<typename FPT>
-Polyline_<FPT>
+/// Helper function, used in FRect_<FPT>::unionArea()
+template<typename PLT,typename FPT>
+PolylineBase<PLT,FPT>
 convertToCoord(
 	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
 	const std::array<Index<FPT>,4>& vx,      ///< holds x-coordinates
@@ -4347,7 +4379,7 @@ convertToCoord(
 		}
 	}
 //	printVector( v_pts, "polyline" );
-	return Polyline_<FPT>( v_pts, IsClosed::Yes );
+	return PolylineBase<PLT,FPT>( v_pts );//, IsClosed::Yes );
 }
 
 } // namespace priv
@@ -4416,9 +4448,9 @@ This will produce a Polyline_ with 2 extra points:<br>
 <br>We solve this by proceeding an extra Polyline minimization,
 see Polyline_::minimize()
 */
-template<typename FPT>
+template<typename PLT,typename FPT>
 template<typename FPT2>
-Polyline_<FPT>
+PolylineBase<PLT,FPT>
 FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
@@ -4804,9 +4836,9 @@ operator << ( std::ostream& f, const Segment_<T>& seg )
 	return f;
 }
 
-template<typename T>
+template<typename PLT,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const Polyline_<T>& pl )
+operator << ( std::ostream& f, const Polyline_<PLT,FPT>& pl )
 {
 	f << "Polyline: ";
 	if( !pl.size() )
@@ -4815,7 +4847,7 @@ operator << ( std::ostream& f, const Polyline_<T>& pl )
 	{
 		for( const auto& pt: pl._plinevec )
 			f << pt << "-";
-		f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
+//		f << (pl._isClosed ? "CLOSED" : "NOT-CLOSED");
 	}
 	f << '\n';
 	return f;
@@ -5878,7 +5910,6 @@ operator * ( const Homogr_<FPT2>& h, const Polyline_<FPT1>& pl )
 	const auto& pts = pl.getPts();
 	for( const auto pt: pts )
 		out.add( h * pt );
-	out.isClosed() = pl.isClosed();
 	return out;
 }
 
@@ -5984,6 +6015,13 @@ FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
+{
+	return pt1.distTo( pt2 );
+}
+
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
 Polyline_<FPT1>
@@ -6009,18 +6047,18 @@ getBoundingCircle( const FRect_<FPT>& rect )
 }
 
 /// Returns true if is a polygon (free function)
-///  \sa Polyline_::isPolygon()
-template<typename FPT>
+///  \sa PolylineBase::isPolygon()
+template<typename PLT,typename FPT>
 bool
-isPolygon( const Polyline_<FPT>& pl )
+isPolygon( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.isPolygon();
 }
 
 /// Returns the number of segments (free function)
-/// \sa Polyline_::nbSegs()
-template<typename FPT>
-size_t nbSegs( const Polyline_<FPT>& pl )
+/// \sa PolylineBase::nbSegs()
+template<typename PLT,typename FPT>
+size_t nbSegs( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.nbSegs();
 }
@@ -6035,27 +6073,27 @@ length( const Segment_<FPT>& seg )
 }
 
 /// Returns length (free function)
-/// \sa Polyline_::length()
-template<typename FPT>
+/// \sa PolylineBase::length()
+template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
-length( const Polyline_<FPT>& pl )
+length( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.length();
 }
 
 /// Returns the segments of the polyline (free function)
-/// \sa Polyline_::getSegs()
-template<typename FPT>
+/// \sa PolylineBase::getSegs()
+template<typename PLT,typename FPT>
 std::vector<Segment_<FPT>>
-getSegs( const Polyline_<FPT>& pl )
+getSegs( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.getSegs();
 }
 
 /// Returns the number of points (free function)
-/// \sa Polyline_::size()
-template<typename FPT>
-size_t size( const Polyline_<FPT>& pl )
+/// \sa PolylineBase::size()
+template<typename PLT,typename FPT>
+size_t size( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.size();
 }
@@ -6088,10 +6126,10 @@ getBB( const Circle_<FPT>& cir )
 }
 
 /// Returns Bounding Box of Polyline_ (free function)
-/// \sa FRect_::getBB()
-template<typename FPT>
+/// \sa PolylineBase::getBB()
+template<typename PLT,typename FPT>
 FRect_<FPT>
-getBB( const Polyline_<FPT>& pl )
+getBB( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.getBB();
 }
@@ -6278,17 +6316,16 @@ HOMOG2D_INUMTYPE area( const Ellipse_<FPT>& ell )
 
 /// Free function
 /// \sa Polyline_::area()
-template<typename FPT>
-HOMOG2D_INUMTYPE area( const Polyline_<FPT>& pl )
+template<typename PLT,typename FPT>
+HOMOG2D_INUMTYPE area( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.area();
 }
 
 /// Free function
 /// \sa Polyline_::centroid()
-template<typename FPT>
-Root<type::IsPoint,FPT>
-centroid( const Polyline_<FPT>& pl )
+template<typename PLT,typename FPT>
+Root<type::IsPoint,FPT> centroid( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.centroid();
 }
@@ -6487,10 +6524,10 @@ drawPt(
 
 //------------------------------------------------------------------
 /// Draw Polyline_, independent of back-end library (calls the segment drawing function)
-template<typename FPT>
+template<typename PLT,typename FPT>
 template<typename T>
 void
-Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;
@@ -6500,14 +6537,27 @@ Polyline_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 		const auto& pt1 = _plinevec[i];
 		const auto& pt2 = _plinevec[i+1];
 		assert( pt1 != pt2 );
-		Segment_<FPT>(pt1,pt2).draw( img, dp );
+		Segment_<FPT>(pt1,pt2).draw( im, dp );
 //			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
 	}
+	impl_draw( im, dp, detail::PolylineHelper<PLT>() );
+}
+
+template<typename PLT,typename FPT>
+template<typename T>
+void
+PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::PolylineHelper<type::PolylineClosed>& ) const
+{
 	if( size() < 3 ) // no last segment
 		return;
-	if( _isClosed )
-		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( img, dp );
+	Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( im, dp );
 }
+
+template<typename PLT,typename FPT>
+template<typename T>
+void
+PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::PolylineHelper<type::PolylineOpen>& ) const
+{} // nothing to do
 
 
 /////////////////////////////////////////////////////////////////////////////
