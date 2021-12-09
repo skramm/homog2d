@@ -824,7 +824,7 @@ struct Param_PL : Data
 {
 	explicit Param_PL( std::string title ):Data(title)
 	{}
-	Polyline_<float> polyline;
+	OPolyline polyline;
 };
 
 void action_PL( void* param )
@@ -900,12 +900,12 @@ void demo_PL( int n )
 	action_PL( &data );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*)
+/*	kbloop.addKeyAction( 'a', [&](void*)
 		{
 			data.polyline.isClosed() = !data.polyline.isClosed();
 		},
 		"switch close"
-	);
+	);*/
 //	kbloop.addCommonAction( [&] { action_PL(&data); } );
 	kbloop.start( data );
 }

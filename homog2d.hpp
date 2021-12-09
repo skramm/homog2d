@@ -3467,7 +3467,13 @@ public:
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
 	bool             isPolygon() const;
-	FRect_<FPT>      getBB()     const;
+
+/// Returns Bounding Box
+	FRect_<FPT> getBB() const
+	{
+		return priv::getPointsBB( getPts() );
+	}
+
 	Root<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
 
 private:
@@ -3505,6 +3511,27 @@ private:
 	bool impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& )   const;
 	bool impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const;
 
+/// Add single point. private, because only to be used from other member functions
+/**
+\warning This function was discarded from public API in dec.2021, because
+this will add the new point after the previous one \b only if the object has \b not
+been normalized. This normalizing operation will happen if you do a comparison (== or !=)
+*/
+	template<typename FPT2>
+	void p_addPoint( const Point2d_<FPT2>& pt )
+	{
+#ifndef HOMOG2D_NOCHECKS
+		if( size() )
+			if( pt == _plinevec.back() )
+				HOMOG2D_THROW_ERROR_1(
+					"cannot add a point identical to previous one: pt=" << pt << " size=" << size()
+				);
+#endif
+		_attribs.setBad();
+		_plIsNormalized=false;
+		_plinevec.push_back( pt );
+	}
+
 
 /// \name Data access
 ///@{
@@ -3522,7 +3549,7 @@ private:
 		return _plinevec;
 	}
 
-/// Returns the segments of the polyline
+/// Returns (as a copy) the segments of the polyline
 	std::vector<Segment_<FPT>> getSegs() const
 	{
 		std::vector<Segment_<FPT>> out;
@@ -3533,18 +3560,18 @@ private:
 		{
 			const auto& pt1 = _plinevec[i];
 			const auto& pt2 = _plinevec[i+1];
-			out.push_back( Segment_<FPT>( pt1,pt2) );
+			out.push_back( Segment_<FPT>(pt1,pt2) );
 		}
-		impl_getSegs( out,  detail::PolylineHelper<PLT>() );
+		impl_getSegs( out, detail::PolylineHelper<PLT>() );
 		return out;
 	}
 
 private:
 /// empty implementation
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineOpen>& )
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineOpen>& ) const
 	{}
 /// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineClosed>& )
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineClosed>& ) const
 	{
 		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
 	}
@@ -3739,9 +3766,15 @@ public:
 
 private:
 	template<typename T>
-	void impl_draw( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineClosed>& ) const;
+	void impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineClosed>& ) const;
+	{
+		if( size() < 3 ) // if only 2 points (or less), nothing to draw
+			return;
+		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( im, dp );
+	}
 	template<typename T>
-	void impl_draw( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineOpen>& ) const;
+	void impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineOpen>& ) const;
+	{}
 
 public:
 
@@ -3759,7 +3792,7 @@ Two tasks:
 */
 	void p_normalizePL() const
 	{
-		assert( isClosed() );   // should not do this if not closed !
+//		assert( isClosed() );   // should not do this if not closed !
 		if( size() < 3 )
 			return;
 
@@ -3785,11 +3818,12 @@ Two tasks:
 //------------------------------------------------------------------
 namespace priv {
 
+/// Free function, called by PolylineBase::impl_minimizePL()
 template<typename PLT,typename FPT>
 void
 p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 {
-	auto nbpts = size();
+	auto nbpts = pl.size();
 // step 1: check each point to see if it is the middle point of two segments with same angle
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
@@ -3845,7 +3879,7 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::Polyl
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& )
 {
 	p_minimizePL( *this, 0, size() );
 }
@@ -3900,7 +3934,7 @@ getPointsBB( const T& vpts )
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Returns true if object is a polygon (i.e. no segment crossing)
+/// Returns true if object is a polygon (closed, and no segment crossing)
 template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isPolygon() const
@@ -3910,6 +3944,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 	return impl_isPolygon( detail::PolylineHelper<PLT>() );
 }
 
+/// If open, then not a polygon
 template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& ) const
@@ -3917,6 +3952,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineOpen
 	return false;
 }
 
+/// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const
@@ -4448,18 +4484,18 @@ This will produce a Polyline_ with 2 extra points:<br>
 <br>We solve this by proceeding an extra Polyline minimization,
 see Polyline_::minimize()
 */
-template<typename PLT,typename FPT>
+template<typename FPT>
 template<typename FPT2>
-PolylineBase<PLT,FPT>
+PolylineBase<type::PolylineClosed,FPT>
 FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
 
 	if( *this == other )                  // if same rectangles, then
-		return Polyline_<FPT>( other );   // returns one of them
+		return PolylineBase<type::PolylineClosed,FPT>( other );   // returns one of them
 
 	if( !this->intersects(other)() )  // if no intersection,
-		return Polyline_<FPT>();      // return empty polygon
+		return PolylineBase<type::PolylineClosed,FPT>();      // return empty polygon
 
 /* step 0: make sure the rect with highest x is first.
  This is needed to avoid this kind of situation in table:
@@ -4513,15 +4549,6 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 	res1.minimize(); // remove unecessary points
 	return res1;
 }
-
-/// Returns Bounding Box
-template<typename FPT>
-FRect_<FPT>
-Polyline_<FPT>::getBB() const
-{
-	return priv::getPointsBB( getPts() );
-}
-
 
 //------------------------------------------------------------------
 namespace detail {
@@ -4838,7 +4865,7 @@ operator << ( std::ostream& f, const Segment_<T>& seg )
 
 template<typename PLT,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const Polyline_<PLT,FPT>& pl )
+operator << ( std::ostream& f, const PolylineBase<PLT,FPT>& pl )
 {
 	f << "Polyline: ";
 	if( !pl.size() )
@@ -5023,7 +5050,7 @@ Algorithm:
 
 */
 template<typename FPT>
-Polyline_<FPT>
+PolylineBase<type::PolylineClosed,FPT>
 Ellipse_<FPT>::getBB() const
 {
 // step 1: build ptA using angle
@@ -5049,7 +5076,7 @@ Ellipse_<FPT>::getBB() const
 	auto li_V1 = li_H.getOrthogonalLine( ptA );
 	auto li_V2 = li_H.getOrthogonalLine( ptB );
 
-	Polyline_<FPT> out( IsClosed::Yes );
+	PolylineBase<type::PolylineClosed,FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
 	out.add( para.first  * li_V1 );
 	out.add( para.second * li_V1 );
@@ -5069,10 +5096,10 @@ Ellipse_<FPT>::getBB() const
 		<< "\n ptB=" << ptB
 		<< "\n " << ppts
 	);
-	out.add( p1 );
-	out.add( p2 );
-	out.add( p3 );
-	out.add( p4 );
+	out.p_addPoint( p1 );
+	out.p_addPoint( p2 );
+	out.p_addPoint( p3 );
+	out.p_addPoint( p4 );
 #endif
 	return out;
 }
@@ -5902,25 +5929,25 @@ operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
 }
 
 /// Apply homography to a Polyline
-template<typename FPT1,typename FPT2>
-Polyline_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const Polyline_<FPT1>& pl )
+template<typename FPT1,typename FPT2,typename PLT>
+PolylineBase<PLT,FPT1>
+operator * ( const Homogr_<FPT2>& h, const PolylineBase<PLT,FPT1>& pl )
 {
-	Polyline_<FPT1> out;
+	PolylineBase<PLT,FPT1> out;
 	const auto& pts = pl.getPts();
 	for( const auto pt: pts )
-		out.add( h * pt );
+		out.p_addPoint( h * pt );
 	return out;
 }
 
 /// Apply homography to a flat rectangle produces a closed polyline
 template<typename FPT1,typename FPT2>
-Polyline_<FPT1>
+PolylineBase<type::PolylineClosed,FPT1>
 operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 {
-	Polyline_<FPT1> out( IsClosed::Yes );
+	PolylineBase<type::PolylineClosed,FPT1> out;
 	for( const auto& pt: rin.get4Pts() )
-		out.add( h * pt );
+		out.p_addPoint( h * pt );
 	return out;
 }
 
@@ -6024,7 +6051,7 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
-Polyline_<FPT1>
+PolylineBase<type::PolylineClosed,FPT1>
 unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 {
 	return r1.unionArea(r2);
@@ -6101,7 +6128,7 @@ size_t size( const PolylineBase<PLT,FPT>& pl )
 /// Returns Bounding Box of Ellipse_ (free function)
 /// \sa Ellipse_::getBB()
 template<typename FPT>
-Polyline_<FPT>
+PolylineBase<type::PolylineClosed,FPT>
 getBB( const Ellipse_<FPT>& ell )
 {
 	return ell.getBB();
@@ -6540,25 +6567,8 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		Segment_<FPT>(pt1,pt2).draw( im, dp );
 //			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
 	}
-	impl_draw( im, dp, detail::PolylineHelper<PLT>() );
+	impl_drawLast( im, dp, detail::PolylineHelper<PLT>() );
 }
-
-template<typename PLT,typename FPT>
-template<typename T>
-void
-PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::PolylineHelper<type::PolylineClosed>& ) const
-{
-	if( size() < 3 ) // no last segment
-		return;
-	Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( im, dp );
-}
-
-template<typename PLT,typename FPT>
-template<typename T>
-void
-PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::PolylineHelper<type::PolylineOpen>& ) const
-{} // nothing to do
-
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING - GENERAL
