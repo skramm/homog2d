@@ -1719,8 +1719,8 @@ s0 |      | s2
 	}
 
 /// FRect/Polyline intersection
-	template<typename PLT,typename FPT2>
-	detail::IntersectM<FPT> intersects( const PolylineBase<PLT,FPT>& pl ) const
+	template<typename PLT2,typename FPT2>
+	detail::IntersectM<FPT> intersects( const PolylineBase<PLT2,FPT2>& pl ) const
 	{
 		HOMOG2D_START;
 		return pl.intersects( *this );
@@ -3562,7 +3562,7 @@ private:
 
 /// Add single point. private, because only to be used from other member functions
 /**
-\warning This function was discarded from public API in dec.2021, because
+\warning This function was discarded from public API in dec. 2021, because
 this will add the new point after the previous one \b only if the object has \b not
 been normalized. This normalizing operation will happen if you do a comparison (== or !=)
 */
@@ -3660,13 +3660,11 @@ Segment \c n is the one between point \c n and point \c n+1
 ///@}
 
 private:
-//	template<typename PLT,template FPT>
 	Segment_<FPT>
 	impl_getSegment( size_t idx, const detail::PlHelper<type::IsClosed>& )
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
 	}
-//	template<typename PLT,template FPT>
 	Segment_<FPT>
 	impl_getSegment( size_t idx, const detail::PlHelper<type::IsOpen>& )
 	{
@@ -3741,21 +3739,7 @@ public:
 	{
 		if( size() != other.size() )          // for quick exit
 			return false;
-		return impl_operatorComp( detail::PlHelper<PLT>() );
-
-/*
-		if( isClosed() )          // if operating on a closed polygon, we
-		{                         // first "normalize" the points (i.e. sort them)
-			p_normalizePL();
-			other.p_normalizePL();
-		}
-
-		auto it = other._plinevec.begin();
-		for( const auto& elem: _plinevec )
-			if( *it++ != elem )
-				return false;
-		return true;
-*/
+		return impl_operatorComp( other, detail::PlHelper<PLT>() );
 	}
 
 	template<typename PLT2,typename FPT2>
@@ -3766,13 +3750,39 @@ public:
 ///@}
 
 private:
-	bool impl_operatorComp( const detail::PlHelper<type::IsOpen>& )
+/// This one is guaranteed to operate on same 'PLT' types, is called by the four others
+	template<typename FPT2>
+	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
 	{
+		p_normalizePL();
+		other.p_normalizePL();
 
+		auto it = other._plinevec.begin();
+		for( const auto& elem: _plinevec )
+			if( *it++ != elem )
+				return false;
+		return true;
 	}
-	bool impl_operatorComp( const detail::PlHelper<type::IsClosed>& )
-	{
 
+	template<typename PLT2,typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
+	{
+		return impl_operatorComp_root( other );
+	}
+	template<typename PLT2,typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
+	{
+		return false;
+	}
+	template<typename PLT2,typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
+	{
+		return false;
+	}
+	template<typename PLT2,typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
+	{
+		return impl_operatorComp_root( other );
 	}
 
 public:
