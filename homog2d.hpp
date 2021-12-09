@@ -135,7 +135,7 @@ namespace detail {
 	template<typename> struct RootDataType {};
 
 	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
-	template<typename> struct PolylineHelper {};
+	template<typename> struct PlHelper {};
 
 #ifdef HOMOG2D_FUTURE_STUFF
 	/// Helper class for Matrix type
@@ -3483,14 +3483,14 @@ public:
 			std::is_same<PLT,type::IsOpen>::value,
 			"Error, cannot build an Open Polyline from a closed one"
 		);
-//		impl_CC( other, PolylineHelper<PLT2>() );
+//		impl_CC( other, PlHelper<PLT2>() );
 		set( other._plinevec );
 	}
 /// Copy-Constructor from Open Polyline
 	template<typename FPT2>
 	PolylineBase( const PolylineBase<type::IsOpen,FPT2>& other )
 	{
-//		impl_CC( other, PolylineHelper<PLT2>() );
+//		impl_CC( other, PlHelper<PLT2>() );
 		set( other._plinevec );
 	}
 
@@ -3499,7 +3499,7 @@ public:
 private:
 /*	template<typename PLT2,typename FPT2>
 	void
-	impl_CC( const PolylineBase<PLT2,FPT2>& other, PolylineHelper<PolylineClosed>& )
+	impl_CC( const PolylineBase<PLT2,FPT2>& other, PlHelper<PolylineClosed>& )
 	{
 		set( other._plinevec );
 	}*/
@@ -3534,31 +3534,31 @@ public:
 	{
 		if( size() < 2 )
 			return 0;
-		return impl_nbSegs( detail::PolylineHelper<PLT>() );
+		return impl_nbSegs( detail::PlHelper<PLT>() );
 	}
 ///@}
 
 private:
-	size_t impl_nbSegs( const detail::PolylineHelper<type::IsOpen>& ) const
+	size_t impl_nbSegs( const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return size() - 1;
 	}
-	size_t impl_nbSegs( const detail::PolylineHelper<type::IsClosed>& ) const
+	size_t impl_nbSegs( const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return size();
 	}
 
-	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::IsClosed>& ) const
+	HOMOG2D_INUMTYPE impl_length( const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return dist( _plinevec.front(), _plinevec.back() );
 	}
-	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::IsOpen>& ) const
+	HOMOG2D_INUMTYPE impl_length( const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return 0.;
 	}
 
-	bool impl_isPolygon( detail::PolylineHelper<type::IsOpen>& )   const;
-	bool impl_isPolygon( detail::PolylineHelper<type::IsClosed>& ) const;
+	bool impl_isPolygon( detail::PlHelper<type::IsOpen>& )   const;
+	bool impl_isPolygon( detail::PlHelper<type::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -3611,16 +3611,16 @@ been normalized. This normalizing operation will happen if you do a comparison (
 			const auto& pt2 = _plinevec[i+1];
 			out.push_back( Segment_<FPT>(pt1,pt2) );
 		}
-		impl_getSegs( out, detail::PolylineHelper<PLT>() );
+		impl_getSegs( out, detail::PlHelper<PLT>() );
 		return out;
 	}
 
 private:
 /// empty implementation
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::IsOpen>& ) const
+	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
 	{}
 /// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::IsClosed>& ) const
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
 	}
@@ -3655,20 +3655,20 @@ Segment \c n is the one between point \c n and point \c n+1
 			HOMOG2D_THROW_ERROR_1( "no segment " << idx );
 #endif
 
-		return impl_getSegment( idx, detail::PolylineHelper<PLT>() );
+		return impl_getSegment( idx, detail::PlHelper<PLT>() );
 	}
 ///@}
 
 private:
 //	template<typename PLT,template FPT>
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PolylineHelper<type::IsClosed>& )
+	impl_getSegment( size_t idx, const detail::PlHelper<type::IsClosed>& )
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
 	}
 //	template<typename PLT,template FPT>
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PolylineHelper<type::IsOpen>& )
+	impl_getSegment( size_t idx, const detail::PlHelper<type::IsOpen>& )
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
 	}
@@ -3701,7 +3701,7 @@ at 180° of the previous one.
 	{
 		if( size()<3 )
 			return;
-		impl_minimizePL( detail::PolylineHelper<PLT>() );
+		impl_minimizePL( detail::PlHelper<PLT>() );
 	}
 
 /// Translate Polyline using \c dx, \c dy
@@ -3729,8 +3729,8 @@ at 180° of the previous one.
 ///@}
 
 private:
-	void impl_minimizePL( const detail::PolylineHelper<type::IsOpen>& );
-	void impl_minimizePL( const detail::PolylineHelper<type::IsClosed>& );
+	void impl_minimizePL( const detail::PlHelper<type::IsOpen>& );
+	void impl_minimizePL( const detail::PlHelper<type::IsClosed>& );
 
 public:
 /// \name Operators
@@ -3741,7 +3741,7 @@ public:
 	{
 		if( size() != other.size() )          // for quick exit
 			return false;
-		return impl_operatorComp( detail::PolylineHelper<PLT>() );
+		return impl_operatorComp( detail::PlHelper<PLT>() );
 
 /*
 		if( isClosed() )          // if operating on a closed polygon, we
@@ -3766,11 +3766,11 @@ public:
 ///@}
 
 private:
-	bool impl_operatorComp( const detail::PolylineHelper<type::IsOpen>& )
+	bool impl_operatorComp( const detail::PlHelper<type::IsOpen>& )
 	{
 
 	}
-	bool impl_operatorComp( const detail::PolylineHelper<type::IsClosed>& )
+	bool impl_operatorComp( const detail::PlHelper<type::IsClosed>& )
 	{
 
 	}
@@ -3816,7 +3816,7 @@ public:
 private:
 	template<typename T>
 	void
-	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::IsClosed>& ) const
+	impl_drawLast( img::Image<T>& im, img::DrawParams dp, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		if( size() < 3 ) // if only 2 points (or less), nothing to draw
 			return;
@@ -3824,7 +3824,7 @@ private:
 	}
 	template<typename T>
 	void
-	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::IsOpen>& ) const
+	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PlHelper<type::IsOpen>& ) const
 	{}
 
 public:
@@ -3922,7 +3922,7 @@ p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::IsOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsOpen>& )
 {
 	assert( size() > 2 );
 	p_minimizePL( *this, 1, size()-1 );
@@ -3930,7 +3930,7 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::IsOpe
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsClosed>& )
 {
 	p_minimizePL( *this, 0, size() );
 }
@@ -3944,13 +3944,13 @@ PolylineBase<PLT,FPT>::isPolygon() const
 {
 	if( size()<3 )       // needs at least 3 points to be a polygon
 		return false;
-	return impl_isPolygon( detail::PolylineHelper<PLT>() );
+	return impl_isPolygon( detail::PlHelper<PLT>() );
 }
 
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PlHelper<type::IsOpen>& ) const
 {
 	return false;
 }
@@ -3958,7 +3958,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::IsOpen>& ) c
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PlHelper<type::IsClosed>& ) const
 {
 	if( _attribs._isPolygon.isBad() )
 	{
@@ -3996,7 +3996,7 @@ PolylineBase<PLT,FPT>::length() const
 		HOMOG2D_INUMTYPE sum = 0.;
 		for( const auto& seg: getSegs() )
 			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-		sum += impl_length( detail::PolylineHelper<PLT>() );
+		sum += impl_length( detail::PlHelper<PLT>() );
 		_attribs._length.set( sum );
 	}
 	return _attribs._length.value();
@@ -6570,7 +6570,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		Segment_<FPT>(pt1,pt2).draw( im, dp );
 //			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
 	}
-	impl_drawLast( im, dp, detail::PolylineHelper<PLT>() );
+	impl_drawLast( im, dp, detail::PlHelper<PLT>() );
 }
 
 /////////////////////////////////////////////////////////////////////////////
