@@ -119,8 +119,8 @@ struct IsLine   {};
 struct IsPoint  {};
 struct IsHomogr {};
 struct IsEpipmat {};
-struct PolylineClosed {};
-struct PolylineOpen {};
+struct IsClosed {};
+struct IsOpen {};
 } // namespace type
 
 
@@ -201,9 +201,9 @@ template<typename T>
 using Line2d_  = Root<type::IsLine,T>;
 
 template<typename T>
-using CPolyline_  = PolylineBase<type::PolylineClosed,T>;
+using CPolyline_  = PolylineBase<type::IsClosed,T>;
 template<typename T>
-using OPolyline_  = PolylineBase<type::PolylineOpen,T>;
+using OPolyline_  = PolylineBase<type::IsOpen,T>;
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -1186,7 +1186,7 @@ public:
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 ) const;
 	Point2d_<FPT>                            center() const;
-	PolylineBase<type::PolylineClosed,FPT>   getBB()  const;
+	PolylineBase<type::IsClosed,FPT>   getBB()  const;
 	HOMOG2D_INUMTYPE                         angle()  const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 ///@}
@@ -1599,11 +1599,11 @@ public:
 /// \name Union/intersection area
 ///@{
 	template<typename FPT2>
-	PolylineBase<type::PolylineClosed,FPT> unionArea( const FRect_<FPT2>& other ) const;
+	PolylineBase<type::IsClosed,FPT> unionArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
 	detail::RectArea<FPT> intersectArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	PolylineBase<type::PolylineClosed,FPT> operator | ( const FRect_<FPT2>& other ) const
+	PolylineBase<type::IsClosed,FPT> operator | ( const FRect_<FPT2>& other ) const
 	{
 		return this->unionArea( other );
 	}
@@ -3383,6 +3383,51 @@ struct PolylineAttribs
 	}
 };
 
+//------------------------------------------------------------------
+/// Returns the bounding box of points in vector/list/array \c vpts
+/**
+\todo This loops twice on the points. Maybe some improvement here.
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		priv::Is_Container<T>::value,
+		T
+	>::type* = nullptr
+>
+FRect_<typename T::value_type::FType>
+getPointsBB( const T& vpts )
+{
+	using FPT = typename T::value_type::FType;
+#ifndef HOMOG2D_NOCHECKS
+	if( vpts.empty() )
+		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set" );
+#endif
+	auto mm_x = std::minmax_element(
+		std::begin( vpts ),
+		std::end( vpts ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getX() < pt2.getX();
+		}
+	);
+	auto mm_y = std::minmax_element(
+		std::begin( vpts ),
+		std::end( vpts ),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return pt1.getY() < pt2.getY();
+		}
+	);
+
+	return FRect_<typename T::value_type::FType>(
+		mm_x.first->getX(),  mm_y.first->getY(),
+		mm_x.second->getX(), mm_y.second->getY()
+	);
+}
+
 } // namespace priv
 
 //------------------------------------------------------------------
@@ -3430,19 +3475,25 @@ public:
 		set( vec );
 	}
 
-/// Copy-Constructor for same type (Open/Closed)
-	template<
-		typename FPT2,
-		typename std::enable_if<
-			(std::is_same<PLT2,PLT>::value),
-			,PLT
-		>::type* = nullptr
-	>
-	template<typename PLT2,typename FPT2>
-	PolylineBase( const PolylineBase<PLT2,FPT2>& other )
+/// Copy-Constructor from Closed Polyline
+	template<typename FPT2>
+	PolylineBase( const PolylineBase<type::IsClosed,FPT2>& other )
 	{
-		impl_CC( other, PolylineHelper<PLT2>() );
+		static_assert(
+			std::is_same<PLT,type::IsOpen>::value,
+			"Error, cannot build an Open Polyline from a closed one"
+		);
+//		impl_CC( other, PolylineHelper<PLT2>() );
+		set( other._plinevec );
 	}
+/// Copy-Constructor from Open Polyline
+	template<typename FPT2>
+	PolylineBase( const PolylineBase<type::IsOpen,FPT2>& other )
+	{
+//		impl_CC( other, PolylineHelper<PLT2>() );
+		set( other._plinevec );
+	}
+
 ///@}
 
 private:
@@ -3451,10 +3502,7 @@ private:
 	impl_CC( const PolylineBase<PLT2,FPT2>& other, PolylineHelper<PolylineClosed>& )
 	{
 		set( other._plinevec );
-	}
-
-	 or PolylineOpen  )
-*/
+	}*/
 
 
 public:
@@ -3491,25 +3539,26 @@ public:
 ///@}
 
 private:
-	size_t impl_nbSegs( const detail::PolylineHelper<type::PolylineOpen>& );
+	size_t impl_nbSegs( const detail::PolylineHelper<type::IsOpen>& ) const
 	{
 		return size() - 1;
 	}
-	size_t impl_nbSegs( const detail::PolylineHelper<type::PolylineClosed>& );
+	size_t impl_nbSegs( const detail::PolylineHelper<type::IsClosed>& ) const
 	{
 		return size();
 	}
-	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::PolylineClosed>& ) const
+
+	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::IsClosed>& ) const
 	{
 		return dist( _plinevec.front(), _plinevec.back() );
 	}
-	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::PolylineOpen>& ) const;
+	HOMOG2D_INUMTYPE impl_length( const detail::PolylineHelper<type::IsOpen>& ) const
 	{
 		return 0.;
 	}
 
-	bool impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& )   const;
-	bool impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const;
+	bool impl_isPolygon( detail::PolylineHelper<type::IsOpen>& )   const;
+	bool impl_isPolygon( detail::PolylineHelper<type::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -3568,10 +3617,10 @@ been normalized. This normalizing operation will happen if you do a comparison (
 
 private:
 /// empty implementation
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineOpen>& ) const
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::IsOpen>& ) const
 	{}
 /// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::PolylineClosed>& ) const
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PolylineHelper<type::IsClosed>& ) const
 	{
 		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
 	}
@@ -3613,13 +3662,13 @@ Segment \c n is the one between point \c n and point \c n+1
 private:
 //	template<typename PLT,template FPT>
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PolylineHelper<type::PolylineClosed>& )
+	impl_getSegment( size_t idx, const detail::PolylineHelper<type::IsClosed>& )
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
 	}
 //	template<typename PLT,template FPT>
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PolylineHelper<type::PolylineOpen>& )
+	impl_getSegment( size_t idx, const detail::PolylineHelper<type::IsOpen>& )
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
 	}
@@ -3680,8 +3729,8 @@ at 180° of the previous one.
 ///@}
 
 private:
-	void impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& );
-	void impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& );
+	void impl_minimizePL( const detail::PolylineHelper<type::IsOpen>& );
+	void impl_minimizePL( const detail::PolylineHelper<type::IsClosed>& );
 
 public:
 /// \name Operators
@@ -3717,11 +3766,11 @@ public:
 ///@}
 
 private:
-	bool impl_operatorComp( const detail::PolylineHelper<type::PolylineOpen>& )
+	bool impl_operatorComp( const detail::PolylineHelper<type::IsOpen>& )
 	{
 
 	}
-	bool impl_operatorComp( const detail::PolylineHelper<type::PolylineClosed>& )
+	bool impl_operatorComp( const detail::PolylineHelper<type::IsClosed>& )
 	{
 
 	}
@@ -3766,14 +3815,16 @@ public:
 
 private:
 	template<typename T>
-	void impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineClosed>& ) const;
+	void
+	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::IsClosed>& ) const
 	{
 		if( size() < 3 ) // if only 2 points (or less), nothing to draw
 			return;
 		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( im, dp );
 	}
 	template<typename T>
-	void impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::PolylineOpen>& ) const;
+	void
+	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PolylineHelper<type::IsOpen>& ) const
 	{}
 
 public:
@@ -3871,7 +3922,7 @@ p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::IsOpen>& )
 {
 	assert( size() > 2 );
 	p_minimizePL( *this, 1, size()-1 );
@@ -3879,59 +3930,11 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::Polyl
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::PolylineClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PolylineHelper<type::IsClosed>& )
 {
 	p_minimizePL( *this, 0, size() );
 }
 
-//------------------------------------------------------------------
-namespace priv {
-
-/// Returns the bounding box of points in vector/list/array \c vpts
-/**
-\todo This loops twice on the points. Maybe some improvement here.
-*/
-template<
-	typename T,
-	typename std::enable_if<
-		priv::Is_Container<T>::value,
-		T
-	>::type* = nullptr
->
-FRect_<typename T::value_type::FType>
-getPointsBB( const T& vpts )
-{
-	using FPT = typename T::value_type::FType;
-#ifndef HOMOG2D_NOCHECKS
-	if( vpts.empty() )
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set" );
-#endif
-	auto mm_x = std::minmax_element(
-		std::begin( vpts ),
-		std::end( vpts ),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			return pt1.getX() < pt2.getX();
-		}
-	);
-	auto mm_y = std::minmax_element(
-		std::begin( vpts ),
-		std::end( vpts ),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			return pt1.getY() < pt2.getY();
-		}
-	);
-
-	return FRect_<typename T::value_type::FType>(
-		mm_x.first->getX(),  mm_y.first->getY(),
-		mm_x.second->getX(), mm_y.second->getY()
-	);
-}
-
-} // namespace priv
 
 //------------------------------------------------------------------
 /// Returns true if object is a polygon (closed, and no segment crossing)
@@ -3947,7 +3950,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::IsOpen>& ) const
 {
 	return false;
 }
@@ -3955,7 +3958,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineOpen
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::PolylineClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( detail::PolylineHelper<type::IsClosed>& ) const
 {
 	if( _attribs._isPolygon.isBad() )
 	{
@@ -4486,16 +4489,16 @@ see Polyline_::minimize()
 */
 template<typename FPT>
 template<typename FPT2>
-PolylineBase<type::PolylineClosed,FPT>
+PolylineBase<type::IsClosed,FPT>
 FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
 
 	if( *this == other )                  // if same rectangles, then
-		return PolylineBase<type::PolylineClosed,FPT>( other );   // returns one of them
+		return PolylineBase<type::IsClosed,FPT>( other );   // returns one of them
 
 	if( !this->intersects(other)() )  // if no intersection,
-		return PolylineBase<type::PolylineClosed,FPT>();      // return empty polygon
+		return PolylineBase<type::IsClosed,FPT>();      // return empty polygon
 
 /* step 0: make sure the rect with highest x is first.
  This is needed to avoid this kind of situation in table:
@@ -5050,7 +5053,7 @@ Algorithm:
 
 */
 template<typename FPT>
-PolylineBase<type::PolylineClosed,FPT>
+PolylineBase<type::IsClosed,FPT>
 Ellipse_<FPT>::getBB() const
 {
 // step 1: build ptA using angle
@@ -5076,7 +5079,7 @@ Ellipse_<FPT>::getBB() const
 	auto li_V1 = li_H.getOrthogonalLine( ptA );
 	auto li_V2 = li_H.getOrthogonalLine( ptB );
 
-	PolylineBase<type::PolylineClosed,FPT> out;
+	PolylineBase<type::IsClosed,FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
 	out.add( para.first  * li_V1 );
 	out.add( para.second * li_V1 );
@@ -5942,10 +5945,10 @@ operator * ( const Homogr_<FPT2>& h, const PolylineBase<PLT,FPT1>& pl )
 
 /// Apply homography to a flat rectangle produces a closed polyline
 template<typename FPT1,typename FPT2>
-PolylineBase<type::PolylineClosed,FPT1>
+PolylineBase<type::IsClosed,FPT1>
 operator * ( const Homogr_<FPT2>& h, const FRect_<FPT1>& rin )
 {
-	PolylineBase<type::PolylineClosed,FPT1> out;
+	PolylineBase<type::IsClosed,FPT1> out;
 	for( const auto& pt: rin.get4Pts() )
 		out.p_addPoint( h * pt );
 	return out;
@@ -6051,7 +6054,7 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
-PolylineBase<type::PolylineClosed,FPT1>
+PolylineBase<type::IsClosed,FPT1>
 unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 {
 	return r1.unionArea(r2);
@@ -6128,7 +6131,7 @@ size_t size( const PolylineBase<PLT,FPT>& pl )
 /// Returns Bounding Box of Ellipse_ (free function)
 /// \sa Ellipse_::getBB()
 template<typename FPT>
-PolylineBase<type::PolylineClosed,FPT>
+PolylineBase<type::IsClosed,FPT>
 getBB( const Ellipse_<FPT>& ell )
 {
 	return ell.getBB();
@@ -6844,8 +6847,8 @@ using Circle = Circle_<double>;
 using FRect = FRect_<double>;
 
 /// Default polyline type
-using CPolyline = PolylineBase<type::PolylineClosed,double>;
-using OPolyline = PolylineBase<type::PolylineOpen,double>;
+using CPolyline = PolylineBase<type::IsClosed,double>;
+using OPolyline = PolylineBase<type::IsOpen,double>;
 
 /// Default ellipse type
 using Ellipse = Ellipse_<double>;
@@ -6877,9 +6880,9 @@ using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 using EllipseL = Ellipse_<long double>;
 
-using CPolylineF= PolylineBase<type::PolylineClosed,float>;
-using CPolylineD= PolylineBase<type::PolylineClosed,double>;
-using CPolylineL= PolylineBase<type::PolylineClosed,long double>;
+using CPolylineF= PolylineBase<type::IsClosed,float>;
+using CPolylineD= PolylineBase<type::IsClosed,double>;
+using CPolylineL= PolylineBase<type::IsClosed,long double>;
 
 } // namespace h2d end
 
