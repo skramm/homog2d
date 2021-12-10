@@ -14,7 +14,7 @@ using namespace h2d::img;
 int main( int argc, const char** argv )
 {
 	auto n = 25; // nb images
-	Polyline pl(IsClosed::Yes);
+	CPolyline pl;
 
 	pl.add( 5,5);
 	pl.add( 7,3);

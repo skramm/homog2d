@@ -3735,6 +3735,7 @@ at 180° of the previous one.
 private:
 	void impl_minimizePL( const detail::PlHelper<type::IsOpen>& );
 	void impl_minimizePL( const detail::PlHelper<type::IsClosed>& );
+	void p_minimizePL( PolylineBase<PLT,FPT>&, size_t istart, size_t iend );
 
 public:
 /// \name Operators
@@ -3770,22 +3771,22 @@ private:
 		return true;
 	}
 
-	template<typename PLT2,typename FPT2>
+	template<typename FPT2>
 	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return impl_operatorComp_root( other );
 	}
-	template<typename PLT2,typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
+	template<typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return false;
 	}
-	template<typename PLT2,typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
+	template<typename FPT2>
+	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return false;
 	}
-	template<typename PLT2,typename FPT2>
+	template<typename FPT2>
 	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return impl_operatorComp_root( other );
@@ -3883,12 +3884,10 @@ Two tasks:
 
 
 //------------------------------------------------------------------
-namespace priv {
-
 /// Free function, called by PolylineBase::impl_minimizePL()
 template<typename PLT,typename FPT>
 void
-p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 {
 	auto nbpts = pl.size();
 // step 1: check each point to see if it is the middle point of two segments with same angle
@@ -3922,19 +3921,16 @@ p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
 
 		if( vec_idx<ptset.size() ) // if there is more points to remove
 		{
-			if( ptset.at(vec_idx) != i )        // if regular point, add it
-				out.add( pl._plinevec.at(i) );  //  to the output set
-			else                            // else, we found a "middle point"
-				vec_idx++;                  // and switch to next one
+			if( ptset.at(vec_idx) != i )               // if regular point, add it
+				out.p_addPoint( pl._plinevec.at(i) );  //  to the output set
+			else                                       // else, we found a "middle point"
+				vec_idx++;                             // and switch to next one
 		}
-		else                          // no more points to remove
-			out.add( pl._plinevec.at(i) );   // so just add the point to the output set
+		else                                        // no more points to remove
+			out.p_addPoint( pl._plinevec.at(i) );   // so just add the point to the output set
 	}
 	std::swap( out, pl ); // maybe we can "move" instead?
 }
-
-} // namespace priv
-
 
 template<typename PLT,typename FPT>
 void
@@ -4409,8 +4405,8 @@ printTable( const Table& t, std::string msg )
 #endif
 //------------------------------------------------------------------
 /// Helper function, used in FRect_<FPT>::unionArea()
-template<typename PLT,typename FPT>
-PolylineBase<PLT,FPT>
+template<typename FPT>
+PolylineBase<type::IsClosed,FPT>
 convertToCoord(
 	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
 	const std::array<Index<FPT>,4>& vx,      ///< holds x-coordinates
@@ -4434,7 +4430,7 @@ convertToCoord(
 		}
 	}
 //	printVector( v_pts, "polyline" );
-	return PolylineBase<PLT,FPT>( v_pts );//, IsClosed::Yes );
+	return PolylineBase<type::IsClosed,FPT>( v_pts );//, IsClosed::Yes );
 }
 
 } // namespace priv

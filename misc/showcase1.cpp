@@ -32,7 +32,7 @@ int main( int argc, const char** argv )
 	Segment seg( 85,210, 335, 25 );
 
 	FRect_<double> rect( 0,0,200,80 );
-	Polyline pl( rect, IsClosed::Yes );
+	CPolyline pl;
 	auto color_red = DrawParams().setColor(200,20,20);
 	auto color_green = DrawParams().setColor(20,220,20);
 	auto color_blue = DrawParams().setColor(20,20,220);
