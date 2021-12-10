@@ -2021,7 +2021,8 @@ TEST_CASE( "Polyline comparison", "[polyline-comparison]" )
 		cpl2.set( vpt2 );
 		CHECK( cpl1 == cpl2 );
 
-		CHECK( opl1 != cpl1 ); // this is possible !
+		CHECK( opl1 != cpl1 ); // comparing polygons of different types is allowed
+		CHECK( opl2 != cpl1 ); // (but will always return false)
 	}
 }
 

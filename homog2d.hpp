@@ -3452,9 +3452,9 @@ class PolylineBase: public detail::Common<FPT>
 	friend PolylineBase<type::IsClosed,FPT1>
 	operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 
-	template<typename FPT1,typename FPT2>
-	PolylineBase<PLT,FPT1>
-	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT,FPT1>& );
+	template<typename FPT1,typename FPT2,typename PLT2>
+	friend PolylineBase<PLT2,FPT1>
+	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT2,FPT1>& );
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -3765,8 +3765,8 @@ private:
 	template<typename FPT2>
 	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
 	{
-		p_normalizePL();
-		other.p_normalizePL();
+		p_normalizePL( detail::PlHelper<PLT>() );
+		other.p_normalizePL( detail::PlHelper<PLT>() );
 
 		auto it = other._plinevec.begin();
 		for( const auto& elem: _plinevec )
@@ -3780,11 +3780,13 @@ private:
 	{
 		return impl_operatorComp_root( other );
 	}
+/// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
 	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return false;
 	}
+/// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
 	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
 	{
@@ -3862,9 +3864,8 @@ Two tasks:
 - rotating so that the smallest one is first
 - reverse if needed, so that the second point is smaller than the last one
 */
-	void p_normalizePL() const
+	void p_normalizePL( const detail::PlHelper<PLT>& ) const
 	{
-//		assert( isClosed() );   // should not do this if not closed !
 		if( size() < 3 )
 			return;
 
