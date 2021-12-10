@@ -3492,29 +3492,17 @@ public:
 			!(std::is_same<PLT,type::IsOpen>::value),
 			"Error, cannot build an Open Polyline from a closed one"
 		);
-//		impl_CC( other, PlHelper<PLT2>() );
 		set( other._plinevec );
 	}
 /// Copy-Constructor from Open Polyline
 	template<typename FPT2>
 	PolylineBase( const PolylineBase<type::IsOpen,FPT2>& other )
 	{
-//		impl_CC( other, PlHelper<PLT2>() );
 		set( other._plinevec );
 	}
 
 ///@}
 
-private:
-/*	template<typename PLT2,typename FPT2>
-	void
-	impl_CC( const PolylineBase<PLT2,FPT2>& other, PlHelper<PolylineClosed>& )
-	{
-		set( other._plinevec );
-	}*/
-
-
-public:
 /// \name Attributes access
 ///@{
 
@@ -3533,10 +3521,6 @@ public:
 
 	Root<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
 
-private:
-	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
-
-public:
 /// Returns the number of segments . If "closed",
 /** the last segment (going from last to first point) is counted */
 	size_t nbSegs() const
@@ -3548,6 +3532,8 @@ public:
 ///@}
 
 private:
+	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
+
 	size_t impl_nbSegs( const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return size() - 1;
@@ -3557,11 +3543,11 @@ private:
 		return size();
 	}
 
-	HOMOG2D_INUMTYPE impl_length( const detail::PlHelper<type::IsClosed>& ) const
+	HOMOG2D_INUMTYPE impl_lastLength( const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return dist( _plinevec.front(), _plinevec.back() );
 	}
-	HOMOG2D_INUMTYPE impl_length( const detail::PlHelper<type::IsOpen>& ) const
+	HOMOG2D_INUMTYPE impl_lastLength( const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return 0.;
 	}
@@ -3671,12 +3657,12 @@ Segment \c n is the one between point \c n and point \c n+1
 
 private:
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PlHelper<type::IsClosed>& )
+	impl_getSegment( size_t idx, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
 	}
 	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PlHelper<type::IsOpen>& )
+	impl_getSegment( size_t idx, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
 	}
@@ -3723,9 +3709,20 @@ at 180° of the previous one.
 	}
 
 /// Set from vector of points (discards previous points)
+/**
+-Size of vector must be 0 or 2 or more
+*/
 	template<typename FPT2>
 	void set( const std::vector<Point2d_<FPT2>>& vec )
 	{
+		if( vec.size() == 1 )
+			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 2 or more" );
+
+#ifndef HOMOG2D_NOCHECKS
+		if( vec.size() > 1 )
+			p_checkInputVector( vec );
+#endif
+
 		_attribs.setBad();
 		_plIsNormalized=false;
 		_plinevec.resize( vec.size() );
@@ -3737,6 +3734,17 @@ at 180° of the previous one.
 ///@}
 
 private:
+	template<typename FPT2>
+	void p_checkInputVector( const std::vector<Point2d_<FPT2>>& vec )
+	{
+		for( size_t i=0; i<vec.size()-1; i++ )
+			if( vec[i] == vec[i+1] )
+				HOMOG2D_THROW_ERROR_1(
+					"cannot add two consecutive identical points:\nat pos "
+					<< i << ", pt:" << vec[i] << " and pt:" << vec[i+1]
+				);
+	}
+
 	void impl_minimizePL( const detail::PlHelper<type::IsOpen>& );
 	void impl_minimizePL( const detail::PlHelper<type::IsClosed>& );
 	void p_minimizePL( PolylineBase<PLT,FPT>&, size_t istart, size_t iend );
@@ -3765,8 +3773,8 @@ private:
 	template<typename FPT2>
 	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
 	{
-		p_normalizePL( detail::PlHelper<PLT>() );
-		other.p_normalizePL( detail::PlHelper<PLT>() );
+		p_normalizePL();
+		other.p_normalizePL();
 
 		auto it = other._plinevec.begin();
 		for( const auto& elem: _plinevec )
@@ -3858,29 +3866,39 @@ public:
 #endif
 
 private:
+	void impl_normalizePL( const detail::PlHelper<type::IsClosed>& ) const
+	{
+		auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+		std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+		const auto& p1 = _plinevec[1];
+		const auto& p2 = _plinevec.back();
+		if( p2 < p1 )
+		{
+			std::reverse( _plinevec.begin(), _plinevec.end() );
+			minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+		}
+	}
+	void impl_normalizePL( const detail::PlHelper<type::IsOpen>& ) const
+	{
+		if( _plinevec.back() < _plinevec.front() )
+			std::reverse( _plinevec.begin(), _plinevec.end() );
+	}
+
 /// Normalisation of closed Polyline_
 /**
 Two tasks:
 - rotating so that the smallest one is first
 - reverse if needed, so that the second point is smaller than the last one
 */
-	void p_normalizePL( const detail::PlHelper<PLT>& ) const
+	void p_normalizePL() const
 	{
 		if( size() < 3 )
 			return;
 
 		if( !_plIsNormalized )
 		{
-			auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-			const auto& p1 = _plinevec[1];
-			const auto& p2 = _plinevec.back();
-			if( p2 < p1 )
-			{
-				std::reverse( _plinevec.begin(), _plinevec.end() );
-				minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-			}
+			impl_normalizePL( detail::PlHelper<PLT>() );
 			_plIsNormalized=true;
 		}
 	}
@@ -4013,7 +4031,7 @@ PolylineBase<PLT,FPT>::length() const
 		HOMOG2D_INUMTYPE sum = 0.;
 		for( const auto& seg: getSegs() )
 			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-		sum += impl_length( detail::PlHelper<PLT>() );
+		sum += impl_lastLength( detail::PlHelper<PLT>() );
 		_attribs._length.set( sum );
 	}
 	return _attribs._length.value();

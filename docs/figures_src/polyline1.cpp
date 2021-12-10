@@ -7,7 +7,7 @@
 int main()
 {
 //	std::srand(time(0));
-	Polyline pl(IsClosed::No);
+	OPolyline pl;
 
 	pl.add( 5,5);
 	pl.add( 7,3);

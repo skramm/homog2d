@@ -2,11 +2,9 @@
 	std::cout << "file: " << __FILE__ << '\n';
 #endif
 
-	Polyline_<NUMTYPE> pl( IsClosed::Yes );
-	pl.add( 3,0 );
-	pl.add( 3,1 );
-	pl.add( 0,0 );
-	pl.add( 0,3 );
-	pl.add( 1,3 );
-	pl.add( 0,0 );
+	CPolyline_<NUMTYPE> pl(
+		std::vector<Point2d>{
+			{3,0},{3,1},{0,0},{0,3},{1,3},{0,0}
+		}
+	);
 

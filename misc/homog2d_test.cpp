@@ -145,7 +145,7 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( dtype(rF)  == Dtype::Float );
 }
 
-TEST_CASE( "types testing", "[testtypes]" )
+TEST_CASE( "types testing 1", "[test-types-1]" )
 {
 	INFO( "type size" )
 	{
@@ -182,6 +182,13 @@ TEST_CASE( "types testing", "[testtypes]" )
 	Line2dD li_D0(1,1);
 	Line2dF li_F0(2,2);
 	Line2dL li_L0(3,3);
+}
+
+TEST_CASE( "types testing 2", "[test-types-2]" )
+{
+	Point2dD ptD0(1,1);
+	Point2dF ptF0(2,2);
+	Point2dL ptL0(3,3);
 
 	INFO( "numerical type conversions (assignment)" )
 	{
@@ -237,13 +244,22 @@ TEST_CASE( "types testing", "[testtypes]" )
 		OPolylineF pof;
 		OPolylineD pod;
 		OPolylineL pol;
-		pol = pod;
+
+ 		pol = pod;
 		pof = pod;
 		pod = pof;
 		pol = pof;
 		pof = pol;
 		pod = pol;
 	}
+}
+
+TEST_CASE( "types testing 3", "[test-types-3]" )
+{
+	Point2dD ptD0(1,1);
+	Point2dF ptF0(2,2);
+	Point2dL ptL0(3,3);
+
 	INFO( "numerical type conversions (constructor)" )
 	{
 		Point2dL ptL1 = ptD0;
@@ -322,6 +338,10 @@ does not trigger a build failure. The checking is only there to avoid a warning/
 \todo Once we switch to C++17, we can remove the checking and use:
 https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 */
+		Line2dD li_D0(1,1);
+		Line2dF li_F0(2,2);
+		Line2dL li_L0(3,3);
+
 		Line2dD li_D1 = li_F0; CHECK( li_D1.get()[2] == 0. );
 		Line2dD li_L1 = li_F0; CHECK( li_L1.get()[2] == 0. );
 
@@ -2026,7 +2046,7 @@ TEST_CASE( "Polyline comparison", "[polyline-comparison]" )
 	}
 }
 
-#if 0
+
 TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
@@ -2084,19 +2104,35 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 	}
 }
 
+#if 1
 TEST_CASE( "Polyline", "[polyline]" )
 {
 	{
-		Polyline_<NUMTYPE> pl1( 3,4 );
-		CHECK( pl1.isClosed() == false );
+		OPolyline_<NUMTYPE> pl1;
 		CHECK( pl1.isPolygon() == false );
-		CHECK( pl1.size() == 1 );
 		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
 		CHECK( pl1.area() == 0 );
 		CHECK( area(pl1)  == 0 );
 		CHECK_THROWS( centroid(pl1) );
 	}
+	{
+		CPolyline_<NUMTYPE> pl1;
+		CHECK( pl1.isPolygon() == false );
+		CHECK( pl1.nbSegs() == 0 );
+		CHECK( pl1.length() == 0 );
+		CHECK( pl1.area() == 0 );
+		CHECK( area(pl1)  == 0 );
+		CHECK_THROWS( centroid(pl1) );
+	}
+	{
+		CPolyline_<NUMTYPE> pc1;
+		OPolyline_<NUMTYPE> po1;
+		std::vector<Point2d> vpt{ {0,0} };
+		CHECK_THROWS( pc1.set( vpt ) );  // can't hold only 1 point
+		CHECK_THROWS( po1.set( vpt ) );
+	}
+/*
 	{
 		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
 		CHECK( pl1.isClosed() == true );
@@ -2115,41 +2151,36 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.length() == 0 );
 		CHECK( pl1.area() == 0 );
 	}
+*/
 	{
 		FRect r( 5,6, 7,8 );
-		Polyline_<NUMTYPE> pl1( r );
-		CHECK( pl1.isClosed() == true );
+		CPolyline_<NUMTYPE> pl1( r );
+		CHECK_THROWS( OPolyline_<NUMTYPE>( r ) ); // cannot build an open polyline from a FRect
+
 		CHECK( pl1.isPolygon() == true );
-		CHECK( pl1.size() == 4 );
+		CHECK( isPolygon(pl1)  == true );
+		CHECK( pl1.size()   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
+		CHECK( nbSegs(pl1)  == 4 );
 		CHECK( pl1.length() == 8 );
-		CHECK( pl1.area() == 4 );
-		CHECK( area(pl1)  == 4 );
+		CHECK( length(pl1)  == 8 );
+		CHECK( pl1.area()   == 4 );
+		CHECK( area(pl1)    == 4 );
 		CHECK( pl1.centroid() == Point2d(6,7) );
 		CHECK( centroid(pl1)  == Point2d(6,7) );
 		pl1.translate(1,2);
-		CHECK( pl1 == Polyline_<NUMTYPE>( FRect( 6,8, 8,10 ) ) );
-	}
-	{                         // build Polyline from FRect
-		FRect r( 5,6, 7,8 );
-		Polyline_<NUMTYPE> pl1( r, IsClosed::No );
-		CHECK( pl1.isClosed() == false );
-		CHECK( pl1.isPolygon() == false );
-		CHECK( pl1.size() == 4 );
-		CHECK( pl1.nbSegs() == 3 );
-		CHECK( pl1.length() == 6 );
-		CHECK( pl1.area() == 0 );
-		CHECK_THROWS( pl1.centroid() );
+		CHECK( pl1 == CPolyline_<NUMTYPE>( FRect( 6,8, 8,10 ) ) );
 	}
 	{
-		Polyline_<NUMTYPE> pl1;
-		pl1.add( 0,0 );
-		pl1.add( 1,1 );
-		CHECK( pl1.size() == 2 );
-		CHECK_THROWS( pl1.add( 1,1 ) ); // cant add same point as previous one
+		OPolyline_<NUMTYPE> po1;
+		CPolyline_<NUMTYPE> pc1;
+		std::vector<Point2d> vpt{ {0,0},{2,2}, {2,2}, {4,3} };
+
+		CHECK_THROWS( po1.set( vpt ) ); // cant have two contiguous identical points
+		CHECK_THROWS( pc1.set( vpt ) ); // cant have two contiguous identical points
 	}
 
-	Polyline_<NUMTYPE> pl1;
+/*	Polyline_<NUMTYPE> pl1;
 	pl1.add(
 		std::vector<Point2d>{ {0,0}, {1,1.5}, {3,5}, {1,4} }
 	);
@@ -2183,41 +2214,48 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getBB() == bb2 );
 	pl1.translate(2,1.);
 	CHECK( pl1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
+*/
 }
+#endif
 
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 {
 	{
-		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
-		Polyline_<NUMTYPE> pl2(IsClosed::Yes);                               //  +-----+
-		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );       //  |     |
-		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );       //  +-----+
+		CPolyline_<NUMTYPE> pl1;
+		CPolyline_<NUMTYPE> pl2;                                             //  +-----+
+		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );       //  |     |
+		pl2.set( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );       //  +-----+
 		CHECK( pl1 == pl2 );   // is closed, so the points describe the same thing
 	}
 	{
-		Polyline_<NUMTYPE> pl1(IsClosed::No);
-		Polyline_<NUMTYPE> pl2(IsClosed::No);                             //  +-----+     +-----+
-		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );    //        | and |     |
-		pl2.add( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );    //  +-----+     +     +
+		OPolyline_<NUMTYPE> pl1;
+		OPolyline_<NUMTYPE> pl2;                                          //  +-----+     +-----+
+		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );    //        | and |     |
+		pl2.set( std::vector<Point2d>{ {0,0}, {0,1}, {2,1}, {2,0} } );    //  +-----+     +     +
 		CHECK( pl1 != pl2 ); // is open, so they are different
+
+		CPolyline_<NUMTYPE> plc1(pl1);
+		CPolyline_<NUMTYPE> plc2(pl2);
+		CHECK( plc1 == plc2 );
 	}
 	{
-		Polyline_<NUMTYPE> pl1(IsClosed::Yes);
-		Polyline_<NUMTYPE> pl2(IsClosed::Yes);
-		pl1.add( std::vector<Point2d>{ {0,0}, {1,0}, {1,1} } );
-		pl2.add( std::vector<Point2d>{ {1,1}, {1,0}, {0,0} } );
+		std::vector<Point2d> v1{ {0,0}, {1,0}, {1,1} };
+		std::vector<Point2d> v2{ {1,1}, {1,0}, {0,0} };
+
+		CPolyline_<NUMTYPE> pl1(v1);
+		CPolyline_<NUMTYPE> pl2(v2);
 		CHECK( pl1 == pl2 );
-		pl1.isClosed() = false;
-		pl2.isClosed() = false;
-		CHECK( pl1 == pl2 );
+		OPolyline_<NUMTYPE> po1(v1);
+		OPolyline_<NUMTYPE> po2(v2);
+		CHECK( po1 == po2 );
 	}
 }
 
 TEST_CASE( "Polygon area", "[polyline-area]" )
 {
-	Polyline_<NUMTYPE> pl1(IsClosed::Yes);
+	CPolyline_<NUMTYPE> pl1;
 	{
-		pl1.add( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
+		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
 		CHECK( pl1.size()   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
 		CHECK( pl1.isPolygon() == true );
@@ -2230,8 +2268,13 @@ TEST_CASE( "Polygon area", "[polyline-area]" )
 		CHECK( pl1.isPolygon() == true );
 		CHECK( pl1.area() == 3. );
 	}
+	OPolyline_<NUMTYPE> plo;
+	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
+	CHECK( plo.isPolygon() == false );
+	CHECK( plo.area() == 0. );
 }
 
+#if 0
 TEST_CASE( "Polyline comparison", "[polyline-comp]" )
 {
 	{
