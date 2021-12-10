@@ -3486,7 +3486,7 @@ public:
 	PolylineBase( const PolylineBase<type::IsClosed,FPT2>& other )
 	{
 		static_assert(
-			std::is_same<PLT,type::IsOpen>::value,
+			!(std::is_same<PLT,type::IsOpen>::value),
 			"Error, cannot build an Open Polyline from a closed one"
 		);
 //		impl_CC( other, PlHelper<PLT2>() );
@@ -6896,9 +6896,13 @@ using CircleL  = Circle_<long double>;
 using FRectL   = FRect_<long double>;
 using EllipseL = Ellipse_<long double>;
 
-using CPolylineF= PolylineBase<type::IsClosed,float>;
-using CPolylineD= PolylineBase<type::IsClosed,double>;
-using CPolylineL= PolylineBase<type::IsClosed,long double>;
+using CPolylineF = PolylineBase<type::IsClosed,float>;
+using CPolylineD = PolylineBase<type::IsClosed,double>;
+using CPolylineL = PolylineBase<type::IsClosed,long double>;
+
+using OPolylineF = PolylineBase<type::IsOpen,float>;
+using OPolylineD = PolylineBase<type::IsOpen,double>;
+using OPolylineL = PolylineBase<type::IsOpen,long double>;
 
 } // namespace h2d end
 

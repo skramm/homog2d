@@ -107,9 +107,13 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CircleD cD;
 	CircleL cL;
 
-	PolylineF pF;
-	PolylineD pD;
-	PolylineL pL;
+	OPolylineF poF;
+	OPolylineD poD;
+	OPolylineL poL;
+
+	CPolylineF pcF;
+	CPolylineD pcD;
+	CPolylineL pcL;
 
 	EllipseF eF;
 	EllipseD eD;
@@ -121,7 +125,8 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( rF.dtype()  == Dtype::Float );
 	CHECK( sF.dtype()  == Dtype::Float );
 	CHECK( cF.dtype()  == Dtype::Float );
-	CHECK( pF.dtype()  == Dtype::Float );
+	CHECK( poF.dtype() == Dtype::Float );
+	CHECK( pcF.dtype() == Dtype::Float );
 	CHECK( eF.dtype()  == Dtype::Float );
 
 	CHECK( ptD.dtype() == Dtype::Double );
@@ -130,7 +135,8 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( rD.dtype()  == Dtype::Double );
 	CHECK( sD.dtype()  == Dtype::Double );
 	CHECK( cD.dtype()  == Dtype::Double );
-	CHECK( pD.dtype()  == Dtype::Double );
+	CHECK( poD.dtype() == Dtype::Double );
+	CHECK( pcD.dtype() == Dtype::Double );
 	CHECK( eD.dtype()  == Dtype::Double );
 
 	CHECK( dtype(ptD) == Dtype::Double );
@@ -228,15 +234,15 @@ TEST_CASE( "types testing", "[testtypes]" )
 		rf = rl;
 		rd = rl;
 
-		PolylineF pf;
-		PolylineD pd;
-		PolylineL pl;
-		pl = pd;
-		pf = pd;
-		pd = pf;
-		pl = pf;
-		pf = pl;
-		pd = pl;
+		OPolylineF pof;
+		OPolylineD pod;
+		OPolylineL pol;
+		pol = pod;
+		pof = pod;
+		pod = pof;
+		pol = pof;
+		pof = pol;
+		pod = pol;
 	}
 	INFO( "numerical type conversions (constructor)" )
 	{
@@ -288,16 +294,27 @@ TEST_CASE( "types testing", "[testtypes]" )
 		FRectF rf3 = rl;
 		FRectD rd3 = rl;
 
-		PolylineF pf;
-		PolylineD pd;
-		PolylineL pl;
+		OPolylineF pof;
+		OPolylineD pod;
+		OPolylineL pol;
 
-		PolylineL pl2 = pd;
-		PolylineF pf2 = pd;
-		PolylineD pd2 = pf;
-		PolylineL pl3 = pf;
-		PolylineF pf3 = pl;
-		PolylineD pd3 = pl;
+		OPolylineL pol2 = pod;
+		OPolylineF pof2 = pod;
+		OPolylineD pod2 = pof;
+		OPolylineL pol3 = pof;
+		OPolylineF pof3 = pol;
+		OPolylineD pod3 = pol;
+
+		CPolylineF pcf;
+		CPolylineD pcd;
+		CPolylineL pcl;
+
+		CPolylineL pcl2 = pcd;
+		CPolylineF pcf2 = pcd;
+		CPolylineD pcd2 = pcf;
+		CPolylineL pcl3 = pcf;
+		CPolylineF pcf3 = pcl;
+		CPolylineD pcd3 = pcl;
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
@@ -1006,14 +1023,15 @@ TEST_CASE( "IsInside Rectangle", "[test_IsInside]" )
 	CHECK( Circle( 6,6, 22 ).isInside( r ) == false);
 	CHECK( r.isInside( Circle( 6,6, 22 ) ) == true );
 
-	Polyline pl( IsClosed::Yes );
-	pl.add( 3,3 );
+	std::vector<Point2d> vecpt{ {3,3},{4,4} };
+	CPolyline pl(vecpt);
 	CHECK( pl.isInside( r ) == false );  // on contour
-	Polyline pl2( IsClosed::Yes );
+
+/*	Polyline pl2( IsClosed::Yes );
 	pl2.add( 4,4 );
 	CHECK( pl2.isInside( r ) == true );
 	pl2.add( 4,5 );
-	CHECK( pl2.isInside( r ) == true );
+	CHECK( pl2.isInside( r ) == true );*/
 }
 
 
@@ -1061,39 +1079,53 @@ TEST_CASE( "Intersection", "[int_all]" )
 	Circle   c1,c2;
 	Segment  s1,s2;
 	Line2d   l1,l2;
-	Polyline p1,p2;
+	OPolyline po1,po2;
+	CPolyline pc1,pc2;
 
 	CHECK( !r1.intersects( r2 )() ); // intersection with object of same type
 	CHECK( !c1.intersects( c2 )() );
 	CHECK( !s1.intersects( s2 )() );
 	CHECK( !l1.intersects( l2 )() );
-	CHECK( !p1.intersects( p2 )() );
+	CHECK( !po1.intersects( po2 )() );
+	CHECK( !pc1.intersects( pc2 )() );
 
 	CHECK( r1.intersects( c2 )() );
 	CHECK( r1.intersects( s2 )() );
 	CHECK( r1.intersects( l2 )() );
-	CHECK( !r1.intersects( p2 )() );  // polyline is empty !
+	CHECK( !r1.intersects( po2 )() );  // polyline is empty !
+	CHECK( !r1.intersects( pc2 )() );  // polyline is empty !
 
 	CHECK( c1.intersects( r2 )() );
 	CHECK( c1.intersects( s2 )() );
 	CHECK( c1.intersects( l2 )() );
-	CHECK( !c1.intersects( p2 )() );  // polyline is empty !
+	CHECK( !c1.intersects( po2 )() );  // polyline is empty !
+	CHECK( !c1.intersects( pc2 )() );  // polyline is empty !
 
 	CHECK( s1.intersects( r2 )() );
 	CHECK( s1.intersects( c2 )() );
 	CHECK( s1.intersects( l2 )() );
-	CHECK( !s1.intersects( p2 )() );  // polyline is empty !
+	CHECK( !s1.intersects( po2 )() );  // polyline is empty !
+	CHECK( !s1.intersects( pc2 )() );  // polyline is empty !
 
 	CHECK( l1.intersects( r2 )() );
 	CHECK( l1.intersects( c2 )() );
 	CHECK( l1.intersects( s2 )() );
-	CHECK( !l1.intersects( p2 )() );  // polyline is empty !
+	CHECK( !l1.intersects( po2 )() );  // polyline is empty !
+	CHECK( !l1.intersects( pc2 )() );  // polyline is empty !
 
-	CHECK( !p1.intersects( r2 )() );
-	CHECK( !p1.intersects( c2 )() );
-	CHECK( !p1.intersects( s2 )() );
-	CHECK( !p1.intersects( l2 )() );
+	CHECK( !po1.intersects( r2 )() );
+	CHECK( !po1.intersects( c2 )() );
+	CHECK( !po1.intersects( s2 )() );
+	CHECK( !po1.intersects( l2 )() );
+	CHECK( !po1.intersects( pc2 )() );
+
+	CHECK( !pc1.intersects( r2 )() );
+	CHECK( !pc1.intersects( c2 )() );
+	CHECK( !pc1.intersects( s2 )() );
+	CHECK( !pc1.intersects( l2 )() );
+	CHECK( !pc1.intersects( po2 )() );
 }
+
 
 TEST_CASE( "Line/Line intersection", "[int_LL]" )
 {
@@ -1236,7 +1268,8 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 		auto u1 = unionArea(r1,r2);
 		CHECK( u1.size() == 4 );      // 4 points
-		CHECK( u1 == Polyline(r1) );  // same
+		CHECK( u1 == CPolyline(r1) );  // same
+		CHECK( u1 != OPolyline(r1) );
 	}
 	{
 #include "figures_test/frect_intersect_1.code"
