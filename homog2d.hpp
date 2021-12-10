@@ -3473,9 +3473,9 @@ public:
 	template<typename FPT2>
 	PolylineBase( const FRect_<FPT2>& rect )
 	{
-		for( const auto& pt: rect.get4Pts() )
-			_plinevec.push_back( pt );
+		imp_constrFRect( rect, detail::PlHelper<PLT>() );
 	}
+
 
 /// Constructor from a vector of points.
 	template<typename FPT2>
@@ -3503,6 +3503,21 @@ public:
 
 ///@}
 
+private:
+	template<typename FPT2>
+	void imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
+	{
+		for( const auto& pt: rect.get4Pts() )
+			_plinevec.push_back( pt );
+	}
+	template<typename FPT2>
+	void imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsOpen>& )
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an open Polyline object from a FRect");
+//		static_assert( std::false, "cannot build an open Polyline object from a FRect");
+	}
+
+public:
 /// \name Attributes access
 ///@{
 
@@ -3541,15 +3556,6 @@ private:
 	size_t impl_nbSegs( const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return size();
-	}
-
-	HOMOG2D_INUMTYPE impl_lastLength( const detail::PlHelper<type::IsClosed>& ) const
-	{
-		return dist( _plinevec.front(), _plinevec.back() );
-	}
-	HOMOG2D_INUMTYPE impl_lastLength( const detail::PlHelper<type::IsOpen>& ) const
-	{
-		return 0.;
 	}
 
 	bool impl_isPolygon( const detail::PlHelper<type::IsOpen>& )   const;
@@ -4031,7 +4037,6 @@ PolylineBase<PLT,FPT>::length() const
 		HOMOG2D_INUMTYPE sum = 0.;
 		for( const auto& seg: getSegs() )
 			sum += static_cast<HOMOG2D_INUMTYPE>( seg.length() );
-		sum += impl_lastLength( detail::PlHelper<PLT>() );
 		_attribs._length.set( sum );
 	}
 	return _attribs._length.value();

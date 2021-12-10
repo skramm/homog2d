@@ -1289,7 +1289,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto u1 = unionArea(r1,r2);
 		CHECK( u1.size() == 4 );      // 4 points
 		CHECK( u1 == CPolyline(r1) );  // same
-		CHECK( u1 != OPolyline(r1) );
+//		CHECK( u1 != OPolyline(r1) );
 	}
 	{
 #include "figures_test/frect_intersect_1.code"
@@ -2104,18 +2104,20 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 	}
 }
 
-#if 1
+
 TEST_CASE( "Polyline", "[polyline]" )
 {
 	{
 		OPolyline_<NUMTYPE> pl1;
 		CHECK( pl1.isPolygon() == false );
+		CHECK( pl1.size()   == 0 );
 		CHECK( pl1.nbSegs() == 0 );
 		CHECK( pl1.length() == 0 );
-		CHECK( pl1.area() == 0 );
-		CHECK( area(pl1)  == 0 );
-		CHECK_THROWS( centroid(pl1) );
+		CHECK( pl1.area()   == 0 );
+		CHECK( area(pl1)    == 0 );
+		CHECK_THROWS( centroid(pl1) ); // unable
 	}
+
 	{
 		CPolyline_<NUMTYPE> pl1;
 		CHECK( pl1.isPolygon() == false );
@@ -2123,8 +2125,9 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.length() == 0 );
 		CHECK( pl1.area() == 0 );
 		CHECK( area(pl1)  == 0 );
-		CHECK_THROWS( centroid(pl1) );
+		CHECK_THROWS( centroid(pl1) ); // unable
 	}
+
 	{
 		CPolyline_<NUMTYPE> pc1;
 		OPolyline_<NUMTYPE> po1;
@@ -2132,6 +2135,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK_THROWS( pc1.set( vpt ) );  // can't hold only 1 point
 		CHECK_THROWS( po1.set( vpt ) );
 	}
+
+
 /*
 	{
 		Polyline_<NUMTYPE> pl1( 3,4, IsClosed::Yes );
@@ -2152,10 +2157,10 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pl1.area() == 0 );
 	}
 */
+
 	{
 		FRect r( 5,6, 7,8 );
 		CPolyline_<NUMTYPE> pl1( r );
-		CHECK_THROWS( OPolyline_<NUMTYPE>( r ) ); // cannot build an open polyline from a FRect
 
 		CHECK( pl1.isPolygon() == true );
 		CHECK( isPolygon(pl1)  == true );
@@ -2216,7 +2221,6 @@ TEST_CASE( "Polyline", "[polyline]" )
 	CHECK( pl1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
 */
 }
-#endif
 
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 {
