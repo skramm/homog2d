@@ -3446,6 +3446,12 @@ template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
 {
 	template<typename T1,typename T2> friend class PolylineBase;
+	template<typename T1> friend class Ellipse_;
+
+	template<typename FPT1,typename FPT2>
+	friend PolylineBase<type::IsClosed,FPT1>
+	operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
+
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -3557,8 +3563,8 @@ private:
 		return 0.;
 	}
 
-	bool impl_isPolygon( detail::PlHelper<type::IsOpen>& )   const;
-	bool impl_isPolygon( detail::PlHelper<type::IsClosed>& ) const;
+	bool impl_isPolygon( const detail::PlHelper<type::IsOpen>& )   const;
+	bool impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -3960,7 +3966,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PlHelper<type::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) const
 {
 	return false;
 }
@@ -3968,7 +3974,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( detail::PlHelper<type::IsOpen>& ) const
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( detail::PlHelper<type::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const
 {
 	if( _attribs._isPolygon.isBad() )
 	{

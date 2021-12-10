@@ -1973,6 +1973,26 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 }
 
+TEST_CASE( "Polyline comparison", "[polyline-comparison]" )
+{
+	std::vector<Point2d_<NUMTYPE>> vpt1{ {0,0}, {1,0}, {1,1}        };
+	std::vector<Point2d_<NUMTYPE>> vpt2{        {1,0}, {1,1}, {0,0} };
+	{
+		OPolyline opl1, opl2;
+		opl1.set( vpt1 );
+		opl2.set( vpt2 );
+		CHECK( opl1 != opl2 );
+
+		CPolyline cpl1, cpl2;
+		cpl1.set( vpt1 );
+		cpl2.set( vpt2 );
+		CHECK( cpl1 == cpl2 );
+
+		CHECK( opl1 != cpl1 ); // this is possible !
+	}
+}
+
+#if 0
 TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
@@ -2242,6 +2262,7 @@ TEST_CASE( "Polyline comparison", "[polyline-comp]" )
 		CHECK( pa != pb );
 	}
 }
+#endif // if 0
 
 TEST_CASE( "general binding", "[gen_bind]" )
 {
