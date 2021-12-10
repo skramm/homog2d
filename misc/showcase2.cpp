@@ -27,8 +27,10 @@ int main( int argc, const char** argv )
 	int mul = 1;
 	for( int i=0; i<n; i++ )
 	{
-		cvmata = cv::Scalar(255,255,255);
-		cvmatb = cv::Scalar(255,255,255);
+//		cvmata = cv::Scalar(255,255,255);
+//		cvmatb = cv::Scalar(255,255,255);
+		imga.clear();
+		imgb.clear();
 		getBB(r1,r2).draw( imga, DrawParams().setColor(200,200,200) );
 		getBB(r1,r2).draw( imgb, DrawParams().setColor(200,200,200) );
 

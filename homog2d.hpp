@@ -3452,6 +3452,9 @@ class PolylineBase: public detail::Common<FPT>
 	friend PolylineBase<type::IsClosed,FPT1>
 	operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 
+	template<typename FPT1,typename FPT2>
+	PolylineBase<PLT,FPT1>
+	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT,FPT1>& );
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -3587,6 +3590,7 @@ been normalized. This normalizing operation will happen if you do a comparison (
 		_plinevec.push_back( pt );
 	}
 
+public:
 
 /// \name Data access
 ///@{

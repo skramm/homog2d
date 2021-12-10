@@ -45,7 +45,8 @@ int main( int argc, const char** argv )
 	Line2d li( Point2d(0,0), Point2d(200,80) );
 	for( int i=0; i<n; i++ )
 	{
-		cvmat = cv::Scalar(255,255,255);
+		myImg.clear();
+//		cvmat = cv::Scalar(255,255,255);
 
 //		ell.draw( myImg, color_green );
 		lih.draw( myImg );

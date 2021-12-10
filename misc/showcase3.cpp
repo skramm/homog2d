@@ -15,17 +15,20 @@ int main( int argc, const char** argv )
 {
 	auto n = 25; // nb images
 	CPolyline pl;
+	std::vector<Point2d> vpts{
+		{ 5,5 },
+		{ 7,3 },
+		{ 6,  2 },
+		{ 7.5, 1. },
+		{ 4, 0 },
+		{ 5.5, 2.5 },
+		{ 4., 1.2 },
+		{ 3., 2.2 },
+		{ 3.6, 4.1 },
+		{ 1.6, 5.4 }
+	};
+	pl.set( vpts );
 
-	pl.add( 5,5);
-	pl.add( 7,3);
-	pl.add( 6,  2);
-	pl.add( 7.5, 1.);
-	pl.add( 4, 0);
-	pl.add( 5.5, 2.5);
-	pl.add( 4., 1.2);
-	pl.add( 3., 2.2);
-	pl.add( 3.6, 4.1);
-	pl.add( 1.6, 5.4);
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,30);
 
 	Line2d li(1,1,6,3);
