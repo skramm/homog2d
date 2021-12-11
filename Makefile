@@ -83,6 +83,8 @@ show:
 	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
 	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
 	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
+	@echo "NOBUILD_SRC_FILES=$(NOBUILD_SRC_FILES)"
+	@echo "NOBUILD_OBJ_FILES=$(NOBUILD_OBJ_FILES)"
 
 #=======================================================================
 # testing targets
@@ -234,11 +236,11 @@ diff:
 # The following is used to make sure that some constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
-NOBUILD_OBJ_FILES := $(patsubst %.cxx, BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
 #.PRECIOUS: /tmp/no_build_%.cpp
 
-nobuild: $(NOBUILD_OBJ_FILES)
+nobuild: $(NOBUILD_OBJ_FILES) #BUILD/no_build.stdout
 	@echo "done target $@"
 
 $(NOBUILD_OBJ_FILES): rm_nb
@@ -256,7 +258,7 @@ BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
 	@cat misc/no_build/footer.txt >>BUILD/no_build/$(notdir $@)
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
-BUILD/no_build_%.o: BUILD/no_build/no_build_%.cpp
+BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
 	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
 	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
