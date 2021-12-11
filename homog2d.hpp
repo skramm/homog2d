@@ -3850,6 +3850,7 @@ public:
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
+#if 0  // DEPRECATED !
 private:
 	template<typename T>
 	void
@@ -3865,6 +3866,7 @@ private:
 	{}
 
 public:
+#endif
 
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
@@ -6601,7 +6603,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;
-
+#if 0
 	for( size_t i=0; i<size()-1; i++ )
 	{
 		const auto& pt1 = _plinevec[i];
@@ -6611,6 +6613,10 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 //			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
 	}
 	impl_drawLast( im, dp, detail::PlHelper<PLT>() );
+#else
+	for( size_t i=0; i<nbSegs(); i++ )
+		getSegment(i).draw( im, dp );
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////

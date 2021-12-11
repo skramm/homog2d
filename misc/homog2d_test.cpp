@@ -435,16 +435,7 @@ TEST_CASE( "test1", "[test1]" )
 
 		Line2d_<NUMTYPE> lH2(1,0);                // build horizontal line
 		Line2d_<NUMTYPE> lH3 = lH2;
-
-//		lH2.addOffset( LineOffset::vert, 100 );  // add vertical offset
-//		CHECK( li2 == lH2 );
 		CHECK( lH2.getAngle(lH3) == 0. );
-
-		Line2d_<NUMTYPE> lH(1,0);                // build horizontal line
-//		Line2d_<NUMTYPE> li3 = lH.getOrthogonalLine( GivenCoord::X, 100 );
-//		Line2d_<NUMTYPE> lV2;
-//		lV2.addOffset( LineOffset::horiz, 100 );  // add horizontal offset
-//		CHECK( li3 == lV2 );
 	}
 	{
 		Line2d_<NUMTYPE> li(4,2);
@@ -599,43 +590,6 @@ TEST_CASE( "dist2points", "[t_d2p]" )
 	Point2d_<NUMTYPE> p2( 4,4);
 	CHECK( p1.distTo( p2 ) == std::sqrt(2) );
 }
-#if 0
-TEST_CASE( "offset test", "[test3]" )
-{
-	Line2d_<NUMTYPE> lA( Point2d_<NUMTYPE>(0,0), Point2d_<NUMTYPE>(2,2) );
-	CHECK( lA.distTo( Point2d_<NUMTYPE>(1.,1.) ) == 0. );
-
-	Line2d_<NUMTYPE> lB = lA;
-	lA.addOffset( LineOffset::vert, 2. );
-	CHECK( lA == Line2d_<NUMTYPE>( Point2d_<NUMTYPE>(0,2), Point2d_<NUMTYPE>(2,4) ) );
-	lB.addOffset( LineOffset::horiz, 2. );
-	CHECK( lB == Line2d_<NUMTYPE>( Point2d_<NUMTYPE>(2,0), Point2d_<NUMTYPE>(4,2) ) );
-	{
-		Line2d_<NUMTYPE> v;
-		Line2d_<NUMTYPE> h(1,0);
-		CHECK( v*h == Point2d_<NUMTYPE>() );    // intersection is (0,0)
-
-		v.addOffset( LineOffset::horiz, 1 );
-		CHECK( v*h == Point2d_<NUMTYPE>(1,0) ); // intersection is (1,0)
-
-		h.addOffset( LineOffset::vert, 1 );
-		CHECK( v*h == Point2d_<NUMTYPE>(1,1) ); // intersection is (1,0)
-	}
-	{
-		Line2d_<NUMTYPE> liV;
-		Line2d_<NUMTYPE> liV2 = liV;
-		liV.addOffset( LineOffset::vert, 1 ); // adding vertical offset to vertical line does nothing
-		CHECK( liV == liV2 );
-
-		Line2d_<NUMTYPE> liH(1,0);
-		Line2d_<NUMTYPE> liH2 = liH;
-//		std::cout << "liH2=" << liH2 << "\n";
-		liH.addOffset( LineOffset::horiz, 1 ); // adding horizontal offset to horizontal line does nothing
-//		std::cout << "liH=" << liH << "\n";
-		CHECK( liH == liH2 );
-	}
-}
-#endif
 
 #ifdef HOMOG2D_FUTURE_STUFF
 TEST_CASE( "test Epipmat", "[t_epipmat]" )
@@ -2026,7 +1980,7 @@ TEST_CASE( "FRect", "[frect]" )
 	}
 }
 
-TEST_CASE( "Polyline comparison", "[polyline-comparison]" )
+TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 {
 	std::vector<Point2d_<NUMTYPE>> vpt1{ {0,0}, {1,0}, {1,1}        };
 	std::vector<Point2d_<NUMTYPE>> vpt2{        {1,0}, {1,1}, {0,0} };
@@ -2278,51 +2232,43 @@ TEST_CASE( "Polygon area", "[polyline-area]" )
 	CHECK( plo.area() == 0. );
 }
 
-#if 0
-TEST_CASE( "Polyline comparison", "[polyline-comp]" )
+TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 {
 	{
-		Polyline_<NUMTYPE> pa,pb;
+		OPolyline_<NUMTYPE> pa,pb;
 		CHECK( pa == pb );
 	}
-	Polyline_<NUMTYPE> pl1(IsClosed::No);
-	pl1.add( 3,4 );
-	pl1.add( 5,6 );
-	pl1.add( 7,8 );
+	{
+		CPolyline_<NUMTYPE> pa,pb;
+		CHECK( pa == pb );
+	}
 
-	Polyline_<NUMTYPE> pl2(IsClosed::No);
-	pl2.add( 7,8 );
-	pl2.add( 3,4 );
-	pl2.add( 5,6 );
+	OPolyline_<NUMTYPE> pl2( std::vector<Point2d>{ {7,8},{3,4},{5,6}       } );
+	OPolyline_<NUMTYPE> pl1( std::vector<Point2d>{       {3,4},{5,6},{7,8} } );
 
 	{
-		Polyline_<NUMTYPE> p1 = pl1;
-		Polyline_<NUMTYPE> p2 = pl2;
+		OPolyline_<NUMTYPE> p1 = pl1;
+		OPolyline_<NUMTYPE> p2 = pl2;
 
 		CHECK( p1.isNormalized() == false );
 		CHECK( p2.isNormalized() == false );
-		CHECK( (p1==p2) == false );
+		CHECK( p1!=p2 );
 	}
 	{
-		Polyline_<NUMTYPE> p1 = pl1;
-		Polyline_<NUMTYPE> p2 = pl2;
-		p1.isClosed() = true;
+		OPolyline_<NUMTYPE> p1 = pl1;
+		OPolyline_<NUMTYPE> p2 = pl2;
+/*		p1.isClosed() = true;
 		CHECK( p1.isNormalized() == false );
 		CHECK( p2.isNormalized() == false );
 		p2.isClosed() = true;
 		CHECK( (p1==p2) == true );
 		CHECK( p1.isNormalized() == true );
-		CHECK( p2.isNormalized() == true );
+		CHECK( p2.isNormalized() == true );*/
 	}
 	{
-		Polyline_<NUMTYPE> p1( IsClosed::Yes );
-		p1.add( 1,1 );
-		p1.add( 2,1 );
-		p1.add( 1,2 );
-		Polyline_<NUMTYPE> p2( IsClosed::Yes );
-		p2.add( 1,2 );
-		p2.add( 1,1 );
-		p2.add( 2,1 );
+		CPolyline_<NUMTYPE> p2( std::vector<Point2d>{ {1,2},{1,1},{2,1}       } );
+		CPolyline_<NUMTYPE> p1( std::vector<Point2d>{       {1,1},{2,1},{1,2} } );
+
 		CHECK( p1.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
 		CHECK( p2.getPoint(0) == Point2d_<NUMTYPE>(1,2) );
 		CHECK( p1 == p2 ); // normalizing
@@ -2330,7 +2276,7 @@ TEST_CASE( "Polyline comparison", "[polyline-comp]" )
 		CHECK( p2.getPoint(0) == Point2d_<NUMTYPE>(1,1) );
 	}
 	{
-		Polyline pa, pb;
+		CPolyline pa, pb;
 		{
 #include "figures_test/polyline_comp_1a.code"
 			pa = pl;
@@ -2343,7 +2289,6 @@ TEST_CASE( "Polyline comparison", "[polyline-comp]" )
 		CHECK( pa != pb );
 	}
 }
-#endif // if 0
 
 TEST_CASE( "general binding", "[gen_bind]" )
 {
