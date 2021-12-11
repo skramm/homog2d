@@ -7,29 +7,32 @@
 int main()
 {
 //	std::srand(time(0));
-	OPolyline pl;
+	std::vector<Point2d> vpts{
+		{5,5},
+		{7,3},
+		{6,2},
+		{7.5, 1.},
+		{4, 0},
+		{5.5, 2.5},
+		{4., 1.2},
+		{3., 2.2},
+		{3.6, 4.1},
+		{1.6, 5.4}
+	};
+	OPolyline opl(vpts);
 
-	pl.add( 5,5);
-	pl.add( 7,3);
-	pl.add( 6,  2);
-	pl.add( 7.5, 1.);
-	pl.add( 4, 0);
-	pl.add( 5.5, 2.5);
-	pl.add( 4., 1.2);
-	pl.add( 3., 2.2);
-	pl.add( 3.6, 4.1);
-	pl.add( 1.6, 5.4);
-	pl = Homogr().setScale(30).addTranslation(10,30) * pl;
+	opl = Homogr().setScale(30).addTranslation(10,30) * opl;
 
 	img::Image<cv::Mat> img2( 300, 450 );
 
-	pl.draw( img2, DrawParams().setColor(250,0,20) );
-	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
+	opl.draw( img2, DrawParams().setColor(250,0,20) );
+	opl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
 	cv::imwrite( "polyline1.png", img2.getReal()  );
 
-	pl.isClosed() = true;
+	CPolyline cpl(opl);
+
 	img2.clear();
-	pl.draw( img2, DrawParams().setColor(250,0,20) );
-	pl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
+	cpl.draw( img2, DrawParams().setColor(250,0,20) );
+	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
 	cv::imwrite( "polyline2.png", img2.getReal() );
 }

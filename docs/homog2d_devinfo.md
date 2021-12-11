@@ -23,6 +23,8 @@ everything that gets build ends up in the `BUILD` folder
 * `check`: runs cppcheck (static analysis)
 * `install`: `cp homog2d.hpp /usr/local/include`
 * `doc`: build html reference (requires doxygen)
+* `nobuild`: checks that the files in `misc/no_build` contain illegal code (part of the test process)
+
 
 **Targets only available if Opencv is installed:**
 

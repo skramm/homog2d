@@ -3439,7 +3439,7 @@ The consequence is that when adding points, if you have done a comparison before
 add point after the one you thought!
 
 template args:
- - PLT: PolyLine Type: PolylineClosed or PolylineOpen
+ - PLT: PolyLine Type: IsClosed or IsOpen
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
@@ -3469,7 +3469,7 @@ public:
 	PolylineBase()
 	{}
 
-/// Constructor from FRect.
+/// Constructor from FRect. Enabled for "closed" type, disabled for "open" type
 	template<typename FPT2>
 	PolylineBase( const FRect_<FPT2>& rect )
 	{
@@ -5645,7 +5645,7 @@ template<typename FPT2>
 bool
 Root<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Rectangle) with a line" );
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(FRect) with a line" );
 	return false; // to avoid a warning
 }
 

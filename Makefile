@@ -153,14 +153,14 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
 
 DOC_IMAGES_LOC:=docs/figures_src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,$(DOC_IMAGES_LOC)/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/figures_src/%.png, $(DOC_IMAGES_SRC))
 
 .PRECIOUS: docs/figures_src/%
 
 # run the program
-$(DOC_IMAGES_LOC)/%.png: BUILD/figures_src/%
-	$<
-	mv $(notdir $@) $(DOC_IMAGES_LOC)/
+BUILD/figures_src/%.png: BUILD/figures_src/%
+	cd BUILD/figures_src/; $(notdir $<)
+#	mv $(notdir $@) $(DOC_IMAGES_LOC)/
 
 # build the program
 BUILD/figures_src/%: $(DOC_IMAGES_LOC)/%.cpp

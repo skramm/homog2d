@@ -135,42 +135,21 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="homog2d_test.cpp" />
-		<Unit filename="no_build/footer.txt">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/header.txt">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_1.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_2.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_3.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_4.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_5.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_6.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_7.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_8.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/no_build_9.cxx">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="no_build/readme.txt">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="no_build/footer.txt" />
+		<Unit filename="no_build/header.txt" />
+		<Unit filename="no_build/no_build_01.cxx" />
+		<Unit filename="no_build/no_build_02.cxx" />
+		<Unit filename="no_build/no_build_03.cxx" />
+		<Unit filename="no_build/no_build_04.cxx" />
+		<Unit filename="no_build/no_build_05.cxx" />
+		<Unit filename="no_build/no_build_06.cxx" />
+		<Unit filename="no_build/no_build_07.cxx" />
+		<Unit filename="no_build/no_build_08.cxx" />
+		<Unit filename="no_build/no_build_09.cxx" />
+		<Unit filename="no_build/no_build_10.cxx" />
+		<Unit filename="no_build/no_build_11.cxx" />
+		<Unit filename="no_build/no_build_12.cxx" />
+		<Unit filename="no_build/readme.txt" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -184,9 +163,6 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
