@@ -434,8 +434,8 @@ The minimum number of points is 2, initializing with a vector holding 1 points w
 
 The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
-![An open Polyline and its bounding box](figures_src/polyline1.png)
-![The same one, but closed](figures_src/polyline2.png)
+![An open Polyline and its bounding box](figures_src/polyline1a.png)
+![The same one, but closed](figures_src/polyline1b.png)
 
 
 The open/close attribute can be read, but will return a constexpr value:
@@ -500,6 +500,10 @@ Consider these two sets of points:
 (0,0)--(2,3)--(0,2)
 (2,3)--(0,2)--(0,0)
 ```
+![First open Polyline](figures_src/polyline2_o1.png)
+![Second open Polyline](figures_src/polyline2_o2.png)
+![Sames points, but closed type](figures_src/polyline2_c.png)
+
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
 

@@ -230,7 +230,7 @@ struct Image
 #ifdef HOMOG2D_USE_OPENCV
 	Image( size_t width, size_t height )
 	{
-		real_img.create( width, height, CV_8UC3 );
+		real_img.create( height, width, CV_8UC3 );
 		clear();
 	}
 	int cols() const { return real_img.cols; }
