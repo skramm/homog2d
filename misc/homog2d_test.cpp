@@ -2164,25 +2164,25 @@ TEST_CASE( "Polyline", "[polyline]" )
 		pc1.translate(2,1.);
 		CHECK( pc1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
 	}
-/*	{                                        // build from std::array
-		std::array<Point2d,3> pts{ {0,0}, {1,1}, {0,1} };
+	{                                        // build from std::array
+		std::array<Point2d,3> pts{{ {0,0}, {1,1}, {0,1} }};
 		CPolyline_<NUMTYPE> pc(pts);
-		CPolyline_<NUMTYPE> po(pts);
+		OPolyline_<NUMTYPE> po(pts);
 		CHECK( pc.isClosed() == true );
 		CHECK( po.isClosed() == false );
-		CHECK( pc.size() == 4 );
-		CHECK( po.size() == 4 );
+		CHECK( pc.size() == 3 );
+		CHECK( po.size() == 3 );
 		CHECK( pc.nbSegs() == 3 );
 		CHECK( po.nbSegs() == 2 );
-	}*/
+	}
 	{                                          // build from std::list
 		std::list<Point2d> pts{ {0,0}, {1,1}, {0,1} };
 		CPolyline_<NUMTYPE> pc(pts);
 		OPolyline_<NUMTYPE> po(pts);
 		CHECK( pc.isClosed() == true );
 		CHECK( po.isClosed() == false );
-		CHECK( pc.size() == 4 );
-		CHECK( po.size() == 4 );
+		CHECK( pc.size() == 3 );
+		CHECK( po.size() == 3 );
 		CHECK( pc.nbSegs() == 3 );
 		CHECK( po.nbSegs() == 2 );
 	}
@@ -2197,6 +2197,19 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pc.nbSegs() == 2 );
 		CHECK( po.nbSegs() == 1 );
 	}
+
+	{                   // build from segment - 2
+		Segment_<NUMTYPE> seg; // (0,0) - (1,1)
+		CPolyline_<NUMTYPE> pc1( seg );
+		OPolyline_<NUMTYPE> po1( seg );
+
+		std::list<Point2d> pts{ {1,1},{0,0} };
+		CPolyline_<NUMTYPE> pc2(pts);
+		OPolyline_<NUMTYPE> po2(pts);
+		CHECK( pc1 == pc2 );
+		CHECK( po1 == po2 );
+	}
+
 }
 
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )

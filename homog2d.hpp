@@ -3741,24 +3741,21 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
-/// Set from vector of points (discards previous points)
+/// Set from vector/array/list of points (discards previous points)
 /**
--Size of vector must be 0 or 2 or more
+- nb of elements must be 0 or 2 or more
 */
-template<
-//	typename FPT2,
-	typename CONT,
-	typename std::enable_if<
-		priv::IsContainer<CONT>::value,
-		CONT
-	>::type* = nullptr
->
-//	template<typename FPT2>
-//	void set( const std::vector<Point2d_<FPT2>>& vec )
+	template<
+		typename CONT,
+		typename std::enable_if<
+			priv::IsContainer<CONT>::value,
+			CONT
+		>::type* = nullptr
+	>
 	void set( const CONT& vec )
 	{
 		if( vec.size() == 1 )
-			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 2 or more" );
+			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 0, 2 or more" );
 
 #ifndef HOMOG2D_NOCHECKS
 		if( vec.size() > 1 )
@@ -3816,7 +3813,8 @@ public:
 ///@}
 
 private:
-/// This one is guaranteed to operate on same 'PLT' types, is called by the four others
+/// This one is guaranteed to operate on same 'PLT' types, is called by the four others.
+/**  Assumes the size is the same */
 	template<typename FPT2>
 	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
 	{
@@ -3947,7 +3945,7 @@ Two tasks:
 */
 	void p_normalizePL() const
 	{
-		if( size() < 3 )
+		if( size() == 0 )
 			return;
 
 		if( !_plIsNormalized )
