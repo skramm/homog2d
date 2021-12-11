@@ -34,6 +34,8 @@ int main()
 }
 ```
 
+:new: major refactoring in progress, expected new release before january 2022
+
 :new: 2021-07-31: Fresh 2.5 release! : https://github.com/skramm/homog2d/releases
 
 
