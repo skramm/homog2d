@@ -21,7 +21,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getBB()` to get the bounding box of two arbitrary rectangles
   - added more tests
   - added some missing free functions
-  - refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
+  - API changes: refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)

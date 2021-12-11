@@ -1,13 +1,7 @@
-Polyline is templated by type
-`enum class PType uint8_t { Closed, Open };`
+## Technical details on the Polyline classes
+
+They are defined as:
 ```
-template<typename T>
-class PolylineBase
-{
-
-};
-
-
 template<typename FPT>
 using OPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
 

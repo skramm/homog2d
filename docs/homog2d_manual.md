@@ -522,6 +522,7 @@ and their normalisation will produce these sets of points:<br>
 A: `(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)` (identical)<br>
 B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 
+For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 ### 3.5 - Ellipse
 
