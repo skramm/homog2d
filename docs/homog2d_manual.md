@@ -397,74 +397,71 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ### 3.4 - Polyline
 
 This class holds a set of points and models an arbitrary set of joined segments, without orientation.
-It can be either open or closed (last points joins first one).
-If closed, and if it does not intersect itself, then it can be used to model a polygon.
-It can be seen as a wrapper over a vector of points.
+It is available as two classes `OPolyline_` (open) and `CPolyline_` (closed).
+
+The closed one automatically considers a connection betwen last and first point.
+It can be used to model a polygon.
+
 ```C++
-Polyline pl1;                  // default is open
-Polyline pl2( IsClosed::Yes ); // this one is closed
-pl1.add( pt );       // add a point
-pl1.add( 66,77 );    // add a point as (x,y)
+OPolyline pl1; // empty
+CPolyline pl2;
 std::vector<Point2d> vpts;
 // fill vpts
-pl1.add( vpt );      // add a vector of points
-pl2.isClosed() = false;  // now open
+pl1.set( vpt );      // sets the points
+pl2.set( vpt );      // sets the points
 ```
 
-Warning: you may not add a point identical to the previous one. This code:
+It can be initialised either with a container holding the points, or (only for the closed version) from a `FRect`:
 ```C++
-Polyline pl1;
-pl1.add( 1,1 );
-pl1.add( 1,1 );
+std::vector<Point2d> vpts{ {0,0},{1,1},{3,1} };
+OPolyline op(vpts);
+CPolyline cp(vpts);
+FRect rect( .... );
+CPolyline cp2(rect);
+// OPolyline op2(rect); // this does not build
 ```
-will trigger an exception.
 
+
+Warning: you may not add a point identical to the previous one.
+Whatever the type, this code will throw:
+```C++
+std::vector<Point2d> vpts{ {0,0},{1,1},{3,1},{3,1} };
+OPolyline op(vpts);
+CPolyline cp(vpts);
+```
+
+The minimum number of points is 2, initializing with a vector holding 1 points will throw.
 
 The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
 ![An open Polyline and its bounding box](figures_src/polyline1.png)
 ![The same one, but closed](figures_src/polyline2.png)
 
-It can be build directly from a `FRect` object:
-```C++
-FRect rect;
-Polyline pl1( frect );                // default is closed
-Polyline pl2( frect, IsClosed::No );  // optional argument
-```
-If the latter line is used, then this will produce a polyline without the segment from `p3` to `p0`
-(see above figure for points of `FRect`).
 
-The open/close attribute can be read/written:
+The open/close attribute can be read, but will return a constexpr value:
 ```C++
-Polyline pl1;
-std::cout << "IsClosed=" << pl1.isClosed() << '\n';
-pl1.isClosed() = true;
+OPolyline p1;
+CPolyline p2;
+auto b1 = p1.isClosed(); // always false
+auto b2 = p2.isClosed(); // always true
 ```
 
-Number of points and number of segments (member or free function):
+Both types provide access to basic attributes:
+number of points, number of segments, length, and bounding box, all available as member or free functions:
 ```C++
-Polyline pl;
-// ... add points
 auto n1 = pl.size();  // nb of points
 auto n2 = size(pl);
-auto s1 = pl.nbSegs();
+auto s1 = pl.nbSegs(); // nb of segments
 auto s2 = nbSegs(s2);
+
+auto length1 = pl.length();
+auto length2 = length(pl);
+auto rect1 = pl.getBB();
+auto rect2 = getBB(pl);
 ```
 
-Please note that for a `Polyline` of 0 or 1 point, `nbSegs()` will return 0.
-If it has 2 points, `nbSegs()` will return 1 if "open", and 2 if "closed"
-(allthough the 2 segments are identical).
 
-It is possible to replace all the points with the ones contained in a vector, or just add them:
-```C++
-Polyline pl;
-std::vector<Point2d> v_pts_2;
-std::vector<Point2d> v_pts_2;
-pl.set( v_pts_1 );  // replace
-pl.add( v_pts_2 );  // add
-```
-
-It has no orientation, meaning that the open Polyline build from this set of points:<br>
+It has no orientation, meaning that the `OPolyline` build from this set of points:<br>
 `(0,0)-(1,0)-(1,1)`<br>
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
@@ -473,36 +470,27 @@ You can extract either points or segments.
 The number of segments is related to the open/close condition.
 For example, if we have 4 points, that will generate 4 segments if closed, but only 3 if the polyline is open.
 ```C++
-Polyline pl;
-// ... add points
 std::cout << "nbpts=" << pl.size() << " nb segments=" << pl.nbSegs() << '\n';
 auto vec_pts  = pl.getPts();
 auto vec_segs = pl.getSegs();
-auto seg = pl.getSegment( i );   // will throw if non-existent
+auto pt = pl.getPoint( i );   // will throw if point i non-existent
+auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-Additional features: length, and bounding box (member function or free function):
-```C++
-Polyline pl;
-// ... add points
-auto length1 = pl.length();
-auto length2 = length(pl);
-FRect rect1 = pl.getBB();
-FRect rect2 = getBB(pl);
-```
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
 If it is, you can get its area and its centroid point:
 ```C++
-Polyline pl;
-// ... add points
+CPolyline pl;
+// ... set points
 if( pl.isPolygon() ) {
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
 
-Please note that if not a polygon, then the `area()` function will return 0 but the the `centroid()` function will throw.
+Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the the `centroid()` function will throw.
+
 
 #### Comparison of Polyline objects
 
