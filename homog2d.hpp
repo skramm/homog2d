@@ -3523,7 +3523,10 @@ public:
 
 /// Returns the number of points
 	size_t size() const { return _plinevec.size(); }
-
+	bool isClosed() const
+	{
+		return impl_isClosed( detail::PlHelper<PLT>());
+	}
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
 	bool             isPolygon() const;
@@ -3548,6 +3551,15 @@ public:
 
 private:
 	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
+
+	bool impl_isClosed( const detail::PlHelper<type::IsOpen>& ) const
+	{
+		return false;
+	}
+	bool impl_isClosed( const detail::PlHelper<type::IsClosed>& ) const
+	{
+		return true;
+	}
 
 	size_t impl_nbSegs( const detail::PlHelper<type::IsOpen>& ) const
 	{
