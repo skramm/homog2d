@@ -6116,6 +6116,8 @@ FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
+/// Free function, distance between points
+/// \sa Point2d_::distTo()
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
 dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )

@@ -81,7 +81,11 @@ OPolyline po(seg);
 CPolyline pc(seg);
 
 ```
+You can also build from a FRect_, but only a CPolyline (as a rectangle is by definition closed, using it to initialize an Open Polyline makes no sense).
 
+```C++
+CPolyline pc( Frect() );
+```
 
 
 

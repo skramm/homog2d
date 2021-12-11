@@ -120,6 +120,13 @@ Line2d li2;
 // auto dist = li.distTo( li2 );   // this does not build !
 ```
 
+For points, you may also use the corresponding free function:
+```C++
+Point2d pt1, pt2;          // some points
+auto d = dist( pt1, pt2 );
+```
+
+
 ### Get point(s) lying on line
 
 To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
@@ -133,7 +140,7 @@ You can compute the coordinate of y for x=2 with:
 ```C++
 auto y = li.getCoord( GivenCoord::X, 2 );
 ```
-of get the coordinate of x for y=1 with:
+or get the coordinate of x for y=1 with:
 ```C++
 auto x = li.getCoord( GivenCoord::Y, 1 );
 ```
@@ -159,7 +166,7 @@ You can compute the two points that are lying on a line and at a given distance 
 
 ![Computing the 2 points at a given distance of a point on a line](fig1.png)
 
-The API provides two ways to get these.
+The API provides two ways to get these:
 
 - either you provide the x or y coordinate of p0:
 ```C++
@@ -478,7 +485,7 @@ auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
 
-You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections),
+You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
@@ -519,7 +526,7 @@ They both describe the same object:
 
 When compared, they will be considered as different because they both use twice the same point `(0,0)`
 and their normalisation will produce these sets of points:<br>
-A: `(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)` (identical)<br>
+A: `(0,0)-(3,0)-(3,1)-(0,0)-(0,3)-(1,3)` (unchanged)<br>
 B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
