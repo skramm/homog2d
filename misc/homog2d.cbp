@@ -61,6 +61,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../docs/future_stuff_doc.txt" />
+		<Unit filename="../docs/homog2d_Polyline.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
 		<Unit filename="../docs/homog2d_history.md">
 			<Option target="&lt;{~None~}&gt;" />

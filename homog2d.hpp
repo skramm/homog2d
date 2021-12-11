@@ -3331,10 +3331,10 @@ template<typename T1,typename T2> struct IsShape<PolylineBase<T1,T2>>: std::true
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
-template <typename T>               struct Is_Container: std::false_type { };
-template <typename T,std::size_t N> struct Is_Container<std::array<T,N>>:     std::true_type { };
-template <typename... Ts>           struct Is_Container<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct Is_Container<std::list<Ts...  >> : std::true_type { };
+template <typename T>               struct IsContainer: std::false_type { };
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>:     std::true_type { };
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
 
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
@@ -3391,7 +3391,7 @@ struct PolylineAttribs
 template<
 	typename T,
 	typename std::enable_if<
-		priv::Is_Container<T>::value,
+		priv::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -3433,7 +3433,7 @@ getPointsBB( const T& vpts )
 //------------------------------------------------------------------
 /// Polyline, can be closed or not
 /**
-\warning When closed, In order to be able to compare two objects describing the same structure
+\warning When closed, in order to be able to compare two objects describing the same structure
 but potentially in different order, the comparison operator will proceed a sorting.<br>
 The consequence is that when adding points, if you have done a comparison before, you might not
 add point after the one you thought!
@@ -3476,6 +3476,14 @@ public:
 		imp_constrFRect( rect, detail::PlHelper<PLT>() );
 	}
 
+	template<typename FPT2>
+	PolylineBase( const Segment_<FPT2>& seg )
+	{
+		const auto& ppts = seg.getPts();
+		p_addPoint( ppts.first );
+		p_addPoint( ppts.second );
+	}
+
 
 /// Constructor from a vector of points.
 	template<typename FPT2>
@@ -3483,6 +3491,13 @@ public:
 	{
 		set( vec );
 	}
+
+	template<typename CONT>
+	PolylineBase( const CONT& vec )
+	{
+		set( vec );
+	}
+
 
 /// Copy-Constructor from Closed Polyline
 	template<typename FPT2>
@@ -3730,15 +3745,24 @@ at 180° of the previous one.
 /**
 -Size of vector must be 0 or 2 or more
 */
-	template<typename FPT2>
-	void set( const std::vector<Point2d_<FPT2>>& vec )
+template<
+//	typename FPT2,
+	typename CONT,
+	typename std::enable_if<
+		priv::IsContainer<CONT>::value,
+		CONT
+	>::type* = nullptr
+>
+//	template<typename FPT2>
+//	void set( const std::vector<Point2d_<FPT2>>& vec )
+	void set( const CONT& vec )
 	{
 		if( vec.size() == 1 )
 			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 2 or more" );
 
 #ifndef HOMOG2D_NOCHECKS
 		if( vec.size() > 1 )
-			p_checkInputVector( vec );
+			p_checkInputData( vec );
 #endif
 
 		_attribs.setBad();
@@ -3752,15 +3776,20 @@ at 180° of the previous one.
 ///@}
 
 private:
-	template<typename FPT2>
-	void p_checkInputVector( const std::vector<Point2d_<FPT2>>& vec )
+/// Checks that no contiguous identical	points are stored
+	template<typename CONT>
+	void p_checkInputData( const CONT& pts )
 	{
-		for( size_t i=0; i<vec.size()-1; i++ )
-			if( vec[i] == vec[i+1] )
+		for( auto it=pts.begin(); it!=std::prev(pts.end()); it++ )
+		{
+			const auto& elem = *it;
+			const auto& next = *std::next(it);
+			if( elem == next )
 				HOMOG2D_THROW_ERROR_1(
-					"cannot add two consecutive identical points:\nat pos "
-					<< i << ", pt:" << vec[i] << " and pt:" << vec[i+1]
+					"cannot add two consecutive identical points:\npt:"
+					<< elem << " and pt:" << next
 				);
+		}
 	}
 
 	void impl_minimizePL( const detail::PlHelper<type::IsOpen>& );
@@ -3802,26 +3831,31 @@ private:
 	}
 
 	template<typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
+	bool
+	impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return impl_operatorComp_root( other );
 	}
+	template<typename FPT2>
+	bool
+	impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
+	{
+		return impl_operatorComp_root( other );
+	}
+
 /// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
+	constexpr bool
+	impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return false;
 	}
 /// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
+	constexpr bool
+	impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return false;
-	}
-	template<typename FPT2>
-	bool impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
-	{
-		return impl_operatorComp_root( other );
 	}
 
 public:
@@ -4872,7 +4906,7 @@ operator << ( std::ostream& f, const Root<LP,FPT>& r )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::Is_Container<T>::value,
+		priv::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -6077,7 +6111,7 @@ alloc( std::size_t nb )
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
 template<typename FPT,typename Cont>
-typename std::enable_if<priv::Is_Container<Cont>::value,Cont>::type
+typename std::enable_if<priv::IsContainer<Cont>::value,Cont>::type
 operator * (
 	const Hmatrix_<type::IsHomogr,FPT>& h,    ///< Matrix
 	const Cont&                         vin   ///< Input container
@@ -6242,7 +6276,7 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::Is_Container<T>::value,
+		priv::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -6532,7 +6566,7 @@ template<
 	typename U,
 	typename T,
 	typename std::enable_if<
-		priv::Is_Container<T>::value,
+		priv::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >

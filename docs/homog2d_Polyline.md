@@ -9,7 +9,7 @@ template<typename FPT>
 using CPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
 ```
 
-## Difference between these two types:
+### Difference between these two types:
 
 Both types can be seen as a container of a set of points.
 Order of points will be retained, but some normalizing step will occur, that will be different for the two types.
@@ -28,34 +28,38 @@ is obviously the same as the one describeb by `(1,1)-(0,0)`
 ### Conversions:
 
 Say we have:
-```
+```C++
 OPolyline_ po;
 CPolyline_ pc;
 ```
 
-This is possible: `pc = po;`
-
+This is possible: `pc = po;` :
 (the first point gets connected to the last one)
 
-This is **not** possible: `po = pc;`
-
+This is **not** possible: `po = pc;` (build failure),
 because we would be unable to determine which segment needs to be removed.
 
 ### Initializing
 
-The default constructor will build an empty object (which is perfectly valid).
+The default constructors for both types will build an empty object (which is perfectly valid).
 
 Since there is a normalizing step involved, it is not possible for both types to add points "on the fly".
 You will need to first build a vector of points, then assigning it to the Polyline object:
-```
+```C++
 std::vector<Point2d> vec{ {0,0},{1,0},{1,1} };
 OPolyline po(vec);
 CPolyline pc(vec);
 ```
 (`std::vector` is an example but you can use `std::array` or `std::list`)
 
-However, it is possible to replace all the points of a Polyline by another set of points:
+Or you can use the provided constructor:
+```C++
+OPolyline po( std::vector<Point2d>{ {0,0},{1,0},{1,1} } );
+CPolyline pc( std::vector<Point2d>{ {0,0},{1,0},{1,1} } );
 ```
+
+However, it is possible to replace all the points of a Polyline by another set of points:
+```C++
 OPolyline po(vec1);
 CPolyline pc(vec1);
 po.set( vec2 );
@@ -64,14 +68,14 @@ pc.set( vec2 );
 
 The minimum size is 2 points, a Polyline of 1 point is not legal.
 Thus, this will throw:
-```
+```C++
 std::vector<Point2d> vec{ {0,0} };
 OPolyline po(vec);
 CPolyline pc(vec);
 ```
 
 Another constructor enables building a Polyline from a Segment, wich ends up with a Polyline of 2 points:
-```
+```C++
 Segment seg; // default constructor
 OPolyline po(seg);
 CPolyline pc(seg);

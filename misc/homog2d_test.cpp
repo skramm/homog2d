@@ -2082,7 +2082,7 @@ void polytest_1( const PolylineBase<T,U>& pl1 )
 
 TEST_CASE( "Polyline", "[polyline]" )
 {
-	{
+	{                                 // default constructor
 		OPolyline_<NUMTYPE> pl1;
 		polytest_1( pl1 );
 		CPolyline_<NUMTYPE> pl2;
@@ -2096,6 +2096,11 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK_THROWS( po1.set( vpt ) );
 	}
 	{
+		std::vector<Point2d> vpt{ {0,0} };
+		CHECK_THROWS( CPolyline_<NUMTYPE>( vpt ) );
+		CHECK_THROWS( OPolyline_<NUMTYPE>( vpt ) );
+	}
+	{                           // build from Rectangle
 		FRect r( 5,6, 7,8 );
 		CPolyline_<NUMTYPE> pl1( r );
 
@@ -2158,6 +2163,39 @@ TEST_CASE( "Polyline", "[polyline]" )
 
 		pc1.translate(2,1.);
 		CHECK( pc1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
+	}
+/*	{                                        // build from std::array
+		std::array<Point2d,3> pts{ {0,0}, {1,1}, {0,1} };
+		CPolyline_<NUMTYPE> pc(pts);
+		CPolyline_<NUMTYPE> po(pts);
+		CHECK( pc.isClosed() == true );
+		CHECK( po.isClosed() == false );
+		CHECK( pc.size() == 4 );
+		CHECK( po.size() == 4 );
+		CHECK( pc.nbSegs() == 3 );
+		CHECK( po.nbSegs() == 2 );
+	}*/
+	{                                          // build from std::list
+		std::list<Point2d> pts{ {0,0}, {1,1}, {0,1} };
+		CPolyline_<NUMTYPE> pc(pts);
+		OPolyline_<NUMTYPE> po(pts);
+		CHECK( pc.isClosed() == true );
+		CHECK( po.isClosed() == false );
+		CHECK( pc.size() == 4 );
+		CHECK( po.size() == 4 );
+		CHECK( pc.nbSegs() == 3 );
+		CHECK( po.nbSegs() == 2 );
+	}
+	{                   // build from segment
+		Segment_<NUMTYPE> seg;
+		CPolyline_<NUMTYPE> pc( seg );
+		OPolyline_<NUMTYPE> po( seg );
+		CHECK( pc.size() == 2 );
+		CHECK( po.size() == 2 );
+		CHECK( pc.getPoint(0) == Point2d(0,0) );
+		CHECK( po.getPoint(0) == Point2d(0,0) );
+		CHECK( pc.nbSegs() == 2 );
+		CHECK( po.nbSegs() == 1 );
 	}
 }
 
