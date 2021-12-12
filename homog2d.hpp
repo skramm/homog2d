@@ -1564,6 +1564,11 @@ public:
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
 	HOMOG2D_INUMTYPE length() const { return 2.*height() + 2.*width(); }
+/// Return size of rectangle in a std::pair<width, height>
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> size() const
+	{
+		return std::make_pair( width(), height() );
+	}
 
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
@@ -6200,6 +6205,16 @@ size_t size( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.size();
 }
+
+/// Returns width, height of rectangle (free function)
+/// \sa FRect_::size()
+template<typename FPT>
+std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+size( const FRect_<FPT>& rect )
+{
+	return rect.size();
+}
+
 
 /// Returns Bounding Box of Ellipse_ (free function)
 /// \sa Ellipse_::getBB()

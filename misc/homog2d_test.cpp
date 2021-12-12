@@ -1978,6 +1978,13 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r.area() == 5000 );
 		CHECK( r.center() == Point2d(0,0) );
 	}
+
+	{
+		FRect_<NUMTYPE> r1( 0,0, 5, 3 );
+		FRect_<NUMTYPE> r2( 2,3, 7, 6 );
+		CHECK( r1.size() == r2.size() );
+		CHECK( size(r1) == size(r2) );
+	}
 }
 
 TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )

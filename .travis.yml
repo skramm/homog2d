@@ -16,7 +16,8 @@ install:
  - mv catch.hpp misc/
  - ls
 
-script: make testall
+script:
+ - make testall
 
 # build useless on "dev" branches
 branches:
