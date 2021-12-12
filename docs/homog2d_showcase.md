@@ -8,8 +8,17 @@ On this page, some graphical demos, all generated with programs in misc/showcase
 
 * The front page demo
 
-![showcase1](docs/showcase1.gif)
+![showcase1](showcase1.gif)
+
+* A rotating Polyline object and its intersection with a line
+
+![showcase3](showcase3.gif)
 
 * Two dancing rectangles and their bounding box
 
-![showcase1](docs/showcase4.gif)
+![showcase1](showcase4.gif)
+
+* intersection and union areas of two rectangles
+
+![Example of intersection area](showcase2a.gif)
+![Example of union area](showcase2b.gif)

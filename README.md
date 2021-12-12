@@ -11,6 +11,8 @@ Also handles other geometric primitives.
 
 ![showcase1](docs/showcase1.gif)
 
+(see [other demos here](docs/homog2d_showcase.md))
+
 - Language: C++14
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
