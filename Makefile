@@ -266,10 +266,11 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 #=================================================================
 # SHOWCASE: generates gif images of some situations
 
-SHOWCASE_SRC=$(wildcard misc/showcase*.cpp)
-SHOWCASE_BIN=$(patsubst misc/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
-SHOWCASE_GIF=$(patsubst misc/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
-SHOWCASE_PNG=$(wildcard misc/showcase*.png)
+SHOWCASE_SRC_LOC=misc/showcase
+SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
+SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
+SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
+#SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 
 
 #BUILD/%.gif: BUILD/%.png
@@ -282,7 +283,7 @@ SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 #	BUILD/showcase/showcase1
 
 # compile program that will generate the set of png files
-BUILD/showcase/showcase%: misc/showcase%.cpp homog2d.hpp
+BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	@mkdir -p BUILD/showcase/
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 	$@

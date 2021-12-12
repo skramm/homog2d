@@ -4,7 +4,7 @@
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 #include "opencv2/highgui.hpp"
 
@@ -32,7 +32,7 @@ int main( int argc, const char** argv )
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,30);
 
 	Line2d li(1,1,6,3);
-	img::Image<cv::Mat> img2( 250, 300 );
+	img::Image<cv::Mat> img2( 300, 250 );
 
 	Homogr H;
 	H.addTranslation(-4,-3).addRotation(360./n/180*M_PI ).addTranslation(4,3);

@@ -6243,7 +6243,7 @@ getBB( const Circle_<FPT>& cir )
 	return cir.getBB();
 }
 
-/// Returns Bounding Box of Polyline_ (free function)
+/// Returns Bounding Box of PolylineBase (free function)
 /// \sa PolylineBase::getBB()
 template<typename PLT,typename FPT>
 FRect_<FPT>
@@ -6253,9 +6253,6 @@ getBB( const PolylineBase<PLT,FPT>& pl )
 }
 
 /// Returns Bounding Box of two rectangles (free function)
-/**
-whatever their intersection status
-*/
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
 getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
@@ -6270,6 +6267,30 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 	auto max_x = std::max( ppts1.second.getX(), ppts2.second.getX() );
 	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+}
+
+/// Returns Bounding Box of two PolylineBase objects (free function)
+/// \sa PolylineBase::getBB()
+/** works whatever their real type and floatinf-point type
+*/
+template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
+FRect_<FPT1>
+getBB( const PolylineBase<PLT1,FPT1>& pl1, const PolylineBase<PLT2,FPT2>& pl2 )
+{
+	auto r1 = pl1.getBB();
+	auto r2 = pl2.getBB();
+	return getBB( r1, r2 );
+}
+
+/// Returns Bounding Box of two Circle_ objects (free function)
+/// \sa Circle_::getBB()
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+getBB( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
+{
+	auto r1 = c1.getBB();
+	auto r2 = c2.getBB();
+	return getBB( r1, r2 );
 }
 
 /// Returns Bounding Box of arbitrary container holding points (free function)

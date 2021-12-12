@@ -346,7 +346,8 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
-And of course, its width, height, length, and enclosed area:
+And of course, its width, height, length, and enclosed area.
+This is available through member functions or free functions.
 ```C++
 FRect rect;
 auto w = rect.width();
@@ -357,6 +358,12 @@ auto w2 = width(rect);
 auto h2 = height(rect);
 auto a2 = area(rect);
 auto l2 = length(rect);
+```
+
+You can gets its size as a pair of values (member function or free function):
+```C++
+FRect rect;
+auto s = rect.size();
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -606,7 +613,7 @@ Point2d pt2 = h * pt1; // pt2 is now (4,6)
 h.init(); // reset to unit transformation
 ```
 
-This can also be used with the types `Segment`, `FRect` and `Polyline`:
+This can also be used with all the other types (`Segment`, `FRect`, `OPolyline`, `CPolyline`, `Circle`, `Ellipse`):
 ```C++
 Homogr h;
  ... assign some planar transformation
@@ -618,7 +625,8 @@ pl = H * pl;
 
 auto a = H * rect; // a is a Polyline
 ```
-It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a (closed) `Polyline`.
+It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `CPolyline`.
+Similarly, applying a homography to a `Circle` will generate an `Ellipse` object.
 
 ### 4.2 - Homographies for lines
 <a name="line_homography"></a>

@@ -3,7 +3,7 @@
 \brief Generates general showcase image
 */
 #define HOMOG2D_USE_OPENCV
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 #include "opencv2/highgui.hpp"
 

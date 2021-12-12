@@ -72,6 +72,7 @@
 		<Unit filename="../docs/homog2d_qa.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
@@ -154,11 +155,10 @@
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="showcase1.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="showcase2.cpp" />
-		<Unit filename="showcase3.cpp" />
+		<Unit filename="showcase/showcase1.cpp" />
+		<Unit filename="showcase/showcase2.cpp" />
+		<Unit filename="showcase/showcase3.cpp" />
+		<Unit filename="showcase/showcase4.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
