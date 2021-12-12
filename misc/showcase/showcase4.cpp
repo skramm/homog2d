@@ -41,8 +41,7 @@ int main( int argc, const char** argv )
 		img::Image<cv::Mat> im( 250, 200 );
 		rect1_d.draw( im, DrawParams().setColor(250,0,0) );
 		rect2_d.draw( im, DrawParams().setColor(0,0,250) );
-		auto bb = getBB(rect1_d, rect2_d);
-		bb.draw( im, DrawParams().setColor(g,g,g) );
+		getBB(rect1_d, rect2_d).draw( im, DrawParams().setColor(g,g,g) );
 		std::ostringstream ossa;
 		ossa << "BUILD/showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossa.str(), im.getReal() );
