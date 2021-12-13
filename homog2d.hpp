@@ -3129,7 +3129,7 @@ public:
 /// Returns Bounding Box
 	FRect_<FPT> getBB() const
 	{
-		return FRect_<FPT>(	_ptS1. _ptS2 );
+		return FRect_<FPT>(	_ptS1, _ptS2 );
 	}
 
 /// Get angle between segment and other segment/line
@@ -5157,10 +5157,10 @@ Ellipse_<FPT>::getBB() const
 
 	PolylineBase<type::IsClosed,FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
-	out.add( para.first  * li_V1 );
-	out.add( para.second * li_V1 );
-	out.add( para.second * li_V2 );
-	out.add( para.first  * li_V2 );
+	out.p_addPoint( para.first  * li_V1 );
+	out.p_addPoint( para.second * li_V1 );
+	out.p_addPoint( para.second * li_V2 );
+	out.p_addPoint( para.first  * li_V2 );
 #else
 	auto p1 = para.first  * li_V1;
 	auto p2 = para.second * li_V1;
@@ -6258,6 +6258,7 @@ FRect_<FPT1>
 getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 {
 // first, convert them to internal numerical type
+// (same type is needed to use std::min/max)
 	const FRect_<HOMOG2D_INUMTYPE> r1(ra);
 	const FRect_<HOMOG2D_INUMTYPE> r2(rb);
 	auto ppts1 = r1.getPts();
@@ -6290,6 +6291,17 @@ getBB( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 	auto r1 = c1.getBB();
 	auto r2 = c2.getBB();
+	return getBB( r1, r2 );
+}
+
+/// Returns Bounding Box of two Segment_ objects (free function)
+/// \sa Segment_::getBB()
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+getBB( const Segment_<FPT1>& s1, const Segment_<FPT2>& s2 )
+{
+	auto r1 = s1.getBB();
+	auto r2 = s2.getBB();
 	return getBB( r1, r2 );
 }
 

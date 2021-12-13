@@ -11,17 +11,18 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add precision evaluation
 
 - current master branch
-  - added threshold as default argument to Ellipse::isCircle()
+  - added threshold as default argument to `Ellipse::isCircle()`
   - fixed manual typos, added "dev" doc page
   - added speed test, manual edits
-  - added missing intersection function (FRect/Polyline)
-  - added binding template constructor for points/lines (see HOMOG2D_BIND_X)
+  - added missing intersection function (`FRect`/`Polyline`)
+  - added binding template constructor for points/lines (see `HOMOG2D_BIND_X`)
   - added centroid computation to `Polyline_`
   - added minimizing function to `Polyline_`
-  - added `getBB()` to get the bounding box of two arbitrary rectangles
+  - added  `getBB()` to get the bounding box of two arbitrary objects of same type.
   - added more tests
   - added some missing free functions
   - API changes: refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
+  - bugfixes
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)

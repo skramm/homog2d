@@ -3,7 +3,8 @@
 [Manual main page](homog2d_manual.md)
 
 On this page, some graphical demos, all generated with programs in misc/showcase, with `$ make showcase`
-(requires Opencv)
+<br>
+Requires Opencv (to generate images) and ImageMagick (to generate the final gif).
 
 
 * The front page demo

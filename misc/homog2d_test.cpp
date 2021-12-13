@@ -2334,6 +2334,40 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 	}
 }
 
+
+TEST_CASE( "bounding box of two objects", "[getBB]" )
+{
+
+	FRect_<NUMTYPE> r1(0,3, 2,0);
+	FRect_<NUMTYPE> r2(4,5, 6,8);
+	FRect_<NUMTYPE> bbr(0,0, 6,8);
+	CHECK( bbr == getBB( r1,r2 ) );
+	{                                    // distant segments
+		Segment_<NUMTYPE> s1(0,3, 2,0);
+		Segment_<NUMTYPE> s2(4,5, 6,8);
+		FRect_<NUMTYPE> bbs(0,0, 6,8);
+		CHECK( bbs == getBB( s1,s2 ) );
+	}
+	{                                    // crossing segments
+		Segment_<NUMTYPE> s1(0,0, 5,5);
+		Segment_<NUMTYPE> s2(0,6, 4,0);
+		FRect_<NUMTYPE> bbs(0,0, 5,6);
+		CHECK( bbs == getBB( s1,s2 ) );
+	}
+	{                                  // one circle inside the other
+		Circle_<NUMTYPE> c1(0,0, 2);
+		Circle_<NUMTYPE> c2(0,1, 4);
+		FRect_<NUMTYPE> bbc(-4,-3, +4,5);
+		CHECK( bbc == getBB( c1,c2 ) );
+	}
+	{                                  // two distant circles
+		Circle_<NUMTYPE> c1(5,5, 2);
+		Circle_<NUMTYPE> c2(0,0, 1);
+		FRect_<NUMTYPE> bbc(-1,-1, 7,7);
+		CHECK( bbc == getBB( c1,c2 ) );
+	}
+}
+
 TEST_CASE( "general binding", "[gen_bind]" )
 {
 	struct MyType

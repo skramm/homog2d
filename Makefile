@@ -11,7 +11,7 @@
 
 
 SHELL=bash
-CFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -22,16 +22,16 @@ ifeq "$(USE_OPENCV)" ""
 endif
 
 ifeq ($(USE_OPENCV),Y)
-	CFLAGS += -DHOMOG2D_USE_OPENCV
+	CXXFLAGS += -DHOMOG2D_USE_OPENCV
 	LDFLAGS += `pkg-config --libs opencv`
 endif
 
 ifeq ($(USE_EIGEN),Y)
-	CFLAGS += -DHOMOG2D_USE_EIGEN
+	CXXFLAGS += -DHOMOG2D_USE_EIGEN
 endif
 
 ifeq ($(DEBUG),Y)
-	CFLAGS += -g
+	CXXFLAGS += -g
 endif
 
 #=======================================================================
@@ -89,30 +89,30 @@ show:
 #=======================================================================
 # testing targets
 
-test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
 test_SY: BUILD/homog2d_test_SY
 
 test_SN: BUILD/homog2d_test_SN
 
 demo_check: misc/demo_check.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -I. -o demo_check misc/demo_check.cpp
+	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SY.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SY.stderr
 
 BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
 
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
+	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
 
 BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_d.stderr
+	$(CXX) $(CXXFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_d.stderr
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
+	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 #ptest1: precision_test1
 #	./precision_test1
@@ -121,10 +121,10 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 #	./precision_test2
 
 #precision_test1: misc/precision_test_opencv.cpp
-#	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+#	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 #precision_test2: misc/precision_test.cpp
-#	$(CXX) $(CFLAGS) -I. -o $@ $<
+#	$(CXX) $(CXXFLAGS) -I. -o $@ $<
 
 #=======================================================================
 # speed test
@@ -133,19 +133,19 @@ speed_test: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/elli
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
 
-BUILD/ellipse_speed_test_SY: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+BUILD/ellipse_speed_test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
 # No Checking
-BUILD/ellipse_speed_test_SYCN: CFLAGS += -DHOMOG2D_OPTIMIZE_SPEED -DHOMOG2D_NOCHECKS
+BUILD/ellipse_speed_test_SYCN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED -DHOMOG2D_NOCHECKS
 
 BUILD/ellipse_speed_test_SY: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
 
 BUILD/ellipse_speed_test_SYCN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
 
 BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_NY.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_NY.stderr
 
 
 #=======================================================================
@@ -165,7 +165,7 @@ BUILD/figures_src/%.png: BUILD/figures_src/%
 # build the program
 BUILD/figures_src/%: $(DOC_IMAGES_LOC)/%.cpp
 	@mkdir -p BUILD/figures_src/
-	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 doc_fig: $(DOC_IMAGES_PNG)
 
@@ -223,10 +223,10 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 
 # this target REQUIRES Opencv
 BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 demo_sdl2: misc/demo_sdl2.cpp homog2d.hpp
-	$(CXX) $(CFLAGS) `pkg-config --cflags sdl2` -I. -o demo_sdl2 $< `pkg-config --libs sdl2`
+	$(CXX) $(CXXFLAGS) `pkg-config --cflags sdl2` -I. -o demo_sdl2 $< `pkg-config --libs sdl2`
 
 diff:
 	git diff | colordiff | aha > diff.html

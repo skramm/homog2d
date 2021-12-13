@@ -1,7 +1,6 @@
 # Questions & Answers
 
-Home page: https://github.com/skramm/homog2d
-
+[Manual main page](homog2d_manual.md)
 
 <dl>
 <dt>

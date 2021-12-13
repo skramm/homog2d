@@ -540,9 +540,13 @@ For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 ### 3.5 - Ellipse
 
+
 We follow here the traditional parametrization of ellipses:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
 Internally, it is stored as a conic in its matrix form (see [build options](#build_options) for details).
+
+_Warning: support for ellipse is only partial at present, several features available with all the other primitives may not
+all be available for this type_
 
 ![ellipse1](ellipse1.png)
 
@@ -1126,7 +1130,7 @@ configure the library to use `long double` by adding this before the "include":
 ```C++
 #define HOMOG2D_INUMTYPE long double
 ```
-or add that as a compile flag: `$(CXX) $(CFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
+or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
 <br>(don't forget the quotes!)
 
 #### Numerical type access

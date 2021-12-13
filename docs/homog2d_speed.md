@@ -1,7 +1,10 @@
-# Computation time information
+## Computation time information
+
+[Manual main page](homog2d_manual.md)
 
 As detailed [in manual](homog2d_manual.md#build_options), the
 `HOMOG2D_OPTIMIZE_SPEED` build option will favor speed over memory footprint.
+At present, this only has an impact on the `Ellipse_` class behavior.
 
 With current commit (2021-08-04), and using the
 `$ make speed_test`

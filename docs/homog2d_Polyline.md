@@ -1,6 +1,8 @@
 ## Technical details on the Polyline classes
 
-They are defined as:
+[Manual main page](homog2d_manual.md)
+
+The two classes, open and closed type, are defined as:
 ```
 template<typename FPT>
 using OPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
@@ -44,7 +46,7 @@ because we would be unable to determine which segment needs to be removed.
 The default constructors for both types will build an empty object (which is perfectly valid).
 
 Since there is a normalizing step involved, it is not possible for both types to add points "on the fly".
-You will need to first build a vector of points, then assigning it to the Polyline object:
+You will need to build a vector of points to initialize the Polyline object:
 ```C++
 std::vector<Point2d> vec{ {0,0},{1,0},{1,1} };
 OPolyline po(vec);
@@ -52,13 +54,13 @@ CPolyline pc(vec);
 ```
 (`std::vector` is an example but you can use `std::array` or `std::list`)
 
-Or you can use the provided constructor:
+This can be done in a single step:
 ```C++
 OPolyline po( std::vector<Point2d>{ {0,0},{1,0},{1,1} } );
 CPolyline pc( std::vector<Point2d>{ {0,0},{1,0},{1,1} } );
 ```
 
-However, it is possible to replace all the points of a Polyline by another set of points:
+It is possible to replace all the points of a Polyline by another set of points:
 ```C++
 OPolyline po(vec1);
 CPolyline pc(vec1);
@@ -66,7 +68,7 @@ po.set( vec2 );
 pc.set( vec2 );
 ```
 
-The minimum size is 2 points, a Polyline of 1 point is not legal.
+The minimum size is 2 points, an object of 1 point is not legal.
 Thus, this will throw:
 ```C++
 std::vector<Point2d> vec{ {0,0} };
