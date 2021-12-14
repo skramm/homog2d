@@ -248,11 +248,20 @@ Besides points and lines, the following primitives are provided:
 * [flat rectangle](#p_frect)
 * [circle](#p_circle)
 * [polyline](#p_polyline)
-* [ellipse]](#p_ellipse)
+* [ellipse](#p_ellipse)
 
+All these provide some common features:
+
+* `getBB()`: returns a [flat rectangle](#p_frect) holding the bounding box
+
+Besides these, you can also get the bounding box of two arbitrary primitives `p1`,`p2`, even of different types, with a free function:
+
+```C++
+auto bb = getBB( p1, p2 );
+```
 
 ### 3.1 - Segments
-<a name="segment"></a>
+<a name="p_segment"></a>
 
 A segment is implemented internally as a pair of points.
 Usage is straightforward:
@@ -577,6 +586,13 @@ auto area    = ell.area();
 auto area2   = area(ell);    // or use the free function
 auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
+
+Two member functions are provided to get the bounding box:
+as with the others primitives, the
+`getBB()` member function returns the "flat" bounding box,
+while the `getOBB()` returns the "oriented" bounding box as a [closed polyline](#p_polyline) object.
+
+
 You can get the pair of axis lines:
 ```C++
 Ellipse ell;
