@@ -1569,7 +1569,11 @@ public:
 	{
 		return std::make_pair( width(), height() );
 	}
-
+/// Needed for getBB( pair of objects )
+	FRect_<FPT> getBB() const
+	{
+		return *this;
+	}
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
@@ -3435,6 +3439,9 @@ template args:
 template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
 {
+public:
+	using FType = FPT;
+
 	template<typename T1,typename T2> friend class PolylineBase;
 	template<typename T1> friend class Ellipse_;
 
@@ -3445,6 +3452,7 @@ class PolylineBase: public detail::Common<FPT>
 	template<typename FPT1,typename FPT2,typename PLT2>
 	friend PolylineBase<PLT2,FPT1>
 	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT2,FPT1>& );
+
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -6252,6 +6260,8 @@ getBB( const PolylineBase<PLT,FPT>& pl )
 	return pl.getBB();
 }
 
+#if 0
+
 /// Returns Bounding Box of two rectangles (free function)
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
@@ -6268,6 +6278,45 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
 }
+#else
+namespace priv {
+/// Returns Bounding Box of two rectangles (private free function)
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
+{
+// first, convert them to internal numerical type
+	const FRect_<HOMOG2D_INUMTYPE> r1(ra);
+	const FRect_<HOMOG2D_INUMTYPE> r2(rb);
+	auto ppts1 = r1.getPts();
+	auto ppts2 = r2.getPts();
+	auto min_x = std::min( ppts1.first.getX(),  ppts2.first.getX() );
+	auto min_y = std::min( ppts1.first.getY(),  ppts2.first.getY() );
+	auto max_x = std::max( ppts1.second.getX(), ppts2.second.getX() );
+	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
+	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+}
+} // namespace priv
+
+#endif
+
+#if 1
+
+/// Returns Bounding Box of two arbitrary objects (free function)
+/** works whatever their real type and floating-point type
+*/
+template<typename T1,typename T2>
+FRect_<typename T1::FType>
+getBB( const T1& elem1, const T2& elem2 )
+{
+//	using FPT=T1::FType;
+
+	auto r1 = elem1.getBB();
+	auto r2 = elem2.getBB();
+	return priv::getBB( r1, r2 );
+}
+
+#else
 
 /// Returns Bounding Box of two PolylineBase objects (free function)
 /// \sa PolylineBase::getBB()
@@ -6281,6 +6330,7 @@ getBB( const PolylineBase<PLT1,FPT1>& pl1, const PolylineBase<PLT2,FPT2>& pl2 )
 	auto r2 = pl2.getBB();
 	return getBB( r1, r2 );
 }
+#endif
 
 /// Returns Bounding Box of two Circle_ objects (free function)
 /// \sa Circle_::getBB()

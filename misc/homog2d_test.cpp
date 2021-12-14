@@ -1883,7 +1883,6 @@ TEST_CASE( "Segment", "[seg1]" )
 	}
 }
 
-/// \todo what happens if the rectangles are of different FP type?
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 {
 	{                              // two identical rectangles
@@ -1919,8 +1918,35 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 		CHECK( bb == FRect_<long double>(0,0,5,5) );
 		CHECK( bb.dtype() == Dtype::Float );
 	}
+}
+
+TEST_CASE( "pair bounding box", "[getBB-pair]" )
+{
+	{
+		CPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
+		FRect_<NUMTYPE> rect;
+		CHECK( getBB(po,rect) == FRect_<NUMTYPE>(0,0,3,2) );
+	}
+	{
+		OPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
+		Segment_<NUMTYPE> seg;
+		CHECK( getBB(seg,po) == FRect_<NUMTYPE>(0,0,3,2) );
+	}
+	{
+		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
+		FRect_<NUMTYPE> rect; // (0,0)--(1,1)
+		CHECK( getBB(cir,rect) == FRect_<NUMTYPE>(0,0,8,8) );
+	}
+
+	{
+		Circle_<NUMTYPE> cir1( 5,5,3 ); // center at 5,5, radius=3
+		Circle_<NUMTYPE> cir2( 5,5,1 ); // center at 5,5, radius=1
+		CHECK( getBB(cir1,cir2) == FRect_<NUMTYPE>(2,2,8,8) );
+	}
+
 
 }
+
 
 TEST_CASE( "FRect", "[frect]" )
 {
