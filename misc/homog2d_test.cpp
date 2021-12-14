@@ -1922,29 +1922,45 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 
 TEST_CASE( "pair bounding box", "[getBB-pair]" )
 {
-	{
+	{  // CPolyline / Frect
 		CPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
 		FRect_<NUMTYPE> rect;
 		CHECK( getBB(po,rect) == FRect_<NUMTYPE>(0,0,3,2) );
 	}
-	{
+	{  // OPolyline / Frect
+		OPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
+		FRect_<NUMTYPE> rect;
+		CHECK( getBB(po,rect) == FRect_<NUMTYPE>(0,0,3,2) );
+	}
+	{  // OPolyline / Segment
 		OPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
 		Segment_<NUMTYPE> seg;
 		CHECK( getBB(seg,po) == FRect_<NUMTYPE>(0,0,3,2) );
 	}
-	{
+
+	{  // Circle / Frect
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		FRect_<NUMTYPE> rect; // (0,0)--(1,1)
 		CHECK( getBB(cir,rect) == FRect_<NUMTYPE>(0,0,8,8) );
 	}
-
-	{
+	{  // Circle / Segment
+		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
+		Segment_<NUMTYPE> seg(10,20,30,40);
+		CHECK( getBB(cir,seg) == FRect_<NUMTYPE>(2,2,30,40) );
+	}
+	{  // Circle / Circle (one inside the other)
 		Circle_<NUMTYPE> cir1( 5,5,3 ); // center at 5,5, radius=3
 		Circle_<NUMTYPE> cir2( 5,5,1 ); // center at 5,5, radius=1
 		CHECK( getBB(cir1,cir2) == FRect_<NUMTYPE>(2,2,8,8) );
 	}
-
-
+	{  // two identical Circles
+		Circle_<NUMTYPE> cir1,cir2;
+		CHECK( getBB(cir1,cir2) == FRect_<NUMTYPE>(-1,-1,1,1) );
+	}
+	{  // two identical Ellipses
+		Ellipse_<NUMTYPE> e1,e2;
+		CHECK( getBB(e1,e2) == FRect_<NUMTYPE>(-2,-1,2,1) );
+	}
 }
 
 

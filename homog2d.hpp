@@ -1184,11 +1184,13 @@ public:
 
 /// \name attributes
 ///@{
-	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 ) const;
-	Point2d_<FPT>                            center() const;
-	PolylineBase<type::IsClosed,FPT>   getBB()  const;
-	HOMOG2D_INUMTYPE                         angle()  const;
+	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
+	Point2d_<FPT>                                center()    const;
+	PolylineBase<type::IsClosed,FPT>             getOBB()    const;
+	FRect_<FPT>                                  getBB()     const;
+	HOMOG2D_INUMTYPE                             angle()     const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
+
 ///@}
 
 /// Area of ellipse
@@ -3133,7 +3135,7 @@ public:
 /// Returns Bounding Box
 	FRect_<FPT> getBB() const
 	{
-		return FRect_<FPT>(	_ptS1. _ptS2 );
+		return FRect_<FPT>(	_ptS1, _ptS2 );
 	}
 
 /// Get angle between segment and other segment/line
@@ -5126,7 +5128,16 @@ Ellipse_<FPT>::getAxisLines() const
 }
 
 //------------------------------------------------------------------
-/// Returns bounding box of ellipse
+/// Returns bounding box of ellipse (as an FRect_)
+template<typename FPT>
+FRect_<FPT>
+Ellipse_<FPT>::getBB() const
+{
+	return getBB( getOBB() );
+}
+
+//------------------------------------------------------------------
+/// Returns oriented bounding box of ellipse as a closed Polyline
 /**
 Algorithm:
  - build line \c liH going through major axis, by using center point and
@@ -5138,7 +5149,7 @@ Algorithm:
 */
 template<typename FPT>
 PolylineBase<type::IsClosed,FPT>
-Ellipse_<FPT>::getBB() const
+Ellipse_<FPT>::getOBB() const
 {
 // step 1: build ptA using angle
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
@@ -5165,10 +5176,10 @@ Ellipse_<FPT>::getBB() const
 
 	PolylineBase<type::IsClosed,FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
-	out.add( para.first  * li_V1 );
-	out.add( para.second * li_V1 );
-	out.add( para.second * li_V2 );
-	out.add( para.first  * li_V2 );
+	out.p_addPoint( para.first  * li_V1 );
+	out.p_addPoint( para.second * li_V1 );
+	out.p_addPoint( para.second * li_V2 );
+	out.p_addPoint( para.first  * li_V2 );
 #else
 	auto p1 = para.first  * li_V1;
 	auto p2 = para.second * li_V1;
@@ -6309,8 +6320,6 @@ template<typename T1,typename T2>
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
-//	using FPT=T1::FType;
-
 	auto r1 = elem1.getBB();
 	auto r2 = elem2.getBB();
 	return priv::getBB( r1, r2 );
