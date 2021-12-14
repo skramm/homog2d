@@ -89,6 +89,13 @@ show:
 #=======================================================================
 # testing targets
 
+variants=test_SY test_SN
+#BUILD/homog2d_test_SY BUILD/homog2d_test_SN
+
+newtests:
+	-rm BUILD/homog2d_test.stderr
+	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
+
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
 test_SY: BUILD/homog2d_test_SY
@@ -98,11 +105,12 @@ test_SN: BUILD/homog2d_test_SN
 demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
-BUILD/homog2d_test_SY: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SY.stderr
+BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
+#	 2>BUILD/homog2d_test_SY.stderr
 
-BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
+#BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+#	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
 
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp

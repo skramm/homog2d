@@ -151,6 +151,8 @@
 		<Unit filename="no_build/no_build_10.cxx" />
 		<Unit filename="no_build/no_build_11.cxx" />
 		<Unit filename="no_build/no_build_12.cxx" />
+		<Unit filename="no_build/no_build_13.cxx" />
+		<Unit filename="no_build/no_build_14.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
@@ -164,6 +166,9 @@
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
+			<code_completion />
+			<envvars />
+			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

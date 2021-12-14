@@ -1184,11 +1184,13 @@ public:
 
 /// \name attributes
 ///@{
-	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 ) const;
-	Point2d_<FPT>                            center() const;
-	PolylineBase<type::IsClosed,FPT>   getBB()  const;
-	HOMOG2D_INUMTYPE                         angle()  const;
+	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
+	Point2d_<FPT>                                center()    const;
+	PolylineBase<type::IsClosed,FPT>             getOBB()    const;
+	FRect_<FPT>                                  getBB()     const;
+	HOMOG2D_INUMTYPE                             angle()     const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
+
 ///@}
 
 /// Area of ellipse
@@ -1569,7 +1571,11 @@ public:
 	{
 		return std::make_pair( width(), height() );
 	}
-
+/// Needed for getBB( pair of objects )
+	FRect_<FPT> getBB() const
+	{
+		return *this;
+	}
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
 	std::pair<Point2d_<FPT>,Point2d_<FPT>>
@@ -3264,15 +3270,6 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	Point2d_<HOMOG2D_INUMTYPE> pt1 = _center;
 	Point2d_<HOMOG2D_INUMTYPE> pt2 = other._center;
 
-#if 0
-	HOMOG2D_INUMTYPE d  = _center.distTo( other._center );
-	if( d > r1 + r2 )                                     // no intersection
-		return detail::Intersect<detail::Inters_2,FPT>();
-
-	if( d < std::abs( r1 - r2 ) )                         // no intersection: one circle inside the other
-		return detail::Intersect<detail::Inters_2,FPT>();
-	auto a = (r1*r1 - r2*r2 + d*d) / 2. / d;
-#else
 	HOMOG2D_INUMTYPE x1 = pt1.getX();
 	HOMOG2D_INUMTYPE y1 = pt1.getY();
 	HOMOG2D_INUMTYPE x2 = pt2.getX();
@@ -3287,8 +3284,6 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 
 	auto d = std::sqrt( d_squared );
 	auto a = (r1*r1 - r2*r2 + d_squared) / 2. / d;
-#endif
-
 	auto h = std::sqrt( r1*r1 - a*a );
 
 	Point2d_<FPT> P0(
@@ -3435,6 +3430,9 @@ template args:
 template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
 {
+public:
+	using FType = FPT;
+
 	template<typename T1,typename T2> friend class PolylineBase;
 	template<typename T1> friend class Ellipse_;
 
@@ -3445,6 +3443,7 @@ class PolylineBase: public detail::Common<FPT>
 	template<typename FPT1,typename FPT2,typename PLT2>
 	friend PolylineBase<PLT2,FPT1>
 	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT2,FPT1>& );
+
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -3883,24 +3882,6 @@ public:
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
-
-#if 0  // DEPRECATED !
-private:
-	template<typename T>
-	void
-	impl_drawLast( img::Image<T>& im, img::DrawParams dp, const detail::PlHelper<type::IsClosed>& ) const
-	{
-		if( size() < 3 ) // if only 2 points (or less), nothing to draw
-			return;
-		Segment_<FPT>(_plinevec.front(),_plinevec.back() ).draw( im, dp );
-	}
-	template<typename T>
-	void
-	impl_drawLast( img::Image<T>&, img::DrawParams, const detail::PlHelper<type::IsOpen>& ) const
-	{}
-
-public:
-#endif
 
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
@@ -5118,7 +5099,16 @@ Ellipse_<FPT>::getAxisLines() const
 }
 
 //------------------------------------------------------------------
-/// Returns bounding box of ellipse
+/// Returns bounding box of ellipse (as an FRect_)
+template<typename FPT>
+FRect_<FPT>
+Ellipse_<FPT>::getBB() const
+{
+	return getOBB().getBB();
+}
+
+//------------------------------------------------------------------
+/// Returns oriented bounding box of ellipse as a closed Polyline
 /**
 Algorithm:
  - build line \c liH going through major axis, by using center point and
@@ -5130,7 +5120,7 @@ Algorithm:
 */
 template<typename FPT>
 PolylineBase<type::IsClosed,FPT>
-Ellipse_<FPT>::getBB() const
+Ellipse_<FPT>::getOBB() const
 {
 // step 1: build ptA using angle
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
@@ -6252,7 +6242,8 @@ getBB( const PolylineBase<PLT,FPT>& pl )
 	return pl.getBB();
 }
 
-/// Returns Bounding Box of two rectangles (free function)
+namespace priv {
+/// Returns Bounding Box of two rectangles (private free function)
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
 getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
@@ -6269,40 +6260,18 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
 }
+} // namespace priv
 
-/// Returns Bounding Box of two PolylineBase objects (free function)
-/// \sa PolylineBase::getBB()
-/** works whatever their real type and floatinf-point type
+/// Returns Bounding Box of two arbitrary objects (free function)
+/** works whatever their real type and floating-point type
 */
-template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
-FRect_<FPT1>
-getBB( const PolylineBase<PLT1,FPT1>& pl1, const PolylineBase<PLT2,FPT2>& pl2 )
+template<typename T1,typename T2>
+FRect_<typename T1::FType>
+getBB( const T1& elem1, const T2& elem2 )
 {
-	auto r1 = pl1.getBB();
-	auto r2 = pl2.getBB();
-	return getBB( r1, r2 );
-}
-
-/// Returns Bounding Box of two Circle_ objects (free function)
-/// \sa Circle_::getBB()
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-getBB( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
-{
-	auto r1 = c1.getBB();
-	auto r2 = c2.getBB();
-	return getBB( r1, r2 );
-}
-
-/// Returns Bounding Box of two Segment_ objects (free function)
-/// \sa Segment_::getBB()
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-getBB( const Segment_<FPT1>& s1, const Segment_<FPT2>& s2 )
-{
-	auto r1 = s1.getBB();
-	auto r2 = s2.getBB();
-	return getBB( r1, r2 );
+	auto r1 = elem1.getBB();
+	auto r2 = elem2.getBB();
+	return priv::getBB( r1, r2 );
 }
 
 /// Returns Bounding Box of arbitrary container holding points (free function)
@@ -6682,20 +6651,8 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;
-#if 0
-	for( size_t i=0; i<size()-1; i++ )
-	{
-		const auto& pt1 = _plinevec[i];
-		const auto& pt2 = _plinevec[i+1];
-		assert( pt1 != pt2 );
-		Segment_<FPT>(pt1,pt2).draw( im, dp );
-//			cv::putText( mat, std::to_string(i), getCvPti(pt1), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(10,100,10) );
-	}
-	impl_drawLast( im, dp, detail::PlHelper<PLT>() );
-#else
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
-#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////

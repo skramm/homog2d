@@ -243,11 +243,25 @@ auto angle2 = getAngle( li1, li2 );
 ## 3 - Other geometric primitives
 <a name="shapes"></a>
 
-Some other shapes are provided, for conveniency.
+Besides points and lines, the following primitives are provided:
+* [segment](#p_segment)
+* [flat rectangle](#p_frect)
+* [circle](#p_circle)
+* [polyline](#p_polyline)
+* [ellipse](#p_ellipse)
 
+All these provide some common features:
+
+* `getBB()`: returns a [flat rectangle](#p_frect) holding the bounding box
+
+Besides these, you can also get the bounding box of two arbitrary primitives `p1`,`p2`, even of different types, with a free function:
+
+```C++
+auto bb = getBB( p1, p2 );
+```
 
 ### 3.1 - Segments
-<a name="segments"></a>
+<a name="p_segment"></a>
 
 A segment is implemented internally as a pair of points.
 Usage is straightforward:
@@ -299,7 +313,7 @@ auto length2 = length(s1);
 
 
 ### 3.2 - Flat rectangles
-<a name="frect"></a>
+<a name="p_frect"></a>
 
 A flat rectangle is provided through the template class `FRect`.
 It is modeled by its two opposite points.
@@ -380,6 +394,7 @@ auto bb = getBB( r1, r2 );
 ```
 
 ### 3.3 - Circles
+<a name="p_circle"></a>
 
 Creation is straightforward:
 ```C++
@@ -409,6 +424,7 @@ auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 
 
 ### 3.4 - Polyline
+<a name="p_polyline"></a>
 
 This class holds a set of points and models an arbitrary set of joined segments, without orientation.
 It is available as two classes `OPolyline_` (open) and `CPolyline_` (closed).
@@ -539,6 +555,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 ### 3.5 - Ellipse
+<a name="p_ellipse"></a>
 
 
 We follow here the traditional parametrization of ellipses:
@@ -573,6 +590,13 @@ auto area    = ell.area();
 auto area2   = area(ell);    // or use the free function
 auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
+
+Two member functions are provided to get the bounding box:
+as with the others primitives, the
+`getBB()` member function returns the "flat" bounding box,
+while the `getOBB()` returns the "oriented" bounding box as a [closed polyline](#p_polyline) object.
+
+
 You can get the pair of axis lines:
 ```C++
 Ellipse ell;
