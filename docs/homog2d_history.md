@@ -18,7 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added binding template constructor for points/lines (see HOMOG2D_BIND_X)
   - added centroid computation to `Polyline_`
   - added minimizing function to `Polyline_`
-  - added `getBB()` to get the bounding box of two arbitrary rectangles
+  - added generalized `getBB()` to get the bounding box of two arbitrary objects
   - added more tests
   - added some missing free functions
   - API changes: refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
