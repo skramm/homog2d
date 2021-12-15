@@ -545,7 +545,7 @@ and<br>
 B: `(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
 
 They both describe the same object:
-![Polyline comparison](polyline_comp_1.png)
+![Polyline comparison](img/polyline_comp_1.png)
 
 When compared, they will be considered as different because they both use twice the same point `(0,0)`
 and their normalisation will produce these sets of points:<br>

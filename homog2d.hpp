@@ -254,7 +254,7 @@ struct Image
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: uint8_t { X, Y };
 
-/// Used in line constructor, to instanciate a H or V line, see \ref LPBase LineDir, T )
+/// Used in line constructor, to instanciate a H or V line, see \ref LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
 // Used in Polyline_ constructors
@@ -506,7 +506,7 @@ protected:
 		_isNormalized = false;
 	}
 
-/// Divide all elements of \c mat by \v value
+/// Divide all elements of \c mat by \c value
 	template<typename FPT2>
 	void p_divideAll( detail::Matrix_<FPT>& mat, FPT2 value ) const
 	{
@@ -5113,7 +5113,7 @@ Ellipse_<FPT>::getBB() const
 Algorithm:
  - build line \c liH going through major axis, by using center point and
  point on semi-major axis, intersecting ellipse
- - get opposite point \x ptB, lying on line and at distance \c a
+ - get opposite point \c ptB, lying on line and at distance \c a
  - get the two parallel lines to \c liH, at a distance \c b
  - get the two orthogonal lines at \c ptA and \c ptB
 
