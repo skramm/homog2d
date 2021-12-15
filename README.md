@@ -9,7 +9,7 @@ handling 2D lines, points and homographies (2D planar transformations),
 using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
 Also handles other geometric primitives.
 
-![showcase1](docs/showcase1/showcase1.gif)
+![showcase1](docs/showcase/showcase1.gif)
 
 (see [other demos here](docs/homog2d_showcase.md))
 
