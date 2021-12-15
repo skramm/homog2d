@@ -552,7 +552,7 @@ and<br>
 B: `(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
 
 They both describe the same object:
-![Polyline comparison](img/polyline_comp_1.png)
+![Polyline comparison](polyline_comp_1.png)
 
 When compared, they will be considered as different because they both use twice the same point `(0,0)`
 and their normalisation will produce these sets of points:<br>
@@ -563,7 +563,6 @@ For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 ### 3.5 - Ellipse
 <a name="p_ellipse"></a>
-
 
 We follow here the traditional parametrization of ellipses:
 center point, semi-major (a) and semi-minor (b) distances, and angle between main axis and horizontal axis.
@@ -598,10 +597,17 @@ auto area2   = area(ell);    // or use the free function
 auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
 
-Two member functions are provided to get the bounding box:
+Two functions are provided to get the bounding box:
 as with the others primitives, the
 `getBB()` member function returns the "flat" bounding box,
 while the `getOBB()` returns the "oriented" bounding box as a [closed polyline](#p_polyline) object.
+
+These are also available as free functions:
+```C++
+Ellipse ell;
+auto bb  = getBB(ell);
+auto obb = getOBB(ell);
+```
 
 
 You can get the pair of axis lines:
@@ -783,7 +789,7 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 Once you have the desired matrix, you can apply it to about anything you want.
-For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase3.cpp).
+For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase/showcase3.cpp).
 
 ![showcase3](showcase/showcase3.gif)
 
