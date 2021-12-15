@@ -1925,8 +1925,39 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 	}
 }
 
-TEST_CASE( "pair bounding box", "[getBB-pair]" )
+
+TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 {
+
+	FRect_<NUMTYPE> r1(0,3, 2,0);
+	FRect_<NUMTYPE> r2(4,5, 6,8);
+	FRect_<NUMTYPE> bbr(0,0, 6,8);
+	CHECK( bbr == getBB( r1,r2 ) );
+/*	{                                    // distant segments
+		Segment_<NUMTYPE> s1(0,3, 2,0);
+		Segment_<NUMTYPE> s2(4,5, 6,8);
+		FRect_<NUMTYPE> bbs(0,0, 6,8);
+		CHECK( bbs == getBB( s1,s2 ) );
+	}
+	{                                    // crossing segments
+		Segment_<NUMTYPE> s1(0,0, 5,5);
+		Segment_<NUMTYPE> s2(0,6, 4,0);
+		FRect_<NUMTYPE> bbs(0,0, 5,6);
+		CHECK( bbs == getBB( s1,s2 ) );
+	}
+*/
+	{                                  // one circle inside the other
+		Circle_<NUMTYPE> c1(0,0, 2);
+		Circle_<NUMTYPE> c2(0,1, 4);
+		FRect_<NUMTYPE> bbc(-4,-3, +4,5);
+		CHECK( bbc == getBB( c1,c2 ) );
+	}
+	{                                  // two distant circles
+		Circle_<NUMTYPE> c1(5,5, 2);
+		Circle_<NUMTYPE> c2(0,0, 1);
+		FRect_<NUMTYPE> bbc(-1,-1, 7,7);
+		CHECK( bbc == getBB( c1,c2 ) );
+	}
 	{  // CPolyline / Frect
 		CPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
 		FRect_<NUMTYPE> rect;
@@ -1937,22 +1968,22 @@ TEST_CASE( "pair bounding box", "[getBB-pair]" )
 		FRect_<NUMTYPE> rect;
 		CHECK( getBB(po,rect) == FRect_<NUMTYPE>(0,0,3,2) );
 	}
-	{  // OPolyline / Segment
+/*	{  // OPolyline / Segment
 		OPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
 		Segment_<NUMTYPE> seg;
 		CHECK( getBB(seg,po) == FRect_<NUMTYPE>(0,0,3,2) );
-	}
+	}*/
 
 	{  // Circle / Frect
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		FRect_<NUMTYPE> rect; // (0,0)--(1,1)
 		CHECK( getBB(cir,rect) == FRect_<NUMTYPE>(0,0,8,8) );
 	}
-	{  // Circle / Segment
+/*	{  // Circle / Segment
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		Segment_<NUMTYPE> seg(10,20,30,40);
 		CHECK( getBB(cir,seg) == FRect_<NUMTYPE>(2,2,30,40) );
-	}
+	}*/
 	{  // Circle / Circle (one inside the other)
 		Circle_<NUMTYPE> cir1( 5,5,3 ); // center at 5,5, radius=3
 		Circle_<NUMTYPE> cir2( 5,5,1 ); // center at 5,5, radius=1
@@ -2380,40 +2411,6 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 		}
 		CHECK( pa.size() == pb.size() );
 		CHECK( pa != pb );
-	}
-}
-
-
-TEST_CASE( "bounding box of two objects", "[getBB]" )
-{
-
-	FRect_<NUMTYPE> r1(0,3, 2,0);
-	FRect_<NUMTYPE> r2(4,5, 6,8);
-	FRect_<NUMTYPE> bbr(0,0, 6,8);
-	CHECK( bbr == getBB( r1,r2 ) );
-	{                                    // distant segments
-		Segment_<NUMTYPE> s1(0,3, 2,0);
-		Segment_<NUMTYPE> s2(4,5, 6,8);
-		FRect_<NUMTYPE> bbs(0,0, 6,8);
-		CHECK( bbs == getBB( s1,s2 ) );
-	}
-	{                                    // crossing segments
-		Segment_<NUMTYPE> s1(0,0, 5,5);
-		Segment_<NUMTYPE> s2(0,6, 4,0);
-		FRect_<NUMTYPE> bbs(0,0, 5,6);
-		CHECK( bbs == getBB( s1,s2 ) );
-	}
-	{                                  // one circle inside the other
-		Circle_<NUMTYPE> c1(0,0, 2);
-		Circle_<NUMTYPE> c2(0,1, 4);
-		FRect_<NUMTYPE> bbc(-4,-3, +4,5);
-		CHECK( bbc == getBB( c1,c2 ) );
-	}
-	{                                  // two distant circles
-		Circle_<NUMTYPE> c1(5,5, 2);
-		Circle_<NUMTYPE> c2(0,0, 1);
-		FRect_<NUMTYPE> bbc(-1,-1, 7,7);
-		CHECK( bbc == getBB( c1,c2 ) );
 	}
 }
 

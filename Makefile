@@ -106,6 +106,7 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+	-rm BUILD/homog2d_test.stderr
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
 #	 2>BUILD/homog2d_test_SY.stderr
 
