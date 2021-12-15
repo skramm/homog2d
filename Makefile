@@ -163,14 +163,11 @@ DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
 DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/png/%.png, $(DOC_IMAGES_SRC))
 
-.PRECIOUS: BUILD/figures_src/src/% BUILD/figures_src/png/%
+.PRECIOUS: BUILD/img/png/%
 
-# run the program
+# run the program => builds the png image
 BUILD/img/png/%.png: BUILD/img/png/bin/%
-#	mkdir -p BUILD/img/png/
 	cd BUILD/img/png; bin/$(notdir $<)
-#	mv $(notdir $@) $(DOC_IMAGES_LOC)/
-
 
 # build the program
 BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp
