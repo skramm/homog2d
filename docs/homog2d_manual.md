@@ -164,7 +164,7 @@ auto y = li.getCoord( GivenCoord::X, 0 );
 
 You can compute the two points that are lying on a line and at a given distance from a point.
 
-![Computing the 2 points at a given distance of a point on a line](fig1.png)
+![Computing the 2 points at a given distance of a point on a line](img_latex/fig1.png)
 
 The API provides two ways to get these:
 
@@ -198,7 +198,7 @@ Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
 will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
-![Orthogonal lines](fig3.png)
+![Orthogonal lines](img_latex/fig3.png)
 
 Similarly, you can also directly use as input a point on the line:
 ```C++
@@ -328,7 +328,7 @@ with the one with smallest coordinates as "first".
 
 This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored:
 
-![A flat rectangle defined by two points](fig2.png)
+![A flat rectangle defined by two points](img_latex/fig2.png)
 
 The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
@@ -420,7 +420,7 @@ auto seg = getSegment( c1, c2 );  // as a segment
 auto line = getLine( c1, c2 );    // as a line
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
-![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](figures_src/circles1.png)
+![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles1.png)
 
 
 ### 3.4 - Polyline
@@ -464,8 +464,8 @@ The minimum number of points is 2, initializing with a vector holding 1 points w
 
 The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
-![An open Polyline and its bounding box](figures_src/polyline1a.png)
-![The same one, but closed](figures_src/polyline1b.png)
+![An open Polyline and its bounding box](img/polyline1a.png)
+![The same one, but closed](img/polyline1b.png)
 
 
 The open/close attribute can be read, but will return a constexpr value:
@@ -530,9 +530,9 @@ Consider these two sets of points:
 (0,0)--(2,3)--(0,2)
 (2,3)--(0,2)--(0,0)
 ```
-![First open Polyline](figures_src/polyline2_o1.png)
-![Second open Polyline](figures_src/polyline2_o2.png)
-![Sames points, but closed type](figures_src/polyline2_c.png)
+![First open Polyline](img/polyline2_o1.png)
+![Second open Polyline](img/polyline2_o2.png)
+![Sames points, but closed type](img/polyline2_c.png)
 
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
@@ -778,7 +778,7 @@ Thanks to templates, this works also for a set of points (or lines) stored in a 
 Once you have the desired matrix, you can apply it to about anything you want.
 For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase3.cpp).
 
-![showcase3](showcase3.gif)
+![showcase3](showcase/showcase3.gif)
 
 ### 4.4 - Constructors
 
@@ -873,15 +873,15 @@ and if equal, the point with the lowest `y` value.
 
 When a segment has a point lying on another segment, such as in the figure below, this will be considered as an intersection point:
 
-![segment1](figures_src/segment1.png)
+![segment1](img/segment1.png)
 
 This has a consequence on rectangle intersections: when the rectangles are overlapping such as the figure below, we will have here **4** intersection points.
 
-![frect1](figures_src/frect1.png)
+![frect1](img/frect1.png)
 
 Similarly, in the situation as in the figure below, we will have **2** intersection points:
 
-![frect2](figures_src/frect2.png)
+![frect2](img/frect2.png)
 
 
 ### 5.2 - Enclosing determination
@@ -942,8 +942,8 @@ auto b2 = r1 | r2;
 auto b3 = unionArea( r1, r2 ); // free function
 ```
 
-![Example of intersection area](showcase2a.gif)
-![Example of union area](showcase2b.gif)
+![Example of intersection area](showcase/showcase2a.gif)
+![Example of union area](showcase/showcase2b.gif)
 
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.<br>
