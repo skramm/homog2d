@@ -1,0 +1,11 @@
+// this file is part of homog2d
+// used to build the figures that are included in manual
+
+#define HOMOG2D_USE_OPENCV
+
+#include "homog2d.hpp"
+#include "opencv2/highgui.hpp"
+
+using namespace h2d;
+using namespace h2d::img;
+

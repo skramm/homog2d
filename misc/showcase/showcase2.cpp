@@ -55,11 +55,11 @@ int main( int argc, const char** argv )
 			r1.translate(0,30);
 		}
 		std::ostringstream ossa;
-		ossa << "BUILD/showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossa.str(), imga.getReal() );
 
 		std::ostringstream ossb;
-		ossb << "BUILD/showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossb << "showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossb.str(), imgb.getReal() );
 
 		r1.translate( mul*20,0);

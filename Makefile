@@ -159,20 +159,22 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
 #=======================================================================
 # Generation of the doc figures from code
 
-DOC_IMAGES_LOC:=docs/figures_src
+DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/figures_src/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/png/%.png, $(DOC_IMAGES_SRC))
 
-.PRECIOUS: docs/figures_src/%
+.PRECIOUS: BUILD/figures_src/src/% BUILD/figures_src/png/%
 
 # run the program
-BUILD/figures_src/%.png: BUILD/figures_src/%
-	cd BUILD/figures_src/; $(notdir $<)
+BUILD/img/png/%.png: BUILD/img/png/bin/%
+#	mkdir -p BUILD/img/png/
+	cd BUILD/img/png; bin/$(notdir $<)
 #	mv $(notdir $@) $(DOC_IMAGES_LOC)/
 
+
 # build the program
-BUILD/figures_src/%: $(DOC_IMAGES_LOC)/%.cpp
-	@mkdir -p BUILD/figures_src/
+BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp
+	@mkdir -p BUILD/img/png/bin
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 doc_fig: $(DOC_IMAGES_PNG)
@@ -180,12 +182,16 @@ doc_fig: $(DOC_IMAGES_PNG)
 #=======================================================================
 # Generation of the doc figures from LaTeX sources
 
-TEX_FIG_LOC=docs
+TEX_FIG_LOC=misc/figures_src/latex
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
-TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,$(TEX_FIG_LOC)/%.png, $(TEX_FIG_SRC))
+TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,BUILD/fig_latex/%.png, $(TEX_FIG_SRC))
 
-$(TEX_FIG_LOC)/%.png: $(TEX_FIG_LOC)/%.tex
-	cd docs; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
+BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex
+	@mkdir -p BUILD/fig_latex/
+	@cp $< $@
+
+BUILD/fig_latex/%.png: BUILD/fig_latex/%.tex
+	cd BUILD/fig_latex; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
 doc_fig_tex: $(TEX_FIG_PNG)
 
@@ -294,7 +300,7 @@ SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase%.gif, $
 BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	@mkdir -p BUILD/showcase/
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
-	$@
+	cd BUILD/showcase/; ./$(notdir $@)
 
 showcase: $(SHOWCASE_BIN)
 	docs/build_gif.sh

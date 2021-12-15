@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates two moving recangles
+\brief Generates two moving rectangles
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
@@ -43,7 +43,7 @@ int main( int argc, const char** argv )
 		rect2_d.draw( im, DrawParams().setColor(0,0,250) );
 		getBB(rect1_d, rect2_d).draw( im, DrawParams().setColor(g,g,g) );
 		std::ostringstream ossa;
-		ossa << "BUILD/showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossa.str(), im.getReal() );
 	}
 }

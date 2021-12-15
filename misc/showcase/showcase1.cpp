@@ -98,7 +98,7 @@ int main( int argc, const char** argv )
 			draw( myImg, interse.get(), color_red );
 */
 		std::ostringstream oss;
-		oss << "BUILD/showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( oss.str(), myImg.getReal() );
 
 		pl = H * pl;

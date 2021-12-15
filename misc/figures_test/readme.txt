@@ -7,6 +7,6 @@ To build the associated figures, enter `$ make test_fig`
 and check BUILD/figures_test
 
 This target will produce a valid cpp file, by concatenating
-header.cpp, footer.cpp, and the considered *.code file,
+a header, a footer, and the considered *.code file,
 then compile it, then run it to generate the .png file.
 

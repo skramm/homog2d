@@ -49,7 +49,7 @@ int main( int argc, const char** argv )
 		auto pts2 = Hdraw * pts.get();
 		draw( img2, pts2 );
 		std::ostringstream ossa;
-		ossa << "BUILD/showcase3_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase3_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossa.str(), img2.getReal() );
 	}
 }
