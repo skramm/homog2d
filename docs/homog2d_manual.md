@@ -250,9 +250,8 @@ Besides points and lines, the following primitives are provided:
 * [polyline](#p_polyline)
 * [ellipse](#p_ellipse)
 
-All these provide some common features:
-
-* `getBB()`: returns a [flat rectangle](#p_frect) holding the bounding box
+The ones that may cover some area (polyline, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
+This is not available for points, lines, and segments (as a segment can be vertical or horizontal, thus holding no area).
 
 Besides these, you can also get the bounding box of two arbitrary primitives `p1`,`p2`, even of different types, with a free function:
 

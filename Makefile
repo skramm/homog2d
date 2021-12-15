@@ -170,7 +170,7 @@ BUILD/img/png/%.png: BUILD/img/png/bin/%
 	cd BUILD/img/png; bin/$(notdir $<)
 
 # build the program
-BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp
+BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@mkdir -p BUILD/img/png/bin
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 

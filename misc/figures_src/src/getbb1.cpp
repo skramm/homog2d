@@ -15,11 +15,11 @@ int main()
 	c2.draw( im, DrawParams().setColor(250,0,20) );
 	getBB(c2).draw( im );
 
-	Segment seg( 3.5, 3., 7., 0.5 );
+/*	Segment seg( 3.5, 3., 7., 0.5 );
 	seg = H*seg;
 	seg.draw( im, DrawParams().setColor(250,0,20) );
 	getBB(seg).draw( im );
-
+*/
 	Ellipse e( 10.,2., 2., 1.2, 25*M_PI/180. );
 	e = H*e;
 	e.draw( im, DrawParams().setColor(250,0,20) );
