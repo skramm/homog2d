@@ -565,7 +565,7 @@ Internally, it is stored as a conic in its matrix form (see [build options](#bui
 _Warning: support for ellipse is only partial at present, several features available with all the other primitives may not
 all be available for this type_
 
-![ellipse1](ellipse1.png)
+![ellipse1](img_latex/ellipse1.png)
 
 It can be build using several constructors:
 

@@ -38,28 +38,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../docs/build_gif.sh" />
-		<Unit filename="../docs/fig1.tex">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/fig2.tex">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/figures_src/circles1.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/figures_src/fig_src.header" />
-		<Unit filename="../docs/figures_src/frect1.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/figures_src/frect2.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/figures_src/polyline1.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/figures_src/segment1.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="../docs/future_stuff_doc.txt" />
 		<Unit filename="../docs/homog2d_Polyline.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
@@ -96,6 +74,18 @@
 		<Unit filename="extra_style_sheet.css">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="figures_src/latex/ellipse1.tex" />
+		<Unit filename="figures_src/latex/fig1.tex" />
+		<Unit filename="figures_src/latex/fig2.tex" />
+		<Unit filename="figures_src/latex/fig3.tex" />
+		<Unit filename="figures_src/src/circles1.cpp" />
+		<Unit filename="figures_src/src/fig_src.header" />
+		<Unit filename="figures_src/src/frect1.cpp" />
+		<Unit filename="figures_src/src/frect2.cpp" />
+		<Unit filename="figures_src/src/getbb1.cpp" />
+		<Unit filename="figures_src/src/polyline1.cpp" />
+		<Unit filename="figures_src/src/polyline2.cpp" />
+		<Unit filename="figures_src/src/segment1.cpp" />
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

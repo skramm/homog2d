@@ -3132,12 +3132,6 @@ public:
 		return _ptS1.distTo( _ptS2 );
 	}
 
-/// Returns Bounding Box
-	FRect_<FPT> getBB() const
-	{
-		return FRect_<FPT>(	_ptS1, _ptS2 );
-	}
-
 /// Get angle between segment and other segment/line
 /**
 This will call the line angle function, thus the returned value will be
@@ -6205,6 +6199,24 @@ size( const FRect_<FPT>& rect )
 	return rect.size();
 }
 
+/// Returns Bounding Box of Ellipse_ (free function)
+/// \sa Ellipse_::getBB()
+template<typename FPT>
+PolylineBase<type::IsClosed,FPT>
+getOBB( const Ellipse_<FPT>& ell )
+{
+	return ell.getOBB();
+}
+
+#if 1
+/// Returns Bounding Box of object (free function)
+template<typename T>
+FRect_<typename T::FType>
+getBB( const T& object )
+{
+	return object.getBB();
+}
+#else
 
 /// Returns Bounding Box of Ellipse_ (free function)
 /// \sa Ellipse_::getBB()
@@ -6241,6 +6253,7 @@ getBB( const PolylineBase<PLT,FPT>& pl )
 {
 	return pl.getBB();
 }
+#endif
 
 namespace priv {
 /// Returns Bounding Box of two rectangles (private free function)

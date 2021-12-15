@@ -1737,11 +1737,16 @@ TEST_CASE( "Circle", "[cir1]" )
 		CHECK( c1.center() == Point2d(0,0) );
 		CHECK( center(c1)  == Point2d(0,0) );
 		CHECK( c1.radius() == 1. );
+		CHECK( c1.getBB() == FRect(-1,-1,1,1 ) );
+		CHECK( getBB(c1)  == FRect(-1,-1,1,1 ) );
 	}
 	{
-		Circle_<NUMTYPE> c1(444);  // Constructor 2
+		int i = 44;
+		Circle_<NUMTYPE> c1(i);  // Constructor 2
 		CHECK( c1.center() == Point2d(0,0) );
-		CHECK( c1.radius() == 444. );
+		CHECK( c1.radius() == i );
+		CHECK( c1.getBB() == FRect(-i,-i,i,i) );
+		CHECK( getBB(c1)  == FRect(-i,-i,i,i) );
 	}
 	{
 		Point2d pt( 4,5);
@@ -2201,6 +2206,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		FRect bb1( 0,0, 3,5);
 		CHECK( getBB(po1) == bb1 );
 		CHECK( getBB(pc1) == bb1 );
+		CHECK( po1.getBB() == bb1 );
+		CHECK( pc1.getBB() == bb1 );
 	}
 	{
 		std::vector<Point2d> vpt{ {0,0}, {1,1}, {0,1}, {1,0} };
