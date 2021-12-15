@@ -5093,12 +5093,23 @@ Ellipse_<FPT>::getAxisLines() const
 }
 
 //------------------------------------------------------------------
-/// Returns bounding box of ellipse (as an FRect_)
+/// Returns axis-aligned bounding box of ellipse
+/**
+- see https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
+*/
 template<typename FPT>
 FRect_<FPT>
 Ellipse_<FPT>::getBB() const
 {
-	return getOBB().getBB();
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	auto vx = par.a2 * par.cost * par.cost	+ par.b2 * par.sint * par.sint;
+	auto vy = par.a2 * par.sint * par.sint	+ par.b2 * par.cost * par.cost;
+	auto vx_sq = std::sqrt( vx );
+	auto vy_sq = std::sqrt( vy );
+	return FRect_<FPT>(
+		Point2d_<FPT>( par.x0 - vx_sq, par.y0 - vy_sq ),
+		Point2d_<FPT>( par.x0 + vx_sq, par.y0 + vy_sq )
+	);
 }
 
 //------------------------------------------------------------------
@@ -6276,7 +6287,8 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 } // namespace priv
 
 /// Returns Bounding Box of two arbitrary objects (free function)
-/** works whatever their real type and floating-point type
+/**
+- available only for Circles, Ellipse, FRect, Polyline
 */
 template<typename T1,typename T2>
 FRect_<typename T1::FType>

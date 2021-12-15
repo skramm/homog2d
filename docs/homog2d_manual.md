@@ -228,7 +228,6 @@ auto liA = p_lines1.first;
 auto liB = p_lines1.second;
 ```
 
-
 If you know that two lines are parallel and you want the distance between them, then you have:
 ```C++
 auto dist = getParallelDistance( li1, li2 );
@@ -251,13 +250,22 @@ Besides points and lines, the following primitives are provided:
 * [ellipse](#p_ellipse)
 
 The ones that may cover some area (polyline, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
-This is not available for points, lines, and segments (as a segment can be vertical or horizontal, thus holding no area).
+This is not available for points, lines, and segments (as a segment can be vertical or horizontal, it does not have an area).
+
+On this figure, you can see a circle, a polyline and and ellipse, along with their corresponding bounding boxes.
+For the ellipse, you can get both the axis-aligned bounding box (shown in blue here), and the ellipse-axis aligned bounding box, shown in green.
+
+![getbb1a](img/getbb1a.png)
 
 Besides these, you can also get the bounding box of two arbitrary primitives `p1`,`p2`, even of different types, with a free function:
 
 ```C++
 auto bb = getBB( p1, p2 );
 ```
+
+On this figure, you can see the three combinations of bounding boxes for the three objects above.
+
+![getbb1b](img/getbb1b.png)
 
 ### 3.1 - Segments
 <a name="p_segment"></a>
