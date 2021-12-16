@@ -47,7 +47,8 @@ testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	misc/test_all.sh
 
 check:
-	cppcheck . --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
+	@cppcheck --version
+	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
 	xdg-open cppcheck.log
 
 doc: BUILD/html/index.html
@@ -93,7 +94,7 @@ variants=test_SY test_SN
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
 newtests:
-	-rm BUILD/homog2d_test.stderr
+	@if [ -e BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
@@ -106,13 +107,8 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	-rm BUILD/homog2d_test.stderr
+	@if [ -e BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
-#	 2>BUILD/homog2d_test_SY.stderr
-
-#BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-#	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_SN.stderr
-
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
@@ -304,8 +300,5 @@ showcase: $(SHOWCASE_BIN)
 	docs/build_gif.sh
 	@echo "done target $@"
 
-#BUILD/showcase%: misc/showcase%.cpp homog2d.hpp
-#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
-#	$@
 
 #=================================================================

@@ -1759,6 +1759,10 @@ TEST_CASE( "Circle", "[cir1]" )
 		CHECK( c1.center() == Point2d(1,2) );
 		CHECK( c1.radius() == 3 );
 	}
+	{
+		CHECK_THROWS( Circle_<NUMTYPE>(1,2,0.) );
+		CHECK_THROWS( Circle_<NUMTYPE>(1,2,-1.) );
+	}
 }
 
 

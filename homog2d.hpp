@@ -1536,8 +1536,8 @@ private:
 		x0 = std::min( x0, pt3.getX() );
 		x0 = std::min( x0, pt4.getX() );
 		auto y0 = std::min( pt1.getY(), pt2.getY() );
-		y0 = std::min( x0, pt3.getY() );
-		y0 = std::min( x0, pt4.getY() );
+		y0 = std::min( y0, pt3.getY() );
+		y0 = std::min( y0, pt4.getY() );
 
 		auto x1 = std::max( pt1.getX(), pt2.getX() );
 		x1 = std::max( x1, pt3.getX() );
@@ -1850,8 +1850,12 @@ public:
 	Circle_( const Point2d_<T1>& center, T2 rad )
 		: _radius(rad), _center(center)
 	{
+#ifndef HOMOG2D_NOCHECKS
 		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+		if( rad < 0. )
+			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
+#endif
 	}
 
 /// Constructor 4: x, y, radius
@@ -1875,8 +1879,8 @@ public:
 	FPT&       radius()       { return _radius; }
 	const FPT& radius() const { return _radius; }
 
-	Point2d_<FPT>       center()       { return _center; }
-	const Point2d_<FPT> center() const { return _center; }
+	Point2d_<FPT>&       center()       { return _center; }
+	const Point2d_<FPT>& center() const { return _center; }
 
 /// Returns Bounding Box
 	FRect_<FPT> getBB() const
@@ -1888,10 +1892,13 @@ public:
 	}
 ///@}
 
-	void set( const Point2d_<FPT>& center, FPT rad )
+	template<typename FPT2,typename FPT3>
+	void set( const Point2d_<FPT2>& center, FPT3 rad )
 	{
-		_radius = rad;
-		_center = center;
+		Circle_<FPT> c( center, rad );
+		std::swap( c, this ); /// \todo 20211216: replace with move
+//		_radius = rad;
+//		_center = center;
 	}
 
 	template<typename T1, typename T2>
@@ -4225,7 +4232,9 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 #endif
 		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
 	}
-
+/*------------------------
+ If we get to this point, we have 2 intersection points
+------------------------*/
 #ifndef HOMOG2D_DEBUGMODE
 	assert( inter.size() == 2 );
 #else
@@ -4978,7 +4987,7 @@ template<typename T>
 detail::EllParams<T>
 Ellipse_<FPT>::p_computeParams() const
 {
-	auto& m = detail::Matrix_<FPT>::_mdata;
+	const auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A = m[0][0];
 	HOMOG2D_INUMTYPE C = m[1][1];
 	HOMOG2D_INUMTYPE F = m[2][2];
@@ -5034,7 +5043,7 @@ template<typename FPT>
 bool
 Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 {
-	auto& m = detail::Matrix_<FPT>::_mdata;
+	const auto& m = detail::Matrix_<FPT>::_mdata;
 	HOMOG2D_INUMTYPE A  = m[0][0];
 	HOMOG2D_INUMTYPE C  = m[1][1];
 	HOMOG2D_INUMTYPE B2 = m[0][1];
@@ -5855,8 +5864,16 @@ template<typename T>
 void
 Hmatrix_<W,FPT>::applyTo( T& vin ) const
 {
+#if 0
+	std::transform(
+		std::begin( vin ),
+		std::end( vin ),
+		std::begin( vin ),
+#else
+	);
 	for( auto& elem: vin )
 		elem = *this * elem;
+#endif
 }
 
 namespace detail {

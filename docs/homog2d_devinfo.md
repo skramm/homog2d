@@ -20,7 +20,7 @@ everything that gets build ends up in the `BUILD` folder
 * `clean`: erase everything that was built (in the `BUILD` folder)
 * `test`: builds and runs the unit test with and without the `HOMOG2D_OPTIMIZE_SPEED` build option
 * `testall`: builds and runs the unit test for the 3 different numerical types
-* `check`: runs cppcheck (static analysis)
+* `check`: runs cppcheck (static analysis) ( https://cppcheck.sourceforge.io/ )
 * `install`: `cp homog2d.hpp /usr/local/include`
 * `doc`: build html reference (requires doxygen)
 * `nobuild`: checks that the files in `misc/no_build` contain illegal code (part of the test process)
@@ -60,7 +60,7 @@ The makefile then compiles it and runs it.
 ## Code details
 
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
-As the Root class is already templatized on the type (Point or Line),
+As the `LPBase` class is already templatized on the type (`type::IsPoint` or `type::IsLine`),
 it would require a partial template specialization to define the behavior of each member function (or free function),
 depending on the basic type (Line or Point), and still templatize on the numerical type.
 C++ does not allow this.
@@ -70,7 +70,7 @@ To achieve this overloading, each of these functions receives as additional (dum
 In the definition of the function, this additional argument value is ignored,
 it is there just so that the compiler can select the correct overload.
 
-The two implementations (for points and for lines) are written as two `impl_` private functions that are templated by the numerical data type.
+The different implementations are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
 the implementation of that type only holds a `static_assert`, so that can be catched at build time.
 
@@ -84,6 +84,6 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 - `camelCase` for identifiers
 - class member variables are prefixed with an underscore (`_`)
 - spaces after parenthesis (`if( someBool )`)
-- private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation for points/lines)
+- private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation)
 - all symbols start with `HOMOG2D_`, to avoid name collisions
 
