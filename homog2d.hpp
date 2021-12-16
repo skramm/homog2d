@@ -5869,8 +5869,8 @@ Hmatrix_<W,FPT>::applyTo( T& vin ) const
 		std::begin( vin ),
 		std::end( vin ),
 		std::begin( vin ),
-#else
 	);
+#else
 	for( auto& elem: vin )
 		elem = *this * elem;
 #endif
