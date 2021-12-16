@@ -683,11 +683,18 @@ TEST_CASE( "test Homogr", "[testH]" )
 		Homogr_<NUMTYPE> H;
 		H.setTranslation(5,6);
 
-		std::vector<Point2d> v_pt(3);
-		H.applyTo( v_pt );
+		std::vector<Point2d> v_pt(3);  // 3 points at (0,0)
+		H.applyTo( v_pt );             // translate them all to (+5,+6)
 		CHECK( v_pt[2].getX() == 5 );
+		CHECK( v_pt[2].getY() == 6 );
+		CHECK( v_pt[0].getX() == 5 );
+		CHECK( v_pt[0].getY() == 6 );
 		auto vpt2 = H * v_pt;
-		CHECK( v_pt.size() == 3 );
+		CHECK( v_pt2.size() == 3 );
+		CHECK( v_pt2[2].getX() == 10 );
+		CHECK( v_pt2[2].getY() == 12 );
+		CHECK( v_pt2[0].getX() == 10 );
+		CHECK( v_pt2[0].getY() == 12 );
 
 		std::array<Point2d,3> a_pt;
 		H.applyTo( a_pt );
