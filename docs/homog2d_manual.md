@@ -1,6 +1,6 @@
 # Manual
 
-Home page: https://github.com/skramm/homog2d
+Home page: [github.com/skramm/homog2d](https://github.com/skramm/homog2d)
 
 This is the manual for the current master branch of `homog2d`.
 For stable releases, see home page.

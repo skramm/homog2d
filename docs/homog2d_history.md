@@ -1,5 +1,7 @@
 # History
 
+[Manual main page](homog2d_manual.md)
+
 See [Release page](https://github.com/skramm/homog2d/releases).
 
 - planned:
