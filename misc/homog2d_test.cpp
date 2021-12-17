@@ -369,6 +369,37 @@ TEST_CASE( "TMP test1", "[tmp1]" )
 		<< "\n";
 }
 
+TEST_CASE( "line/point distance", "[lp-dist]" )
+{
+	auto n= 100000;
+	float k = 1000;
+	std::srand( time(0) );
+	for( auto i=0; i<n; i++ )
+	{
+		Point2d_<NUMTYPE> pt1(
+			1.0*rand()/RAND_MAX * k,
+			1.0*rand()/RAND_MAX * k
+		);
+		Point2d_<NUMTYPE> pt2(
+			1.0*rand()/RAND_MAX * k,
+			1.0*rand()/RAND_MAX * k
+		);
+		auto li = pt1 * pt2;
+		CHECK( li.distTo(pt1)< Point2d::nullDistance() );
+		CHECK( li.distTo(pt2)< Point2d::nullDistance() );
+	}
+/*	std::cout << std::scientific
+		<< "\npt0=" << pt0
+		<< "\npt1=" << pt1
+		<< "\nline=" << line
+		<< "\ndist to pt0=" << pt0.distTo( line )
+		<< "\ndist to pt1=" << pt1.distTo( line )
+		<< "\ndist to pt0=" << line.distTo( pt0 )
+		<< "\ndist to pt1=" << line.distTo( pt1 )
+		<< "\n";
+*/
+}
+
 TEST_CASE( "test1", "[test1]" )
 {
 	Point2d_<NUMTYPE> ptA1; // 0,0
