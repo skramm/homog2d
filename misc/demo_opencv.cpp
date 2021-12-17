@@ -926,7 +926,7 @@ struct Param_ELL : Data
 		auto bb1 = ell2.getBB();
 		bb1.draw( img, DrawParams().setColor(0,0,250) );
 
-		auto bb2 = bb1.getBB();
+		auto bb2 = ell2.getOBB();
 		bb2.draw( img, DrawParams().setColor(0,250,0) );
 
 		auto axis = ell2.getAxisLines();

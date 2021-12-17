@@ -72,7 +72,7 @@ See https://github.com/skramm/homog2d
 		{ \
 			std::cerr << "Homog2d assert failure, version:" << HOMOG2D_VERSION \
 				<< ", line:" << __LINE__ << "\n -details: " << b << '\n'; \
-			std::cout << "homog2d: internal failure, please check stderr and report this\n"; \
+			std::cout << "homog2d: internal failure, please check stderr and report this on https://github.com/skramm/homog2d/issues\n"; \
 			std::exit(1); \
 		} \
 	}
@@ -515,7 +515,7 @@ protected:
 				mat._mdata[i][j] /= value;
 		_isNormalized = false;
 	}
-
+#if 0
 /// Matrix multiplication
 	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
 	{
@@ -524,7 +524,11 @@ protected:
 		product( out, h1, h2 );
 		return out;
 	}
+#else
+	template<typename T1,typename T2>
+	friend Matrix_<T1> operator * ( const Matrix_<T1>&, const Matrix_<T2>& );
 
+#endif
 private:
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
 	{
@@ -577,6 +581,18 @@ void
 product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
 
 
+
+#if 1
+
+	template<typename T1,typename T2>
+	Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
+	{
+		HOMOG2D_START;
+		Matrix_<T1> out;
+		product( out, h1, h2 );
+		return out;
+	}
+#endif
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -2077,12 +2093,13 @@ getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
 	return std::make_pair( pt1, pt2 );
 }
 
-/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B()
+/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B(),
+/// Compute orthogonal line to \c li at point \c pt (that must lie on the line)
 template<typename T1,typename T2>
 Line2d_<T1>
 getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 {
-	auto arr = li.get();
+	auto arr = li.get(); // get array of 3 values
 	Line2d_<T1> out(
 		-arr[1],
 		arr[0],
@@ -2123,6 +2140,39 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 #endif
 } // namespace priv
 
+//------------------------------------------------------------------
+/*
+namespace thr
+{
+
+static HOMOG2D_INUMTYPE& nullAngleValue()
+{
+	static HOMOG2D_INUMTYPE _zeroAngleValue;
+	return _zeroAngleValue;
+}
+static HOMOG2D_INUMTYPE& nullDistance()
+{
+	static HOMOG2D_INUMTYPE _zeroDistance;
+	return _zeroDistance;
+}
+static HOMOG2D_INUMTYPE& nullOffsetValue()
+{
+	static HOMOG2D_INUMTYPE _zeroOffset;
+	return _zeroOffset;
+}
+static HOMOG2D_INUMTYPE& nullOrthogDistance()
+{
+	static HOMOG2D_INUMTYPE _zeroOrthoDistance;
+	return _zeroOrthoDistance;
+}
+static HOMOG2D_INUMTYPE& nullDenom()
+{
+	static HOMOG2D_INUMTYPE _zeroDenom;
+	return _zeroDenom;
+}
+
+} // namespace thr
+*/
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
@@ -2679,6 +2729,7 @@ public:
 	}
 #endif // HOMOG2D_USE_OPENCV
 
+#if 1
 	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
 	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
 	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
@@ -2697,6 +2748,7 @@ private:
 	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
 	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
 	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
+#endif
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -2811,7 +2863,8 @@ template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
 template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-8;
+HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-12;
+//HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-05;
 
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroOrthoDistance = 1E-18;
@@ -5095,8 +5148,9 @@ Ellipse_<FPT>::getAxisLines() const
 		par.y0 + dy
 	);
 	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
-
 	auto li_H = ptA * pt0;
+	HOMOG2D_LOG( "ptA=" << ptA << " pt0=" << pt0 << "li_H=" << li_H );
+
 	auto li_V = li_H.getOrthogonalLine( pt0 );
 	return std::make_pair( li_H, li_V );
 }
@@ -5327,7 +5381,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const deta
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > nullDistance() )
 	{
-		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt ) << " > null distance (" << nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getPoints", "point is not on line" );
 	}
 #endif
@@ -5375,7 +5429,8 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail:
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > nullDistance() )
 	{
-		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
+			<< "> null distance (" << nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getOrthogonalLine", "point is not on line" );
 	}
 #endif

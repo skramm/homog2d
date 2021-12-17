@@ -37,12 +37,12 @@ endif
 #=======================================================================
 # general/common targets
 
-test: test_SY test_SN nobuild
+test: test_SY test_SN nobuild speed_test_b
 	@echo "Make: run test, build using $(CXX)"
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
 
-testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 
@@ -94,7 +94,7 @@ variants=test_SY test_SN
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
 newtests:
-	@if [ -e BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
+	-if [ -f BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
@@ -107,7 +107,7 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	@if [ -e BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
+	-if [ -f BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
@@ -133,10 +133,12 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 
 #=======================================================================
 # speed test
-speed_test: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+speed_test: speed_test_b
 	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
+
+speed_test_b: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
 
 BUILD/ellipse_speed_test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
@@ -296,7 +298,10 @@ BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 	cd BUILD/showcase/; ./$(notdir $@)
 
-showcase: $(SHOWCASE_BIN)
+showcase_b: $(SHOWCASE_BIN)
+	@echo "done target $@"
+
+showcase: showcase_b
 	docs/build_gif.sh
 	@echo "done target $@"
 
