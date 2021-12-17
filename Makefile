@@ -37,12 +37,12 @@ endif
 #=======================================================================
 # general/common targets
 
-test: test_SY test_SN nobuild speed_test_b
+test: test_SY test_SN nobuild
 	@echo "Make: run test, build using $(CXX)"
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
 
-testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 

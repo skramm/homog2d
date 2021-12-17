@@ -53,7 +53,10 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_LOG(a) std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " << a << '\n'
+	#define HOMOG2D_LOG(a) \
+		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
+		<< std::scientific << std::setprecision(10) \
+		<< a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
 #endif
@@ -3243,7 +3246,10 @@ the one with smallest y-coordinate will be returned first */
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
 	{
-		return _ptS1 * _ptS2;
+		Point2d_<HOMOG2D_INUMTYPE> pt1( _ptS1 );
+		Point2d_<HOMOG2D_INUMTYPE> pt2( _ptS2 );
+		auto li = pt1 * pt2;
+		return Line2d_<FPT>(li);
 	}
 
 /// \name Intersection functions
@@ -5141,15 +5147,15 @@ std::pair<Line2d_<FPT>,Line2d_<FPT>>
 Ellipse_<FPT>::getAxisLines() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
-	auto dy = par.sint * par.a;
-	auto dx = par.cost * par.a;
-	Point2d_<FPT> ptA(
+	auto dy = static_cast<HOMOG2D_INUMTYPE>(par.sint) * par.a;
+	auto dx = static_cast<HOMOG2D_INUMTYPE>(par.cost) * par.a;
+	Point2d_<HOMOG2D_INUMTYPE> ptA(
 		par.x0 + dx,
 		par.y0 + dy
 	);
 	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
 	auto li_H = ptA * pt0;
-	HOMOG2D_LOG( "ptA=" << ptA << " pt0=" << pt0 << "li_H=" << li_H );
+	HOMOG2D_LOG( std::scientific << "ptA=" << ptA << " pt0=" << pt0 << " li_H=" << li_H );
 
 	auto li_V = li_H.getOrthogonalLine( pt0 );
 	return std::make_pair( li_H, li_V );
@@ -5858,18 +5864,18 @@ detail::Intersect<detail::Inters_2,FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
 	HOMOG2D_START;
-
-//	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
+	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
 	std::vector<Point2d_<FPT>> pti;
-	for( const auto seg: rect.getSegs() )
+	for( const auto seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
+		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
+			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if intersection point is one of the segment pts
 				if( pti.size() == 1 )                            // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
 						storePoint = false;
@@ -5880,7 +5886,7 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Ro
 				break;
 		}
 	}
-
+#if 0
 #ifndef HOMOG2D_DEBUGMODE
 	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
 #else
@@ -5889,6 +5895,11 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Ro
 		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
 						<< "\n -pti.size()=" << pti.size()
 	);
+#endif
+	if( pti.size() == 1 )         // if single intersections,
+		pti.push_back( pti[0] );  // we return two indentical points
+#else
+
 #endif
 
 	if( pti.empty() )

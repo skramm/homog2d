@@ -353,6 +353,22 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 	}
 }
 
+TEST_CASE( "TMP test1", "[tmp1]" )
+{
+	Point2d_<NUMTYPE> pt1(202.858,86.9109);
+	Point2d_<NUMTYPE> pt0(154.429,74.4764);
+	auto line = pt1*pt0;
+	std::cout << std::scientific
+		<< "\npt0=" << pt0
+		<< "\npt1=" << pt1
+		<< "\nline=" << line
+		<< "\ndist to pt0=" << pt0.distTo( line )
+		<< "\ndist to pt1=" << pt1.distTo( line )
+		<< "\ndist to pt0=" << line.distTo( pt0 )
+		<< "\ndist to pt1=" << line.distTo( pt1 )
+		<< "\n";
+}
+
 TEST_CASE( "test1", "[test1]" )
 {
 	Point2d_<NUMTYPE> ptA1; // 0,0
