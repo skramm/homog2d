@@ -309,7 +309,14 @@ dtest: BUILD/dtest
 
 BUILD/dtest: misc/dtest.cpp Makefile
 	$(CXX) $(CXXFLAGS) -o $@ $<
-	./$@
+	./$@ .01
+	./$@ .1
+	./$@ 1
+	./$@ 10
+	./$@ 100
+	./$@ 1000
+	./$@ 10000
+
 
 
 
