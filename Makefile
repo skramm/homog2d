@@ -305,5 +305,12 @@ showcase: showcase_b
 	docs/build_gif.sh
 	@echo "done target $@"
 
+dtest: BUILD/dtest
+
+BUILD/dtest: misc/dtest.cpp Makefile
+	$(CXX) $(CXXFLAGS) -o $@ $<
+	./$@
+
+
 
 #=================================================================
