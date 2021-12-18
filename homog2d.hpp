@@ -464,18 +464,6 @@ protected:
 		_isNormalized = true;
 	}
 
-#if 0
-/// Used by copy constructor
-/** \todo maybe integrate into CC ? Not used anywhere else... */
-	template<typename FPT2>
-	void p_copyTo( const Matrix_<FPT2>& other )
-	{
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				other._mdata[i][j] = _mdata[i][j];
-	}
-#endif
-
 /// Divide all elements by the value at (r,c), used for normalization.
 /** No need to check value, done by caller */
 	void p_divideBy( size_t r, size_t c ) const
@@ -585,17 +573,15 @@ product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& 
 
 
 
-#if 1
+template<typename T1,typename T2>
+Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
+{
+	HOMOG2D_START;
+	Matrix_<T1> out;
+	product( out, h1, h2 );
+	return out;
+}
 
-	template<typename T1,typename T2>
-	Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
-	{
-		HOMOG2D_START;
-		Matrix_<T1> out;
-		product( out, h1, h2 );
-		return out;
-	}
-#endif
 } // namespace detail
 
 //------------------------------------------------------------------
@@ -5886,26 +5872,13 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Ro
 				break;
 		}
 	}
-#if 0
-#ifndef HOMOG2D_DEBUGMODE
-	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
-#else
-	HOMOG2D_DEBUG_ASSERT(
-		( pti.size() == 0 || pti.size() == 2 ),
-		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
-						<< "\n -pti.size()=" << pti.size()
-	);
-#endif
-	if( pti.size() == 1 )         // if single intersections,
-		pti.push_back( pti[0] );  // we return two indentical points
-#else
-
-#endif
-
 	if( pti.empty() )
 		return detail::Intersect<detail::Inters_2,FPT>();
 
-	priv::fix_order( pti[0], pti[1] );
+	if( pti.size() == 1 )         // if single intersections, add one,
+		pti.push_back( pti[0] );  // we return two identical points
+	else
+		priv::fix_order( pti[0], pti[1] );
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
@@ -6302,7 +6275,6 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
-#if 1
 /// Returns Bounding Box of object (free function)
 template<typename T>
 FRect_<typename T::FType>
@@ -6310,44 +6282,6 @@ getBB( const T& object )
 {
 	return object.getBB();
 }
-#else
-
-/// Returns Bounding Box of Ellipse_ (free function)
-/// \sa Ellipse_::getBB()
-template<typename FPT>
-PolylineBase<type::IsClosed,FPT>
-getBB( const Ellipse_<FPT>& ell )
-{
-	return ell.getBB();
-}
-
-/// Returns Bounding Box of Segment_ (free function)
-/// \sa Segment_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Segment_<FPT>& seg )
-{
-	return seg.getBB();
-}
-
-/// Returns Bounding Box of Circle_ (free function)
-/// \sa Circle_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Circle_<FPT>& cir )
-{
-	return cir.getBB();
-}
-
-/// Returns Bounding Box of PolylineBase (free function)
-/// \sa PolylineBase::getBB()
-template<typename PLT,typename FPT>
-FRect_<FPT>
-getBB( const PolylineBase<PLT,FPT>& pl )
-{
-	return pl.getBB();
-}
-#endif
 
 namespace priv {
 /// Returns Bounding Box of two rectangles (private free function)

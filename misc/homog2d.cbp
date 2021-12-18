@@ -70,6 +70,7 @@
 		<Unit filename="doxyfile_opencv">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="dtest.cpp" />
 		<Unit filename="ellipse_speed_test.cpp" />
 		<Unit filename="extra_style_sheet.css">
 			<Option target="&lt;{~None~}&gt;" />
@@ -151,14 +152,12 @@
 		<Unit filename="showcase/showcase2.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
 		<Unit filename="showcase/showcase4.cpp" />
+		<Unit filename="showcase/showcase5.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

@@ -353,26 +353,12 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 	}
 }
 
-TEST_CASE( "TMP test1", "[tmp1]" )
-{
-	Point2d_<NUMTYPE> pt1(202.858,86.9109);
-	Point2d_<NUMTYPE> pt0(154.429,74.4764);
-	auto line = pt1*pt0;
-	std::cout << std::scientific
-		<< "\npt0=" << pt0
-		<< "\npt1=" << pt1
-		<< "\nline=" << line
-		<< "\ndist to pt0=" << pt0.distTo( line )
-		<< "\ndist to pt1=" << pt1.distTo( line )
-		<< "\ndist to pt0=" << line.distTo( pt0 )
-		<< "\ndist to pt1=" << line.distTo( pt1 )
-		<< "\n";
-}
 
 TEST_CASE( "line/point distance", "[lp-dist]" )
 {
-	auto n= 100000;
-	float k = 1000;
+	size_t n = 1E6;  // nb of runs
+	size_t c = 0;
+	float k = 1;
 	std::srand( time(0) );
 	for( auto i=0; i<n; i++ )
 	{
@@ -385,19 +371,12 @@ TEST_CASE( "line/point distance", "[lp-dist]" )
 			1.0*rand()/RAND_MAX * k
 		);
 		auto li = pt1 * pt2;
-		CHECK( li.distTo(pt1)< Point2d::nullDistance() );
-		CHECK( li.distTo(pt2)< Point2d::nullDistance() );
+		if( li.distTo(pt1) > Point2d::nullDistance() )
+			c++;
+		if( li.distTo(pt2) > Point2d::nullDistance() )
+			c++;
 	}
-/*	std::cout << std::scientific
-		<< "\npt0=" << pt0
-		<< "\npt1=" << pt1
-		<< "\nline=" << line
-		<< "\ndist to pt0=" << pt0.distTo( line )
-		<< "\ndist to pt1=" << pt1.distTo( line )
-		<< "\ndist to pt0=" << line.distTo( pt0 )
-		<< "\ndist to pt1=" << line.distTo( pt1 )
-		<< "\n";
-*/
+	CHECK( c == 0 );
 }
 
 TEST_CASE( "test1", "[test1]" )

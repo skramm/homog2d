@@ -2,9 +2,9 @@
 
 
 
-#define HOMOG2D_INUMTYPE long double
-//#define HOMOG2D_INUMTYPE float
-#define HOMOG2D_INUMTYPE double
+//#define HOMOG2D_INUMTYPE long double
+#define HOMOG2D_INUMTYPE float
+//#define HOMOG2D_INUMTYPE double
 
 #include "../homog2d.hpp"
 #include <limits>
@@ -40,7 +40,8 @@ int main( int argc, const char **argv )
 	std::srand( time(0) );
 	NUMTYPE sum  = 0.;
 	NUMTYPE vmax = 0.;
-
+	NUMTYPE M2   = 0.;
+	NUMTYPE mean = 0.;
 	for( auto i=0; i<nb; i++ )
 	{
 		Point2d_<NUMTYPE> pt1( getRandom(), getRandom() );
@@ -50,14 +51,28 @@ int main( int argc, const char **argv )
 		NUMTYPE d = li.distTo(pt1);
 		vmax = std::max( vmax, d );
 		sum += d;
-	}
 
-	std::cout << std::scientific
-		<< "random values: min=" << grmin << " max=" << grmax << " mean=" << grsum/nb/4. << "\n";
+/*		auto delta = d - mean;
+		mean += delta / nb;
+        M2 += delta*( d - mean );
+  */
+		auto delta = d - mean;
+		mean += delta / (i+1);
+		auto delta2 = d - mean;
+		M2 += delta * delta2;
+
+	}
+	auto sigma = M2 / (nb-1);
+//	std::cout << std::scientific
+//		<< "random coordinates: min=" << grmin << " max=" << grmax << " mean=" << grsum/nb/4. << "\n";
 	std::cout << std::scientific
 		<< "-results:"
-		<< "mean=" << sum / nb
+		<< "mean1=" << sum / nb
 		<< " max=" << vmax
+		<< " mean2=" << mean
+		<< " sigma=" << sigma
+		<< " mean2/k=" << mean/gk
+		<< " sigma/k=" << sigma/gk
 		<< "\n";
 }
 

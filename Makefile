@@ -279,11 +279,18 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 SHOWCASE_SRC_LOC=misc/showcase
 SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
-SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
+SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%.gif, $(SHOWCASE_SRC))
 #SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 
 
-#BUILD/%.gif: BUILD/%.png
+#BUILD/showcase/showcase%.gif: showcase_b
+#	SHOWCASE_PNG=$(wildcard BUILD/showcase/showcase*.png)
+#	convert -delay 12 -loop 0 BUILD/showcase/*.png $@
+#	rm BUILD/showcase/*.png
+#	@echo "done target $@"
+#", SHOWCASE_PNG=$(SHOWCASE_PNG)"
+
+#BUILD/showcase/%.gif: BUILD/%.png
 #	@echo "done target $<"
 
 #BUILD/showcase%_*.png: BUILD/showcase/showcase%
@@ -302,7 +309,7 @@ showcase_b: $(SHOWCASE_BIN)
 	@echo "done target $@"
 
 showcase: showcase_b
-	docs/build_gif.sh
+	misc/build_gif.sh
 	@echo "done target $@"
 
 dtest: BUILD/dtest
