@@ -506,20 +506,9 @@ protected:
 				mat._mdata[i][j] /= value;
 		_isNormalized = false;
 	}
-#if 0
-/// Matrix multiplication
-	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
-	{
-		HOMOG2D_START;
-		Matrix_ out;
-		product( out, h1, h2 );
-		return out;
-	}
-#else
 	template<typename T1,typename T2>
 	friend Matrix_<T1> operator * ( const Matrix_<T1>&, const Matrix_<T2>& );
 
-#endif
 private:
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
 	{
@@ -570,8 +559,6 @@ public:
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
-
-
 
 template<typename T1,typename T2>
 Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
@@ -3026,7 +3013,7 @@ buildFrom4Points_Eigen(
 
 	return H;
 }
-#endif
+#endif // HOMOG2D_USE_EIGEN
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
