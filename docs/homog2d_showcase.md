@@ -15,11 +15,15 @@ Requires Opencv (to generate images) and ImageMagick (to generate the final gif)
 
 ![showcase3](showcase/showcase3.gif)
 
-* Two dancing rectangles and their common bounding box.
+* [Showcase 4](../misc/showcase/showcase4.cpp): Two dancing objects (Circle and FRect) and their common bounding box.
 
-![showcase1](showcase/showcase4.gif)
+![showcase4](showcase/showcase4.gif)
 
 * Intersection and union areas of two rectangles.
 
 ![Example of intersection area](showcase/showcase2a.gif)
 ![Example of union area](showcase/showcase2b.gif)
+
+* A rotating ellipse with its center point (green), its axis lines, and its two bounding boxes (one aligned with its axis, the other xy-aligned).
+
+![showcase5](showcase/showcase5.gif)

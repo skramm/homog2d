@@ -1204,29 +1204,11 @@ In this library, this can hurt in several ways:
  - creating a line from two points will fail if the points are equal,
  - similarly, computing a point at the intersection of two lines will fail if the lines are parallel.
 
-This library will ensure these conditions, and will throw an exception (of
-type `std::runtime_error`) if that kind of thing happens.
-The thresholds have default values.
+This library will ensure these conditions, and will throw an exception (of type `std::runtime_error`) if that kind of thing happens.
+The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
-- When checking for parallel lines (see Root::isParallelTo() ), the "null" angle value
-has a default value of one thousand of a radian (0.001 rad).
-You can print the current value with:
-```C++
-cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
-```
-It can be changed any time with the same function, for example:
-```C++
-Line2d::nullAngleValue() = 0.01; // 1/100 radian
-```
-This is checked for when computing an intersection point.
-
-- When attempting to compute a line out of two points, the library will throw if
-the distance between the two points is less than `Point2d::nullDistance()`.
-That same function can be used to change (or print) the current value.
-
-- When attempting to compute the inverse of a matrix, if the determinant is less
-than `Homogr::nullDeterValue()`, the inversion code will throw.
+More details and complete list on [threshold page](homog2d_thresholds.md).
 
 ### 7.4 - Additional rounding
 
@@ -1237,7 +1219,7 @@ for each segments supporting line, we check if the intersection point is in the 
 However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
 (i.e. with coordinates in the range [0-99]).
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
-Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
+Unfortunately, the range checking will fail, because the actual computed value will be "99.00000000000123".
 
 To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates,
 so that the value stays at "99":

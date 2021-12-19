@@ -42,7 +42,7 @@ test: test_SY test_SN nobuild
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
 
-testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 
@@ -94,7 +94,7 @@ variants=test_SY test_SN
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
 newtests:
-	@if [ -e BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
+	-if [ -f BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
@@ -107,7 +107,7 @@ demo_check: misc/demo_check.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	@if [ -e BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
+	-if [ -f BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
@@ -133,10 +133,12 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 
 #=======================================================================
 # speed test
-speed_test: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+speed_test: speed_test_b
 	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
+
+speed_test_b: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
 
 BUILD/ellipse_speed_test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
@@ -277,11 +279,18 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 SHOWCASE_SRC_LOC=misc/showcase
 SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
-SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
+SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%.gif, $(SHOWCASE_SRC))
 #SHOWCASE_PNG=$(wildcard misc/showcase*.png)
 
 
-#BUILD/%.gif: BUILD/%.png
+#BUILD/showcase/showcase%.gif: showcase_b
+#	SHOWCASE_PNG=$(wildcard BUILD/showcase/showcase*.png)
+#	convert -delay 12 -loop 0 BUILD/showcase/*.png $@
+#	rm BUILD/showcase/*.png
+#	@echo "done target $@"
+#", SHOWCASE_PNG=$(SHOWCASE_PNG)"
+
+#BUILD/showcase/%.gif: BUILD/%.png
 #	@echo "done target $<"
 
 #BUILD/showcase%_*.png: BUILD/showcase/showcase%
@@ -296,9 +305,49 @@ BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 	cd BUILD/showcase/; ./$(notdir $@)
 
-showcase: $(SHOWCASE_BIN)
-	docs/build_gif.sh
+showcase_b: $(SHOWCASE_BIN)
 	@echo "done target $@"
+
+showcase: showcase_b
+	misc/build_gif.sh
+	@echo "done target $@"
+
+#------------------------------------------------------------------------------
+.PHONY: dtest1
+
+dtest1: BUILD/dtest1_f.png
+
+DTEST1_BIN:=BUILD/dtest1_f BUILD/dtest1_d BUILD/dtest1_l
+
+DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
+
+BUILD/dtest1_f.png: $(DTEST1_DATA) misc/dtest1.plt
+	misc/dtest1.plt
+
+
+showdtest1:
+	@echo "DTEST1_BIN=$(DTEST1_BIN)"
+	@echo "DTEST1_DATA=$(DTEST1_DATA)"
+
+BUILD/dtest1_%.data:BUILD/dtest1_%
+	@echo "#" > $@
+	./$< .0001 >> $@
+	./$< .001 >> $@
+	./$< .01 >> $@
+	./$< .1 >> $@
+	./$< 1 >> $@
+	./$< 10 >> $@
+	./$< 100 >> $@
+	./$< 1000 >> $@
+	./$< 10000 >> $@
+	./$< 100000 >> $@
+
+BUILD/dtest1_f: CXXFLAGS+=-DHOMOG2D_INUMTYPE=float
+BUILD/dtest1_d: CXXFLAGS+=-DHOMOG2D_INUMTYPE=double
+BUILD/dtest1_l: CXXFLAGS+="-DHOMOG2D_INUMTYPE=long double"
+
+$(DTEST1_BIN): misc/dtest1.cpp Makefile homog2d.hpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 
 #=================================================================
