@@ -113,6 +113,22 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
 
+// Default values for thresholds
+#ifndef HOMOG2D_THR_ZERO_DIST
+	#define HOMOG2D_THR_ZERO_DIST 1E-12
+#endif
+
+#ifndef HOMOG2D_THR_ZERO_ORTHO_DIST
+	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-18
+#endif
+
+// default value: 1 thousand of a radian (tan = 0.001 too)
+#ifndef HOMOG2D_THR_ZERO_ANGLE
+	#define HOMOG2D_THR_ZERO_ANGLE 0.001
+#endif
+
+
+
 namespace h2d {
 
 /// Holds the types needed for policy based design
@@ -294,6 +310,42 @@ namespace priv {
 } // namespace priv
 
 
+//------------------------------------------------------------------
+/// Holds threshold values and api
+namespace thr {
+
+static HOMOG2D_INUMTYPE& nullDistance()
+{
+	static HOMOG2D_INUMTYPE s_zeroDistance = HOMOG2D_THR_ZERO_DIST;
+	return s_zeroDistance;
+}
+
+static HOMOG2D_INUMTYPE& nullAngleValue()
+{
+	static HOMOG2D_INUMTYPE s_zeroAngleValue = HOMOG2D_THR_ZERO_ANGLE;
+	return s_zeroAngleValue;
+}
+static HOMOG2D_INUMTYPE& nullOrthogDistance()
+{
+	static HOMOG2D_INUMTYPE s_zeroOrthoDistance = HOMOG2D_THR_ZERO_ORTHO_DIST;
+	return s_zeroOrthoDistance;
+}
+/*
+static HOMOG2D_INUMTYPE& nullOffsetValue()
+{
+	static HOMOG2D_INUMTYPE _zeroOffset;
+	return _zeroOffset;
+}
+
+static HOMOG2D_INUMTYPE& nullDenom()
+{
+	static HOMOG2D_INUMTYPE _zeroDenom;
+	return _zeroDenom;
+}
+*/
+} // namespace thr
+
+
 namespace detail {
 
 // forward declaration
@@ -309,8 +361,8 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		   std::fabs( p0.getX() - p1.getX() ) < Point2d_<FPT>::nullOrthogDistance()
-		|| std::fabs( p0.getY() - p1.getY() ) < Point2d_<FPT>::nullOrthogDistance()
+		   std::fabs( p0.getX() - p1.getX() ) < thr::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < thr::nullOrthogDistance()
 	)
 		HOMOG2D_THROW_ERROR_1(
 			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
@@ -323,6 +375,7 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 
 template<typename T>
 using matrix_t = std::array<std::array<T,3>,3>;
+
 
 //------------------------------------------------------------------
 /// Common class for all the geometric primitives
@@ -1843,7 +1896,8 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
+//		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
+		if( std::abs(rad) < thr::nullDistance() )
 			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
@@ -2116,39 +2170,7 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 #endif
 } // namespace priv
 
-//------------------------------------------------------------------
-/*
-namespace thr
-{
 
-static HOMOG2D_INUMTYPE& nullAngleValue()
-{
-	static HOMOG2D_INUMTYPE _zeroAngleValue;
-	return _zeroAngleValue;
-}
-static HOMOG2D_INUMTYPE& nullDistance()
-{
-	static HOMOG2D_INUMTYPE _zeroDistance;
-	return _zeroDistance;
-}
-static HOMOG2D_INUMTYPE& nullOffsetValue()
-{
-	static HOMOG2D_INUMTYPE _zeroOffset;
-	return _zeroOffset;
-}
-static HOMOG2D_INUMTYPE& nullOrthogDistance()
-{
-	static HOMOG2D_INUMTYPE _zeroOrthoDistance;
-	return _zeroOrthoDistance;
-}
-static HOMOG2D_INUMTYPE& nullDenom()
-{
-	static HOMOG2D_INUMTYPE _zeroDenom;
-	return _zeroDenom;
-}
-
-} // namespace thr
-*/
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
@@ -2706,10 +2728,6 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 
 #if 1
-	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
-	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
-	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
-	static HOMOG2D_INUMTYPE& nullOrthogDistance() { return _zeroOrthoDistance; }
 	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
 
 //////////////////////////
@@ -2719,10 +2737,10 @@ public:
 private:
 	std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
-	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
-	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
-	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
+//	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
+//	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
+//	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
+//	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
 	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
 #endif
 
@@ -2835,22 +2853,9 @@ private:
 // SECTION  - INSTANCIATION OF STATIC VARIABLES
 /////////////////////////////////////////////////////////////////////////////
 
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-12;
-//HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-05;
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroOrthoDistance = 1E-18;
 
 template<typename LP,typename FPT>
 HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroOffset = 1E-15;
-
 template<typename FPT>
 HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
 template<typename FPT>
@@ -3984,7 +3989,8 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-		if( std::abs(a1-a2) < LPBase<type::IsLine,FPT>::nullAngleValue() )
+//		if( std::abs(a1-a2) < LPBase<type::IsLine,FPT>::nullAngleValue() )
+		if( std::abs(a1-a2) < thr::nullAngleValue() )
 			ptset.push_back( i );
 	}
 
@@ -4248,18 +4254,18 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 		auto xmax = std::max( v[0].getX(), std::max( v[1].getX(),v[2].getX() ) );
 		auto ymax = std::max( v[0].getY(), std::max( v[1].getY(),v[2].getY() ) );
 #ifndef HOMOG2D_DEBUGMODE
-		assert( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() );
-		assert( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() );
+		assert( xmax-xmin > thr::nullOrthogDistance() );
+		assert( ymax-ymin > thr::nullOrthogDistance() );
 #else
 		HOMOG2D_DEBUG_ASSERT(
-			( ( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() )
+			( ( xmax-xmin > thr::nullOrthogDistance() )
 			&&
-			( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() )) ,
+			( ymax-ymin > thr::nullOrthogDistance() )) ,
 			std::scientific
 			<< "this=" << *this << " other=" << other
 			<< "\nxmax=" << xmax << " xmin=" << xmin
 			<< "\nymax=" << ymax << " ymin=" << ymin
-			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
+			<< "\nnod=" << thr::nullOrthogDistance()
 		);
 #endif
 		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
@@ -4711,7 +4717,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 		return PtTag::Inside;
 	if(
 		std::abs( pt.distTo( circle.center() ) - circle.radius() )
-		< Point2d_<FPT>::nullDistance()
+			< thr::nullDistance()
 	)
 		return PtTag::OnEdge;
 	return PtTag::Outside;
@@ -5358,9 +5364,10 @@ std::pair<Point2d_<FPT>,Point2d_<FPT>>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( this->distTo( pt ) > nullDistance() )
+	if( this->distTo( pt ) > thr::nullDistance() )
 	{
-		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt ) << " > null distance (" << nullDistance() << ")\n";
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
+			<< " > null distance (" << thr::nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getPoints", "point is not on line" );
 	}
 #endif
@@ -5406,10 +5413,10 @@ Line2d_<FPT>
 LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( this->distTo( pt ) > nullDistance() )
+	if( this->distTo( pt ) > thr::nullDistance() )
 	{
 		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
-			<< "> null distance (" << nullDistance() << ")\n";
+			<< "> null distance (" << thr::nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getOrthogonalLine", "point is not on line" );
 	}
 #endif
@@ -5466,7 +5473,7 @@ LPBase<LP,FPT>::impl_getParallelLines( T dist, const detail::RootHelper<type::Is
 Definition: two lines will be equal:
 - if they are parallel
 AND
-- if their offset (3 third value) is less than nullOffsetValue()
+- if their offset (3 third value) is less than nullDistance()
 */
 template<typename LP,typename FPT>
 bool
@@ -5475,7 +5482,7 @@ LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::RootHe
 	if( !this->isParallelTo( other ) )
 		return false;
 
-	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
+	if( std::fabs( _v[2] - other._v[2] ) > thr::nullDistance() )
 		return false;
 
 	return true;
@@ -5487,7 +5494,8 @@ bool
 LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
 	auto dist = this->distTo( other );
-	if( dist < nullDistance() )
+//	if( dist < nullDistance() )
+	if( dist < thr::nullDistance() )
 		return true;
 	return false;
 }
@@ -5635,7 +5643,8 @@ template<typename FPT2>
 bool
 LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	if( getAngle(li) < LPBase::nullAngleValue() )
+//	if( getAngle(li) < LPBase::nullAngleValue() )
+	if( getAngle(li) < thr::nullAngleValue() )
 		return true;
 	return false;
 }
