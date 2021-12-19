@@ -4,7 +4,7 @@
 */
 
 
-#define HOMOG2D_INUMTYPE long double
+//#define HOMOG2D_INUMTYPE long double
 //#define HOMOG2D_INUMTYPE float
 //#define HOMOG2D_INUMTYPE double
 

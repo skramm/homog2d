@@ -312,28 +312,41 @@ showcase: showcase_b
 	misc/build_gif.sh
 	@echo "done target $@"
 
+#------------------------------------------------------------------------------
 .PHONY: dtest1
 
-BUILD/dtest1.png: BUILD/dtest1 misc/dtest1.plt
-	@echo "#" > BUILD/dtest1.data
-	./$< .0001 >> BUILD/dtest1.data
-	./$< .001 >> BUILD/dtest1.data
-	./$< .01 >> BUILD/dtest1.data
-	./$< .1 >> BUILD/dtest1.data
-	./$< 1 >> BUILD/dtest1.data
-	./$< 10 >> BUILD/dtest1.data
-	./$< 100 >> BUILD/dtest1.data
-	./$< 1000 >> BUILD/dtest1.data
-	./$< 10000 >> BUILD/dtest1.data
-	./$< 100000 >> BUILD/dtest1.data
+dtest1: BUILD/dtest1_f.png
+
+BUILD/dtest1_f.png: $(DTEST1_DATA) misc/dtest1.plt
 	misc/dtest1.plt
 
-dtest1: BUILD/dtest1.png
+DTEST1_BIN=BUILD/dtest1_f BUILD/dtest1_d BUILD/dtest1_l
 
-BUILD/dtest1: misc/dtest1.cpp Makefile homog2d.hpp
+DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
+
+showdtest1:
+	@echo "DTEST1_BIN=$(DTEST1_BIN)"
+	@echo "DTEST1_DATA=$(DTEST1_DATA)"
+
+BUILD/dtest1_%.data:BUILD/dtest1_%
+	@echo "#" > $@
+	./$< .0001 >> $@
+	./$< .001 >> $@
+	./$< .01 >> $@
+	./$< .1 >> $@
+	./$< 1 >> $@
+	./$< 10 >> $@
+	./$< 100 >> $@
+	./$< 1000 >> $@
+	./$< 10000 >> $@
+	./$< 100000 >> $@
+
+BUILD/dtest1_f: CXXFLAGS+=-DHOMOG2D_INUMTYPE=float
+BUILD/dtest1_d: CXXFLAGS+=-DHOMOG2D_INUMTYPE=double
+BUILD/dtest1_l: CXXFLAGS+="-DHOMOG2D_INUMTYPE=long double"
+
+$(DTEST1_BIN): misc/dtest1.cpp Makefile homog2d.hpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
-
-
 
 
 #=================================================================

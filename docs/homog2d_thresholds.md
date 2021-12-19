@@ -61,19 +61,21 @@ There is one function per symbol above:
 
 If you feel you need to change from the default values, it depends greatly on the numerical range of your data.
 
-Below is a plot that shows the result of an experiment (code is included).
+Below is a plot that shows the result of an experiment (code is provided).
 It shows the distance (max and mean value) between a line and the points it was generated with.
-When you build a line using two points (line= pt1 * pt2), the distance between the computed line and both of the points should be 0.
+When you build a line using two points (line = pt1 * pt2), the distance between the computed line and both of the points should be 0.
 But (as you got it), its not. And that is the distance that is shown on the plot below.
 
-This is done on 1 M random point coordinates, in the range shown on horizontal axis.
+This is done on 1 M random point coordinates, in the range shown on horizontal axis, for the 3 available internal numerical types (`HOMOG2D_INUMTYPE`).
 
-![dtest1](img_other/dtest1.png)
+![dtest1_f](img_other/dtest1_f.png)
+![dtest1_d](img_other/dtest1_d.png)
+![dtest1_l](img_other/dtest1_l.png)
 
 To run this yourself and generate the plot:
 <br>
 (requires gnuplot)
 ```
-$ make detest
+$ make dtest1
 ```
 
