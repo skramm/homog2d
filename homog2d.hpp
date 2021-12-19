@@ -128,12 +128,12 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_THR_ZERO_ANGLE 0.001
 #endif
 
-#ifndef HOMOG2D_THR_NULL_DENOM
-	#define HOMOG2D_THR_NULL_DENOM 1E-10
+#ifndef HOMOG2D_THR_ZERO_DENOM
+	#define HOMOG2D_THR_ZERO_DENOM 1E-10
 #endif
 
-#ifndef HOMOG2D_THR_NULL_DETER
-	#define HOMOG2D_THR_NULL_DETER 1E-15
+#ifndef HOMOG2D_THR_ZERO_DETER
+	#define HOMOG2D_THR_ZERO_DETER 1E-15
 #endif
 ///////////////////////////////////////
 
@@ -341,13 +341,13 @@ static HOMOG2D_INUMTYPE& nullAngleValue()
 
 static HOMOG2D_INUMTYPE& nullDenom()
 {
-	static HOMOG2D_INUMTYPE _zeroDenom = HOMOG2D_THR_NULL_DENOM;
+	static HOMOG2D_INUMTYPE _zeroDenom = HOMOG2D_THR_ZERO_DENOM;
 	return _zeroDenom;
 }
 
 static HOMOG2D_INUMTYPE& nullDeter()
 {
-	static HOMOG2D_INUMTYPE _zeroDeter = HOMOG2D_THR_NULL_DETER;
+	static HOMOG2D_INUMTYPE _zeroDeter = HOMOG2D_THR_ZERO_DETER;
 	return _zeroDeter;
 }
 
@@ -5580,11 +5580,9 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
-	return static_cast<double>(
-		std::hypot(
-			static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
-			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
-		)
+	return std::hypot(
+		static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
+		static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
 	);
 }
 //------------------------------------------------------------------
@@ -5603,7 +5601,12 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
-	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
+	return std::fabs(
+		static_cast<HOMOG2D_INUMTYPE>( _v[0] ) * pt.getX()
+		+ static_cast<HOMOG2D_INUMTYPE>( _v[1] ) * pt.getY()
+		+ static_cast<HOMOG2D_INUMTYPE>( _v[2] )
+	)
+	/ std::hypot( _v[0], _v[1] );
 }
 
 /// overload for line to point distance

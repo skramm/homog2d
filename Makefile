@@ -312,17 +312,26 @@ showcase: showcase_b
 	misc/build_gif.sh
 	@echo "done target $@"
 
-dtest: BUILD/dtest
+.PHONY: dtest1
 
-BUILD/dtest: misc/dtest.cpp Makefile
+BUILD/dtest1.png: BUILD/dtest1 misc/dtest1.plt
+	@echo "#" > BUILD/dtest1.data
+	./$< .0001 >> BUILD/dtest1.data
+	./$< .001 >> BUILD/dtest1.data
+	./$< .01 >> BUILD/dtest1.data
+	./$< .1 >> BUILD/dtest1.data
+	./$< 1 >> BUILD/dtest1.data
+	./$< 10 >> BUILD/dtest1.data
+	./$< 100 >> BUILD/dtest1.data
+	./$< 1000 >> BUILD/dtest1.data
+	./$< 10000 >> BUILD/dtest1.data
+	./$< 100000 >> BUILD/dtest1.data
+	misc/dtest1.plt
+
+dtest1: BUILD/dtest1.png
+
+BUILD/dtest1: misc/dtest1.cpp Makefile homog2d.hpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
-	./$@ .01
-	./$@ .1
-	./$@ 1
-	./$@ 10
-	./$@ 100
-	./$@ 1000
-	./$@ 10000
 
 
 
