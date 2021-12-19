@@ -15,7 +15,7 @@ set format y "%.0e"
 set format x "%.0e"
 set grid
 
-set title "Distance value from a line to the points its was generated from\n(using float as internal type)"
+set title "Distance value from a line to the points its was generated from\n(using 'float' as internal type)"
 set output "BUILD/dtest1_f.png"
 plot "BUILD/dtest1_f.data" \
 	using 1:6 with linespoints lw 2 ti "Max value", \

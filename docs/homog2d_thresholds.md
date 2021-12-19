@@ -2,34 +2,37 @@
 
 [Manual main page](homog2d_manual.md)
 
+Several thresholds are used to manage numeric issues.
+They are used in the situations described below.
 
-- When checking for parallel lines (see Root::isParallelTo() ), the "null" angle value
-has a default value of one thousand of a radian (0.001 rad).
-You can print the current value with:
-```C++
-cout << "default null angle=" << thr::nullAngleValue() << " rad.\n";
-```
-It can be changed any time with the same function, for example:
-```C++
-thr::nullAngleValue() = 0.01; // 1/100 radian
-```
-This is checked for when computing an intersection point.
+### Situations
 
-- When attempting to compute a line out of two points, the library will throw if
-the distance between the two points is less than `thr::nullDistance()`.
-That same function can be used to change (or print) the current value.
+* Checking for parallel lines (see `isParallelTo()` )is done by checking the angle between the lines.
+If it is below a threshold, the function returns true.
+The default value is one thousand of a radian (0.001 rad).
+<br>
+This is checked for when computing an intersection point between two  lines/segments, for example when attempting to build a point from 2 lines.
 
-- When attempting to compute the inverse of a matrix, if the determinant is less
+* When attempting to compute a line out of two points, if the distance between the two points is less than `thr::nullDistance()`,
+then the library will throow an exception.
+
+* When attempting to compute the inverse of a matrix, if the determinant is less
 than `thr::nullDeter()`, the inversion code will throw.
+
+
+All the thresholds have default values.
+These can be changed at build time, globally, but the values can also be changed at runtime.
 
 ### Changing thresholds at build time
 
-You can define values for theses symbols before the "include" line to change the default values.
-Example:
+You can define values for these thresholds before the "include" line, by assigning a value to a symbol.
+For example:
 ```
 #define HOMOG2D_THR_ZERO_DIST 1E-10
 #include "homog2d.hpp"
 ```
+
+These are the symbols to use:
 
 * `HOMOG2D_THR_ZERO_DIST`: default value for null distance, i.e. two points whose distance is less than this value will be considered identical points.
 * `HOMOG2D_THR_ZERO_ORTHO_DIST`: default value for othogonal distance.
@@ -44,10 +47,10 @@ They all lie in the sub-namespace `thr`:
 
 Example:
 ```
-auto curr = << thr::nullDistance();  // store current value
-thr::nullDistance() = 1E-6;          // change value
-...                                  // do some stuf
-thr::nullDistance() = curr;          // restore previous value
+auto curr = thr::nullDistance();  // store current value
+thr::nullDistance() = 1E-6;       // change value
+...                               // do some stuf
+thr::nullDistance() = curr;       // restore previous value
 ```
 
 There is one function per symbol above:
@@ -57,7 +60,7 @@ There is one function per symbol above:
 * `thr::nullDenom()`
 * `thr::nullDeter()`
 
-### How should I fix the thresholds?
+### What value should I use for the thresholds?
 
 If you feel you need to change from the default values, it depends greatly on the numerical range of your data.
 

@@ -22,7 +22,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added more tests
   - added some missing free functions
   - API changes: refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
-  - bugfixes
+  - many bugfixes and improvments
+  - added precision tests and plots (see [homog2d_thresholds.md](homog2d_thresholds.md))
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)

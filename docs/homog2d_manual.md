@@ -1204,8 +1204,7 @@ In this library, this can hurt in several ways:
  - creating a line from two points will fail if the points are equal,
  - similarly, computing a point at the intersection of two lines will fail if the lines are parallel.
 
-This library will ensure these conditions, and will throw an exception (of
-type `std::runtime_error`) if that kind of thing happens.
+This library will ensure these conditions, and will throw an exception (of type `std::runtime_error`) if that kind of thing happens.
 The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
@@ -1220,7 +1219,7 @@ for each segments supporting line, we check if the intersection point is in the 
 However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
 (i.e. with coordinates in the range [0-99]).
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
-Unfortunately, the range checking will fail, because the actual value can be "99.00000000000123".
+Unfortunately, the range checking will fail, because the actual computed value will be "99.00000000000123".
 
 To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates,
 so that the value stays at "99":

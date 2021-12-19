@@ -317,12 +317,13 @@ showcase: showcase_b
 
 dtest1: BUILD/dtest1_f.png
 
+DTEST1_BIN:=BUILD/dtest1_f BUILD/dtest1_d BUILD/dtest1_l
+
+DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
+
 BUILD/dtest1_f.png: $(DTEST1_DATA) misc/dtest1.plt
 	misc/dtest1.plt
 
-DTEST1_BIN=BUILD/dtest1_f BUILD/dtest1_d BUILD/dtest1_l
-
-DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
 
 showdtest1:
 	@echo "DTEST1_BIN=$(DTEST1_BIN)"
