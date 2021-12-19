@@ -1,4 +1,4 @@
-## Technical details on thresholds an how to mange them
+## Technical details on thresholds an how to manage them
 
 [Manual main page](homog2d_manual.md)
 
@@ -44,9 +44,10 @@ They all lie in the sub-namespace `thr`:
 
 Example:
 ```
-auto curr = << thr::nullDistance() << "\n"; // store current value
-thr::nullDistance() = 1E-6;                 // change value
-thr::nullDistance() = curr;                 // restore previous value
+auto curr = << thr::nullDistance();  // store current value
+thr::nullDistance() = 1E-6;          // change value
+...                                  // do some stuf
+thr::nullDistance() = curr;          // restore previous value
 ```
 
 There is one function per symbol above:
@@ -61,11 +62,9 @@ There is one function per symbol above:
 If you feel you need to change from the default values, it depends greatly on the numerical range of your data.
 
 Below is a plot that shows the result of an experiment (code is included).
-It shows the distance (max and mean value) between a line and the points it was generated with:
-<br>
-line= pt1 * pt2
-<br>
-Thus the distance between the compute line and both of the points should be 0, but (as you got it), its not!
+It shows the distance (max and mean value) between a line and the points it was generated with.
+When you build a line using two points (line= pt1 * pt2), the distance between the computed line and both of the points should be 0.
+But (as you got it), its not. And that is the distance that is shown on the plot below.
 
 This is done on 1 M random point coordinates, in the range shown on horizontal axis.
 
