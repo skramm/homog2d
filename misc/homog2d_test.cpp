@@ -360,7 +360,7 @@ TEST_CASE( "line/point distance", "[lp-dist]" )
 	size_t c = 0;
 	float k = 1;
 	std::srand( time(0) );
-	for( auto i=0; i<n; i++ )
+	for( size_t i=0; i<n; i++ )
 	{
 		Point2d_<NUMTYPE> pt1(
 			1.0*rand()/RAND_MAX * k,

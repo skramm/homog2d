@@ -1206,27 +1206,10 @@ In this library, this can hurt in several ways:
 
 This library will ensure these conditions, and will throw an exception (of
 type `std::runtime_error`) if that kind of thing happens.
-The thresholds have default values.
+The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
-- When checking for parallel lines (see Root::isParallelTo() ), the "null" angle value
-has a default value of one thousand of a radian (0.001 rad).
-You can print the current value with:
-```C++
-cout << "default null angle=" << Line2d::nullAngleValue() << " rad.\n";
-```
-It can be changed any time with the same function, for example:
-```C++
-Line2d::nullAngleValue() = 0.01; // 1/100 radian
-```
-This is checked for when computing an intersection point.
-
-- When attempting to compute a line out of two points, the library will throw if
-the distance between the two points is less than `Point2d::nullDistance()`.
-That same function can be used to change (or print) the current value.
-
-- When attempting to compute the inverse of a matrix, if the determinant is less
-than `Homogr::nullDeterValue()`, the inversion code will throw.
+More details and complete list on [threshold page](homog2d_thresholds.md).
 
 ### 7.4 - Additional rounding
 

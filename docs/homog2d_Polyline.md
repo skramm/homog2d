@@ -16,10 +16,10 @@ using CPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
 Both types can be seen as a container of a set of points.
 Order of points will be retained, but some normalizing step will occur, that will be different for the two types.
 
-- The CPolyline_ type will get normalized (rotated) so that the smallest point is placed in first position,
+- The `CPolyline_` type will get normalized (rotated) so that the smallest point is placed in first position,
 and reversed so that the **second** smallest point is placed in second position.
 
-- The OPolyline_ type will get reversed so that the smallest point is placed in first position
+- The `OPolyline_` type will get reversed so that the smallest point is placed in first position
 
 For both types, the normalisation occurs only when needed (first comparison).
 

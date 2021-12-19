@@ -113,13 +113,14 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
 
+///////////////////////////////////////
 // Default values for thresholds
 #ifndef HOMOG2D_THR_ZERO_DIST
 	#define HOMOG2D_THR_ZERO_DIST 1E-12
 #endif
 
 #ifndef HOMOG2D_THR_ZERO_ORTHO_DIST
-	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-18
+	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-15
 #endif
 
 // default value: 1 thousand of a radian (tan = 0.001 too)
@@ -127,6 +128,14 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_THR_ZERO_ANGLE 0.001
 #endif
 
+#ifndef HOMOG2D_THR_NULL_DENOM
+	#define HOMOG2D_THR_NULL_DENOM 1E-10
+#endif
+
+#ifndef HOMOG2D_THR_NULL_DETER
+	#define HOMOG2D_THR_NULL_DETER 1E-15
+#endif
+///////////////////////////////////////
 
 
 namespace h2d {
@@ -319,30 +328,29 @@ static HOMOG2D_INUMTYPE& nullDistance()
 	static HOMOG2D_INUMTYPE s_zeroDistance = HOMOG2D_THR_ZERO_DIST;
 	return s_zeroDistance;
 }
-
-static HOMOG2D_INUMTYPE& nullAngleValue()
-{
-	static HOMOG2D_INUMTYPE s_zeroAngleValue = HOMOG2D_THR_ZERO_ANGLE;
-	return s_zeroAngleValue;
-}
 static HOMOG2D_INUMTYPE& nullOrthogDistance()
 {
 	static HOMOG2D_INUMTYPE s_zeroOrthoDistance = HOMOG2D_THR_ZERO_ORTHO_DIST;
 	return s_zeroOrthoDistance;
 }
-/*
-static HOMOG2D_INUMTYPE& nullOffsetValue()
+static HOMOG2D_INUMTYPE& nullAngleValue()
 {
-	static HOMOG2D_INUMTYPE _zeroOffset;
-	return _zeroOffset;
+	static HOMOG2D_INUMTYPE s_zeroAngleValue = HOMOG2D_THR_ZERO_ANGLE;
+	return s_zeroAngleValue;
 }
 
 static HOMOG2D_INUMTYPE& nullDenom()
 {
-	static HOMOG2D_INUMTYPE _zeroDenom;
+	static HOMOG2D_INUMTYPE _zeroDenom = HOMOG2D_THR_NULL_DENOM;
 	return _zeroDenom;
 }
-*/
+
+static HOMOG2D_INUMTYPE& nullDeter()
+{
+	static HOMOG2D_INUMTYPE _zeroDeter = HOMOG2D_THR_NULL_DETER;
+	return _zeroDeter;
+}
+
 } // namespace thr
 
 
@@ -410,7 +418,7 @@ class Matrix_: public Common<FPT>
 
 private:
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
+//	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -488,7 +496,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	Matrix_& inverse()
 	{
 		auto det = determ();
-		if( std::abs(det) < nullDeterValue() )
+		if( std::abs(det) < thr::nullDeter() )
 			HOMOG2D_THROW_ERROR_1( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
 
 		auto adjugate = p_adjugate();
@@ -503,10 +511,10 @@ protected:
 	void p_normalize( int r, int c ) const
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( std::fabs(_mdata[r][c]) < nullDenomValue() )
+		if( std::fabs(_mdata[r][c]) < thr::nullDenom() )
 			HOMOG2D_THROW_ERROR_1(
 				"Unable to normalize matrix, value at ("
-					<< r << ',' << c << ") less than " << nullDenomValue()
+					<< r << ',' << c << ") less than " << thr::nullDenom()
 			);
 #endif
 		p_divideBy( r, c );
@@ -602,10 +610,6 @@ private:
 		}
 		return f;
 	}
-
-public:
-	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
-	static HOMOG2D_INUMTYPE& nullDenomValue() { return _zeroDenomValue; }
 
 }; // class Matrix_
 
@@ -928,11 +932,12 @@ and if one differs more than the threshold, it will return false
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
 					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - h.value(i,j) )
-					>= detail::Matrix_<FPT>::nullDeterValue()
+					>= thr::nullDeter()
 				)
 					return false;
 		return true;
 	}
+
 /// Comparison operator. Does normalization if required
 	bool operator != ( const Hmatrix_& h ) const
 	{
@@ -1896,9 +1901,8 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-//		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
 		if( std::abs(rad) < thr::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+			HOMOG2D_THROW_ERROR_1( "radius must value too small: " << std::scientific << std::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
 #endif
@@ -1943,8 +1947,6 @@ public:
 	{
 		Circle_<FPT> c( center, rad );
 		std::swap( c, this ); /// \todo 20211216: replace with move
-//		_radius = rad;
-//		_center = center;
 	}
 
 	template<typename T1, typename T2>
@@ -2728,7 +2730,7 @@ public:
 #endif // HOMOG2D_USE_OPENCV
 
 #if 1
-	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
+//	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -2741,7 +2743,7 @@ private:
 //	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
 //	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
 //	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
-	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
+//	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
 #endif
 
 //////////////////////////
@@ -2854,12 +2856,12 @@ private:
 /////////////////////////////////////////////////////////////////////////////
 
 
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
+//template<typename LP,typename FPT>
+//HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
 template<typename FPT>
 HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
-template<typename FPT>
-HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
+//template<typename FPT>
+//HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -5038,7 +5040,7 @@ Ellipse_<FPT>::p_computeParams() const
 	auto denom = B*B - 4. * A * C;
 
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < detail::Matrix_<FPT>::nullDenomValue() )
+	if( std::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute parameters, denom=" << std::scientific << std::setprecision(15) << denom
 		);
@@ -5055,7 +5057,7 @@ Ellipse_<FPT>::p_computeParams() const
 
 	par.a2 = par.a * par.a;
 	par.b2 = par.b * par.b;
-	if( std::abs(B) < detail::Matrix_<FPT>::nullDenomValue() )
+	if( std::abs(B) < thr::nullDenom() )
 	{
 		if( A > C )
 			par.theta = 90.;
@@ -5303,7 +5305,7 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelpe
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < nullDenom() )
+	if( std::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
@@ -5493,11 +5495,7 @@ template<typename LP,typename FPT>
 bool
 LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
-	auto dist = this->distTo( other );
-//	if( dist < nullDistance() )
-	if( dist < thr::nullDistance() )
-		return true;
-	return false;
+	return ( this->distTo( other ) < thr::nullDistance() );
 }
 
 //------------------------------------------------------------------

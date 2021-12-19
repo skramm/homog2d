@@ -21,8 +21,8 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_DEBUGMODE
-#define HOMOG2D_USE_ROOT_CLASS
+//#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
