@@ -116,11 +116,11 @@ See https://github.com/skramm/homog2d
 ///////////////////////////////////////
 // Default values for thresholds
 #ifndef HOMOG2D_THR_ZERO_DIST
-	#define HOMOG2D_THR_ZERO_DIST 1E-12
+	#define HOMOG2D_THR_ZERO_DIST 1E-10
 #endif
 
 #ifndef HOMOG2D_THR_ZERO_ORTHO_DIST
-	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-15
+	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-14
 #endif
 
 // default value: 1 thousand of a radian (tan = 0.001 too)

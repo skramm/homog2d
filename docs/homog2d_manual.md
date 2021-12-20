@@ -1262,7 +1262,7 @@ If defined, program will very likely crash.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is immediate.
-For more on this, [see this page](docs/homog2d_speed.md).
+For more on this, [see this page](homog2d_speed.md).
 
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
