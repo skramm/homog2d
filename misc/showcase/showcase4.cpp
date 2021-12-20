@@ -42,14 +42,15 @@ int main( int argc, const char** argv )
 
 		img::Image<cv::Mat> im( 250, 200 );
 		img::Image<cv::Mat> im2( 250, 200 );
-		bcir_d.draw( im, DrawParams().setColor(0,250,0)  );
-		obj1_d.draw( im, DrawParams().setColor(250,0,0) );
 
-		bcir_d.draw( im2, DrawParams().setColor(50,250,50)  );
+		obj1_d.draw( im, DrawParams().setColor(250,0,0) );
+		obj2_d.draw( im, DrawParams().setColor(0,0,250) );
+		bcir_d.draw( im, DrawParams().setColor(100,250,100)  );
+
 		obj1_d.draw( im2, DrawParams().setColor(250,0,0) );
+		bcir_d.draw( im2, DrawParams().setColor(50,250,50)  );
 		center_d.draw( im2, DrawParams().setColor(250,100,100) );
 
-		obj2_d.draw( im, DrawParams().setColor(0,0,250) );
 		getBB(obj1_d, obj2_d).draw( im, DrawParams().setColor(g,g,g) );
 
 		std::ostringstream ossa;

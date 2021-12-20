@@ -399,7 +399,7 @@ FRect r1(...); // whatever
 auto cir = r1.getBoundingCircle();
 ```
 
-![showcase4b](showcase4b.gif)
+![showcase4b](showcase/showcase4b.gif)
 
 
 You can get the Bounding Box of two rectangles (will return a `FRect`);
