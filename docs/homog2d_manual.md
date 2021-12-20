@@ -393,7 +393,16 @@ FRect rect;
 rect.translate( dx, dy );
 ```
 
-You can get the Bounding Box of two rectangles (will return a `FRect`):
+you can get the circle that passes through the 4 points:
+```C++
+FRect r1(...); // whatever
+auto cir = r1.getBoundingCircle();
+```
+
+![showcase4b](showcase4b.gif)
+
+
+You can get the Bounding Box of two rectangles (will return a `FRect`);
 ```C++
 FRect r1(...); // whatever
 FRect r2(...); // whatever
@@ -1209,26 +1218,6 @@ The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
-
-### 7.4 - Additional rounding
-
-In some situations, although the math is clear, some numerical issues always happen.
-The most crucial is when computing intersection points between a rectangle and a line.
-The algorithm just checks the intersection points between each of the 4 segments of the rectangle and the line:
-for each segments supporting line, we check if the intersection point is in the segment area.
-However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
-(i.e. with coordinates in the range [0-99]).
-The intersection point can appear to have for one of the coordinates the value "99". So far so good.
-Unfortunately, the range checking will fail, because the actual computed value will be "99.00000000000123".
-
-To avoid this issue, the "Segment/Line" intersection code will request an additional rounding with the computed coordinates,
-so that the value stays at "99":
-```
-value = std::round( value * coeff ) / coeff
-```
-
-At present the coefficient value is not adjustable, but will in the future.
-
 
 ## 8 - Technical details
 <a name="tech"></a>

@@ -31,17 +31,34 @@ int main( int argc, const char** argv )
 
 		FRect obj1( Point2d( x1+x0, y1+x0), r_w, r_h0 );
 		Circle obj2( Point2d(-x1+x0,-y1+x0), 2.-.5*r_w );
+		auto bcir = obj1.getBoundingCircle();
+		auto center = obj1.center();
 //		std::cout << "radius=" << obj2.radius() << "\n";
+
 		auto obj1_d = Hdraw * obj1;
 		auto obj2_d = Hdraw * obj2;
+		auto bcir_d = Hdraw * bcir;
+		auto center_d = Hdraw * center;
 
 		img::Image<cv::Mat> im( 250, 200 );
+		img::Image<cv::Mat> im2( 250, 200 );
+		bcir_d.draw( im, DrawParams().setColor(0,250,0)  );
 		obj1_d.draw( im, DrawParams().setColor(250,0,0) );
+
+		bcir_d.draw( im2, DrawParams().setColor(50,250,50)  );
+		obj1_d.draw( im2, DrawParams().setColor(250,0,0) );
+		center_d.draw( im2, DrawParams().setColor(250,100,100) );
+
 		obj2_d.draw( im, DrawParams().setColor(0,0,250) );
 		getBB(obj1_d, obj2_d).draw( im, DrawParams().setColor(g,g,g) );
+
 		std::ostringstream ossa;
 		ossa << "showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		cv::imwrite( ossa.str(), im.getReal() );
+
+		std::ostringstream ossb;
+		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		cv::imwrite( ossb.str(), im2.getReal() );
 	}
 }
 
