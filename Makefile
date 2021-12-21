@@ -105,7 +105,7 @@ test_SN: BUILD/homog2d_test_SN
 
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
+	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
 
 
 testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
@@ -289,15 +289,17 @@ showcase: showcase_b
 	@echo "done target $@"
 
 #------------------------------------------------------------------------------
-.PHONY: dtest1
+FNAME1:=dtest1
 
-dtest1: BUILD/dtest1_f.png
+.PHONY: $(FNAME1)
 
-DTEST1_BIN:=BUILD/dtest1_f BUILD/dtest1_d BUILD/dtest1_l
+dtest1: BUILD/$(FNAME1)_f.png
+
+DTEST1_BIN:=BUILD/$(FNAME1)_f BUILD/$(FNAME1)_d BUILD/$(FNAME1)_l
 
 DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
 
-BUILD/dtest1_f.png: $(DTEST1_DATA) misc/dtest1.plt
+BUILD/$(FNAME1)_f.png: $(DTEST1_DATA) misc/dtest1.plt
 	misc/dtest1.plt
 
 
@@ -305,7 +307,7 @@ showdtest1:
 	@echo "DTEST1_BIN=$(DTEST1_BIN)"
 	@echo "DTEST1_DATA=$(DTEST1_DATA)"
 
-BUILD/dtest1_%.data:BUILD/dtest1_%
+BUILD/$(FNAME1)_%.data:BUILD/$(FNAME1)_%
 	@echo "#" > $@
 	./$< .0001 >> $@
 	./$< .001 >> $@
@@ -318,11 +320,11 @@ BUILD/dtest1_%.data:BUILD/dtest1_%
 	./$< 10000 >> $@
 	./$< 100000 >> $@
 
-BUILD/dtest1_f: CXXFLAGS+=-DHOMOG2D_INUMTYPE=float
-BUILD/dtest1_d: CXXFLAGS+=-DHOMOG2D_INUMTYPE=double
-BUILD/dtest1_l: CXXFLAGS+="-DHOMOG2D_INUMTYPE=long double"
+BUILD/$(FNAME1)_f: CXXFLAGS+=-DHOMOG2D_INUMTYPE=float
+BUILD/$(FNAME1)_d: CXXFLAGS+=-DHOMOG2D_INUMTYPE=double
+BUILD/$(FNAME1)_l: CXXFLAGS+="-DHOMOG2D_INUMTYPE=long double"
 
-$(DTEST1_BIN): misc/dtest1.cpp Makefile homog2d.hpp
+$(DTEST1_BIN): misc/$(FNAME1).cpp Makefile homog2d.hpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 

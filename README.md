@@ -36,10 +36,7 @@ int main()
 }
 ```
 
-:new: 2021-12-11: refactoring of Polyline finished, expected in a couple of days.
-See [history](docs/homog2d_history.md) for details.
-
-:new: 2021-07-31: Fresh 2.5 release! : https://github.com/skramm/homog2d/releases
+:new: 2021-12-21: fresh 2.6 release: https://github.com/skramm/homog2d/releases
 
 
 To install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
