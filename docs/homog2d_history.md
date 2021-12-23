@@ -12,7 +12,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add precision evaluation
 
 - current master branch
-  - (no changes)
+  - added symbol `HOMOG2D_ROUNDING_COEFF` to adjust rounding coeff.
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`

@@ -103,5 +103,4 @@ so that the value stays at "99":
 value = std::round( value * coeff ) / coeff
 ```
 
-At present the coefficient value is not adjustable, but will in the future.
-
+The coefficient value has a default value of 1E6 but this can be adjusted globally at compile time by defining the value of the symbol `HOMOG2D_ROUNDING_COEFF`.

@@ -135,6 +135,11 @@ See https://github.com/skramm/homog2d
 #ifndef HOMOG2D_THR_ZERO_DETER
 	#define HOMOG2D_THR_ZERO_DETER 1E-15
 #endif
+
+#ifndef HOMOG2D_ROUNDING_COEFF
+	#define HOMOG2D_ROUNDING_COEFF 1E6
+#endif
+
 ///////////////////////////////////////
 
 
@@ -4666,8 +4671,6 @@ isBetween( T1 v, T2 v1, T2 v2 )
 {
 	HOMOG2D_CHECK_IS_NUMBER(T1);
 	HOMOG2D_CHECK_IS_NUMBER(T2);
-//std::cout << std::scientific << std::setprecision(18);
-//HOMOG2D_LOG("v="<<v << " v1=" << v1 << " v2=" << v2 );
 	if( v >= std::min( v1, v2 ) )
 		if( v <= std::max( v1, v2 ) )
 			return true;
@@ -4675,14 +4678,13 @@ isBetween( T1 v, T2 v1, T2 v2 )
 }
 
 /// Does some small rounding (if requested), to avoid some numerical issues
-/// \todo provide access to the coefficient in API
 template<typename FPT>
 long double
 doRounding( FPT value, Rounding r )
 {
 	if( r == Rounding::No )
 		return value;
-	long double coeff=1E6;
+	HOMOG2D_INUMTYPE coeff = HOMOG2D_ROUNDING_COEFF;
 	return std::llroundl( value * coeff ) / coeff;
 }
 
