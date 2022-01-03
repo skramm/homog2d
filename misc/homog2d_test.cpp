@@ -689,7 +689,7 @@ TEST_CASE( "test Homogr", "[testH]" )
 		CHECK( v_pt[2].getY() == 6 );
 		CHECK( v_pt[0].getX() == 5 );
 		CHECK( v_pt[0].getY() == 6 );
-		auto vpt2 = H * v_pt;
+		auto v_pt2 = H * v_pt;
 		CHECK( v_pt2.size() == 3 );
 		CHECK( v_pt2[2].getX() == 10 );
 		CHECK( v_pt2[2].getY() == 12 );

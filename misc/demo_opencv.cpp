@@ -923,7 +923,7 @@ struct Param_ELL : Data
 		auto ell2 = H * ell;
 		ell2.draw( img );
 
-		auto bb1 = ell2.getBB();
+		auto bb1 = ell2.getOBB();
 		bb1.draw( img, DrawParams().setColor(0,0,250) );
 
 		auto bb2 = bb1.getBB();
