@@ -37,15 +37,6 @@ endif
 #=======================================================================
 # general/common targets
 
-test: test_SY test_SN nobuild
-	@echo "Make: run test, build using $(CXX)"
-	BUILD/homog2d_test_SY
-	BUILD/homog2d_test_SN
-
-testall: BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
-	@echo "Make: run testall, build using $(CXX)"
-	misc/test_all.sh
-
 check:
 	@cppcheck --version
 	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
@@ -93,9 +84,18 @@ show:
 variants=test_SY test_SN
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
-newtests:
-	@if [ -e BUILD/homog2d_test.stderr ] then; rm BUILD/homog2d_test.stderr; fi
+.PHONY: newtests_before
+
+newtests_before: CXXFLAGS += -Wno-unused-but-set-variable
+
+newtests: newtests_before
+	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
+
+test: test_SY test_SN nobuild
+	@echo "Make: run test, build using $(CXX)"
+	BUILD/homog2d_test_SY
+	BUILD/homog2d_test_SN
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
@@ -103,12 +103,14 @@ test_SY: BUILD/homog2d_test_SY
 
 test_SN: BUILD/homog2d_test_SN
 
-demo_check: misc/demo_check.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	@if [ -e BUILD/homog2d_test.stderr ]; then rm BUILD/homog2d_test.stderr; fi
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
+	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
+
+
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
+	@echo "Make: run testall, build using $(CXX)"
+	misc/test_all.sh
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
@@ -119,24 +121,19 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
-#ptest1: precision_test1
-#	./precision_test1
+# to be removed
+demo_check: misc/demo_check.cpp homog2d.hpp Makefile
+	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
-#ptest2: precision_test2
-#	./precision_test2
-
-#precision_test1: misc/precision_test_opencv.cpp
-#	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
-
-#precision_test2: misc/precision_test.cpp
-#	$(CXX) $(CXXFLAGS) -I. -o $@ $<
 
 #=======================================================================
 # speed test
-speed_test: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
+speed_test: speed_test_b
 	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
+
+speed_test_b: BUILD/ellipse_speed_test_SYCN BUILD/ellipse_speed_test_SY BUILD/ellipse_speed_test_SN
 
 BUILD/ellipse_speed_test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
@@ -246,7 +243,6 @@ diff:
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
 NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
-#.PRECIOUS: /tmp/no_build_%.cpp
 
 nobuild: $(NOBUILD_OBJ_FILES) #BUILD/no_build.stdout
 	@echo "done target $@"
@@ -277,18 +273,7 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 SHOWCASE_SRC_LOC=misc/showcase
 SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
-SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase%.gif, $(SHOWCASE_SRC))
-#SHOWCASE_PNG=$(wildcard misc/showcase*.png)
-
-
-#BUILD/%.gif: BUILD/%.png
-#	@echo "done target $<"
-
-#BUILD/showcase%_*.png: BUILD/showcase/showcase%
-#	@echo "done target $<"
-
-#$(SHOWCASE_PNG):
-#	BUILD/showcase/showcase1
+SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
 BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
@@ -296,9 +281,51 @@ BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 	cd BUILD/showcase/; ./$(notdir $@)
 
-showcase: $(SHOWCASE_BIN)
-	docs/build_gif.sh
+showcase_b: $(SHOWCASE_BIN)
 	@echo "done target $@"
+
+showcase: showcase_b
+	misc/build_gif.sh
+	@echo "done target $@"
+
+#------------------------------------------------------------------------------
+FNAME1:=dtest1
+
+.PHONY: $(FNAME1)
+
+dtest1: BUILD/$(FNAME1)_f.png
+
+DTEST1_BIN:=BUILD/$(FNAME1)_f BUILD/$(FNAME1)_d BUILD/$(FNAME1)_l
+
+DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
+
+BUILD/$(FNAME1)_f.png: $(DTEST1_DATA) misc/dtest1.plt
+	misc/dtest1.plt
+
+
+showdtest1:
+	@echo "DTEST1_BIN=$(DTEST1_BIN)"
+	@echo "DTEST1_DATA=$(DTEST1_DATA)"
+
+BUILD/$(FNAME1)_%.data:BUILD/$(FNAME1)_%
+	@echo "#" > $@
+	./$< .0001 >> $@
+	./$< .001 >> $@
+	./$< .01 >> $@
+	./$< .1 >> $@
+	./$< 1 >> $@
+	./$< 10 >> $@
+	./$< 100 >> $@
+	./$< 1000 >> $@
+	./$< 10000 >> $@
+	./$< 100000 >> $@
+
+BUILD/$(FNAME1)_f: CXXFLAGS+=-DHOMOG2D_INUMTYPE=float
+BUILD/$(FNAME1)_d: CXXFLAGS+=-DHOMOG2D_INUMTYPE=double
+BUILD/$(FNAME1)_l: CXXFLAGS+="-DHOMOG2D_INUMTYPE=long double"
+
+$(DTEST1_BIN): misc/$(FNAME1).cpp Makefile homog2d.hpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 
 #=================================================================

@@ -1,5 +1,7 @@
 # Dev information
 
+[Manual main page](homog2d_manual.md)
+
 This page will gather misc. information useful for anyone wanting to contribute to code.
 
 ## Introduction

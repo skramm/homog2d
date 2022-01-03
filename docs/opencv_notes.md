@@ -1,5 +1,7 @@
 # Opencv binding problems
 
+[Manual main page](homog2d_manual.md)
+
 __Please read this if you have Opencv installed on your system, but fail to build the Opencv binding demo.__
 
 

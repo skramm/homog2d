@@ -21,8 +21,8 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_DEBUGMODE
-#define HOMOG2D_USE_ROOT_CLASS
+//#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -926,7 +926,7 @@ struct Param_ELL : Data
 		auto bb1 = ell2.getOBB();
 		bb1.draw( img, DrawParams().setColor(0,0,250) );
 
-		auto bb2 = bb1.getBB();
+		auto bb2 = ell2.getOBB();
 		bb2.draw( img, DrawParams().setColor(0,250,0) );
 
 		auto axis = ell2.getAxisLines();

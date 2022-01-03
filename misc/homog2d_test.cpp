@@ -353,6 +353,32 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 	}
 }
 
+
+TEST_CASE( "line/point distance", "[lp-dist]" )
+{
+	size_t n = 1E6;  // nb of runs
+	size_t c = 0;
+	float k = 1;
+	std::srand( time(0) );
+	for( size_t i=0; i<n; i++ )
+	{
+		Point2d_<NUMTYPE> pt1(
+			1.0*rand()/RAND_MAX * k,
+			1.0*rand()/RAND_MAX * k
+		);
+		Point2d_<NUMTYPE> pt2(
+			1.0*rand()/RAND_MAX * k,
+			1.0*rand()/RAND_MAX * k
+		);
+		auto li = pt1 * pt2;
+		if( li.distTo(pt1) > thr::nullDistance() )
+			c++;
+		if( li.distTo(pt2) > thr::nullDistance() )
+			c++;
+	}
+	CHECK( c == 0 );
+}
+
 TEST_CASE( "test1", "[test1]" )
 {
 	Point2d_<NUMTYPE> ptA1; // 0,0
@@ -494,8 +520,8 @@ TEST_CASE( "test throw", "[test_thr]" )
 	{
 		Point2d_<NUMTYPE> pt;
 		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, 0 ) );
-		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()/1.1 ) );
-		CHECK_NOTHROW( Circle_<NUMTYPE> ( pt, Point2d_<NUMTYPE>::nullDistance()*1.1 ) );
+		CHECK_THROWS(  Circle_<NUMTYPE> ( pt, thr::nullDistance()/1.1 ) );
+		CHECK_NOTHROW( Circle_<NUMTYPE> ( pt, thr::nullDistance()*1.1 ) );
 	}
 	INFO("segment constructor")           // can't have identical points
 	{
@@ -532,10 +558,10 @@ TEST_CASE( "test parallel", "[test_para]" )
 			Line2d_<NUMTYPE> l2b(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.002,1.) ); // almost vertical line
 			CHECK( l1.isParallelTo(l2b) == false );
 		}
-		Line2d_<NUMTYPE>::nullAngleValue() = 0.01;
+		thr::nullAngleValue() = 0.01;
 		{
 //			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
-			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.005,1.) ); // almost vertical line
+			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
 			INFO( "angle=" << getAngle( l1,l2a) );
 			CHECK( l1.isParallelTo(l2a) == true );
 
@@ -618,7 +644,7 @@ TEST_CASE( "Homogr constructors", "[testHC]" )
 		Line2d_<NUMTYPE> li1;
 		Line2d_<NUMTYPE> li2 = H0 * li1;
 		auto angle2 = getAngle( li1, li2 );
-		CHECK( std::fabs(angle2 - angle) < Line2d::nullAngleValue() );
+		CHECK( std::fabs(angle2 - angle) < thr::nullAngleValue() );
 //		std::cout << std::setprecision( std::numeric_limits<double>::digits10 ) << std::scientific << "angle2=" << angle2 << " angle=" << angle << "\n";
 	}
 	{

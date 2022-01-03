@@ -48,7 +48,7 @@ int main( int argc, const char** argv )
 //		std::cout << ell;
 		if( dummy_pt.isInside( ell ) )
 			c1++;
-		auto bb = ell.getBB();
+		auto bb = ell.getOBB();
 		c2 += bb.size();
 //		if( dummy_pt.isInside(bb) )
 //			c2++;

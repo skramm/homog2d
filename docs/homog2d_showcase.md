@@ -7,19 +7,28 @@ On this page, some graphical demos, all generated with programs in misc/showcase
 Requires Opencv (to generate images) and ImageMagick (to generate the final gif).
 
 
-* The front page demo. The moving circle turns red when it is detected as inside the rectangle or the other circle.
+* [Showcase 1](../misc/showcase/showcase1.cpp):The front page demo. The moving circle turns red when it is detected as inside the rectangle or the other circle.
 
 ![showcase1](showcase/showcase1.gif)
 
-* A rotating Polyline object, its bounding box, and its intersection with a line.
+
+* [Showcase 3](../misc/showcase/showcase3.cpp): A rotating Polyline object, its bounding box, and its intersection with a line.
 
 ![showcase3](showcase/showcase3.gif)
 
-* Two dancing rectangles and their common bounding box.
 
-![showcase1](showcase/showcase4.gif)
+* [Showcase 4](../misc/showcase/showcase4.cpp): Two dancing objects (Circle and FRect) and their common bounding box.
+Also show the rectangle's bounding circle.
 
-* Intersection and union areas of two rectangles.
+![showcase4](showcase/showcase4.gif)
+
+
+* [Showcase 2](../misc/showcase/showcase2.cpp):Intersection and union areas of two rectangles.
 
 ![Example of intersection area](showcase/showcase2a.gif)
 ![Example of union area](showcase/showcase2b.gif)
+
+
+* [Showcase 5](../misc/showcase/showcase5.cpp):A rotating ellipse with its center point (green), its axis lines, and its two bounding boxes (one aligned with its axis, the other xy-aligned).
+
+![showcase5](showcase/showcase5.gif)

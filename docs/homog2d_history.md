@@ -1,16 +1,20 @@
 # History
 
+[Manual main page](homog2d_manual.md)
+
 See [Release page](https://github.com/skramm/homog2d/releases).
 
 - planned:
-  - add inversion of a Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
+  - add inversion of a 8x8 Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - provide clear interface to extend drawing capabilities using other back-ends
   - add (optional) common root class, to be able to store heterogeneous objects in container
-  - clarify thresholds usage and manual
   - add precision evaluation
 
 - current master branch
+  - added symbol `HOMOG2D_ROUNDING_COEFF` to adjust rounding coeff.
+
+- [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`
   - fixed manual typos, added "dev" doc page
   - added speed test, manual edits
@@ -22,7 +26,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added more tests
   - added some missing free functions
   - API changes: refactoring of `Polyline` class, now split in two classes, `CPolyline` and `OPolyline` (closed and open)
-  - bugfixes
+  - many bugfixes and improvments
+  - added precision tests, plots, and details on thresholds, see [homog2d_thresholds.md](homog2d_thresholds.md).
+  - added lots of code demos and showcases as gif images, see [homog2d_showcase.md](homog2d_showcase.md).
 
 - [v2.5](https://github.com/skramm/homog2d/releases/tag/v2.5), released on 2021-07-31
   - switch to C++14 (so we can use `auto` return types!)

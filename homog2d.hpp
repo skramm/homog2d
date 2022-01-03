@@ -53,7 +53,10 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_LOG(a) std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " << a << '\n'
+	#define HOMOG2D_LOG(a) \
+		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
+		<< std::scientific << std::setprecision(10) \
+		<< a << '\n'
 #else
 	#define HOMOG2D_LOG(a) {;}
 #endif
@@ -72,7 +75,7 @@ See https://github.com/skramm/homog2d
 		{ \
 			std::cerr << "Homog2d assert failure, version:" << HOMOG2D_VERSION \
 				<< ", line:" << __LINE__ << "\n -details: " << b << '\n'; \
-			std::cout << "homog2d: internal failure, please check stderr and report this\n"; \
+			std::cout << "homog2d: internal failure, please check stderr and report this on https://github.com/skramm/homog2d/issues\n"; \
 			std::exit(1); \
 		} \
 	}
@@ -109,6 +112,36 @@ See https://github.com/skramm/homog2d
 /// Error throw wrapper macro, first arg in the function name
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
+
+///////////////////////////////////////
+// Default values for thresholds
+#ifndef HOMOG2D_THR_ZERO_DIST
+	#define HOMOG2D_THR_ZERO_DIST 1E-10
+#endif
+
+#ifndef HOMOG2D_THR_ZERO_ORTHO_DIST
+	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-14
+#endif
+
+// default value: 1 thousand of a radian (tan = 0.001 too)
+#ifndef HOMOG2D_THR_ZERO_ANGLE
+	#define HOMOG2D_THR_ZERO_ANGLE 0.001
+#endif
+
+#ifndef HOMOG2D_THR_ZERO_DENOM
+	#define HOMOG2D_THR_ZERO_DENOM 1E-10
+#endif
+
+#ifndef HOMOG2D_THR_ZERO_DETER
+	#define HOMOG2D_THR_ZERO_DETER 1E-15
+#endif
+
+#ifndef HOMOG2D_ROUNDING_COEFF
+	#define HOMOG2D_ROUNDING_COEFF 1E6
+#endif
+
+///////////////////////////////////////
+
 
 namespace h2d {
 
@@ -291,6 +324,41 @@ namespace priv {
 } // namespace priv
 
 
+//------------------------------------------------------------------
+/// Holds threshold values and api
+namespace thr {
+
+static HOMOG2D_INUMTYPE& nullDistance()
+{
+	static HOMOG2D_INUMTYPE s_zeroDistance = HOMOG2D_THR_ZERO_DIST;
+	return s_zeroDistance;
+}
+static HOMOG2D_INUMTYPE& nullOrthogDistance()
+{
+	static HOMOG2D_INUMTYPE s_zeroOrthoDistance = HOMOG2D_THR_ZERO_ORTHO_DIST;
+	return s_zeroOrthoDistance;
+}
+static HOMOG2D_INUMTYPE& nullAngleValue()
+{
+	static HOMOG2D_INUMTYPE s_zeroAngleValue = HOMOG2D_THR_ZERO_ANGLE;
+	return s_zeroAngleValue;
+}
+
+static HOMOG2D_INUMTYPE& nullDenom()
+{
+	static HOMOG2D_INUMTYPE _zeroDenom = HOMOG2D_THR_ZERO_DENOM;
+	return _zeroDenom;
+}
+
+static HOMOG2D_INUMTYPE& nullDeter()
+{
+	static HOMOG2D_INUMTYPE _zeroDeter = HOMOG2D_THR_ZERO_DETER;
+	return _zeroDeter;
+}
+
+} // namespace thr
+
+
 namespace detail {
 
 // forward declaration
@@ -306,8 +374,8 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		   std::fabs( p0.getX() - p1.getX() ) < Point2d_<FPT>::nullOrthogDistance()
-		|| std::fabs( p0.getY() - p1.getY() ) < Point2d_<FPT>::nullOrthogDistance()
+		   std::fabs( p0.getX() - p1.getX() ) < thr::nullOrthogDistance()
+		|| std::fabs( p0.getY() - p1.getY() ) < thr::nullOrthogDistance()
 	)
 		HOMOG2D_THROW_ERROR_1(
 			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
@@ -320,6 +388,7 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 
 template<typename T>
 using matrix_t = std::array<std::array<T,3>,3>;
+
 
 //------------------------------------------------------------------
 /// Common class for all the geometric primitives
@@ -354,7 +423,7 @@ class Matrix_: public Common<FPT>
 
 private:
 	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
+//	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -432,7 +501,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	Matrix_& inverse()
 	{
 		auto det = determ();
-		if( std::abs(det) < nullDeterValue() )
+		if( std::abs(det) < thr::nullDeter() )
 			HOMOG2D_THROW_ERROR_1( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
 
 		auto adjugate = p_adjugate();
@@ -447,10 +516,10 @@ protected:
 	void p_normalize( int r, int c ) const
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( std::fabs(_mdata[r][c]) < nullDenomValue() )
+		if( std::fabs(_mdata[r][c]) < thr::nullDenom() )
 			HOMOG2D_THROW_ERROR_1(
 				"Unable to normalize matrix, value at ("
-					<< r << ',' << c << ") less than " << nullDenomValue()
+					<< r << ',' << c << ") less than " << thr::nullDenom()
 			);
 #endif
 		p_divideBy( r, c );
@@ -460,18 +529,6 @@ protected:
 					e = -e;
 		_isNormalized = true;
 	}
-
-#if 0
-/// Used by copy constructor
-/** \todo maybe integrate into CC ? Not used anywhere else... */
-	template<typename FPT2>
-	void p_copyTo( const Matrix_<FPT2>& other )
-	{
-		for( int i=0; i<3; i++ )
-			for( int j=0; j<3; j++ )
-				other._mdata[i][j] = _mdata[i][j];
-	}
-#endif
 
 /// Divide all elements by the value at (r,c), used for normalization.
 /** No need to check value, done by caller */
@@ -515,15 +572,8 @@ protected:
 				mat._mdata[i][j] /= value;
 		_isNormalized = false;
 	}
-
-/// Matrix multiplication
-	friend Matrix_ operator * ( const Matrix_& h1, const Matrix_& h2 )
-	{
-		HOMOG2D_START;
-		Matrix_ out;
-		product( out, h1, h2 );
-		return out;
-	}
+	template<typename T1,typename T2>
+	friend Matrix_<T1> operator * ( const Matrix_<T1>&, const Matrix_<T2>& );
 
 private:
 	HOMOG2D_INUMTYPE p_det2x2( const std::vector<int>& v ) const
@@ -566,16 +616,20 @@ private:
 		return f;
 	}
 
-public:
-	static HOMOG2D_INUMTYPE& nullDeterValue() { return _zeroDeterminantValue; }
-	static HOMOG2D_INUMTYPE& nullDenomValue() { return _zeroDenomValue; }
-
 }; // class Matrix_
 
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
 
+template<typename T1,typename T2>
+Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
+{
+	HOMOG2D_START;
+	Matrix_<T1> out;
+	product( out, h1, h2 );
+	return out;
+}
 
 } // namespace detail
 
@@ -883,11 +937,12 @@ and if one differs more than the threshold, it will return false
 			for( int j=0; j<3; j++ )
 				if( std::fabs(
 					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - h.value(i,j) )
-					>= detail::Matrix_<FPT>::nullDeterValue()
+					>= thr::nullDeter()
 				)
 					return false;
 		return true;
 	}
+
 /// Comparison operator. Does normalization if required
 	bool operator != ( const Hmatrix_& h ) const
 	{
@@ -1851,8 +1906,8 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( std::abs(rad) < Point2d_<FPT>::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must not be 0" );
+		if( std::abs(rad) < thr::nullDistance() )
+			HOMOG2D_THROW_ERROR_1( "radius must value too small: " << std::scientific << std::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
 #endif
@@ -1897,8 +1952,6 @@ public:
 	{
 		Circle_<FPT> c( center, rad );
 		std::swap( c, this ); /// \todo 20211216: replace with move
-//		_radius = rad;
-//		_center = center;
 	}
 
 	template<typename T1, typename T2>
@@ -2077,12 +2130,13 @@ getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
 	return std::make_pair( pt1, pt2 );
 }
 
-/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B()
+/// Helper function for impl_getOrthogonalLine_A() and impl_getOrthogonalLine_B(),
+/// Compute orthogonal line to \c li at point \c pt (that must lie on the line)
 template<typename T1,typename T2>
 Line2d_<T1>
 getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 {
-	auto arr = li.get();
+	auto arr = li.get(); // get array of 3 values
 	Line2d_<T1> out(
 		-arr[1],
 		arr[0],
@@ -2122,6 +2176,7 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 }
 #endif
 } // namespace priv
+
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -2679,11 +2734,8 @@ public:
 	}
 #endif // HOMOG2D_USE_OPENCV
 
-	static HOMOG2D_INUMTYPE& nullAngleValue()     { return _zeroAngleValue; }
-	static HOMOG2D_INUMTYPE& nullDistance()       { return _zeroDistance; }
-	static HOMOG2D_INUMTYPE& nullOffsetValue()    { return _zeroOffset; }
-	static HOMOG2D_INUMTYPE& nullOrthogDistance() { return _zeroOrthoDistance; }
-	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
+#if 1
+//	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
 
 //////////////////////////
 //      DATA SECTION    //
@@ -2692,11 +2744,12 @@ public:
 private:
 	std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
 
-	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
-	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
-	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
-	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
-	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
+//	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
+//	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
+//	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
+//	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
+//	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
+#endif
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -2807,25 +2860,13 @@ private:
 // SECTION  - INSTANCIATION OF STATIC VARIABLES
 /////////////////////////////////////////////////////////////////////////////
 
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroAngleValue = 0.001; // 1 thousand of a radian (tan = 0.001 too)
 
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDistance = 1E-8;
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroOrthoDistance = 1E-18;
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
-
-template<typename LP,typename FPT>
-HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroOffset = 1E-15;
-
+//template<typename LP,typename FPT>
+//HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
 template<typename FPT>
 HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
-template<typename FPT>
-HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
+//template<typename FPT>
+//HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2984,7 +3025,7 @@ buildFrom4Points_Eigen(
 
 	return H;
 }
-#endif
+#endif // HOMOG2D_USE_EIGEN
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
@@ -3190,7 +3231,10 @@ the one with smallest y-coordinate will be returned first */
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
 	{
-		return _ptS1 * _ptS2;
+		Point2d_<HOMOG2D_INUMTYPE> pt1( _ptS1 );
+		Point2d_<HOMOG2D_INUMTYPE> pt2( _ptS2 );
+		auto li = pt1 * pt2;
+		return Line2d_<FPT>(li);
 	}
 
 /// \name Intersection functions
@@ -3952,7 +3996,8 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-		if( std::abs(a1-a2) < LPBase<type::IsLine,FPT>::nullAngleValue() )
+//		if( std::abs(a1-a2) < LPBase<type::IsLine,FPT>::nullAngleValue() )
+		if( std::abs(a1-a2) < thr::nullAngleValue() )
 			ptset.push_back( i );
 	}
 
@@ -4216,18 +4261,18 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 		auto xmax = std::max( v[0].getX(), std::max( v[1].getX(),v[2].getX() ) );
 		auto ymax = std::max( v[0].getY(), std::max( v[1].getY(),v[2].getY() ) );
 #ifndef HOMOG2D_DEBUGMODE
-		assert( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() );
-		assert( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() );
+		assert( xmax-xmin > thr::nullOrthogDistance() );
+		assert( ymax-ymin > thr::nullOrthogDistance() );
 #else
 		HOMOG2D_DEBUG_ASSERT(
-			( ( xmax-xmin > Point2d_<FPT>::nullOrthogDistance() )
+			( ( xmax-xmin > thr::nullOrthogDistance() )
 			&&
-			( ymax-ymin > Point2d_<FPT>::nullOrthogDistance() )) ,
+			( ymax-ymin > thr::nullOrthogDistance() )) ,
 			std::scientific
 			<< "this=" << *this << " other=" << other
 			<< "\nxmax=" << xmax << " xmin=" << xmin
 			<< "\nymax=" << ymax << " ymin=" << ymin
-			<< "\nnod=" << Point2d_<FPT>::nullOrthogDistance()
+			<< "\nnod=" << thr::nullOrthogDistance()
 		);
 #endif
 		return detail::RectArea<FPT>( FRect_<FPT>( xmin, ymin, xmax,ymax ) );
@@ -4626,8 +4671,6 @@ isBetween( T1 v, T2 v1, T2 v2 )
 {
 	HOMOG2D_CHECK_IS_NUMBER(T1);
 	HOMOG2D_CHECK_IS_NUMBER(T2);
-//std::cout << std::scientific << std::setprecision(18);
-//HOMOG2D_LOG("v="<<v << " v1=" << v1 << " v2=" << v2 );
 	if( v >= std::min( v1, v2 ) )
 		if( v <= std::max( v1, v2 ) )
 			return true;
@@ -4635,14 +4678,13 @@ isBetween( T1 v, T2 v1, T2 v2 )
 }
 
 /// Does some small rounding (if requested), to avoid some numerical issues
-/// \todo provide access to the coefficient in API
 template<typename FPT>
 long double
 doRounding( FPT value, Rounding r )
 {
 	if( r == Rounding::No )
 		return value;
-	long double coeff=1E6;
+	HOMOG2D_INUMTYPE coeff = HOMOG2D_ROUNDING_COEFF;
 	return std::llroundl( value * coeff ) / coeff;
 }
 
@@ -4679,7 +4721,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 		return PtTag::Inside;
 	if(
 		std::abs( pt.distTo( circle.center() ) - circle.radius() )
-		< Point2d_<FPT>::nullDistance()
+			< thr::nullDistance()
 	)
 		return PtTag::OnEdge;
 	return PtTag::Outside;
@@ -5000,7 +5042,7 @@ Ellipse_<FPT>::p_computeParams() const
 	auto denom = B*B - 4. * A * C;
 
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < detail::Matrix_<FPT>::nullDenomValue() )
+	if( std::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute parameters, denom=" << std::scientific << std::setprecision(15) << denom
 		);
@@ -5017,7 +5059,7 @@ Ellipse_<FPT>::p_computeParams() const
 
 	par.a2 = par.a * par.a;
 	par.b2 = par.b * par.b;
-	if( std::abs(B) < detail::Matrix_<FPT>::nullDenomValue() )
+	if( std::abs(B) < thr::nullDenom() )
 	{
 		if( A > C )
 			par.theta = 90.;
@@ -5088,15 +5130,16 @@ std::pair<Line2d_<FPT>,Line2d_<FPT>>
 Ellipse_<FPT>::getAxisLines() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
-	auto dy = par.sint * par.a;
-	auto dx = par.cost * par.a;
-	Point2d_<FPT> ptA(
+	auto dy = static_cast<HOMOG2D_INUMTYPE>(par.sint) * par.a;
+	auto dx = static_cast<HOMOG2D_INUMTYPE>(par.cost) * par.a;
+	Point2d_<HOMOG2D_INUMTYPE> ptA(
 		par.x0 + dx,
 		par.y0 + dy
 	);
 	auto pt0 = Point2d_<HOMOG2D_INUMTYPE>( par.x0, par.y0 );
-
 	auto li_H = ptA * pt0;
+	HOMOG2D_LOG( std::scientific << "ptA=" << ptA << " pt0=" << pt0 << " li_H=" << li_H );
+
 	auto li_V = li_H.getOrthogonalLine( pt0 );
 	return std::make_pair( li_H, li_V );
 }
@@ -5264,7 +5307,7 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::RootHelpe
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < nullDenom() )
+	if( std::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
@@ -5325,9 +5368,10 @@ std::pair<Point2d_<FPT>,Point2d_<FPT>>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::RootHelper<type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( this->distTo( pt ) > nullDistance() )
+	if( this->distTo( pt ) > thr::nullDistance() )
 	{
-		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
+			<< " > null distance (" << thr::nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getPoints", "point is not on line" );
 	}
 #endif
@@ -5373,9 +5417,10 @@ Line2d_<FPT>
 LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( this->distTo( pt ) > nullDistance() )
+	if( this->distTo( pt ) > thr::nullDistance() )
 	{
-		std::cerr << "distance=" << std::scientific << this->distTo( pt ) << " nD=" << nullDistance() << "\n";
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
+			<< "> null distance (" << thr::nullDistance() << ")\n";
 		HOMOG2D_THROW_ERROR_2( "getOrthogonalLine", "point is not on line" );
 	}
 #endif
@@ -5432,7 +5477,7 @@ LPBase<LP,FPT>::impl_getParallelLines( T dist, const detail::RootHelper<type::Is
 Definition: two lines will be equal:
 - if they are parallel
 AND
-- if their offset (3 third value) is less than nullOffsetValue()
+- if their offset (3 third value) is less than nullDistance()
 */
 template<typename LP,typename FPT>
 bool
@@ -5441,7 +5486,7 @@ LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::RootHe
 	if( !this->isParallelTo( other ) )
 		return false;
 
-	if( std::fabs( _v[2] - other._v[2] ) > nullOffsetValue() )
+	if( std::fabs( _v[2] - other._v[2] ) > thr::nullDistance() )
 		return false;
 
 	return true;
@@ -5452,10 +5497,7 @@ template<typename LP,typename FPT>
 bool
 LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::RootHelper<type::IsPoint>& ) const
 {
-	auto dist = this->distTo( other );
-	if( dist < nullDistance() )
-		return true;
-	return false;
+	return ( this->distTo( other ) < thr::nullDistance() );
 }
 
 //------------------------------------------------------------------
@@ -5540,11 +5582,9 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsPoint>& ) const
 {
-	return static_cast<double>(
-		std::hypot(
-			static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
-			static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
-		)
+	return std::hypot(
+		static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
+		static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
 	);
 }
 //------------------------------------------------------------------
@@ -5563,7 +5603,12 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::RootHelper<type::IsLine>& ) const
 {
-	return std::fabs( _v[0] * pt.getX() + _v[1] * pt.getY() + _v[2] ) / std::hypot( _v[0], _v[1] );
+	return std::fabs(
+		static_cast<HOMOG2D_INUMTYPE>( _v[0] ) * pt.getX()
+		+ static_cast<HOMOG2D_INUMTYPE>( _v[1] ) * pt.getY()
+		+ static_cast<HOMOG2D_INUMTYPE>( _v[2] )
+	)
+	/ std::hypot( _v[0], _v[1] );
 }
 
 /// overload for line to point distance
@@ -5601,7 +5646,8 @@ template<typename FPT2>
 bool
 LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-	if( getAngle(li) < LPBase::nullAngleValue() )
+//	if( getAngle(li) < LPBase::nullAngleValue() )
+	if( getAngle(li) < thr::nullAngleValue() )
 		return true;
 	return false;
 }
@@ -5803,18 +5849,18 @@ detail::Intersect<detail::Inters_2,FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
 	HOMOG2D_START;
-
-//	std::cout << "Line/FRect intersection, line=" << *this << " rect=" << rect << "\n";
+	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
 	std::vector<Point2d_<FPT>> pti;
-	for( const auto seg: rect.getSegs() )
+	for( const auto seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
+		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if point is one of the segments
+			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if intersection point is one of the segment pts
 				if( pti.size() == 1 )                            // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
 						storePoint = false;
@@ -5825,21 +5871,13 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Ro
 				break;
 		}
 	}
-
-#ifndef HOMOG2D_DEBUGMODE
-	assert( pti.size() == 0 || pti.size() == 2 ); // only two points
-#else
-	HOMOG2D_DEBUG_ASSERT(
-		( pti.size() == 0 || pti.size() == 2 ),
-		"Line/FRect intersection:" << std::scientific << std::setprecision(15) << "\n -line=" << *this << "\n -frect=" << rect
-						<< "\n -pti.size()=" << pti.size()
-	);
-#endif
-
 	if( pti.empty() )
 		return detail::Intersect<detail::Inters_2,FPT>();
 
-	priv::fix_order( pti[0], pti[1] );
+	if( pti.size() == 1 )         // if single intersections, add one,
+		pti.push_back( pti[0] );  // we return two identical points
+	else
+		priv::fix_order( pti[0], pti[1] );
 	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
 }
 
@@ -6237,7 +6275,6 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
-#if 1
 /// Returns Bounding Box of object (free function)
 template<typename T>
 FRect_<typename T::FType>
@@ -6245,44 +6282,6 @@ getBB( const T& object )
 {
 	return object.getBB();
 }
-#else
-
-/// Returns Bounding Box of Ellipse_ (free function)
-/// \sa Ellipse_::getBB()
-template<typename FPT>
-PolylineBase<type::IsClosed,FPT>
-getBB( const Ellipse_<FPT>& ell )
-{
-	return ell.getBB();
-}
-
-/// Returns Bounding Box of Segment_ (free function)
-/// \sa Segment_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Segment_<FPT>& seg )
-{
-	return seg.getBB();
-}
-
-/// Returns Bounding Box of Circle_ (free function)
-/// \sa Circle_::getBB()
-template<typename FPT>
-FRect_<FPT>
-getBB( const Circle_<FPT>& cir )
-{
-	return cir.getBB();
-}
-
-/// Returns Bounding Box of PolylineBase (free function)
-/// \sa PolylineBase::getBB()
-template<typename PLT,typename FPT>
-FRect_<FPT>
-getBB( const PolylineBase<PLT,FPT>& pl )
-{
-	return pl.getBB();
-}
-#endif
 
 namespace priv {
 /// Returns Bounding Box of two rectangles (private free function)

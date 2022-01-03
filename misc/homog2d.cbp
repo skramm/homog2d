@@ -37,7 +37,6 @@
 		<Unit filename="../README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../docs/build_gif.sh" />
 		<Unit filename="../docs/future_stuff_doc.txt" />
 		<Unit filename="../docs/homog2d_Polyline.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
@@ -52,12 +51,14 @@
 		</Unit>
 		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
+		<Unit filename="../docs/homog2d_thresholds.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../homog2d.hpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="build_gif.sh" />
 		<Unit filename="demo_check.cpp">
 			<Option target="demo" />
 		</Unit>
@@ -70,6 +71,8 @@
 		<Unit filename="doxyfile_opencv">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="dtest1.cpp" />
+		<Unit filename="dtest1.plt" />
 		<Unit filename="ellipse_speed_test.cpp" />
 		<Unit filename="extra_style_sheet.css">
 			<Option target="&lt;{~None~}&gt;" />
@@ -151,14 +154,12 @@
 		<Unit filename="showcase/showcase2.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
 		<Unit filename="showcase/showcase4.cpp" />
+		<Unit filename="showcase/showcase5.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Extensions>
 			<lib_finder disable_auto="1" />
-			<code_completion />
-			<envvars />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
