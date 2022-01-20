@@ -829,11 +829,29 @@ Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
 You can also compute the transformation from two sets of 4 (non-colinear) points:
 
 ```C++
-std::vector<Point2d> v1(4);
-std::vector<Point2d> v2(4);
+std::vector<Point2d> v1(4); // "from" points
+std::vector<Point2d> v2(4); // "to" points
 ... // fill v1 and v2
 H.buildFrom4Points( v1, v2 );
+auto H2 = buildFrom4Points( v1, v2 ); // or use the free function
 ```
+
+For example, the following code:
+```C++
+	std::vector<Point2d> v1 { {20,20}, {250,20}, {230,170}, {60,190} };
+	std::vector<Point2d> v2 { {60,60}, {280,50}, {220,150}, {90,130} };
+	auto H = buildFrom4Points(v1, v2);
+	std::cout << H;
+```
+will produce this matrix:
+```
+| 0.347509   0.140962     48.967  |
+| -0.147718  0.510036     51.4901 |
+| -0.0021031 0.00105012    1      |
+```
+
+![Exemple of Homography computing](img/homog_from_pts.png)
+
 
 However, this requires the solving of a linear system of 8 equations with 8 unknowns (i.e. computing the inverse of a 8x8 matrix).
 This task does not enter in the scope of this library, thus we rely on others ones to do this.
