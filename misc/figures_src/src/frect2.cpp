@@ -12,5 +12,5 @@ int main()
 
 	r1.draw( im, DrawParams().setColor(250,0,20) );
 	r2.draw( im, DrawParams().setColor(20,0,250) );
-	cv::imwrite( "frect2.png", im.getReal() );
+	im.write( "frect2.png" );
 }

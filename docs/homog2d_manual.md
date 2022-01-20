@@ -27,8 +27,10 @@ It also provides some additional types, derived from these.
 All these implement a comparison operator ( `==` and  `!=`).
 
 It does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
+The types are fully templated by the underlying numerical type.
+To make things simple, we introduce here only the default type, based on `double` (see [Numerical data types](#numdt) for details).
 
-A large part of the API is exposed both as member functions and as free functions.
+The API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
 Both of these are possible:
 ```C++
@@ -63,8 +65,8 @@ Line2d  li3( pt1, pt2 );
 
 - Get a line from two points, and a point from two lines:
 ```C++
-pt1 = li1 * li2;
-li1 = pt1 * pt2;
+auto pt = li1 * li2;
+auto li = pt1 * pt2;
 ```
 
 Beware, two parallel lines will never cross, and two identical points do not define a line.
@@ -194,7 +196,7 @@ Upon return, the "first" point will hold the one with smallest 'x' coordinates, 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-Line2d lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
+auto lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
 ```
 will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
@@ -205,7 +207,7 @@ Similarly, you can also directly use as input a point on the line:
 Line2d liB = lA.getOrthogonalLine( p1 );
 ```
 Again, point is checked and this will throw if distance from point to line is above some threshold
-(see ["numerical issues"](#num_issues))
+(see ["numerical issues"](#num_issues)).
 
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
@@ -214,7 +216,7 @@ This function takes as argument a point that the line will intersect.
 ```C++
 Line2d li1; // some line
 Point2d pt; // some point
-Line2d li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is parallel to li1
+auto li2 = li1.getParallelLine( pt ); // pt will be lying on li2, wich is parallel to li1
 ```
 
 If you need a parallel line to another at a given distance, then you can use
@@ -223,7 +225,7 @@ They both return a pair (`std::pair`) of lines, one on one side, and the other o
 ```C++
 Line2d li; // some line
 auto p_lines1 = li.getParallelLines( 100 );
-auto p_lines2 = getParallelLines( li, 50 );
+auto p_lines2 = getParallelLines( li, 50 ); // free function
 auto liA = p_lines1.first;
 auto liB = p_lines1.second;
 ```
@@ -232,11 +234,12 @@ If you know that two lines are parallel and you want the distance between them, 
 ```C++
 auto dist = getParallelDistance( li1, li2 );
 ```
+This will throw if lines are not parallel.
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
 auto angle1 = li2.getAngle( li1 );
-auto angle2 = getAngle( li1, li2 );
+auto angle2 = getAngle( li1, li2 ); // free function
 ```
 
 ## 3 - Other geometric primitives
@@ -285,6 +288,12 @@ The only constraint is that they must be all of the same type (no int/float/doub
 Segment s1( x1, y1, x2, y2 );
 ```
 
+Besides using a homography matrix, translating the segment can be done with a member function:
+```C++
+Segment s1( ... );
+s1.translate( dx, dy );
+```
+
 You can get the pair of points (as an `std::pair`) with `getPts()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
@@ -308,28 +317,27 @@ You can get the point lying in the middle of the segment:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getMiddlePoint();
-auto p_mid2 = getMiddlePoint(s1); // your choice
+auto p_mid2 = getMiddlePoint(s1); // free function
 ```
 
 The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto length  = s1.length();
-auto length2 = length(s1);
+auto length2 = length(s1); // free function
 ```
-
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
 
-A flat rectangle is provided through the template class `FRect`.
+A flat rectangle is provided through the class `FRect`.
 It is modeled by its two opposite points.
 ```C++
 FRect r1; // (0,0) (1,1)
 FRect r2( Point2d(0,0), Point2d(10,10) );
 r1.set( pt1, pt2 );
 ```
-When using the constuctor or the `set()` member function, there is no constraint on the points themselves:
+When using the constructor or the `set()` member function, there is no constraint on the points themselves:
 the library will automatically adjust the points to store the two opposite ones,
 with the one with smallest coordinates as "first".
 
@@ -340,7 +348,7 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
 
-You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2, y2.
+You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2,y2.
 The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
@@ -375,6 +383,7 @@ auto w = rect.width();
 auto h = rect.height();
 auto a = rect.area();   // w * h
 auto l = rect.length(); // 2*w + 2*h
+// or free functions
 auto w2 = width(rect);
 auto h2 = height(rect);
 auto a2 = area(rect);
@@ -384,7 +393,8 @@ auto l2 = length(rect);
 You can gets its size as a pair of values (member function or free function):
 ```C++
 FRect rect;
-auto s = rect.size();
+auto s1 = rect.size();
+auto s2 = size(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -401,13 +411,6 @@ auto cir = r1.getBoundingCircle();
 
 ![showcase4b](showcase/showcase4b.gif)
 
-
-You can get the Bounding Box of two rectangles (will return a `FRect`);
-```C++
-FRect r1(...); // whatever
-FRect r2(...); // whatever
-auto bb = getBB( r1, r2 );
-```
 
 ### 3.3 - Circles
 <a name="p_circle"></a>
@@ -543,15 +546,20 @@ Please note that if not a polygon, or if applied on a open type, then the `area(
 Polyline objects can be compared, however, the behavior differs whether it is closed or not.
 Consider these two sets of points:
 ```
-(0,0)--(2,3)--(0,2)
-(2,3)--(0,2)--(0,0)
+(1,1)--(3,4)--(1,3)
+(3,4)--(1,3)--(1,1)
 ```
+
 ![First open Polyline](img/polyline2_o1.png)
 ![Second open Polyline](img/polyline2_o2.png)
 ![Sames points, but closed type](img/polyline2_c.png)
 
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
+
+This is handled through a normalization step, called automatically.
+  * if "closed" type, the normalization will reverse and rotate the points, so that the smallest point is first and the second one is smaller than the last one.
+  * if "open" type, only the reverse operation is performed.
 
 However, comparison of identical objects can fail in some circumstances, because a Polyline object can hold the same point several times (but not contiguous).
 Consider these two closed Polyline objects:
@@ -673,7 +681,7 @@ auto s2 = H * s1;
 Polyline pl;
 pl = H * pl;
 
-auto a = H * rect; // a is a Polyline
+auto a = H * rect; // a is a CPolyline
 ```
 It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `CPolyline`.
 Similarly, applying a homography to a `Circle` will generate an `Ellipse` object.
@@ -798,7 +806,8 @@ auto v_out = h * v_in;
 Thanks to templates, this works also for a set of points (or lines) stored in a `std::list` or `std::array`.
 
 Once you have the desired matrix, you can apply it to about anything you want.
-For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line (see misc/showcase/showcase3.cpp).
+For example, here is a rotating polygon, with its bounding box and intersection points with a crossing line
+(see [showcase3.cpp](../misc/showcase/showcase3.cpp)).
 
 ![showcase3](showcase/showcase3.gif)
 
@@ -1073,7 +1082,7 @@ img::Image<cv::Mat> img( 300, 400 ); // new image, white
 
 Circle c( 100,100,80 );
 c.draw( img );
-cv::imwrite( "circles1.png", img.getReal() );
+img.write( "circles1.png" );
 ```
 (the `getReal()` function returns the underlying type, here the Opencv cv:Mat)
 

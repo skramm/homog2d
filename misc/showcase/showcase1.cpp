@@ -5,8 +5,6 @@
 #define HOMOG2D_USE_OPENCV
 #include "../../homog2d.hpp"
 
-#include "opencv2/highgui.hpp"
-
 using namespace h2d;
 using namespace h2d::img;
 
@@ -99,7 +97,7 @@ int main( int argc, const char** argv )
 */
 		std::ostringstream oss;
 		oss << "showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( oss.str(), myImg.getReal() );
+		myImg.write( oss.str() );
 
 		pl = H * pl;
 		lih = H*lih;

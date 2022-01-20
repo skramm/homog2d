@@ -7,11 +7,7 @@
 //#define HOMOG2D_NOCHECKS
 #include "../../homog2d.hpp"
 
-
-#include "opencv2/highgui.hpp"
-
 using namespace h2d;
-using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
@@ -39,16 +35,16 @@ int main( int argc, const char** argv )
 		auto ell2 = Hdraw * ell;
 
 		img::Image<cv::Mat> im( 250, 200 );
-		ell2.center().draw( im, DrawParams().setColor(0,250,0) );
+		ell2.center().draw( im, img::DrawParams().setColor(0,250,0) );
 		auto lines = ell2.getAxisLines();
 		lines.first.draw( im );
 		lines.second.draw( im );
 
-		getBB(ell2).draw(  im, DrawParams().setColor(0,250,0) );
-		getOBB(ell2).draw( im, DrawParams().setColor(0,0,250) );
-		ell2.draw( im, DrawParams().setColor(250,0,0) );
+		getBB(ell2).draw(  im, img::DrawParams().setColor(0,250,0) );
+		getOBB(ell2).draw( im, img::DrawParams().setColor(0,0,250) );
+		ell2.draw( im, img::DrawParams().setColor(250,0,0) );
 		std::ostringstream ossa;
 		ossa << "showcase5_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), im.getReal() );
+		im.write( ossa.str() );
 	}
 }

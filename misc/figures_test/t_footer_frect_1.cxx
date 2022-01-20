@@ -37,6 +37,6 @@
 	r1b.draw( img2, img::DrawParams().setColor(250,0,20) );
 	r2b.draw( img2, img::DrawParams().setColor(20,0,250) );
 
-	cv::imwrite( std::string(argv[0])+ ".png", img2.getReal() );
+	img2.write( std::string(argv[0])+ ".png" );
 }
 

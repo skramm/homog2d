@@ -26,12 +26,12 @@ int main()
 
 	opl.draw( img2, DrawParams().setColor(250,0,20) );
 	opl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	cv::imwrite( "polyline1a.png", img2.getReal()  );
+	img2.write( "polyline1a.png" );
 
 	CPolyline cpl(opl);
 
 	img2.clear();
 	cpl.draw( img2, DrawParams().setColor(250,0,20) );
 	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	cv::imwrite( "polyline1b.png", img2.getReal() );
+	img2.write( "polyline1b.png" );
 }

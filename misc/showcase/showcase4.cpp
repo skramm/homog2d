@@ -5,7 +5,6 @@
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
-#include "opencv2/highgui.hpp"
 
 using namespace h2d;
 using namespace h2d::img;
@@ -40,26 +39,26 @@ int main( int argc, const char** argv )
 		auto bcir_d = Hdraw * bcir;
 		auto center_d = Hdraw * center;
 
-		img::Image<cv::Mat> im( 250, 200 );
-		img::Image<cv::Mat> im2( 250, 200 );
+		Image<cv::Mat> im( 250, 200 );
+		Image<cv::Mat> im2( 250, 200 );
 
 		obj1_d.draw( im, DrawParams().setColor(250,0,0) );
 		obj2_d.draw( im, DrawParams().setColor(0,0,250) );
 		bcir_d.draw( im, DrawParams().setColor(100,250,100)  );
 
-		obj1_d.draw( im2, DrawParams().setColor(250,0,0) );
-		bcir_d.draw( im2, DrawParams().setColor(50,250,50)  );
+		obj1_d.draw(   im2, DrawParams().setColor(250,0,0) );
+		bcir_d.draw(   im2, DrawParams().setColor(50,250,50)  );
 		center_d.draw( im2, DrawParams().setColor(250,100,100) );
 
 		getBB(obj1_d, obj2_d).draw( im, DrawParams().setColor(g,g,g) );
 
 		std::ostringstream ossa;
 		ossa << "showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), im.getReal() );
+		im.write( ossa.str() );
 
 		std::ostringstream ossb;
 		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossb.str(), im2.getReal() );
+		im2.write( ossb.str() );
 	}
 }
 

@@ -11,7 +11,6 @@ They are used in the situations described below.
 * Checking for parallel lines (see `isParallelTo()` )is done by computing the angle between the lines.
 If it is below a threshold, the function returns true.
 The default value is one thousand of a radian (0.001 rad).
-<br>
 This is checked for when computing an intersection point between two  lines/segments, for example when attempting to build a point from 2 lines.
 
 * When attempting to compute a line out of two points, if the distance between the two points is less than `thr::nullDistance()`,

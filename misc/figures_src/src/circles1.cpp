@@ -18,5 +18,5 @@ int main()
 	seg.draw( img2, DrawParams().setColor(250,0,0) );
 	pseg.first.draw( img2,  DrawParams().setColor(0,200,100) );
 	pseg.second.draw( img2, DrawParams().setColor(0,100,200) );
-	cv::imwrite( "circles1.png", img2.getReal() );
+	img2.write( "circles1.png" );
 }

@@ -5,7 +5,6 @@
 #define HOMOG2D_DEBUGMODE
 
 #include "../../homog2d.hpp"
-#include "opencv2/highgui.hpp"
 
 #define NUMTYPE double
 

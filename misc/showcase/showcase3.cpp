@@ -6,10 +6,7 @@
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
-#include "opencv2/highgui.hpp"
-
 using namespace h2d;
-using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
@@ -42,15 +39,15 @@ int main( int argc, const char** argv )
 		pl = H*pl;
 		img2.clear();
 		auto pl2 = Hdraw * pl;
-		pl2.draw( img2, DrawParams().setColor(250,0,20) );
-		pl2.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-		draw( img2, Hdraw * li,  DrawParams().setColor(120,250,220) );
+		pl2.draw( img2, img::DrawParams().setColor(250,0,20) );
+		pl2.getBB().draw( img2, img::DrawParams().setColor(150,150,120) );
+		draw( img2, Hdraw * li,  img::DrawParams().setColor(120,250,220) );
 		auto pts = pl.intersects(li);
 		auto pts2 = Hdraw * pts.get();
 		draw( img2, pts2 );
 		std::ostringstream ossa;
 		ossa << "showcase3_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), img2.getReal() );
+		img2.write( ossa.str() );
 	}
 }
 

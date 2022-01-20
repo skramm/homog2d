@@ -560,7 +560,6 @@ TEST_CASE( "test parallel", "[test_para]" )
 		}
 		thr::nullAngleValue() = 0.01;
 		{
-//			std::cout << "null angle=" << Line2d_<NUMTYPE>::nullAngleValue() << " rad.\n";
 			Line2d_<NUMTYPE> l2a(Point2d_<NUMTYPE>(1.,0.), Point2d_<NUMTYPE>(1.0005,1.) ); // almost vertical line
 			INFO( "angle=" << getAngle( l1,l2a) );
 			CHECK( l1.isParallelTo(l2a) == true );
@@ -594,6 +593,9 @@ TEST_CASE( "test parallel", "[test_para]" )
 		Line2d_<NUMTYPE> l3( Point2d(-3,0), Point2d(-3,-10) ); // vertical line at x=1
 		CHECK( getParallelDistance( l1, l3 ) == 3. );
 		CHECK( getParallelDistance( l2, l3 ) == 4. );
+
+		Line2d l4( LineDir::H, 1 ); 	 // horizontal line
+		CHECK_THROWS( getParallelDistance( l1, l4 ) );
 	}
 }
 
@@ -1864,6 +1866,10 @@ TEST_CASE( "Segment", "[seg1]" )
 			Segment_<NUMTYPE> s( p1, p2 );   // same x value
 			CHECK( s.getPts().first == p1 );
 			CHECK( s.getPts().second == p2 );
+
+			s.translate( 2, 3 );
+			CHECK( s.getPts().first == Point2d(45,11) );
+			CHECK( s.getPts().second == Point2d(45,21) );
 		}
 		{
 			Segment_<NUMTYPE> s( p2, p1 );   // same x value

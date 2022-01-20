@@ -6,8 +6,6 @@
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
-#include "opencv2/highgui.hpp"
-
 using namespace h2d;
 using namespace h2d::img;
 
@@ -56,11 +54,11 @@ int main( int argc, const char** argv )
 		}
 		std::ostringstream ossa;
 		ossa << "showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossa.str(), imga.getReal() );
+		imga.write( ossa.str() );
 
 		std::ostringstream ossb;
 		ossb << "showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		cv::imwrite( ossb.str(), imgb.getReal() );
+		imgb.write( ossb.str() );
 
 		r1.translate( mul*20,0);
 	}

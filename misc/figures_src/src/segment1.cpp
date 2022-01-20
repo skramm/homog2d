@@ -13,5 +13,5 @@ int main()
 	s1.draw( img2, DrawParams().setColor(250,0,20) );
 	s2.draw( img2, DrawParams().setColor(20,0,250) );
 
-	cv::imwrite( "segment1.png", img2.getReal()  );
+	img2.write( "segment1.png" );
 }

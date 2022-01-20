@@ -38,7 +38,7 @@ void generate( std::string fname, const PolylineBase<T,U>& pl )
 	drawGrid( im, H );
 	auto pl2 = H * pl;
 	pl2.draw( im, DrawParams().setColor(250,0,20).showPoints(true) );
-	cv::imwrite( fname, im.getReal()  );
+	im.write( fname );
 }
 
 int main()

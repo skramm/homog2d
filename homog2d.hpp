@@ -44,6 +44,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
+	#include "opencv2/highgui.hpp"
 #endif
 
 #if 0
@@ -269,6 +270,10 @@ struct Image
 	int cols() const { return real_img.cols; }
 	int rows() const { return real_img.rows; }
 	void clear() { real_img = cv::Scalar(255,255,255); }
+	void write( std::string fname ) const
+	{
+		cv::imwrite( fname, real_img );
+	}
 #endif
 
 //#ifdef HOMOG2D_SOME_OTHER_LIB
@@ -3171,6 +3176,15 @@ public:
 		priv::fix_order( _ptS1, _ptS2 );
 	}
 
+	template<typename T1,typename T2>
+	void translate( T1 dx, T2 dy )
+	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		_ptS1.translate( dx, dy );
+		_ptS2.translate( dx, dy );
+	}
+
 /// \name Attributes access
 ///@{
 
@@ -3996,7 +4010,6 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-//		if( std::abs(a1-a2) < LPBase<type::IsLine,FPT>::nullAngleValue() )
 		if( std::abs(a1-a2) < thr::nullAngleValue() )
 			ptset.push_back( i );
 	}
@@ -5646,7 +5659,6 @@ template<typename FPT2>
 bool
 LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::RootHelper<type::IsLine>& ) const
 {
-//	if( getAngle(li) < LPBase::nullAngleValue() )
 	if( getAngle(li) < thr::nullAngleValue() )
 		return true;
 	return false;
