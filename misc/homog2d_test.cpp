@@ -594,7 +594,7 @@ TEST_CASE( "test parallel", "[test_para]" )
 		CHECK( getParallelDistance( l1, l3 ) == 3. );
 		CHECK( getParallelDistance( l2, l3 ) == 4. );
 
-		Line2d l4( LineDir::H, 1 ); 	 // horizontal line
+		Line2d_<NUMTYPE> l4( LineDir::H, 1 ); 	 // horizontal line
 		CHECK_THROWS( getParallelDistance( l1, l4 ) );
 	}
 }
