@@ -2244,6 +2244,11 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( area(pl1)    == 4 );
 		CHECK( pl1.centroid() == Point2d(6,7) );
 		CHECK( centroid(pl1)  == Point2d(6,7) );
+
+		auto vpts = pl1.getPts();
+		CHECK( vpts.size() == 4 );
+		CHECK( vpts[0] == Point2d(5,6) );
+
 		pl1.translate(1,2);
 		CHECK( pl1 == CPolyline_<NUMTYPE>( FRect( 6,8, 8,10 ) ) );
 	}
