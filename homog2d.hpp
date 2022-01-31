@@ -6709,17 +6709,52 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		getSegment(i).draw( im, dp );
 }
 
-/// Compute Convex Hull
+//------------------------------------------------------------------
+/// Compute Convex Hull (free function)
 /**
 Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+
+UNTESTED !!!
 */
 template<typename T,typename FPT>
 PolylineBase<type::IsClosed,FPT>
 getConvexHull( const T& input )
 {
-	using FPT=T:FType;
-// step 1: sort points
-	std::vector<FPT> v2 = input.getPts();
+//	using FPT=typename T::FType;
+
+// step 1: find pivot (point with smallest Y coord)
+//	const auto& v2 = input.getPts();
+	auto v2 = input.getPts();
+	auto pmin = std::min_element(
+		v2.begin(),
+		v2.end(),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getY() < pt2.getY() )
+				return true;
+			if( pt1.getY() > pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	auto pt0 = *pmin;
+
+// step 2: sort points by angle of lines between the current point and pivot point
+	std::sort(
+		v2.begin(),
+		v2.end(),
+		[&]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			return (
+				pt0.getX() * pt1.getX() + pt0.getY() * pt1.getY()
+			<
+				pt0.getX() * pt2.getX() + pt0.getY() * pt2.getY()
+			);
+		}
+	);
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
