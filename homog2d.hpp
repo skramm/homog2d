@@ -40,7 +40,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.6
+#define HOMOG2D_VERSION 2.62
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -6707,6 +6707,19 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		return;
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
+}
+
+/// Compute Convex Hull
+/**
+Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+*/
+template<typename T,typename FPT>
+PolylineBase<type::IsClosed,FPT>
+getConvexHull( const T& input )
+{
+	using FPT=T:FType;
+// step 1: sort points
+	std::vector<FPT> v2 = input.getPts();
 }
 
 /////////////////////////////////////////////////////////////////////////////
