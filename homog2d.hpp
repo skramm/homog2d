@@ -3692,16 +3692,6 @@ public:
 		return out;
 	}
 
-private:
-/// empty implementation
-	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
-	{}
-/// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PlHelper<type::IsClosed>& ) const
-	{
-		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
-	}
-
 public:
 
 /// Returns one point of the polyline.
@@ -3737,6 +3727,15 @@ Segment \c n is the one between point \c n and point \c n+1
 ///@}
 
 private:
+/// empty implementation
+	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
+	{}
+/// that one is for closed Polyline, adds the last segment
+	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PlHelper<type::IsClosed>& ) const
+	{
+		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
+	}
+
 	Segment_<FPT>
 	impl_getSegment( size_t idx, const detail::PlHelper<type::IsClosed>& ) const
 	{
@@ -3789,6 +3788,14 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
+/// Set from FRect
+	template<typename FPT2>
+	void set( const FRect_<FPT2>& rec )
+	{
+		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
+	}
+
+
 /// Set from vector/array/list of points (discards previous points)
 /**
 - nb of elements must be 0 or 2 or more
@@ -3821,6 +3828,18 @@ at 180° of the previous one.
 ///@}
 
 private:
+	template<typename FPT2>
+	void impl_setFromFRect( const FRect_<FPT2>&, const detail::PlHelper<type::IsOpen>& )
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot build a OPolyline from a FRect" );
+	}
+	template<typename FPT2>
+	void impl_setFromFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
+	{
+		CPolyline_<FPT> tmp(rect);
+		std::swap( *this, tmp );
+	}
+
 /// Checks that no contiguous identical	points are stored
 	template<typename CONT>
 	void p_checkInputData( const CONT& pts )

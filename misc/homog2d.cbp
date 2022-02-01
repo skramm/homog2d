@@ -146,6 +146,7 @@
 		<Unit filename="no_build/no_build_12.cxx" />
 		<Unit filename="no_build/no_build_13.cxx" />
 		<Unit filename="no_build/no_build_14.cxx" />
+		<Unit filename="no_build/no_build_15.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />

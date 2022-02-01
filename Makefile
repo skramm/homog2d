@@ -92,16 +92,24 @@ newtests: newtests_before
 	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
 
-test: test_SY test_SN nobuild
+.PHONY: pretest nobuild
+
+test: pretest test_SY test_SN nobuild
 	@echo "Make: run test, build using $(CXX)"
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
 
+pretest:
+	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
+	@echo "done target $@"
+
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
-test_SY: BUILD/homog2d_test_SY
+test_SY: pretest BUILD/homog2d_test_SY
+	@echo "$< --- $@"
 
-test_SN: BUILD/homog2d_test_SN
+test_SN: pretest BUILD/homog2d_test_SN
+	@echo "$< --- $@"
 
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
