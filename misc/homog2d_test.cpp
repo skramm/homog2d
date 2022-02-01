@@ -2252,6 +2252,15 @@ TEST_CASE( "Polyline", "[polyline]" )
 		pl1.translate(1,2);
 		CHECK( pl1 == CPolyline_<NUMTYPE>( FRect( 6,8, 8,10 ) ) );
 	}
+	{                           // set from Rectangle
+		FRect r( 5,6, 7,8 );
+		CPolyline_<NUMTYPE> pl1;
+		pl1.set(r);
+
+		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.size() == 4 );
+		CHECK( pl1.getPoint(0)  == Point2d(5,6) );
+	}
 	{
 		OPolyline_<NUMTYPE> po1;
 		CPolyline_<NUMTYPE> pc1;
