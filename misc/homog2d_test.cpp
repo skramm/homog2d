@@ -2477,7 +2477,9 @@ TEST_CASE( "general binding", "[gen_bind]" )
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
 	CPolyline_<NUMTYPE> pl( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
-	CHECK( getConvexHull(pl) );
+	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+	pl.set( FRect_<NUMTYPE>(1,1,3,3) );
+	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
 }
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

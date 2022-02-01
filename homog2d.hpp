@@ -3693,7 +3693,7 @@ public:
 	}
 
 private:
-/// empty implementation
+/// empty implementation for open polyline
 	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
 	{}
 /// that one is for closed Polyline, adds the last segment
@@ -6710,24 +6710,16 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Compute Convex Hull (free function)
-/**
-Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+namespace priv {
+namespace chull {
 
-UNTESTED !!!
-*/
-template<typename T,typename FPT>
-PolylineBase<type::IsClosed,FPT>
-getConvexHull( const T& input )
+template<typename FPT>
+size_t
+getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 {
-//	using FPT=typename T::FType;
-
-// step 1: find pivot (point with smallest Y coord)
-//	const auto& v2 = input.getPts();
-	auto v2 = input.getPts();
 	auto pmin = std::min_element(
-		v2.begin(),
-		v2.end(),
+		in.begin(),
+		in.end(),
 		[]                  // lambda
 		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
@@ -6738,10 +6730,33 @@ getConvexHull( const T& input )
 			return( pt1.getX() < pt2.getX() );
 		}
 	);
-	auto pt0 = *pmin;
+	return static_cast<size_t>( pmin - in.begin() );
+}
+
+} // namespace chull
+} // namespace private
+//------------------------------------------------------------------
+/// Compute Convex Hull (free function)
+/**
+Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+
+UNTESTED !!!
+*/
+template<typename T,typename FPT>
+PolylineBase<type::IsClosed,FPT>
+getConvexHull( const T& input )
+{
+	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
+		return PolylineBase<type::IsClosed,FPT>( input );
+
+//	using FPT=typename T::FType;
+
+// step 1: find pivot (point with smallest Y coord)
+	auto p0 = getPivotPoint( input.getPts() );
+//	auto pt0 = *pmin;
 
 // step 2: sort points by angle of lines between the current point and pivot point
-	std::sort(
+/*	std::sort(
 		v2.begin(),
 		v2.end(),
 		[&]                  // lambda
@@ -6754,7 +6769,7 @@ getConvexHull( const T& input )
 			);
 		}
 	);
-
+*/
 }
 
 /////////////////////////////////////////////////////////////////////////////
