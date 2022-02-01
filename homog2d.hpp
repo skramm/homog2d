@@ -3692,16 +3692,6 @@ public:
 		return out;
 	}
 
-private:
-/// empty implementation for open polyline
-	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
-	{}
-/// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PlHelper<type::IsClosed>& ) const
-	{
-		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
-	}
-
 public:
 
 /// Returns one point of the polyline.
@@ -6767,38 +6757,43 @@ getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 //------------------------------------------------------------------
 /// Compute Convex Hull (free function)
 /**
-Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+- type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
+- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
 
 UNTESTED !!!
 */
-template<typename T,typename FPT>
+template<typename CT,typename FPT>
 PolylineBase<type::IsClosed,FPT>
-getConvexHull( const T& input )
+getConvexHull( const PolylineBase<CT,FPT>& input )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return PolylineBase<type::IsClosed,FPT>( input );
 
+	HOMOG2D_LOG( "input:" << input );
 //	using FPT=typename T::FType;
 
 // step 1: find pivot (point with smallest Y coord)
-	auto p0 = getPivotPoint( input.getPts() );
-//	auto pt0 = *pmin;
+	auto p0 = priv::chull::getPivotPoint( input.getPts() );
+	auto pt0 = input.getPoint( p0 );
+	std::cerr << "p0=" << p0 << " pt0=" << pt0 << "\n";
 
+	auto v2 = input.getPts();
 // step 2: sort points by angle of lines between the current point and pivot point
-/*	std::sort(
+	std::sort(
 		v2.begin(),
 		v2.end(),
 		[&]                  // lambda
 		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
-			return (
-				pt0.getX() * pt1.getX() + pt0.getY() * pt1.getY()
-			<
-				pt0.getX() * pt2.getX() + pt0.getY() * pt2.getY()
-			);
+			auto dx1 = pt1.getX() - pt0.getX();
+			auto dy1 = pt1.getY() - pt0.getY();
+			auto dx2 = pt2.getX() - pt0.getX();
+			auto dy2 = pt2.getY() - pt0.getY();
+			std::cerr << "comparing " << pt1 << " and " << pt2 << '\n';
+			return (dx1 * dy2 - dx2*dy1<0);
 		}
 	);
-*/
+	std::cerr << v2 << "\n";
 }
 
 /////////////////////////////////////////////////////////////////////////////

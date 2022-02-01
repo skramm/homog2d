@@ -2489,6 +2489,7 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
 	pl.set( FRect_<NUMTYPE>(1,1,3,3) );
 	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+	auto ch = getConvexHull( pl );
 }
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
