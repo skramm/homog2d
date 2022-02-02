@@ -207,7 +207,7 @@ test_fig: $(TEST_FIG_PNG)
 BUILD/figures_test/%.png: BUILD/figures_test/%
 	@echo "Running $<"
 	@./$<
-	@mogrify -flip $<.png
+#	@mogrify -flip $<.png
 
 # build the program from source
 BUILD/figures_test/%: BUILD/figures_test/%.cpp

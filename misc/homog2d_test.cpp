@@ -2498,10 +2498,10 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	{
 #include "figures_test/polyline_chull_1.code"
 		auto vp = pl.getPts();
-		auto vout = sortPoints( vp, 1 );
-		CHECK( vout == std::vector<Point2d>{
+		auto vout = priv::chull::sortPoints( vp, 1 );
+//		CHECK( vout ==
 	}
-	auto ch = getConvexHull( pl );
+//	auto ch = getConvexHull( pl );
 }
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

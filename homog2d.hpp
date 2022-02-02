@@ -3980,10 +3980,14 @@ public:
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
-#ifdef HOMOG2D_USE_OPENCV
 private:
+#ifdef HOMOG2D_USE_OPENCV
 	template<typename T>
-	void impl_draw( img::Image<T>& ) const; //, img::DrawParams dp=img::DrawParams() ) const;
+	void impl_draw( img::Image<T>& ) const;
+#else
+	template<typename T>
+	void impl_draw( img::Image<T>& ) const    // this one does nothing
+	{}
 #endif
 
 public:
@@ -6790,22 +6794,27 @@ getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 //------------------------------------------------------------------
 /// Sorts points by angle between the lines with horizontal axis
 template<typename FPT>
-std::vector<Point2d_<FPT>>
+std::vector<size_t>
 sortPoints( const std::vector<Point2d_<FPT>>& in, size_t pivot_idx )
 {
 	assert( in.size()>3 );
-	std::vector<Point2d_<FPT>> out(in);
+	std::vector<size_t> out( in.size() );
+	std::iota( out.begin(), out.end(), 0);
+
 	if( pivot_idx != 0 )
 		std::swap( out[pivot_idx], out[0] );  // so that the pivot is in first position
-	auto pt0 = out[0];
+
+	auto pt0 = in[pivot_idx];
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	std::sort(
 		out.begin()+1,
 		out.end(),
 		[&]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		( size_t i1, size_t i2 )
 		{
+			auto pt1 = in[i1];
+			auto pt2 = in[i2];
 			auto dx1 = pt1.getX() - pt0.getX();
 			auto dy1 = pt1.getY() - pt0.getY();
 			auto dx2 = pt2.getX() - pt0.getX();

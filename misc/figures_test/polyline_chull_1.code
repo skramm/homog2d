@@ -5,6 +5,8 @@
 	CPolyline_<NUMTYPE> pl(
 		std::vector<Point2d>{
 			{5,1},{4.,0.1},{2,3},{3.5,2.},{4,4}
+//            0      1       2       3      4
+// pivot is 1
 		}
 	);
 
