@@ -30,7 +30,9 @@
 
 	auto poly2 = H*pl;
 //	poly2.draw( img2, img::DrawParams().setColor(250,0,20).showPoints(true) );
-	poly2.draw( img2, img::DrawParams().setColor(250,0,20).showPoints(true).setPointStyle(img::PtStyle::Times) );
+
+	auto dp = img::DrawParams().setColor(250,0,20).showPoints(true).setPointStyle(img::PtStyle::Times).showPointsIndex(true);
+	poly2.draw( img2, dp );
 	img2.write( std::string(argv[0])+ ".png" );
 }
 

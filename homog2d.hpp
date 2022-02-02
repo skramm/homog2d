@@ -998,6 +998,9 @@ namespace img {
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
+/**
+\warning Check nextPointStyle() in case of added values here!
+*/
 enum class PtStyle: uint8_t
 {
 	Plus,   ///< "+" symbol
@@ -1032,7 +1035,16 @@ class DrawParams
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
 		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
+		bool        _showPointsIndex = false;     ///< show the points number (useful only for Polyline_)
 
+/// Returns the point style following the current one
+		PtStyle nextPointStyle() const
+		{
+			if( _ptStyle == PtStyle::Diam )
+				return PtStyle::Plus;
+			auto curr = static_cast<int>(_ptStyle);
+			return static_cast<PtStyle>(curr+1);
+		}
 #ifdef HOMOG2D_USE_OPENCV
 		cv::Scalar color() const
 		{
@@ -1095,6 +1107,13 @@ public:
 	DrawParams& showPoints( bool b )
 	{
 		_dpValues._showPoints = b;
+		return *this;
+	}
+
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showPointsIndex( bool b )
+	{
+		_dpValues._showPointsIndex = b;
 		return *this;
 	}
 
@@ -3961,6 +3980,13 @@ public:
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
+#ifdef HOMOG2D_USE_OPENCV
+private:
+	template<typename T>
+	void impl_draw( img::Image<T>& ) const; //, img::DrawParams dp=img::DrawParams() ) const;
+#endif
+
+public:
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
 	bool isNormalized() const { return _plIsNormalized; }
@@ -6726,12 +6752,21 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		return;
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
+
+	if( dp._dpValues._showPoints )
+	{
+		auto newPointStyle = dp._dpValues.nextPointStyle();
+		getPoint(0).draw( im, dp.setColor(10,10,10).setPointStyle( newPointStyle ) );
+	}
+	if( dp._dpValues._showPointsIndex )
+		impl_draw( im );
 }
 
 //------------------------------------------------------------------
 namespace priv {
 namespace chull {
 
+//------------------------------------------------------------------
 template<typename FPT>
 size_t
 getPivotPoint( const std::vector<Point2d_<FPT>>& in )
@@ -6752,6 +6787,38 @@ getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 	return static_cast<size_t>( pmin - in.begin() );
 }
 
+//------------------------------------------------------------------
+/// Sorts points by angle between the lines with horizontal axis
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+sortPoints( const std::vector<Point2d_<FPT>>& in, size_t pivot_idx )
+{
+	assert( in.size()>3 );
+	std::vector<Point2d_<FPT>> out(in);
+	if( pivot_idx != 0 )
+		std::swap( out[pivot_idx], out[0] );  // so that the pivot is in first position
+	auto pt0 = out[0];
+
+// step 2: sort points by angle of lines between the current point and pivot point
+	std::sort(
+		out.begin()+1,
+		out.end(),
+		[&]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			auto dx1 = pt1.getX() - pt0.getX();
+			auto dy1 = pt1.getY() - pt0.getY();
+			auto dx2 = pt2.getX() - pt0.getX();
+			auto dy2 = pt2.getY() - pt0.getY();
+			std::cerr << "comparing " << pt1 << " and " << pt2 << '\n';
+			return ((dx1 * dy2 - dx2*dy1)<0);
+		}
+	);
+
+	return out;
+}
+
+//------------------------------------------------------------------
 } // namespace chull
 } // namespace private
 //------------------------------------------------------------------
@@ -6773,27 +6840,20 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 //	using FPT=typename T::FType;
 
 // step 1: find pivot (point with smallest Y coord)
-	auto p0 = priv::chull::getPivotPoint( input.getPts() );
-	auto pt0 = input.getPoint( p0 );
-	std::cerr << "p0=" << p0 << " pt0=" << pt0 << "\n";
+	auto pivot_idx = priv::chull::getPivotPoint( input.getPts() );
+	auto pt0 = input.getPoint( pivot_idx );
+	std::cerr << "p0=" << pivot_idx << " pt0=" << pt0 << "\n";
 
-	auto v2 = input.getPts();
+	auto v1 = input.getPts();
+	std::cerr <<"BEFORE: v2 size=" << v1.size() << ", pts=" << v1 << "\n";
+
 // step 2: sort points by angle of lines between the current point and pivot point
-	std::sort(
-		v2.begin(),
-		v2.end(),
-		[&]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			auto dx1 = pt1.getX() - pt0.getX();
-			auto dy1 = pt1.getY() - pt0.getY();
-			auto dx2 = pt2.getX() - pt0.getX();
-			auto dy2 = pt2.getY() - pt0.getY();
-			std::cerr << "comparing " << pt1 << " and " << pt2 << '\n';
-			return (dx1 * dy2 - dx2*dy1<0);
-		}
-	);
-	std::cerr << v2 << "\n";
+	auto v2 = sortPoints( input, pivot_idx );
+	std::cerr <<"AFTER: v2=" << v2 << "\n";
+
+// step 3: iterate
+
+	return PolylineBase<type::IsClosed,FPT>();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -6960,6 +7020,32 @@ LPBase<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail:
 	}
 	return false;
 }
+
+//------------------------------------------------------------------
+/// Extension to PolylineBase<PLT,FPT>::draw(), to draw point indexes
+/**
+(Opencv-dependent)
+*/
+template<typename PLT,typename FPT>
+template<typename T>
+void
+PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im ) const //, img::DrawParams dp ) const
+{
+	for( size_t i=0; i<size(); i++ )
+	{
+		auto pt = getPoint(i);
+		cv::putText(
+			im.getReal(),
+			std::to_string(i),
+			pt.getCvPti(),
+			0,
+			0.6,
+			cv::Scalar( 20,20,20 ),
+			2
+		);
+	}
+}
+
 
 //------------------------------------------------------------------
 /// Draw FRect_

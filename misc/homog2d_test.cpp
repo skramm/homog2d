@@ -2485,10 +2485,22 @@ TEST_CASE( "general binding", "[gen_bind]" )
 
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
-	CPolyline_<NUMTYPE> pl( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
-	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
-	pl.set( FRect_<NUMTYPE>(1,1,3,3) );
-	CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+	{
+		CPolyline_<NUMTYPE> pl( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+
+		pl.set( FRect_<NUMTYPE>(1,1,3,3) );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+
+		pl.set( std::vector<Point2d>{ {0,1}, {0,0}, {2,0}, {2,2}, {1,2}, {1,1} } );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 1 );
+	}
+	{
+#include "figures_test/polyline_chull_1.code"
+		auto vp = pl.getPts();
+		auto vout = sortPoints( vp, 1 );
+		CHECK( vout == std::vector<Point2d>{
+	}
 	auto ch = getConvexHull( pl );
 }
 //////////////////////////////////////////////////////////////
