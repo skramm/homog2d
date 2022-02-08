@@ -33,7 +33,7 @@ run with "make test"
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -2498,8 +2498,9 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	{
 #include "figures_test/polyline_chull_1.code"
 		auto vp = pl.getPts();
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 1 );
 		auto vout = priv::chull::sortPoints( vp, 1 );
-//		CHECK( vout ==
+		CHECK( vout == std::vector<size_t>{ 0,4,3,2 } );
 	}
 //	auto ch = getConvexHull( pl );
 }

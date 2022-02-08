@@ -31,6 +31,7 @@ See https://github.com/skramm/homog2d
 #include <set>
 #include <list>
 #include <vector>
+#include <stack>
 #include <iomanip>
 #include <cassert>
 #include <sstream>
@@ -4071,7 +4072,7 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 	size_t vec_idx = 0;
 	for( size_t i=0; i<nbpts; i++ )
 	{
-		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+//		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
 
 		if( vec_idx<ptset.size() ) // if there is more points to remove
 		{
@@ -4989,6 +4990,7 @@ template<
 std::ostream&
 operator << ( std::ostream& f, const T& vec )
 {
+	f << "#="<< vec.size() << '\n';
 	for( const auto& elem: vec )
 		f << elem << '\n';
 	return f;
@@ -6795,20 +6797,23 @@ getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 /// Sorts points by angle between the lines with horizontal axis
 template<typename FPT>
 std::vector<size_t>
-sortPoints( const std::vector<Point2d_<FPT>>& in, size_t pivot_idx )
+sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 {
 	assert( in.size()>3 );
-	std::vector<size_t> out( in.size() );
-	std::iota( out.begin(), out.end(), 0);
 
-	if( pivot_idx != 0 )
-		std::swap( out[pivot_idx], out[0] );  // so that the pivot is in first position
+// step 1: create new vector holding the indexes of the points, without the pivot point
+	std::vector<size_t> out( in.size()-1 );
+	size_t c=0;
+	for( size_t i=0; i<out.size(); i++, c++ )
+		out[i] = ( c != piv_idx ? c : ++c );
 
-	auto pt0 = in[pivot_idx];
+HOMOG2D_LOG( "out START: " << out );
 
+	auto pt0 = in[piv_idx];
+HOMOG2D_LOG( "piv_idx=" << piv_idx );
 // step 2: sort points by angle of lines between the current point and pivot point
 	std::sort(
-		out.begin()+1,
+		out.begin(),
 		out.end(),
 		[&]                  // lambda
 		( size_t i1, size_t i2 )
@@ -6819,14 +6824,36 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t pivot_idx )
 			auto dy1 = pt1.getY() - pt0.getY();
 			auto dx2 = pt2.getX() - pt0.getX();
 			auto dy2 = pt2.getY() - pt0.getY();
-			std::cerr << "comparing " << pt1 << " and " << pt2 << '\n';
-			return ((dx1 * dy2 - dx2*dy1)<0);
+//			std::cerr << "comparing line " << piv_idx << "-" << i1 << " and " << piv_idx << "-" << i2 << '\n';
+			return ((dx1 * dy2 - dx2*dy1)>=0);
 		}
 	);
-
+HOMOG2D_LOG( "out AFTER:" << out );
 	return out;
 }
 
+//------------------------------------------------------------------
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are collinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+template<typename T>
+int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
+{
+	HOMOG2D_INUMTYPE px = p.getX();
+	HOMOG2D_INUMTYPE py = p.getY();
+	HOMOG2D_INUMTYPE qx = q.getX();
+	HOMOG2D_INUMTYPE qy = q.getY();
+	HOMOG2D_INUMTYPE rx = r.getX();
+	HOMOG2D_INUMTYPE ry = r.getY();
+
+	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
+
+    if( val < HOMOG2D_THR_ZERO_DETER )
+		return 0;  // collinear
+    return (val > 0 ? 1 : -1 ); // clock or counterclock wise
+}
 //------------------------------------------------------------------
 } // namespace chull
 } // namespace private
@@ -6860,7 +6887,23 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 	auto v2 = sortPoints( input, pivot_idx );
 	std::cerr <<"AFTER: v2=" << v2 << "\n";
 
+	std::stack<size_t> hull;
+	hull.push( pivot_idx );
+	hull.push( 0 );
+	hull.push( 1 );
+
 // step 3: iterate
+	size_t curr = 1;
+	bool notDone = true;
+	do
+	{
+		auto p = input.getPoint( curr );
+		auto q = input.getPoint( curr+1 );
+		auto r = input.getPoint( curr+2 );
+		auto orient = orientation( p, q, r );
+		HOMOG2D_LOG( "considering pt " << curr << ", " << curr+1 << "," << curr+2 << ", or = " << orient << "\n" );
+	}
+	while( notDone );
 
 	return PolylineBase<type::IsClosed,FPT>();
 }
