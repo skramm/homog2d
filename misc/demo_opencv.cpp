@@ -21,7 +21,7 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 //#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
@@ -978,6 +978,40 @@ void demo_ELL( int n )
 }
 
 //------------------------------------------------------------------
+/// Convex hull demo
+struct Param_CH : Data
+{
+	explicit Param_CH( std::string title ):Data(title)
+	{
+		pl.set( std::vector<Point2d>{ {2.5,2.}, {1,2}, {1,1}, {0,1}, {0,0}, {2,0} } );
+	}
+	CPolyline pl;
+};
+void action_CH( void* param )
+{
+	auto& data = *reinterpret_cast<Param_CH*>(param);
+
+	data.clearImage();
+	auto H = Homogr().addScale(50).addTranslation(50,50);
+	auto pl = H * data.pl;
+	pl.draw( data.img, img::DrawParams().showPointsIndex() );
+
+	auto chull = getConvexHull( data.pl );
+	auto ch2 = H * chull;
+	ch2.draw( data.img, img::DrawParams().setColor(250,0,0) );
+
+	data.showImage();
+}
+void demo_CH( int  n )
+{
+	Param_CH data ( "Convex Hull demo" );
+	action_CH( &data );
+
+	KeyboardLoop kbloop;
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -990,6 +1024,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_CH,
 		demo_B,
 		demo_ELL,
 		demo_H,
