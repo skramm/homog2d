@@ -6833,7 +6833,7 @@ HOMOG2D_LOG( "out START: " << out );
 			return ((dx1 * dy2 - dx2*dy1)>=0);
 		}
 	);
-HOMOG2D_LOG( "out AFTER:" << out );
+//HOMOG2D_LOG( "out AFTER:" << out );
 	return out;
 }
 
@@ -6854,7 +6854,7 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 	HOMOG2D_INUMTYPE ry = r.getY();
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-	std::cerr << "p=" << p << " q=" << q << " r=" << r << " or=" << val << '\n';
+//	std::cerr << "p=" << p << " q=" << q << " r=" << r << " or=" << val << '\n';
     if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
 		return 0;  // collinear
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
@@ -6907,7 +6907,7 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 	bool notDone = true;
 	do
 	{
-		std::cerr << "** loop start, stack size=" << hull.size() << ", curr=" << curr << '\n';
+		std::cerr << "** loop start, curr=" << curr << ", hull:" << hull << '\n';
 		auto p = input.getPoint( v2[curr] );
 		auto q = input.getPoint( v2[curr+1] );
 		auto r = input.getPoint( v2[curr+2] );
@@ -6916,7 +6916,7 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 		if( orient != 1 )
 		{
 //			hull.push( curr+1 );
-			hull.push_back( curr+1 );
+			hull.push_back( v2[curr+1] );
 			std::cerr << " -turn CCW, adding point " << v2[curr+1] << '\n';
 //			hull.pop();                // remove last point.
 			curr++;
@@ -6937,9 +6937,9 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 		else
 		{
 			notDone = false;
-			std::cerr << "done, adding point " << v2[curr] << '\n';
+	//		std::cerr << "done, adding point " << v2[curr] << '\n';
 //			hull.push( curr );
-			hull.push_back( v2[curr] );
+		//	hull.push_back( v2[curr] );
 		}
 	}
 	while( notDone );

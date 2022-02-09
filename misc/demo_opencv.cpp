@@ -118,7 +118,7 @@ struct Data
 
 /// Called by mouse callback functions, checks if one of the points is selected.
 /**
-- If so, that point gets moved by the mouse, and the function \c actionM is called
+- If so, that point gets moved by the mouse, and the function \c action is called
 */
 void
 checkSelected( int event, int x, int y, std::function<void(void*)> action, void* param )
@@ -174,13 +174,14 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, void*
 	}
 }
 
-void action_1(  void* param );
-void action_C(  void* param );
-void action_SI(  void* param );
-void action_6(  void* param );
-void action_H(  void* param );
-void action_PL( void* param );
-void action_ELL( void* param );
+void action_1(   void* );
+void action_C(   void* );
+void action_SI(  void* );
+void action_6(   void* );
+void action_H(   void* );
+void action_PL(  void* );
+void action_CH(  void* );
+void action_ELL( void* );
 
 //------------------------------------------------------------------
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
@@ -321,6 +322,12 @@ void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_PL, param );
+}
+
+/// Mouse callback for demo_CH
+void mouse_CB_CH( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_CH, param );
 }
 
 #if 0
@@ -838,6 +845,8 @@ void action_PL( void* param )
 	if( data.polyline.isPolygon() )
 		color = DrawParams().setColor( 250,10,20);
 	data.polyline.draw( data.img, color );
+	auto ch = getConvexHull( data.polyline );
+	ch.draw( data.img, DrawParams().setColor( 0,200,200) );
 
 	auto col_green = DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
@@ -983,29 +992,31 @@ struct Param_CH : Data
 {
 	explicit Param_CH( std::string title ):Data(title)
 	{
-		pl.set( std::vector<Point2d>{ {2.5,2.}, {1,2}, {1,1}, {0,1}, {0,0}, {2,0} } );
+		vpt = std::vector<Point2d>{ {250,200}, {100,200}, {100,100}, {50,100}, {40,30}, {200,0} };
 	}
-	CPolyline pl;
 };
+
 void action_CH( void* param )
 {
 	auto& data = *reinterpret_cast<Param_CH*>(param);
 
 	data.clearImage();
-	auto H = Homogr().addScale(50).addTranslation(50,50);
-	auto pl = H * data.pl;
+	CPolyline pl( data.vpt );
 	pl.draw( data.img, img::DrawParams().showPointsIndex() );
 
-	auto chull = getConvexHull( data.pl );
-	auto ch2 = H * chull;
-	ch2.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	auto chull = getConvexHull( pl );
+	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 
 	data.showImage();
 }
-void demo_CH( int  n )
+
+void demo_CH( int )
 {
 	Param_CH data ( "Convex Hull demo" );
 	action_CH( &data );
+	data.leftClicAddPoint=true;
+
+	data.setMouseCallback( mouse_CB_CH );
 
 	KeyboardLoop kbloop;
 	kbloop.start( data );
