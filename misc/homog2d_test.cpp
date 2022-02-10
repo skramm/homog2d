@@ -1888,6 +1888,15 @@ TEST_CASE( "Segment", "[seg1]" )
 		}
 	}
 	{
+		Point2d_<NUMTYPE> p1( 4,5 );
+		Point2d_<NUMTYPE> p2( 1,2 );
+		auto ppts = std::make_pair( p1, p2 );
+		Segment_<NUMTYPE> s( ppts );
+		CHECK( s.getPts().first  == p2 );
+		CHECK( s.getPts().second == p1 );
+		s.set( ppts );
+	}
+	{
 		Line2d_<NUMTYPE> li( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s2( Point2d(2,2), Point2d(0,0) );

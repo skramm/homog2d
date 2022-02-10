@@ -288,6 +288,14 @@ The only constraint is that they must be all of the same type (no int/float/doub
 Segment s1( x1, y1, x2, y2 );
 ```
 
+It can also be initialized (or set) with a pair of points:
+```C++
+auto ppts = std::make_pair( Point2d(4,5), Point2d(2,1) );
+Segment s1( ppts );
+s1.set( ppts );
+```
+
+
 Besides using a homography matrix, translating the segment can be done with a member function:
 ```C++
 Segment s1( ... );
