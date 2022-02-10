@@ -749,8 +749,8 @@ void action_H( void* param )
 	sa1.draw( data.img, DrawParams().setColor( 0,100,100) );
 	sb1.draw( data.img, DrawParams().setColor( 0,100,100) );
 
-	cv::putText(  data.img.getReal(), "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
-	cv::putText(  data.img.getReal(), "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
+	cv::putText( data.img.getReal(), "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+	cv::putText( data.img.getReal(), "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
 
 	Homogr H;
 	H.buildFrom4Points( v1, v2, data.hmethod );
@@ -1001,10 +1001,12 @@ void action_CH( void* param )
 	auto& data = *reinterpret_cast<Param_CH*>(param);
 
 	data.clearImage();
-	CPolyline pl( data.vpt );
-	pl.draw( data.img, img::DrawParams().showPointsIndex() );
+//	CPolyline pl( data.vpt );
+//	pl.draw( data.img, img::DrawParams().showPointsIndex() );
+//	data.img.draw( data.vpt );//, img::DrawParams().showPointsIndex() );
+	draw( data.img, data.vpt, img::DrawParams().showPointsIndex() );//, img::DrawParams().showPointsIndex() );
 
-	auto chull = getConvexHull( pl );
+	auto chull = getConvexHull( data.vpt );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 
 	data.showImage();
@@ -1022,6 +1024,32 @@ void demo_CH( int )
 	kbloop.start( data );
 }
 
+void demo_SEG( int )
+{
+	int n=1000;
+	auto width = 400;
+	auto heigth = 400;
+//	Param_CH data ( "Convex Hull demo" );
+//	action_CH( &data );
+//	data.leftClicAddPoint=true;
+
+//	data.setMouseCallback( mouse_CB_CH );
+
+	for( auto i=0; i<n; i++ )
+	{
+		auto len = 1.0*rand() / RAND_MAX * 40 + 20;
+		auto p1x = 1.0*rand() / RAND_MAX * width;
+		auto p2x = 1.0*rand() / RAND_MAX * width;
+		auto p1y = 1.0*rand() / RAND_MAX * heigth;
+		auto p2y = 1.0*rand() / RAND_MAX * heigth;
+		auto line = Line2d( p1x, p1y, p2x, p2y );
+		auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
+		Segment seg( ppts );
+	}
+	KeyboardLoop kbloop;
+//	kbloop.start( data );
+}
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -1035,6 +1063,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_SEG,
 		demo_CH,
 		demo_B,
 		demo_ELL,

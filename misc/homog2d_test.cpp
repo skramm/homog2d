@@ -2507,7 +2507,7 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 #include "figures_test/polyline_chull_1.code"
 		auto vp = pl.getPts();
 		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
-		auto vout = priv::chull::sortPoints( vp, 1 );
+		auto vout = priv::chull::sortPoints( vp, 0 );
 		CHECK( vout == std::vector<size_t>{ 0,1,2,3 } );
 		auto ch = getConvexHull( pl );
 		CHECK( ch == CPolyline(

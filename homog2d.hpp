@@ -6665,9 +6665,24 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 	prim.draw( img, dp );
 }
 
-/// Free function, draws a set of points or lines
+#ifdef HOMOG2D_USE_OPENCV
+template<typename U,typename FPT>
+void
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt /* tag dispatching */ )
+{
+	if( dp._dpValues._showPointsIndex )
+		cv::putText( img.getReal(), std::to_string(c), pt.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+}
+#endif
+/// Default signature, will be instanciated if no other fits (and does nothing)
+template<typename U,typename DUMMY>
+void
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const DUMMY& )
+{}
+
+/// Free function, draws a set of primitives
 /**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+Template type \c T can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
 */
 template<
 	typename U,
@@ -6679,8 +6694,14 @@ template<
 >
 void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
 {
+//	using PType = typename T::value_type;
+	size_t c=0;
 	for( const auto& elem: cont )
+	{
 		elem.draw( img, dp );
+		impl_drawIndexes( img, c, dp, elem );
+		c++;
+	}
 }
 //------------------------------------------------------------------
 /// Free function, draws a pair of points
@@ -6874,6 +6895,13 @@ template<typename CT,typename FPT>
 PolylineBase<type::IsClosed,FPT>
 getConvexHull( const PolylineBase<CT,FPT>& input )
 {
+	return getConvexHull( input.getPts() );
+}
+
+template<typename FPT>
+PolylineBase<type::IsClosed,FPT>
+getConvexHull( const std::vector<Point2d_<FPT>>& input )
+{
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return PolylineBase<type::IsClosed,FPT>( input );
 
@@ -6881,15 +6909,16 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 //	using FPT=typename T::FType;
 
 // step 1: find pivot (point with smallest Y coord)
-	auto pivot_idx = priv::chull::getPivotPoint( input.getPts() );
-	auto pt0 = input.getPoint( pivot_idx );
+	auto pivot_idx = priv::chull::getPivotPoint( input );
+//	auto pt0 = input.getPoint( pivot_idx );
+	auto pt0 = input.at( pivot_idx );
 	std::cerr << "p0=" << pivot_idx << " pt0=" << pt0 << "\n";
 
-	auto v1 = input.getPts();
+//	auto v1 = input.getPts();
 //	std::cerr <<"BEFORE: v2 size=" << v1.size() << ", pts=" << v1 << "\n";
 
 // step 2: sort points by angle of lines between the current point and pivot point
-	auto v2 = priv::chull::sortPoints( input.getPts(), pivot_idx );
+	auto v2 = priv::chull::sortPoints( input, pivot_idx );
 	std::cerr <<"AFTER: v2=" << v2 << "\n";
 	auto nbPts = v2.size();
 
@@ -6908,9 +6937,9 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 	do
 	{
 		std::cerr << "** loop start, curr=" << curr << ", hull:" << hull << '\n';
-		auto p = input.getPoint( v2[curr] );
-		auto q = input.getPoint( v2[curr+1] );
-		auto r = input.getPoint( v2[curr+2] );
+		auto p = input.at( v2[curr] );
+		auto q = input.at( v2[curr+1] );
+		auto r = input.at( v2[curr+2] );
 		auto orient = priv::chull::orientation( p, q, r );
 		HOMOG2D_LOG( "considering pts: " << v2[curr] << "," << v2[curr+1] << "," << v2[curr+2] << ": or = " << orient << "\n" );
 		if( orient != 1 )
@@ -6931,15 +6960,12 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 		if( curr+2 < nbPts )       // if some point left,
 		{
 			std::cerr << " keep on!\n"; //adding point " << curr+3 << "\n";
-//			hull.push( curr+3 );    //  then add next one
-//			curr++;
 		}
 		else
 		{
 			notDone = false;
 	//		std::cerr << "done, adding point " << v2[curr] << '\n';
-//			hull.push( curr );
-		//	hull.push_back( v2[curr] );
+			hull.push_back( v2[curr] );
 		}
 	}
 	while( notDone );
@@ -6954,7 +6980,7 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 		[&input]               // lambda
 		(size_t idx)
 		{
-			return input.getPoint( idx );
+			return input.at( idx );
 		}
 	);
 
