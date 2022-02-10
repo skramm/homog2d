@@ -3138,7 +3138,7 @@ public:
 /// Default constructor: initializes segment to (0,0)--(1,1)
 	Segment_(): _ptS2(1.,1.)
 	{}
-/// Contructor 2: build segment from two points
+/// Constructor 2: build segment from two points
 	Segment_( Point2d_<FPT> p1, Point2d_<FPT> p2 )
 		: _ptS1(p1), _ptS2(p2)
 	{
@@ -3149,13 +3149,18 @@ public:
 		priv::fix_order( _ptS1, _ptS2 );
 	}
 
-/// Contructor 3: build segment from two points coordinates, call constructor 2
+/// Constructor 3: build segment from two points coordinates, call constructor 2
 	template<typename T>
 	Segment_( T x1, T y1, T x2, T y2 )
 		: Segment_( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) )
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 	}
+
+/// Constructor 4: build segment from pair of points
+	Segment_( const std::pair<Point2d_<FPT>,Point2d_<FPT>>& ppts )
+		: Segment_(ppts.first, ppts.second)
+	{}
 
 /// Copy-Constructor
 	template<typename FPT2>
@@ -3165,7 +3170,8 @@ public:
 ///@}
 
 /// Setter
-	void set( const Point2d_<FPT>& p1, const Point2d_<FPT>& p2 )
+	template<typename FPT2>
+	void set( const Point2d_<FPT>& p1, const Point2d_<FPT2>& p2 )
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
@@ -3174,6 +3180,13 @@ public:
 		_ptS1 = p1;
 		_ptS2 = p2;
 		priv::fix_order( _ptS1, _ptS2 );
+	}
+
+/// Setter from a std::pair (points need to be of same underlying type)
+	template<typename FPT2>
+	void set( const std::pair<Point2d_<FPT2>,Point2d_<FPT2>> ppts )
+	{
+		set( ppts.first, ppts.second );
 	}
 
 	template<typename T1,typename T2>
