@@ -2486,25 +2486,33 @@ TEST_CASE( "general binding", "[gen_bind]" )
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
 	{
-		CPolyline_<NUMTYPE> pl( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
-		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+		CPolyline_<NUMTYPE> pl;
 
 		pl.set( FRect_<NUMTYPE>(1,1,3,3) );
 		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
 
-		pl.set( std::vector<Point2d>{ {0,1}, {0,0}, {2,0}, {2,2}, {1,2}, {1,1} } );
-		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 1 );
+		std::vector<Point2d> v1{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} };
+		pl.set( v1 );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
+
+		std::rotate( v1.begin(), v1.begin()+1, v1.end() );
+		pl.set( v1 );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 5 );
+
+		std::rotate( v1.begin(), v1.begin()+1, v1.end() );
+		pl.set( v1 );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 4 );
 	}
 	{
 #include "figures_test/polyline_chull_1.code"
 		auto vp = pl.getPts();
-		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 1 );
+		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
 		auto vout = priv::chull::sortPoints( vp, 1 );
-		CHECK( vout == std::vector<size_t>{ 1,0,4,3,2 } );
+		CHECK( vout == std::vector<size_t>{ 0,1,2,3 } );
 		auto ch = getConvexHull( pl );
 		CHECK( ch == CPolyline(
-			std::vector<Point2d>{
-				{4.,0.1},{5,1},{4,4},{3.5,2.},{2,3}
+				std::vector<Point2d>{
+					{0,0},{3,0},{0,3}
 				}
 			)
 		);
