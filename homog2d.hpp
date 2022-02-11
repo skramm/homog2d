@@ -6686,6 +6686,17 @@ impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const
 	if( dp._dpValues._showPointsIndex )
 		cv::putText( img.getReal(), std::to_string(c), pt.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
+template<typename U,typename FPT>
+void
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& pt /* tag dispatching */ )
+{
+	if( dp._dpValues._showPointsIndex )
+	{
+		auto pts = pt.getPts();
+		auto mid = (pts.first + pts.second)/2.0;
+		cv::putText( img.getReal(), std::to_string(c), mid.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+	}
+}
 #endif
 /// Default signature, will be instanciated if no other fits (and does nothing)
 template<typename U,typename DUMMY>
@@ -6933,6 +6944,10 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
 	std::cerr <<"AFTER: v2=" << v2 << "\n";
+
+	for( auto i: v2 )
+		std::cerr << i << ": " << input.at(i) << '\n';
+
 	auto nbPts = v2.size();
 
 //	std::stack<size_t, std::vector<size_t>> hull;

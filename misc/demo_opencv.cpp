@@ -990,9 +990,10 @@ void demo_ELL( int n )
 /// Convex hull demo
 struct Param_CH : Data
 {
-	explicit Param_CH( std::string title ):Data(title)
+	explicit Param_CH( std::string title ): Data(title)
 	{
-		vpt = std::vector<Point2d>{ {250,200}, {100,200}, {100,100}, {50,100}, {40,30}, {200,0} };
+//		vpt = std::vector<Point2d>{ {250,200}, {100,200}, {100,100}, {50,100}, {40,70}, {200,0} };
+		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400} };
 	}
 };
 
@@ -1023,31 +1024,48 @@ void demo_CH( int )
 	KeyboardLoop kbloop;
 	kbloop.start( data );
 }
+//------------------------------------------------------------------
+/// Segments demo
+struct Param_SEG : Data
+{
+	explicit Param_SEG( std::string title ):Data(title)
+	{
+	}
+};
 
 void demo_SEG( int )
 {
-	int n=1000;
+	int n=100;
 	auto width = 400;
 	auto heigth = 400;
-//	Param_CH data ( "Convex Hull demo" );
+	int k_col = 200;
+	int k_min = 15;
+	Param_SEG data ( "Segments demo" );
 //	action_CH( &data );
 //	data.leftClicAddPoint=true;
-
+	std::vector<Segment> vseg;
 //	data.setMouseCallback( mouse_CB_CH );
-
+	data.clearImage();
 	for( auto i=0; i<n; i++ )
 	{
-		auto len = 1.0*rand() / RAND_MAX * 40 + 20;
-		auto p1x = 1.0*rand() / RAND_MAX * width;
-		auto p2x = 1.0*rand() / RAND_MAX * width;
-		auto p1y = 1.0*rand() / RAND_MAX * heigth;
-		auto p2y = 1.0*rand() / RAND_MAX * heigth;
+		auto len = 1.0*rand() / RAND_MAX * 40 + 10;
+		auto p1x = 1.0*rand() / RAND_MAX * width + 20;
+		auto p2x = 1.0*rand() / RAND_MAX * width + 20;;
+		auto p1y = 1.0*rand() / RAND_MAX * heigth + 20;
+		auto p2y = 1.0*rand() / RAND_MAX * heigth + 20;
 		auto line = Line2d( p1x, p1y, p2x, p2y );
 		auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
-		Segment seg( ppts );
+		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
+		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
+		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
+		vseg.push_back(Segment( ppts ) );
 	}
+	draw( data.img, vseg, img::DrawParams().showPointsIndex() );
+//	draw( vseg, data.img, img::DrawParams().setColor(colR,colG,colB).showPointsIndex() );
+	data.showImage();
+
 	KeyboardLoop kbloop;
-//	kbloop.start( data );
+	kbloop.start( data );
 }
 
 //------------------------------------------------------------------
