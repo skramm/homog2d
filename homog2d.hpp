@@ -3399,6 +3399,15 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 //------------------------------------------------------------------
 namespace priv {
 
+/// Traits class, used in generic draw() function
+template<typename T> struct IsDrawable              : std::false_type {};
+template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<Point2d_<T>>  : std::true_type  {};
+template<typename T1,typename T2> struct IsDrawable<PolylineBase<T1,T2>>: std::true_type  {};
+
 /// Traits class, used in intersects() for Polyline
 template<typename T> struct IsShape              : std::false_type {};
 template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
@@ -6671,7 +6680,7 @@ template<
 	typename U,
 	typename Prim,
 	typename std::enable_if<
-		priv::IsShape<Prim>::value,
+		priv::IsDrawable<Prim>::value,
 		Prim
 	>::type* = nullptr
 >
@@ -6680,6 +6689,7 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 	prim.draw( img, dp );
 }
 
+namespace priv {
 #ifdef HOMOG2D_USE_OPENCV
 template<typename U,typename FPT>
 void
@@ -6701,6 +6711,7 @@ template<typename U,typename DUMMY>
 void
 impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const DUMMY& )
 {}
+} // namespace priv
 
 /// Free function, draws a set of primitives
 /**
@@ -6721,7 +6732,7 @@ void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::Dra
 	for( const auto& elem: cont )
 	{
 		elem.draw( img, dp );
-		impl_drawIndexes( img, c, dp, elem );
+		priv::impl_drawIndexes( img, c, dp, elem );
 		c++;
 	}
 }
@@ -6932,7 +6943,6 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
-//	auto pt0 = input.getPoint( pivot_idx );
 	auto pt0 = input.at( pivot_idx );
 	std::cerr << "p0=" << pivot_idx << " pt0=" << pt0 << "\n";
 
@@ -6985,13 +6995,13 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 //		curr = hull.top();
 		if( curr+2 < nbPts )       // if some point left,
 		{
-			std::cerr << " keep on!\n"; //adding point " << curr+3 << "\n";
+			std::cerr << " keep on!\n";
 		}
 		else
 		{
 			notDone = false;
-	//		std::cerr << "done, adding point " << v2[curr] << '\n';
-			hull.push_back( v2[curr] );
+			std::cerr << "done, adding point " << v2[curr+1] << '\n';
+			hull.push_back( v2[curr+1] );
 		}
 	}
 	while( notDone );

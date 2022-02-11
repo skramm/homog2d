@@ -202,13 +202,16 @@ struct KeyboardLoop
 		}
 	};
 
-	private:
+private:
 	std::vector<KbLoopAction> _actions;
 	std::function<FuncType> _common = nullptr;
 
-	public:
-/// Add \c action when key \c key is hit
-	void addKeyAction( char key, const std::function<FuncType>& action, std::string text=std::string() )
+public:
+	void addKeyAction(
+		char key,
+		const std::function<FuncType>& action,
+		std::string text=std::string()
+	)
 	{
 		auto it = std::find_if(
 			_actions.begin(),
@@ -1031,53 +1034,89 @@ struct Param_SEG : Data
 	explicit Param_SEG( std::string title ):Data(title)
 	{
 	}
-	bool showIndexes = false;
-	std::vector<Segment> vseg;
+	bool showIndexes      = false;
+	bool showIntersection = false;
+	bool showMiddlePoint  = false;
+	bool regen = false;
+	std::vector<Segment>          vseg;
 	std::vector<img::priv::Color> vcol;
+
+	int nbSegs = 100;
+	int width  = 400;
+	int heigth = 400;
+	int k_col  = 200;
+	int k_min  = 15;
+
+	void generateSegments()
+	{
+		std::cout << "generating " << nbSegs << " segments\n";
+		vseg.clear();
+		vcol.clear();
+		for( auto i=0; i<nbSegs; i++ )
+		{
+			auto len = 1.0*rand() / RAND_MAX * 40 + 10;
+			auto p1x = 1.0*rand() / RAND_MAX * width + 20;
+			auto p2x = 1.0*rand() / RAND_MAX * width + 20;;
+			auto p1y = 1.0*rand() / RAND_MAX * heigth + 20;
+			auto p2y = 1.0*rand() / RAND_MAX * heigth + 20;
+			auto line = Line2d( p1x, p1y, p2x, p2y );
+			auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
+			vseg.push_back( Segment( ppts ) );
+			auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
+			auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
+			auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
+			vcol.push_back( img::priv::Color(colR,colG,colB) );
+		}
+		regen = false;
+	}
 };
 void action_SEG( void* param )
 {
 	auto& data = *reinterpret_cast<Param_SEG*>(param);
 
 	data.clearImage();
-	draw( data.img, data.vseg, img::DrawParams().showPointsIndex(data.showIndexes) );
-//	draw( vseg, data.img, img::DrawParams().setColor(colR,colG,colB).showPointsIndex() );
-	data.showImage();
+	if( data.regen )
+		data.generateSegments();
 
+	draw( data.img, data.vseg, DrawParams().showPointsIndex(data.showIndexes) );
+	if( data.showIntersection )
+	{
+		for( size_t i=0; i<data.vseg.size()-1; i++ )
+		{
+			auto s1 = data.vseg[i];
+			for( size_t j=i+1; j<data.vseg.size(); j++ )
+			{
+				auto s2 = data.vseg[j];
+				auto pi = s1.intersects( s2 );
+				if( pi() )
+					draw( data.img, pi.get(), DrawParams().setColor( 250,0,0) );
+			}
+		}
+	}
+	if( data.showMiddlePoint )
+	{
+		for( const auto& seg: data.vseg )
+			seg.getMiddlePoint().draw( data.img, DrawParams().setColor( 0,0,250) );
+
+
+	}
+	data.showImage();
 }
 
 void demo_SEG( int )
 {
 	Param_SEG data ( "Segments demo" );
-//	action_CH( &data );
-//	data.leftClicAddPoint=true;
-
-	int n=100;
-	auto width = 400;
-	auto heigth = 400;
-	int k_col = 200;
-	int k_min = 15;
-
-
-//	data.setMouseCallback( mouse_CB_CH );
-	for( auto i=0; i<n; i++ )
-	{
-		auto len = 1.0*rand() / RAND_MAX * 40 + 10;
-		auto p1x = 1.0*rand() / RAND_MAX * width + 20;
-		auto p2x = 1.0*rand() / RAND_MAX * width + 20;;
-		auto p1y = 1.0*rand() / RAND_MAX * heigth + 20;
-		auto p2y = 1.0*rand() / RAND_MAX * heigth + 20;
-		auto line = Line2d( p1x, p1y, p2x, p2y );
-		auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
-		data.vseg.push_back( Segment( ppts ) );
-		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-		data.vcol.push_back( img::priv::Color(colR,colG,colB) );
-	}
+	data.generateSegments();
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'n', [&](void*){ data.showIndexes = !data.showIndexes; }, "show indexes" );
+	kbloop.addKeyAction( 'm', [&](void*){ data.showMiddlePoint  = !data.showMiddlePoint; }, "show middle point" );
+	kbloop.addKeyAction( 'n', [&](void*){ data.showIndexes      = !data.showIndexes; }, "show indexes" );
+	kbloop.addKeyAction( 'i', [&](void*){ data.showIntersection = !data.showIntersection; }, "show intersection points" );
+
+	kbloop.addKeyAction( 'r', [&](void*){ data.regen = true; }, "Re-generate" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nbSegs = data.nbSegs*2; data.regen = true; }, "double nb points" );
+	kbloop.addKeyAction( 'x', [&](void*){ data.nbSegs = data.nbSegs/2; data.regen = true; }, "half nb points" );
+
 	kbloop.addCommonAction( action_SEG );
 	action_SEG( &data );
 
