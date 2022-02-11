@@ -3305,8 +3305,8 @@ the one with smallest y-coordinate will be returned first */
 	getMiddlePoint() const
 	{
 		return Point2d_<FPT>(
-			( _ptS1.getX() + _ptS2.getX() ) / 2.,
-			( _ptS1.getY() + _ptS2.getY() ) / 2.
+			( static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX()) + _ptS2.getX() ) / 2.,
+			( static_cast<HOMOG2D_INUMTYPE>(_ptS1.getY()) + _ptS2.getY() ) / 2.
 		);
 	}
 
