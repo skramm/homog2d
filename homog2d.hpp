@@ -1017,6 +1017,8 @@ struct Color
 	uint8_t r = 80;
 	uint8_t g = 80;
 	uint8_t b = 80;
+	Color( uint8_t rr, uint8_t gg, uint8_t bb ): r(rr),g(gg),b(bb) {}
+	Color() = default;
 };
 
 } // namespace priv
@@ -6688,14 +6690,10 @@ impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const
 }
 template<typename U,typename FPT>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& pt /* tag dispatching */ )
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg /* tag dispatching */ )
 {
 	if( dp._dpValues._showPointsIndex )
-	{
-		auto pts = pt.getPts();
-		auto mid = (pts.first + pts.second)/2.0;
-		cv::putText( img.getReal(), std::to_string(c), mid.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
-	}
+		cv::putText( img.getReal(), std::to_string(c), seg.getMiddlePoint().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 #endif
 /// Default signature, will be instanciated if no other fits (and does nothing)

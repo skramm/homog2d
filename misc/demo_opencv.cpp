@@ -1031,21 +1031,35 @@ struct Param_SEG : Data
 	explicit Param_SEG( std::string title ):Data(title)
 	{
 	}
+	bool showIndexes = false;
+	std::vector<Segment> vseg;
+	std::vector<img::priv::Color> vcol;
 };
+void action_SEG( void* param )
+{
+	auto& data = *reinterpret_cast<Param_SEG*>(param);
+
+	data.clearImage();
+	draw( data.img, data.vseg, img::DrawParams().showPointsIndex(data.showIndexes) );
+//	draw( vseg, data.img, img::DrawParams().setColor(colR,colG,colB).showPointsIndex() );
+	data.showImage();
+
+}
 
 void demo_SEG( int )
 {
+	Param_SEG data ( "Segments demo" );
+//	action_CH( &data );
+//	data.leftClicAddPoint=true;
+
 	int n=100;
 	auto width = 400;
 	auto heigth = 400;
 	int k_col = 200;
 	int k_min = 15;
-	Param_SEG data ( "Segments demo" );
-//	action_CH( &data );
-//	data.leftClicAddPoint=true;
-	std::vector<Segment> vseg;
+
+
 //	data.setMouseCallback( mouse_CB_CH );
-	data.clearImage();
 	for( auto i=0; i<n; i++ )
 	{
 		auto len = 1.0*rand() / RAND_MAX * 40 + 10;
@@ -1055,16 +1069,18 @@ void demo_SEG( int )
 		auto p2y = 1.0*rand() / RAND_MAX * heigth + 20;
 		auto line = Line2d( p1x, p1y, p2x, p2y );
 		auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
+		data.vseg.push_back( Segment( ppts ) );
 		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
 		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
 		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-		vseg.push_back(Segment( ppts ) );
+		data.vcol.push_back( img::priv::Color(colR,colG,colB) );
 	}
-	draw( data.img, vseg, img::DrawParams().showPointsIndex() );
-//	draw( vseg, data.img, img::DrawParams().setColor(colR,colG,colB).showPointsIndex() );
-	data.showImage();
 
 	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'n', [&](void*){ data.showIndexes = !data.showIndexes; }, "show indexes" );
+	kbloop.addCommonAction( action_SEG );
+	action_SEG( &data );
+
 	kbloop.start( data );
 }
 
