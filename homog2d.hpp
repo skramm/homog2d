@@ -58,7 +58,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_LOG(a) \
 		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
 		<< std::scientific << std::setprecision(10) \
-		<< a << '\n'
+		<< a << std::endl;
 #else
 	#define HOMOG2D_LOG(a) {;}
 #endif
@@ -6917,6 +6917,15 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 } // namespace chull
 } // namespace priv
 //------------------------------------------------------------------
+
+struct Mystack : std::stack<size_t,std::vector<size_t>>
+{
+	const std::vector<size_t>& getVect() const
+	{
+		return this->c;
+	}
+};
+
 /// Compute Convex Hull (free function)
 /**
 - type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
@@ -6938,80 +6947,84 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return PolylineBase<type::IsClosed,FPT>( input );
 
-	HOMOG2D_LOG( "input:" << input );
+	HOMOG2D_LOG( "START: input:" << input );
 //	using FPT=typename T::FType;
 
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
 	auto pt0 = input.at( pivot_idx );
-	std::cerr << "p0=" << pivot_idx << " pt0=" << pt0 << "\n";
+	std::cout << "p0=" << pivot_idx << " pt0=" << pt0 << std::endl;
 
 //	auto v1 = input.getPts();
 //	std::cerr <<"BEFORE: v2 size=" << v1.size() << ", pts=" << v1 << "\n";
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
-	std::cerr <<"AFTER: v2=" << v2 << "\n";
+	std::cout <<"AFTER: v2=" << v2 << std::endl;
 
 	for( auto i: v2 )
-		std::cerr << i << ": " << input.at(i) << '\n';
+		std::cout << i << ": " << input.at(i) << '\n';
 
 	auto nbPts = v2.size();
 
-//	std::stack<size_t, std::vector<size_t>> hull;
-	std::vector<size_t> hull;
+//	std::stack<size_t>, std::vector<size_t>> hull;
+//	std::stack<size_t> hull;
+	Mystack hull;
+//	std::vector<size_t> hull;
 //	hull.push( pivot_idx );
 //	hull.push( 0 );
 //	hull.push( 1 );
-	hull.push_back( v2[0] );
-	hull.push_back( v2[1] );
+	hull.push( v2[0] );
+	hull.push( v2[1] );
+	hull.push( v2[2] );
 
 // return PolylineBase<type::IsClosed,FPT>();
 // step 3: iterate
-	size_t curr = 1;
+	size_t idx1 = 1;
+	size_t idx2 = 2;
 	bool notDone = true;
 	do
 	{
-		std::cerr << "** loop start, curr=" << curr << ", hull:" << hull << '\n';
-		auto p = input.at( v2[curr] );
-		auto q = input.at( v2[curr+1] );
-		auto r = input.at( v2[curr+2] );
+		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", hull " << hull.getVect() );
+		auto p = input.at( v2[idx1] );
+		auto q = input.at( v2[idx2] );
+		auto r = input.at( v2[idx2+1] );
 		auto orient = priv::chull::orientation( p, q, r );
-		HOMOG2D_LOG( "considering pts: " << v2[curr] << "," << v2[curr+1] << "," << v2[curr+2] << ": or = " << orient << "\n" );
+		HOMOG2D_LOG( "considering pts: " << v2[idx1] << "," << v2[idx2] << "," << v2[idx2+1] << ": or = " << orient );
 		if( orient != 1 )
 		{
-//			hull.push( curr+1 );
-			hull.push_back( v2[curr+1] );
-			std::cerr << " -turn CCW, adding point " << v2[curr+1] << '\n';
-//			hull.pop();                // remove last point.
-			curr++;
+			HOMOG2D_LOG( " -turn CCW" );
+			idx1++;
 		}
 		else
 		{
-			curr = curr+2;
-			std::cerr << " -turn CC, switch to " << v2[curr] << '\n';
+			HOMOG2D_LOG( " -remove previous point" );
+			hull.pop();
 		}
+		HOMOG2D_LOG( " -turn CCW, adding point idx2+1=" << idx2+1 << " pt=" << v2[idx2+1] );
+		hull.push( v2[idx2+1] );
+		idx2++;
 
-//		curr = hull.top();
-		if( curr+2 < nbPts )       // if some point left,
-		{
-			std::cerr << " keep on!\n";
-		}
-		else
+
+		if( idx2+1 >= nbPts )       // if some point left,
 		{
 			notDone = false;
-			std::cerr << "done, adding point " << v2[curr+1] << '\n';
-			hull.push_back( v2[curr+1] );
+			HOMOG2D_LOG( " Done!" );
+		}
+		else
+		{
+			HOMOG2D_LOG( " keep on!" );
 		}
 	}
 	while( notDone );
-	std::cerr << "stack: " << hull << '\n';
+	std::cout << "stack: " << hull.getVect() << std::endl;
+	const auto v = hull.getVect();
 
 // copy hull indexes to vector of points
-	std::vector<Point2d_<FPT>> vout( hull.size() );
+	std::vector<Point2d_<FPT>> vout( v.size() );
 	std::transform(
-		hull.begin(),
-		hull.end(),
+		v.begin(),
+		v.end(),
 		vout.begin(),
 		[&input]               // lambda
 		(size_t idx)

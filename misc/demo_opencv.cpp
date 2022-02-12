@@ -996,7 +996,7 @@ struct Param_CH : Data
 	explicit Param_CH( std::string title ): Data(title)
 	{
 //		vpt = std::vector<Point2d>{ {250,200}, {100,200}, {100,100}, {50,100}, {40,70}, {200,0} };
-		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400} };
+		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
 	}
 };
 
@@ -1136,8 +1136,8 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
-		demo_SEG,
 		demo_CH,
+		demo_SEG,
 		demo_B,
 		demo_ELL,
 		demo_H,
