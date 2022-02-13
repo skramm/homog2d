@@ -6968,53 +6968,54 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	auto nbPts = v2.size();
 
 //	std::stack<size_t>, std::vector<size_t>> hull;
-//	std::stack<size_t> hull;
+	std::stack<size_t> firstPoint;
 	Mystack hull;
 //	std::vector<size_t> hull;
-//	hull.push( pivot_idx );
-//	hull.push( 0 );
-//	hull.push( 1 );
 	hull.push( v2[0] );
 	hull.push( v2[1] );
 	hull.push( v2[2] );
 
-// return PolylineBase<type::IsClosed,FPT>();
 // step 3: iterate
 	size_t idx1 = 1;
 	size_t idx2 = 2;
+	size_t idx3 = 3;
 	bool notDone = true;
 	do
 	{
-		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", hull " << hull.getVect() );
+		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", idx3=" << idx3 << ", hull " << hull.getVect() );
 		auto p = input.at( v2[idx1] );
 		auto q = input.at( v2[idx2] );
-		auto r = input.at( v2[idx2+1] );
+		auto r = input.at( v2[idx3] );
 		auto orient = priv::chull::orientation( p, q, r );
-		HOMOG2D_LOG( "considering pts: " << v2[idx1] << "," << v2[idx2] << "," << v2[idx2+1] << ": or = " << orient );
+		HOMOG2D_LOG( "considering pts: " << v2[idx1] << "," << v2[idx2] << "," << v2[idx3] << ": or = " << orient );
 		if( orient != 1 )
 		{
-			HOMOG2D_LOG( " -turn CCW" );
-			idx1++;
+			HOMOG2D_LOG( " -turn CW" );
+			hull.push( v2[idx3] );
+			idx1 = idx2;
+			idx2 = idx3;
+			idx3++;
+			firstPoint.push( idx1 );
 		}
 		else
 		{
-			HOMOG2D_LOG( " -remove previous point" );
+			HOMOG2D_LOG( " -turn CCW, remove previous point" );
 			hull.pop();
+			idx2=idx1; // idx3 stays the same
+			idx1 = firstPoint.top();
+			firstPoint.pop();
 		}
-		HOMOG2D_LOG( " -turn CCW, adding point idx2+1=" << idx2+1 << " pt=" << v2[idx2+1] );
-		hull.push( v2[idx2+1] );
-		idx2++;
 
-
-		if( idx2+1 >= nbPts )       // if some point left,
+		if( idx3 < nbPts )       // if some point left,
+		{
+			HOMOG2D_LOG( " keep on!" );
+		}
+		else
 		{
 			notDone = false;
 			HOMOG2D_LOG( " Done!" );
 		}
-		else
-		{
-			HOMOG2D_LOG( " keep on!" );
-		}
+
 	}
 	while( notDone );
 	std::cout << "stack: " << hull.getVect() << std::endl;
