@@ -6883,8 +6883,10 @@ HOMOG2D_LOG( "out START: " << out );
 			auto dy1 = pt1.getY() - pt0.getY();
 			auto dx2 = pt2.getX() - pt0.getX();
 			auto dy2 = pt2.getY() - pt0.getY();
-//			std::cerr << "comparing line " << piv_idx << "-" << i1 << " and " << piv_idx << "-" << i2 << '\n';
-			return ((dx1 * dy2 - dx2*dy1)>=0);
+			std::cout << "comparing line 0-" << i1 << " and 0-" << i2 << '\n';
+			std::cout << "pt1=" << pt1 << " pt2= " << pt2 << '\n';
+			std::cout << "res=" << ((dx1 * dy2 - dx2*dy1)>0) << '\n';
+			return ((dx1 * dy2 - dx2*dy1)>0);
 		}
 	);
 //HOMOG2D_LOG( "out AFTER:" << out );
@@ -6975,6 +6977,9 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	hull.push( v2[1] );
 	hull.push( v2[2] );
 
+	firstPoint.push( 0 );
+	firstPoint.push( 1 );
+
 // step 3: iterate
 	size_t idx1 = 1;
 	size_t idx2 = 2;
@@ -7002,8 +7007,8 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 			HOMOG2D_LOG( " -turn CCW, remove previous point" );
 			hull.pop();
 			idx2=idx1; // idx3 stays the same
-			idx1 = firstPoint.top();
 			firstPoint.pop();
+			idx1 = firstPoint.top();
 		}
 
 		if( idx3 < nbPts )       // if some point left,
