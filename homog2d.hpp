@@ -36,6 +36,7 @@ See https://github.com/skramm/homog2d
 #include <cassert>
 #include <sstream>
 #include <type_traits>
+#include <functional>
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>

@@ -28,8 +28,6 @@
 // additional Opencv header, needed for GUI stuff
 #include "opencv2/highgui.hpp"
 
-#include <functional>
-
 using namespace h2d;
 using namespace h2d::img;
 
@@ -1035,8 +1033,9 @@ struct Param_SEG : Data
 	std::vector<img::Color> vcol;
 
 	int nbSegs = 100;
-	int width  = 400;
-	int heigth = 400;
+	int delta = 40;
+	int width2  = width-delta;
+	int height2 = height-delta;
 	int k_col  = 200;
 	int k_min  = 15;
 
@@ -1048,10 +1047,10 @@ struct Param_SEG : Data
 		for( auto i=0; i<nbSegs; i++ )
 		{
 			auto len = 1.0*rand() / RAND_MAX * 40 + 10;
-			auto p1x = 1.0*rand() / RAND_MAX * width + 20;
-			auto p2x = 1.0*rand() / RAND_MAX * width + 20;;
-			auto p1y = 1.0*rand() / RAND_MAX * heigth + 20;
-			auto p2y = 1.0*rand() / RAND_MAX * heigth + 20;
+			auto p1x = 1.0*rand() / RAND_MAX * width2 + 20;
+			auto p2x = 1.0*rand() / RAND_MAX * width2 + 20;;
+			auto p1y = 1.0*rand() / RAND_MAX * height2 + 20;
+			auto p2y = 1.0*rand() / RAND_MAX * height2 + 20;
 			auto line = Line2d( p1x, p1y, p2x, p2y );
 			auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
 			vseg.push_back( Segment( ppts ) );
