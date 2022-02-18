@@ -21,7 +21,7 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 //#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
@@ -848,8 +848,8 @@ void action_PL( void* param )
 	if( data.polyline.isPolygon() )
 		color = DrawParams().setColor( 250,10,20);
 	data.polyline.draw( data.img, color );
-	auto ch = getConvexHull( data.polyline );
-	ch.draw( data.img, DrawParams().setColor( 0,200,200) );
+//	auto ch = getConvexHull( data.polyline );
+//	ch.draw( data.img, DrawParams().setColor( 0,200,200) );
 
 	auto col_green = DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
@@ -872,6 +872,9 @@ void action_PL( void* param )
 
 	auto bb = data.polyline.getBB();
 	bb.draw( data.img );
+
+//	auto ch = convexHull( data.polyline );
+//	ch.draw( data.img );
 
 	if( data.polyline.isPolygon() )
 	{
@@ -938,7 +941,7 @@ struct Param_ELL : Data
 		auto bb1 = ell2.getOBB();
 		bb1.draw( img, DrawParams().setColor(0,0,250) );
 
-		auto bb2 = ell2.getOBB();
+		auto bb2 = ell2.getBB();
 		bb2.draw( img, DrawParams().setColor(0,250,0) );
 
 		auto axis = ell2.getAxisLines();
@@ -995,7 +998,6 @@ struct Param_CH : Data
 {
 	explicit Param_CH( std::string title ): Data(title)
 	{
-//		vpt = std::vector<Point2d>{ {250,200}, {100,200}, {100,100}, {50,100}, {40,70}, {200,0} };
 		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
 	}
 };
@@ -1005,10 +1007,7 @@ void action_CH( void* param )
 	auto& data = *reinterpret_cast<Param_CH*>(param);
 
 	data.clearImage();
-//	CPolyline pl( data.vpt );
-//	pl.draw( data.img, img::DrawParams().showPointsIndex() );
-//	data.img.draw( data.vpt );//, img::DrawParams().showPointsIndex() );
-	draw( data.img, data.vpt, img::DrawParams().showPointsIndex() );//, img::DrawParams().showPointsIndex() );
+	draw( data.img, data.vpt, img::DrawParams().showPointsIndex() );
 
 	auto chull = getConvexHull( data.vpt );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );

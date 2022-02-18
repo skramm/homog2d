@@ -3,18 +3,19 @@
 Home page: [github.com/skramm/homog2d](https://github.com/skramm/homog2d)
 
 This is the manual for the current master branch of `homog2d`.
-For stable releases, see home page.
+For stable releases, see https://github.com/skramm/homog2d/releases .
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
 3. [Other geometric primitives](#shapes)
 4. [2D transformation (aka homographies)](#matrix)
 5. [Intersections and enclosings determination](#inter)
-6. [Bindings](#bind)
-7. [Numerical data types](#numdt)
-8. [Technical details](#tech)
-9. [FAQ](homog2d_qa.md)
-10. [History](homog2d_history.md)
+6. [Misc. features](#misc)
+7. [Bindings](#bind)
+8. [Numerical data types](#numdt)
+9. [Technical details](#tech)
+10. [FAQ](homog2d_qa.md)
+11. [History](homog2d_history.md)
 
 ## 1 - Introduction
 <a name="intro"></a>
@@ -294,7 +295,6 @@ auto ppts = std::make_pair( Point2d(4,5), Point2d(2,1) );
 Segment s1( ppts );
 s1.set( ppts );
 ```
-
 
 Besides using a homography matrix, translating the segment can be done with a member function:
 ```C++
@@ -874,7 +874,6 @@ However, if none of these are installed on you system, the easiest to install is
 
 The member function `buildFrom4Points()` accepts as third argument an `int`, 0 means using Opencv, 1 means using Eigen.
 
-
 ## 5 - Intersections and enclosings determination
 <a name="inter"></a>
 
@@ -950,7 +949,8 @@ bool b2 = pt.isInside( circle );
 bool b3 = pt.isInside( ellipse );
 ```
 
-**Note**: this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
+**Note**:
+this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
 
 For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
 ```C++
@@ -1004,10 +1004,23 @@ auto b3 = unionArea( r1, r2 ); // free function
 
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.<br>
-For the union, if there is no intersection, the function will return an empty `Polyline` object.
+For the union, if there is no intersection, the function will return an empty `CPolyline` object.
 
+## 6 - Misc. features
+<a name="misc"></a>
 
-## 6 - Bindings with other libraries
+**Convex Hull**
+You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with the free-function `convexHull( )`.
+This function will return a `CPolyline` object.
+```C++
+std::vector<Point2d> vec;
+// ... fill with at least 3 points
+auto ch1 = convexHull( vec );
+CPolyline pl( vec );
+auto ch2 = convexHull( pl ); // will be the same as ch1
+```
+
+## 7 - Bindings with other libraries
 <a name="bind"></a>
 
 Import from other types is pretty much straight forward.
@@ -1033,7 +1046,7 @@ For homographies, you can import directly from
 
 For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
 
-### 6.1 - Data conversion from/to Opencv data types
+### 7.1 - Data conversion from/to Opencv data types
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -1089,7 +1102,7 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 6.2 - Drawing functions
+### 7.2 - Drawing functions
 
 Generic drawing functions are provided for all the types, using an "opaque" image datatype and some other classes,
 all lying in the sub-namespace `img` :
@@ -1173,15 +1186,15 @@ draw( img, p_cir );     // draw the pair of circles
 ```
 
 A demo demonstrating this Opencv binding is provided, try it with
-`make demo` (requires that Opencv is installed on your machine).
+`$ make demo` (requires that Opencv is installed on your machine).
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 
-## 7 - Numerical data types
+## 8 - Numerical data types
 <a name="numdt"></a>
 
-### 7.1 - Underlying data type
+### 8.1 - Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -1227,7 +1240,7 @@ CircleF c2;
 assert( dtype(c2) == Dtype::Float );
 ```
 
-### 7.2 - Numerical type conversion
+### 8.2 - Numerical type conversion
 
 It is possible to convert to/from an object templated by a different type (at the cost of a potential precision loss):
 ```C++
@@ -1239,7 +1252,7 @@ SegmentD sd;
 SegmentL sl = sd;
 ```
 
-### 7.3 - Numerical issues
+### 8.3 - Numerical issues
 <a name="num_issues"></a>
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
@@ -1254,7 +1267,7 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
-## 8 - Technical details
+## 9 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually the same class,
@@ -1266,7 +1279,7 @@ Normalization is done for comparison but not saved.
 
 For more details on the code, check [this page](homog2d_devinfo.md).
 
-### Testing
+### 9.1 - Testing
 
 A unit-test program is included, it is build and run with `$ make test`.
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
@@ -1281,7 +1294,7 @@ type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYP
 The test target also attempts to build the files in the folder `misc/no_build`.
 These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
 
-### Build options
+### 9.2 - Build options
 <a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.

@@ -6859,17 +6859,8 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 	std::vector<size_t> out( in.size() );
 	std::iota( out.begin(), out.end(), 0 );
 	std::swap( out[piv_idx], out[0] );
+	auto pt0 = in[piv_idx];
 
-//	size_t c=0;
-//	for( size_t i=0; i<out.size(); i++, c++ )
-//		out[i] = ( c != piv_idx ? c : ++c );
-
-HOMOG2D_LOG( "out START: " << out );
-
-//	auto pt0 = in[piv_idx];
-	auto pt0 = in[0];
-
-//HOMOG2D_LOG( "piv_idx=" << piv_idx );
 // step 2: sort points by angle of lines between the current point and pivot point
 	std::sort(
 		out.begin()+1,
@@ -6883,20 +6874,16 @@ HOMOG2D_LOG( "out START: " << out );
 			auto dy1 = pt1.getY() - pt0.getY();
 			auto dx2 = pt2.getX() - pt0.getX();
 			auto dy2 = pt2.getY() - pt0.getY();
-			std::cout << "comparing line 0-" << i1 << " and 0-" << i2 << '\n';
-			std::cout << "pt1=" << pt1 << " pt2= " << pt2 << '\n';
-			std::cout << "res=" << ((dx1 * dy2 - dx2*dy1)>0) << '\n';
-			return ((dx1 * dy2 - dx2*dy1)>0);
+			return ((dx1 * dy2 - dx2 * dy1) > 0);
 		}
 	);
-//HOMOG2D_LOG( "out AFTER:" << out );
 	return out;
 }
 
 //------------------------------------------------------------------
 // To find orientation of ordered triplet (p, q, r).
 // The function returns following values
-// 0 --> p, q and r are collinear
+// 0 --> p, q and r are colinear
 // 1 --> Clockwise
 // 2 --> Counterclockwise
 template<typename T>
@@ -6910,7 +6897,6 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 	HOMOG2D_INUMTYPE ry = r.getY();
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-//	std::cerr << "p=" << p << " q=" << q << " r=" << r << " or=" << val << '\n';
     if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
 		return 0;  // collinear
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
@@ -6932,8 +6918,6 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 /**
 - type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
 - Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
-
-UNTESTED !!!
 */
 template<typename CT,typename FPT>
 PolylineBase<type::IsClosed,FPT>
@@ -6950,29 +6934,17 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 		return PolylineBase<type::IsClosed,FPT>( input );
 
 	HOMOG2D_LOG( "START: input:" << input );
-//	using FPT=typename T::FType;
 
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
-	auto pt0 = input.at( pivot_idx );
-	std::cout << "p0=" << pivot_idx << " pt0=" << pt0 << std::endl;
-
-//	auto v1 = input.getPts();
-//	std::cerr <<"BEFORE: v2 size=" << v1.size() << ", pts=" << v1 << "\n";
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
-	std::cout <<"AFTER: v2=" << v2 << std::endl;
+//	auto nbPts =
 
-	for( auto i: v2 )
-		std::cout << i << ": " << input.at(i) << '\n';
-
-	auto nbPts = v2.size();
-
-//	std::stack<size_t>, std::vector<size_t>> hull;
 	std::stack<size_t> firstPoint;
+//	std::stack<size_t> hull;
 	Mystack hull;
-//	std::vector<size_t> hull;
 	hull.push( v2[0] );
 	hull.push( v2[1] );
 	hull.push( v2[2] );
@@ -6984,7 +6956,6 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	size_t idx1 = 1;
 	size_t idx2 = 2;
 	size_t idx3 = 3;
-	bool notDone = true;
 	do
 	{
 		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", idx3=" << idx3 << ", hull " << hull.getVect() );
@@ -6992,10 +6963,9 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 		auto q = input.at( v2[idx2] );
 		auto r = input.at( v2[idx3] );
 		auto orient = priv::chull::orientation( p, q, r );
-		HOMOG2D_LOG( "considering pts: " << v2[idx1] << "," << v2[idx2] << "," << v2[idx3] << ": or = " << orient );
+//		HOMOG2D_LOG( "considering pts: " << v2[idx1] << "," << v2[idx2] << "," << v2[idx3] << ": or = " << orient );
 		if( orient != 1 )
 		{
-			HOMOG2D_LOG( " -turn CW" );
 			hull.push( v2[idx3] );
 			idx1 = idx2;
 			idx2 = idx3;
@@ -7004,29 +6974,16 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 		}
 		else
 		{
-			HOMOG2D_LOG( " -turn CCW, remove previous point" );
 			hull.pop();
 			idx2=idx1; // idx3 stays the same
 			firstPoint.pop();
 			idx1 = firstPoint.top();
 		}
-
-		if( idx3 < nbPts )       // if some point left,
-		{
-			HOMOG2D_LOG( " keep on!" );
-		}
-		else
-		{
-			notDone = false;
-			HOMOG2D_LOG( " Done!" );
-		}
-
 	}
-	while( notDone );
-	std::cout << "stack: " << hull.getVect() << std::endl;
-	const auto v = hull.getVect();
+	while( idx3 < v2.size() );
 
-// copy hull indexes to vector of points
+// final step: copy hull indexes to vector of points
+	const auto v = hull.getVect();
 	std::vector<Point2d_<FPT>> vout( v.size() );
 	std::transform(
 		v.begin(),

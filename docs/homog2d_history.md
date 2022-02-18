@@ -15,7 +15,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added symbol `HOMOG2D_ROUNDING_COEFF` to adjust rounding coeff.
   - added `translate()` to `Segment`
   - added `img::write()` abstraction member function for image disk writing
-  - added initializing `Segment` from a `std::pair` of points
+  - added initializing `Segment` from a `std::pair` of points (constructor and `set()` member function)
+  - added `convexHull()` and associate demo
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`
