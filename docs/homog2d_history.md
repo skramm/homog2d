@@ -17,6 +17,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `img::write()` abstraction member function for image disk writing
   - added initializing `Segment` from a `std::pair` of points (constructor and `set()` member function)
   - added `convexHull()` and associate demo
+  - added generic drawing function (for containers) with a `std::function` as third argument
+  - added "Segments" demo
+  - added arguments to abstract `img::clear()`, and added `img::Color` data type
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`

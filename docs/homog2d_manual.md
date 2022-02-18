@@ -821,14 +821,19 @@ For example, here is a rotating polygon, with its bounding box and intersection 
 
 ### 4.4 - Constructors
 
-Three constructors are provided:
+Four constructors are provided:
 * one without arguments, that initializes the matrix to a unit transformation;
 * one with **one** floating point argument, that produces a rotation matrix of the given angle value;
-* one with **two** floating point arguments, that produces a translation matrix with the given values.
+* one with **two** floating point arguments, that produces a translation matrix with the given values;
+* the last one can be used to fill the matrix with a 2-dim container
+(`std::vector<std::vector<numeric_type>>` or `std::array<std::array<numeric_type,3>,3>`).
 
 ```C++
 Homogr Hr( 1. ); // rotation matrix of 1 radian
 Homogr Ht( 3., 4. ); // translation matrix of tx=3, ty=4
+std::array<std::array<numeric_type,3>,3> ar;
+// ... fill array
+Homogr Ha( ar );
 ```
 
 ### 4.5 - Computing from 2 sets of 4 points
@@ -1193,7 +1198,19 @@ draw( img, vseg, dp );  // or pass some
 draw( img, p_cir );     // draw the pair of circles
 ```
 
-A demo demonstrating this Opencv binding is provided, try it with
+For containers, a second generic function is provided that has as third argument a `std::function`.
+This is useful to enable having different drawing properties (think: color) for each element:
+```C++
+void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
+```
+
+The passed function must return a valid img::DrawParams() object.
+It may be build depending on the index of the object.
+An exemple of usage is provided in `misc/demo_opencv.cpp`, see function
+`action_SEG()`.
+
+
+The demo demonstrating this Opencv binding is provided, try it with
 `$ make demo` (requires that Opencv is installed on your machine).
 
 In case you have some trouble building this program, please [read this](opencv_notes.md).

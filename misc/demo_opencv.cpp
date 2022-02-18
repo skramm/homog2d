@@ -51,6 +51,7 @@ struct Data
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
 		img.getReal().create( height, width, CV_8UC3 );
+		img.clear(255);
 		vpt.resize(4);
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
@@ -81,11 +82,11 @@ struct Data
 	}
 	void clearImage()
 	{
-		img.getReal() = cv::Scalar(255,255,255);
+		img.clear();
 	}
 	void showImage()
 	{
-		cv::imshow( win1, img.getReal() );
+		img.show( win1 );
 	}
 
 	void drawLines()
@@ -333,13 +334,6 @@ void mouse_CB_CH( int event, int x, int y, int /* flags */, void* param )
 	checkSelected( event, x, y, action_CH, param );
 }
 
-#if 0
-// Mouse callback for demo_CC
-void mouse_CB_CC( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_CC, param );
-}
-#endif
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -688,13 +682,13 @@ struct Param_H: public Data
 	}
 	void showImage()
 	{
-		cv::imshow( win1, img.getReal() );
-		cv::imshow( win2, img2.getReal() );
+		img.show( win1 );
+		img2.show( win2 );
 	}
 	void clearImage()
 	{
-		img.getReal() = cv::Scalar(255,255,255);
-		img2.getReal() = cv::Scalar(255,255,255);
+		img.clear();
+		img2.clear();
 	}
 	void reset()
 	{
@@ -1077,9 +1071,16 @@ void action_SEG( void* param )
 	if( data.regen )
 		data.generateSegments();
 
-	draw( data.img, data.vseg, DrawParams().showIndex(data.showIndexes) );
+	auto func = [&](int i)   // lambda, needed to fetch color from index
+		{
+			return DrawParams().showIndex(data.showIndexes).setColor(data.vcol[i]);
+		};
+	std::function<DrawParams(int)> f(func);
+	draw( data.img, data.vseg, f );
+
 	if( data.showIntersection )
 	{
+		size_t c_intersect = 0;
 		for( size_t i=0; i<data.vseg.size()-1; i++ )
 		{
 			auto s1 = data.vseg[i];
@@ -1088,9 +1089,13 @@ void action_SEG( void* param )
 				auto s2 = data.vseg[j];
 				auto pi = s1.intersects( s2 );
 				if( pi() )
+				{
 					draw( data.img, pi.get(), DrawParams().setColor( 250,0,0) );
+					c_intersect++;
+				}
 			}
 		}
+		std::cout << "- # intersection points=" << c_intersect << '\n';
 	}
 	if( data.showMiddlePoint )
 	{

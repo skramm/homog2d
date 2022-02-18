@@ -244,6 +244,16 @@ using OPolyline_  = PolylineBase<type::IsOpen,T>;
 /// Holds drawing related code, independent of back-end library
 namespace img {
 
+/// Color type , see DrawParams
+struct Color
+{
+	uint8_t r = 80;
+	uint8_t g = 80;
+	uint8_t b = 80;
+	Color( uint8_t rr, uint8_t gg, uint8_t bb ): r(rr),g(gg),b(bb) {}
+	Color() = default;
+};
+
 /// Opaque data structure, will hold the image type, depending on back-end library.
 /// This type is the one used in all the drawing functions.
 /**
@@ -270,10 +280,17 @@ struct Image
 	}
 	int cols() const { return real_img.cols; }
 	int rows() const { return real_img.rows; }
-	void clear() { real_img = cv::Scalar(255,255,255); }
+	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { real_img = cv::Scalar(b,g,r); }
+	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
+/// Write image to disk with name \c fname
 	void write( std::string fname ) const
 	{
 		cv::imwrite( fname, real_img );
+	}
+/// Show image on window \c wname
+	void show( std::string wname )
+	{
+		cv::imshow( wname, real_img );
 	}
 #endif
 
@@ -732,6 +749,7 @@ Thus some assert can get triggered elsewhere.
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		detail::Matrix_<FPT>::p_fillWith( in );
+		normalize();
 	}
 
 /// Copy-constructor
@@ -1008,16 +1026,6 @@ enum class PtStyle: uint8_t
 	Times,  ///< "times" symbol
 	Star,   ///< "*" symbol
 	Diam    ///< diamond
-};
-
-/// Color type , see DrawParams
-struct Color
-{
-	uint8_t r = 80;
-	uint8_t g = 80;
-	uint8_t b = 80;
-	Color( uint8_t rr, uint8_t gg, uint8_t bb ): r(rr),g(gg),b(bb) {}
-	Color() = default;
 };
 
 //------------------------------------------------------------------
@@ -2982,7 +2990,6 @@ getCvPts( const std::vector<Point2d_<FPT>>& vpt )
 }
 #endif // HOMOG2D_USE_OPENCV
 
-
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
 namespace detail {
@@ -2993,14 +3000,11 @@ template<typename FPT1,typename FPT2>
 bool
 ptIsInside( const Point2d_<FPT1>& pt, const Point2d_<FPT2>& p00, const Point2d_<FPT2>& p11 )
 {
-//	if( pt.getX() >= p00.getX() && pt.getX() <= p11.getX() )
-//		if( pt.getY() >= p00.getY() && pt.getY() <= p11.getY() )
 	if( pt.getX() > p00.getX() && pt.getX() < p11.getX() )
 		if( pt.getY() > p00.getY() && pt.getY() < p11.getY() )
 			return true;
 	return false;
 }
-
 
 #ifdef HOMOG2D_USE_EIGEN
 ///  Build Homography from 2 sets of 4 points, using Eigen
@@ -3038,7 +3042,6 @@ buildFrom4Points_Eigen(
 		A(i*2+1,6) = - u1 * v2;
 		A(i*2+1,7) = - v1 * v2;
 	}
-
 
 #if 0
 	Eigen::VectorXd X = A.ldlt().solve(b); // for some reason this does not work...
@@ -3082,6 +3085,7 @@ buildFrom4Points_Opencv (
 
 //------------------------------------------------------------------
 /// Build Homography from 2 sets of 4 points (free function)
+/// \sa Homogr_::buildFrom4Points()
 template<typename FPT>
 Homogr_<FPT>
 buildFrom4Points(
@@ -3578,7 +3582,6 @@ public:
 		p_addPoint( ppts.second );
 	}
 
-
 /// Constructor from a vector of points.
 	template<typename FPT2>
 	PolylineBase( const std::vector<Point2d_<FPT2>>& vec )
@@ -3591,7 +3594,6 @@ public:
 	{
 		set( vec );
 	}
-
 
 /// Copy-Constructor from Closed Polyline
 	template<typename FPT2>
@@ -3806,7 +3808,7 @@ public:
 		_attribs.setBad();
 	}
 
-/// Miminize the Polyline: remove all points that lie in the middle of two segments with same angle.
+/// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
 /**
 For example, if we have the following points ("Open" polyline):
 (0,0)-(1,0)-(2,0)<br>
@@ -4010,10 +4012,10 @@ public:
 private:
 #ifdef HOMOG2D_USE_OPENCV
 	template<typename T>
-	void impl_draw( img::Image<T>& ) const;
+	void impl_draw_pl( img::Image<T>& ) const;
 #else
 	template<typename T>
-	void impl_draw( img::Image<T>& ) const    // this one does nothing
+	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
 	{}
 #endif
 
@@ -4043,7 +4045,7 @@ private:
 			std::reverse( _plinevec.begin(), _plinevec.end() );
 	}
 
-/// Normalisation of closed Polyline_
+/// Normalisation of CPolyline_
 /**
 Two tasks:
 - rotating so that the smallest one is first
@@ -4618,13 +4620,13 @@ convertToCoord(
 } // namespace priv
 } // namespace runion
 //------------------------------------------------------------------
-/// Computes the Polyline_ of the union of two rectangles
+/// Computes the CPolyline of the union of two rectangles
 /**
 Algorithm:
  -# build vectors of x and y coordinates (4 elements)
  -# build table x-y (4x4), with corners tagged
  -# parse the table by turning right at each corner, and left if position is not one the outside row/col
- -# convert back indexes to real coordinates, to build the final Polyline_
+ -# convert back indexes to real coordinates, to build the final CPolyline object
 
 Two examples:
 \verbatim
@@ -4679,7 +4681,7 @@ This will produce a Polyline_ with 2 extra points:<br>
 <br>instead of:<br>
 (1,7)-(1,8)-(2,8)-(2,9)-(3,9)-(3,6)-(2,6)-(2,7)
 <br>We solve this by proceeding an extra Polyline minimization,
-see Polyline_::minimize()
+see PolylineBase::minimize()
 */
 template<typename FPT>
 template<typename FPT2>
@@ -6566,7 +6568,7 @@ HOMOG2D_INUMTYPE area( const Ellipse_<FPT>& ell )
 }
 
 /// Free function
-/// \sa Polyline_::area()
+/// \sa PolylineBase::area()
 template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE area( const PolylineBase<PLT,FPT>& pl )
 {
@@ -6574,7 +6576,7 @@ HOMOG2D_INUMTYPE area( const PolylineBase<PLT,FPT>& pl )
 }
 
 /// Free function
-/// \sa Polyline_::centroid()
+/// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
 LPBase<type::IsPoint,FPT> centroid( const PolylineBase<PLT,FPT>& pl )
 {
@@ -6713,11 +6715,12 @@ template<typename U,typename DUMMY>
 void
 impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const DUMMY& )
 {}
+
 } // namespace priv
 
 /// Free function, draws a set of primitives
 /**
-Template type \c T can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable
 */
 template<
 	typename U,
@@ -6738,15 +6741,36 @@ void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::Dra
 		c++;
 	}
 }
+
+template<
+	typename U,
+	typename T,
+	typename std::enable_if<
+		priv::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
+{
+	size_t c=0;
+	for( const auto& elem: cont )
+	{
+		auto dp = func(c);
+		elem.draw( img, dp );
+		priv::impl_drawIndexes( img, c, dp, elem );
+		c++;
+	}
+}
+
 //------------------------------------------------------------------
-/// Free function, draws a pair of points
+/// Free function, draws a pair of objects
 /**
-Template type can be std::array<type> or std::vector<type>, with \c type being Point2d or \c Line2d
+Type \c T can be anything drawable
 */
 template<typename T,typename U>
 void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams& dp=img::DrawParams() )
 {
-	ppts.first.draw( img, dp );
+	ppts.first.draw(  img, dp );
 	ppts.second.draw( img, dp );
 }
 
@@ -6804,7 +6828,7 @@ drawPt(
 } // namespace detail
 
 //------------------------------------------------------------------
-/// Draw Polyline_, independent of back-end library (calls the segment drawing function)
+/// Draw PolylineBase, independent of back-end library (calls the segment drawing function)
 template<typename PLT,typename FPT>
 template<typename T>
 void
@@ -6821,7 +6845,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		getPoint(0).draw( im, dp.setColor(10,10,10).setPointStyle( newPointStyle ) );
 	}
 	if( dp._dpValues._showIndex )
-		impl_draw( im );
+		impl_draw_pl( im );
 }
 
 //------------------------------------------------------------------
@@ -7174,7 +7198,7 @@ LPBase<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail:
 template<typename PLT,typename FPT>
 template<typename T>
 void
-PolylineBase<PLT,FPT>::impl_draw( img::Image<T>& im ) const //, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 {
 	for( size_t i=0; i<size(); i++ )
 	{
