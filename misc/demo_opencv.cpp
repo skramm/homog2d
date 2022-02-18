@@ -1007,7 +1007,7 @@ void action_CH( void* param )
 	auto& data = *reinterpret_cast<Param_CH*>(param);
 
 	data.clearImage();
-	draw( data.img, data.vpt, img::DrawParams().showPointsIndex() );
+	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
 	auto chull = getConvexHull( data.vpt );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
@@ -1038,7 +1038,7 @@ struct Param_SEG : Data
 	bool showMiddlePoint  = false;
 	bool regen = false;
 	std::vector<Segment>          vseg;
-	std::vector<img::priv::Color> vcol;
+	std::vector<img::Color> vcol;
 
 	int nbSegs = 100;
 	int width  = 400;
@@ -1064,7 +1064,7 @@ struct Param_SEG : Data
 			auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
 			auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
 			auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-			vcol.push_back( img::priv::Color(colR,colG,colB) );
+			vcol.push_back( img::Color(colR,colG,colB) );
 		}
 		regen = false;
 	}
@@ -1077,7 +1077,7 @@ void action_SEG( void* param )
 	if( data.regen )
 		data.generateSegments();
 
-	draw( data.img, data.vseg, DrawParams().showPointsIndex(data.showIndexes) );
+	draw( data.img, data.vseg, DrawParams().showIndex(data.showIndexes) );
 	if( data.showIntersection )
 	{
 		for( size_t i=0; i<data.vseg.size()-1; i++ )

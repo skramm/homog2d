@@ -1133,6 +1133,13 @@ li.draw( img, img::DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
 ```
 with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
+A local type holding these 3 values can also be used:
+```C++
+auto c = img::Color c(255,0,222);
+li.draw( img, img::DrawParams().setColor(c) );
+```
+
+
 The drawing parameters default values can be changed anytime with a call to `setDefault()`,
 and values will be retained, unless explicitely changed, as showed in the example below;
 
@@ -1159,6 +1166,7 @@ The available functions are given in the table below:
      Function     |    Arguments     | Comment |
 ------------------|------------------|---------|
 `setColor()`      | 3 ints ([0-255]) |  |
+`setColor()`      |  `img::Color`    |  |
 `setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` | +,x,*, |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |

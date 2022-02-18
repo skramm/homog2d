@@ -1010,8 +1010,7 @@ enum class PtStyle: uint8_t
 	Diam    ///< diamond
 };
 
-namespace priv {
-/// Color drawing (internal use), see DrawParams
+/// Color type , see DrawParams
 struct Color
 {
 	uint8_t r = 80;
@@ -1021,8 +1020,6 @@ struct Color
 	Color() = default;
 };
 
-} // namespace priv
-
 //------------------------------------------------------------------
 /// Draw parameters, independent of back-end library
 class DrawParams
@@ -1031,14 +1028,14 @@ class DrawParams
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
 	{
-		priv::Color _color;
+		Color       _color;
 		int         _lineThickness = 1;
 		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
 		uint8_t     _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
 		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
-		bool        _showPointsIndex = false;     ///< show the points number (useful only for Polyline_)
+		bool        _showIndex     = false;     ///< show the index as number
 
 /// Returns the point style following the current one
 		PtStyle nextPointStyle() const
@@ -1098,7 +1095,12 @@ public:
 	}
 	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
 	{
-		_dpValues._color = priv::Color{r,g,b};
+		_dpValues._color = Color{r,g,b};
+		return *this;
+	}
+	DrawParams& setColor( Color col )
+	{
+		_dpValues._color = col;
 		return *this;
 	}
 	DrawParams& selectPoint()
@@ -1114,9 +1116,9 @@ public:
 	}
 
 /// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPointsIndex( bool b=true )
+	DrawParams& showIndex( bool b=true )
 	{
-		_dpValues._showPointsIndex = b;
+		_dpValues._showIndex = b;
 		return *this;
 	}
 
@@ -6693,16 +6695,16 @@ namespace priv {
 #ifdef HOMOG2D_USE_OPENCV
 template<typename U,typename FPT>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt /* tag dispatching */ )
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt )
 {
-	if( dp._dpValues._showPointsIndex )
+	if( dp._dpValues._showIndex )
 		cv::putText( img.getReal(), std::to_string(c), pt.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 template<typename U,typename FPT>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg /* tag dispatching */ )
+impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
 {
-	if( dp._dpValues._showPointsIndex )
+	if( dp._dpValues._showIndex )
 		cv::putText( img.getReal(), std::to_string(c), seg.getMiddlePoint().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 #endif
@@ -6818,7 +6820,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 		auto newPointStyle = dp._dpValues.nextPointStyle();
 		getPoint(0).draw( im, dp.setColor(10,10,10).setPointStyle( newPointStyle ) );
 	}
-	if( dp._dpValues._showPointsIndex )
+	if( dp._dpValues._showIndex )
 		impl_draw( im );
 }
 
