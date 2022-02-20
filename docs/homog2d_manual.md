@@ -1233,15 +1233,16 @@ The other types can be selected by an additional suffix letter added after the t
 
 For example: `Point2dF`, `Line2dF` or `SegmentF` are float types.
 
-If you prefer the classical template notation, it is also available by using `Point2d_` and `Line2d_`:
+If you prefer the classical template notation, it is also available by adding an underscore after the type:
 
 ```C++
-Point2d_<float> ptf;   // float
-FRect_<double> rectd; // double
+Point2d_<float> ptf;
+FRect_<double> rectd;
+Segment_<long double> sld;
 ```
 
 However, this only applies to **storage**.
-All the computation (distances, angles, intersections, ...) uses (and returns)
+All the computation (distances, angles, intersections, ...) use (and returns)
 the type defined by symbol `HOMOG2D_INUMTYPE`, that defaults to `double`.
 
 If you need extra precision (and if your compiler supports it), you may
@@ -1296,7 +1297,8 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually the same class,
-behavior differs due to some policy-based design (see below).
+behavior differs due to some policy-based design.
+Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `PolylineBase`.
 - Points are stored as non-normalized values, any computation will keep the resulting values.
 Normalization is done for comparison but not saved.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
@@ -1318,12 +1320,14 @@ type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYP
 
 The test target also attempts to build the files in the folder `misc/no_build`.
 These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
+This is just to make sure that some invalid code does, indeed, not build.
 
 ### 9.2 - Build options
 <a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
-You can do that in the makefile or just add a `#define` on top of your program,
+You can do that in the makefile by adding `-DHOMOG2D_SYMBOL` to the compiler call options,
+or just add a `#define` on top of your program
 **before** the `#include "homog2d"`
 
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).

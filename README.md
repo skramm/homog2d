@@ -72,6 +72,8 @@ Don't hesitate, this is still beta but stable release expected soon.
   - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
+**Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there are **no drawing functions** included.
+The images are drawn using a third-party library, but it is not needed to use this library.
 
 - [Release history](docs/homog2d_history.md)
 

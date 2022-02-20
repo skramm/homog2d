@@ -49,7 +49,7 @@ Example:
 ```
 auto curr = thr::nullDistance();  // store current value
 thr::nullDistance() = 1E-6;       // change value
-...                               // do some stuf
+...                               // do some stuff
 thr::nullDistance() = curr;       // restore previous value
 ```
 
