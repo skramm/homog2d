@@ -2109,6 +2109,7 @@ public:
 
 //------------------------------------------------------------------
 /// Return circle passing through 4 points of flat rectangle
+/// \sa h2d::getBoundingCircle()
 template<typename FPT>
 Circle_<FPT>
 FRect_<FPT>::getBoundingCircle() const
@@ -2219,9 +2220,9 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
 /**
-Parameters:
-- LP: Line or Point
-- FPT: Floating Point Type
+Type parameters:
+- LP: type::IsPoint or type::IsLine
+- FPT: Floating Point Type (float, double or long double)
 */
 template<typename LP,typename FPT>
 class LPBase: public detail::Common<FPT>
@@ -4270,9 +4271,9 @@ PolylineBase<PLT,FPT>::centroid() const
 }
 
 //------------------------------------------------------------------
-/// Returns Rectangle of the intersection area, will throw if no intersection area
+/// Returns Rectangle of the intersection area
 /**
-\return an object of type detail::RectArea, that can be checked for success using the ()
+\return An object of type detail::RectArea, that can be checked for success using the ()
 operator, and if success, will hold the resulting FRect_
 
 Algorithm:
@@ -6290,6 +6291,7 @@ intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 }
 
 /// Returns circle passing through 4 points of flat rectangle (free function)
+/// \sa FRect_::getBoundingCircle()
 template<typename FPT>
 Circle_<FPT>
 getBoundingCircle( const FRect_<FPT>& rect )
@@ -6851,6 +6853,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 
 //------------------------------------------------------------------
 namespace priv {
+/// Holds convex hull code
 namespace chull {
 
 //------------------------------------------------------------------
@@ -6929,10 +6932,8 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
 }
 //------------------------------------------------------------------
-} // namespace chull
-} // namespace priv
-//------------------------------------------------------------------
-
+/// Inherits std::stack<> and adds a member function to fetch the underlying std::vector.
+/// Used in h2d::getConvexHull()
 struct Mystack : std::stack<size_t,std::vector<size_t>>
 {
 	const std::vector<size_t>& getVect() const
@@ -6940,7 +6941,11 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 		return this->c;
 	}
 };
+//------------------------------------------------------------------
+} // namespace chull
+} // namespace priv
 
+//------------------------------------------------------------------
 /// Compute Convex Hull (free function)
 /**
 - type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
@@ -6953,6 +6958,11 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 	return getConvexHull( input.getPts() );
 }
 
+//------------------------------------------------------------------
+/// Computes and returns the convex hull of a set of points (free function)
+/**
+- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+*/
 template<typename FPT>
 PolylineBase<type::IsClosed,FPT>
 getConvexHull( const std::vector<Point2d_<FPT>>& input )
@@ -6960,18 +6970,14 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return PolylineBase<type::IsClosed,FPT>( input );
 
-	HOMOG2D_LOG( "START: input:" << input );
-
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
-//	auto nbPts =
 
 	std::stack<size_t> firstPoint;
-//	std::stack<size_t> hull;
-	Mystack hull;
+	priv::chull::Mystack hull;
 	hull.push( v2[0] );
 	hull.push( v2[1] );
 	hull.push( v2[2] );

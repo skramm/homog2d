@@ -1296,7 +1296,7 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 ## 9 - Technical details
 <a name="tech"></a>
 
-- The two types `Point2d` and `Line2d` are actually the same class,
+- The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
 behavior differs due to some policy-based design.
 Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `PolylineBase`.
 - Points are stored as non-normalized values, any computation will keep the resulting values.
