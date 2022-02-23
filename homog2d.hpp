@@ -253,6 +253,12 @@ struct Color
 	uint8_t b = 80;
 	Color( uint8_t rr, uint8_t gg, uint8_t bb ): r(rr),g(gg),b(bb) {}
 	Color() = default;
+
+	friend std::ostream& operator << ( std::ostream& f, const Color& c )
+	{
+		f << "Color:" << (int)c.r << '-' << (int)c.g << '-' << (int)c.b;
+		return f;
+	}
 };
 
 /// Opaque data structure, will hold the image type, depending on back-end library.
@@ -6475,7 +6481,6 @@ getMiddlePoint( const Segment_<FPT>& seg )
 - input: set of segments
 - output: set of points (same container)
 */
-
 template<typename FPT>
 std::vector<Point2d_<FPT>>
 getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
@@ -6485,6 +6490,22 @@ getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
 	auto it = std::begin( vout );
 	for( const auto& seg: vsegs )
 		*it++ = getMiddlePoint( seg );
+	return vout;
+}
+
+/// Free function, returns a set of lines from a set of segments
+/**
+\sa Segment_::getLine()
+*/
+template<typename FPT>
+std::vector<Line2d_<FPT>>
+getLines( const std::vector<Segment_<FPT>>& vsegs )
+{
+	std::vector<Line2d_<FPT>> vout( vsegs.size() );
+
+	auto it = std::begin( vout );
+	for( const auto& seg: vsegs )
+		*it++ = seg.getLine();
 	return vout;
 }
 
@@ -6713,10 +6734,11 @@ impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const
 		cv::putText( img.getReal(), std::to_string(c), seg.getMiddlePoint().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 #endif
+
 /// Default signature, will be instanciated if no other fits (and does nothing)
 template<typename U,typename DUMMY>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const DUMMY& )
+impl_drawIndexes( img::Image<U>&, size_t, const img::DrawParams&, const DUMMY& )
 {}
 
 } // namespace priv
@@ -6735,7 +6757,6 @@ template<
 >
 void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
 {
-//	using PType = typename T::value_type;
 	size_t c=0;
 	for( const auto& elem: cont )
 	{
@@ -6744,7 +6765,8 @@ void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::Dra
 		c++;
 	}
 }
-
+/// This version holds a \c std::function as 3th parameter. It can be used to pass a function
+/// that will return a different img::DrawParams for a given index of the container.
 template<
 	typename U,
 	typename T,

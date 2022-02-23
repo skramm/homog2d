@@ -1025,6 +1025,17 @@ CPolyline pl( vec );
 auto ch2 = convexHull( pl ); // will be the same as ch1
 ```
 
+
+**Extracting data from sets/containers of primitives**
+
+If you have a `std::vector<Segment>` named `v_segs`, then the following functions:
+
+- `auto v_pts   = getMiddlePoints( v_segs );`
+- `auto v_lines = getLines( v_segs );`
+
+will return a vector holding the middle points of all the segments and a vector holding the supporting lines of all the segments.
+
+
 ## 7 - Bindings with other libraries
 <a name="bind"></a>
 

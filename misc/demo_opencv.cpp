@@ -290,6 +290,21 @@ public:
 	}
 };
 
+std::vector<img::Color> genRandomColors( size_t nb )
+{
+	std::vector<img::Color> vcol( nb );
+	int k_col  = 200;
+	int k_min  = 15;
+
+	for( size_t i=0; i<nb; i++ )
+	{
+		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
+		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
+		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
+		vcol[i] = img::Color(colR,colG,colB);
+	}
+	return vcol;
+}
 
 /// Mouse callback for demo_H
 void mouse_CB_H( int event, int x, int y, int /* flags */, void* param )
@@ -992,16 +1007,33 @@ struct Param_CH : Data
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
 	}
+	std::vector<img::Color> vcol;
 };
 
 void action_CH( void* param )
 {
+	static size_t old_size = 0;
 	auto& data = *reinterpret_cast<Param_CH*>(param);
 
 	data.clearImage();
 	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
 	auto chull = getConvexHull( data.vpt );
+
+	auto vlines = getLines( chull.getSegs() );
+	if( old_size != vlines.size() )
+	{
+		data.vcol = genRandomColors( vlines.size() );
+		old_size = vlines.size();
+	}
+
+	auto func = [&](int i)   // lambda, needed to fetch color from index
+		{
+			return DrawParams().setColor(data.vcol[i]);
+		};
+	std::function<DrawParams(int)> f(func);
+
+	draw( data.img, vlines, f );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 
 	data.showImage();
@@ -1054,11 +1086,12 @@ struct Param_SEG : Data
 			auto line = Line2d( p1x, p1y, p2x, p2y );
 			auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
 			vseg.push_back( Segment( ppts ) );
-			auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
+/*			auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
 			auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
 			auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-			vcol.push_back( img::Color(colR,colG,colB) );
+			vcol.push_back( img::Color(colR,colG,colB) );*/
 		}
+		vcol = genRandomColors( nbSegs );
 		regen = false;
 	}
 };
