@@ -1124,14 +1124,19 @@ H = m;        // or call assignment operator
 
 ### 7.2 - Drawing functions
 
-Generic drawing functions are provided for all the types, using an "opaque" image datatype and some other classes,
+The demo demonstrating this Opencv binding is provided, try it with
+`$ make demo` (requires that Opencv is installed on your machine).
+
+In case you have some trouble building this program, please [read this](opencv_notes.md).
+
+
+Generic drawing member functions are provided for all the types, using an opaque image datatype and some other classes,
 all lying in the sub-namespace `img` :
 
 ```C++
 template<typename T>
 void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 ```
-
 At present, this templated image datatype only implements drawing on a OpenCv image (`cv::Mat` type),
 but the idea is to make it easily adaptable for other back-end graphical libraries.
 
@@ -1143,9 +1148,22 @@ Circle c( 100,100,80 );
 c.draw( img );
 img.write( "circles1.png" );
 ```
-(the `getReal()` function returns the underlying type, here the Opencv cv:Mat)
+This will create a png file in current folder, holding a circle.
 
-All these drawing functions support a second optional argument of type `img::DrawParams` (also back-end library independent)
+A corresponding free function is available, can be used for any type:
+```C++
+Point2d pt(100,100);
+Circle c( pt,80 );
+draw( img, c );
+draw( img, pt );
+```
+
+The `getReal()` member function provides access to the image underlying object, here the Opencv cv:Mat.
+
+
+### 7.3 - Drawing parameters
+
+All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
 So you can for example set the color and line width with:
 ```C++
@@ -1192,15 +1210,9 @@ The available functions are given in the table below:
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
 
+### 7.4 - Drawing containers
 
-Free functions are also provided with all these types, with the primitive as second argument and the drawing parameters as optional third argument.
-This means any graphical primitive `prim` can be drawn with:
-```C++
-draw( img, prim );
-draw( img, prim, dp );
-```
-
-Additionaly, if you have a container filled with one of the primitives (`std::vector`, `std::array` or `std::list`),
+If you have a container (`std::vector`, `std::array` or `std::list`) filled with one of the primitives
 or a `std::pair` of primitives,
 you can draw them at once with a call to the same function:
 ```C++
@@ -1209,7 +1221,7 @@ std::vector<Segment> vseg;
 std::pair<Circle,Circle> p_cir;
 // ... fill the pair
 draw( img, vseg );      // use default parameters
-draw( img, vseg, dp );  // or pass some
+draw( img, vseg, dp );  // pass some drawing parameters
 draw( img, p_cir );     // draw the pair of circles
 ```
 
@@ -1221,14 +1233,21 @@ void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)
 
 The passed function must return a valid img::DrawParams() object.
 It may be build depending on the index of the object.
-An exemple of usage is provided in `misc/demo_opencv.cpp`, see function
-`action_SEG()`.
 
+A typical example would be:
+```C++
+std::vector<Segment> vseg;
+/// fill vseg with data
+std::vector<Color> vcol( vseg.size() );
+/// fill vcol with colors
 
-The demo demonstrating this Opencv binding is provided, try it with
-`$ make demo` (requires that Opencv is installed on your machine).
-
-In case you have some trouble building this program, please [read this](opencv_notes.md).
+auto fl = [&](int i)   // lambda
+	{
+		return img::DrawParams().setColor( vcol[i] );
+	};
+std::function<DrawParams(int)> func(fl);
+draw( img, vseg, func );
+```
 
 
 ## 8 - Numerical data types
