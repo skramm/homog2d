@@ -855,8 +855,6 @@ void action_PL( void* param )
 	if( data.polyline.isPolygon() )
 		color = DrawParams().setColor( 250,10,20);
 	data.polyline.draw( data.img, color );
-//	auto ch = getConvexHull( data.polyline );
-//	ch.draw( data.img, DrawParams().setColor( 0,200,200) );
 
 	auto col_green = DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
@@ -1018,7 +1016,7 @@ void action_CH( void* param )
 	data.clearImage();
 	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
-	auto chull = getConvexHull( data.vpt );
+	auto chull = convexHull( data.vpt );
 
 	auto vlines = getLines( chull.getSegs() );
 	if( old_size != vlines.size() )

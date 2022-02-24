@@ -2518,16 +2518,30 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 		CHECK( priv::chull::getPivotPoint(pl.getPts() ) == 0 );
 		auto vout = priv::chull::sortPoints( vp, 0 );
 		CHECK( vout == std::vector<size_t>{ 0,1,2,3 } );
-		auto ch = getConvexHull( pl );
+		auto ch = convexHull( pl );
 		CHECK( ch == CPolyline(
 				std::vector<Point2d>{
 					{0,0},{3,0},{0,3}
 				}
 			)
 		);
-//             1       0    4      3       2
+	}
+	{
+		CPolyline pl1;
+		auto ch1 = convexHull( pl1 );
+		CHECK( ch1.size() == 0 );
+		auto ch2 = pl1.convexHull();
+		CHECK( ch2.size() == 0 );
+	}
+	{
+		CPolyline pl1( std::vector<Point2d>{ {1,1}, {2,2} });
+		auto ch1 = convexHull( pl1 );
+		CHECK( ch1.size() == 2 );
+		auto ch2 = pl1.convexHull();
+		CHECK( ch2.size() == 2 );
 	}
 }
+
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////

@@ -3561,7 +3561,6 @@ public:
 	friend PolylineBase<PLT2,FPT1>
 	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT2,FPT1>& );
 
-
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
 	mutable bool _plIsNormalized = false;
@@ -3748,8 +3747,6 @@ public:
 		return out;
 	}
 
-public:
-
 /// Returns one point of the polyline.
 	Point2d_<FPT> getPoint( size_t idx ) const
 	{
@@ -3780,7 +3777,10 @@ Segment \c n is the one between point \c n and point \c n+1
 
 		return impl_getSegment( idx, detail::PlHelper<PLT>() );
 	}
+
+	PolylineBase<type::IsClosed,FPT> convexHull() const;
 ///@}
+
 
 private:
 /// empty implementation
@@ -6933,11 +6933,12 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 }
 
 //------------------------------------------------------------------
-// To find orientation of ordered triplet (p, q, r).
-// The function returns following values
-// 0 --> p, q and r are colinear
-// 1 --> Clockwise
-// 2 --> Counterclockwise
+/// To find orientation of ordered triplet of points (p, q, r).
+/** The function returns following values
+- 0 --> p, q and r are colinear
+- 1 --> Clockwise
+- 2 --> Counterclockwise
+*/
 template<typename T>
 int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 {
@@ -6955,7 +6956,7 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 }
 //------------------------------------------------------------------
 /// Inherits std::stack<> and adds a member function to fetch the underlying std::vector.
-/// Used in h2d::getConvexHull()
+/// Used in h2d::convexHull()
 struct Mystack : std::stack<size_t,std::vector<size_t>>
 {
 	const std::vector<size_t>& getVect() const
@@ -6975,9 +6976,9 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 */
 template<typename CT,typename FPT>
 PolylineBase<type::IsClosed,FPT>
-getConvexHull( const PolylineBase<CT,FPT>& input )
+convexHull( const PolylineBase<CT,FPT>& input )
 {
-	return getConvexHull( input.getPts() );
+	return convexHull( input.getPts() );
 }
 
 //------------------------------------------------------------------
@@ -6987,7 +6988,7 @@ getConvexHull( const PolylineBase<CT,FPT>& input )
 */
 template<typename FPT>
 PolylineBase<type::IsClosed,FPT>
-getConvexHull( const std::vector<Point2d_<FPT>>& input )
+convexHull( const std::vector<Point2d_<FPT>>& input )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return PolylineBase<type::IsClosed,FPT>( input );
@@ -7052,6 +7053,13 @@ getConvexHull( const std::vector<Point2d_<FPT>>& input )
 	);
 
 	return PolylineBase<type::IsClosed,FPT>( vout );
+}
+
+template<typename CT,typename FPT>
+PolylineBase<type::IsClosed,FPT>
+PolylineBase<CT,FPT>::convexHull() const
+{
+	return h2d::convexHull( *this );
 }
 
 /////////////////////////////////////////////////////////////////////////////

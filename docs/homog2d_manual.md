@@ -1015,7 +1015,8 @@ For the union, if there is no intersection, the function will return an empty `C
 <a name="misc"></a>
 
 **Convex Hull**
-You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with the free-function `convexHull( )`.
+You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with `convexHull()`,
+available as free or member function.
 This function will return a `CPolyline` object.
 ```C++
 std::vector<Point2d> vec;
@@ -1023,7 +1024,10 @@ std::vector<Point2d> vec;
 auto ch1 = convexHull( vec );
 CPolyline pl( vec );
 auto ch2 = convexHull( pl ); // will be the same as ch1
+auto ch3 = pl.convexHull(); // member function
 ```
+This is also available as a member function:
+
 
 
 **Extracting data from sets/containers of primitives**
