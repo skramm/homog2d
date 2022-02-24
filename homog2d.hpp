@@ -6216,6 +6216,9 @@ operator * ( const Homogr_<FPT2>& h, const Circle_<FPT1>& cir )
 namespace priv {
 
 /// Allocation for \c std::array container
+/**
+\sa operator * ( const Hmatrix_&, const Cont& );
+*/
 template<
 	typename Cont,
 	typename std::enable_if<
