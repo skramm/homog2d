@@ -3590,14 +3590,14 @@ public:
 	}
 
 /// Constructor from a vector of points.
-	template<typename FPT2>
-	PolylineBase( const std::vector<Point2d_<FPT2>>& vec )
-	{
-		set( vec );
-	}
-
-	template<typename CONT>
-	PolylineBase( const CONT& vec )
+template<
+	typename T,
+	typename std::enable_if<
+		priv::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+	PolylineBase( const T& vec )
 	{
 		set( vec );
 	}
@@ -7166,7 +7166,7 @@ LPBase<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::
 	switch( dp._dpValues._ptStyle )
 	{
 		case img::PtStyle::Plus:   // "+" symbol
-			detail::drawPt( im, img::PtStyle::Plus,  vpt, dp );
+			detail::drawPt( im, img::PtStyle::Plus, vpt, dp );
 		break;
 
 		case img::PtStyle::Star:
@@ -7175,7 +7175,7 @@ LPBase<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::
 		break;
 
 		case img::PtStyle::Diam:
-			detail::drawPt( im, img::PtStyle::Plus,  vpt, dp, true );
+			detail::drawPt( im, img::PtStyle::Plus, vpt, dp, true );
 		break;
 
 		case img::PtStyle::Times:      // "times" symbol

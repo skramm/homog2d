@@ -2350,19 +2350,16 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pc.nbSegs() == 2 );
 		CHECK( po.nbSegs() == 1 );
 	}
-
 	{                   // build from segment - 2
 		Segment_<NUMTYPE> seg; // (0,0) - (1,1)
 		CPolyline_<NUMTYPE> pc1( seg );
 		OPolyline_<NUMTYPE> po1( seg );
-
 		std::list<Point2d> pts{ {1,1},{0,0} };
 		CPolyline_<NUMTYPE> pc2(pts);
 		OPolyline_<NUMTYPE> po2(pts);
 		CHECK( pc1 == pc2 );
 		CHECK( po1 == po2 );
 	}
-
 }
 
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )

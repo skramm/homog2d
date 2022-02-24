@@ -1177,7 +1177,6 @@ auto c = img::Color c(255,0,222);
 li.draw( img, img::DrawParams().setColor(c) );
 ```
 
-
 The drawing parameters default values can be changed anytime with a call to `setDefault()`,
 and values will be retained, unless explicitely changed, as showed in the example below;
 

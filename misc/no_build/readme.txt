@@ -17,3 +17,7 @@ no_build_10.cxx : homography applied to a FRect does not produce a FRect
 no_build_11.cxx : cannot build an OPolyline from a closed one
 no_build_12.cxx : cannot build an OPolyline from FRect
 
+
+no_build_16.cxx : cannot build an OPolyline from a non-container object
+no_build_17.cxx : cannot build an CPolyline from a non-container object
+
