@@ -2196,7 +2196,7 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 }
 
 template<typename T, typename U>
-void polytest_1( const PolylineBase<T,U>& pl1 )
+void polytest_1( const base::PolylineBase<T,U>& pl1 )
 {
 	CHECK( pl1.isPolygon() == false );
 	CHECK( isPolygon(pl1)  == false );
