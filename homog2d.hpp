@@ -214,7 +214,9 @@ namespace detail {
 } // namespace detail
 
 // forward declarations
-template<typename LP,typename FPT> class LPBase;
+namespace base {
+	template<typename LP,typename FPT> class LPBase;
+}
 template<typename LP,typename FPT> class Hmatrix_;
 
 template<typename T>
@@ -234,11 +236,10 @@ namespace base {
 template<typename PLT,typename FPT> class PolylineBase;
 }
 
-
 template<typename T>
-using Point2d_ = LPBase<type::IsPoint,T>;
+using Point2d_ = base::LPBase<type::IsPoint,T>;
 template<typename T>
-using Line2d_  = LPBase<type::IsLine,T>;
+using Line2d_  = base::LPBase<type::IsLine,T>;
 
 template<typename T>
 using CPolyline_  = base::PolylineBase<type::IsClosed,T>;
@@ -392,13 +393,17 @@ static HOMOG2D_INUMTYPE& nullDeter()
 
 } // namespace thr
 
+// forward declaration
+template<typename LP,typename FPT>
+std::ostream&
+operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& );
 
 namespace detail {
 
 // forward declaration
 template<typename FPT1,typename FPT2,typename FPT3>
-void product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
-
+void
+product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
@@ -449,14 +454,14 @@ class Matrix_: public Common<FPT>
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
-	product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
+	product( base::LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const base::LPBase<T2,FPT1>& );
 
 	template<typename FPT1,typename FPT2,typename FPT3>
 	friend void
 	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
-private:
-	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
+//private:
+//	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
 //	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
@@ -654,7 +659,7 @@ private:
 
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
-product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
+product( base::LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const base::LPBase<T2,FPT1>& );
 
 template<typename T1,typename T2>
 Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
@@ -700,8 +705,8 @@ class Hmatrix_ : public detail::Matrix_<FPT>
 	operator * ( const Homogr_<U>&, const Point2d_<T>& );
 
 	template<typename T,typename U,typename V>
-	friend LPBase<typename detail::HelperPL<T>::OtherType,V>
-	operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const LPBase<T,V>& in );
+	friend base::LPBase<typename detail::HelperPL<T>::OtherType,V>
+	operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const base::LPBase<T,V>& in );
 
 public:
 
@@ -1382,7 +1387,7 @@ namespace detail {
 
 // forward declaration of template instanciation
 template<typename T1,typename T2,typename FPT1,typename FPT2>
-LPBase<T1,FPT1> crossProduct( const LPBase<T2,FPT1>&, const LPBase<T2,FPT2>& );
+base::LPBase<T1,FPT1> crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
 struct Inters_1 {};
 struct Inters_2 {};
@@ -1450,7 +1455,7 @@ template<typename FPT>
 class Intersect<Inters_2,FPT>: public IntersectCommon
 {
 	template<typename U,typename V>
-	friend class ::h2d::LPBase;
+	friend class ::h2d::base::LPBase;
 
 	public:
 		Intersect() {}
@@ -2226,6 +2231,17 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 #endif
 } // namespace priv
 
+// forward declaration
+template<typename FPT1,typename FPT2>
+Line2d_<FPT1>
+operator * ( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
+
+// forward declaration
+template<typename FPT1,typename FPT2>
+Point2d_<FPT1>
+operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
+
+namespace base {
 
 //------------------------------------------------------------------
 /// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
@@ -2248,31 +2264,35 @@ private:
 
 	template<typename FPT1,typename FPT2>
 	friend Point2d_<FPT1>
-	operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
+	h2d::operator * ( const h2d::Line2d_<FPT1>&, const h2d::Line2d_<FPT2>& );
 
 	template<typename FPT1,typename FPT2>
-	friend Line2d_<FPT1>
-	operator * ( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
+	friend //Line2d_<FPT1>
+	auto
+	h2d::operator * ( const h2d::Point2d_<FPT1>&, const h2d::Point2d_<FPT2>& )
+	-> h2d::Line2d_<FPT1>;
 
 	template<typename T,typename U>
-	friend Line2d_<T>
-	operator * ( const Homogr_<U>&, const Line2d_<T>& );
+	friend auto //Line2d_<T>
+	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
+	-> h2d::Line2d_<T>;
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
-	friend LPBase<T1,FPT1>
-	detail::crossProduct( const LPBase<T2,FPT1>&, const LPBase<T2,FPT2>& );
+	friend base::LPBase<T1,FPT1>
+	detail::crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
 	template<typename U,typename V>
-	friend std::ostream&
-	operator << ( std::ostream& f, const LPBase<U,V>& r );
+	friend auto
+	h2d::operator << ( std::ostream&, const base::LPBase<U,V>& )
+	-> std::ostream&;
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
-	detail::product( LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const LPBase<T2,FPT1>& );
+	detail::product( base::LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const base::LPBase<T2,FPT1>& );
 
 	template<typename T1,typename T2>
 	friend Line2d_<T1>
-	priv::getOrthogonalLine_B2( const LPBase<type::IsPoint,T2>&, const Line2d_<T1>& );
+	priv::getOrthogonalLine_B2( const Point2d_<T2>&, const Line2d_<T1>& );
 
 public:
 
@@ -2751,15 +2771,15 @@ public:
 //////////////////////////
 //       OPERATORS      //
 //////////////////////////
-	bool operator == ( const LPBase<LP,FPT>& other ) const
+	bool operator == ( const base::LPBase<LP,FPT>& other ) const
 	{
 		return impl_op_equal( other, detail::RootHelper<LP>() );
 	}
-	bool operator != ( const LPBase<LP,FPT>& other ) const
+	bool operator != ( const base::LPBase<LP,FPT>& other ) const
 	{
 		return !(*this == other);
 	}
-	bool operator < ( const LPBase<LP,FPT>& other ) const
+	bool operator < ( const base::LPBase<LP,FPT>& other ) const
 	{
 		return impl_op_sort( other, detail::RootHelper<LP>() );
 	}
@@ -2903,7 +2923,9 @@ private:
 	template<typename T1,typename T2>
 	void impl_init_2( const T1&, const T2&, const detail::RootHelper<type::IsLine>& );
 
-}; // class Root
+}; // class
+
+} // namespace base
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - INSTANCIATION OF STATIC VARIABLES
@@ -2912,8 +2934,8 @@ private:
 
 //template<typename LP,typename FPT>
 //HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
-template<typename FPT>
-HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
+//template<typename FPT>
+//HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
 //template<typename FPT>
 //HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
 
@@ -3478,7 +3500,7 @@ struct PolylineAttribs
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
 	priv::ValueFlag<bool>             _isPolygon;
-	priv::ValueFlag<LPBase<type::IsPoint,HOMOG2D_INUMTYPE>> _centroid;
+	priv::ValueFlag<Point2d_<HOMOG2D_INUMTYPE>> _centroid;
 
 	void setBad()
 	{
@@ -3543,6 +3565,11 @@ template<typename PLT,typename FPT> class PolylineBase;
 template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
 operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
+
+// forward declaration
+template<typename T1,typename T2>
+std::ostream&
+operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
 
 namespace base {
 
@@ -3795,7 +3822,6 @@ Segment \c n is the one between point \c n and point \c n+1
 	CPolyline_<FPT> convexHull() const;
 ///@}
 
-
 private:
 /// empty implementation
 	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<type::IsOpen>& ) const
@@ -3864,7 +3890,6 @@ at 180° of the previous one.
 	{
 		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
 	}
-
 
 /// Set from vector/array/list of points (discards previous points)
 /**
@@ -4256,8 +4281,8 @@ PolylineBase<PLT,FPT>::p_ComputeSignedArea() const
 ref: https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
 */
 template<typename PLT,typename FPT>
-LPBase<type::IsPoint,HOMOG2D_INUMTYPE>
-PolylineBase<PLT,FPT>::centroid() const
+Point2d_<HOMOG2D_INUMTYPE>
+base::PolylineBase<PLT,FPT>::centroid() const
 {
 	if( !isPolygon() )
 		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
@@ -4284,7 +4309,7 @@ PolylineBase<PLT,FPT>::centroid() const
 		cx /= (6. * signedArea);
 		cy /= (6. * signedArea);
 
-		auto c = LPBase<type::IsPoint,HOMOG2D_INUMTYPE>( cx, cy );
+		auto c = Point2d_<HOMOG2D_INUMTYPE>( cx, cy );
 		_attribs._centroid.set( c );
 	}
 	return _attribs._centroid.value();
@@ -5008,7 +5033,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 /// Overload for points
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
+base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
 {
 	f
 //	<< std::scientific << std::setprecision(25)
@@ -5018,7 +5043,7 @@ LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
 /// Overload for lines
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) const
+base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) const
 {
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "]";
 }
@@ -5026,7 +5051,7 @@ LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) const
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
 template<typename LP,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const LPBase<LP,FPT>& r )
+operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& r )
 {
 	r.impl_op_stream( f, r );
 	return f;
@@ -5052,7 +5077,7 @@ operator << ( std::ostream& f, const T& vec )
 /// Stream operator for a pair of points/lines, free function
 template<typename LP1,typename LP2,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const std::pair<LPBase<LP1,FPT>,LPBase<LP2,FPT>>& pr )
+operator << ( std::ostream& f, const std::pair<base::LPBase<LP1,FPT>,base::LPBase<LP2,FPT>>& pr )
 {
 	f << "std::pair (" << getString(pr.first.type()) << "-" << getString(pr.second.type())
 		<< "):\n -first="  << pr.first
@@ -5110,6 +5135,14 @@ operator << ( std::ostream& f, const Ellipse_<T>& ell )
 	return f;
 }
 
+//------------------------------------------------------------------
+/// Returns the 2 parallel lines at distance \c dist from \c li (free function)
+template<typename FPT,typename T>
+std::pair<Line2d_<FPT>,Line2d_<FPT>>
+getParallelLines( const Line2d_<FPT>& li, T dist )
+{
+	return li.getParallelLines( dist );
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - MEMBER FUNCTION IMPLEMENTATION: CLASS Ellipse_
@@ -5375,9 +5408,10 @@ Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - MEMBER FUNCTION IMPLEMENTATION: CLASS Root
+// SECTION  - MEMBER FUNCTION IMPLEMENTATION: CLASS LPBase
 /////////////////////////////////////////////////////////////////////////////
 
+namespace base {
 //------------------------------------------------------------------
 /// Normalize to unit length, and make sure \c a is always >0
 /**
@@ -5630,6 +5664,7 @@ LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>& other, const detail::RootHel
 		return true;
 	return false;
 }
+
 /// Sorting operator, for lines
 template<typename LP,typename FPT>
 constexpr bool
@@ -5639,28 +5674,31 @@ LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>&, const detail::RootHelper<ty
 	return false; // to avoid a warning
 }
 
+} // namespace base
+
 //------------------------------------------------------------------
 /// Inner implementation details
 namespace detail {
 
-	/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
-	template<typename Out,typename In,typename FPT1,typename FPT2>
-	LPBase<Out,FPT1> crossProduct( const LPBase<In,FPT1>& r1, const LPBase<In,FPT2>& r2 )
-	{
-		auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
-		auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
-		auto r1_c = static_cast<HOMOG2D_INUMTYPE>(r1._v[2]);
-		auto r2_a = static_cast<HOMOG2D_INUMTYPE>(r2._v[0]);
-		auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
-		auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
+/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+template<typename Out,typename In,typename FPT1,typename FPT2>
+base::LPBase<Out,FPT1> crossProduct( const base::LPBase<In,FPT1>& r1, const base::LPBase<In,FPT2>& r2 )
+{
+	auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
+	auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
+	auto r1_c = static_cast<HOMOG2D_INUMTYPE>(r1._v[2]);
+	auto r2_a = static_cast<HOMOG2D_INUMTYPE>(r2._v[0]);
+	auto r2_b = static_cast<HOMOG2D_INUMTYPE>(r2._v[1]);
+	auto r2_c = static_cast<HOMOG2D_INUMTYPE>(r2._v[2]);
 
-		LPBase<Out,FPT1> res;
-		res._v[0] = static_cast<FPT1>( r1_b * r2_c  - r1_c * r2_b );
-		res._v[1] = static_cast<FPT1>( r1_c * r2_a  - r1_a * r2_c );
-		res._v[2] = static_cast<FPT1>( r1_a * r2_b  - r1_b * r2_a );
+	base::LPBase<Out,FPT1> res;
+	res._v[0] = static_cast<FPT1>( r1_b * r2_c  - r1_c * r2_b );
+	res._v[1] = static_cast<FPT1>( r1_c * r2_a  - r1_a * r2_c );
+	res._v[2] = static_cast<FPT1>( r1_a * r2_b  - r1_b * r2_a );
 
-		return res;
-	}
+	return res;
+}
+
 } // namespace detail
 
 
@@ -5668,6 +5706,8 @@ namespace detail {
 ///////////////////////////////////////////
 // CONSTRUCTORS
 ///////////////////////////////////////////
+
+namespace base {
 
 /// Points overload: generic init from two numeric args
 template<typename LP, typename FPT>
@@ -5746,6 +5786,8 @@ LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::RootHelper<
 	return 0.;    // to avoid warning message on build
 }
 
+} // namespace base
+
 //------------------------------------------------------------------
 /// Free function, returns the angle (in Rad) between two lines/ or segments
 /// \sa Segment_::getAngle()
@@ -5756,6 +5798,8 @@ getAngle( const T1& li1, const T2& li2 )
 {
 	return li1.getAngle( li2 );
 }
+
+namespace base {
 
 template<typename LP, typename FPT>
 template<typename FPT2>
@@ -6005,6 +6049,7 @@ bool LPBase<LP,FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 	return impl_draw( img, dp, detail::RootHelper<LP>() );
 }
 
+} // namespace base
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - PRODUCT OPERATORS DEFINITIONS (HELPER FUNCTIONS)
@@ -6057,9 +6102,9 @@ product(
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
 product(
-	LPBase<T1,FPT1>&       out,
-	const Matrix_<FPT2>& h,
-	const LPBase<T2,FPT1>& in
+	base::LPBase<T1,FPT1>&        out,
+	const Matrix_<FPT2>&          h,
+	const base::LPBase<T2,FPT1>&  in
 )
 {
 	for( int i=0; i<3; i++ )
@@ -6118,8 +6163,8 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
 template<typename T,typename U,typename V>
-LPBase<typename detail::HelperPL<T>::OtherType,V>
-operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const LPBase<T,V>& in )
+base::LPBase<typename detail::HelperPL<T>::OtherType,V>
+operator * ( const Hmatrix_<type::IsEpipmat,U>& h, const base::LPBase<T,V>& in )
 {
 	LPBase<typename detail::HelperPL<T>::OtherType,V> out;
 	detail::product( out, h._data, in );
@@ -6621,7 +6666,7 @@ HOMOG2D_INUMTYPE area( const base::PolylineBase<PLT,FPT>& pl )
 /// Free function
 /// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
-LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
+base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.centroid();
 }
@@ -6641,14 +6686,6 @@ Dtype dtype( const T& t )
 }
 
 //------------------------------------------------------------------
-/// Returns the 2 parallel lines at distance \c dist from \c li
-template<typename FPT,typename T>
-std::pair<Line2d_<FPT>,Line2d_<FPT>>
-getParallelLines( const Line2d_<FPT>& li, T dist )
-{
-	return li.getParallelLines( dist );
-}
-
 /// Returns the distance between 2 parallel lines (free function)
 /**
 - ref: https://en.wikipedia.org/wiki/Distance_between_two_parallel_lines
@@ -7095,7 +7132,7 @@ base::PolylineBase<CT,FPT>::convexHull() const
 template<typename LP, typename FPT>
 template<typename OPENCVT>
 OPENCVT
-LPBase<LP,FPT>::impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const
+base::LPBase<LP,FPT>::impl_getCvPt( const detail::RootHelper<type::IsPoint>&, const OPENCVT& ) const
 {
 	return OPENCVT( getX(),getY() );
 }
@@ -7178,7 +7215,7 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 template<typename LP, typename FPT>
 template<typename T>
 bool
-LPBase<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
+base::LPBase<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
 	if( getX()<0 || getX()>=im.cols() )
 		return false;
@@ -7224,7 +7261,7 @@ Steps:
 template<typename LP, typename FPT>
 template<typename T>
 bool
-LPBase<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
+base::LPBase<LP,FPT>::impl_draw( img::Image<T>& img, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
 {
 	assert( img.rows() > 2 );
 	assert( img.cols() > 2 );
@@ -7367,7 +7404,7 @@ Ellipse_<FPT>::draw( img::Image<T>& img, img::DrawParams dp )  const
 using Line2d = Line2d_<double>;
 
 /// Default point type, uses \c double as numerical type
-using Point2d = LPBase<type::IsPoint,double>;
+using Point2d = base::LPBase<type::IsPoint,double>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
 using Homogr = Homogr_<double>;
@@ -7393,7 +7430,7 @@ using Ellipse = Ellipse_<double>;
 
 // float types
 using Line2dF  = Line2d_<float>;
-using Point2dF = LPBase<type::IsPoint,float>;
+using Point2dF = Point2d_<float>;
 using HomogrF  = Homogr_<float>;
 using SegmentF = Segment_<float>;
 using CircleF  = Circle_<float>;
@@ -7402,7 +7439,7 @@ using EllipseF = Ellipse_<float>;
 
 // double types
 using Line2dD  = Line2d_<double>;
-using Point2dD = LPBase<type::IsPoint,double>;
+using Point2dD = Point2d_<double>;
 using HomogrD  = Homogr_<double>;
 using SegmentD = Segment_<double>;
 using CircleD  = Circle_<double>;
@@ -7411,7 +7448,7 @@ using EllipseD = Ellipse_<double>;
 
 // long double types
 using Line2dL  = Line2d_<long double>;
-using Point2dL = LPBase<type::IsPoint,long double>;
+using Point2dL = Point2d_<long double>;
 using HomogrL  = Homogr_<long double>;
 using SegmentL = Segment_<long double>;
 using CircleL  = Circle_<long double>;
