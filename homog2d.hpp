@@ -229,9 +229,10 @@ template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
 
+/// Holds base classes, not part of API
 namespace base {
 template<typename PLT,typename FPT> class PolylineBase;
-} // namespace base
+}
 
 
 template<typename T>
@@ -1288,7 +1289,7 @@ public:
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
 	Point2d_<FPT>                                center()    const;
-	base::PolylineBase<type::IsClosed,FPT>       getOBB()    const;
+	CPolyline_<FPT>                              getOBB()    const;
 	FRect_<FPT>                                  getBB()     const;
 	HOMOG2D_INUMTYPE                             angle()     const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
@@ -1712,11 +1713,11 @@ public:
 /// \name Union/intersection area
 ///@{
 	template<typename FPT2>
-	base::PolylineBase<type::IsClosed,FPT> unionArea( const FRect_<FPT2>& other ) const;
+	CPolyline_<FPT> unionArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
 	detail::RectArea<FPT> intersectArea( const FRect_<FPT2>& other ) const;
 	template<typename FPT2>
-	base::PolylineBase<type::IsClosed,FPT> operator | ( const FRect_<FPT2>& other ) const
+	CPolyline_<FPT> operator | ( const FRect_<FPT2>& other ) const
 	{
 		return this->unionArea( other );
 	}
@@ -3535,17 +3536,13 @@ getPointsBB( const T& vpts )
 
 } // namespace priv
 
-/// forward declaration
 namespace base {
 template<typename PLT,typename FPT> class PolylineBase;
 }
 
-
 template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
 operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
-//-> base::PolylineBase<type::IsClosed,FPT1>;
-
 
 namespace base {
 
@@ -3621,7 +3618,7 @@ template<
 
 /// Copy-Constructor from Closed Polyline
 	template<typename FPT2>
-	constexpr PolylineBase( const PolylineBase<type::IsClosed,FPT2>& other )
+	constexpr PolylineBase( const CPolyline_<FPT2>& other )
 	{
 		static_assert(
 			!(std::is_same<PLT,type::IsOpen>::value),
@@ -3631,7 +3628,7 @@ template<
 	}
 /// Copy-Constructor from Open Polyline
 	template<typename FPT2>
-	PolylineBase( const PolylineBase<type::IsOpen,FPT2>& other )
+	PolylineBase( const OPolyline_<FPT2>& other )
 	{
 		set( other._plinevec );
 	}
@@ -3795,7 +3792,7 @@ Segment \c n is the one between point \c n and point \c n+1
 		return impl_getSegment( idx, detail::PlHelper<PLT>() );
 	}
 
-	PolylineBase<type::IsClosed,FPT> convexHull() const;
+	CPolyline_<FPT> convexHull() const;
 ///@}
 
 
@@ -3970,13 +3967,13 @@ private:
 
 	template<typename FPT2>
 	bool
-	impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
+	impl_operatorComp( const OPolyline_<FPT2>& other, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return impl_operatorComp_root( other );
 	}
 	template<typename FPT2>
 	bool
-	impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
+	impl_operatorComp( const CPolyline_<FPT2>& other, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return impl_operatorComp_root( other );
 	}
@@ -3984,14 +3981,14 @@ private:
 /// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
 	constexpr bool
-	impl_operatorComp( const PolylineBase<type::IsOpen,FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
+	impl_operatorComp( const OPolyline_<FPT2>&, const detail::PlHelper<type::IsClosed>& ) const
 	{
 		return false;
 	}
 /// Comparing open and closed polyline objects returns always \c false
 	template<typename FPT2>
 	constexpr bool
-	impl_operatorComp( const PolylineBase<type::IsClosed,FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
+	impl_operatorComp( const CPolyline_<FPT2>&, const detail::PlHelper<type::IsOpen>& ) const
 	{
 		return false;
 	}
@@ -4618,7 +4615,7 @@ printTable( const Table& t, std::string msg )
 //------------------------------------------------------------------
 /// Helper function, used in FRect_<FPT>::unionArea()
 template<typename FPT>
-base::PolylineBase<type::IsClosed,FPT>
+CPolyline_<FPT>
 convertToCoord(
 	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
 	const std::array<Index<FPT>,4>& vx,      ///< holds x-coordinates
@@ -4642,7 +4639,7 @@ convertToCoord(
 		}
 	}
 //	printVector( v_pts, "polyline" );
-	return base::PolylineBase<type::IsClosed,FPT>( v_pts );//, IsClosed::Yes );
+	return CPolyline_<FPT>( v_pts );//, IsClosed::Yes );
 }
 
 } // namespace priv
@@ -4713,16 +4710,16 @@ see PolylineBase::minimize()
 */
 template<typename FPT>
 template<typename FPT2>
-base::PolylineBase<type::IsClosed,FPT>
+CPolyline_<FPT>
 FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 {
 	using namespace priv::runion;
 
 	if( *this == other )                  // if same rectangles, then
-		return base::PolylineBase<type::IsClosed,FPT>( other );   // returns one of them
+		return CPolyline_<FPT>( other );   // returns one of them
 
 	if( !this->intersects(other)() )  // if no intersection,
-		return base::PolylineBase<type::IsClosed,FPT>();      // return empty polygon
+		return CPolyline_<FPT>();      // return empty polygon
 
 /* step 0: make sure the rect with highest x is first.
  This is needed to avoid this kind of situation in table:
@@ -5295,7 +5292,7 @@ Algorithm:
 
 */
 template<typename FPT>
-base::PolylineBase<type::IsClosed,FPT>
+CPolyline_<FPT>
 Ellipse_<FPT>::getOBB() const
 {
 // step 1: build ptA using angle
@@ -5321,7 +5318,6 @@ Ellipse_<FPT>::getOBB() const
 	auto li_V1 = li_H.getOrthogonalLine( ptA );
 	auto li_V2 = li_H.getOrthogonalLine( ptB );
 
-//	base::PolylineBase<type::IsClosed,FPT> out;
 	CPolyline_<FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
 	out.p_addPoint( para.first  * li_V1 );
