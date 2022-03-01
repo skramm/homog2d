@@ -213,10 +213,12 @@ namespace detail {
 
 } // namespace detail
 
-// forward declarations
+/// Holds base classes, not part of API
 namespace base {
-	template<typename LP,typename FPT> class LPBase;
+	template<typename PLT,typename FPT> class PolylineBase;
+	template<typename LP, typename FPT> class LPBase;
 }
+
 template<typename LP,typename FPT> class Hmatrix_;
 
 template<typename T>
@@ -231,10 +233,6 @@ template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
 
-/// Holds base classes, not part of API
-namespace base {
-template<typename PLT,typename FPT> class PolylineBase;
-}
 
 template<typename T>
 using Point2d_ = base::LPBase<type::IsPoint,T>;
@@ -394,9 +392,18 @@ static HOMOG2D_INUMTYPE& nullDeter()
 } // namespace thr
 
 // forward declaration
+namespace base {
 template<typename LP,typename FPT>
-std::ostream&
-operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& );
+auto
+operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& )
+-> std::ostream&;
+}
+/*
+template<typename LP,typename FPT>
+auto
+operator << ( std::ostream&, const h2d::Point2d_<FPT>& )
+-> std::ostream&;
+*/
 
 namespace detail {
 
@@ -404,6 +411,7 @@ namespace detail {
 template<typename FPT1,typename FPT2,typename FPT3>
 void
 product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
+
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
@@ -2283,8 +2291,13 @@ private:
 
 	template<typename U,typename V>
 	friend auto
-	h2d::operator << ( std::ostream&, const base::LPBase<U,V>& )
+	operator << ( std::ostream& f, const h2d::base::LPBase<U,V>& r )
 	-> std::ostream&;
+/*
+{
+	r.impl_op_stream( f, r );
+	return f;
+}*/
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
@@ -5048,6 +5061,7 @@ base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) c
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "]";
 }
 
+namespace base {
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
 template<typename LP,typename FPT>
 std::ostream&
@@ -5055,6 +5069,7 @@ operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& r )
 {
 	r.impl_op_stream( f, r );
 	return f;
+}
 }
 
 /// Stream operator for a container of points/lines, free function
@@ -7048,7 +7063,8 @@ convexHull( const base::PolylineBase<CT,FPT>& input )
 */
 template<typename FPT>
 CPolyline_<FPT>
-convexHull( const std::vector<Point2d_<FPT>>& input )
+//convexHull( const std::vector<Point2d_<FPT>>& input )
+convexHull( const std::vector<base::LPBase<type::IsPoint,FPT>>& input )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return CPolyline_<FPT>( input );
