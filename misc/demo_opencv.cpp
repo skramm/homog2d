@@ -1165,9 +1165,6 @@ void demo_SEG( int )
 */
 int main( int argc, const char** argv )
 {
-	Point2d pt;
-	foo( pt );
-
 	std::cout << "homog2d graphical demo using Opencv"
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';

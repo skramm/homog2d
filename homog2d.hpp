@@ -389,6 +389,17 @@ static HOMOG2D_INUMTYPE& nullDeter()
 	return _zeroDeter;
 }
 
+void printThresholds( std::ostream& f )
+{
+	f << "Current threshold values:"
+		<< "\n  -nullDistance()="       << nullDistance()
+		<< "\n  -nullOrthogDistance()=" << nullOrthogDistance()
+		<< "\n  -nullAngleValue()="     << nullAngleValue()
+		<< "\n  -nullDenom()="          << nullDenom()
+		<< "\n  -nullDeter()="          << nullDeter()
+		<< '\n';
+}
+
 } // namespace thr
 
 // forward declaration
@@ -2252,7 +2263,7 @@ operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
 namespace base {
 
 //------------------------------------------------------------------
-/// Base class, will be instanciated as a \ref Point2d or a \ref Line2d
+/// Base class, will be instanciated as a \ref Point2d_ or a \ref Line2d_<>
 /**
 Type parameters:
 - LP: type::IsPoint or type::IsLine
@@ -3587,7 +3598,7 @@ operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
 namespace base {
 
 //------------------------------------------------------------------
-/// Polyline, can be closed or not
+/// Polyline, will be instanciated either as OPolyline_ (open polyline) or CPolyline_
 /**
 \warning When closed, in order to be able to compare two objects describing the same structure
 but potentially in different order, the comparison operator will proceed a sorting.<br>
@@ -3787,15 +3798,17 @@ public:
 /// Returns (as a copy) the segments of the polyline
 	std::vector<Segment_<FPT>> getSegs() const
 	{
-		std::vector<Segment_<FPT>> out;
 		if( size() < 2 ) // nothing to return
-			return out;
+			return std::vector<Segment_<FPT>>();
 
+		std::vector<Segment_<FPT>> out;
+		out.reserve( size() );
 		for( size_t i=0; i<size()-1; i++ )
 		{
 			const auto& pt1 = _plinevec[i];
 			const auto& pt2 = _plinevec[i+1];
-			out.push_back( Segment_<FPT>(pt1,pt2) );
+//			out.push_back( Segment_<FPT>(pt1,pt2) );
+			out.emplace_back( Segment_<FPT>(pt1,pt2) );
 		}
 		impl_getSegs( out, detail::PlHelper<PLT>() );
 		return out;
@@ -7056,6 +7069,7 @@ convexHull( const base::PolylineBase<CT,FPT>& input )
 	return convexHull( input.getPts() );
 }
 
+namespace base {
 //------------------------------------------------------------------
 /// Computes and returns the convex hull of a set of points (free function)
 /**
@@ -7063,8 +7077,7 @@ convexHull( const base::PolylineBase<CT,FPT>& input )
 */
 template<typename FPT>
 CPolyline_<FPT>
-//convexHull( const std::vector<Point2d_<FPT>>& input )
-convexHull( const std::vector<base::LPBase<type::IsPoint,FPT>>& input )
+convexHull( const std::vector<Point2d_<FPT>>& input )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return CPolyline_<FPT>( input );
@@ -7131,6 +7144,9 @@ convexHull( const std::vector<base::LPBase<type::IsPoint,FPT>>& input )
 	return CPolyline_<FPT>( vout );
 }
 
+} // namespace base
+
+/// Return convex hull (member function implementation)
 template<typename CT,typename FPT>
 CPolyline_<FPT>
 base::PolylineBase<CT,FPT>::convexHull() const

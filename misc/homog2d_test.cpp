@@ -75,6 +75,11 @@ int main( int argc, char* argv[] )
 // removed until PR merged into next release, see https://github.com/catchorg/Catch2/pull/2245
 //	Catch::StringMaker<long double>::precision = 25;
 
+#if (#NUMTYPE) == float
+	thr::nullDistance() = 1E-6;
+#endif
+	thr::printThresholds( std::cout );
+
 	int result = Catch::Session().run( argc, argv );
 
   // global clean-up...
@@ -353,11 +358,13 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 	}
 }
 
-
 TEST_CASE( "line/point distance", "[lp-dist]" )
 {
 	size_t n = 1E6;  // nb of runs
-	size_t c = 0;
+	size_t c1{};
+	size_t c2{};
+	long double sum1{};
+	long double sum2{};
 	float k = 1;
 	std::srand( time(0) );
 	for( size_t i=0; i<n; i++ )
@@ -371,12 +378,31 @@ TEST_CASE( "line/point distance", "[lp-dist]" )
 			1.0*rand()/RAND_MAX * k
 		);
 		auto li = pt1 * pt2;
-		if( li.distTo(pt1) > thr::nullDistance() )
-			c++;
+		auto d1 = li.distTo(pt1);
+		auto d2 = li.distTo(pt2);
+		if( d1 > thr::nullDistance() )
+		{
+//			std::cerr << ": distance check failure 1, value " << d1 << " > thres (" << thr::nullDistance()  << ")\n";
+			sum1 += d1;
+			c1++;
+		}
 		if( li.distTo(pt2) > thr::nullDistance() )
-			c++;
+		{
+//			std::cerr << "distance check failure 2, value " << d2 << " > thres (" << thr::nullDistance()  << ")\n";
+			sum2 += d2;
+			c2++;
+		}
 	}
-	CHECK( c == 0 );
+	if( c1 != 0 || c2 != 0  )
+	{
+		std::cout << "line/point distance test failures with thres=" << thr::nullDistance()
+			<< "\n nb1=" << c1 << ", nb2=" << c2  << " failures over total nb of tests=" << n
+			<< "\n- mean distance: d1=" << sum1 / c1
+			<< "\n- mean distance: d2=" << sum2 / c2
+			<< '\n';
+	}
+	CHECK( c1 == 0 );
+	CHECK( c2 == 0 );
 }
 
 TEST_CASE( "test1", "[test1]" )
@@ -616,7 +642,8 @@ TEST_CASE( "dist2points", "[t_d2p]" )
 
 	Point2d_<NUMTYPE> p1( 3,3);
 	Point2d_<NUMTYPE> p2( 4,4);
-	CHECK( p1.distTo( p2 ) == std::sqrt(2) );
+	auto r = std::abs( p1.distTo( p2 ) - std::sqrt(2) );
+	CHECK( r < thr::nullDistance() );
 }
 
 #ifdef HOMOG2D_FUTURE_STUFF
