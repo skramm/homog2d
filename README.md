@@ -36,14 +36,17 @@ int main()
 }
 ```
 
-## NEWS  ##
+### News ###
+
 - 2022-03-04: removed clang build from testsuite because of unexplained link error, should be fixed soon.
 - 2021-12-21: fresh 2.6 release: https://github.com/skramm/homog2d/releases
 
+(see [history](docs/homog2d_history.md) for more)
 
-To install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
+### Details ##
+
+- Install: to install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.
-
 
 - Audience: any C++ dev requiring some basic computational geometry, without the burden of large scale framework.
 
@@ -74,10 +77,9 @@ Don't hesitate, this is still beta but stable release expected soon.
   - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
-**Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there are **no drawing functions** included.
+**Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there is **no rendering code** included.
+The library provides drawing function whose implementation requires external code.
 The images are drawn using a third-party library, but it is not needed to use this library.
-
-- [Release history](docs/homog2d_history.md)
 
 
 (*):

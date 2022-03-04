@@ -2654,7 +2654,7 @@ private:
 	}
 	template<typename T1,typename T2>
 	constexpr void
-	impl_move( T1 dx, T2 dy, const detail::RootHelper<type::IsLine>& )
+	impl_move( T1, T2, const detail::RootHelper<type::IsLine>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
@@ -3696,7 +3696,7 @@ private:
 	}
 	template<typename FPT2>
 	constexpr void
-	imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsOpen>& )
+	imp_constrFRect( const FRect_<FPT2>&, const detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an OPolyline object from a FRect");
 	}

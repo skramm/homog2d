@@ -63,6 +63,7 @@ clean:
 
 # just a debug target...
 show:
+	@echo "CXX=$(CXX)"
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
 	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
 	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
