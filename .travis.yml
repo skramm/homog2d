@@ -7,8 +7,9 @@ before_install:
   - lsb_release -a
 
 # build using these two compilers
+# 2022-03-04: remove clang because of unexplained build failure
 compiler:
-  - clang
+#  - clang
   - gcc
 
 install:

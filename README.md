@@ -36,7 +36,9 @@ int main()
 }
 ```
 
-:new: 2021-12-21: fresh 2.6 release: https://github.com/skramm/homog2d/releases
+## NEWS  ##
+- 2022-03-04: removed clang build from testsuite because of unexplained link error, should be fixed soon.
+- 2021-12-21: fresh 2.6 release: https://github.com/skramm/homog2d/releases
 
 
 To install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
