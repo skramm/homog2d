@@ -20,6 +20,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added generic drawing function (for containers) with a `std::function` as third argument
   - added "Segments" demo
   - added arguments to abstract `img::clear()`, and added `img::Color` data type
+  - moved base classes from main namespace to sub-namespace
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`
