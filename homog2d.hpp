@@ -389,6 +389,7 @@ static HOMOG2D_INUMTYPE& nullDeter()
 	return _zeroDeter;
 }
 
+/// Helper function, could be needed
 void printThresholds( std::ostream& f )
 {
 	f << "Current threshold values:"

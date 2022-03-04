@@ -68,22 +68,19 @@ int main( int argc, char* argv[] )
 #endif // HOMOG2D_USE_OPENCV
 		<< '\n';
 
-  // global setup...
 	Catch::StringMaker<float>::precision = 25;
 	Catch::StringMaker<double>::precision = 25;
 
 // removed until PR merged into next release, see https://github.com/catchorg/Catch2/pull/2245
 //	Catch::StringMaker<long double>::precision = 25;
 
-#if (#NUMTYPE) == float
-	thr::nullDistance() = 1E-6;
-#endif
+// we need to have a bigger threshold value for "float" type, as it has a lot less precision
+	if( std::string( XSTR(NUMTYPE) ) == "float" )
+		thr::nullDistance() = 1E-6;
+
 	thr::printThresholds( std::cout );
 
-	int result = Catch::Session().run( argc, argv );
-
-  // global clean-up...
-	return result;
+	return Catch::Session().run( argc, argv );
 }
 
 TEST_CASE( "numerical types access", "[types-access]" )
