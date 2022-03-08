@@ -1,7 +1,7 @@
 # homog2d
 
 Current test status:
-[![Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d) (gcc7 and gcc9)
+[![Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 
 A single-file header-only C++ library dedicated to
