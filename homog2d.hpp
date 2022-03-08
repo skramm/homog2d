@@ -3617,7 +3617,7 @@ public:
 	using FType = FPT;
 
 	template<typename T1,typename T2> friend class PolylineBase;
-	template<typename T1> friend class Ellipse_;
+	template<typename T1> friend class h2d::Ellipse_;
 
 	template<typename FPT1,typename FPT2>
 	friend CPolyline_<FPT1>

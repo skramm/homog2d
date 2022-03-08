@@ -1345,6 +1345,8 @@ A unit-test program is included.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
 The travis-based CI loads the 2.13.6 release.
 It is build and run with `$ make test`.
+It has been tested both with gcc7.5 (Ubuntu 18) and gcc9.4 (Ubuntu 20).
+
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
 make test USE_OPENCV=Y
