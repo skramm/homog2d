@@ -4846,6 +4846,9 @@ isBetween( T1 v, T2 v1, T2 v2 )
 }
 
 /// Does some small rounding (if requested), to avoid some numerical issues
+/**
+Edit 20220425: no need for llroundl(), check https://en.cppreference.com/w/cpp/numeric/math/round
+*/
 template<typename FPT>
 long double
 doRounding( FPT value, Rounding r )
@@ -4853,7 +4856,8 @@ doRounding( FPT value, Rounding r )
 	if( r == Rounding::No )
 		return value;
 	HOMOG2D_INUMTYPE coeff = HOMOG2D_ROUNDING_COEFF;
-	return std::llroundl( value * coeff ) / coeff;
+//	return std::llroundl( value * coeff ) / coeff;
+	return std::round( value * coeff ) / coeff;
 }
 
 /// Helper function, checks if \c pt is in the area defined by \c pt1 and \c pt2
@@ -4880,7 +4884,7 @@ enum class PtTag: uint8_t
 	Inside, Outside, OnEdge
 };
 
-/// Returns a label characterizing point \c pt, related to \c circle
+/// Returns a label characterizing point \c pt, related to \c circle: inside, outside, or on edge of circle
 template<typename FPT,typename FPT2>
 PtTag
 getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
@@ -6886,7 +6890,7 @@ void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams
 
 namespace detail {
 
-/// Private helper function, used by LPBase<IsPoint>::draw()
+/// Private helper function, used by LPBase<IsPoint>::draw(). Draw point on image.
 template<typename T>
 void
 drawPt(
