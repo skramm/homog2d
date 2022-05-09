@@ -19,6 +19,12 @@
 \file homog2d_test.cpp
 \brief A test file for homog2d, needs Catch https://github.com/catchorg/Catch2,
 run with "make test"
+
+This file holds mostly "general" tests.
+
+It also holds some tests that are only related to the OpenCv binding
+Thus, they are run only if the symbol \c HOMOG2D_USE_OPENCV is defined.<br>
+This latter part starts around line 2565.
 */
 
 /// see test [gen_bind]
@@ -28,7 +34,8 @@ run with "make test"
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-/// Numerical type for object storage. This is usually defined by makefile
+/// Numerical type for object storage for tests. This is usually defined by makefile.
+/// (The internal numerical type for the library is defined by HOMOG2D_INUMTYPE)
 #ifndef NUMTYPE
 	#define NUMTYPE double
 #endif
@@ -36,8 +43,6 @@ run with "make test"
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
-
-#include <list>
 
 #define LOCALLOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
 
@@ -2562,6 +2567,12 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 		CHECK( ch2.size() == 2 );
 	}
 }
+
+/*TEST_CASE( "isInArea() tests", "[isInArea]" )
+{
+	Point2d_<NUMTYPE> pt0(100,100);
+
+}*/
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
