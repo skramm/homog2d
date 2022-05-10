@@ -103,3 +103,13 @@ value = std::round( value * coeff ) / coeff
 ```
 
 The coefficient value has a default value of 1E6 but this can be adjusted globally at compile time by defining the value of the symbol `HOMOG2D_ROUNDING_COEFF`.
+
+### 6 - Further readings
+
+Some material on handling floating-point values.
+
+- https://www.boost.org/doc/libs/1_78_0/libs/math/doc/html/math_toolkit/float_comparison.html
+- https://bitbashing.io/comparing-floats.html
+- https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+- https://dl.acm.org/doi/abs/10.1145/103162.103163
+- https://floating-point-gui.de/
