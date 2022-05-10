@@ -31,7 +31,7 @@ void drawGrid( img::Image<cv::Mat>& im, const Homogr& H )
 }
 
 template<typename T,typename U>
-void generate( std::string fname, const PolylineBase<T,U>& pl )
+void generate( std::string fname, const base::PolylineBase<T,U>& pl )
 {
 	img::Image<cv::Mat> im( 200, 200 );
 	auto H = Homogr().setScale(30).addTranslation(10,30);

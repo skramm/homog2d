@@ -3583,6 +3583,7 @@ getPointsBB( const T& vpts )
 
 } // namespace priv
 
+// Forward declaration
 namespace base {
 template<typename PLT,typename FPT> class PolylineBase;
 }
@@ -3595,6 +3596,11 @@ operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 template<typename T1,typename T2>
 std::ostream&
 operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
+
+// Forward declaration
+template<typename FPT1,typename FPT2,typename PLT2>
+auto
+operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
 namespace base {
 
@@ -3624,8 +3630,8 @@ public:
 	h2d::operator * ( const h2d::Homogr_<FPT2>&, const h2d::FRect_<FPT1>& );
 
 	template<typename FPT1,typename FPT2,typename PLT2>
-	friend base::PolylineBase<PLT2,FPT1>
-	operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& );
+	friend auto
+	h2d::operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -6290,7 +6296,6 @@ operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
 	return Segment_<FPT1>( pt1, pt2 );
 }
 
-namespace base {
 /// Apply homography to a Polyline
 template<typename FPT1,typename FPT2,typename PLT>
 base::PolylineBase<PLT,FPT1>
@@ -6302,7 +6307,6 @@ operator * ( const Homogr_<FPT2>& h, const base::PolylineBase<PLT,FPT1>& pl )
 		out.p_addPoint( h * pt );
 	return out;
 }
-} // namespace base
 
 /// Apply homography to a flat rectangle produces a closed polyline
 template<typename FPT1,typename FPT2>
