@@ -12,7 +12,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add precision evaluation
 
 - current master branch
-  - added symbol `HOMOG2D_ROUNDING_COEFF` to adjust rounding coeff.
   - added `translate()` to `Segment`
   - added `img::write()` abstraction member function for image disk writing
   - added initializing `Segment` from a `std::pair` of points (constructor and `set()` member function)
@@ -21,6 +20,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added "Segments" demo
   - added arguments to abstract `img::clear()`, and added `img::Color` data type
   - moved base classes from main namespace to sub-namespace
+  - cleaned out segment/line, segment/segment, segment/circle intersection code
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`

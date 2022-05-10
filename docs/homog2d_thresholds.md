@@ -85,27 +85,7 @@ To run this yourself and generate the plot:
 $ make dtest1
 ```
 
-### 5 - Additional rounding
-
-In some situations, although the math is cristal clear, some numerical issues might happen.
-The most crucial is when computing intersection points between a rectangle and a line.
-The algorithm checks the intersection points between each of the 4 segments of the rectangle and the line:
-for each supporting line of each of the 4 segments, it checks if the intersection point is in the segment area.
-However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
-(i.e. with coordinates in the range [0-99]).
-The intersection point can appear to have for one of the coordinates the value "99". So far so good.
-Unfortunately, the range checking will fail, because the actual computed value will be "99.00000000000123".
-
-To avoid this issue, the "Segment/Line" intersection code will proceed with an additional rounding of the computed coordinates,
-so that the value stays at "99":
-```
-value = std::round( value * coeff ) / coeff
-```
-(see https://en.cppreference.com/w/cpp/numeric/math/round)
-
-The coefficient value has a default value of 1E6 but this can be adjusted globally at compile time by defining the value of the symbol `HOMOG2D_ROUNDING_COEFF`.
-
-### 6 - Further readings
+### 5 - Further readings
 
 Some material on handling floating-point values.
 

@@ -139,9 +139,9 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_THR_ZERO_DETER 1E-15
 #endif
 
-#ifndef HOMOG2D_ROUNDING_COEFF
-	#define HOMOG2D_ROUNDING_COEFF 1E6
-#endif
+//#ifndef HOMOG2D_ROUNDING_COEFF
+//	#define HOMOG2D_ROUNDING_COEFF 1E6
+//#endif
 
 ///////////////////////////////////////
 
@@ -358,7 +358,7 @@ namespace priv {
 
 
 //------------------------------------------------------------------
-/// Holds threshold values and api
+/// Holds threshold values and api to access these
 namespace thr {
 
 static HOMOG2D_INUMTYPE& nullDistance()
@@ -3276,6 +3276,13 @@ public:
 		set( ppts.first, ppts.second );
 	}
 
+/// Setter from 4 raw point coordinates
+	template<typename FPT2>
+	void set( FPT2 x1, FPT2 y1, FPT2 x2, FPT2 y2 )
+	{
+		set( Point2d_<FPT2>(x1,y1), Point2d_<FPT2>(x2,y2) );
+	}
+
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -4851,7 +4858,6 @@ isBetween( T1 v, T2 v1, T2 v2 )
 			return true;
 	return false;
 }
-#endif
 
 /// Does some small rounding (if requested), to avoid some numerical issues
 /**
@@ -4868,7 +4874,6 @@ doRounding( FPT value, Rounding r )
 	return std::round( value * coeff ) / coeff;
 }
 
-#if 0
 /// Helper function, checks if \c pt is in the area defined by \c pt1 and \c pt2
 template<typename T1,typename T2>
 bool
@@ -4952,24 +4957,16 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 
 	auto ptInter = l1 * l2;   // intersection point
 
-#if 1
-/// \todo replace with difference comparison to threshold
 	auto dA1 = ptA1.distTo( ptInter );
 	auto dA2 = ptA2.distTo( ptInter );
-	if( dA1+dA2 <= length() )
+	if( std::abs(dA1+dA2 - length()) < thr::nullDistance() )
 	{
 		auto dB1 = ptB1.distTo( ptInter );
 		auto dB2 = ptB2.distTo( ptInter );
-		if( dB1+dB2 <= s2.length() )
+		if( std::abs(dB1+dB2 - s2.length()) < thr::nullDistance() )
 			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
 	}
 	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
-#else
-	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
-		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
-			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
-	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
-#endif
 }
 
 //------------------------------------------------------------------
@@ -4993,20 +4990,15 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 
 	out._ptIntersect = li1 * li2;   // intersection point
 
-	const auto& pi   = out._ptIntersect;
+	const auto& pi  = out._ptIntersect;
 	const auto& pt1 = getPts().first;
 	const auto& pt2 = getPts().second;
 
-#if 0
-	if( detail::isInArea( pi, pt1, pt2, detail::Rounding::Yes ) )
-		out._doesIntersect = true;
-#else
 	auto d1 = pt1.distTo( pi );
 	auto d2 = pt2.distTo( pi );
+	if( std::abs(d1+d2-length()) < thr::nullDistance() )
+ 		out._doesIntersect = true;
 
-	if( d1+d2 <= length() )
-		out._doesIntersect = true;
-#endif
 	return out;
 }
 
@@ -5038,7 +5030,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	HOMOG2D_START;
 	using detail::PtTag;
 
-	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle );
+	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle ); // get status of segment points related to circle (inside/outside/on-edge)
 	auto tag_ptS2 = detail::getPtLabel( _ptS2, circle );
 
 	if( tag_ptS1 == PtTag::Inside )
@@ -5060,34 +5052,24 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	)
 	{
 		detail::IntersectM<FPT> out;
-#if 1
+
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
-		if( d1+d2 > length() )
-			out.add( p2 );                          // points is inside
-		else
-			out.add( p1 );
-#else
-        if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // check which one of the intersections
+		if( std::abs( d1+d2-length() ) < thr::nullDistance() )
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
-#endif
 		return out;
 	}
 
 	detail::IntersectM<FPT> out;
 	if( tag_ptS1 == PtTag::Outside && tag_ptS2 == PtTag::Outside ) // both outside
 	{
-#if 1
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
-		if( d1+d2 > length() )                 // if sum of the two distances is higher than length
+		if( std::abs( d1+d2-length() ) >= thr::nullDistance() )   // if sum of the two distances is higher than length
 			return detail::IntersectM<FPT>();
-#else
-		if( !detail::isInArea( p1, _ptS1, _ptS2 ) ) //could have done for p2, doesn't matter
-			return detail::IntersectM<FPT>();
-#endif
+
 		out.add( p1 );
 		out.add( p2 );
 		return out;

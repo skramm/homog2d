@@ -1130,26 +1130,26 @@ TEST_CASE( "Intersection", "[int_all]" )
 	CHECK( r1.intersects( c2 )() );
 	CHECK( r1.intersects( s2 )() );
 	CHECK( r1.intersects( l2 )() );
-	CHECK( !r1.intersects( po2 )() );  // polyline is empty !
-	CHECK( !r1.intersects( pc2 )() );  // polyline is empty !
+	CHECK( !r1.intersects( po2 )() );  // polyline is empty, so no intersection
+	CHECK( !r1.intersects( pc2 )() );  // polyline is empty, so no intersection
 
 	CHECK( c1.intersects( r2 )() );
 	CHECK( c1.intersects( s2 )() );
 	CHECK( c1.intersects( l2 )() );
-	CHECK( !c1.intersects( po2 )() );  // polyline is empty !
-	CHECK( !c1.intersects( pc2 )() );  // polyline is empty !
+	CHECK( !c1.intersects( po2 )() );  // polyline is empty, so no intersection
+	CHECK( !c1.intersects( pc2 )() );  // polyline is empty, so no intersection
 
 	CHECK( s1.intersects( r2 )() );
 	CHECK( s1.intersects( c2 )() );
 	CHECK( s1.intersects( l2 )() );
-	CHECK( !s1.intersects( po2 )() );  // polyline is empty !
-	CHECK( !s1.intersects( pc2 )() );  // polyline is empty !
+	CHECK( !s1.intersects( po2 )() );  // polyline is empty, so no intersection
+	CHECK( !s1.intersects( pc2 )() );  // polyline is empty, so no intersection
 
 	CHECK( l1.intersects( r2 )() );
 	CHECK( l1.intersects( c2 )() );
 	CHECK( l1.intersects( s2 )() );
-	CHECK( !l1.intersects( po2 )() );  // polyline is empty !
-	CHECK( !l1.intersects( pc2 )() );  // polyline is empty !
+	CHECK( !l1.intersects( po2 )() );  // polyline is empty, so no intersection
+	CHECK( !l1.intersects( pc2 )() );  // polyline is empty, so no intersection
 
 	CHECK( !po1.intersects( r2 )() );
 	CHECK( !po1.intersects( c2 )() );
@@ -1250,6 +1250,20 @@ TEST_CASE( "Segment/Segment intersection", "[int_SS]" )
 			CHECK( si() );
 			CHECK( si.size() == 1 );
 			CHECK( si.get() == Point2d(0,1) );
+		}
+	}
+	{
+		s1.set( 0., 0., 1., 0. );
+		s2.set( 1., 1., 1., -1E-05 );
+		{
+			auto si = s1.intersects(s2);
+			CHECK( si() );
+			CHECK( si.size() == 1 );
+			CHECK( si.get() == Point2d(1,0) );
+		}
+		s2.set( 1., 1., 1., +1E-05 );
+		{
+			CHECK( !s1.intersects(s2)() );
 		}
 	}
 }
@@ -2567,12 +2581,6 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 		CHECK( ch2.size() == 2 );
 	}
 }
-
-/*TEST_CASE( "isInArea() tests", "[isInArea]" )
-{
-	Point2d_<NUMTYPE> pt0(100,100);
-
-}*/
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
