@@ -3583,6 +3583,7 @@ getPointsBB( const T& vpts )
 
 } // namespace priv
 
+// Forward declaration
 namespace base {
 template<typename PLT,typename FPT> class PolylineBase;
 }
@@ -3595,6 +3596,11 @@ operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 template<typename T1,typename T2>
 std::ostream&
 operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
+
+// Forward declaration
+template<typename FPT1,typename FPT2,typename PLT2>
+auto
+operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
 namespace base {
 
@@ -3624,8 +3630,8 @@ public:
 	h2d::operator * ( const h2d::Homogr_<FPT2>&, const h2d::FRect_<FPT1>& );
 
 	template<typename FPT1,typename FPT2,typename PLT2>
-	friend PolylineBase<PLT2,FPT1>
-	operator * ( const Homogr_<FPT2>&, const PolylineBase<PLT2,FPT1>& );
+	friend auto
+	h2d::operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
@@ -4829,9 +4835,10 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 //------------------------------------------------------------------
 namespace detail {
 
-/// Used in isBetween()
+/// Used in isBetween() and isInArea()
 enum class Rounding: uint8_t { Yes, No };
 
+#if 0
 /// Helper function
 template<typename T1,typename T2>
 bool
@@ -4844,8 +4851,12 @@ isBetween( T1 v, T2 v1, T2 v2 )
 			return true;
 	return false;
 }
+#endif
 
 /// Does some small rounding (if requested), to avoid some numerical issues
+/**
+Edit 20220425: no need for llroundl(), check https://en.cppreference.com/w/cpp/numeric/math/round
+*/
 template<typename FPT>
 long double
 doRounding( FPT value, Rounding r )
@@ -4853,17 +4864,19 @@ doRounding( FPT value, Rounding r )
 	if( r == Rounding::No )
 		return value;
 	HOMOG2D_INUMTYPE coeff = HOMOG2D_ROUNDING_COEFF;
-	return std::llroundl( value * coeff ) / coeff;
+//	return std::llroundl( value * coeff ) / coeff;
+	return std::round( value * coeff ) / coeff;
 }
 
+#if 0
 /// Helper function, checks if \c pt is in the area defined by \c pt1 and \c pt2
 template<typename T1,typename T2>
 bool
 isInArea(
-	const Point2d_<T1>& pt,
-	const Point2d_<T2>& pt1,
-	const Point2d_<T2>& pt2,
-	Rounding r = Rounding::No
+	const Point2d_<T1>& pt,    ///< the considered point
+	const Point2d_<T2>& pt1,   ///< pt1
+	const Point2d_<T2>& pt2,   ///< pt2
+	Rounding r = Rounding::No  ///< default behavior is "no rounding"
 )
 {
 	HOMOG2D_START;
@@ -4872,6 +4885,7 @@ isInArea(
 			return true;
 	return false;
 }
+#endif // 0
 
 //------------------------------------------------------------------
 /// See getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
@@ -4880,7 +4894,7 @@ enum class PtTag: uint8_t
 	Inside, Outside, OnEdge
 };
 
-/// Returns a label characterizing point \c pt, related to \c circle
+/// Returns a label characterizing point \c pt, related to \c circle: inside, outside, or on edge of circle
 template<typename FPT,typename FPT2>
 PtTag
 getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
@@ -4914,7 +4928,8 @@ printTag( std::string txt, PtTag tag )
 /// Segment/Segment intersection
 /**
 Algorithm:<br>
-We check if the intersection point lies in between the range of both segments, both on x and on y
+- first compute the intersection point
+- then check if the intersection point lies in between the range of both segments, both on x and on y
 */
 template<typename FPT>
 template<typename FPT2>
@@ -4937,11 +4952,24 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 
 	auto ptInter = l1 * l2;   // intersection point
 
+#if 1
+/// \todo replace with difference comparison to threshold
+	auto dA1 = ptA1.distTo( ptInter );
+	auto dA2 = ptA2.distTo( ptInter );
+	if( dA1+dA2 <= length() )
+	{
+		auto dB1 = ptB1.distTo( ptInter );
+		auto dB2 = ptB2.distTo( ptInter );
+		if( dB1+dB2 <= s2.length() )
+			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
+	}
+	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
+#else
 	if( detail::isInArea( ptInter, ptA1, ptA2 ) )
 		if( detail::isInArea( ptInter, ptB1, ptB2 ) )
 			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
-
 	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
+#endif
 }
 
 //------------------------------------------------------------------
@@ -4966,14 +4994,19 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 	out._ptIntersect = li1 * li2;   // intersection point
 
 	const auto& pi   = out._ptIntersect;
-	const auto& ptA1 = getPts().first;
-	const auto& ptA2 = getPts().second;
+	const auto& pt1 = getPts().first;
+	const auto& pt2 = getPts().second;
 
-//	HOMOG2D_LOG( "pi=" << pi << " ptA1=" <<ptA1  << " ptA2=" <<ptA2 );
-	if( detail::isInArea( pi, ptA1, ptA2, detail::Rounding::Yes ) )
+#if 0
+	if( detail::isInArea( pi, pt1, pt2, detail::Rounding::Yes ) )
 		out._doesIntersect = true;
-//	else
-//		HOMOG2D_LOG( "Is NOT in area" );
+#else
+	auto d1 = pt1.distTo( pi );
+	auto d2 = pt2.distTo( pi );
+
+	if( d1+d2 <= length() )
+		out._doesIntersect = true;
+#endif
 	return out;
 }
 
@@ -5020,25 +5053,41 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	const auto& p1 = p_pts.first;
 	const auto& p2 = p_pts.second;
 
-	if(
+	if(                                                            // one inside, the other outside
 		( tag_ptS1 == PtTag::Inside  && tag_ptS2 == PtTag::Outside )
 		||
 		( tag_ptS1 == PtTag::Outside && tag_ptS2 == PtTag::Inside )
 	)
 	{
 		detail::IntersectM<FPT> out;
+#if 1
+		auto d1 = _ptS1.distTo( p1 );
+		auto d2 = _ptS2.distTo( p1 );
+		if( d1+d2 > length() )
+			out.add( p2 );                          // points is inside
+		else
+			out.add( p1 );
+#else
         if( detail::isInArea( p1, _ptS1, _ptS2 ) )  // check which one of the intersections
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
+#endif
 		return out;
 	}
 
 	detail::IntersectM<FPT> out;
-	if( tag_ptS1 == PtTag::Outside &&  tag_ptS2 == PtTag::Outside ) // both outside
+	if( tag_ptS1 == PtTag::Outside && tag_ptS2 == PtTag::Outside ) // both outside
 	{
+#if 1
+		auto d1 = _ptS1.distTo( p1 );
+		auto d2 = _ptS2.distTo( p1 );
+		if( d1+d2 > length() )                 // if sum of the two distances is higher than length
+			return detail::IntersectM<FPT>();
+#else
 		if( !detail::isInArea( p1, _ptS1, _ptS2 ) ) //could have done for p2, doesn't matter
 			return detail::IntersectM<FPT>();
+#endif
 		out.add( p1 );
 		out.add( p2 );
 		return out;
@@ -6886,7 +6935,7 @@ void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams
 
 namespace detail {
 
-/// Private helper function, used by LPBase<IsPoint>::draw()
+/// Private helper function, used by LPBase<IsPoint>::draw(). Draw point on image.
 template<typename T>
 void
 drawPt(

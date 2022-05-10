@@ -87,10 +87,10 @@ $ make dtest1
 
 ### 5 - Additional rounding
 
-In some situations, although the math is clear, some numerical issues always happen.
+In some situations, although the math is cristal clear, some numerical issues might happen.
 The most crucial is when computing intersection points between a rectangle and a line.
-The algorithm just checks the intersection points between each of the 4 segments of the rectangle and the line:
-for each segments supporting line, we check if the intersection point is in the segment area.
+The algorithm checks the intersection points between each of the 4 segments of the rectangle and the line:
+for each supporting line of each of the 4 segments, it checks if the intersection point is in the segment area.
 However, due to numerical issues, this can fail: for example, say we want to check the intersection between a line and an rectangle 100x100
 (i.e. with coordinates in the range [0-99]).
 The intersection point can appear to have for one of the coordinates the value "99". So far so good.
@@ -101,6 +101,7 @@ so that the value stays at "99":
 ```
 value = std::round( value * coeff ) / coeff
 ```
+(see https://en.cppreference.com/w/cpp/numeric/math/round)
 
 The coefficient value has a default value of 1E6 but this can be adjusted globally at compile time by defining the value of the symbol `HOMOG2D_ROUNDING_COEFF`.
 
@@ -113,3 +114,5 @@ Some material on handling floating-point values.
 - https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
 - https://dl.acm.org/doi/abs/10.1145/103162.103163
 - https://floating-point-gui.de/
+=======
+

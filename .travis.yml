@@ -1,4 +1,5 @@
 
+# focal  = Ubuntu 20.04
 # bionic = Ubuntu 18.04
 dist: bionic
 language: cpp
@@ -7,7 +8,7 @@ before_install:
   - lsb_release -a
 
 # build using these two compilers
-# 2022-03-04: remove clang because of unexplained build failure
+# 2022-03-04: remove clang because of unexplained test app build failure (only the test app!!)
 compiler:
 #  - clang
   - gcc
