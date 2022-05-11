@@ -39,6 +39,7 @@
 		</Unit>
 		<Unit filename="../docs/future_stuff_doc.txt" />
 		<Unit filename="../docs/homog2d_Polyline.md" />
+		<Unit filename="../docs/homog2d_algorithms.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
 		<Unit filename="../docs/homog2d_history.md">
 			<Option target="&lt;{~None~}&gt;" />
@@ -89,6 +90,7 @@
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
 		<Unit filename="figures_src/src/segment1.cpp" />
+		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

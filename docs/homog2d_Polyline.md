@@ -2,7 +2,7 @@
 
 [Manual main page](homog2d_manual.md)
 
-The two classes, open and closed type, are defined as:
+The two classes, open and closed type, are actually the same class, and are defined as:
 ```
 template<typename FPT>
 using OPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
@@ -14,7 +14,7 @@ using CPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
 ### Difference between these two types:
 
 Both types can be seen as a container of a set of points.
-Order of points will be retained, but some normalizing step will occur, that will be different for the two types.
+Order of points will be retained, but some normalizing step may occur, in a way that will be different for the two types.
 
 - The `CPolyline_` type will get normalized (rotated) so that the smallest point is placed in first position,
 and reversed so that the **second** smallest point is placed in second position.

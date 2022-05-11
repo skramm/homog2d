@@ -27,7 +27,7 @@ then open an issue [here](https://github.com/skramm/homog2d/issues) and include 
 </dd>
 
 <dt>
-Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite with GCC, why?
+Q: I get a lot of warnings (`...may be used uninitialized in this function`) when running the test suite with GCC with `$ make test`, why?
 </dt>
 <dd>
 A: This seems to be an issue with Catch, regular program shouldn't issue those, no worry
@@ -41,13 +41,13 @@ Q: why do
 </dt>
 <dd>
 A: because the first function returns a (flat) rectangle, and the second returns a polygon (as a closed <code>Polyline</code> object).
-However, both can fail (is there is no common part of course), but you cannot return an invalid <code>FRect</code> object.
+However, both can fail (if there is no common part of course), but you cannot return an invalid <code>FRect</code> object.
 Thus the first function returns a type that can be checked for success.
-A contrario, the second function will return a <code>Polyline</code>, and in case of failure, it will just be empty, which is perfectly valid.
+A contrario, the second function will return a <code>Polyline</code> object, and in case of failure, it will just be empty, which is perfectly valid.
 </dd>
 
 <dt>
-Q: I notice the repo has a lot of branches. Whats the point with all these branches?
+Q: I notice the repo has a lot of branches. What's the point with all these branches?
 </dt>
 <dd>
 Probably bad branch managment...
@@ -57,14 +57,14 @@ But the point to remember is that "master" will always stay clean (build and tes
 
 
 <dt>
-Q: Why is there only Opencv provided as backend? kinda strange.
+Q: Why is there only Opencv provided as backend?
 </dt>
 <dd>
 -Short answer: because it works fine!
 <br>
 -Long(er) answer:
 Besides the fact that I have already used it with other projects, it also has the great advantage of having all the drawing code for "advanced" primitives (circle, ellipse).
-This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/).
+This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/) or other backends.
 <br>
 But writing a binding for other libraries shouldn't be too difficult, assuming they have these.
 </dd>

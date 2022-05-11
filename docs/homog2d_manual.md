@@ -863,7 +863,7 @@ will produce this matrix:
 | -0.0021031 0.00105012    1      |
 ```
 
-![Exemple of Homography computing](img/homog_from_pts.png)
+![Example of Homography computing](img/homog_from_pts.png)
 
 
 However, this requires the solving of a linear system of 8 equations with 8 unknowns (i.e. computing the inverse of a 8x8 matrix).

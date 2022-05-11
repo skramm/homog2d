@@ -5,13 +5,11 @@
 __Please read this if you have Opencv installed on your system, but fail to build the Opencv binding demo.__
 
 
-The Opencv binding capabilities for this library are demonstrated with a short graphical demo, included here.
+The [Opencv](https://opencv.org/releases/) binding capabilities for this library are demonstrated with a short graphical demo, included here.
 Building the app using the provided Makefile (`$ make demo`) relies on the `pkg-config` utility.
 
 Recently, with Opencv4 (and probably also with latest 3.x releases), the Opencv team seems to have dropped support of pkg-config
 (see https://github.com/opencv/opencv/issues/13154).
-
-This is a pity, but... can't do much about it.
 
 The demo program has been tested using Opencv 3.4, build from source.
 The trick is to activate the pkg-config option when building Opencv with Cmake.
