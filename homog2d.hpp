@@ -1061,7 +1061,8 @@ enum class PtStyle: uint8_t
 	Plus,   ///< "+" symbol
 	Times,  ///< "times" symbol
 	Star,   ///< "*" symbol
-	Diam    ///< diamond
+	Diam,   ///< diamond
+	Dot     ///< dot (circle)
 };
 
 //------------------------------------------------------------------
@@ -1074,6 +1075,7 @@ class DrawParams
 	{
 		Color       _color;
 		int         _lineThickness = 1;
+		int         _pointSize     = 4;
 		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
 		uint8_t     _ptDelta       = 8;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
@@ -1122,7 +1124,7 @@ public:
 	}
 	DrawParams& setPointStyle( PtStyle ps )
 	{
-		if( (int)ps > (int)PtStyle::Diam )
+		if( (int)ps > (int)PtStyle::Dot )
 			throw std::runtime_error( "Error: invalid value for point style");
 		_dpValues._ptStyle = ps;
 		return *this;
@@ -7289,6 +7291,10 @@ base::LPBase<LP,FPT>::impl_draw( img::Image<T>& im, img::DrawParams dp, const de
 	std::vector<Point2d_<float>> vpt( 4, *this );
 	switch( dp._dpValues._ptStyle )
 	{
+		case img::PtStyle::Dot:
+			cv::circle( im.getReal(), getCvPti(), dp._dpValues._pointSize, dp._dpValues.color(), -1 );
+		break;
+
 		case img::PtStyle::Plus:   // "+" symbol
 			detail::drawPt( im, img::PtStyle::Plus, vpt, dp );
 		break;
