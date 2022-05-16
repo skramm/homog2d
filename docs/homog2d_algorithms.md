@@ -46,6 +46,23 @@ This basically restates what is [described here](https://cp-algorithms.com/geome
 
 The first step is to check if the segments supporting line has an intersection with the circle, using the above algorithm.
   * If there is no interesection, then we can stop.
-  * If these is one, then several situations need to be considered.
+  * If these is one, then several situations need to be considered:
+
+![segintcir1a](img/segment_intersect_circle_1a.png)
+![segintcir1b](img/segment_intersect_circle_1b.png)
+![segintcir1c](img/segment_intersect_circle_1c.png)
+
+We first determine the status of each point of the segment: are they inside or outside(*) of the circle.
+
+  * If the two points are inside, then there are no intersections.
+  * If the two points are outside, then we have two intersection points, that are computed with the algorithm described above.
+  * If one point is inside and the other outside, then we have only one intersection.
+Determining which one of the two points is the correct one if done by checking which point of the segment is inside the circle.
+
+(*) for clarity, we do not detail here the case where points are on the edge of the circle, but this is taken into account in the code.
+
+
+
+
 
 
