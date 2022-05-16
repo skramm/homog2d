@@ -2026,7 +2026,13 @@ public:
 	void set( const Point2d_<FPT2>& center, FPT3 rad )
 	{
 		Circle_<FPT> c( center, rad );
-		std::swap( c, this ); /// \todo 20211216: replace with move
+		std::swap( c, *this ); /// \todo 20211216: replace with move
+	}
+	template<typename FPT2,typename FPT3>
+	void set( FPT2 x, FPT2 y, FPT3 rad )
+	{
+		Circle_<FPT> c( x, y, rad );
+		std::swap( c, *this ); /// \todo 20211216: replace with move
 	}
 
 	template<typename T1, typename T2>
