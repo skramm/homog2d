@@ -26,13 +26,13 @@ Here, their sum is obviously higher than the segment length, thus there is no in
 
 For Segment/Segment, the checking is done twice, once for each segment.
 
-A threshold is used to compare theses distances, the computation is actually:
+A threshold is used to compare theses distances, the computation is actually (pseudocode):
 ```
-if( d(ac) + d(bc) - segment_length < thr::nullDistance() )
+if( | d(ac) + d(bc) - segment_length | < thr::nullDistance() )
 	... then intersection point
 ```
 
-See [page on thresholds](homog2d_thresholds.md) for details.
+See [page on thresholds](homog2d_thresholds.md) for details on how to manage the threshold value.
 
 ### 1.2 - Line/Circle
 
