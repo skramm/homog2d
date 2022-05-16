@@ -930,6 +930,8 @@ See the provided demo for a runnable example (relies on Opencv backend).
 For the functions returning a pair of points, the returned pair will always hold as "first" the point with the lowest `x` value,
 and if equal, the point with the lowest `y` value.
 
+For details on the algorithms involved, check [this page](homog2d_algorithms.md).
+
 ### 5.1.1 - Details on intersections
 
 When a segment has a point lying on another segment, such as in the figure below, this will be considered as an intersection point:

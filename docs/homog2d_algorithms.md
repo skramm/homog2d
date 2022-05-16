@@ -12,6 +12,7 @@ For Line/Line intersection, this simply checks that lines are not parallel and i
 
 For Segment/Line, it first fetches the supporting line of the segment, and compute the intersection point using the above function.
 Then, it checks if the intersection point is lying on the segment.
+
 This is done by computing the sum of the two distances between the two points of the segment and the intersection point, and comparing that value to the segment length.
 If it is higher than the segment length, then the intersection point does not cross the segment.
 
@@ -31,4 +32,20 @@ if( d(ac) + d(bc) - segment_length < thr::nullDistance() )
 ```
 
 See [page on thresholds](homog2d_thresholds.md) for details.
+
+
+
+### Line/Circle
+
+We use here a geometric approach, described in [this document](http://skramm.lautre.net/files/misc/intersect_circle_line.pdf).
+
+This basically restates what is [described here](https://cp-algorithms.com/geometry/circle-line-intersection.html).
+
+
+### Segment/Circle
+
+The first step is to check if the segments supporting line has an intersection with the circle, using the above algorithm.
+  * If there is no interesection, then we can stop.
+  * If these is one, then several situations need to be considered.
+
 
