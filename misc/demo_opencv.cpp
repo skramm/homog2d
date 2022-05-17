@@ -841,49 +841,81 @@ struct Param_PL : Data
 {
 	explicit Param_PL( std::string title ):Data(title)
 	{}
-	OPolyline polyline;
+	OPolyline polyline_o;
+	CPolyline polyline_c;
+	bool showClosedPoly = false;
 };
 
 void action_PL( void* param )
 {
 	auto& data = *reinterpret_cast<Param_PL*>(param);
 
+	int lineSize = 22;
+	int lineCount = 1;
+
 	data.clearImage();
-	data.polyline.set( data.vpt );
+	data.polyline_o.set( data.vpt );
+	data.polyline_c.set( data.vpt );
 
 	auto color = DrawParams().setColor( 0,10,200);
-	if( data.polyline.isPolygon() )
+	if( data.polyline_c.isPolygon() )
 		color = DrawParams().setColor( 250,10,20);
-	data.polyline.draw( data.img, color );
+
+	auto len = data.showClosedPoly ? data.polyline_c.length() : data.polyline_o.length();
+	if( data.showClosedPoly )
+		data.polyline_c.draw( data.img, color );
+	else
+		data.polyline_o.draw( data.img, color );
 
 	auto col_green = DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img, col_green );
-	auto intersPts = li.intersects(data.polyline);
-	for( const auto& pt: intersPts.get() )
+
+	cv::putText(
+		data.img.getReal(),
+		std::string("Nb pts=") + std::to_string( data.polyline_c.size() ),
+		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+	);
+	cv::putText(
+		data.img.getReal(),
+		std::string("length=") + std::to_string(len),
+		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+	);
+
+	auto intersPts_o = li.intersects(data.polyline_o).get();
+	auto intersPts_c = li.intersects(data.polyline_c).get();;
+
+	auto intersPts = ( data.showClosedPoly ? intersPts_c : intersPts_o );
+	for( const auto& pt: intersPts )
 		pt.draw( data.img  );
 
-	Circle cir( 350,180,65);
+	Circle cir( 350,180,85);
 	cir.draw( data.img, col_green );
-	auto i_cir = cir.intersects( data.polyline );
-	if( i_cir() )
-		draw( data.img, i_cir.get()	);
+	auto i_cir_o = cir.intersects( data.polyline_o );
+	auto i_cir_c = cir.intersects( data.polyline_c );
 
 	FRect rect( 90,160,205,245);
 	rect.draw( data.img, col_green );
-	auto i_rect = rect.intersects( data.polyline );
-	if( i_rect() )
-		draw( data.img, i_rect.get() );
+	auto i_rect_o = rect.intersects( data.polyline_o );
+	auto i_rect_c = rect.intersects( data.polyline_c );
 
-	auto bb = data.polyline.getBB();
+	if( data.showClosedPoly )
+	{
+		draw( data.img, i_cir_c.get() );
+		draw( data.img, i_rect_c.get() );
+	}
+	else
+	{
+		draw( data.img, i_cir_o.get() );
+		draw( data.img, i_rect_o.get() );
+	}
+
+	auto bb = data.polyline_c.getBB();
 	bb.draw( data.img );
 
-//	auto ch = convexHull( data.polyline );
-//	ch.draw( data.img );
-
-	if( data.polyline.isPolygon() )
+	if( data.showClosedPoly && data.polyline_c.isPolygon() )
 	{
-		auto centroid = data.polyline.centroid();
+		auto centroid = data.polyline_c.centroid();
 		centroid.draw( data.img, DrawParams().setColor(40,20,250) );
 		cv::putText(
 			data.img.getReal(),
@@ -892,20 +924,23 @@ void action_PL( void* param )
 			0, 0.6,
 			cv::Scalar( 250,0,0 )
 		);
-	}
 
-	cv::putText(
-		data.img.getReal(),
-		std::string("length=")+ std::to_string(data.polyline.length()),
-		cv::Point2i( 20,20), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-	);
-	if( data.polyline.isPolygon() )
 		cv::putText(
 			data.img.getReal(),
-			std::string("area=")+ std::to_string(data.polyline.area()),
-			cv::Point2i( 20,40), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+			std::string("area=") + std::to_string(data.polyline_c.area()),
+			cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+		);
+		auto isC = "Is Convex";
+		if( !data.polyline_c.isConvex() )
+			isC = "Is NOT Convex";
+
+		cv::putText(
+			data.img.getReal(),
+			isC,
+			cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
 		);
 
+	}
 	data.showImage();
 }
 
@@ -920,12 +955,12 @@ void demo_PL( int n )
 	action_PL( &data );
 
 	KeyboardLoop kbloop;
-/*	kbloop.addKeyAction( 'a', [&](void*)
+	kbloop.addKeyAction( 'a', [&](void*)
 		{
-			data.polyline.isClosed() = !data.polyline.isClosed();
+			data.showClosedPoly = !data.showClosedPoly;
 		},
-		"switch close"
-	);*/
+		"switch open/close"
+	);
 //	kbloop.addCommonAction( [&] { action_PL(&data); } );
 	kbloop.start( data );
 }

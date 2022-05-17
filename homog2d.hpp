@@ -3620,7 +3620,7 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 namespace base {
 
 //------------------------------------------------------------------
-/// Polyline, will be instanciated either as OPolyline_ (open polyline) or CPolyline_
+/// Polyline, will be instanciated either as \ref OPolyline_ (open polyline) or \ref CPolyline_
 /**
 \warning When closed, in order to be able to compare two objects describing the same structure
 but potentially in different order, the comparison operator will proceed a sorting.<br>
@@ -3628,7 +3628,7 @@ The consequence is that when adding points, if you have done a comparison before
 add point after the one you thought!
 
 template args:
- - PLT: PolyLine Type: IsClosed or IsOpen
+ - PLT: PolyLine Type: type::IsClosed or type::IsOpen
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
@@ -3752,6 +3752,9 @@ public:
 			return 0;
 		return impl_nbSegs( detail::PlHelper<PLT>() );
 	}
+
+	bool isConvex() const;
+
 ///@}
 
 private:
@@ -4274,6 +4277,47 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& )
 	}
 	return _attribs._isPolygon.value();
 }
+
+//------------------------------------------------------------------
+/// Returns true if polygon is convex (20220517: WIP !!!)
+/**
+This implies that:
+ - the Polyline is a Polygon
+ - cross product of consecutive points have same sign
+ (see https://stackoverflow.com/a/1881201/193789 )
+*/
+template<typename PLT,typename FPT>
+bool
+PolylineBase<PLT,FPT>::isConvex() const
+{
+//	if( isPolygon() )
+		return false;
+#if 0
+
+	int8_t sign = 0;
+	const auto& vpts = getPts();
+	for( size_t i=0; i<vpts.size()-2; i++ )
+	{
+		const auto& pt0 = vpts[i];
+		const auto& pt1 = vpts[i+1];
+		const auto& pt2 = vpts[i+2];
+		auto dx1 = pt1.getX() - pt0.getX();
+		auto dy1 = pt1.getY() - pt0.getY();
+
+		auto dx2 = pt2.getX() - pt1.getX();
+		auto dy2 = pt2.getY() - pt1.getY();
+
+		auto crossproduct = dx1*dy2 - dy1*dx2;
+		if( sign == 0 )                          // initial sign value
+			sign = crossproduct>0 ? +1 : -1;
+		else
+			if (sign != (crossproduct>0 ? +1 : -1) )
+				return false;
+	}
+	return true;
+#endif
+}
+
 
 //------------------------------------------------------------------
 /// Returns length
