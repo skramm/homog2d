@@ -70,17 +70,18 @@ But writing a binding for other libraries shouldn't be too difficult, assuming t
 </dd>
 
 <dt>
-Q: Why do yo use (Gnu)Make as a build tool?
+Q: Why do yo use (Gnu)Make as build tool (and not CMake or another fancy thing)?
 </dt>
 <dd>
-Because
- 1- it is really powerful
- 2- there is no need for more
- 3- I like it
+Because:
+ 1. it is really powerful
+ 2. there is no need for more
+ 3. I like it
 
-I have the feeling that most people criticizing that tool never really understood how it works.
+(Actually, I have the feeling that most people criticizing that tool never really understood how it works.)
 
-BTW, the library end-user doesn't need to use it. As this is a "header-only" lib, he can use the tool he wants.
+Anyway, the library end-user doesn't need to use it.
+As this is a "header-only" lib, he can use the tool he wants.
 </dd>
 
 
