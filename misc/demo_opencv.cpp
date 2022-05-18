@@ -540,9 +540,9 @@ void action_C( void* param )
 	data.showImage();
 }
 
-void demo_C( int n )
+void demo_C( int nd )
 {
-	std::cout << "Demo " << n << ": move circle over line, hit [lm] to change circle radius\n";
+	std::cout << "Demo " << nd << ": move circle over line, hit [lm] to change circle radius\n";
 	Param_C data("circle demo");
 
 	data.li[0] = Point2d() * Point2d(200,100);
@@ -612,10 +612,10 @@ void action_SI( void* param )
 }
 
 /// Segment intersection demo
-void demo_SI( int n )
+void demo_SI( int nd )
 {
 	Param_SI data( "segment_intersection" );
-	std::cout << "Demo " << n << ": intersection of segments\n Select a point and move it around. "
+	std::cout << "Demo " << nd << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
 
 	data.vpt[0] = Point2d(100,200);
@@ -662,9 +662,9 @@ void action_6( void* param )
 	s1.getPts().second.draw( data.img, DrawParams().selectPoint() );
 }
 
-void demo_6(int n)
+void demo_6( int nd )
 {
-	std::cout << "Demo " << n << ": apply homography to lines and segments\n Hit [lm] to change angle, "
+	std::cout << "Demo " << nd << ": apply homography to lines and segments\n Hit [lm] to change angle, "
 		<< "and select points of blue segment with mouse\n";
 	Param_6 data( "homography_lines_seg" );
 	data.setMouseCallback( mouse_CB_6 );
@@ -807,12 +807,12 @@ void action_H( void* param )
 }
 
 /// Demo of computing a homography from two sets of 4 points
-void demo_H( int n )
+void demo_H( int nd )
 {
 	Param_H data( "compute_H" );
 	data.vpt.resize(8);
 	data.reset();
-	std::cout << "Demo " << n << ": compute homography from two sets of 4 points\n"
+	std::cout << "Demo " << nd << ": compute homography from two sets of 4 points\n"
 		<< " - usage: move points with mouse in left window, right window will show source rectangle (blue)\n"
 		<< "and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
@@ -899,16 +899,24 @@ void action_PL( void* param )
 	auto i_rect_o = rect.intersects( data.polyline_o );
 	auto i_rect_c = rect.intersects( data.polyline_c );
 
+	std::string str_ispoly{"Polygon: N"};
 	if( data.showClosedPoly )
 	{
 		draw( data.img, i_cir_c.get() );
 		draw( data.img, i_rect_c.get() );
+		if( data.polyline_c.isPolygon() )
+			str_ispoly = "Polygon: Y";
 	}
 	else
 	{
 		draw( data.img, i_cir_o.get() );
 		draw( data.img, i_rect_o.get() );
 	}
+	cv::putText(
+		data.img.getReal(),
+		str_ispoly,
+		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
+	);
 
 	auto bb = data.polyline_c.getBB();
 	bb.draw( data.img );
@@ -930,9 +938,9 @@ void action_PL( void* param )
 			std::string("area=") + std::to_string(data.polyline_c.area()),
 			cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
 		);
-		auto isC = "Is Convex";
+		auto isC = "Convex: Y";
 		if( !data.polyline_c.isConvex() )
-			isC = "Is NOT Convex";
+			isC = "Convex: N";
 
 		cv::putText(
 			data.img.getReal(),
@@ -944,10 +952,12 @@ void action_PL( void* param )
 	data.showImage();
 }
 
-void demo_PL( int n )
+void demo_PL( int nd )
 {
 	Param_PL data( "Polyline_demo" );
-	std::cout << "Demo " << n << ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n";
+	std::cout << "Demo " << nd
+		<< ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n"
+		<< "Lclick to add point, Rclick to remove\n";
 	data.leftClicAddPoint=true;
 
 	data.setMouseCallback( mouse_CB_PL );
@@ -1008,10 +1018,10 @@ void action_ELL( void* param )
 }
 
 /// Ellipse demo
-void demo_ELL( int n )
+void demo_ELL( int nd )
 {
 	Param_ELL data( "Ellipse demo" );
-	std::cout << "Demo " << n
+	std::cout << "Demo " << nd
 		<< ": Ellipse (no mouse, enter 'h' for valid keys)\n"
 		<< " -blue rectangle: ellipse bounding box\n"
 		<< " -green rectangle: blue rectangle bounding box\n";
@@ -1072,9 +1082,10 @@ void action_CH( void* param )
 	data.showImage();
 }
 
-void demo_CH( int )
+void demo_CH( int nd )
 {
 	Param_CH data ( "Convex Hull demo" );
+	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove" );
 	action_CH( &data );
 	data.leftClicAddPoint=true;
 
@@ -1166,15 +1177,14 @@ void action_SEG( void* param )
 	{
 		for( const auto& seg: data.vseg )
 			seg.getMiddlePoint().draw( data.img, DrawParams().setColor( 0,0,250) );
-
-
 	}
 	data.showImage();
 }
 
-void demo_SEG( int )
+void demo_SEG( int nd )
 {
 	Param_SEG data ( "Segments demo" );
+	std::cout << "Demo " << nd << ": Segments demo\n";
 	data.generateSegments();
 
 	KeyboardLoop kbloop;
