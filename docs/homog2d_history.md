@@ -12,6 +12,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add precision evaluation
 
 - current master branch
+ (nil)
+
+- [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`
   - added `img::write()` abstraction member function for image disk writing
   - added initializing `Segment` from a `std::pair` of points (constructor and `set()` member function)
