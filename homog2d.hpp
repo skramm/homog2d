@@ -4277,14 +4277,6 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& )
 	}
 	return _attribs._isPolygon.value();
 }
-//------------------------------------------------------------------
-/// Free function, calls PolylineBase<PLT,FPT>::isPolygon()
-template<typename PLT,typename FPT>
-bool
-isPolygon( const PolylineBase<PLT,FPT>& poly )
-{
-	return poly.isPolygon();
-}
 
 //------------------------------------------------------------------
 /// Returns true if polygon is convex
@@ -4325,15 +4317,6 @@ PolylineBase<PLT,FPT>::isConvex() const
 				return false;
 	}
 	return true;
-}
-
-//------------------------------------------------------------------
-/// Free function, calls PolylineBase<PLT,FPT>::isConvex()
-template<typename PLT,typename FPT>
-bool
-isConvex( const PolylineBase<PLT,FPT>& poly )
-{
-	return poly.isConvex();
 }
 
 //------------------------------------------------------------------
@@ -6505,6 +6488,15 @@ bool
 isPolygon( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.isPolygon();
+}
+
+/// Returns true if polygon is convex (free function)
+/// \sa PolylineBase::isConvex()
+template<typename PLT,typename FPT>
+bool
+isConvex( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return poly.isConvex();
 }
 
 /// Returns the number of segments (free function)
