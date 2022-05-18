@@ -1085,7 +1085,7 @@ void action_CH( void* param )
 void demo_CH( int nd )
 {
 	Param_CH data ( "Convex Hull demo" );
-	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove" );
+	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
 	data.leftClicAddPoint=true;
 
