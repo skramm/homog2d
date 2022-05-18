@@ -112,7 +112,7 @@ See https://github.com/skramm/homog2d
 		throw std::runtime_error( oss.str() ); \
 	}
 
-/// Error throw wrapper macro, first arg in the function name
+/// Error throw wrapper macro, first arg is the function name
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
 
@@ -1587,7 +1587,8 @@ public:
 
 	FRect_<T> get() const
 	{
-		assert( _success );
+		if( !_success );
+			HOMOG2D_THROW_ERROR_1( "unable, no intersection between the two rectangles" );
 		return _area;
 	}
 };
