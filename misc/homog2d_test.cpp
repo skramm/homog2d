@@ -2412,19 +2412,24 @@ TEST_CASE( "Polygon convexity", "[polyline-convex]" )
 	CHECK( !plo.isConvex() );  // empty !!
 	CHECK( !plc.isConvex() );
 
-	plo.set( std::vector<Point2d>{ {0,0}, {2,0} };
-	plc.set( std::vector<Point2d>{ {0,0}, {2,0} };
+	plo.set( std::vector<Point2d>{ {0,0}, {2,0} } );
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0} } );
 	CHECK( !plo.isConvex() );  // 2 pts are fine, but not convex
 	CHECK( !plc.isConvex() );
 
-	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } )
-	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } )
-	CHECK( !plo.isConvex() );  // 3 pts ok, bu open Polyline never convex
+	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } );
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } );
+	CHECK( !plo.isConvex() );  // 3 pts ok, but open Polyline never convex
 	CHECK( plc.isConvex() );
 
 	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {0,2} } );
 	CHECK( plc.isConvex() );
 	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {1,1}, {2,2}, {0,2} } );
+	CHECK( !plc.isConvex() );
+
+	plc.set( std::vector<Point2d>{ {2,2}, {2,-2}, {-2,-2}, {-2,2} } );
+	CHECK( plc.isConvex() );
+	plc.set( std::vector<Point2d>{ {2,2}, {2,-2}, {1,1}, {-2,2} } );
 	CHECK( !plc.isConvex() );
 }
 

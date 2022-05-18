@@ -4279,7 +4279,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& )
 }
 
 //------------------------------------------------------------------
-/// Returns true if polygon is convex (20220517: WIP !!!)
+/// Returns true if polygon is convex
 /**
 This implies that:
  - the Polyline is a Polygon
@@ -4292,18 +4292,17 @@ PolylineBase<PLT,FPT>::isConvex() const
 {
 	if( !isPolygon() )
 		return false;
-//#if 0
+
 	int8_t sign = 0;
 	const auto& vpts = getPts();
 	if( vpts.size() == 3 )   // 3 pts => always convex
 		return true;
-	std::cout << "\n**isConvex(), #=" << vpts.size() << '\n';
 
-	for( size_t i=0; i<vpts.size()-1; i++ )
+	for( size_t i=0; i<vpts.size(); i++ )
 	{
-		const auto& pt0 = vpts[(i==0?vpts.size()-1:i-1)];
-		const auto& pt1 = vpts[i];
-		const auto& pt2 = vpts[i+1];
+		const auto& pt0 = vpts[ i==0?vpts.size()-1:i-1 ];
+		const auto& pt1 = vpts[ i ];
+		const auto& pt2 = vpts[ i==vpts.size()-1?0:i+1 ];
 		auto dx1 = pt1.getX() - pt0.getX();
 		auto dy1 = pt1.getY() - pt0.getY();
 
@@ -4311,9 +4310,6 @@ PolylineBase<PLT,FPT>::isConvex() const
 		auto dy2 = pt2.getY() - pt1.getY();
 
 		auto crossproduct = dx1*dy2 - dy1*dx2;
-		std::cout << i << ": cp=" << crossproduct  << " sign=" << (crossproduct>0 ? +1 : -1) // << '\n'
-			<< "\n-pt0=" << pt0 << "\n-pt1=" << pt1 << "\n-pt2=" << pt2 << '\n';
-
 		if( sign == 0 )                          // initial sign value
 			sign = crossproduct>0 ? +1 : -1;
 		else
@@ -4321,9 +4317,7 @@ PolylineBase<PLT,FPT>::isConvex() const
 				return false;
 	}
 	return true;
-//#endif
 }
-
 
 //------------------------------------------------------------------
 /// Returns length
