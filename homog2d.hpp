@@ -4290,17 +4290,20 @@ template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isConvex() const
 {
-//	if( isPolygon() )
+	if( !isPolygon() )
 		return false;
-#if 0
-
+//#if 0
 	int8_t sign = 0;
 	const auto& vpts = getPts();
-	for( size_t i=0; i<vpts.size()-2; i++ )
+	if( vpts.size() == 3 )   // 3 pts => always convex
+		return true;
+	std::cout << "\n**isConvex(), #=" << vpts.size() << '\n';
+
+	for( size_t i=0; i<vpts.size()-1; i++ )
 	{
-		const auto& pt0 = vpts[i];
-		const auto& pt1 = vpts[i+1];
-		const auto& pt2 = vpts[i+2];
+		const auto& pt0 = vpts[(i==0?vpts.size()-1:i-1)];
+		const auto& pt1 = vpts[i];
+		const auto& pt2 = vpts[i+1];
 		auto dx1 = pt1.getX() - pt0.getX();
 		auto dy1 = pt1.getY() - pt0.getY();
 
@@ -4308,6 +4311,9 @@ PolylineBase<PLT,FPT>::isConvex() const
 		auto dy2 = pt2.getY() - pt1.getY();
 
 		auto crossproduct = dx1*dy2 - dy1*dx2;
+		std::cout << i << ": cp=" << crossproduct  << " sign=" << (crossproduct>0 ? +1 : -1) // << '\n'
+			<< "\n-pt0=" << pt0 << "\n-pt1=" << pt1 << "\n-pt2=" << pt2 << '\n';
+
 		if( sign == 0 )                          // initial sign value
 			sign = crossproduct>0 ? +1 : -1;
 		else
@@ -4315,7 +4321,7 @@ PolylineBase<PLT,FPT>::isConvex() const
 				return false;
 	}
 	return true;
-#endif
+//#endif
 }
 
 

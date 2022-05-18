@@ -2405,6 +2405,29 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 }
 
+TEST_CASE( "Polygon convexity", "[polyline-convex]" )
+{
+	OPolyline_<NUMTYPE> plo;
+	CPolyline_<NUMTYPE> plc;
+	CHECK( !plo.isConvex() );  // empty !!
+	CHECK( !plc.isConvex() );
+
+	plo.set( std::vector<Point2d>{ {0,0}, {2,0} };
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0} };
+	CHECK( !plo.isConvex() );  // 2 pts are fine, but not convex
+	CHECK( !plc.isConvex() );
+
+	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } )
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1} } )
+	CHECK( !plo.isConvex() );  // 3 pts ok, bu open Polyline never convex
+	CHECK( plc.isConvex() );
+
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {0,2} } );
+	CHECK( plc.isConvex() );
+	plc.set( std::vector<Point2d>{ {0,0}, {2,0}, {1,1}, {2,2}, {0,2} } );
+	CHECK( !plc.isConvex() );
+}
+
 TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 {
 	{
