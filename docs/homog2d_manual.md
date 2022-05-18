@@ -539,7 +539,7 @@ If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
 // ... set points
-if( pl.isPolygon() ) {
+if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
@@ -552,7 +552,7 @@ For closed types, you can determine its convexity:
 CPolyline plo;
 OPolyline plc;
 // ... set points
-if( plc.isConvex() ) {
+if( plc.isConvex() ) {  // or : if( isConvex(plc) )  (free function)
 	std::cout << pl.isConvex() ? "is convex\n" : "is NOT convex\n";
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```

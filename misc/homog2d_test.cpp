@@ -2412,6 +2412,9 @@ TEST_CASE( "Polygon convexity", "[polyline-convex]" )
 	CHECK( !plo.isConvex() );  // empty !!
 	CHECK( !plc.isConvex() );
 
+	CHECK( !isConvex(plc) ); // free function call
+	CHECK( !isConvex(plo) );
+
 	plo.set( std::vector<Point2d>{ {0,0}, {2,0} } );
 	plc.set( std::vector<Point2d>{ {0,0}, {2,0} } );
 	CHECK( !plo.isConvex() );  // 2 pts are fine, but not convex

@@ -21,6 +21,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added arguments to abstract `img::clear()`, and added `img::Color` data type
   - moved base classes from main namespace to sub-namespace
   - cleaned out segment/line, segment/segment, segment/circle intersection code
+  - added convexity test for `Polyline_` types.
 
 - [v2.6](https://github.com/skramm/homog2d/releases/tag/v2.6), released on 2021-12-21
   - added threshold as default argument to `Ellipse::isCircle()`
