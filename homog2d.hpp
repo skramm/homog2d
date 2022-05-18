@@ -4277,9 +4277,17 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& )
 	}
 	return _attribs._isPolygon.value();
 }
+//------------------------------------------------------------------
+/// Free function, calls PolylineBase<PLT,FPT>::isPolygon()
+template<typename PLT,typename FPT>
+bool
+isPolygon( const PolylineBase<PLT,FPT>& poly )
+{
+	return poly.isPolygon();
+}
 
 //------------------------------------------------------------------
-/// Returns true if polygon is convex (20220517: WIP !!!)
+/// Returns true if polygon is convex
 /**
 This implies that:
  - the Polyline is a Polygon
@@ -4290,17 +4298,19 @@ template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isConvex() const
 {
-//	if( isPolygon() )
+	if( !isPolygon() )
 		return false;
-#if 0
 
 	int8_t sign = 0;
 	const auto& vpts = getPts();
-	for( size_t i=0; i<vpts.size()-2; i++ )
+	if( vpts.size() == 3 )   // 3 pts => always convex
+		return true;
+
+	for( size_t i=0; i<vpts.size(); i++ )
 	{
-		const auto& pt0 = vpts[i];
-		const auto& pt1 = vpts[i+1];
-		const auto& pt2 = vpts[i+2];
+		const auto& pt0 = vpts[ i==0?vpts.size()-1:i-1 ];
+		const auto& pt1 = vpts[ i ];
+		const auto& pt2 = vpts[ i==vpts.size()-1?0:i+1 ];
 		auto dx1 = pt1.getX() - pt0.getX();
 		auto dy1 = pt1.getY() - pt0.getY();
 
@@ -4315,9 +4325,16 @@ PolylineBase<PLT,FPT>::isConvex() const
 				return false;
 	}
 	return true;
-#endif
 }
 
+//------------------------------------------------------------------
+/// Free function, calls PolylineBase<PLT,FPT>::isConvex()
+template<typename PLT,typename FPT>
+bool
+isConvex( const PolylineBase<PLT,FPT>& poly )
+{
+	return poly.isConvex();
+}
 
 //------------------------------------------------------------------
 /// Returns length

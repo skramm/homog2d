@@ -534,13 +534,12 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
 // ... set points
-if( pl.isPolygon() ) {
+if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
@@ -548,6 +547,15 @@ if( pl.isPolygon() ) {
 
 Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the the `centroid()` function will throw.
 
+For closed types, you can determine its convexity:
+```C++
+CPolyline plo;
+OPolyline plc;
+// ... set points
+if( plc.isConvex() ) {  // or : if( isConvex(plc) )  (free function)
+	std::cout << pl.isConvex() ? "is convex\n" : "is NOT convex\n";
+assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
+```
 
 #### Comparison of Polyline objects
 
@@ -1361,6 +1369,16 @@ type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYP
 The test target also attempts to build the files in the folder `misc/no_build`.
 These demonstrate some code that should NOT build, thus Make will fail if any of these does build.
 This is just to make sure that some invalid code does, indeed, not build.
+
+**Timing**
+Using the Catch library has a small drawkback: build time is pretty long (but will succeed!).
+For example:
+```
+$ time make test -j2
+real   0m41,986s
+user   1m21,940s
+sys    0m1,699s
+```
 
 ### 9.2 - Build options
 <a name="build_options"></a>
