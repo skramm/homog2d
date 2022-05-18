@@ -42,7 +42,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.62
+#define HOMOG2D_VERSION 2.7
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -1872,8 +1872,8 @@ s0 |      | s2
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
 		HOMOG2D_START;
-		if( *this == rect )
-			return detail::IntersectM<FPT>();
+		if( *this == rect )                    // if rectangles are the same,
+			return detail::IntersectM<FPT>();  // no intersection
 		return p_intersects_R_C( rect );
 	}
 ///@}
@@ -2738,7 +2738,8 @@ public:
 	}
 
 /// Line/Circle intersection
-/** <br>The Sfinae below is needed to avoid ambiguity with the other 2 args function (with 2 points defining a FRect, see above) */
+/** <br>The Sfinae below is needed to avoid ambiguity with the other 2 args "intersects()" function
+(with 2 points defining a FRect, see above) */
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2751,6 +2752,7 @@ public:
 		HOMOG2D_START;
 		return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 	}
+
 /// Line/Circle intersection
 	template<typename T>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
@@ -2758,6 +2760,7 @@ public:
 		HOMOG2D_START;
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
+
 /// Line/Polyline intersection
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const

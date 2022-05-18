@@ -74,9 +74,9 @@ Q: Why do yo use (Gnu)Make as build tool (and not CMake or another fancy thing)?
 </dt>
 <dd>
 Because:<br>
-1. it is really powerful<br>
-2. there is no need for more<br>
-3. I like it
+ 1. it is really powerful<br>
+ 2. there is no need for more<br>
+ 3. I like it
 
 (Actually, I have the feeling that most people criticizing that tool never really understood how it works.)
 
