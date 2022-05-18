@@ -1036,8 +1036,6 @@ CPolyline pl( vec );
 auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
-This is also available as a member function:
-
 
 
 **Extracting data from sets/containers of primitives**

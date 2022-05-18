@@ -1587,7 +1587,7 @@ public:
 
 	FRect_<T> get() const
 	{
-		if( !_success );
+		if( !_success )
 			HOMOG2D_THROW_ERROR_1( "unable, no intersection between the two rectangles" );
 		return _area;
 	}
