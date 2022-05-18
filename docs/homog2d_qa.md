@@ -69,6 +69,20 @@ This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/) or ot
 But writing a binding for other libraries shouldn't be too difficult, assuming they have these.
 </dd>
 
+<dt>
+Q: Why do yo use (Gnu)Make as a build tool?
+</dt>
+<dd>
+Because
+ 1- it is really powerful
+ 2- there is no need for more
+ 3- I like it
+
+I have the feeling that most people criticizing that tool never really understood how it works.
+
+BTW, the library end-user doesn't need to use it. As this is a "header-only" lib, he can use the tool he wants.
+</dd>
+
 
 </dl>
 
