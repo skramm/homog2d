@@ -29,7 +29,7 @@
 #include "opencv2/highgui.hpp"
 
 using namespace h2d;
-using namespace h2d::img;
+//using namespace h2d::img;
 
 /// General data struct used in demos
 struct Data
@@ -92,26 +92,26 @@ struct Data
 		for( int i=0; i<nbPts(); i++ )
 		{
 			if( selected == i )
-				vpt[i].draw( img, DrawParams().setColor( 250, 0, 150).setPointStyle( (PtStyle)i).selectPoint() );
+				vpt[i].draw( img, img::DrawParams().setColor( 250, 0, 150).setPointStyle( (img::PtStyle)i).selectPoint() );
 			else
-				vpt[i].draw( img, DrawParams().setPointStyle((PtStyle)i) );
+				vpt[i].draw( img, img::DrawParams().setPointStyle((img::PtStyle)i) );
 		}
 		Line2d lA( vpt[0], vpt[2] );
 		Line2d lB( vpt[0], vpt[3] );
 		Line2d lC( vpt[1], vpt[2] );
 		Line2d lD( vpt[1], vpt[3] );
 
-		DrawParams dp;
+		img::DrawParams dp;
 		dp.setColor(  250,  50, 100) ;
 		lA.draw( img, dp );
 		lB.draw( img, dp );
 		lC.draw( img, dp );
 		lD.draw( img, dp );
 		auto rect = getBB( vpt );
-		rect.draw( img, DrawParams().setColor(0,250,0) );
+		rect.draw( img, img::DrawParams().setColor(0,250,0) );
 
 		auto cbb = rect.getBoundingCircle();
-		cbb.draw( img,  DrawParams().setColor( 0,0,250) );
+		cbb.draw( img, img::DrawParams().setColor( 0,0,250) );
 	}
 };
 
@@ -147,7 +147,7 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, void*
 			if( data.selected != -1 )
 			{
 				data.vpt[data.selected] = data.pt_mouse;
-				data.vpt[data.selected].draw( data.img, DrawParams().selectPoint() );
+				data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
 			}
 		break;
 
@@ -371,7 +371,7 @@ void action_1( void* param )
 	auto p_lines_o = l_mouse_o.getParallelLines( 10 );
 
 
-	DrawParams dp;
+	img::DrawParams dp;
 	dp.setColor(100,250,100);
 	p_lines.first.draw(  data.img, dp );
 	p_lines.second.draw( data.img, dp );
@@ -491,19 +491,19 @@ void action_C( void* param )
 	Circle c1( data.vpt[0], data.radius );
 	Circle c2( data.vpt[1], 100 );
 
-	DrawParams dpc2;
+	img::DrawParams dpc2;
 	dpc2.setColor(150,0,150);
 	if( c2.isInside( c1 ) )
 		dpc2.setColor(250,100,0);
 	c2.draw( data.img, dpc2 );
 
-	DrawParams dp;
+	img::DrawParams dp;
 	dp.setColor(150,0,150);
 	if( data.rect.isInside( c1 ) )
 		dp.setColor(250,100,0);
 	data.rect.draw( data.img, dp );
 
-	DrawParams dpc1;
+	img::DrawParams dpc1;
 	dpc1.setColor(0,250,0);
 	if( c1.isInside( data.rect ) )
 		dpc1.setColor(250,100,0);
@@ -511,21 +511,21 @@ void action_C( void* param )
 		dpc1.setColor(250,100,0);
 	c1.draw( data.img, dpc1 );
 
-	data.pt_mouse.draw( data.img, DrawParams().setColor(250,50,20) );
+	data.pt_mouse.draw( data.img, img::DrawParams().setColor(250,50,20) );
 
 // circle - circle intersections
 	auto cci = c1.intersects( c2 );
 	if( cci() )
-		draw( data.img, cci.get(), DrawParams().setColor(0,150,0).setPointStyle(PtStyle::Diam) );
+		draw( data.img, cci.get(), img::DrawParams().setColor(0,150,0).setPointStyle(img::PtStyle::Diam) );
 
 
 // circle - rectangle intersections
 	auto cr1 = c1.intersects( data.rect );
 	auto cr2 = c2.intersects( data.rect );
 	if( cr1() )
-		draw( data.img, cr1.get(), DrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+		draw( data.img, cr1.get(), img::DrawParams().setColor(0,20,220).setPointStyle(img::PtStyle::Diam) );
 	if( cr2() )
-		draw( data.img, cr2.get(), DrawParams().setColor(0,20,220).setPointStyle(PtStyle::Diam) );
+		draw( data.img, cr2.get(), img::DrawParams().setColor(0,20,220).setPointStyle(img::PtStyle::Diam) );
 
 // circle - lines intersections
 	for( size_t i=0; i<data.li.size(); i++ )
@@ -534,16 +534,16 @@ void action_C( void* param )
 		if( ri() )
 		{
 			auto inter = ri.get();
-			inter.first.draw(  data.img, DrawParams().setColor(250, 0, 0) );
-			inter.second.draw( data.img, DrawParams().setColor(250, 0, 0) );
+			inter.first.draw(  data.img, img::DrawParams().setColor(250, 0, 0) );
+			inter.second.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 		}
 	}
 
 	auto seg = getSegment( c1, c2 );
-	seg.draw( data.img, DrawParams().setColor(250, 0, 0) );
+	seg.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );
-	pseg.first.draw(  data.img, DrawParams().setColor(250, 250, 0) );
-	pseg.second.draw( data.img, DrawParams().setColor(0, 250, 250) );
+	pseg.first.draw(  data.img, img::DrawParams().setColor(250, 250, 0) );
+	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
 	data.showImage();
 }
 
@@ -587,14 +587,14 @@ void action_SI( void* param )
 	data.seg1.set( data.vpt[0], data.vpt[1] );
 	data.seg2.set( data.vpt[2], data.vpt[3] );
 
-	data.seg1.draw( data.img, DrawParams().setColor( 0,0,250).setThickness(2) );
-	data.seg2.draw( data.img, DrawParams().setColor( 250,0,0).setThickness(2) );
-	data.seg1.getLine().draw( data.img, DrawParams().setColor( 100,100,100) );
-	data.seg2.getLine().draw( data.img, DrawParams().setColor( 100,100,100) );
+	data.seg1.draw( data.img, img::DrawParams().setColor( 0,0,250).setThickness(2) );
+	data.seg2.draw( data.img, img::DrawParams().setColor( 250,0,0).setThickness(2) );
+	data.seg1.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
+	data.seg2.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
 	draw( data.img, data.vpt );
 
 	if( data.selected != -1 )
-		data.vpt[data.selected].draw( data.img, DrawParams().selectPoint() );
+		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
 
 	auto inters = data.seg1.intersects( data.seg2 );
 	if( inters() ) //&& g_data.selected != -1 )
@@ -602,10 +602,10 @@ void action_SI( void* param )
 		auto pti = inters.get();
 		pti.draw( data.img );
 		Line2d l1 = data.seg1.getLine().getOrthogonalLine( pti );
-		l1.draw( data.img, DrawParams().setColor( 0,0,100) );
+		l1.draw( data.img, img::DrawParams().setColor( 0,0,100) );
 
 		Line2d l2 = data.seg2.getLine().getOrthogonalLine( pti );
-		l2.draw( data.img, DrawParams().setColor( 100,0,0) );
+		l2.draw( data.img, img::DrawParams().setColor( 100,0,0) );
 	}
 
 	Line2d li2( Point2d(350,120),Point2d(20,50));
@@ -613,7 +613,7 @@ void action_SI( void* param )
 	auto inters2 = data.seg1.intersects( li2 );
 	if( inters2() )
 	{
-		 inters2.get().draw( data.img, DrawParams().setPointStyle(PtStyle::Diam).setColor( 250,0,0));
+		 inters2.get().draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam).setColor( 250,0,0));
 	}
 	data.showImage();
 }
@@ -658,15 +658,16 @@ void action_6( void* param )
 	Line2d l1( data.vpt[0], data.vpt[1] );
 	Line2d l2 = H*l1;
 
-	l1.draw( data.img, DrawParams().setColor( 250,0,0) );
-	l2.draw( data.img, DrawParams().setColor( 0,250,0) );
+	auto dpar = img::DrawParams();
+	l1.draw( data.img, dpar.setColor( 250,0,0) );
+	l2.draw( data.img, dpar.setColor( 0,250,0) );
 
 	Segment s1( data.vpt[2], data.vpt[3] );
 	Segment s2 = H*s1;
-	s1.draw( data.img, DrawParams().setColor( 0,0,250) );
-	s2.draw( data.img, DrawParams().setColor( 250,250,0) );
-	s1.getPts().first.draw( data.img, DrawParams().selectPoint() );
-	s1.getPts().second.draw( data.img, DrawParams().selectPoint() );
+	s1.draw( data.img, dpar.setColor( 0,0,250) );
+	s2.draw( data.img, dpar.setColor( 250,250,0) );
+	s1.getPts().first.draw( data.img, dpar.selectPoint() );
+	s1.getPts().second.draw( data.img, dpar.selectPoint() );
 }
 
 void demo_6( int nd )
@@ -739,10 +740,10 @@ void action_H( void* param )
 	{
 		Segment s1( v1[i], v1[i==3?0:i+1] );
 		Segment s2( v2[i], v2[i==3?0:i+1] );
-		s1.draw( data.img, DrawParams().setColor( 0,0,250) );
-		s2.draw( data.img, DrawParams().setColor( 250,0,0) );
+		s1.draw( data.img, img::DrawParams().setColor( 0,0,250) );
+		s2.draw( data.img, img::DrawParams().setColor( 250,0,0) );
 
-		s1.draw( data.img2, DrawParams().setColor( 0,0,250) );
+		s1.draw( data.img2, img::DrawParams().setColor( 0,0,250) );
 
 		Segment( v1[i], v2[i] ).draw( data.img );
 
@@ -763,8 +764,8 @@ void action_H( void* param )
 	Segment sa1( vseg[0], vseg[1] );
 	Segment sb1( vseg[2], vseg[3] );
 
-	sa1.draw( data.img, DrawParams().setColor( 0,100,100) );
-	sb1.draw( data.img, DrawParams().setColor( 0,100,100) );
+	sa1.draw( data.img, img::DrawParams().setColor( 0,100,100) );
+	sb1.draw( data.img, img::DrawParams().setColor( 0,100,100) );
 
 	cv::putText( data.img.getReal(), "source points", cv::Point2i( v1[0].getX(), v1[0].getY() ), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 	cv::putText( data.img.getReal(), "dest points",   cv::Point2i( v2[0].getX(), v2[0].getY() ), 0, 0.8, cv::Scalar( 0,0,250 ), 2 );
@@ -780,15 +781,15 @@ void action_H( void* param )
 	for( int i=0; i<4; i++ )
 	{
 		Segment s1( vpt3[i], vpt3[i==3?0:i+1] );
-		s1.draw( data.img2, DrawParams().setColor( 0,250,0) );
+		s1.draw( data.img2, img::DrawParams().setColor( 0,250,0) );
 	}
 
 	auto vsegH  = H * vseg;
 	Segment sa2( vsegH[0], vsegH[1] );
 	Segment sb2( vsegH[2], vsegH[3] );
 
-	sa2.draw( data.img2, DrawParams().setColor( 0,100,100) );
-	sb2.draw( data.img2, DrawParams().setColor( 0,100,100) );
+	sa2.draw( data.img2, img::DrawParams().setColor( 0,100,100) );
+	sb2.draw( data.img2, img::DrawParams().setColor( 0,100,100) );
 
 
 	FRect rect( Point2d(200,160), Point2d(330,250));
@@ -864,9 +865,9 @@ void action_PL( void* param )
 	data.polyline_o.set( data.vpt );
 	data.polyline_c.set( data.vpt );
 
-	auto color = DrawParams().setColor( 0,10,200);
+	auto color = img::DrawParams().setColor( 0,10,200);
 	if( data.polyline_c.isPolygon() )
-		color = DrawParams().setColor( 250,10,20);
+		color = img::DrawParams().setColor( 250,10,20);
 
 	auto len = data.showClosedPoly ? data.polyline_c.length() : data.polyline_o.length();
 	if( data.showClosedPoly )
@@ -874,7 +875,7 @@ void action_PL( void* param )
 	else
 		data.polyline_o.draw( data.img, color );
 
-	auto col_green = DrawParams().setColor(10,250,10);
+	auto col_green = img::DrawParams().setColor(10,250,10);
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img, col_green );
 
@@ -931,7 +932,7 @@ void action_PL( void* param )
 	if( data.showClosedPoly && data.polyline_c.isPolygon() )
 	{
 		auto centroid = data.polyline_c.centroid();
-		centroid.draw( data.img, DrawParams().setColor(40,20,250) );
+		centroid.draw( data.img, img::DrawParams().setColor(40,20,250) );
 		cv::putText(
 			data.img.getReal(),
 			"centroid",
@@ -996,10 +997,10 @@ struct Param_ELL : Data
 		ell2.draw( img );
 
 		auto bb1 = ell2.getOBB();
-		bb1.draw( img, DrawParams().setColor(0,0,250) );
+		bb1.draw( img, img::DrawParams().setColor(0,0,250) );
 
 		auto bb2 = ell2.getBB();
-		bb2.draw( img, DrawParams().setColor(0,250,0) );
+		bb2.draw( img, img::DrawParams().setColor(0,250,0) );
 
 		auto axis = ell2.getAxisLines();
 		h2d::draw( img, axis );
@@ -1055,7 +1056,7 @@ struct Param_CIR : Data
 {
 	explicit Param_CIR( std::string title ): Data(title)
 	{
-		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400} };
+		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,200} };
 	}
 	void setCircleFromPoints()
 	{
@@ -1069,20 +1070,24 @@ void action_CIR( void* param )
 	auto& data = *reinterpret_cast<Param_CIR*>(param);
 	data.setCircleFromPoints();
 	data.clearImage();
+	data.cir.set( 150,120,40);
+//	Circle cc( 150,120,40);
 
 	data.cir.draw (data.img);
+	h2d::draw( data.img, data.vpt );
+	data.showImage();
 }
 
 void demo_CIR( int nd )
 {
 	Param_CIR data ( "Circle demo" );
-	std::cout << "Demo " << nd << ": Circle from 3 points\n";
+	std::cout << "Demo " << nd << ": Compute circle from 3 points\nMove points to show the circle\n";
 	action_CIR( &data );
-	data.leftClicAddPoint=true;
 
 	data.setMouseCallback( mouse_CB_CIR );
 
 	KeyboardLoop kbloop;
+	kbloop.addCommonAction( action_CIR );
 	kbloop.start( data );
 }
 
@@ -1116,9 +1121,9 @@ void action_CH( void* param )
 
 	auto func = [&](int i)   // lambda, needed to fetch color from index
 		{
-			return DrawParams().setColor(data.vcol[i]);
+			return img::DrawParams().setColor(data.vcol[i]);
 		};
-	std::function<DrawParams(int)> f(func);
+	std::function<img::DrawParams(int)> f(func);
 
 	draw( data.img, vlines, f );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
@@ -1193,9 +1198,9 @@ void action_SEG( void* param )
 
 	auto func = [&](int i)   // lambda, needed to fetch color from index
 		{
-			return DrawParams().showIndex(data.showIndexes).setColor(data.vcol[i]);
+			return img::DrawParams().showIndex(data.showIndexes).setColor(data.vcol[i]);
 		};
-	std::function<DrawParams(int)> f(func);
+	std::function<img::DrawParams(int)> f(func);
 	draw( data.img, data.vseg, f );
 
 	if( data.showIntersection )
@@ -1210,7 +1215,7 @@ void action_SEG( void* param )
 				auto pi = s1.intersects( s2 );
 				if( pi() )
 				{
-					draw( data.img, pi.get(), DrawParams().setColor( 250,0,0) );
+					draw( data.img, pi.get(), img::DrawParams().setColor( 250,0,0) );
 					c_intersect++;
 				}
 			}
@@ -1220,7 +1225,7 @@ void action_SEG( void* param )
 	if( data.showMiddlePoint )
 	{
 		for( const auto& seg: data.vseg )
-			seg.getMiddlePoint().draw( data.img, DrawParams().setColor( 0,0,250) );
+			seg.getMiddlePoint().draw( data.img, img::DrawParams().setColor( 0,0,250) );
 	}
 	data.showImage();
 }

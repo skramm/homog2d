@@ -42,7 +42,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.7
+#define HOMOG2D_VERSION 2.71
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -1989,17 +1989,36 @@ public:
 #endif
 	}
 
-/// Constructor 4: x, y, radius
-	template<typename T1, typename T2>
-	Circle_( T1 x, T1 y, T2 rad )
+/// Constructor 4 (3 floating-point args): x, y, radius
+/**
+We need Sfinae because there is another 3-args constructor (circle from 3 points)
+*/
+//	template<typename T1, typename T2>
+	template<
+		typename T,
+		typename std::enable_if<
+			(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
+			,T
+		>::type* = nullptr
+	>
+	Circle_( T x, T y, T rad )
 		: Circle_( Point2d_<FPT>(x,y), rad )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T1);
-		HOMOG2D_CHECK_IS_NUMBER(T2);
+		HOMOG2D_CHECK_IS_NUMBER(T);
+//		HOMOG2D_CHECK_IS_NUMBER(T2);
 	}
 
-/// Constructor 5: 3 points
-	template<typename PT>
+/// Constructor 5: builds a circle from 3 points
+/**
+We need Sfinae because there is another 3-args constructor (x, y, radius as floating point values)
+*/
+	template<
+		typename PT,
+		typename std::enable_if<
+			!std::is_arithmetic<PT>::value
+			,PT
+		>::type* = nullptr
+	>
 	Circle_( const PT& pt1, const PT& pt2, const PT& pt3 )
 	{
 		set( pt1, pt2, pt3 );
@@ -2036,12 +2055,10 @@ public:
 		Circle_<FPT> c( center, rad );
 		std::swap( c, *this ); /// \todo 20211216: replace with move
 	}
-	template<typename FPT2,typename FPT3>
-	void set( FPT2 x, FPT2 y, FPT3 rad )
-	{
-		Circle_<FPT> c( x, y, rad );
-		std::swap( c, *this ); /// \todo 20211216: replace with move
-	}
+
+	template<typename FPT2>//,typename FPT3>
+	void set( FPT2 x, FPT2 y, FPT2 rad );
+
 	template<typename PT>
 	void set( const PT& pt1, const PT& pt2, const PT& pt3 );
 
@@ -2161,12 +2178,35 @@ public:
 }; // class Circle_
 
 //------------------------------------------------------------------
-/// Create circle from 3 points
+/// Set circle from 3 values (x0,y0,radius)
+template<typename FPT>
+template<
+	typename FPT2,
+	typename std::enable_if<
+		std::is_arithmetic<FPT2>::value
+		,FPT2
+	>::type* = nullptr
+>
+void
+Circle_<FPT>::set( FPT2 x, FPT2 y, FPT2 rad )
+{
+	Circle_<FPT> c( x, y, rad );
+	std::swap( c, *this ); /// \todo 20211216: replace with move
+}
+
+//------------------------------------------------------------------
+/// Set circle from 3 points
 /**
 \warning Not sure this will not suffer from numerical instability
 */
 template<typename FPT>
-template<typename PT>
+template<
+	typename PT,
+	typename std::enable_if<
+		!std::is_arithmetic<PT>::value
+		,PT
+	>::type* = nullptr
+>
 void
 Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 {
@@ -2188,9 +2228,19 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 	auto sy12 = y1*y1 - y2*y2;
 	auto sy13 = y1*y1 - y3*y3;
 
+	auto B1 = (sx12 + sy12) * dx13 - ( sx13 + sy13 ) * dx12;
+	auto B2 = dy13 * dx12 - dy12 * dx13;
+	auto B = B1 / B2;
+	auto y0 = - B / 2.0;
 
+	auto Am = ( sx12 + sy12 + B * dy12 ) / dx12;
+	auto x0 = Am / 2.0;
+
+	_center.set( x0, y0 );
+
+	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
+	_radius = std::sqrt( x0*x0 + y0*y0 + C );
 }
-
 
 //------------------------------------------------------------------
 /// Return circle passing through 4 points of flat rectangle
@@ -2789,7 +2839,8 @@ public:
 			,T
 		>::type* = nullptr
 	>
-	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT>& pt0, T radius ) const
+	detail::Intersect<detail::Inters_2,FPT>
+	intersects( const Point2d_<FPT>& pt0, T radius ) const
 	{
 		HOMOG2D_START;
 		return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
