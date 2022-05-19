@@ -42,7 +42,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.62
+#define HOMOG2D_VERSION 2.7
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -112,7 +112,7 @@ See https://github.com/skramm/homog2d
 		throw std::runtime_error( oss.str() ); \
 	}
 
-/// Error throw wrapper macro, first arg in the function name
+/// Error throw wrapper macro, first arg is the function name
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
 
@@ -1587,7 +1587,8 @@ public:
 
 	FRect_<T> get() const
 	{
-		assert( _success );
+		if( !_success )
+			HOMOG2D_THROW_ERROR_1( "unable, no intersection between the two rectangles" );
 		return _area;
 	}
 };
@@ -1872,8 +1873,8 @@ s0 |      | s2
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
 		HOMOG2D_START;
-		if( *this == rect )
-			return detail::IntersectM<FPT>();
+		if( *this == rect )                    // if rectangles are the same,
+			return detail::IntersectM<FPT>();  // no intersection
 		return p_intersects_R_C( rect );
 	}
 ///@}
@@ -2738,7 +2739,8 @@ public:
 	}
 
 /// Line/Circle intersection
-/** <br>The Sfinae below is needed to avoid ambiguity with the other 2 args function (with 2 points defining a FRect, see above) */
+/** <br>The Sfinae below is needed to avoid ambiguity with the other 2 args "intersects()" function
+(with 2 points defining a FRect, see above) */
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2751,6 +2753,7 @@ public:
 		HOMOG2D_START;
 		return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 	}
+
 /// Line/Circle intersection
 	template<typename T>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
@@ -2758,6 +2761,7 @@ public:
 		HOMOG2D_START;
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
+
 /// Line/Polyline intersection
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
@@ -4279,7 +4283,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& )
 }
 
 //------------------------------------------------------------------
-/// Returns true if polygon is convex (20220517: WIP !!!)
+/// Returns true if polygon is convex
 /**
 This implies that:
  - the Polyline is a Polygon
@@ -4290,17 +4294,19 @@ template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isConvex() const
 {
-//	if( isPolygon() )
+	if( !isPolygon() )
 		return false;
-#if 0
 
 	int8_t sign = 0;
 	const auto& vpts = getPts();
-	for( size_t i=0; i<vpts.size()-2; i++ )
+	if( vpts.size() == 3 )   // 3 pts => always convex
+		return true;
+
+	for( size_t i=0; i<vpts.size(); i++ )
 	{
-		const auto& pt0 = vpts[i];
-		const auto& pt1 = vpts[i+1];
-		const auto& pt2 = vpts[i+2];
+		const auto& pt0 = vpts[ i==0?vpts.size()-1:i-1 ];
+		const auto& pt1 = vpts[ i ];
+		const auto& pt2 = vpts[ i==vpts.size()-1?0:i+1 ];
 		auto dx1 = pt1.getX() - pt0.getX();
 		auto dy1 = pt1.getY() - pt0.getY();
 
@@ -4315,9 +4321,7 @@ PolylineBase<PLT,FPT>::isConvex() const
 				return false;
 	}
 	return true;
-#endif
 }
-
 
 //------------------------------------------------------------------
 /// Returns length
@@ -6488,6 +6492,15 @@ bool
 isPolygon( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.isPolygon();
+}
+
+/// Returns true if polygon is convex (free function)
+/// \sa PolylineBase::isConvex()
+template<typename PLT,typename FPT>
+bool
+isConvex( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return poly.isConvex();
 }
 
 /// Returns the number of segments (free function)

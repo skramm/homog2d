@@ -38,8 +38,9 @@ int main()
 
 ### News ###
 
-- 2022-03-04: removed clang build from testsuite because of unexplained link error, should be fixed soon.
-- 2021-12-21: fresh 2.6 release: https://github.com/skramm/homog2d/releases
+- 2022-05-18: fresh 2.7 release, see https://github.com/skramm/homog2d/releases
+- 2022-03-04: removed clang build from testsuite
+- 2021-12-21: 2.6 release
 
 (see [history](docs/homog2d_history.md) for more)
 

@@ -102,6 +102,10 @@ test: pretest test2 nobuild
 
 test2: test_SY test_SN
 
+test-list: test_SY
+	@echo "Tests available:"
+	BUILD/homog2d_test_SY --list-tests
+
 pretest:
 	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
 	@echo "done target $@"
