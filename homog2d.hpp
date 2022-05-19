@@ -1998,6 +1998,13 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 	}
 
+/// Constructor 5: 3 points
+	template<typename PT>
+	Circle_( const PT& pt1, const PT& pt2, const PT& pt3 )
+	{
+		set( pt1, pt2, pt3 );
+	}
+
 /// Copy-Constructor
 	template<typename FPT2>
 	Circle_( const Circle_<FPT2>& other )
@@ -2035,6 +2042,8 @@ public:
 		Circle_<FPT> c( x, y, rad );
 		std::swap( c, *this ); /// \todo 20211216: replace with move
 	}
+	template<typename PT>
+	void set( const PT& pt1, const PT& pt2, const PT& pt3 );
 
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
@@ -2150,6 +2159,38 @@ public:
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class Circle_
+
+//------------------------------------------------------------------
+/// Create circle from 3 points
+/**
+\warning Not sure this will not suffer from numerical instability
+*/
+template<typename FPT>
+template<typename PT>
+void
+Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
+{
+	HOMOG2D_INUMTYPE x1 = pt1.getX();
+	HOMOG2D_INUMTYPE x2 = pt2.getX();
+	HOMOG2D_INUMTYPE x3 = pt3.getX();
+
+	HOMOG2D_INUMTYPE y1 = pt1.getY();
+	HOMOG2D_INUMTYPE y2 = pt2.getY();
+	HOMOG2D_INUMTYPE y3 = pt3.getY();
+
+	auto dx12 = x1 - x2;
+	auto dx13 = x1 - x3;
+	auto dy12 = y1 - y2;
+	auto dy13 = y1 - y3;
+
+	auto sx12 = x1*x1 - x2*x2;
+	auto sx13 = x1*x1 - x3*x3;
+	auto sy12 = y1*y1 - y2*y2;
+	auto sy13 = y1*y1 - y3*y3;
+
+
+}
+
 
 //------------------------------------------------------------------
 /// Return circle passing through 4 points of flat rectangle

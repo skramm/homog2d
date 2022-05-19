@@ -181,6 +181,7 @@ void action_H(   void* );
 void action_PL(  void* );
 void action_CH(  void* );
 void action_ELL( void* );
+void action_CIR( void* );
 
 //------------------------------------------------------------------
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
@@ -345,6 +346,12 @@ void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
 void mouse_CB_CH( int event, int x, int y, int /* flags */, void* param )
 {
 	checkSelected( event, x, y, action_CH, param );
+}
+
+/// Mouse callback for demo_CIR
+void mouse_CB_CIR( int event, int x, int y, int /* flags */, void* param )
+{
+	checkSelected( event, x, y, action_CIR, param );
 }
 
 //------------------------------------------------------------------
@@ -1043,6 +1050,43 @@ void demo_ELL( int nd )
 }
 
 //------------------------------------------------------------------
+/// Circle demo
+struct Param_CIR : Data
+{
+	explicit Param_CIR( std::string title ): Data(title)
+	{
+		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400} };
+	}
+	void setCircleFromPoints()
+	{
+		cir.set( vpt[0], vpt[1], vpt[2] );
+	}
+	Circle cir;
+};
+
+void action_CIR( void* param )
+{
+	auto& data = *reinterpret_cast<Param_CIR*>(param);
+	data.setCircleFromPoints();
+	data.clearImage();
+
+	data.cir.draw (data.img);
+}
+
+void demo_CIR( int nd )
+{
+	Param_CIR data ( "Circle demo" );
+	std::cout << "Demo " << nd << ": Circle from 3 points\n";
+	action_CIR( &data );
+	data.leftClicAddPoint=true;
+
+	data.setMouseCallback( mouse_CB_CIR );
+
+	KeyboardLoop kbloop;
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Convex hull demo
 struct Param_CH : Data
 {
@@ -1215,6 +1259,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_CIR,
 		demo_CH,
 		demo_SEG,
 		demo_B,
