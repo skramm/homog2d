@@ -4309,7 +4309,7 @@ PolylineBase<PLT,FPT>::isConvex() const
 
 		auto crossproduct = dx1*dy2 - dy1*dx2;
 		if( sign == 0 )                          // initial sign value
-			sign = crossproduct>0 ? +1 : -1;
+			sign = (crossproduct>0 ? +1 : -1);
 		else
 			if (sign != (crossproduct>0 ? +1 : -1) )
 				return false;
