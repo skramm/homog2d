@@ -1993,19 +1993,19 @@ public:
 /**
 We need Sfinae because there is another 3-args constructor (circle from 3 points)
 */
-//	template<typename T1, typename T2>
 	template<
-		typename T,
+		typename T1,
+		typename T2,
 		typename std::enable_if<
-			(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
-			,T
+			(std::is_arithmetic<T1>::value && !std::is_same<T1,bool>::value)
+			,T1
 		>::type* = nullptr
 	>
-	Circle_( T x, T y, T rad )
+	Circle_( T1 x, T1 y, T2 rad )
 		: Circle_( Point2d_<FPT>(x,y), rad )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
-//		HOMOG2D_CHECK_IS_NUMBER(T2);
+//		HOMOG2D_CHECK_IS_NUMBER(T1); // not needed, done by sfinae above
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 	}
 
 /// Constructor 5: builds a circle from 3 points
