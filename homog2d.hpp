@@ -2056,10 +2056,26 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		std::swap( c, *this ); /// \todo 20211216: replace with move
 	}
 
-	template<typename FPT2>//,typename FPT3>
-	void set( FPT2 x, FPT2 y, FPT2 rad );
+/// Set circle from 3 values (x0,y0,radius)
+	template<
+		typename FPT2,
+		typename std::enable_if<
+			std::is_arithmetic<FPT2>::value
+			,FPT2
+		>::type* = nullptr
+	>
+	void set( FPT2 x, FPT2 y, FPT2 rad )
+	{
+		set( Point2d_<FPT2>(x,y), rad );
+	}
 
-	template<typename PT>
+	template<
+		typename PT,
+		typename std::enable_if<
+			!std::is_arithmetic<PT>::value
+			,PT
+		>::type* = nullptr
+	>
 	void set( const PT& pt1, const PT& pt2, const PT& pt3 );
 
 	template<typename T1, typename T2>
@@ -2178,23 +2194,6 @@ public:
 }; // class Circle_
 
 //------------------------------------------------------------------
-/// Set circle from 3 values (x0,y0,radius)
-template<typename FPT>
-template<
-	typename FPT2,
-	typename std::enable_if<
-		std::is_arithmetic<FPT2>::value
-		,FPT2
-	>::type* = nullptr
->
-void
-Circle_<FPT>::set( FPT2 x, FPT2 y, FPT2 rad )
-{
-	Circle_<FPT> c( x, y, rad );
-	std::swap( c, *this ); /// \todo 20211216: replace with move
-}
-
-//------------------------------------------------------------------
 /// Set circle from 3 points
 /**
 \warning Not sure this will not suffer from numerical instability
@@ -2205,11 +2204,12 @@ template<
 	typename std::enable_if<
 		!std::is_arithmetic<PT>::value
 		,PT
-	>::type* = nullptr
+	>::type* //= nullptr
 >
 void
 Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 {
+//	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
 	HOMOG2D_INUMTYPE x1 = pt1.getX();
 	HOMOG2D_INUMTYPE x2 = pt2.getX();
 	HOMOG2D_INUMTYPE x3 = pt3.getX();
@@ -2240,6 +2240,7 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 
 	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
 	_radius = std::sqrt( x0*x0 + y0*y0 + C );
+//	std::cout << *this << '\n';
 }
 
 //------------------------------------------------------------------

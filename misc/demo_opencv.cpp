@@ -1070,7 +1070,7 @@ void action_CIR( void* param )
 	auto& data = *reinterpret_cast<Param_CIR*>(param);
 	data.setCircleFromPoints();
 	data.clearImage();
-	data.cir.set( 150,120,40);
+//	data.cir.set( 150,120,40);
 //	Circle cc( 150,120,40);
 
 	data.cir.draw (data.img);

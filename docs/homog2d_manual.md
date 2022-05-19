@@ -428,7 +428,23 @@ Creation is straightforward:
 Circle c1;                          // at (0,0), radius = 1
 Circle c2( center_point );          // radius = 1
 Circle c3( center_point, radius );
+Circle c4( x0, y0, radius );
 ```
+
+Similarly, you can assign values to an existing circle:
+```C++
+c1.set( x0, y0, radius );
+c2.set( center_pt, radius );
+```
+
+Additionnaly, you can also compute the unique circle passing through 3 points:
+```C++
+Circle c1( pt1, pt2, pt 3 );
+// or
+c1.set( pt1, pt2, pt 3 );
+```
+
+
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
