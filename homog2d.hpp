@@ -2245,6 +2245,51 @@ public:
 }; // class Circle_
 
 //------------------------------------------------------------------
+/// Helper function, used to check for colinearity of three points
+namespace priv {
+template<typename PT>
+std::array<PT,3>
+getLargestDistancePoints( const PT& pt1, const PT& pt2, const PT& pt3 )
+{
+	auto d12 = sqDist( pt1, pt2 );
+	auto d13 = sqDist( pt1, pt3 );
+	auto d23 = sqDist( pt2, pt3 );
+
+	if( d12 > d13 )
+	{
+		pB = &pt2;
+		pA = &pt3;
+		pM = &pt1;
+		if( d12 > d23 )
+			std::swap( pA, pM );
+	}
+	else
+	{
+		if( d13 > d23 )
+			{
+				pB = pt3;
+				pc = pt2;
+			}
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Returns true if the 3 points are on the same line
+/**
+*/
+template<typename FPT>
+bool
+areColinear( const Point2d_<FPT>T& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
+{
+	auto pt_arr = getLargestDistancePoints( pt1, pt2, pt3 );
+
+	auto li = pt_arr[0] * pt_arr[1];
+	if( li.distTo(pt_arr[2]) < thr::nullDistance() )
+		return false;
+	return true;
+}
+//------------------------------------------------------------------
 /// Set circle from 3 points
 /**
 \warning Not sure this will not suffer from numerical instability
@@ -2265,34 +2310,8 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 #ifndef HOMOG2D_NOCHECKS
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
-#if 0
-// check for colinearity
-	std::vector<
-	auto d12 = sqDist( pt1, pt2 );
-	auto d13 = sqDist( pt1, pt3 );
-	auto d23 = sqDist( pt2, pt3 );
-
-	struct ColinCheck
-	{
-		HOMOG2D_INUMTYPE dist;
-
-	};
-	HOMOG2D_INUMTYPE d = 0.;
-	if( d12 > d13 )
-	{
-		if( d12 > d23 )
-		{
-
-		}
-	}
-	else
-		d = ( d13 > d23 ? d13 : std::max(d12,d13) );
-
-
-	auto li = pA * pB;
-	if( li.distTo(pC) < thr::nullDistance() )
+	if( areColinear( pt1, pt2, pt3 )
 		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
-#endif
 #endif
 
 	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
