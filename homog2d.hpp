@@ -2093,7 +2093,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		_radius = rad;
 	}
 
-
 /// Set circle from center point and radius
 	template<typename FPT2,typename FPT3>
 	void set( const Point2d_<FPT2>& center, FPT3 rad )
@@ -6971,7 +6970,7 @@ HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 /// Returns radius of circle (free function)
 /// \sa Circle_::radius()
 template<typename FPT>
-HOMOG2D_INUMTYPE&
+FPT&
 radius( Circle_<FPT>& cir )
 {
 	return cir.radius();
@@ -6980,7 +6979,7 @@ radius( Circle_<FPT>& cir )
 /// Returns radius of circle (free function) const version
 /// \sa Circle_::radius()
 template<typename FPT>
-const HOMOG2D_INUMTYPE&
+const FPT&
 radius( const Circle_<FPT>& cir )
 {
 	return cir.radius();
@@ -6989,7 +6988,7 @@ radius( const Circle_<FPT>& cir )
 /// Returns center of circle (free function)
 /// \sa Circle_::center()
 template<typename FPT>
-Point2d_<HOMOG2D_INUMTYPE>&
+Point2d_<FPT>&
 center( Circle_<FPT>& cir )
 {
 	return cir.center();
@@ -6998,7 +6997,7 @@ center( Circle_<FPT>& cir )
 /// Returns center of circle (free function), const version
 /// \sa Circle_::center()
 template<typename FPT>
-const Point2d_<HOMOG2D_INUMTYPE>&
+const Point2d_<FPT>&
 center( const Circle_<FPT>& cir )
 {
 	return cir.center();
