@@ -2248,6 +2248,8 @@ public:
 /// Set circle from 3 points
 /**
 \warning Not sure this will not suffer from numerical instability
+
+Will throw if unable (numerical issue)
 */
 template<typename FPT>
 template<
@@ -2255,7 +2257,7 @@ template<
 	typename std::enable_if<
 		!std::is_arithmetic<PT>::value
 		,PT
-	>::type* //= nullptr
+	>::type*
 >
 void
 Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
@@ -2263,8 +2265,37 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 #ifndef HOMOG2D_NOCHECKS
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
+#if 0
+// check for colinearity
+	std::vector<
+	auto d12 = sqDist( pt1, pt2 );
+	auto d13 = sqDist( pt1, pt3 );
+	auto d23 = sqDist( pt2, pt3 );
+
+	struct ColinCheck
+	{
+		HOMOG2D_INUMTYPE dist;
+
+	};
+	HOMOG2D_INUMTYPE d = 0.;
+	if( d12 > d13 )
+	{
+		if( d12 > d23 )
+		{
+
+		}
+	}
+	else
+		d = ( d13 > d23 ? d13 : std::max(d12,d13) );
+
+
+	auto li = pA * pB;
+	if( li.distTo(pC) < thr::nullDistance() )
+		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
 #endif
-//	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
+#endif
+
+	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
 	HOMOG2D_INUMTYPE x1 = pt1.getX();
 	HOMOG2D_INUMTYPE x2 = pt2.getX();
 	HOMOG2D_INUMTYPE x3 = pt3.getX();
@@ -2286,16 +2317,25 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 	auto B1 = (sx12 + sy12) * dx13 - ( sx13 + sy13 ) * dx12;
 	auto B2 = dy13 * dx12 - dy12 * dx13;
 	auto B = B1 / B2;
+	if( std::isnan(B) )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, B term is nan" );
+
 	auto y0 = - B / 2.0;
 
 	auto Am = ( sx12 + sy12 + B * dy12 ) / dx12;
+	if( std::isnan(Am) )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, A term is nan" );
+
 	auto x0 = Am / 2.0;
 
 	_center.set( x0, y0 );
 
 	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
-	_radius = std::sqrt( x0*x0 + y0*y0 + C );
-//	std::cout << *this << '\n';
+	auto sq_value = x0*x0 + y0*y0 + C;
+	if( sq_value < 0 )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute" );
+	_radius = std::sqrt( sq_value );
+	std::cout << *this << '\n';
 }
 
 //------------------------------------------------------------------
@@ -6623,6 +6663,19 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 {
 	return pt1.distTo( pt2 );
 }
+
+/// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
+/// \sa Point2d_::distTo()
+/// \sa dist( const Point2d_&, const Point2d_& )
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
+{
+	auto dx = (HOMOG2D_INUMTYPE)pt1.getX() - pt2.getX();
+	auto dy = (HOMOG2D_INUMTYPE)pt1.getY() - pt2.getY();
+	return dx*dx + dy*dy;
+}
+
 
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
