@@ -1063,6 +1063,7 @@ struct Param_CIR : Data
 	}
 	void setAndDraw()
 	{
+
 		if( buildFrom3Pts )
 			cir.set( vpt[2], vpt[3], vpt[4] );
 		else
@@ -1105,6 +1106,7 @@ void demo_CIR( int nd )
 	Param_CIR data ( "Circle demo" );
 	std::cout << "Demo " << nd << ": Compute circle from 3 points/2 points\n"
 		<< "Colors: green if inside, blue if not\n";
+
 	action_CIR( &data );
 
 	data.setMouseCallback( mouse_CB_CIR );

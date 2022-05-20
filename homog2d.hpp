@@ -1984,7 +1984,6 @@ public:
 	}
 
 /// 1-arg constructor 1, given center point, radius = 1.0
-//	template<typename T>
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2244,6 +2243,21 @@ public:
 
 }; // class Circle_
 
+
+//------------------------------------------------------------------
+/// Holds private stuff
+namespace priv {
+
+/// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
+template<typename FPT>
+void
+fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
+{
+	if( !(ptA < ptB) )
+		std::swap( ptA, ptB );
+}
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
 /// \sa Point2d_::distTo()
@@ -2259,6 +2273,9 @@ sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 
 //------------------------------------------------------------------
 /// Helper function, used to check for colinearity of three points
+/**
+\todo 20220520: needs some optimization, once it has been tested
+*/
 namespace priv {
 template<typename PT>
 std::array<PT,3>
@@ -2268,28 +2285,53 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 	auto d13 = sqDist( pt1, pt3 );
 	auto d23 = sqDist( pt2, pt3 );
 
+	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
+	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
+
 	PT* pA = &pt1;
 	PT* pB = &pt2;
 	PT* pM = &pt3;
 
-	if( d12 < d13 )
+	if( d12 > d13 )
 	{
-		pB = &pt2;
-		pA = &pt3;
-		pM = &pt1;
+		pA = &pt2;
 		if( d12 > d23 )
-			std::swap( pA, pM );
+		{
+			pM = &pt3;
+			pB = &pt1;
+			std::cout << "pM=3\n";
+		}
+		else
+		{
+			pM = &pt1;
+			pB = &pt3;
+			std::cout << "pM=1\n";
+		}
 	}
 	else
 	{
-		pB = &pt3;
-		pA = &pt1;
-		pM = &pt2;
+		pA = &pt3;
 		if( d13 > d23 )
-			std::swap( pA, pM );
+		{
+			pM = &pt2;
+			pB = &pt1;
+			std::cout << "pM=2\n";
+		}
+		else
+		{
+			pM = &pt1;
+			pB = &pt2;
+			std::cout << "pM=1\n";
+		}
 	}
-
+	priv::fix_order( *pA, *pB );
+#if 1
+	auto arr = std::array<PT,3>{ *pA, *pB, *pM };
+	std::cout << "arr: " << arr[0] << "-" << arr[1] << "-" << arr[2] << "\n";
+	return arr;
+#else
 	return std::array<PT,3>{ *pA, *pB, *pM };
+#endif
 }
 } // namespace priv
 
@@ -2304,9 +2346,10 @@ areColinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<
 	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
 	auto li = pt_arr[0] * pt_arr[1];
-	if( li.distTo(pt_arr[2]) < thr::nullDistance() )
-		return false;
-	return true;
+	std::cout << "dist=" << li.distTo( pt_arr[2] ) << "\n";
+	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
+		return true;
+	return false;
 }
 //------------------------------------------------------------------
 /// Set circle from 3 points
@@ -2371,7 +2414,7 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
 	auto sq_value = x0*x0 + y0*y0 + C;
 	if( sq_value < 0 )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute" );
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, no sqrt of a negative value" );
 	_radius = std::sqrt( sq_value );
 	std::cout << *this << '\n';
 }
@@ -2391,7 +2434,6 @@ FRect_<FPT>::getBoundingCircle() const
 	return Circle_<FPT>( middle_pt, middle_pt.distTo( pts[0] ) );
 }
 
-
 /*
 /// Constructor: build Ellipse from Circle
 /// \todo finish this
@@ -2405,16 +2447,6 @@ Ellipse_<FPT>::Ellipse_( const Circle_<FPT>& cir )
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
-
-/// Private free function, swap the points so that \c ptA.x <= \c ptB.x, and if equal, sorts on y
-template<typename FPT>
-void
-fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
-{
-	if( !(ptA < ptB) )
-		std::swap( ptA, ptB );
-}
-
 
 /// Helper function, factorized here for the two impl_getPoints_A() implementations
 template<typename FPT, typename FPT2>
