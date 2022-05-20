@@ -1969,12 +1969,32 @@ public:
 	{}
 
 /// 1-arg constructor 1, given radius circle at (0,0)
-	template<typename T>
+//	template<typename T>
+	template<
+		typename T,
+		typename std::enable_if<
+			std::is_arithmetic<T>::value
+			,T
+		>::type* = nullptr
+	>
 	explicit Circle_( T rad )
 		: Circle_( Point2d_<FPT>(), rad )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+//		HOMOG2D_CHECK_IS_NUMBER(T); // not needed, as the sfinae above checks this
 	}
+
+/// 1-arg constructor 1, given center point, radius = 1.0
+//	template<typename T>
+	template<
+		typename T,
+		typename std::enable_if<
+			!std::is_arithmetic<T>::value
+			,T
+		>::type* = nullptr
+	>
+	explicit Circle_( T center )
+		: Circle_( center, 1. )
+	{}
 
 /// 2-arg constructor 1: point and radius
 	template<typename T1, typename T2>
@@ -2059,6 +2079,22 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 /// \name Edit values
 ///@{
 
+/// Set circle center point, radius unchanged
+	template<typename PT>
+	void set( const Point2d_<PT>& center )
+	{
+		_center = center;
+	}
+
+/// Set circle radius, center point unchanged
+	template<typename T>
+	void set( T rad )
+	{
+		_radius = rad;
+	}
+
+
+/// Set circle from center point and radius
 	template<typename FPT2,typename FPT3>
 	void set( const Point2d_<FPT2>& center, FPT3 rad )
 	{
@@ -2079,9 +2115,11 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		set( Point2d_<FPT2>(x,y), rad );
 	}
 
+/// Set circle from 2 points
 	template<typename T1, typename T2>
 	void set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 );
 
+/// Set circle from 3 points
 	template<
 		typename PT,
 		typename std::enable_if<
@@ -2223,6 +2261,10 @@ template<
 void
 Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 {
+#ifndef HOMOG2D_NOCHECKS
+	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
+		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
+#endif
 //	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
 	HOMOG2D_INUMTYPE x1 = pt1.getX();
 	HOMOG2D_INUMTYPE x2 = pt2.getX();
@@ -3538,6 +3580,11 @@ template<typename FPT>
 template<typename T1, typename T2>
 void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 {
+#ifndef HOMOG2D_NOCHECKS
+	if( pt1 == pt2 )
+		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
+#endif
+
 	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
 	_center = seg.getMiddlePoint();
 	_radius = seg.length() / 2.0;
@@ -6924,21 +6971,38 @@ HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 /// Returns radius of circle (free function)
 /// \sa Circle_::radius()
 template<typename FPT>
-HOMOG2D_INUMTYPE
+HOMOG2D_INUMTYPE&
+radius( Circle_<FPT>& cir )
+{
+	return cir.radius();
+}
+
+/// Returns radius of circle (free function) const version
+/// \sa Circle_::radius()
+template<typename FPT>
+const HOMOG2D_INUMTYPE&
 radius( const Circle_<FPT>& cir )
 {
 	return cir.radius();
 }
+
 /// Returns center of circle (free function)
 /// \sa Circle_::center()
 template<typename FPT>
-Point2d_<HOMOG2D_INUMTYPE>
-center( const Circle_<FPT>& cir )
+Point2d_<HOMOG2D_INUMTYPE>&
+center( Circle_<FPT>& cir )
 {
 	return cir.center();
 }
 
-
+/// Returns center of circle (free function), const version
+/// \sa Circle_::center()
+template<typename FPT>
+const Point2d_<HOMOG2D_INUMTYPE>&
+center( const Circle_<FPT>& cir )
+{
+	return cir.center();
+}
 
 /// Free function, return floating-point type
 template<typename T>

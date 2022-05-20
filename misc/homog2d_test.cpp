@@ -1820,34 +1820,85 @@ TEST_CASE( "Circle", "[cir1]" )
 	}
 	{
 		int i = 44;
-		Circle_<NUMTYPE> c1(i);  // Constructor 2
+		Circle_<NUMTYPE> c1(i);  // 1-arg Constructor - radius
 		CHECK( c1.center() == Point2d(0,0) );
 		CHECK( c1.radius() == i );
 		CHECK( c1.getBB() == FRect(-i,-i,i,i) );
 		CHECK( getBB(c1)  == FRect(-i,-i,i,i) );
+		c1.set( 454 );
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 454 );
 	}
 	{
-		Point2d pt( 4,5);
-		Circle_<NUMTYPE> c1(pt,3);  // Constructor 3
-		CHECK( c1.center() == Point2d(4,5) );
-		CHECK( c1.radius() == 3 );
-
-		Circle_<NUMTYPE> c2(pt);  // Constructor 3
+		Point2d_<NUMTYPE> pt( 4,5);
+		Circle_<NUMTYPE> c2(pt);  // 1-arg Constructor - center
 		CHECK( c2.center() == Point2d(4,5) );
 		CHECK( c2.radius() == 1 );
 
-		CHECK( center(c2) == Point2d(4,5) );
+		CHECK( center(c2) == Point2d(4,5) );  // free functions call
 		CHECK( radius(c2) == 1 );
-	}
 
+		c2.set( Point2d_<NUMTYPE>(18,22) );
+		CHECK( c2.center() == Point2d(18,22) );
+		CHECK( c2.radius() == 1 );
+	}
 	{
-		Circle_<NUMTYPE> c1(1,2,3);  // Constructor 4
+		Point2d_<NUMTYPE> pt1(0,0), pt2(4,0);
+		Circle_<NUMTYPE> c1(pt1,pt2);  // 2-args constructor: 2 points
+		CHECK( c1.center() == Point2d(2,0) );
+		CHECK( c1.radius() == 2. );
+		c1.set( Point2d(1,1), Point2d(1,5) );
+		CHECK( c1.center() == Point2d(1,3) );
+		CHECK( c1.radius() == 2. );
+	}
+	{
+		Point2d_<NUMTYPE> pt1(4,5);
+		Circle_<NUMTYPE> c2(pt1,3);  // 2-args constructor - center and radius
+		CHECK( c2.center() == pt1 );
+		CHECK( c2.radius() == 3 );
+
+		c2.set( Point2d_<NUMTYPE>(42,24), 18 );
+		CHECK( c2.center() == Point2d_<NUMTYPE>(42,24) );
+		CHECK( c2.radius() == 18 );
+	}
+	{
+		Circle_<NUMTYPE> c1(1,2,3);  // 3-args constructor: x0, y0, radius
 		CHECK( c1.center() == Point2d(1,2) );
 		CHECK( c1.radius() == 3 );
+
+		c1.set( 11, 22, 33 );
+		CHECK( c1.center() == Point2d(11,22) );
+		CHECK( c1.radius() == 33 );
 	}
 	{
-		CHECK_THROWS( Circle_<NUMTYPE>(1,2,0.) );
+		CHECK_THROWS( Circle_<NUMTYPE>(1,2,0.) ); /// ?
 		CHECK_THROWS( Circle_<NUMTYPE>(1,2,-1.) );
+	}
+	{
+		Point2d_<NUMTYPE> pt1(4,5), pt2(6,7), pt3; // 3-args constructor: 3 points
+		Circle_<NUMTYPE> c1(pt1,pt2,pt3);  // 2-args constructor: 2 points
+
+		c1.set( Point2d(4,5), Point2d(6,7), Point2d(2,2) );
+
+		CHECK_THROWS( c1.set( Point2d(4,5), Point2d(4,5) ) );               // points must be different !
+		CHECK_THROWS( c1.set( Point2d(4,5), Point2d(4,5), Point2d(2,2) ) );
+		CHECK_THROWS( Circle( Point2d(4,5), Point2d(4,5), Point2d(2,2) ) );
+		CHECK_THROWS( Circle( Point2d(4,5), Point2d(4,5) ) );
+	}
+	{
+		Circle_<NUMTYPE> c1;
+
+		CHECK( c1.radius() == 1 );
+		c1.radius() = 2;                // member function call
+		CHECK( c1.radius() == 2 );
+		radius(c1) = 3;                 // free function call
+		CHECK( radius(c1) == 3 );
+
+		CHECK( center(c1) == Point2d() );
+		c1.center() = Point2d(3,4);            // member function call
+		CHECK( center(c1) == Point2d(3,4) );
+		center(c1) = Point2d(5,6);             // free function call
+		CHECK( center(c1) == Point2d(5,6) );
 	}
 }
 

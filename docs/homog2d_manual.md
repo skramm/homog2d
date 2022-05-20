@@ -423,7 +423,8 @@ auto cir = r1.getBoundingCircle();
 ### 3.3 - Circles
 <a name="p_circle"></a>
 
-Creation is straightforward:
+These are modeled by their center point and radius.
+Creation is straightforward, whathever your needs :
 ```C++
 Circle c1;                          // at (0,0), radius = 1
 Circle c2( center_point );          // radius = 1
@@ -435,24 +436,38 @@ Similarly, you can assign values to an existing circle:
 ```C++
 c1.set( x0, y0, radius );
 c2.set( center_pt, radius );
+c3.set( radius );            // center doesn't change
+c4.set( center_pt );         // radius doesn't change
 ```
 
-Additionnaly, you can also compute the unique circle passing through 3 points:
+Additionaly, you can also compute the unique circle from points,
+either from 2 points (that define the diameter), or from 3 points:
 ```C++
 Circle c1( pt1, pt2, pt 3 );
 // or
-c1.set( pt1, pt2, pt 3 );
+c1.set( pt1, pt2, pt3 );
+
+Circle c2( pt1, pt2 );
+// or
+c2.set( pt1, pt2 );
 ```
-
-
+For these latter functions, the 2 (or 3) points must be different.
+This is checked for and will throw if not the case (unless the "no error" option is activated).
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
 Circle c1;
 c1.radius() = 100;
-std::cout << c1.radius();
+std::cout << c1.radius();  // prints '100'
 c1.center() = Point2d(12,34);
-std::cout << "center=" << c1.center();
+std::cout << c1.center(); // prints '[12,34]'
+```
+Corresponding free functions are also provided:
+```C++
+radius(c1) = 100;
+std::cout << radius(c1);  // prints '100'
+center(c1) = Point2d(12,34);
+std::cout << center(c1); // prints '[12,34]'
 ```
 
 Two additional free functions provide the segment (or line) between the centers of two circles,

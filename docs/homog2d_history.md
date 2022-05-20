@@ -12,7 +12,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add precision evaluation
 
 - current master branch
-  - added construction of circle from 3 points
+  - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)
 
 - [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`
