@@ -1808,6 +1808,17 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 /////               MISC. TESTS                          /////
 //////////////////////////////////////////////////////////////
 
+
+TEST_CASE( "Colinearity", "[colinearity]" )
+{
+	Point2d pt1(0,0), pt2(1,0), pt3(4,0);
+	CHECK( areColinear( pt1, pt2, pt3 ) );
+	auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+	CHECK( arr[0]==pt1 );
+	CHECK( arr[2]==pt3 );
+	CHECK( arr[3]==pt2 );
+}
+
 TEST_CASE( "Circle", "[cir1]" )
 {
 	{

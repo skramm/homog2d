@@ -2245,17 +2245,34 @@ public:
 }; // class Circle_
 
 //------------------------------------------------------------------
+/// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
+/// \sa Point2d_::distTo()
+/// \sa dist( const Point2d_&, const Point2d_& )
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
+{
+	auto dx = (HOMOG2D_INUMTYPE)pt1.getX() - pt2.getX();
+	auto dy = (HOMOG2D_INUMTYPE)pt1.getY() - pt2.getY();
+	return dx*dx + dy*dy;
+}
+
+//------------------------------------------------------------------
 /// Helper function, used to check for colinearity of three points
 namespace priv {
 template<typename PT>
 std::array<PT,3>
-getLargestDistancePoints( const PT& pt1, const PT& pt2, const PT& pt3 )
+getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 {
 	auto d12 = sqDist( pt1, pt2 );
 	auto d13 = sqDist( pt1, pt3 );
 	auto d23 = sqDist( pt2, pt3 );
 
-	if( d12 > d13 )
+	PT* pA = &pt1;
+	PT* pB = &pt2;
+	PT* pM = &pt3;
+
+	if( d12 < d13 )
 	{
 		pB = &pt2;
 		pA = &pt3;
@@ -2265,13 +2282,15 @@ getLargestDistancePoints( const PT& pt1, const PT& pt2, const PT& pt3 )
 	}
 	else
 	{
+		pB = &pt3;
+		pA = &pt1;
+		pM = &pt2;
 		if( d13 > d23 )
-			{
-				pB = pt3;
-				pc = pt2;
-			}
-}
+			std::swap( pA, pM );
+	}
 
+	return std::array<PT,3>{ *pA, *pB, *pM };
+}
 } // namespace priv
 
 //------------------------------------------------------------------
@@ -2280,9 +2299,9 @@ getLargestDistancePoints( const PT& pt1, const PT& pt2, const PT& pt3 )
 */
 template<typename FPT>
 bool
-areColinear( const Point2d_<FPT>T& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
+areColinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
 {
-	auto pt_arr = getLargestDistancePoints( pt1, pt2, pt3 );
+	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
 	auto li = pt_arr[0] * pt_arr[1];
 	if( li.distTo(pt_arr[2]) < thr::nullDistance() )
@@ -2310,7 +2329,7 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 #ifndef HOMOG2D_NOCHECKS
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
-	if( areColinear( pt1, pt2, pt3 )
+	if( areColinear( pt1, pt2, pt3 ) )
 		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
 #endif
 
@@ -6682,19 +6701,6 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 {
 	return pt1.distTo( pt2 );
 }
-
-/// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
-/// \sa Point2d_::distTo()
-/// \sa dist( const Point2d_&, const Point2d_& )
-template<typename FPT1,typename FPT2>
-HOMOG2D_INUMTYPE
-sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
-{
-	auto dx = (HOMOG2D_INUMTYPE)pt1.getX() - pt2.getX();
-	auto dy = (HOMOG2D_INUMTYPE)pt1.getY() - pt2.getY();
-	return dx*dx + dy*dy;
-}
-
 
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
