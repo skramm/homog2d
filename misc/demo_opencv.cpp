@@ -1056,38 +1056,69 @@ struct Param_CIR : Data
 {
 	explicit Param_CIR( std::string title ): Data(title)
 	{
-		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,200} };
+		vpt = std::vector<Point2d>{
+			{150,120}, {220,240},            // initial rectangle
+			{100,100}, {300,100}, {300,200}  // initial circle
+		};
 	}
-	void setCircleFromPoints()
+	void setAndDraw()
 	{
-		cir.set( vpt[0], vpt[1], vpt[2] );
+		if( buildFrom3Pts )
+			cir.set( vpt[2], vpt[3], vpt[4] );
+		else
+			cir.set( vpt[2], vpt[3] );
+		rect.set( vpt[0], vpt[1] );
+
+		auto par_c = img::DrawParams().setColor(0,0,250);
+		auto par_r = par_c;
+		if( cir.isInside( rect ) )
+			par_c.setColor( 0,250,0);
+		if( rect.isInside( cir ) )
+			par_r.setColor( 0,250,0);
+
+		cir.draw( img, par_c );
+		rect.draw( img, par_r );
+		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
+		if( buildFrom3Pts )
+			draw( img, vpt, par_pt );
+		else                                  // draw only 4 points
+			for( int i=0; i<4; i++ )
+				vpt[i].draw( img, par_pt );
 	}
 	Circle cir;
+	FRect rect;
+	bool buildFrom3Pts = true;
+
 };
 
 void action_CIR( void* param )
 {
 	auto& data = *reinterpret_cast<Param_CIR*>(param);
-	data.setCircleFromPoints();
 	data.clearImage();
-//	data.cir.set( 150,120,40);
-//	Circle cc( 150,120,40);
+	data.setAndDraw();
 
-	data.cir.draw (data.img);
-	h2d::draw( data.img, data.vpt );
 	data.showImage();
 }
 
 void demo_CIR( int nd )
 {
 	Param_CIR data ( "Circle demo" );
-	std::cout << "Demo " << nd << ": Compute circle from 3 points\nMove points to show the circle\n";
+	std::cout << "Demo " << nd << ": Compute circle from 3 points/2 points\n"
+		<< "Colors: green if inside, blue if not\n";
 	action_CIR( &data );
 
 	data.setMouseCallback( mouse_CB_CIR );
 
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_CIR );
+
+	kbloop.addKeyAction( 'a', [&](void*)
+		{
+			data.buildFrom3Pts = !data.buildFrom3Pts;
+		},
+		"switch circle from 2 pts / 3 pts"
+	);
+
 	kbloop.start( data );
 }
 

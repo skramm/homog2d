@@ -1968,7 +1968,7 @@ public:
 	Circle_() : _radius(1.)
 	{}
 
-/// Constructor 2, given radius circle at (0,0)
+/// 1-arg constructor 1, given radius circle at (0,0)
 	template<typename T>
 	explicit Circle_( T rad )
 		: Circle_( Point2d_<FPT>(), rad )
@@ -1976,9 +1976,9 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER(T);
 	}
 
-/// Constructor 3: point and radius
+/// 2-arg constructor 1: point and radius
 	template<typename T1, typename T2>
-	Circle_( const Point2d_<T1>& center, T2 rad )
+	Circle_( const Point2d_<T1>& center, T2 rad=1.0 )
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
@@ -1989,7 +1989,14 @@ public:
 #endif
 	}
 
-/// Constructor 4 (3 floating-point args): x, y, radius
+/// 2-arg constructor 2: circle from 2 points (may be of different types)
+	template<typename T1, typename T2>
+	Circle_( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
+	{
+		set( pt1, pt2 );
+	}
+
+/// 3-arg constructor 1: build circle from 3 floating-point values: x, y, radius
 /**
 We need Sfinae because there is another 3-args constructor (circle from 3 points)
 */
@@ -2008,7 +2015,7 @@ We need Sfinae because there is another 3-args constructor (circle from 3 points
 		HOMOG2D_CHECK_IS_NUMBER(T2);
 	}
 
-/// Constructor 5: builds a circle from 3 points
+/// 3-arg constructor 2: builds a circle from 3 points
 /**
 We need Sfinae because there is another 3-args constructor (x, y, radius as floating point values)
 */
@@ -2049,6 +2056,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 ///@}
 
+/// \name Edit values
+///@{
+
 	template<typename FPT2,typename FPT3>
 	void set( const Point2d_<FPT2>& center, FPT3 rad )
 	{
@@ -2069,6 +2079,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		set( Point2d_<FPT2>(x,y), rad );
 	}
 
+	template<typename T1, typename T2>
+	void set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 );
+
 	template<
 		typename PT,
 		typename std::enable_if<
@@ -2085,6 +2098,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_center.translate( dx, dy );
 	}
+///@}
 
 /// Returns true if circle is inside \c other circle
 	template<typename FPT2>
@@ -3519,6 +3533,17 @@ the one with smallest y-coordinate will be returned first */
 }; // class Segment_
 
 
+//------------------------------------------------------------------
+template<typename FPT>
+template<typename T1, typename T2>
+void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
+{
+	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
+	_center = seg.getMiddlePoint();
+	_radius = seg.length() / 2.0;
+}
+
+//------------------------------------------------------------------
 /// Circle/Circle intersection
 /**
 Ref:
@@ -6895,6 +6920,25 @@ HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
 {
 	return rect.length();
 }
+
+/// Returns radius of circle (free function)
+/// \sa Circle_::radius()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+radius( const Circle_<FPT>& cir )
+{
+	return cir.radius();
+}
+/// Returns center of circle (free function)
+/// \sa Circle_::center()
+template<typename FPT>
+Point2d_<HOMOG2D_INUMTYPE>
+center( const Circle_<FPT>& cir )
+{
+	return cir.center();
+}
+
+
 
 /// Free function, return floating-point type
 template<typename T>

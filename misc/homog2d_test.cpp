@@ -1831,7 +1831,15 @@ TEST_CASE( "Circle", "[cir1]" )
 		Circle_<NUMTYPE> c1(pt,3);  // Constructor 3
 		CHECK( c1.center() == Point2d(4,5) );
 		CHECK( c1.radius() == 3 );
+
+		Circle_<NUMTYPE> c2(pt);  // Constructor 3
+		CHECK( c2.center() == Point2d(4,5) );
+		CHECK( c2.radius() == 1 );
+
+		CHECK( center(c2) == Point2d(4,5) );
+		CHECK( radius(c2) == 1 );
 	}
+
 	{
 		Circle_<NUMTYPE> c1(1,2,3);  // Constructor 4
 		CHECK( c1.center() == Point2d(1,2) );
