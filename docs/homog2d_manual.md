@@ -1068,6 +1068,13 @@ auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
 
+**Colinearity of 3 points**
+
+You can check if three points lie on the same line with this:
+```C++
+bool b = areColinear( pt1, pt2, pt3 );
+```
+
 
 **Extracting data from sets/containers of primitives**
 

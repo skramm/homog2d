@@ -2256,7 +2256,7 @@ fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 	if( !(ptA < ptB) )
 		std::swap( ptA, ptB );
 }
-} // namespace priv
+//} // namespace priv
 
 //------------------------------------------------------------------
 /// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
@@ -2276,7 +2276,7 @@ sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 /**
 \todo 20220520: needs some optimization, once it has been tested
 */
-namespace priv {
+//namespace priv {
 template<typename PT>
 std::array<PT,3>
 getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
@@ -2285,8 +2285,8 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 	auto d13 = sqDist( pt1, pt3 );
 	auto d23 = sqDist( pt2, pt3 );
 
-	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
-	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
+//	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
+//	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
 
 	PT* pA = &pt1;
 	PT* pB = &pt2;
@@ -2299,13 +2299,13 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 		{
 			pM = &pt3;
 			pB = &pt1;
-			std::cout << "pM=3\n";
+//			std::cout << "pM=3\n";
 		}
 		else
 		{
 			pM = &pt1;
 			pB = &pt3;
-			std::cout << "pM=1\n";
+//			std::cout << "pM=1\n";
 		}
 	}
 	else
@@ -2315,17 +2315,17 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 		{
 			pM = &pt2;
 			pB = &pt1;
-			std::cout << "pM=2\n";
+//			std::cout << "pM=2\n";
 		}
 		else
 		{
 			pM = &pt1;
 			pB = &pt2;
-			std::cout << "pM=1\n";
+//			std::cout << "pM=1\n";
 		}
 	}
 	priv::fix_order( *pA, *pB );
-#if 1
+#if 0
 	auto arr = std::array<PT,3>{ *pA, *pB, *pM };
 	std::cout << "arr: " << arr[0] << "-" << arr[1] << "-" << arr[2] << "\n";
 	return arr;
@@ -2338,15 +2338,20 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 //------------------------------------------------------------------
 /// Returns true if the 3 points are on the same line
 /**
+\todo at present, defined by the distance between third point and line.
+Need to change that, and replace by computation of the angle between the two lines
 */
 template<typename FPT>
 bool
 areColinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
 {
+	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
+		return true;
+
 	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
 	auto li = pt_arr[0] * pt_arr[1];
-	std::cout << "dist=" << li.distTo( pt_arr[2] ) << "\n";
+//	std::cout << "dist=" << li.distTo( pt_arr[2] ) << "\n";
 	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
 		return true;
 	return false;
@@ -2370,13 +2375,11 @@ void
 Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
-		HOMOG2D_THROW_ERROR_1( "Unable, some points are identical" );
 	if( areColinear( pt1, pt2, pt3 ) )
 		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
 #endif
 
-	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
+//	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
 	HOMOG2D_INUMTYPE x1 = pt1.getX();
 	HOMOG2D_INUMTYPE x2 = pt2.getX();
 	HOMOG2D_INUMTYPE x3 = pt3.getX();
@@ -2416,7 +2419,7 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 	if( sq_value < 0 )
 		HOMOG2D_THROW_ERROR_1( "Unable to compute, no sqrt of a negative value" );
 	_radius = std::sqrt( sq_value );
-	std::cout << *this << '\n';
+//	std::cout << *this << '\n';
 }
 
 //------------------------------------------------------------------
@@ -3685,6 +3688,7 @@ the one with smallest y-coordinate will be returned first */
 
 
 //------------------------------------------------------------------
+/// Set circle from 2 points
 template<typename FPT>
 template<typename T1, typename T2>
 void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )

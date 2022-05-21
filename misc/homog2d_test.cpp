@@ -1816,16 +1816,24 @@ TEST_CASE( "Colinearity", "[colinearity]" )
 		CHECK( areColinear( pt1, pt2, pt3 ) );
 		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 		CHECK( arr[0]==pt1 );
-		CHECK( arr[2]==pt3 );
-		CHECK( arr[3]==pt2 );
+		CHECK( arr[1]==pt3 );
+		CHECK( arr[2]==pt2 );
 	}
 	{
 		Point2d pt1(1,0), pt2(0,0), pt3(4,0);
 		CHECK( areColinear( pt1, pt2, pt3 ) );
 		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 		CHECK( arr[0]==pt2 );
-		CHECK( arr[2]==pt3 );
-		CHECK( arr[3]==pt1 );
+		CHECK( arr[1]==pt3 );
+		CHECK( arr[2]==pt1 );
+	}
+	{
+		Point2d pt1(1,0), pt2(0,0), pt3(4,1E-3);
+		CHECK( !areColinear( pt1, pt2, pt3 ) );
+		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+		CHECK( arr[0]==pt2 );
+		CHECK( arr[1]==pt3 );
+		CHECK( arr[2]==pt1 );
 	}
 }
 

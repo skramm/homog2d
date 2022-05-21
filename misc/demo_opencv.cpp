@@ -1065,7 +1065,14 @@ struct Param_CIR : Data
 	{
 
 		if( buildFrom3Pts )
-			cir.set( vpt[2], vpt[3], vpt[4] );
+			try
+			{
+				cir.set( vpt[2], vpt[3], vpt[4] );
+			}
+			catch( std::exception& err )
+			{
+				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
+			}
 		else
 			cir.set( vpt[2], vpt[3] );
 		rect.set( vpt[0], vpt[1] );
