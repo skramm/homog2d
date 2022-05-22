@@ -2274,7 +2274,14 @@ sqDist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 //------------------------------------------------------------------
 /// Helper function, used to check for colinearity of three points
 /**
-\todo 20220520: needs some optimization, once it has been tested
+This will return the same points as given in input but ordered as:
+- the pair that has the largest distance in [0] and [1]
+- the third point in [2]
+- the point closest to the third point in [1], the farthest in [0]
+
+\sa bool areColinear()
+
+\todo 20220520: needs some optimization, once it has been extensively tested
 */
 //namespace priv {
 template<typename PT>
@@ -2324,12 +2331,15 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 //			std::cout << "pM=1\n";
 		}
 	}
-	priv::fix_order( *pA, *pB );
+	if( sqDist( *pA, *pM ) < sqDist( *pB, *pM ) )
+		std::swap( *pA, *pB );
+
 #if 0
 	auto arr = std::array<PT,3>{ *pA, *pB, *pM };
 	std::cout << "arr: " << arr[0] << "-" << arr[1] << "-" << arr[2] << "\n";
 	return arr;
 #else
+
 	return std::array<PT,3>{ *pA, *pB, *pM };
 #endif
 }
