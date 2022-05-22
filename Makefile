@@ -287,20 +287,23 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 
 SHOWCASE_SRC_LOC=misc/showcase
 SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
-SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
+#SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
 SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
 BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	@mkdir -p BUILD/showcase/
-	$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
-	cd BUILD/showcase/; ./$(notdir $@)
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
-showcase_b: $(SHOWCASE_BIN)
-	@echo "done target $@"
+# build png files by running program
+BUILD/showcase/%_00.png: BUILD/showcase/%
+	cd BUILD/showcase/; ./$(notdir $<)
 
-showcase: showcase_b
-	misc/build_gif.sh
+# build final gif by running script
+BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
+	misc/build_gif.sh $@
+
+showcase2: $(SHOWCASE_GIF)
 	@echo "done target $@"
 
 #------------------------------------------------------------------------------

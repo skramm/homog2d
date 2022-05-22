@@ -452,7 +452,9 @@ Circle c2( pt1, pt2 );
 c2.set( pt1, pt2 );
 ```
 For these latter functions, the 2 (or 3) points must be different.
-This is checked for and will throw if not the case (unless the "no error" option is activated).
+This is checked for and will throw if not the case (unless the "no error" build option is activated).
+
+![showcase6](showcase/showcase6.gif)
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++

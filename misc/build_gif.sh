@@ -1,22 +1,15 @@
 #!/bin/bash
-function conv
-{
-	echo " -processing $1"
-	convert -delay 12 -loop 0 BUILD/showcase/$1_*.png BUILD/showcase/$1.gif
-	rm BUILD/showcase/$1_*.png
-}
+set -x
+echo " -processing $1"
 
-#for f in BUILD/showcase/*
-#do
-#	conv $(basename $f)
-#done
-#mkdir -p BUILD/showcase
+filename=$(basename -- "$1")
+ext="${filename##*.}"
+fn="${filename%.*}"
 
-conv showcase1
-conv showcase2a
-conv showcase2b
-conv showcase3
-conv showcase4
-conv showcase4b
-conv showcase5
+#echo "filename=$filename"
+#echo "ext=$filename"
+#echo "fn=$filename"
+
+convert -delay 12 -loop 0 BUILD/showcase/${fn}_*.png $1
+rm BUILD/showcase/${fn}_*.png
 
