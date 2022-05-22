@@ -39,26 +39,18 @@ int main( int argc, const char** argv )
 		auto bcir_d = Hdraw * bcir;
 		auto center_d = Hdraw * center;
 
-		Image<cv::Mat> im( 250, 200 );
-		Image<cv::Mat> im2( 250, 200 );
+		Image<cv::Mat> ima( 250, 200 );
 
-		obj1_d.draw( im, DrawParams().setColor(250,0,0) );
-		obj2_d.draw( im, DrawParams().setColor(0,0,250) );
-		bcir_d.draw( im, DrawParams().setColor(100,250,100)  );
+		obj1_d.draw( ima, DrawParams().setColor(250,0,0) );
+		obj2_d.draw( ima, DrawParams().setColor(0,0,250) );
+		bcir_d.draw( ima, DrawParams().setColor(100,250,100)  );
 
-		obj1_d.draw(   im2, DrawParams().setColor(250,0,0) );
-		bcir_d.draw(   im2, DrawParams().setColor(50,250,50)  );
-		center_d.draw( im2, DrawParams().setColor(250,100,100) );
-
-		getBB(obj1_d, obj2_d).draw( im, DrawParams().setColor(g,g,g) );
+		getBB(obj1_d, obj2_d).draw( ima, DrawParams().setColor(g,g,g) );
 
 		std::ostringstream ossa;
-		ossa << "showcase4_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		im.write( ossa.str() );
+		ossa << "showcase4a_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ima.write( ossa.str() );
 
-		std::ostringstream ossb;
-		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		im2.write( ossb.str() );
 	}
 }
 

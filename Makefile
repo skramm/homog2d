@@ -293,18 +293,21 @@ SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcas
 # compile program that will generate the set of png files
 BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp
 	@mkdir -p BUILD/showcase/
+	@echo " -Building program $@"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build png files by running program
 BUILD/showcase/%_00.png: BUILD/showcase/%
-	cd BUILD/showcase/; ./$(notdir $<)
+	@echo " -Running program $< to generate images"
+	@cd BUILD/showcase/; ./$(notdir $<)
 
 # build final gif by running script
 BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
-	misc/build_gif.sh $@
+	@echo " -Generating gif $@ from images"
+	@misc/build_gif.sh $@
 
-showcase2: $(SHOWCASE_GIF)
-	@echo "done target $@"
+showcase: $(SHOWCASE_GIF)
+	@echo "-done target $@"
 
 #------------------------------------------------------------------------------
 FNAME1:=dtest1

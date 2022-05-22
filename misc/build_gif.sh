@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set +x
 echo " -processing $1"
 
 filename=$(basename -- "$1")

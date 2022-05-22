@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates area of intersection and union of two rectangles
+\brief Generates area of intersection of two rectangles
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
@@ -15,7 +15,6 @@ int main( int argc, const char** argv )
 	auto im_w = 350;
 	auto im_h = 180;
 	img::Image<cv::Mat> imga( im_w, im_h );
-	img::Image<cv::Mat> imgb( im_w, im_h );
 
 	FRect r1(40,30, 130,90 );
 	FRect r2(160,45, 210,150 );
@@ -26,27 +25,20 @@ int main( int argc, const char** argv )
 	for( int i=0; i<n; i++ )
 	{
 		imga.clear();
-		imgb.clear();
 		getBB(r1,r2).draw( imga, DrawParams().setColor(200,200,200) );
-		getBB(r1,r2).draw( imgb, DrawParams().setColor(200,200,200) );
 
 		r1.draw( imga, color_green );
 		r2.draw( imga, color_green );
-		r1.draw( imgb, color_green );
-		r2.draw( imgb, color_green );
 
 #if 0                                  // either way is the same
 		auto a = r1.intersectArea(r2);
-		auto b = r1.unionArea(r2);
 #else
 		auto a = r1&r2;
-		auto b = r1|r2;
 #endif
 
 		if( a() )
 			a.get().draw( imga, color_red );
 
-		b.draw( imgb, color_red );
 		if( (i+1)%10 == 0 )
 		{
 			mul = mul*-1;
@@ -56,9 +48,6 @@ int main( int argc, const char** argv )
 		ossa << "showcase2a_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		imga.write( ossa.str() );
 
-		std::ostringstream ossb;
-		ossb << "showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
-		imgb.write( ossb.str() );
 
 		r1.translate( mul*20,0);
 	}
