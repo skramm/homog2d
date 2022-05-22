@@ -18,11 +18,11 @@ A rotating Polyline object, its bounding box, and its intersection with a line.
 ![showcase3](showcase/showcase3.gif)
 
 
-* [Showcase 4](../misc/showcase/showcase4.cpp):
+* [Showcase 4](../misc/showcase/showcase4a.cpp):
 Two dancing objects (Circle and FRect) and their common bounding box.
 Also show the rectangle's bounding circle.
 
-![showcase4](showcase/showcase4.gif)
+![showcase4](showcase/showcase4a.gif)
 
 
 * [Showcase 2](../misc/showcase/showcase2.cpp):

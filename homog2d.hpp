@@ -2566,13 +2566,12 @@ private:
 	h2d::operator * ( const h2d::Line2d_<FPT1>&, const h2d::Line2d_<FPT2>& );
 
 	template<typename FPT1,typename FPT2>
-	friend //Line2d_<FPT1>
-	auto
+	friend auto
 	h2d::operator * ( const h2d::Point2d_<FPT1>&, const h2d::Point2d_<FPT2>& )
 	-> h2d::Line2d_<FPT1>;
 
 	template<typename T,typename U>
-	friend auto //Line2d_<T>
+	friend auto
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
 	-> h2d::Line2d_<T>;
 
