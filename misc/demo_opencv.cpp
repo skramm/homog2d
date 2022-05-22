@@ -31,6 +31,10 @@
 using namespace h2d;
 //using namespace h2d::img;
 
+// forward declaration
+void myMouseCB( int event, int x, int y, int, void* param );
+
+//------------------------------------------------------------------
 /// General data struct used in demos
 struct Data
 {
@@ -44,7 +48,10 @@ struct Data
 	std::vector<Point2d> vpt; ///< some points used in demo
 	bool leftClicAddPoint = false;
 
-	explicit Data( std::string wname ): win1(wname)
+	std::function<void(void*)> _action = nullptr;
+
+	explicit Data( std::string wname )//, std::function<void(void*)>) )
+		: win1(wname)
 	{
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
@@ -53,6 +60,7 @@ struct Data
 		vpt.resize(4);
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
+		cv::setMouseCallback( win1, myMouseCB, this );
 	}
 	void reset()
 	{
@@ -70,10 +78,7 @@ struct Data
 	{
 		vpt.push_back( pt_mouse );
 	}
-	void setMouseCallback( cv::MouseCallback mouse_CB )
-	{
-		cv::setMouseCallback( win1, mouse_CB, this );
-	}
+
 	int nbPts() const
 	{
 		return (int)vpt.size();
@@ -115,12 +120,13 @@ struct Data
 	}
 };
 
-/// Called by mouse callback functions, checks if one of the points is selected.
+//------------------------------------------------------------------
+/// Mouse callback functions, checks if one of the points is selected.
 /**
-- If so, that point gets moved by the mouse, and the function \c action is called
+- If so, that point gets moved by the mouse, and the function \c action is called (if it has been assigned)
 */
 void
-checkSelected( int event, int x, int y, std::function<void(void*)> action, void* param )
+myMouseCB( int event, int x, int y, int, void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
@@ -168,20 +174,11 @@ checkSelected( int event, int x, int y, std::function<void(void*)> action, void*
 	if( doSomething )
 	{
 		data.clearImage();
-		action( param );
+		if( data._action )
+			data._action( param );
 		data.showImage();
 	}
 }
-
-void action_1(   void* );
-void action_C(   void* );
-void action_SI(  void* );
-void action_6(   void* );
-void action_H(   void* );
-void action_PL(  void* );
-void action_CH(  void* );
-void action_ELL( void* );
-void action_CIR( void* );
 
 //------------------------------------------------------------------
 /// Generic Keyboard loop, build on top of Opencv's \c cv::waitKey(0)
@@ -239,6 +236,8 @@ public:
 			for( const auto& elem: _actions )
 				std::cout << elem;
 		}
+		else
+			std::cout << "No user keys defined, but 'h' (help), ESC (quit) and SPC (switch to next) available\n";
 	}
 
 	void start( Data& data )
@@ -307,53 +306,6 @@ std::vector<img::Color> genRandomColors( size_t nb )
 	return vcol;
 }
 
-/// Mouse callback for demo_H
-void mouse_CB_H( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_H, param );
-}
-
-/// Mouse callback for demo_1
-void mouse_CB_1( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_1, param );
-}
-
-/// Mouse callback for demo_C
-void mouse_CB_C( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_C, param );
-}
-/// Mouse callback for demo_SI
-void mouse_CB_SI( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_SI, param );
-}
-
-/// Mouse callback for demo_6
-void mouse_CB_6( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_6, param );
-}
-
-/// Mouse callback for demo_PL
-void mouse_CB_PL( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_PL, param );
-}
-
-/// Mouse callback for demo_CH
-void mouse_CB_CH( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_CH, param );
-}
-
-/// Mouse callback for demo_CIR
-void mouse_CB_CIR( int event, int x, int y, int /* flags */, void* param )
-{
-	checkSelected( event, x, y, action_CIR, param );
-}
-
 //------------------------------------------------------------------
 void action_1( void* param )
 {
@@ -385,7 +337,7 @@ void demo_1( int nd )
 	Data data("lines");
 	std::cout << "Demo " << nd << ": click on points and move them\n";
 
-	data.setMouseCallback( mouse_CB_1 );
+	data._action = action_1;
 
 	int n=5;
 	data.vpt[0].set( data.width/2,       data.height/n );
@@ -561,7 +513,7 @@ void demo_C( int nd )
 	action_C( &data );
 	data.showImage();
 
-	data.setMouseCallback( mouse_CB_C );
+	data._action = action_C;
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'l', [&](void*){ data.radius += 10; }, "increment radius" );
@@ -631,7 +583,7 @@ void demo_SI( int nd )
 	data.vpt[3] = Point2d(300,250);
 
 	action_SI( &data );
-	data.setMouseCallback( mouse_CB_SI );
+	data._action = action_SI;
 
 	if( 27 == cv::waitKey(0) )
 		std::exit(0);
@@ -675,10 +627,11 @@ void demo_6( int nd )
 	std::cout << "Demo " << nd << ": apply homography to lines and segments\n Hit [lm] to change angle, "
 		<< "and select points of blue segment with mouse\n";
 	Param_6 data( "homography_lines_seg" );
-	data.setMouseCallback( mouse_CB_6 );
 	double angle_delta = 5.; // degrees
 
+	data._action = action_6;
 	action_6( &data );
+
 	data.showImage();
 
 	KeyboardLoop kbloop;
@@ -825,7 +778,7 @@ void demo_H( int nd )
 		<< "and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
 
-	data.setMouseCallback( mouse_CB_H );
+	data._action = action_H;
 	action_H( &data );
 
 	KeyboardLoop kbloop;
@@ -968,7 +921,7 @@ void demo_PL( int nd )
 		<< "Lclick to add point, Rclick to remove\n";
 	data.leftClicAddPoint=true;
 
-	data.setMouseCallback( mouse_CB_PL );
+	data._action = action_PL;
 
 	action_PL( &data );
 
@@ -1115,8 +1068,7 @@ void demo_CIR( int nd )
 		<< "Colors: green if inside, blue if not\n";
 
 	action_CIR( &data );
-
-	data.setMouseCallback( mouse_CB_CIR );
+	data._action = action_CIR;
 
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_CIR );
@@ -1176,9 +1128,9 @@ void demo_CH( int nd )
 	Param_CH data ( "Convex Hull demo" );
 	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
-	data.leftClicAddPoint=true;
+	data._action = action_CH;
 
-	data.setMouseCallback( mouse_CB_CH );
+	data.leftClicAddPoint=true;
 
 	KeyboardLoop kbloop;
 	kbloop.start( data );
