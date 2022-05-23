@@ -2256,7 +2256,6 @@ fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 	if( !(ptA < ptB) )
 		std::swap( ptA, ptB );
 }
-//} // namespace priv
 
 //------------------------------------------------------------------
 /// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
@@ -2282,8 +2281,25 @@ This will return the same points as given in input but ordered as:
 \sa bool areColinear()
 
 \todo 20220520: needs some optimization, once it has been extensively tested
+
+We have theses 6 situations, with the desired output order:
+\verbatim
+ 1 +                       1 +
+   |    A => 3,1,2           |     B => 2,1,3
+   |                         |
+ 2 +---------------+ 3     3 +---------------+ 2
+
+ 2 +                       2 +
+   |    C => 3,2,1           |     D => 1,2,3
+   |                         |
+ 1 +---------------+ 3     3 +---------------+ 1
+
+ 3 +                       3 +
+   |    E => 2,3,1           |     F => 1,3,2
+   |                         |
+ 1 +---------------+ 2     2 +---------------+ 1
+\endverbatim
 */
-//namespace priv {
 template<typename PT>
 std::array<PT,3>
 getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
@@ -2295,54 +2311,46 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 //	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
 //	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
 
-	PT* pA = &pt1;
-	PT* pB = &pt2;
-	PT* pM = &pt3;
+	PT* pA = 0;
+	PT* pB = 0;
+	PT* pM = 0;
 
-	if( d12 > d13 )
+	if( d12 > d13 ) // case B, D, E
 	{
 		pA = &pt2;
-		if( d12 > d23 )
+		if( d12 > d23 ) // case B, D
 		{
-			pM = &pt3;
 			pB = &pt1;
-//			std::cout << "pM=3\n";
+			pM = &pt3;
+			if( d13 > d23 )
+				std::swap( *pA, *pB );
 		}
-		else
+		else          // case E
 		{
-			pM = &pt1;
 			pB = &pt3;
-//			std::cout << "pM=1\n";
+			pM = &pt1;
 		}
 	}
-	else
+	else             // case A, C, F
 	{
 		pA = &pt3;
-		if( d13 > d23 )
+		if( d13 > d23 ) // A, F
 		{
-			pM = &pt2;
 			pB = &pt1;
-//			std::cout << "pM=2\n";
+			pM = &pt2;
+			if( d12 > d23 )
+				std::swap( *pA, *pB );
 		}
-		else
+		else           // case C
 		{
-			pM = &pt1;
 			pB = &pt2;
-//			std::cout << "pM=1\n";
+			pM = &pt1;
 		}
 	}
-	if( sqDist( *pA, *pM ) < sqDist( *pB, *pM ) )
-		std::swap( *pA, *pB );
-
-#if 0
-	auto arr = std::array<PT,3>{ *pA, *pB, *pM };
-	std::cout << "arr: " << arr[0] << "-" << arr[1] << "-" << arr[2] << "\n";
-	return arr;
-#else
 
 	return std::array<PT,3>{ *pA, *pB, *pM };
-#endif
 }
+
 } // namespace priv
 
 //------------------------------------------------------------------

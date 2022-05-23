@@ -44,7 +44,11 @@ This latter part starts around line 2565.
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
-#define LOCALLOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
+#if 0
+	#define LOCALLOG(a) std::cout << " - line " << __LINE__ << ": " << a << '\n'
+#else
+	#define LOCALLOG(a)
+#endif
 
 double g_epsilon = std::numeric_limits<NUMTYPE>::epsilon()*10000.;
 
@@ -55,7 +59,9 @@ using namespace h2d;
 
 int main( int argc, char* argv[] )
 {
-	std::cout << "START TESTS:\n - numerical type: " << XSTR(NUMTYPE)
+	std::cout << "START TESTS:"
+		<< "\n - homog2d version: " << HOMOG2D_VERSION
+		<< "\n - numerical type: " << XSTR(NUMTYPE)
 		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
 		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
 		<< "\n - build option:"
@@ -1811,29 +1817,62 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 
 TEST_CASE( "Colinearity", "[colinearity]" )
 {
+	Point2d p00(0,0), p01(0,1), p30(3,0);
+	Point2d pt1, pt2, pt3;
+
 	{
-		Point2d pt1(0,0), pt2(1,0), pt3(4,0);
-		CHECK( areColinear( pt1, pt2, pt3 ) );
+		pt1 = p01; pt2 = p00; pt3 = p30;   // case A
 		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 		CHECK( arr[0]==pt3 );
 		CHECK( arr[1]==pt1 );
 		CHECK( arr[2]==pt2 );
 	}
 	{
-		Point2d pt1(1,0), pt2(0,0), pt3(4,0);
-		CHECK( areColinear( pt1, pt2, pt3 ) );
+		pt1 = p01; pt2 = p30; pt3 = p00;   // case B
+		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+		CHECK( arr[0]==pt2 );
+		CHECK( arr[1]==pt1 );
+		CHECK( arr[2]==pt3 );
+	}
+	{
+		pt1 = p00; pt2 = p01; pt3 = p30;   // case C
+		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+		CHECK( arr[0]==pt3 );
+		CHECK( arr[1]==pt2 );
+		CHECK( arr[2]==pt1 );
+	}
+	{
+		pt1 = p30; pt2 = p01; pt3 = p00;   // case D
+		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+		CHECK( arr[0]==pt1 );
+		CHECK( arr[1]==pt2 );
+		CHECK( arr[2]==pt3 );
+	}
+	{
+		pt1 = p00; pt2 = p30; pt3 = p01;   // case E
 		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 		CHECK( arr[0]==pt2 );
 		CHECK( arr[1]==pt3 );
 		CHECK( arr[2]==pt1 );
 	}
 	{
-		Point2d pt1(1,0), pt2(0,0), pt3(4,1E-3);
-		CHECK( !areColinear( pt1, pt2, pt3 ) );
+		pt1 = p30; pt2 = p00; pt3 = p01;   // case F
 		auto arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
-		CHECK( arr[0]==pt2 );
+		CHECK( arr[0]==pt1 );
 		CHECK( arr[1]==pt3 );
-		CHECK( arr[2]==pt1 );
+		CHECK( arr[2]==pt2 );
+	}
+	{
+		Point2d p1(0,0), p2(1,0), p3(4,0);
+		CHECK( areColinear( p1, p2, p3 ) );
+	}
+	{
+		Point2d p1(1,0), p2(0,0), p3(4,0);
+		CHECK( areColinear( p1, p2, p3 ) );
+	}
+	{
+		Point2d p1(1,0), p2(0,0), p3(4,1E-3);
+		CHECK( !areColinear( p1, p2, p3 ) );
 	}
 }
 
@@ -2294,7 +2333,7 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 		CHECK( pl.size()   == 3 );
 		CHECK( pl.nbSegs() == 2 );
 		pl.minimize();
-		std::cout << "pl:" << pl << '\n';
+//		std::cout << "pl:" << pl << '\n';
 		CHECK( pl.size()   == 3 ); // no change
 		CHECK( pl.nbSegs() == 2 );
 	}
@@ -2311,7 +2350,7 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 		CHECK( pl.size()   == 4 );
 		CHECK( pl.nbSegs() == 3 );
 		pl.minimize();
-		std::cout << "pl:" << pl << '\n';
+//		std::cout << "pl:" << pl << '\n';
 		CHECK( pl.size()   == 4 );     // no change
 		CHECK( pl.nbSegs() == 3 );
 	}
@@ -2320,7 +2359,7 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 		CHECK( pl.size()   == 4 );
 		CHECK( pl.nbSegs() == 4 );
 		pl.minimize();
-		std::cout << "pl:" << pl << '\n';
+//		std::cout << "pl:" << pl << '\n';
 		CHECK( pl.size()   == 3 );     // no change
 		CHECK( pl.nbSegs() == 3 );
 	}
