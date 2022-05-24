@@ -2232,6 +2232,13 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r1.area()   == 1 );
 		CHECK( r1.center() == Point2d(0.5,0.5) );
 
+// free functions
+		CHECK( width(r1)  == 1. );
+		CHECK( height(r1) == 1. );
+		CHECK( length(r1) == 4 );
+		CHECK( area(r1)   == 1 );
+		CHECK( center(r1) == Point2d(0.5,0.5) );
+
 		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
 		CHECK( p_pts.second == Point2d(1.,1.) );
@@ -2278,7 +2285,6 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r.area() == 5000 );
 		CHECK( r.center() == Point2d(0,0) );
 	}
-
 	{
 		FRect_<NUMTYPE> r1( 0,0, 5, 3 );
 		FRect_<NUMTYPE> r2( 2,3, 7, 6 );
