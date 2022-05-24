@@ -21,3 +21,6 @@ no_build_12.cxx : cannot build an OPolyline from FRect
 no_build_16.cxx : cannot build an OPolyline from a non-container object
 no_build_17.cxx : cannot build an CPolyline from a non-container object
 
+no_build_18.cxx : a point cannot be inside a line
+no_build_19.cxx : a point cannot be inside a segment
+

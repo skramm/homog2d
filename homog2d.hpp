@@ -1805,6 +1805,7 @@ s0 |      | s2
 		out[3] = Segment_<FPT>( pts[3], pts[0] );
 		return out;
 	}
+
 /// Returns true if rectangle is inside \c shape (circle or rectangle)
 /// \todo maybe add some SFINAE to enable only for Circle_ or FRect_?
 	template<typename T>
@@ -2551,7 +2552,7 @@ operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
 namespace base {
 
 //------------------------------------------------------------------
-/// Base class, will be instanciated as a \ref Point2d_ or a \ref Line2d_<>
+/// Base class, will be instanciated as \ref Point2d_ or \ref Line2d_
 /**
 Type parameters:
 - LP: type::IsPoint or type::IsLine
@@ -3796,6 +3797,13 @@ template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
 template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
+/// Traits class, used to determine if we can use some "isInside()" function
+/// \todo not used as present. Is that really useful?
+template<typename T> struct HasArea              : std::false_type {};
+template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
+template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
+template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std::true_type  {};
+
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
 template <typename T>               struct IsContainer: std::false_type { };
@@ -4389,6 +4397,7 @@ public:
 		return out;
 	}
 
+/// Polyline isInside other primitive
 	template<typename T>
 	bool
 	isInside( const T& cont ) const
