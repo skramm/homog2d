@@ -1970,7 +1970,6 @@ public:
 	{}
 
 /// 1-arg constructor 1, given radius circle at (0,0)
-//	template<typename T>
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2374,71 +2373,6 @@ areColinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<
 	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
 		return true;
 	return false;
-}
-//------------------------------------------------------------------
-/// Set circle from 3 points
-/**
-\warning Not sure this will not suffer from numerical instability
-
-Will throw if unable (numerical issue)
-*/
-template<typename FPT>
-template<
-	typename PT,
-	typename std::enable_if<
-		!std::is_arithmetic<PT>::value
-		,PT
-	>::type*
->
-void
-Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if( areColinear( pt1, pt2, pt3 ) )
-		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
-#endif
-
-//	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
-	HOMOG2D_INUMTYPE x1 = pt1.getX();
-	HOMOG2D_INUMTYPE x2 = pt2.getX();
-	HOMOG2D_INUMTYPE x3 = pt3.getX();
-
-	HOMOG2D_INUMTYPE y1 = pt1.getY();
-	HOMOG2D_INUMTYPE y2 = pt2.getY();
-	HOMOG2D_INUMTYPE y3 = pt3.getY();
-
-	auto dx12 = x1 - x2;
-	auto dx13 = x1 - x3;
-	auto dy12 = y1 - y2;
-	auto dy13 = y1 - y3;
-
-	auto sx12 = x1*x1 - x2*x2;
-	auto sx13 = x1*x1 - x3*x3;
-	auto sy12 = y1*y1 - y2*y2;
-	auto sy13 = y1*y1 - y3*y3;
-
-	auto B1 = (sx12 + sy12) * dx13 - ( sx13 + sy13 ) * dx12;
-	auto B2 = dy13 * dx12 - dy12 * dx13;
-	auto B = B1 / B2;
-	if( std::isnan(B) )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, B term is nan" );
-
-	auto y0 = - B / 2.0;
-
-	auto Am = ( sx12 + sy12 + B * dy12 ) / dx12;
-	if( std::isnan(Am) )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, A term is nan" );
-
-	auto x0 = Am / 2.0;
-
-	_center.set( x0, y0 );
-
-	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
-	auto sq_value = x0*x0 + y0*y0 + C;
-	if( sq_value < 0 )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, no sqrt of a negative value" );
-	_radius = std::sqrt( sq_value );
-//	std::cout << *this << '\n';
 }
 
 //------------------------------------------------------------------
@@ -3726,6 +3660,84 @@ void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
 	_center = seg.getMiddlePoint();
 	_radius = seg.length() / 2.0;
+}
+
+//------------------------------------------------------------------
+/// Set circle from 3 points
+/**
+\warning Not sure this will not suffer from numerical instability
+
+Will throw if unable (numerical issue)
+*/
+template<typename FPT>
+template<
+	typename PT,
+	typename std::enable_if<
+		!std::is_arithmetic<PT>::value
+		,PT
+	>::type*
+>
+void
+Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( areColinear( pt1, pt2, pt3 ) )
+		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
+#endif
+
+#if 0
+
+//	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
+	HOMOG2D_INUMTYPE x1 = pt1.getX();
+	HOMOG2D_INUMTYPE x2 = pt2.getX();
+	HOMOG2D_INUMTYPE x3 = pt3.getX();
+
+	HOMOG2D_INUMTYPE y1 = pt1.getY();
+	HOMOG2D_INUMTYPE y2 = pt2.getY();
+	HOMOG2D_INUMTYPE y3 = pt3.getY();
+
+	auto dx12 = x1 - x2;
+	auto dx13 = x1 - x3;
+	auto dy12 = y1 - y2;
+	auto dy13 = y1 - y3;
+
+	auto sx12 = x1*x1 - x2*x2;
+	auto sx13 = x1*x1 - x3*x3;
+	auto sy12 = y1*y1 - y2*y2;
+	auto sy13 = y1*y1 - y3*y3;
+
+	auto B1 = (sx12 + sy12) * dx13 - ( sx13 + sy13 ) * dx12;
+	auto B2 = dy13 * dx12 - dy12 * dx13;
+	auto B = B1 / B2;
+	if( std::isnan(B) )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, B term is nan" );
+
+	auto y0 = - B / 2.0;
+
+	auto Am = ( sx12 + sy12 + B * dy12 ) / dx12;
+	if( std::isnan(Am) )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, A term is nan" );
+
+	auto x0 = Am / 2.0;
+
+	_center.set( x0, y0 );
+
+	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
+	auto sq_value = x0*x0 + y0*y0 + C;
+	if( sq_value < 0 )
+		HOMOG2D_THROW_ERROR_1( "Unable to compute, no sqrt of a negative value" );
+	_radius = std::sqrt( sq_value );
+//	std::cout << *this << '\n';
+#else
+	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+
+	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( pt1, pt3 );
+	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( pt1, pt2 );
+	auto li1 = seg1.getBisector();
+	auto li2 = seg2.getBisector();
+	center() = li1 * li2;
+	radius() = center().distTo(pt1);
+#endif
 }
 
 //------------------------------------------------------------------
