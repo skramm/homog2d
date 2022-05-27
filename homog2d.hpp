@@ -3695,6 +3695,13 @@ the one with smallest y-coordinate will be returned first */
 		);
 	}
 
+	Line2d_<FPT>
+	getBisector() const
+	{
+		Segment_<HOMOG2D_INUMTYPE> seg2 = *this; // convert to (possibly) enhance precision
+		return seg2.getLine().getOrthogonalLine( seg2.getMiddlePoint() );
+	}
+
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 

@@ -1409,7 +1409,7 @@ These demonstrate some code that should NOT build, thus Make will fail if any of
 This is just to make sure that some invalid code does, indeed, not build.
 
 **Timing**
-Using the Catch library has a small drawkback: build time is pretty long (but will succeed!).
+Using the Catch library has a small drawback: build time is pretty long (but will succeed!).
 For example:
 ```
 $ time make test -j2

@@ -1145,6 +1145,7 @@ struct Param_SEG : Data
 	bool showIndexes      = false;
 	bool showIntersection = false;
 	bool showMiddlePoint  = false;
+	bool showBisector     = false;
 	bool regen = false;
 	std::vector<Segment>          vseg;
 	std::vector<img::Color> vcol;
@@ -1219,6 +1220,13 @@ void action_SEG( void* param )
 		for( const auto& seg: data.vseg )
 			seg.getMiddlePoint().draw( data.img, img::DrawParams().setColor( 0,0,250) );
 	}
+	if( data.showBisector )
+	{
+		for( const auto& seg: data.vseg )
+			seg.getBisector().draw( data.img, img::DrawParams().setColor( 0,100,100) );
+//			seg.getBisector().draw( data.img, f );  ///< \todo implement this
+
+	}
 	data.showImage();
 }
 
@@ -1232,6 +1240,7 @@ void demo_SEG( int nd )
 	kbloop.addKeyAction( 'm', [&](void*){ data.showMiddlePoint  = !data.showMiddlePoint; }, "show middle point" );
 	kbloop.addKeyAction( 'n', [&](void*){ data.showIndexes      = !data.showIndexes; }, "show indexes" );
 	kbloop.addKeyAction( 'i', [&](void*){ data.showIntersection = !data.showIntersection; }, "show intersection points" );
+	kbloop.addKeyAction( 'b', [&](void*){ data.showBisector     = !data.showBisector; }, "show bisector lines" );
 
 	kbloop.addKeyAction( 'r', [&](void*){ data.regen = true; }, "Re-generate" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.nbSegs = data.nbSegs*2; data.regen = true; }, "double nb points" );
