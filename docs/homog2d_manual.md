@@ -328,6 +328,15 @@ auto p_middle = s1.getMiddlePoint();
 auto p_mid2 = getMiddlePoint(s1); // free function
 ```
 
+The bisector line is available, as member of free function:
+```C++
+Segment s1( Point2d(1,2), Point2d(3,4) );
+auto line1 = s1.getBisector();
+auto line2 = getBisector(s1);
+```
+
+
+
 The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
@@ -585,8 +594,7 @@ For closed types, you can determine its convexity:
 CPolyline plo;
 OPolyline plc;
 // ... set points
-if( plc.isConvex() ) {  // or : if( isConvex(plc) )  (free function)
-	std::cout << pl.isConvex() ? "is convex\n" : "is NOT convex\n";
+std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // of free function: isConvex(plc)
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```
 

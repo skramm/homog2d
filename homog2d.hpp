@@ -6975,6 +6975,15 @@ getMiddlePoint( const Segment_<FPT>& seg )
 	return seg.getMiddlePoint();
 }
 
+/// Free function, returns bisector line of segment
+/// \sa Segment_::getBisector()
+template<typename FPT>
+Line2d_<FPT>
+getBisector( const Segment_<FPT>& seg )
+{
+	return seg.getBisector();
+}
+
 /// Free function, returns middle point of set of segments
 /**
 \sa Segment_::getMiddlePoint()
