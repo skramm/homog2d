@@ -24,6 +24,7 @@ See https://github.com/skramm/homog2d
 #ifndef HG_HOMOG2D_HPP
 #define HG_HOMOG2D_HPP
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -2065,6 +2066,11 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	Point2d_<FPT>&       center()       { return _center; }
 	const Point2d_<FPT>& center() const { return _center; }
 
+	HOMOG2D_INUMTYPE area() const
+	{
+		return _radius * _radius * M_PI;
+	}
+
 /// Returns Bounding Box
 	FRect_<FPT> getBB() const
 	{
@@ -3729,12 +3735,13 @@ Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
 	_radius = std::sqrt( sq_value );
 //	std::cout << *this << '\n';
 #else
-	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
+	auto pt = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
-	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( pt1, pt3 );
-	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( pt1, pt2 );
+	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( pt[0], pt[1] );
+	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( pt[0], pt[2] );
 	auto li1 = seg1.getBisector();
 	auto li2 = seg2.getBisector();
+	HOMOG2D_ASSERT( !li1.isParallelTo(li2) );
 	center() = li1 * li2;
 	radius() = center().distTo(pt1);
 #endif

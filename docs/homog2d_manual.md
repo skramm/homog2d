@@ -423,7 +423,8 @@ rect.translate( dx, dy );
 you can get the circle that passes through the 4 points:
 ```C++
 FRect r1(...); // whatever
-auto cir = r1.getBoundingCircle();
+auto c1 = r1.getBoundingCircle();
+auto c2 = getBoundingCircle(r1); // or use the free function
 ```
 
 ![showcase4b](showcase/showcase4b.gif)
