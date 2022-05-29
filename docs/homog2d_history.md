@@ -15,7 +15,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)
   - added `isColinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
   - added `getBisector()` to class `Segment_`, return bisector line
-  - added `area()` to class `Circle_`
+  - added `area()` and `length()` to class `Circle_` (member and free functions)
 
 - [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`

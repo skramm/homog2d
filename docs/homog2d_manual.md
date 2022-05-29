@@ -461,7 +461,7 @@ Circle c2( pt1, pt2 );
 // or
 c2.set( pt1, pt2 );
 ```
-For these latter functions, the 2 (or 3) points must be different.
+For these latter functions, the 2 (or 3) points must be different, and not colinear.
 This is checked for and will throw if not the case (unless the "no error" build option is activated).
 
 ![showcase6](showcase/showcase6.gif)
@@ -482,12 +482,21 @@ center(c1) = Point2d(12,34);
 std::cout << center(c1); // prints '[12,34]'
 ```
 
+You can get area and perimeter with member or free functions.
+The perimeter function has the name "length" for consistency with other primitives.
+```C++
+auto area  = c1.area() // or area(c1)
+auto perim = c1.length() // or length(c1)
+```
+
+
 Two additional free functions provide the segment (or line) between the centers of two circles,
 and the two segments tangential to two circles:
 ```C++
 Circle c1, c2;
 auto seg = getSegment( c1, c2 );  // as a segment
 auto line = getLine( c1, c2 );    // as a line
+// same result than: getSegment( c1, c2 ).getLine();
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
 ![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles1.png)

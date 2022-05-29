@@ -2068,7 +2068,11 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 	HOMOG2D_INUMTYPE area() const
 	{
-		return _radius * _radius * M_PI;
+		return static_cast<HOMOG2D_INUMTYPE>(_radius) * _radius * M_PI;
+	}
+	HOMOG2D_INUMTYPE length() const
+	{
+		return static_cast<HOMOG2D_INUMTYPE>(_radius) * M_PI * 2.0;
 	}
 
 /// Returns Bounding Box
@@ -2123,15 +2127,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename T1, typename T2>
 	void set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 );
 
-/// Set circle from 3 points
-	template<
-		typename PT,
-		typename std::enable_if<
-			!std::is_arithmetic<PT>::value
-			,PT
-		>::type* = nullptr
-	>
-	void set( const PT& pt1, const PT& pt2, const PT& pt3 );
+// Set circle from 3 points
+	template<typename T>
+	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
 
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
@@ -3676,15 +3674,9 @@ void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 Will throw if unable (numerical issue)
 */
 template<typename FPT>
-template<
-	typename PT,
-	typename std::enable_if<
-		!std::is_arithmetic<PT>::value
-		,PT
-	>::type*
->
+template<typename T>
 void
-Circle_<FPT>::set( const PT& pt1, const PT& pt2, const PT& pt3 )
+Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( areColinear( pt1, pt2, pt3 ) )
@@ -7176,6 +7168,24 @@ const Point2d_<FPT>&
 center( const Circle_<FPT>& cir )
 {
 	return cir.center();
+}
+
+/// Returns area of circle (free function)
+/// \sa Circle_::area()
+template<typename FPT>
+HOMOG2D_INUMTYPE
+area( const Circle_<FPT>& cir )
+{
+	return cir.area();
+}
+
+/// Returns perimeter of circle (free function)
+/// \sa Circle_::length)
+template<typename FPT>
+HOMOG2D_INUMTYPE
+length( const Circle_<FPT>& cir )
+{
+	return cir.length();
 }
 
 /// Free function, return floating-point type

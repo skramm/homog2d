@@ -1883,8 +1883,12 @@ TEST_CASE( "Circle", "[cir1]" )
 		CHECK( c1.center() == Point2d(0,0) );
 		CHECK( center(c1)  == Point2d(0,0) );
 		CHECK( c1.radius() == 1. );
+		CHECK( radius(c1)  == 1. );
 		CHECK( c1.getBB() == FRect(-1,-1,1,1 ) );
 		CHECK( getBB(c1)  == FRect(-1,-1,1,1 ) );
+
+		CHECK( c1.area()   == area(c1) );
+		CHECK( c1.length() == length(c1) );
 	}
 	{
 		int i = 44;
