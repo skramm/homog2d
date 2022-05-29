@@ -485,8 +485,8 @@ std::cout << center(c1); // prints '[12,34]'
 You can get area and perimeter with member or free functions.
 The perimeter function has the name "length" for consistency with other primitives.
 ```C++
-auto area  = c1.area() // or area(c1)
-auto perim = c1.length() // or length(c1)
+auto area  = c1.area();   // or area(c1)
+auto perim = c1.length(); // or length(c1)
 ```
 
 
@@ -619,7 +619,7 @@ Consider these two sets of points:
 
 ![First open Polyline](img/polyline2_o1.png)
 ![Second open Polyline](img/polyline2_o2.png)
-![Sames points, but closed type](img/polyline2_c.png)
+![Same points, but closed type](img/polyline2_c.png)
 
 If they are not closed, then the `==` operator will return `false`.
 But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
@@ -636,7 +636,7 @@ and<br>
 B: `(3,0)-(3,1)-(0,0)-(0,3)-(1,3)-(0,0)`
 
 They both describe the same object:
-![Polyline comparison](polyline_comp_1.png)
+![Polyline comparison example](polyline_comp_1.png)
 
 When compared, they will be considered as different because they both use twice the same point `(0,0)`
 and their normalisation will produce these sets of points:<br>

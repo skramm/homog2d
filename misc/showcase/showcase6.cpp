@@ -60,6 +60,7 @@ int main( int argc, const char** argv )
 				draw( im1, Hdraw * pt, dpinter );
 
 		draw( im1, v1d );
+		cir2d.getBB().draw( im1, DrawParams().setColor(150,200,200) );
 
 		segd.draw( im1, DrawParams().setColor(50,50,150) );
 		cir1d.draw( im1, DrawParams().setColor(250,0,0) );
