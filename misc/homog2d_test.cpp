@@ -1316,7 +1316,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 	{                                   // identical rectangles
 		FRect_<NUMTYPE> r1, r2;
 		CHECK( r1 == r2 );
-		CHECK( !r1.intersects(r2)() );
+		CHECK( !r1.intersects(r2)() ); // no intersection !
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
 
@@ -1327,7 +1327,6 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		auto u1 = unionArea(r1,r2);
 		CHECK( u1.size() == 4 );      // 4 points
 		CHECK( u1 == CPolyline(r1) );  // same
-//		CHECK( u1 != OPolyline(r1) );
 	}
 	{
 #include "figures_test/frect_intersect_1.code"

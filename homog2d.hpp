@@ -393,7 +393,7 @@ static HOMOG2D_INUMTYPE& nullDeter()
 /// Helper function, could be needed
 void printThresholds( std::ostream& f )
 {
-	f << "Current threshold values:"
+	f << "homog2d: current threshold values:"
 		<< "\n  -nullDistance()="       << nullDistance()
 		<< "\n  -nullOrthogDistance()=" << nullOrthogDistance()
 		<< "\n  -nullAngleValue()="     << nullAngleValue()
@@ -1939,7 +1939,7 @@ private:
 					pts.insert( vpts[1] );
 			}
 		}
-		detail::IntersectM<FPT> out;
+		detail::IntersectM<FPT> out; // convert std::set to output container
 		for( const auto& elem: pts )
 			out.add( elem );
 		return out;

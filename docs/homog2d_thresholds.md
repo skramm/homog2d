@@ -42,11 +42,12 @@ These are the symbols to use:
 
 ### 3 - Changing thresholds at run time
 
-In your code, these value can be read/written any time, using the same functions.
+In your code, these values can be read/written any time, using the same functions.
 They all lie in the sub-namespace `thr`:
 
 Example:
 ```
+C++
 auto curr = thr::nullDistance();  // store current value
 thr::nullDistance() = 1E-6;       // change value
 ...                               // do some stuff
@@ -59,6 +60,14 @@ There is one function per symbol above:
 * `thr::nullAngleValue()`
 * `thr::nullDenom()`
 * `thr::nullDeter()`
+
+All the threshold current values can be printed at once with:
+
+```
+C++
+thr::printThresholds( std::cout );
+```
+
 
 ### 4 - What value should I use for the thresholds?
 

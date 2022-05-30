@@ -974,7 +974,7 @@ The table below summarizes the number of intersection points to expect:
 |------------|----------|-----------|----------|----------|------------|
 | `Line2d`   |  0 or 1  |           |          |          |            |
 | `Segment`  |  0 or 1  |   0 or 1  |          |          |            |
-| `FRect`    |  0 or 2  |   0,1,2   |   0,2,4  |          |            |
+| `FRect`    |  0 or 2  |   0,1,2   |    0-4   |          |            |
 | `Circle`   |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |            |
 | `Polyline` |  0 - n   |   0 - n   |   0 - n  |  0 - n   |   0 - n    |
 

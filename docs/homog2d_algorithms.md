@@ -6,7 +6,7 @@ This page will give some details on how things are done.
 
 ## 1 - Intersection algorithms
 
-### 1.A - Line/Line, Line/Segment, Segment/Segment
+### 1.1 - Line/Line, Line/Segment, Segment/Segment
 
 For Line/Line intersection, this simply checks that lines are not parallel and if not, it returns the intersection point,
 defined as the product of the two lines.
@@ -34,13 +34,13 @@ if( | d(ac) + d(bc) - segment_length | < thr::nullDistance() )
 
 See [page on thresholds](homog2d_thresholds.md) for details on how to manage the threshold value.
 
-### 1.2 - Line/Circle
+### 1.2 - Line / Circle
 
 We use here a geometric approach, described in [this document](http://skramm.lautre.net/files/misc/intersect_circle_line.pdf).
 This basically restates what is [described here](https://cp-algorithms.com/geometry/circle-line-intersection.html).
 
 
-### 1.3 - Segment/Circle
+### 1.3 - Segment / Circle
 
 The first step is to check if the segments supporting line has an intersection with the circle, using the above algorithm.
   * If there is no interesection, then we can stop.
@@ -60,6 +60,10 @@ Determining which one of the two points is the correct one if done by checking w
 (*) for clarity, we do not detail here the case where points are on the edge of the circle, but this is taken into account in the code.
 
 
+### 1.4 - FRect / FRect
+
+Each segment of one of the rectangles if compared to each segment of the other rectangle.
+Thus we have between 0 and 4 intersections (equal intersection points are removed).
 
 
 
