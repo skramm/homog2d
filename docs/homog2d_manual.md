@@ -485,10 +485,9 @@ std::cout << center(c1); // prints '[12,34]'
 You can get area and perimeter with member or free functions.
 The perimeter function has the name "length" for consistency with other primitives.
 ```C++
-auto area  = c1.area();   // or area(c1)
-auto perim = c1.length(); // or length(c1)
+auto area  = c1.area();   // or: area(c1)
+auto perim = c1.length(); // or: length(c1)
 ```
-
 
 Two additional free functions provide the segment (or line) between the centers of two circles,
 and the two segments tangential to two circles:
@@ -669,15 +668,15 @@ Circle cir;
 Ellipse ell5( cir );  // can be initialized from a circle
 ```
 
-Retrieving attributes:
+Retrieving attributes
+(The perimeter function has the name "length" for consistency with the other primitives):
 ```C++
 Ellipse ell;
-auto center  = ell.center();
-auto center2 = center(ell);    // or use the free function
-auto angle   = ell.angle();
-auto angle2  = angle(ell);    // or use the free function
-auto area    = ell.area();
-auto area2   = area(ell);    // or use the free function
+auto center  = ell.center(); // or: center(ell)
+auto angle   = ell.angle();  // or: angle(ell)
+auto area    = ell.area();   // or: area(ell)
+auto perim   = ell.length(); // or: length(ell)
+
 auto majmin  = ell.getMajMin();  // returns a pair of floating point values
 ```
 
