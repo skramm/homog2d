@@ -267,7 +267,7 @@ Besides these, you can also get the bounding box of two arbitrary primitives `p1
 auto bb = getBB( p1, p2 );
 ```
 
-On this figure, you can see the three combinations of bounding boxes for the three objects above.
+On this figure, you can see three combinations of bounding boxes for some objects.
 
 ![getbb1b](img/getbb1b.png)
 
@@ -306,7 +306,7 @@ You can get the pair of points (as an `std::pair`) with `getPts()`.
 Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
 ```C++
 Segment s1( Point2d(100,100), Point2d(10,10) );
-auto pair= s1.getPts();
+auto pair = s1.getPts();
 std::cout << pair.first; // will print (10,10)
 ```
 
@@ -328,7 +328,7 @@ auto p_middle = s1.getMiddlePoint();
 auto p_mid2 = getMiddlePoint(s1); // free function
 ```
 
-The bisector line is available, as member of free function:
+The bisector line is available, using a member or free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto line1 = s1.getBisector();
@@ -604,7 +604,7 @@ For closed types, you can determine its convexity:
 CPolyline plo;
 OPolyline plc;
 // ... set points
-std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // of free function: isConvex(plc)
+std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free function: isConvex(plc)
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```
 

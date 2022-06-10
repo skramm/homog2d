@@ -1327,7 +1327,7 @@ public:
 /// Area of ellipse
 	HOMOG2D_INUMTYPE area() const
 	{
-		auto par = p_getParams();
+		auto par = p_getParams<HOMOG2D_INUMTYPE>();
 		return M_PI * par.a * par.b;
 	}
 
