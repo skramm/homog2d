@@ -35,7 +35,7 @@ using namespace h2d;
 void myMouseCB( int event, int x, int y, int, void* param );
 
 //------------------------------------------------------------------
-/// General data struct used in demos
+/// General data struct used in demos, is inherited in each demo
 struct Data
 {
 	img::Image<cv::Mat> img;
@@ -47,11 +47,11 @@ struct Data
 	Point2d pt_mouse;   ///< Mouse coordinates
 	std::vector<Point2d> vpt; ///< some points used in demo
 	bool leftClicAddPoint = false;
+	int tline = 0;          ///< used to draw some lines of text inside window
 
 	std::function<void(void*)> _action = nullptr;
 
-	explicit Data( std::string wname )//, std::function<void(void*)>) )
-		: win1(wname)
+	explicit Data( std::string wname ): win1(wname)
 	{
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
@@ -61,6 +61,7 @@ struct Data
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
 		cv::setMouseCallback( win1, myMouseCB, this );
+		tline = 0;
 	}
 	void reset()
 	{
@@ -91,7 +92,13 @@ struct Data
 	{
 		img.show( win1 );
 	}
-
+	void putTextLine( std::string msg, int lineindex=-1 )
+	{
+		int lineSize = 22;
+		if( lineindex == 0 )
+			tline = 0;
+		cv::putText( img.getReal(), msg, cv::Point2i( 20, lineSize*++tline), 0, 0.6, cv::Scalar( 150,0,0 ), 1 );
+	}
 	void drawLines()
 	{
 		for( int i=0; i<nbPts(); i++ )
@@ -372,8 +379,9 @@ struct Param_B: public Data
 /// Build H from R,T,S (no mouse)
 void demo_B( int n )
 {
-	Param_B data( "build_H" );
-	std::cout << "Demo " << n << ": Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
+	Param_B data( "build Homography" );
+	std::cout << "Demo " << n << ": build Homography from Rotation, Translation, Scale\n"
+		<< "Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 
 	double angle = 0.;
 	double angle_delta = 5.;
@@ -646,7 +654,7 @@ struct Param_H: public Data
 {
 	int hmethod = 1;
 	img::Image<cv::Mat> img2;
-	std::string win2 = "Computed_projection";
+	std::string win2 = "Computed projection";
 
 	explicit Param_H(std::string wname): Data(wname)
 	{
@@ -770,7 +778,7 @@ void action_H( void* param )
 /// Demo of computing a homography from two sets of 4 points
 void demo_H( int nd )
 {
-	Param_H data( "compute_H" );
+	Param_H data( "Compute Homography from 4 points" );
 	data.vpt.resize(8);
 	data.reset();
 	std::cout << "Demo " << nd << ": compute homography from two sets of 4 points\n"
@@ -811,9 +819,6 @@ void action_PL( void* param )
 {
 	auto& data = *reinterpret_cast<Param_PL*>(param);
 
-	int lineSize = 22;
-	int lineCount = 1;
-
 	data.clearImage();
 	data.polyline_o.set( data.vpt );
 	data.polyline_c.set( data.vpt );
@@ -832,16 +837,8 @@ void action_PL( void* param )
 	Line2d li( Point2d( 10,60), Point2d( 400,270) );
 	li.draw( data.img, col_green );
 
-	cv::putText(
-		data.img.getReal(),
-		std::string("Nb pts=") + std::to_string( data.polyline_c.size() ),
-		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-	);
-	cv::putText(
-		data.img.getReal(),
-		std::string("length=") + std::to_string(len),
-		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-	);
+	data.putTextLine( std::string("Nb pts=") + std::to_string( data.polyline_c.size() ), 0 );
+	data.putTextLine( std::string("length=") + std::to_string(len)                         );
 
 	auto intersPts_o = li.intersects(data.polyline_o).get();
 	auto intersPts_c = li.intersects(data.polyline_c).get();;
@@ -873,12 +870,7 @@ void action_PL( void* param )
 		draw( data.img, i_cir_o.get() );
 		draw( data.img, i_rect_o.get() );
 	}
-	cv::putText(
-		data.img.getReal(),
-		str_ispoly,
-		cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-	);
-
+	data.putTextLine( str_ispoly );
 	auto bb = data.polyline_c.getBB();
 	bb.draw( data.img );
 
@@ -894,28 +886,19 @@ void action_PL( void* param )
 			cv::Scalar( 250,0,0 )
 		);
 
-		cv::putText(
-			data.img.getReal(),
-			std::string("area=") + std::to_string(data.polyline_c.area()),
-			cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-		);
 		auto isC = "Convex: Y";
 		if( !data.polyline_c.isConvex() )
 			isC = "Convex: N";
 
-		cv::putText(
-			data.img.getReal(),
-			isC,
-			cv::Point2i( 20,lineSize*lineCount++), 0, 0.6, cv::Scalar( 250,0,0 ), 2
-		);
-
+		data.putTextLine( std::string("area=") + std::to_string(data.polyline_c.area()) );
+		data.putTextLine( isC );
 	}
 	data.showImage();
 }
 
 void demo_PL( int nd )
 {
-	Param_PL data( "Polyline_demo" );
+	Param_PL data( "Polyline demo" );
 	std::cout << "Demo " << nd
 		<< ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n"
 		<< "Lclick to add point, Rclick to remove\n";
@@ -940,12 +923,11 @@ void demo_PL( int nd )
 struct Param_ELL : Data
 {
 	explicit Param_ELL( std::string title ):Data(title)
-	{
-		ell = Ellipse_<float>( x0, y0, 120.,60.,0) ;
-	}
+	{}
 	void draw()
 	{
 		clearImage();
+		ell = Ellipse_<float>( x0, y0, major, major*ratio_mm, 0. ) ;
 		auto ell2 = H * ell;
 		ell2.draw( img );
 
@@ -958,6 +940,15 @@ struct Param_ELL : Data
 		auto axis = ell2.getAxisLines();
 		h2d::draw( img, axis );
 
+		putTextLine( std::string("Major length=")       + std::to_string( major ),       0 );
+		putTextLine( std::string("ratio Mm=")           + std::to_string( ratio_mm )       );
+		putTextLine( std::string("Ellipse area=")       + std::to_string( ell.area()   )   );
+		putTextLine( std::string("Ellipse perimeter=")  + std::to_string( ell.length() )   );
+		putTextLine( std::string("Green BB area=")      + std::to_string( bb2.area()   )   );
+		putTextLine( std::string("Green BB perimeter=") + std::to_string( bb2.length() )   );
+		putTextLine( std::string("Blue BB area=")       + std::to_string( bb1.area()   )   );
+		putTextLine( std::string("Blue BB perimeter=")  + std::to_string( bb1.length() )   );
+
 		showImage();
 	}
 	Ellipse_<double> ell;
@@ -966,7 +957,9 @@ struct Param_ELL : Data
 	double tx = 0;
 	double ty = 0;
 	double x0=200;
-	double y0=100;
+	double y0=250;
+	double major = 120.;
+	double ratio_mm = .5;
 };
 
 /// action for Ellipse demo (run on keyboard hit)
@@ -997,6 +990,8 @@ void demo_ELL( int nd )
 	kbloop.addKeyAction( 'y', [&](void*){ data.ty -= trans_delta;    }, "decrement ty" );
 	kbloop.addKeyAction( 'm', [&](void*){ data.angle += angle_delta; }, "increment angle" );
 	kbloop.addKeyAction( 'l', [&](void*){ data.angle -= angle_delta; }, "decrement angle" );
+	kbloop.addKeyAction( 'o', [&](void*){ data.ratio_mm = std::min(data.ratio_mm*1.1, 1.00); }, "inc ratio" );
+	kbloop.addKeyAction( 'p', [&](void*){ data.ratio_mm = std::max(data.ratio_mm/1.1, 0.05); }, "dec ratio" );
 
 	kbloop.addCommonAction( action_ELL );
 	action_ELL( &data );

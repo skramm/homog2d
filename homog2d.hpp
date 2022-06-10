@@ -1330,6 +1330,8 @@ public:
 		auto par = p_getParams<HOMOG2D_INUMTYPE>();
 		return M_PI * par.a * par.b;
 	}
+// Circumference
+	HOMOG2D_INUMTYPE length() const;
 
 	std::pair<Line2d_<FPT>,Line2d_<FPT>> getAxisLines() const;
 
@@ -1343,7 +1345,7 @@ public:
 private:
 /// private constructor, needed in friend function only
 /**
-This is not public, because: 1-useless 2-not guarantee would be given that the input
+This is not public, because: 1-useless, 2-no guarantee would be given that the input
 is indeed a valid ellipse
 */
 	explicit Ellipse_( const detail::Matrix_<FPT>& mat ): detail::Matrix_<FPT>( mat )
@@ -5664,7 +5666,7 @@ Ellipse_<FPT>::p_computeParams() const
 //------------------------------------------------------------------
 /// Returns true if ellipse is a circle
 /**
-Using the matrix represention, if A = C and B = 0, then the ellipse is a circle
+Using the matrix representation, if A = C and B = 0, then the ellipse is a circle
 
 You can provide the 0 threshold as and argument
 */
@@ -5682,6 +5684,7 @@ Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 	return false;
 }
 
+//------------------------------------------------------------------
 /// Returns center of ellipse
 /// \sa center( const T& )
 template<typename FPT>
@@ -5692,6 +5695,7 @@ Ellipse_<FPT>::center() const
 	return Point2d_<FPT>( par.x0, par.y0 );
 }
 
+//------------------------------------------------------------------
 template<typename FPT>
 std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 Ellipse_<FPT>::getMajMin() const
@@ -5700,6 +5704,7 @@ Ellipse_<FPT>::getMajMin() const
 	return std::make_pair( par.a, par.b );
 }
 
+//------------------------------------------------------------------
 /// Returns angle of ellipse
 /// \sa angle( const Ellipse_& )
 template<typename FPT>
@@ -5708,6 +5713,23 @@ Ellipse_<FPT>::angle() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return par.theta;
+}
+
+//------------------------------------------------------------------
+/// Returns (approximate) perimeter of ellipse using the Ramanujan second formulae
+/**
+See https://en.wikipedia.org/wiki/Ellipse#Circumference
+*/
+template<typename FPT>
+HOMOG2D_INUMTYPE
+Ellipse_<FPT>::length() const
+{
+	auto par = p_getParams<HOMOG2D_INUMTYPE>();
+	auto ab_sum  = par.a + par.b;
+	auto ab_diff = par.a - par.b;
+	auto h = ab_diff * ab_diff / (ab_sum * ab_sum);
+	auto denom = (HOMOG2D_INUMTYPE)10. + std::sqrt(4. - 3. * h);
+	return (par.a + par.b) * M_PI * ( 1. + 3. * h / denom );
 }
 
 //------------------------------------------------------------------
