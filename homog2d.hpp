@@ -6855,24 +6855,6 @@ size_t nbSegs( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.nbSegs();
 }
 
-/// Get segment length (free function)
-/// \sa Segment_::length()
-template<typename FPT>
-HOMOG2D_INUMTYPE
-length( const Segment_<FPT>& seg )
-{
-	return seg.length();
-}
-
-/// Returns length (free function)
-/// \sa PolylineBase::length()
-template<typename PLT,typename FPT>
-HOMOG2D_INUMTYPE
-length( const base::PolylineBase<PLT,FPT>& pl )
-{
-	return pl.length();
-}
-
 /// Returns the segments of the polyline (free function)
 /// \sa PolylineBase::getSegs()
 template<typename PLT,typename FPT>
@@ -7118,42 +7100,11 @@ HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 }
 
 /// Free function
-/// \sa FRect_::area()
-template<typename FPT>
-HOMOG2D_INUMTYPE area( const FRect_<FPT>& rect )
-{
-	return rect.area();
-}
-
-/// Free function
-/// \sa Ellipse_::area()
-template<typename FPT>
-HOMOG2D_INUMTYPE area( const Ellipse_<FPT>& ell )
-{
-	return ell.area();
-}
-
-/// Free function
-/// \sa PolylineBase::area()
-template<typename PLT,typename FPT>
-HOMOG2D_INUMTYPE area( const base::PolylineBase<PLT,FPT>& pl )
-{
-	return pl.area();
-}
-
-/// Free function
 /// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
 base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.centroid();
-}
-
-/// Free function
-template<typename FPT>
-HOMOG2D_INUMTYPE length( const FRect_<FPT>& rect )
-{
-	return rect.length();
 }
 
 /// Returns radius of circle (free function)
@@ -7192,22 +7143,20 @@ center( const Circle_<FPT>& cir )
 	return cir.center();
 }
 
-/// Returns area of circle (free function)
-/// \sa Circle_::area()
-template<typename FPT>
+/// Returns area of primitive (calls the member function)
+template<typename T>
 HOMOG2D_INUMTYPE
-area( const Circle_<FPT>& cir )
+area( const T& t )
 {
-	return cir.area();
+	return t.area();
 }
 
-/// Returns perimeter of circle (free function)
-/// \sa Circle_::length)
-template<typename FPT>
+/// Returns perimeter of primitive (calls the member function)
+template<typename T>
 HOMOG2D_INUMTYPE
-length( const Circle_<FPT>& cir )
+length( const T& t )
 {
-	return cir.length();
+	return t.length();
 }
 
 /// Free function, return floating-point type
