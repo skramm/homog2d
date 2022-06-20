@@ -22,35 +22,35 @@ int main( int argc, const char** argv )
 	uint8_t g = 100;
 	for( int i=0; i<nbim; i++ )
 	{
-		auto angle = i*360./nbim;
-		auto angle_r = angle * M_PI / 180.;
-		auto x1 = std::cos(angle_r)*k;
-		auto y1 = std::sin(angle_r)*k;
-		auto r_w = r_w0 + std::sin( 2.*M_PI*i/nbim );
+		auto angle = i * 2. * M_PI / nbim;
+		auto x1 = std::cos(angle)*k;
+		auto y1 = std::sin(angle)*k;
+		auto r_w = r_w0 + std::sin(angle);
 
 		FRect obj1( Point2d( x1+x0, y1+x0), r_w, r_h0 );
 		Circle obj2( Point2d(-x1+x0,-y1+x0), 2.-.5*r_w );
 		auto bcir = obj1.getBoundingCircle();
+		auto cbb = getBB(obj2);
 		auto center = obj1.center();
-//		std::cout << "radius=" << obj2.radius() << "\n";
 
 		auto obj1_d = Hdraw * obj1;
 		auto obj2_d = Hdraw * obj2;
 		auto bcir_d = Hdraw * bcir;
 		auto center_d = Hdraw * center;
+		auto cbb_d  = Hdraw * cbb;
 
 		Image<cv::Mat> ima( 250, 200 );
 
 		obj1_d.draw( ima, DrawParams().setColor(250,0,0) );
 		obj2_d.draw( ima, DrawParams().setColor(0,0,250) );
 		bcir_d.draw( ima, DrawParams().setColor(100,250,100)  );
+		obj2_d.getBB().draw( ima, DrawParams().setColor(100,50,200)  );
 
 		getBB(obj1_d, obj2_d).draw( ima, DrawParams().setColor(g,g,g) );
 
 		std::ostringstream ossa;
 		ossa << "showcase4a_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		ima.write( ossa.str() );
-
 	}
 }
 
