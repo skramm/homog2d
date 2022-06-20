@@ -3028,6 +3028,13 @@ public:
 		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
 	}
 
+/// Point is inside CPolyline
+	template<typename FPT2>
+	bool isInside( const CPolyline_<FPT2>& poly ) const
+	{
+		return impl_isInsidePoly( poly, detail::RootHelper<LP>() );
+	}
+
 //////////////////////////
 //       OPERATORS      //
 //////////////////////////
@@ -3112,10 +3119,16 @@ private:
 	template<typename FPT2>
 	constexpr bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
+/// \todo add impl_isInsideCircle( const Ciurcle<T>&,  ...)
 	template<typename T>
 	bool           impl_isInsideCircle( const Point2d_<FPT>&, T r, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename T>
 	constexpr bool impl_isInsideCircle( const Point2d_<FPT>&, T r, const detail::RootHelper<type::IsLine>&  ) const;
+
+	template<typename T>
+	bool           impl_isInsidePoly( const CPolyline_<T>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename T>
+	constexpr bool impl_isInsidePoly( const CPolyline_<T>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 	void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
@@ -5352,8 +5365,8 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 
 	Line2d_<HOMOG2D_INUMTYPE> l1 = getLine();
 	Line2d_<HOMOG2D_INUMTYPE> l2 = s2.getLine();
-	if( l1.isParallelTo( l2 ) )                                // if parallel,
-			return detail::Intersect<detail::Inters_1,FPT>();  // then, no intersection
+	if( l1.isParallelTo( l2 ) )                            // if parallel,
+		return detail::Intersect<detail::Inters_1,FPT>();  // then, no intersection
 
 	const auto& ptA1 = getPts().first;
 	const auto& ptA2 = getPts().second;
@@ -6398,6 +6411,55 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::Root
 	return false; // to avoid a warning
 }
 
+//------------------------------------------------------------------
+/// Returns true if point is inside closed Polyline
+/**
+See https://en.wikipedia.org/wiki/Point_in_polygon
+\todo 20220620: Finish this !!!
+*/
+template<typename LP, typename FPT>
+template<typename T>
+bool
+LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::RootHelper<type::IsPoint>& ) const
+{
+	if( !poly.isPolygon() )
+		return false;
+
+// step 1: check if point is lying on one of the segments. if so, return false;
+	for( auto seg: poly.getSegs() )
+		if( seg.getLine().distTo( * this )  < thr::nullDistance() )
+				return false;
+
+// step 2: build a segment going to infinity
+	Point2d_<HOMOG2D_INUMTYPE> pt_inf(1,0,0);
+//	auto bb = poly.getBB();  // polygons's bounding box
+
+//	auto line = pt_inf * *this;
+	Segment_<HOMOG2D_INUMTYPE> seg_inf( *this, pt_inf );
+	std::cout << "seg_inf=" << seg_inf << '\n';
+
+// step 3: count nb of intersections
+	size_t c = 0;
+	for( auto seg: poly.getSegs() )
+	{
+		std::cout << "seg=" << seg << '\n';
+		if( seg.intersects(seg_inf)() )
+			c++;
+	}
+	std::cout << "c=" << c << '\n';
+	if( c%2 )
+		return false;
+	return true;
+}
+
+template<typename LP, typename FPT>
+template<typename T>
+constexpr bool
+LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(CPolyline_) with a line" );
+	return false; // to avoid a warning
+}
 
 //------------------------------------------------------------------
 template<typename LP, typename FPT>

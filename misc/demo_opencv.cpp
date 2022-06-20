@@ -806,6 +806,8 @@ void demo_H( int nd )
 	kbloop.start( data );
 }
 //------------------------------------------------------------------
+/// This datatype holds two Polyline objects, one closed, one open. They are both edited the same way and
+/// we switch drawing
 struct Param_PL : Data
 {
 	explicit Param_PL( std::string title ):Data(title)
@@ -886,12 +888,20 @@ void action_PL( void* param )
 			cv::Scalar( 250,0,0 )
 		);
 
+		data.putTextLine( std::string("area=") + std::to_string(data.polyline_c.area()) );
+
 		auto isC = "Convex: Y";
 		if( !data.polyline_c.isConvex() )
 			isC = "Convex: N";
-
-		data.putTextLine( std::string("area=") + std::to_string(data.polyline_c.area()) );
 		data.putTextLine( isC );
+
+		std::cout << "mouse=" << data.pt_mouse << '\n';
+		auto YN = data.pt_mouse.isInside(data.polyline_c)?"Y":"N";
+		data.putTextLine( std::string("IsInside=") + std::string( YN ) );
+
+	Point2d_<HOMOG2D_INUMTYPE> pt_inf(1,0,0);
+	Segment_<HOMOG2D_INUMTYPE> seg_inf( data.pt_mouse, pt_inf );
+		seg_inf.getLine().draw( data.img );
 	}
 	data.showImage();
 }
