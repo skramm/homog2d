@@ -10,47 +10,46 @@ using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
-	int n=20;
+	auto nbim = 30;         // number of images in gif
 	auto im_w = 400;
 	auto im_h = 250;
 	Image<cv::Mat> myImg( im_w, im_h );
 
 	int offset_h = 100;
 	int offset_v = 60;
-	Homogr Hr( M_PI/n );
-	Homogr HT1(  im_w/2,  100 );
+	Homogr Hr( 2.*M_PI/nbim );    // set up rotation
+	Homogr HT1(  im_w/2,  100 );  // centered on image center
 	Homogr HT2( -im_w/2, -100 );
 	Homogr H = HT1 * Hr * HT2;
 
-	Circle cir_fixed( Point2d( 265,195), 40 );
-	Circle cir( Point2d( 32,82), 22 );
-
-//	Ellipse ell( Point2d( 85,195), 55, 15, 3 );
-	FRect r_fixed( 40,85,130,155 );
+// define some primitives
+	Circle  cir_fixed( Point2d( 265,195), 40 );
+	Circle  cir( Point2d( 32,82), 22 );
+	FRect   r_fixed( 40,85,130,155 );
 	Segment seg( 85,210, 335, 25 );
+	FRect   rect( 0,0,200,80 );
+	CPolyline pol{ std::vector<Point2d>{ {30,20}, {140,45}, {110,110}, {20,65} } };
 
-	FRect_<double> rect( 0,0,200,80 );
-	CPolyline pl;
-	auto color_red = DrawParams().setColor(200,20,20);
+// define some colors
+	auto color_red   = DrawParams().setColor(200,20,20);
 	auto color_green = DrawParams().setColor(20,220,20);
-	auto color_blue = DrawParams().setColor(20,20,220);
+	auto color_blue  = DrawParams().setColor(20,20,220);
+	auto color_poly  = DrawParams().setColor(180,0,180);
 
 // move rectangle dx=100, dy=60
-	pl = Homogr().addTranslation(100, 60) * pl;
+	pol = Homogr().addTranslation(75, 20) * pol;
 	Line2d lih( Point2d(0,100), Point2d(200,100) );
 	Line2d liv( Point2d(200,0), Point2d(200,400) );
 
 	Line2d li( Point2d(0,0), Point2d(200,80) );
-	for( int i=0; i<n; i++ )
+	for( int i=0; i<nbim; i++ )
 	{
 		myImg.clear();
-//		cvmat = cv::Scalar(255,255,255);
 
-//		ell.draw( myImg, color_green );
-		lih.draw( myImg );
+		lih.draw( myImg );             // draw all the stuff
 		liv.draw( myImg );
 		li.draw( myImg, color_green );
-		pl.draw( myImg, color_blue );
+		pol.draw( myImg, color_poly );
 
 		if( cir.isInside( cir_fixed ) || cir.isInside( r_fixed ) )
 			cir.draw( myImg, DrawParams().setColor(220,0,0) );
@@ -61,19 +60,19 @@ int main( int argc, const char** argv )
 		seg.draw( myImg, color_green );
 		cir_fixed.draw( myImg, color_green );
 
-		auto inters1 = pl.intersects( li );
+		auto inters1 = pol.intersects( li );
 		if( inters1() )
 			draw( myImg, inters1.get(), color_red );
 
-		auto inters2 = pl.intersects( r_fixed );
+		auto inters2 = pol.intersects( r_fixed );
 		if( inters2() )
 			draw( myImg, inters2.get(), color_red );
 
-		auto inters3 = pl.intersects( cir_fixed );
+		auto inters3 = pol.intersects( cir_fixed );
 		if( inters3() )
 			draw( myImg, inters3.get(), color_red );
 
-		auto inters4 = pl.intersects( seg );
+		auto inters4 = pol.intersects( seg );
 		if( inters4() )
 			draw( myImg, inters4.get(), color_red );
 
@@ -89,21 +88,15 @@ int main( int argc, const char** argv )
 		if( intersb3() )
 			draw( myImg, intersb3.get(), color_red );
 
-
-/* NOT YET IMPLEMENTED !
-		auto interse = pl.intersects( ell );
-		if( interse() )
-			draw( myImg, interse.get(), color_red );
-*/
 		std::ostringstream oss;
 		oss << "showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		myImg.write( oss.str() );
 
-		pl = H * pl;
-		lih = H*lih;
-		liv = H*liv;
+		pol = H * pol;   // rotate lines and polygon
+		lih = H * lih;
+		liv = H * liv;
 
-		cir.translate( 12,6);
+		cir.translate( 12, 6 ); // move the circle
 	}
 }
 

@@ -40,6 +40,6 @@ A rotating ellipse with its center point (green), its axis lines, and its two bo
 
 * [Showcase 6](../misc/showcase/showcase6.cpp):
 Building circles from two (blue) or three (red) points, with one of them rotating in the image.
-Also shows intersection of circles with a segment
+Also shows intersection of circles with a line segment.
 
 ![showcase6](showcase/showcase6.gif)

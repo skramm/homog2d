@@ -2158,10 +2158,14 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 /// Returns true if circle is inside flat rectangle \c rect
 	template<typename FPT2>
-	bool isInside( const FRect_<FPT2>& rect )
+	bool isInside( const FRect_<FPT2>& rect ) const
 	{
 		return implC_isInside( rect.getPts() );
 	}
+
+// Returns true if circle is inside close polyline \c poly
+	template<typename FPT2>
+	bool isInside( const CPolyline_<FPT2>& poly ) const;
 
 /// \name Intersection
 ///@{
@@ -3739,6 +3743,27 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 	center() = li1 * li2;
 	radius() = center().distTo(pt1);
 #endif
+}
+
+//------------------------------------------------------------------
+/// Returns true if circle is inside close polyline \c poly
+/**
+Will be true if two conditions are met:
+- center point is inside the polygon
+- no intersection points
+*/
+template<typename FPT>
+template<typename FPT2>
+bool
+Circle_<FPT>::isInside( const CPolyline_<FPT2>& poly ) const
+{
+	if( _center.isInside( poly ) )
+	{
+		auto inters = intersects( poly );
+		if( inters.size() == 0 )
+			return true;
+	}
+	return false;
 }
 
 //------------------------------------------------------------------
