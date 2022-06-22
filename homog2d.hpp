@@ -3156,7 +3156,7 @@ private:
 	template<typename FPT2>
 	constexpr bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
-/// \todo add impl_isInsideCircle( const Ciurcle<T>&,  ...)
+/// \todo add impl_isInsideCircle( const Circle<T>&,  ...)
 	template<typename T>
 	bool           impl_isInsideCircle( const Point2d_<FPT>&, T r, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename T>
@@ -6453,6 +6453,11 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::Root
 /**
 See https://en.wikipedia.org/wiki/Point_in_polygon
 \todo 20220620: Finish this !!!
+
+Algo:
+\verbatim
+aaa
+\endverbatim
 */
 template<typename LP, typename FPT>
 template<typename T>
@@ -6462,25 +6467,50 @@ LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::Root
 	if( !poly.isPolygon() )
 		return false;
 
-// step 1: check if point is lying on one of the segments. if so, return false;
+// step 1: if point is outside bounding box, return false
+	auto bb = poly.getBB();
+	if( !this->isInside(bb) )
+		return false;
+
+// step 2: check if point is lying on one of the segments. if so, return false;
 	for( auto seg: poly.getSegs() )
-		if( seg.getLine().distTo( * this )  < thr::nullDistance() )
+		if( seg.getLine().distTo( *this ) < thr::nullDistance() )
 				return false;
 
-// step 2: build a segment going to infinity
-	Point2d_<HOMOG2D_INUMTYPE> pt_inf(1,0,0);
-//	auto bb = poly.getBB();  // polygons's bounding box
+// step 3: determine which segment of the BB is the farthest from the point, and
+// use its middle point
 
-//	auto line = pt_inf * *this;
-	Segment_<HOMOG2D_INUMTYPE> seg_inf( *this, pt_inf );
-	std::cout << "seg_inf=" << seg_inf << '\n';
+	auto segs = bb.getSegs();
+	using localPair = std::pair<HOMOG2D_INUMTYPE,int>;
+	std::array<localPair,4> dist_array;
+	for( int i=0; i<4; i++ )
+	{
+		dist_array[i].first  = this->distTo( segs[i].getLine() );
+		dist_array[i].second = i;
+	}
+	std::sort(
+		dist_array.begin(),
+		dist_array.end(),
+		[]                     // lambda
+		( const localPair& i, const localPair& j )
+		{
+			return i.first < j.first;
+		}
+	);
+
+	auto goodBbSeg = segs[ dist_array[3].second ]; // that segment is the farthest
+
+//build a segment
+
+	Segment_<HOMOG2D_INUMTYPE> seg_a( *this, goodBbSeg.getMiddlePoint() );
+	std::cout << "seg_inf=" << seg_a << '\n';
 
 // step 3: count nb of intersections
 	size_t c = 0;
 	for( auto seg: poly.getSegs() )
 	{
 		std::cout << "seg=" << seg << '\n';
-		if( seg.intersects(seg_inf)() )
+		if( seg.intersects(seg_a)() )
 			c++;
 	}
 	std::cout << "c=" << c << '\n';
