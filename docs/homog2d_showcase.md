@@ -20,7 +20,7 @@ A rotating Polyline object, its bounding box, and its intersection with a line.
 
 * [Showcase 4](../misc/showcase/showcase4a.cpp):
 Two dancing objects (Circle and FRect) and their common bounding box.
-Also show the rectangle's bounding circle.
+Also show the rectangle's bounding circle and the circle's bounding box.
 
 ![showcase4](showcase/showcase4a.gif)
 
@@ -39,7 +39,7 @@ A rotating ellipse with its center point (green), its axis lines, and its two bo
 
 
 * [Showcase 6](../misc/showcase/showcase6.cpp):
-Building circles from two (blue) or three (red) points, with one of them rotating in the image.
-Also shows intersection of circles with a line segment.
+Building circles from two (blue) or three (red) points, with one of the points rotating in the image.
+Also shows intersection of circles with a segment.
 
 ![showcase6](showcase/showcase6.gif)

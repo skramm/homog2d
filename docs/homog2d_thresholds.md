@@ -37,7 +37,7 @@ These are the symbols to use:
 * `HOMOG2D_THR_ZERO_DIST`: default value for null distance, i.e. two points whose distance is less than this value will be considered identical points.
 * `HOMOG2D_THR_ZERO_ORTHO_DIST`: default value for othogonal distance.
 * `HOMOG2D_THR_ZERO_ANGLE`: default value for an angle value to be considered null (value must be given in rad.).
-* `HOMOG2D_THR_ZERO_DENOM`: default value for a denominator to be considered null.
+* `HOMOG2D_THR_ZERO_DENOM`: default value for a denominator to be considered null. Used mostly when checking points for infinity and when normalizing a matrix.
 * `HOMOG2D_THR_ZERO_DETER`: default value for a matrix determinant to be considered null, thus the matrix will not be inversed.
 
 ### 3 - Changing thresholds at run time

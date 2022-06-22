@@ -97,6 +97,11 @@ auto x = getX(pt);
 auto y = getY(pt);
 ```
 
+This library is designed to handle points at infinity, you can check if they are:
+```C++
+Point2d pt(1,2,0);
+assert( pt.isInf() );
+```
 
 To get the 3 components of a line as a homogeneous array, one may use:
 ```C++
