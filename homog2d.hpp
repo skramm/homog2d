@@ -1809,6 +1809,27 @@ s0 |      | s2
 		return out;
 	}
 
+private:
+/// Returns as a pair the two main segments of the rectangle, with the largest one in "first"
+/**
+- If one of the 3 considered points is at infinity, order is not checked
+*/
+	std::pair<Segment_<FPT>,Segment_<FPT>>
+	p_getPairSegs() const
+	{
+		auto pts = get4Pts();
+		std::pair<Segment_<FPT>,Segment_<FPT>> out;
+		out.first  = Segment_<FPT>( pts[0], pts[1] );
+		out.second = Segment_<FPT>( pts[1], pts[2] );
+
+		if( !pts[0].isInf() && !pts[1].isInf() && !pts[2].isInf() )
+			if( out.first.length() < out.second.length() )
+				std::swap( out.first, out.second );
+		return out;
+	}
+
+public:
+
 /// Returns true if rectangle is inside \c shape (circle or rectangle)
 /// \todo maybe add some SFINAE to enable only for Circle_ or FRect_?
 	template<typename T>
@@ -2842,6 +2863,12 @@ Please check out warning described in impl_getAngle()
 		return impl_getAngle( seg.getLine(), detail::RootHelper<LP>() );
 	}
 
+/// Returns true if point is at infinity (third value less than thr::nullDenom() )
+	bool isInf() const
+	{
+		return impl_isInf( detail::RootHelper<LP>() );
+	}
+
 private:
 	FPT impl_getX( const detail::RootHelper<type::IsPoint>& ) const
 	{
@@ -2901,6 +2928,16 @@ private:
 
 	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+
+	constexpr bool impl_isInf( const detail::RootHelper<type::IsLine>& ) const
+	{
+		return false;
+	}
+	bool impl_isInf( const detail::RootHelper<type::IsPoint>& ) const
+	{
+		return std::abs( _v[2] ) < thr::nullDenom();
+	}
 
 	template<typename FPT2>
 	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
