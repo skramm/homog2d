@@ -6449,10 +6449,41 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::Root
 }
 
 //------------------------------------------------------------------
+namespace sub {
+
+/// Returns the index of the segment (among the ones in \c bbox)
+/// that is the farthest from point \c pt
+template<typename FPT1,typename FPT2>
+int
+getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
+{
+	auto segs = bbox.getSegs();
+	using localPair = std::pair<HOMOG2D_INUMTYPE,int>;
+	std::array<localPair,4> dist_array;
+	for( int i=0; i<4; i++ )
+	{
+		dist_array[i].first  = pt.distTo( segs[i].getLine() );
+		dist_array[i].second = i;
+	}
+	std::sort(
+		dist_array.begin(),
+		dist_array.end(),
+		[]                     // lambda
+		( const localPair& i, const localPair& j )
+		{
+			return i.first < j.first;
+		}
+	);
+
+	return dist_array[3].second;
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
 /// Returns true if point is inside closed Polyline
 /**
 See https://en.wikipedia.org/wiki/Point_in_polygon
-\todo 20220620: Finish this !!!
 
 Algo:
 \verbatim
@@ -6468,8 +6499,8 @@ LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::Root
 		return false;
 
 // step 1: if point is outside bounding box, return false
-	auto bb = poly.getBB();
-	if( !this->isInside(bb) )
+	auto bbox = poly.getBB();
+	if( !this->isInside(bbox) )
 		return false;
 
 // step 2: check if point is lying on one of the segments. if so, return false;
@@ -6480,43 +6511,27 @@ LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::Root
 // step 3: determine which segment of the BB is the farthest from the point, and
 // use its middle point
 
-	auto segs = bb.getSegs();
-	using localPair = std::pair<HOMOG2D_INUMTYPE,int>;
-	std::array<localPair,4> dist_array;
-	for( int i=0; i<4; i++ )
-	{
-		dist_array[i].first  = this->distTo( segs[i].getLine() );
-		dist_array[i].second = i;
-	}
-	std::sort(
-		dist_array.begin(),
-		dist_array.end(),
-		[]                     // lambda
-		( const localPair& i, const localPair& j )
-		{
-			return i.first < j.first;
-		}
-	);
+	auto idx = sub::getFarthestSegment( *this, bbox );
 
-	auto goodBbSeg = segs[ dist_array[3].second ]; // that segment is the farthest
+
+	auto segs = bbox.getSegs();
+	auto goodBbSeg = segs[ idx ]; // that segment is the farthest
 
 //build a segment
 
-	Segment_<HOMOG2D_INUMTYPE> seg_a( *this, goodBbSeg.getMiddlePoint() );
-	std::cout << "seg_inf=" << seg_a << '\n';
+	Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, goodBbSeg.getMiddlePoint() );
+//	std::cout << "seg_inf=" << seg_a << '\n';
 
 // step 3: count nb of intersections
 	size_t c = 0;
 	for( auto seg: poly.getSegs() )
 	{
-		std::cout << "seg=" << seg << '\n';
-		if( seg.intersects(seg_a)() )
+//		std::cout << "seg=" << seg << '\n';
+		if( seg.intersects(seg_ref)() )
 			c++;
 	}
-	std::cout << "c=" << c << '\n';
-	if( c%2 )
-		return false;
-	return true;
+//	std::cout << "c=" << c << '\n';
+	return static_cast<bool>( c%2 );
 }
 
 template<typename LP, typename FPT>

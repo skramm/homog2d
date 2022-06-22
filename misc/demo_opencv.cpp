@@ -895,13 +895,13 @@ void action_PL( void* param )
 			isC = "Convex: N";
 		data.putTextLine( isC );
 
-		std::cout << "mouse=" << data.pt_mouse << '\n';
+//		std::cout << "mouse=" << data.pt_mouse << '\n';
 		auto YN = data.pt_mouse.isInside(data.polyline_c)?"Y":"N";
 		data.putTextLine( std::string("IsInside=") + std::string( YN ) );
 
-	Point2d_<HOMOG2D_INUMTYPE> pt_inf(1,0,0);
-	Segment_<HOMOG2D_INUMTYPE> seg_inf( data.pt_mouse, pt_inf );
-		seg_inf.getLine().draw( data.img );
+		auto idx = base::sub::getFarthestSegment( data.pt_mouse, bb );
+		auto seg_f = bb.getSegs()[idx];
+		seg_f.draw( data.img, img::DrawParams().setColor(250,20,120) );
 	}
 	data.showImage();
 }
