@@ -1012,12 +1012,20 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	Circle c2;
 	Segment seg;
 	Ellipse ell(5.,5.);
+	CPolyline cpol;
+	OPolyline opol;
 
 	CHECK( !rect2.isInside( rect ) );
 	CHECK( !rect2.isInside( circle ) );
-	CHECK( !rect2.isInside( ell ) );
+	CHECK( !rect2.isInside( ell  ) );
+	CHECK( !rect2.isInside( cpol ) );
+	CHECK( !rect2.isInside( opol ) );
+
 	CHECK( !c2.isInside( rect ) );
 	CHECK( !c2.isInside( circle ) );
+	CHECK( !c2.isInside( cpol ) );
+	CHECK( !c2.isInside( opol ) );
+
 	CHECK( !seg.isInside( rect ) );
 	CHECK( !seg.isInside( circle ) );
 	CHECK( !seg.isInside( ell ) );

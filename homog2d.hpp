@@ -1830,8 +1830,8 @@ private:
 
 public:
 
-/// Returns true if rectangle is inside \c shape (circle or rectangle)
-/// \todo maybe add some SFINAE to enable only for Circle_ or FRect_?
+/// Returns true if rectangle is inside \c shape (Circle_ or FRect_ or base::Polyline)
+/// \todo maybe add some SFINAE to enable only for allowed types?
 	template<typename T>
 	bool isInside( const T& shape )
 	{
@@ -2185,8 +2185,8 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 
 // Returns true if circle is inside close polyline \c poly
-	template<typename FPT2>
-	bool isInside( const CPolyline_<FPT2>& poly ) const;
+	template<typename FPT2,typename PTYPE>
+	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const;
 
 /// \name Intersection
 ///@{
@@ -3065,9 +3065,9 @@ public:
 		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
 	}
 
-/// Point is inside CPolyline
-	template<typename FPT2>
-	bool isInside( const CPolyline_<FPT2>& poly ) const
+/// Point is inside Polyline
+	template<typename FPT2,typename PTYPE>
+	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
 		return impl_isInsidePoly( poly, detail::RootHelper<LP>() );
 	}
@@ -3162,10 +3162,10 @@ private:
 	template<typename T>
 	constexpr bool impl_isInsideCircle( const Point2d_<FPT>&, T r, const detail::RootHelper<type::IsLine>&  ) const;
 
-	template<typename T>
-	bool           impl_isInsidePoly( const CPolyline_<T>&, const detail::RootHelper<type::IsPoint>& ) const;
-	template<typename T>
-	constexpr bool impl_isInsidePoly( const CPolyline_<T>&, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename T,typename PTYPE>
+	bool           impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename T,typename PTYPE>
+	constexpr bool impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 	void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
@@ -3796,17 +3796,21 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 }
 
 //------------------------------------------------------------------
-/// Returns true if circle is inside close polyline \c poly
+/// Returns true if circle is inside polyline
 /**
-Will be true if two conditions are met:
+Will be true if three conditions are met:
+- the polyline object must be of type "closed" AND a polygon (no intersection points)
 - center point is inside the polygon
 - no intersection points
 */
 template<typename FPT>
-template<typename FPT2>
+template<typename FPT2,typename PTYPE>
 bool
-Circle_<FPT>::isInside( const CPolyline_<FPT2>& poly ) const
+Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
+	if( !poly.isPolygon() )
+		return false;
+
 	if( _center.isInside( poly ) )
 	{
 		auto inters = intersects( poly );
@@ -6491,9 +6495,9 @@ aaa
 \endverbatim
 */
 template<typename LP, typename FPT>
-template<typename T>
+template<typename T,typename PTYPE>
 bool
-LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::RootHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::RootHelper<type::IsPoint>& ) const
 {
 	if( !poly.isPolygon() )
 		return false;
@@ -6512,17 +6516,14 @@ LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::Root
 // use its middle point
 
 	auto idx = sub::getFarthestSegment( *this, bbox );
-
-
 	auto segs = bbox.getSegs();
 	auto goodBbSeg = segs[ idx ]; // that segment is the farthest
 
 //build a segment
-
 	Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, goodBbSeg.getMiddlePoint() );
 //	std::cout << "seg_inf=" << seg_a << '\n';
 
-// step 3: count nb of intersections
+// step 4: count nb of intersections
 	size_t c = 0;
 	for( auto seg: poly.getSegs() )
 	{
@@ -6535,9 +6536,9 @@ LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::Root
 }
 
 template<typename LP, typename FPT>
-template<typename T>
+template<typename T,typename PTYPE>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsidePoly( const CPolyline_<T>& poly, const detail::RootHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::RootHelper<type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(CPolyline_) with a line" );
 	return false; // to avoid a warning
