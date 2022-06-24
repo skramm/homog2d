@@ -241,9 +241,9 @@ template<typename T>
 using Line2d_  = base::LPBase<type::IsLine,T>;
 
 template<typename T>
-using CPolyline_  = base::PolylineBase<type::IsClosed,T>;
+using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
-using OPolyline_  = base::PolylineBase<type::IsOpen,T>;
+using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library

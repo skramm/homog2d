@@ -4,22 +4,21 @@
 
 The two classes, open and closed type, are actually the same class, and are defined as:
 ```
-template<typename FPT>
-using OPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
-
-template<typename FPT>
-using CPolyline_<FPT> = PolylineBase<detail::PType::Open,FPT>;
+template<typename T>
+using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
+template<typename T>
+using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 ```
 
 ### Difference between these two types:
 
-Both types can be seen as a container of a set of points.
-Order of points will be retained, but some normalizing step may occur, in a way that will be different for the two types.
+Both types can be seen as a container holding a set of points.
+Order of points will be retained, but some normalizing step may occur, in a way that will be different for the two types:
 
-- The `CPolyline_` type will get normalized (rotated) so that the smallest point is placed in first position,
-and reversed so that the **second** smallest point is placed in second position.
+- The `CPolyline_` type will get rotated so that the smallest point is placed in first position,
+**and** reversed so that the **second** smallest point is placed in second position.
 
-- The `OPolyline_` type will get reversed so that the smallest point is placed in first position
+- The `OPolyline_` type will get reversed so that the smallest point is placed in first position.
 
 For both types, the normalisation occurs only when needed (first comparison).
 

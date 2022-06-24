@@ -68,17 +68,18 @@ Thus we have between 0 and 4 intersections (equal intersection points are remove
 
 ## 2 - Enclosing algorithms
 
-The table below summarizes what
+The table below summarizes what type can be used to check if it is inside another object of same or different type.
 
-|           | Point2d | Line2d | Segment | CPolyline | OPolyline | Circle | Ellipse |
-| Point2d   |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| Line2d    |    N    |    N   |    N    |     N     |     N     |    N   |    N    |
-| Segment   |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| FRect     |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| CPolyline |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| OPolyline |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| Circle    |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
-| Ellipse   |    N    |    N   |    N    |     Y     | Y (false) |    Y   |    Y    |
+|           | Point2d | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
+|-----------|---------|--------|---------|-------|-----------|-----------|--------|---------|
+| Point2d   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| Line2d    |    N    |    N   |    N    |   N   |     N     |     N     |    N   |    N    |
+| Segment   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| FRect     |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| CPolyline |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| OPolyline |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| Circle    |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
+| Ellipse   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
 
 
 
@@ -101,8 +102,7 @@ However, while mathematically exact, this algorithm needs to be implemented with
 If so, we return `false`.
 - Second, the implementation checks if the point lies on any of the segments of the polygon.
 This is done by measuring the distance between the point and the line supporting the segment.
-If that distance is less than `thr::nullDistance()` (see [homog2d_thresholds.md](homog2d_thresholds.md) ).
-If so, it will return `false`.
+If that distance is less than `thr::nullDistance()` (see [homog2d_thresholds.md](homog2d_thresholds.md) )  then we return `false`.
 - next, we need to find some point outside the polygon to build the "test" segment.
 Instead of taking a point at infinity, and to avoid any corner cases, we consider the middle point of the segment of the bounding box that is the farthest away from the considered point.
 

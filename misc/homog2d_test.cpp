@@ -1031,7 +1031,40 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	CHECK( !seg.isInside( ell ) );
 }
 
-TEST_CASE( "IsInside Rectangle", "[test_IsInside]" )
+TEST_CASE( "IsInside Polyline", "[tip]" )
+{
+	Point2d_<HOMOG2D_INUMTYPE> pt;
+	{
+		CPolyline_<HOMOG2D_INUMTYPE> cpol{ FRect_<HOMOG2D_INUMTYPE>() };  // polygon (0,0)-(1,0)-(1,1)-(0,1)
+
+		pt.set( 0, 0 );
+		CHECK( !pt.isInside( cpol ) );  // equal to one of the points
+		pt.set( .2, .3 );
+		CHECK( pt.isInside( cpol ) );
+		pt.set( 1,0 );
+		CHECK( !pt.isInside( cpol ) );
+		pt.set( .5, 0. );
+		CHECK( !pt.isInside( cpol ) );
+	}
+	{
+//		CPolyline_<HOMOG2D_INUMTYPE> cpol{ {1,0},{2,1},{1,2},{0,1} };
+		CPolyline_<HOMOG2D_INUMTYPE> cpol{ std::vector<Point2d>{ {1,0},{2,1},{1,2},{0,1} } };
+
+		pt.set( 1,1 );
+		CHECK( pt.isInside( cpol ) );
+	}
+
+/*
+		std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+			{0,0
+
+			}
+		}
+	};*/
+
+}
+
+TEST_CASE( "IsInside FRect", "[tir]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
 	Point2d_<NUMTYPE> pt2(10,2);
@@ -1087,7 +1120,7 @@ TEST_CASE( "IsInside Rectangle", "[test_IsInside]" )
 }
 
 
-TEST_CASE( "IsInside circle", "[tic]" )
+TEST_CASE( "IsInside Circle", "[tic]" )
 {
 	Circle_<NUMTYPE> c1(10.);
 	Circle_<NUMTYPE> c2(2.);
