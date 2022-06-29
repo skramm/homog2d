@@ -460,7 +460,11 @@ public:
 	{
 		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
-
+    template<typename T>
+    constexpr bool isInside( const Common<T>& other )
+    {
+        return false;
+    }
 };
 
 //------------------------------------------------------------------
@@ -1176,7 +1180,7 @@ public:
 //------------------------------------------------------------------
 namespace detail {
 
-/// Holds 9 parameters of ellipse
+/// Holds 9 parameters of Ellipse_
 template<typename T>
 struct EllParams
 {
@@ -1831,7 +1835,7 @@ private:
 public:
 
 /// Returns true if rectangle is inside \c shape (Circle_ or FRect_ or base::Polyline)
-/// \todo maybe add some SFINAE to enable only for allowed types?
+/// \todo add some SFINAE to enable only for allowed types: Circle_ or FRect_
 	template<typename T>
 	bool isInside( const T& shape )
 	{
@@ -1841,6 +1845,36 @@ public:
 		return true;
 	}
 
+	template<typename PT,typename FPT2>                      // PT: Polyline Type, open or closed
+	bool isInside( const base::PolylineBase<PT,FPT2>& poly )
+	{
+		return impl_isInsidePoly( poly );
+	}
+private:
+	template<typename FPT2>
+	constexpr bool impl_isInsidePoly( const OPolyline_<FPT2>& )
+	{
+		return false;
+	}
+/// For a rectangle to be inside a closed Polyline, two conditions are necessary:
+/**
+- all the points must be inside
+- no intersections
+*/
+	template<typename FPT2>
+	bool impl_isInsidePoly( const CPolyline_<FPT2>& poly )
+	{
+		for( const auto& seg: getSegs() )
+			if( seg.intersects(poly)() )
+				return false;
+
+		for( const auto& pt: get4Pts() )
+			if( !pt.isInside( poly ) )
+				return false;
+		return true;
+	}
+
+public:
 /// \name Intersection functions
 ///@{
 
@@ -6540,7 +6574,6 @@ template<typename T,typename PTYPE>
 constexpr bool
 LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(CPolyline_) with a line" );
 	return false; // to avoid a warning
 }
 

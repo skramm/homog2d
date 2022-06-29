@@ -1006,14 +1006,22 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 // this test only makes sure that all theses situations compile
 TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 {
-	FRect rect;
-	FRect rect2;
-	Circle circle;
-	Circle c2;
-	Segment seg;
+	Point2d pt1(10,10),pt2(10,10);
+	Line2d li1, li2;
+	FRect rect, rect2;
+	Circle circle, c2;
+	Segment seg, seg2;
 	Ellipse ell(5.,5.);
 	CPolyline cpol;
 	OPolyline opol;
+
+	CHECK( !pt2.isInside( pt1 ) );
+	CHECK( !pt2.isInside( li1 ) );
+	CHECK( !pt2.isInside( rect ) );
+	CHECK( !pt2.isInside( circle ) );
+	CHECK( !pt2.isInside( ell  ) );
+	CHECK( !pt2.isInside( cpol ) );
+	CHECK( !pt2.isInside( opol ) );
 
 	CHECK( !rect2.isInside( rect ) );
 	CHECK( !rect2.isInside( circle ) );
@@ -1023,17 +1031,24 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 
 	CHECK( !c2.isInside( rect ) );
 	CHECK( !c2.isInside( circle ) );
+//	CHECK( !c2.isInside( ell ) );       \todo needs to be done!
 	CHECK( !c2.isInside( cpol ) );
 	CHECK( !c2.isInside( opol ) );
 
 	CHECK( !seg.isInside( rect ) );
 	CHECK( !seg.isInside( circle ) );
 	CHECK( !seg.isInside( ell ) );
+	CHECK( !seg.isInside( cpol ) );
+	CHECK( !seg.isInside( opol ) );
 }
 
-TEST_CASE( "IsInside Polyline", "[tip]" )
+TEST_CASE( "Point IsInside Polyline", "[tip]" )
 {
 	Point2d_<HOMOG2D_INUMTYPE> pt;
+
+	OPolyline_<HOMOG2D_INUMTYPE> opol{ std::vector<Point2d>{ {0,0}, {3,4}, {1,8} } };
+	CHECK( !pt.isInside( opol ) );
+
 	{
 		CPolyline_<HOMOG2D_INUMTYPE> cpol{ FRect_<HOMOG2D_INUMTYPE>() };  // polygon (0,0)-(1,0)-(1,1)-(0,1)
 
@@ -1120,7 +1135,7 @@ TEST_CASE( "IsInside FRect", "[tir]" )
 }
 
 
-TEST_CASE( "IsInside Circle", "[tic]" )
+TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 {
 	Circle_<NUMTYPE> c1(10.);
 	Circle_<NUMTYPE> c2(2.);
