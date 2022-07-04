@@ -40,7 +40,7 @@ This latter part starts around line 2565.
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -1008,38 +1008,78 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 {
 	Point2d pt1(10,10),pt2(10,10);
 	Line2d li1, li2;
-	FRect rect, rect2;
-	Circle circle, c2;
-	Segment seg, seg2;
-	Ellipse ell(5.,5.);
-	CPolyline cpol;
-	OPolyline opol;
+	FRect rect1, rect2;
+	Circle cir1, cir2;
+	Segment seg1, seg2;
+	Ellipse ell1(5.,5.), ell2(3,4);
+	CPolyline cpol1,cpol2;
+	OPolyline opol1,opol2;
 
 	CHECK( !pt2.isInside( pt1 ) );
 	CHECK( !pt2.isInside( li1 ) );
-	CHECK( !pt2.isInside( rect ) );
-	CHECK( !pt2.isInside( circle ) );
-	CHECK( !pt2.isInside( ell  ) );
-	CHECK( !pt2.isInside( cpol ) );
-	CHECK( !pt2.isInside( opol ) );
+	CHECK( !pt2.isInside( rect1 ) );
+	CHECK( !pt2.isInside( cir1 ) );
+	CHECK( !pt2.isInside( ell1  ) );
+	CHECK( !pt2.isInside( cpol1 ) );
+	CHECK( !pt2.isInside( opol1 ) );
 
-	CHECK( !rect2.isInside( rect ) );
-	CHECK( !rect2.isInside( circle ) );
-	CHECK( !rect2.isInside( ell  ) );
-	CHECK( !rect2.isInside( cpol ) );
-	CHECK( !rect2.isInside( opol ) );
+	CHECK( !li2.isInside( pt1 ) );
+	CHECK( !li2.isInside( li1 ) );
+	CHECK( !li2.isInside( rect1 ) );
+	std::cout << "============================\n";
+	CHECK( !li2.isInside( cir1 ) );
+	std::cout << "============================\n";
+	CHECK( !li2.isInside( ell1  ) );
+	CHECK( !li2.isInside( cpol1 ) );
+	CHECK( !li2.isInside( opol1 ) );
 
-	CHECK( !c2.isInside( rect ) );
-	CHECK( !c2.isInside( circle ) );
-//	CHECK( !c2.isInside( ell ) );       \todo needs to be done!
-	CHECK( !c2.isInside( cpol ) );
-	CHECK( !c2.isInside( opol ) );
+	CHECK( !rect2.isInside( pt1 ) );
+	CHECK( !rect2.isInside( li1 ) );
+	CHECK( !rect2.isInside( rect1 ) );
+	CHECK( !rect2.isInside( cir1 ) );
+	CHECK( !rect2.isInside( ell1  ) );
+	CHECK( !rect2.isInside( cpol1 ) );
+	CHECK( !rect2.isInside( opol1 ) );
 
-	CHECK( !seg.isInside( rect ) );
-	CHECK( !seg.isInside( circle ) );
-	CHECK( !seg.isInside( ell ) );
-	CHECK( !seg.isInside( cpol ) );
-	CHECK( !seg.isInside( opol ) );
+	CHECK( !cir2.isInside( pt1 ) );
+	CHECK( !cir2.isInside( li1 ) );
+	CHECK( !cir2.isInside( rect1 ) );
+	CHECK( !cir2.isInside( cir1 ) );
+	CHECK( !cir2.isInside( ell1  ) );
+	CHECK( !cir2.isInside( cpol1 ) );
+	CHECK( !cir2.isInside( opol1 ) );
+
+	CHECK( !seg2.isInside( pt1 ) );
+	CHECK( !seg2.isInside( li1 ) );
+	CHECK( !seg2.isInside( rect1 ) );
+	CHECK( !seg2.isInside( cir1 ) );
+	CHECK( !seg2.isInside( ell1  ) );
+	CHECK( !seg2.isInside( cpol1 ) );
+	CHECK( !seg2.isInside( opol1 ) );
+
+	CHECK( !ell2.isInside( pt1 ) );
+	CHECK( !ell2.isInside( li1 ) );
+	CHECK( !ell2.isInside( rect1 ) );
+	CHECK( !ell2.isInside( cir1 ) );
+	CHECK( !ell2.isInside( ell1  ) );
+	CHECK( !ell2.isInside( cpol1 ) );
+	CHECK( !ell2.isInside( opol1 ) );
+
+	CHECK( !cpol2.isInside( pt1 ) );
+	CHECK( !cpol2.isInside( li1 ) );
+	CHECK( !cpol2.isInside( rect1 ) );
+	CHECK( !cpol2.isInside( cir1 ) );
+	CHECK( !cpol2.isInside( ell1  ) );
+	CHECK( !cpol2.isInside( cpol1 ) );
+	CHECK( !cpol2.isInside( opol1 ) );
+
+	CHECK( !opol2.isInside( pt1 ) );
+	CHECK( !opol2.isInside( li1 ) );
+	CHECK( !opol2.isInside( rect1 ) );
+	CHECK( !opol2.isInside( cir1 ) );
+	CHECK( !opol2.isInside( ell1  ) );
+	CHECK( !opol2.isInside( cpol1 ) );
+	CHECK( !opol2.isInside( opol1 ) );
 }
 
 TEST_CASE( "Point IsInside Polyline", "[tip]" )

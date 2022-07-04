@@ -50,8 +50,9 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/highgui.hpp"
 #endif
 
-#if 0
-	#define HOMOG2D_START std::cout << "START: " << __PRETTY_FUNCTION__ << "()\n"
+#ifdef HOMOG2D_DEBUGMODE
+	#define HOMOG2D_START std::cout << __PRETTY_FUNCTION__ << "()\n"
+//	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
 #endif
@@ -139,11 +140,6 @@ See https://github.com/skramm/homog2d
 #ifndef HOMOG2D_THR_ZERO_DETER
 	#define HOMOG2D_THR_ZERO_DETER 1E-15
 #endif
-
-//#ifndef HOMOG2D_ROUNDING_COEFF
-//	#define HOMOG2D_ROUNDING_COEFF 1E6
-//#endif
-
 ///////////////////////////////////////
 
 
@@ -328,14 +324,27 @@ enum class LineDir: uint8_t { H, V };
 //enum class IsClosed: uint8_t { Yes, No };
 
 /// Type of Root object, see Root::type()
-enum class Type: uint8_t { Line2d, Point2d };
+enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
 /// Type of underlying floating point, see LPBase::dtype()
 enum class Dtype: uint8_t { Float, Double, LongDouble };
 
 const char* getString( Type t )
 {
-	return t==Type::Line2d ? "Line2d" : "Point2d";
+	const char* s=0;
+	switch( t )
+	{
+		case Type::Line2d:     s="Line2d";    break;
+		case Type::Point2d:    s="Point2d";   break;
+		case Type::Segment:    s="Segment";   break;
+		case Type::FRect:      s="FRect";     break;
+		case Type::Circle:     s="Circle";    break;
+		case Type::Ellipse:    s="Ellipse";   break;
+		case Type::OPolyline:  s="OPolyline"; break;
+		case Type::CPolyline:  s="CPolyline"; break;
+		assert(0);
+	}
+	return s;
 }
 
 
@@ -460,9 +469,15 @@ public:
 	{
 		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
+/*	Type type() const
+	{
+		return priv::impl_dtype( detail::RootDataType<FPT>() );
+	}*/
     template<typename T>
-    constexpr bool isInside( const Common<T>& other )
+    constexpr bool isInside( const Common<T>& ) const
     {
+    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
+//    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ /*<< " type1=" << getString(type())*/ << " type2=" << getString(t.type()) << "\n";
         return false;
     }
 };
@@ -689,7 +704,7 @@ product( base::LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const base::LPBas
 template<typename T1,typename T2>
 Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
 {
-	HOMOG2D_START;
+//	HOMOG2D_START;
 	Matrix_<T1> out;
 	product( out, h1, h2 );
 	return out;
@@ -1252,6 +1267,12 @@ class Ellipse_: public detail::Matrix_<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
+
+	Type type() const
+	{
+		return Type::Ellipse;
+	}
 
 	template<typename T> friend class Ellipse_;
 
@@ -1566,7 +1587,7 @@ public:
 		return _vecInters;
 	}
 	friend std::ostream&
-	operator << ( std::ostream& f, IntersectM i )
+	operator << ( std::ostream& f, const IntersectM& i )
 	{
 		f << "IntersectM: size=" << i.size() << '\n' << i._vecInters;
 		return f;
@@ -1611,6 +1632,12 @@ class FRect_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
+
+	Type type() const
+	{
+		return Type::FRect;
+	}
 
 	template<typename T> friend class FRect_;
 
@@ -1839,6 +1866,7 @@ public:
 	template<typename T>
 	bool isInside( const T& shape )
 	{
+		HOMOG2D_START;
 		for( const auto& pt: get4Pts() )
 			if( !pt.isInside( shape ) )
 				return false;
@@ -1848,8 +1876,10 @@ public:
 	template<typename PT,typename FPT2>                      // PT: Polyline Type, open or closed
 	bool isInside( const base::PolylineBase<PT,FPT2>& poly )
 	{
+		HOMOG2D_START;
 		return impl_isInsidePoly( poly );
 	}
+
 private:
 	template<typename FPT2>
 	constexpr bool impl_isInsidePoly( const OPolyline_<FPT2>& )
@@ -1882,7 +1912,7 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return line.intersects( *this );
 	}
 
@@ -1890,7 +1920,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		detail::IntersectM<FPT> out;
 		for( const auto& rseg: getSegs() )
 		{
@@ -1915,7 +1945,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return p_intersects_R_C( circle );
 	}
 
@@ -1923,7 +1953,7 @@ public:
 	template<typename PLT2,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT2,FPT2>& pl ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return pl.intersects( *this );
 	}
 
@@ -1931,7 +1961,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		if( *this == rect )                    // if rectangles are the same,
 			return detail::IntersectM<FPT>();  // no intersection
 		return p_intersects_R_C( rect );
@@ -2012,6 +2042,12 @@ class Circle_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
+
+	Type type() const
+	{
+		return Type::Circle;
+	}
 
 	template<typename T> friend class Circle_;
 
@@ -2230,7 +2266,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Line2d_<FPT2>& li ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return li.intersects( *this );
 	}
 
@@ -2239,7 +2275,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	detail::IntersectM<FPT>
 	intersects( const Segment_<FPT2>& seg ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return seg.intersects( *this );
 	}
 
@@ -2252,7 +2288,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
 
@@ -2260,7 +2296,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return pl.intersects( * this );
 	}
 ///@}
@@ -2562,6 +2598,7 @@ class LPBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
 
 private:
 	template<typename U,typename V> friend class Hmatrix_;
@@ -3011,14 +3048,14 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
 	}
 /// Line/FRect intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return impl_intersectsFRect( rect, detail::RootHelper<LP>() );
 	}
 
@@ -3027,7 +3064,7 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return seg.intersects( *this );
 	}
 
@@ -3044,7 +3081,7 @@ public:
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Point2d_<FPT>& pt0, T radius ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return impl_intersectsCircle( pt0, radius, detail::RootHelper<LP>() );
 	}
 
@@ -3052,7 +3089,7 @@ public:
 	template<typename T>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
 
@@ -3060,13 +3097,14 @@ public:
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return pl.intersects( *this );
 	}
 
 /// Point is inside flat rectangle
 	bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
 	{
+		HOMOG2D_START;
 		return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::RootHelper<LP>() );
 	}
 
@@ -3074,6 +3112,7 @@ public:
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect ) const
 	{
+		HOMOG2D_START;
 		return impl_isInsideRect( rect, detail::RootHelper<LP>() );
 	}
 
@@ -3082,13 +3121,15 @@ public:
 	bool isInside( const Point2d_<FPT>& center, T radius ) const
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_START;
 		return impl_isInsideCircle( center, radius, detail::RootHelper<LP>() );
 	}
 /// Point is inside Circle
 	template<typename T>
-	bool isInside( Circle_<T> cir ) const
+	bool isInside( const Circle_<T>& cir ) const
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_START;
 		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
 	}
 
@@ -3096,6 +3137,7 @@ public:
 	template<typename FPT2>
 	bool isInside( const Ellipse_<FPT2>& ell ) const
 	{
+		HOMOG2D_START;
 		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
 	}
 
@@ -3103,6 +3145,7 @@ public:
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
+		HOMOG2D_START;
 		return impl_isInsidePoly( poly, detail::RootHelper<LP>() );
 	}
 
@@ -3531,8 +3574,14 @@ class Segment_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
 
 	template<typename T> friend class Segment_;
+
+	Type type() const
+	{
+		return Type::Ellipse;
+	}
 
 private:
 	Point2d_<FPT> _ptS1, _ptS2;
@@ -3661,6 +3710,7 @@ the one with smallest y-coordinate will be returned first */
 	template<typename S>
 	bool isInside( const S& shape ) const
 	{
+		HOMOG2D_START;
 		if( !_ptS1.isInside( shape ) )
 			return false;
 		if( !_ptS2.isInside( shape ) )
@@ -3689,7 +3739,7 @@ the one with smallest y-coordinate will be returned first */
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return r.intersects( *this );
 	}
 
@@ -3697,7 +3747,7 @@ the one with smallest y-coordinate will be returned first */
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
 	{
-		HOMOG2D_START;
+//		HOMOG2D_START;
 		return other.intersects( *this );
 	}
 ///@}
@@ -3842,6 +3892,7 @@ template<typename FPT2,typename PTYPE>
 bool
 Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
+	HOMOG2D_START;
 	if( !poly.isPolygon() )
 		return false;
 
@@ -3867,7 +3918,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
-	HOMOG2D_START;
+//	HOMOG2D_START;
 
 	if( *this == other )
 		return detail::Intersect<detail::Inters_2,FPT>();
@@ -4076,6 +4127,7 @@ class PolylineBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class PolylineBase;
 	template<typename T1> friend class h2d::Ellipse_;
@@ -4535,6 +4587,7 @@ public:
 	bool
 	isInside( const T& cont ) const
 	{
+		HOMOG2D_START;
 		for( const auto& pt: getPts() )
 			if( !pt.isInside( cont ) )
 				return false;
@@ -4956,11 +5009,11 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 #ifndef HOMOG2D_DEBUGMODE
 	assert( inter.size() == 2 );
 #else
-	HOMOG2D_DEBUG_ASSERT(
+/*	HOMOG2D_DEBUG_ASSERT(
 		inter.size() == 2,
 		"inter.size()=" << inter.size() << "\n-this=" << *this << "\n-other=" << other
 		<<"\n-inter:" << inter
-	);
+	);*/
 #endif
 	const auto& r1 = *this;
 	const auto& r2 = other;
@@ -5335,56 +5388,6 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 //------------------------------------------------------------------
 namespace detail {
 
-/// Used in isBetween() and isInArea()
-enum class Rounding: uint8_t { Yes, No };
-
-#if 0
-/// Helper function
-template<typename T1,typename T2>
-bool
-isBetween( T1 v, T2 v1, T2 v2 )
-{
-	HOMOG2D_CHECK_IS_NUMBER(T1);
-	HOMOG2D_CHECK_IS_NUMBER(T2);
-	if( v >= std::min( v1, v2 ) )
-		if( v <= std::max( v1, v2 ) )
-			return true;
-	return false;
-}
-
-/// Does some small rounding (if requested), to avoid some numerical issues
-/**
-Edit 20220425: no need for llroundl(), check https://en.cppreference.com/w/cpp/numeric/math/round
-*/
-template<typename FPT>
-long double
-doRounding( FPT value, Rounding r )
-{
-	if( r == Rounding::No )
-		return value;
-	HOMOG2D_INUMTYPE coeff = HOMOG2D_ROUNDING_COEFF;
-//	return std::llroundl( value * coeff ) / coeff;
-	return std::round( value * coeff ) / coeff;
-}
-
-/// Helper function, checks if \c pt is in the area defined by \c pt1 and \c pt2
-template<typename T1,typename T2>
-bool
-isInArea(
-	const Point2d_<T1>& pt,    ///< the considered point
-	const Point2d_<T2>& pt1,   ///< pt1
-	const Point2d_<T2>& pt2,   ///< pt2
-	Rounding r = Rounding::No  ///< default behavior is "no rounding"
-)
-{
-	HOMOG2D_START;
-	if( isBetween( doRounding(pt.getX(), r), pt1.getX(), pt2.getX() ) )
-		if( isBetween( doRounding(pt.getY(), r), pt1.getY(), pt2.getY() ) )
-			return true;
-	return false;
-}
-#endif // 0
-
 //------------------------------------------------------------------
 /// See getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 enum class PtTag: uint8_t
@@ -5434,7 +5437,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
-	HOMOG2D_START;
+//	HOMOG2D_START;
 	if( *this == s2 )              // same segment => no intersection
 		return detail::Intersect<detail::Inters_1,FPT>();
 
@@ -5473,7 +5476,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
-	HOMOG2D_START;
+//	HOMOG2D_START;
 //	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
@@ -5520,7 +5523,7 @@ template<typename FPT2>
 detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
-	HOMOG2D_START;
+//	HOMOG2D_START;
 	using detail::PtTag;
 
 	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle ); // get status of segment points related to circle (inside/outside/on-edge)
@@ -6463,8 +6466,7 @@ template<typename FPT2>
 constexpr bool
 LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(FRect) with a line" );
-	return false; // to avoid a warning
+	return false;
 }
 
 //------------------------------------------------------------------
@@ -6482,8 +6484,7 @@ template<typename T>
 constexpr bool
 LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Circle) with a line" );
-	return false; // to avoid a warning
+	return false;
 }
 
 //------------------------------------------------------------------
@@ -6572,7 +6573,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 template<typename LP, typename FPT>
 template<typename T,typename PTYPE>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::RootHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::RootHelper<type::IsLine>& ) const
 {
 	return false; // to avoid a warning
 }
@@ -6591,8 +6592,7 @@ template<typename FPT2>
 constexpr bool
 LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot use isInside(Ellipse) with a line" );
-	return false; // to avoid a warning
+	return false;
 }
 
 
@@ -6670,13 +6670,12 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::RootHelper<type::IsLine>& ) const
 {
-	HOMOG2D_START;
-	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
+//	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
 	std::vector<Point2d_<FPT>> pti;
 	for( const auto seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
-		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
+//		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
@@ -7759,7 +7758,7 @@ convexHull( const std::vector<Point2d_<FPT>>& input )
 	size_t idx3 = 3;
 	do
 	{
-		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", idx3=" << idx3 << ", hull " << hull.getVect() );
+//		HOMOG2D_LOG( "** loop start, idx1=" << idx1 << ", idx2=" << idx2  << ", idx3=" << idx3 << ", hull " << hull.getVect() );
 		auto p = input.at( v2[idx1] );
 		auto q = input.at( v2[idx2] );
 		auto r = input.at( v2[idx3] );
