@@ -51,7 +51,7 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_START std::cout << __PRETTY_FUNCTION__ << "()\n"
+	#define HOMOG2D_START std::cout << __PRETTY_FUNCTION__ << "() line:" << __LINE__ << "\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -1696,7 +1696,7 @@ private:
 		const Point2d_<T>& pt4
 	)
 	{
-		HOMOG2D_LOG( "pt1" << pt1 << " pt2="<< pt2 << " pt3=" << pt3 << " pt4=" << pt4 );
+//		HOMOG2D_LOG( "pt1" << pt1 << " pt2="<< pt2 << " pt3=" << pt3 << " pt4=" << pt4 );
 		auto x0 = std::min( pt1.getX(), pt2.getX() );
 		x0 = std::min( x0, pt3.getX() );
 		x0 = std::min( x0, pt4.getX() );
@@ -1713,7 +1713,7 @@ private:
 
 		_ptR1 = Point2d_<FPT>(x0,y0);
 		_ptR2 = Point2d_<FPT>(x1,y1);
-		HOMOG2D_LOG( "ptR1=" <<_ptR1 << " _ptR2=" << _ptR2 );
+//		HOMOG2D_LOG( "ptR1=" <<_ptR1 << " _ptR2=" << _ptR2 );
 	}
 
 public:
@@ -3130,7 +3130,7 @@ public:
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
 		HOMOG2D_START;
-		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<type::IsPoint>() );
+		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
 
 /// Point is inside Ellipse
@@ -4140,6 +4140,20 @@ public:
 	friend auto
 	h2d::operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
+	Type type() const
+	{
+		return impl_Poly_type( detail::PlHelper<PLT>() );
+	}
+private:
+	Type impl_Poly_type( const detail::PlHelper<type::IsClosed>& ) const
+	{
+		return Type::CPolyline;
+	}
+	Type impl_Poly_type( const detail::PlHelper<type::IsOpen>& ) const
+	{
+		return Type::OPolyline;
+	}
+
 private:
 	mutable std::vector<Point2d_<FPT>> _plinevec;
 	mutable bool _plIsNormalized = false;
@@ -4150,8 +4164,7 @@ public:
 ///@{
 
 /// Default constructor
-	PolylineBase()
-	{}
+	PolylineBase() = default;
 
 /// Constructor from FRect. Enabled for "closed" type, disabled for "open" type
 	template<typename FPT2>
@@ -4583,11 +4596,17 @@ public:
 	}
 
 /// Polyline isInside other primitive
-	template<typename T>
+	template<
+		typename T,
+		typename std::enable_if<
+			priv::HasArea<T>::value,T
+		>::type* = nullptr
+	>
 	bool
 	isInside( const T& cont ) const
 	{
 		HOMOG2D_START;
+		std::cout << " - other type=" << getString(cont.type()) << '\n';
 		for( const auto& pt: getPts() )
 			if( !pt.isInside( cont ) )
 				return false;
@@ -5017,12 +5036,12 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 #endif
 	const auto& r1 = *this;
 	const auto& r2 = other;
-	HOMOG2D_LOG( "r1="<<r1 << " r2="<<r2 );
+//	HOMOG2D_LOG( "r1="<<r1 << " r2="<<r2 );
 	auto v1 = r1.p_pointsInside( r2 );
 	auto v2 = r2.p_pointsInside( r1 );
 	auto c1 = v1.size();
 	auto c2 = v2.size();
-	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
+//	HOMOG2D_LOG( "c1=" << c1 << " c2=" << c2 );
 
 	if( c1==0 && c2==0 ) // unable, rectangles share a segment
 		return detail::RectArea<FPT>();

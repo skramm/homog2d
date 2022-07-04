@@ -40,7 +40,7 @@ This latter part starts around line 2565.
 	#define NUMTYPE double
 #endif
 
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -1026,9 +1026,7 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	CHECK( !li2.isInside( pt1 ) );
 	CHECK( !li2.isInside( li1 ) );
 	CHECK( !li2.isInside( rect1 ) );
-	std::cout << "============================\n";
 	CHECK( !li2.isInside( cir1 ) );
-	std::cout << "============================\n";
 	CHECK( !li2.isInside( ell1  ) );
 	CHECK( !li2.isInside( cpol1 ) );
 	CHECK( !li2.isInside( opol1 ) );
