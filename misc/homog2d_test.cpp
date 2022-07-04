@@ -1065,7 +1065,13 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 
 	CHECK( !cpol2.isInside( pt1 ) );
 	CHECK( !cpol2.isInside( li1 ) );
+
+	std::cout << "==========================\n";
 	CHECK( !cpol2.isInside( rect1 ) );
+	std::cout << "cpol2=" << cpol2 << '\n';
+	std::cout << "rect1=" << rect1 << '\n';
+	std::cout << "==========================\n";
+
 	CHECK( !cpol2.isInside( cir1 ) );
 	CHECK( !cpol2.isInside( ell1  ) );
 	CHECK( !cpol2.isInside( cpol1 ) );
@@ -1106,15 +1112,6 @@ TEST_CASE( "Point IsInside Polyline", "[tip]" )
 		pt.set( 1,1 );
 		CHECK( pt.isInside( cpol ) );
 	}
-
-/*
-		std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
-			{0,0
-
-			}
-		}
-	};*/
-
 }
 
 TEST_CASE( "IsInside FRect", "[tir]" )

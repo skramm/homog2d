@@ -1873,6 +1873,7 @@ public:
 		return true;
 	}
 
+/// \todo call of sub function uneeded, we can directly call one of the two functions below
 	template<typename PT,typename FPT2>                      // PT: Polyline Type, open or closed
 	bool isInside( const base::PolylineBase<PT,FPT2>& poly )
 	{
@@ -4607,6 +4608,8 @@ public:
 	{
 		HOMOG2D_START;
 		std::cout << " - other type=" << getString(cont.type()) << '\n';
+		if( size() == 0 )
+			return false;
 		for( const auto& pt: getPts() )
 			if( !pt.isInside( cont ) )
 				return false;
