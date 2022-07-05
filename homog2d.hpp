@@ -469,15 +469,10 @@ public:
 	{
 		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
-/*	Type type() const
-	{
-		return priv::impl_dtype( detail::RootDataType<FPT>() );
-	}*/
     template<typename T>
     constexpr bool isInside( const Common<T>& ) const
     {
-    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
-//    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ /*<< " type1=" << getString(type())*/ << " type2=" << getString(t.type()) << "\n";
+//    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
         return false;
     }
 };
@@ -4607,7 +4602,7 @@ public:
 	isInside( const T& cont ) const
 	{
 		HOMOG2D_START;
-		std::cout << " - other type=" << getString(cont.type()) << '\n';
+//		std::cout << " - other type=" << getString(cont.type()) << '\n';
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
