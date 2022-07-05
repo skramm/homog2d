@@ -3676,6 +3676,8 @@ the one with smallest y-coordinate will be returned first */
 		);
 	}
 
+	Segment_<FPT> getDoubled() const;
+
 	Line2d_<FPT>
 	getBisector() const
 	{
@@ -3692,6 +3694,36 @@ the one with smallest y-coordinate will be returned first */
 
 }; // class Segment_
 
+
+//------------------------------------------------------------------
+/// Returns a segment with same support line but doubled length
+/**
+\todo why does the assert below fail !?!?!?
+*/
+template<typename FPT>
+Segment_<FPT>
+Segment_<FPT>::getDoubled() const
+{
+	auto li = getLine();
+	auto rad1 = length();
+	auto c1 = Circle_<HOMOG2D_INUMTYPE>( _ptS1, rad1*2.0 );
+	auto c2 = Circle_<HOMOG2D_INUMTYPE>( _ptS2, rad1*2.0 );
+
+	auto int1 = li.intersects( c1 );
+	auto int2 = li.intersects( c2 );
+	std::cout << "nb intersect c1=" << int1.size() << std::endl;
+	std::cout << "nb intersect c2=" << int2.size() << std::endl;
+//	assert( int1() );
+//	assert( int2() );
+
+	auto ppt1 = int1.get();
+	auto ppt2 = int2.get();
+
+	return Segment_<FPT>(
+		ppt1.first,
+		ppt2.second
+	);
+}
 
 //------------------------------------------------------------------
 /// Set circle from 2 points
