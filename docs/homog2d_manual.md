@@ -436,10 +436,10 @@ auto c2 = getBoundingCircle(r1); // or use the free function
 
 
 ### 3.3 - Circles
-<a name="p_circle"></a>
+<a id="p_circle"></a>
 
 These are modeled by their center point and radius.
-Creation is straightforward, whathever your needs :
+Creation is straightforward, whathever your needs:
 ```C++
 Circle c1;                          // at (0,0), radius = 1
 Circle c2( center_point );          // radius = 1
@@ -455,7 +455,7 @@ c3.set( radius );            // center doesn't change
 c4.set( center_pt );         // radius doesn't change
 ```
 
-Additionaly, you can also compute the unique circle from points,
+You can also compute the unique circle from points,
 either from 2 points (that define the diameter), or from 3 points:
 ```C++
 Circle c1( pt1, pt2, pt 3 );
@@ -466,7 +466,7 @@ Circle c2( pt1, pt2 );
 // or
 c2.set( pt1, pt2 );
 ```
-For these latter functions, the 2 (or 3) points must be different, and not colinear.
+For these latter functions, the 2 (or 3) points must be different, and not colinear (for 3 points).
 This is checked for and will throw if not the case (unless the "no error" build option is activated).
 
 ![showcase6](showcase/showcase6.gif)
