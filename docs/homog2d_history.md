@@ -18,6 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `area()` and `length()` to class `Circle_` and class `Ellipse_` (member and free functions)
   - improved ellipse demo (Opencv-dependent)
   - added `isInf()` to check if points are at infinity
+  - added `getExtended()` to class `Segment_`
 
 - [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`
