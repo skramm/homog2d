@@ -1756,7 +1756,6 @@ public:
 
 ///@}
 
-public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -1764,6 +1763,32 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
+	}
+
+	FRect_<FPT>
+	getExtended() const
+	{
+		auto x1 = _ptR1.getX() * 2. - _ptR2.getX();
+		auto y1 = _ptR1.getY() * 2. - _ptR2.getY();
+
+		auto x2 = _ptR2.getX() * 2. - _ptR1.getX();
+		auto y2 = _ptR2.getY() * 2. - _ptR1.getY();
+
+		return FRect_<FPT>( x1, y1, x2, y2 );
+	}
+
+	std::pair<Segment_<FPT>,Segment_<FPT>>
+	getDiagonals() const
+	{
+		auto x1 = _ptR1.getX();
+		auto y1 = _ptR1.getY();
+		auto x2 = _ptR2.getX();
+		auto y2 = _ptR2.getY();
+
+		return std::make_pair(
+			Segment_<FPT>(x1,y1,x2,y2),
+			Segment_<FPT>(x1,y2,x2,y1)
+		);
 	}
 
 
@@ -7218,6 +7243,14 @@ Line2d_<FPT> getLine( const Segment_<FPT>& seg )
 	return seg.getLine();
 }
 
+/// Returns Extended Segment (free function)
+/// \sa Segment_::geExtended()
+template<typename FPT>
+Segment_<FPT> getExtended( const Segment_<FPT>& seg )
+{
+	return seg.getExtended();
+}
+
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers
 template<typename FPT1,typename FPT2>
@@ -7351,6 +7384,22 @@ template<typename FPT>
 HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
 {
 	return rect.width();
+}
+
+/// Free function
+template<typename FPT>
+FRect_<FPT>
+getExtended( const FRect_<FPT>& rect )
+{
+	return rect.getExtended();
+}
+
+/// Free function
+template<typename FPT>
+std::pair<Segment_<FPT>,Segment_<FPT>>
+getDiagonals( const FRect_<FPT>& rect )
+{
+	return rect.getDiagonals();
 }
 
 /// Free function

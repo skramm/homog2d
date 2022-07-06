@@ -2217,6 +2217,11 @@ TEST_CASE( "Segment extended", "[seg_extended]" )
 	CHECK( s2.length() == 3. );
 	CHECK( s2.getPts().first == Point2d(-1,0) );
 	CHECK( s2.getPts().second == Point2d(2,0) );
+
+	auto s3 = getExtended(seg);
+	CHECK( s3.length() == 3. );
+	CHECK( s3.getPts().first == Point2d(-1,0) );
+	CHECK( s3.getPts().second == Point2d(2,0) );
 }
 
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
@@ -2400,6 +2405,29 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r1.size() == r2.size() );
 		CHECK( size(r1) == size(r2) );
 	}
+}
+
+TEST_CASE( "FRect extended", "[frect-ext]" )
+{
+	FRect_<NUMTYPE> rect;
+	auto r1a = rect.getExtended();
+	auto r1b = getExtended(rect);
+	CHECK( r1a == r1b );
+	CHECK( r1a == FRect(-1,-1,2,2 ) );
+
+	FRect_<NUMTYPE> rect2(4,5,6,6);
+	CHECK( rect2.getExtended() == FRect(2,4,8,7) );
+}
+
+TEST_CASE( "FRect diagonals", "[frect-diags]" )
+{
+	FRect_<NUMTYPE> r1;
+	auto psegs1 = r1.getDiagonals();
+	auto psegs2 = getDiagonals(r1);
+	CHECK( psegs1 == psegs2 );
+
+	CHECK( psegs1.first  == Segment(0,0,1,1) );
+	CHECK( psegs1.second == Segment(0,1,1,0) );
 }
 
 TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
