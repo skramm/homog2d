@@ -2210,6 +2210,15 @@ TEST_CASE( "Segment", "[seg1]" )
 	}
 }
 
+TEST_CASE( "Segment extended", "[seg_extended]" )
+{
+	Segment_<HOMOG2D_INUMTYPE> seg(0,0,1,0);
+	auto s2 = seg.getExtended();
+	CHECK( s2.length() == 3. );
+	CHECK( s2.getPts().first == Point2d(-1,0) );
+	CHECK( s2.getPts().second == Point2d(2,0) );
+}
+
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 {
 	{                              // two identical rectangles
