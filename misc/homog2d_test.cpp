@@ -2126,6 +2126,11 @@ TEST_CASE( "Segment extended", "[seg_extended]" )
 	CHECK( s2.length() == 3. );
 	CHECK( s2.getPts().first == Point2d(-1,0) );
 	CHECK( s2.getPts().second == Point2d(2,0) );
+
+	auto s3 = getExtended(seg);
+	CHECK( s3.length() == 3. );
+	CHECK( s3.getPts().first == Point2d(-1,0) );
+	CHECK( s3.getPts().second == Point2d(2,0) );
 }
 
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
@@ -2309,6 +2314,24 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r1.size() == r2.size() );
 		CHECK( size(r1) == size(r2) );
 	}
+}
+
+TEST_CASE( "FRect extended", "[frect-ext]" )
+{
+	FRect_<NUMTYPE> rect;
+	auto r1 = rect.getExtended();
+	auto r2 = getExtended(rect);
+	CHECK( r1 == r2 );
+	std::cout << "rect=" << rect << "\n";
+	std::cout << "r1=" << r1 << "\n";
+}
+
+TEST_CASE( "FRect diagonals", "[frect-diags]" )
+{
+	FRect_<NUMTYPE> r1;
+	auto psegs1 = r1.getDiagonals();
+	auto psegs2 = getDiagonals(r1);
+	CHECK( psegs1 == psegs2 );
 }
 
 TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
