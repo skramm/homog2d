@@ -2319,11 +2319,13 @@ TEST_CASE( "FRect", "[frect]" )
 TEST_CASE( "FRect extended", "[frect-ext]" )
 {
 	FRect_<NUMTYPE> rect;
-	auto r1 = rect.getExtended();
-	auto r2 = getExtended(rect);
-	CHECK( r1 == r2 );
-	std::cout << "rect=" << rect << "\n";
-	std::cout << "r1=" << r1 << "\n";
+	auto r1a = rect.getExtended();
+	auto r1b = getExtended(rect);
+	CHECK( r1a == r1b );
+	CHECK( r1a == FRect(-1,-1,2,2 ) );
+
+	FRect_<NUMTYPE> rect2(4,5,6,6);
+	CHECK( rect2.getExtended() == FRect(2,4,8,7) );
 }
 
 TEST_CASE( "FRect diagonals", "[frect-diags]" )
@@ -2332,6 +2334,9 @@ TEST_CASE( "FRect diagonals", "[frect-diags]" )
 	auto psegs1 = r1.getDiagonals();
 	auto psegs2 = getDiagonals(r1);
 	CHECK( psegs1 == psegs2 );
+
+	CHECK( psegs1.first  == Segment(0,0,1,1) );
+	CHECK( psegs1.second == Segment(0,1,1,0) );
 }
 
 TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )

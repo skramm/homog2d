@@ -1760,8 +1760,8 @@ public:
 		auto y2 = _ptR2.getY();
 
 		return std::make_pair(
-			Segment_<FPT>(x1,y2,x2,y1),
-			Segment_<FPT>(x1,y1,x2,y2)
+			Segment_<FPT>(x1,y1,x2,y2),
+			Segment_<FPT>(x1,y2,x2,y1)
 		);
 	}
 

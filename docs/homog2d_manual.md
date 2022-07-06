@@ -341,13 +341,20 @@ auto line2 = getBisector(s1);
 ```
 
 
-
 The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
 auto length  = s1.length();
 auto length2 = length(s1); // free function
 ```
+
+The extended segment is available with a free of member function:
+```C++
+Segment s1( pt1, pt2 );
+auto seg_ext = s1.getExtended(); // or getExtended(s1);
+```
+The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
+Thus its length is three times the original segments length.
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
@@ -397,6 +404,14 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
+The two diagonal segments can be fetched with, as a pair of segments:
+```C++
+FRect rect( pt1, pt2 );
+auto psegs = rect.getDiagonals();  // or: getDiagonals(rect);
+```
+The `first` element will hold the point with minimal coordinates.
+
+
 And of course, its width, height, length, and enclosed area.
 This is available through member functions or free functions.
 ```C++
@@ -412,11 +427,11 @@ auto a2 = area(rect);
 auto l2 = length(rect);
 ```
 
-You can gets its size as a pair of values (member function or free function):
+You can gets its size as a pair of values (member function or free function),
+with the width as `first` element and height as `second` element:
 ```C++
 FRect rect;
-auto s1 = rect.size();
-auto s2 = size(rect);
+auto s1 = rect.size();   // or: size(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -434,6 +449,13 @@ auto c2 = getBoundingCircle(r1); // or use the free function
 
 ![showcase4b](showcase/showcase4b.gif)
 
+
+The extended flat rectangle is available with a free of member function:
+```C++
+FRect  r1( pt1, pt2 );
+auto rect_ext = s1.getExtended(); // or getExtended(r1);
+```
+The extended flat rectangle will have an area 9 times the area of original rectangle.
 
 ### 3.3 - Circles
 <a name="p_circle"></a>
