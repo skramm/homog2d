@@ -365,9 +365,10 @@ Line2d line;
 Point2d pt;
 auto seg_orth = line.getOrthogSegment( pt );
 ```
-This is illustrated on this figure, showing a rotating point and the computed orthogonal segment to a line:
+This is illustrated on this figure, showing a rotating point and the computed orthogonal segment to a line [source](../misc/showcase/showcase8.cpp):
+
 ![showcase8](showcase/showcase8.gif)
-[source](../misc/showcase/showcase8.cpp)
+
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
