@@ -138,7 +138,6 @@
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
 		<Unit filename="no_build/no_build_01.cxx" />
-		<Unit filename="no_build/no_build_02.cxx" />
 		<Unit filename="no_build/no_build_03.cxx" />
 		<Unit filename="no_build/no_build_04.cxx" />
 		<Unit filename="no_build/no_build_05.cxx" />
@@ -154,8 +153,6 @@
 		<Unit filename="no_build/no_build_15.cxx" />
 		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
-		<Unit filename="no_build/no_build_18.cxx" />
-		<Unit filename="no_build/no_build_19.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
@@ -168,6 +165,7 @@
 		<Unit filename="showcase/showcase4b.cpp" />
 		<Unit filename="showcase/showcase5.cpp" />
 		<Unit filename="showcase/showcase6.cpp" />
+		<Unit filename="showcase/showcase7.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

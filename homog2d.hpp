@@ -1892,7 +1892,7 @@ public:
 /// Returns true if rectangle is inside \c shape (Circle_ or FRect_ or base::Polyline)
 /// \todo add some SFINAE to enable only for allowed types: Circle_ or FRect_
 	template<typename T>
-	bool isInside( const T& shape )
+	bool isInside( const T& shape ) const
 	{
 		HOMOG2D_START;
 		for( const auto& pt: get4Pts() )
@@ -1901,27 +1901,20 @@ public:
 		return true;
 	}
 
-/// \todo call of sub function uneeded, we can directly call one of the two functions below
-	template<typename PT,typename FPT2>                      // PT: Polyline Type, open or closed
-	bool isInside( const base::PolylineBase<PT,FPT2>& poly )
-	{
-		HOMOG2D_START;
-		return impl_isInsidePoly( poly );
-	}
-
-private:
+/// A FRect is never inside an open polyline
 	template<typename FPT2>
-	constexpr bool impl_isInsidePoly( const OPolyline_<FPT2>& )
+	constexpr bool isInside( const OPolyline_<FPT2>& ) const
 	{
 		return false;
 	}
+
 /// For a rectangle to be inside a closed Polyline, two conditions are necessary:
 /**
 - all the points must be inside
 - no intersections
 */
 	template<typename FPT2>
-	bool impl_isInsidePoly( const CPolyline_<FPT2>& poly )
+	bool isInside( const CPolyline_<FPT2>& poly ) const
 	{
 		for( const auto& seg: getSegs() )
 			if( seg.intersects(poly)() )
@@ -3170,7 +3163,7 @@ public:
 		return impl_isInsideEllipse( ell, detail::RootHelper<LP>() );
 	}
 
-/// Point is inside Polyline
+/// Point or line is inside Polyline
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
@@ -3735,15 +3728,49 @@ the one with smallest y-coordinate will be returned first */
 		return std::make_pair( _ptS1, _ptS2 );
 	}
 
-/// Segment "isInside", S can be Circle or FRect
+private:
 	template<typename S>
-	bool isInside( const S& shape ) const
+	bool p_bothPtsAreInside( const S& shape ) const
 	{
-		HOMOG2D_START;
 		if( !_ptS1.isInside( shape ) )
 			return false;
 		if( !_ptS2.isInside( shape ) )
 			return false;
+		return true;
+	}
+
+public:
+	template<typename FPT2>
+	bool isInside( const Circle_<FPT2>& shape ) const
+	{
+		return p_bothPtsAreInside( shape );
+	}
+	template<typename FPT2>
+	bool isInside( const FRect_<FPT2>& shape ) const
+	{
+		return p_bothPtsAreInside( shape );
+	}
+	template<typename FPT2>
+	bool isInside( const Ellipse_<FPT2>& shape ) const
+	{
+		return p_bothPtsAreInside( shape );
+	}
+
+	template<typename FPT2>
+	constexpr bool isInside( const OPolyline_<FPT2>& ) const
+	{
+		return false;
+	}
+
+	template<typename FPT2>
+	bool isInside( const CPolyline_<FPT2>& cpoly ) const
+	{
+		if( !p_bothPtsAreInside( cpoly ) )
+			return false;
+
+		for( auto poly_seg: cpoly.getSegs() )
+			if( poly_seg.intersects( *this )() )
+				return false;
 		return true;
 	}
 
@@ -6609,6 +6636,11 @@ getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
 /**
 See https://en.wikipedia.org/wiki/Point_in_polygon
 
+Implementing this algorithm in a naive way may encounter some issue:
+if the main segment used to compute the number of intersections is colinear with
+one of the points of the polyline, we might run into a numerical issue.
+
+Thus
 Algo:
 \verbatim
 aaa
@@ -6627,11 +6659,12 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 	if( !this->isInside(bbox) )
 		return false;
 
-// step 2: check if point is lying on one of the segments. if so, return false;
+// step 2: check if point is lying on one of the segments. If so, return false;
 	for( auto seg: poly.getSegs() )
 		if( seg.getLine().distTo( *this ) < thr::nullDistance() )
 				return false;
 
+#if 0
 // step 3: determine which segment of the BB is the farthest from the point, and
 // use its middle point
 
@@ -6639,7 +6672,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 	auto segs = bbox.getSegs();
 	auto goodBbSeg = segs[ idx ]; // that segment is the farthest
 
-//build a segment
+// build a segment
 	Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, goodBbSeg.getMiddlePoint() );
 //	std::cout << "seg_inf=" << seg_a << '\n';
 
@@ -6647,12 +6680,44 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 	size_t c = 0;
 	for( auto seg: poly.getSegs() )
 	{
-//		std::cout << "seg=" << seg << '\n';
 		if( seg.intersects(seg_ref)() )
 			c++;
 	}
-//	std::cout << "c=" << c << '\n';
 	return static_cast<bool>( c%2 );
+
+#else
+	auto bbox2 = bbox.getExtended();
+	auto seg_bb = bbox2.getSegs();
+	for( int i=0; i<4; i++ )        // iterate on all four segments of the extended bounding box
+	{
+		Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, seg_bb[i].getMiddlePoint() );
+		auto line_ref = seg_ref.getLine();
+
+		bool tooClose = false;
+		auto poly_pts = poly.getPts();
+		for( size_t j=0; j<poly_pts.size() && !tooClose; j++  )   // make sure that every point of the polyline is not on the reference segment
+		{
+			const auto& poly_pt = poly_pts[j];
+			if( poly_pt.distTo(line_ref) < thr::nullDistance() )
+				tooClose = true;
+		}
+		if( !tooClose )     // if no polyline points
+		{                   // was found on the segment supporting line
+			size_t c = 0;
+			for( auto seg: poly.getSegs() )  // iterate on the polyline segments
+			{
+				if( seg.intersects(seg_ref)() )
+					c++;
+			}
+			return static_cast<bool>( c%2 );
+		}
+		if( i == 3 )
+			HOMOG2D_THROW_ERROR_1( "unable to determine is point is inside" );
+	}
+	return false; // to avoid a warning
+
+#endif
+
 }
 
 template<typename LP, typename FPT>
@@ -6660,7 +6725,7 @@ template<typename T,typename PTYPE>
 constexpr bool
 LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::RootHelper<type::IsLine>& ) const
 {
-	return false; // to avoid a warning
+	return false;
 }
 
 //------------------------------------------------------------------
