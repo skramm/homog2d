@@ -340,7 +340,6 @@ auto line1 = s1.getBisector();
 auto line2 = getBisector(s1);
 ```
 
-
 The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
@@ -355,7 +354,7 @@ auto seg_ext = s1.getExtended(); // or getExtended(s1);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.
-Below the original segment is blue and the extended segment is red.
+On the figure below, the original segment is blue and the extended segment is red.
 The support line is gray.
 
 ![extended segment](img/segment_extended1.png)
@@ -463,7 +462,7 @@ The extended flat rectangle will have an area 9 times the area of original recta
 
 The figure below shows the extended rectangle and the diagonals.
 red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines
-([source file](../misc/figures_src/srcfrect_extended.cpp)).
+([source file](../misc/figures_src/src/frect_extended.cpp)).
 
 ![Extended Rectangle](img/frect_extended.png)
 
