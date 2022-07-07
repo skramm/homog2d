@@ -355,7 +355,8 @@ auto seg_ext = s1.getExtended(); // or getExtended(s1);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.
-![blue: original segment, red: extended segment](img/segment_extended1.png)
+
+![blue: original segment, red: extended segment, gray: support line](img/segment_extended1.png)
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
