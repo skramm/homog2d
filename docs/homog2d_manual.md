@@ -459,6 +459,13 @@ auto rect_ext = s1.getExtended(); // or getExtended(r1);
 ```
 The extended flat rectangle will have an area 9 times the area of original rectangle.
 
+The figure below shows the extended rectangle and the diagonals.
+red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines.
+<br>
+[source file](misc/figures_src/srcfrect_extended.cpp)
+
+![Extended Rectangle](img/frect_extended.png)
+
 ### 3.3 - Circles
 <a name="p_circle"></a>
 
