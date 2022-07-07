@@ -270,40 +270,48 @@ two function cols() and rows(), bounded in a "#define" block, and define the dra
 template<typename T>
 struct Image
 {
-	T real_img;
+private:
+	T _realImg;
+public:
 	Image() = default;
-	Image( T& m ): real_img(m)
+	Image( T& m ): _realImg(m)
 	{}
 /// Returns a reference on the underlying image
 	T& getReal()
 	{
-		return real_img;
+		return _realImg;
 	}
+/// Returns a const reference on the underlying image
+	const T& getReal() const
+	{
+		return _realImg;
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 	Image( size_t width, size_t height )
 	{
-		real_img.create( height, width, CV_8UC3 );
+		_realImg.create( height, width, CV_8UC3 );
 		clear();
 	}
-	int cols() const { return real_img.cols; }
-	int rows() const { return real_img.rows; }
-	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { real_img = cv::Scalar(b,g,r); }
+	int cols() const { return _realImg.cols; }
+	int rows() const { return _realImg.rows; }
+	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
 /// Write image to disk with name \c fname
 	void write( std::string fname ) const
 	{
-		cv::imwrite( fname, real_img );
+		cv::imwrite( fname, _realImg );
 	}
 /// Show image on window \c wname
 	void show( std::string wname )
 	{
-		cv::imshow( wname, real_img );
+		cv::imshow( wname, _realImg );
 	}
 #endif
 
 //#ifdef HOMOG2D_SOME_OTHER_LIB
-//	int cols() const { return real_img.???; }
-//	int rows() const { return real_img.???; }
+//	int cols() const { return _realImg.???; }
+//	int rows() const { return _realImg.???; }
 //#endif
 
 };

@@ -340,7 +340,6 @@ auto line1 = s1.getBisector();
 auto line2 = getBisector(s1);
 ```
 
-
 The length is available with a member function or a free function:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
@@ -355,6 +354,10 @@ auto seg_ext = s1.getExtended(); // or getExtended(s1);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.
+On the figure below, the original segment is blue and the extended segment is red.
+The support line is gray.
+
+![extended segment](img/segment_extended1.png)
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
@@ -456,6 +459,12 @@ FRect  r1( pt1, pt2 );
 auto rect_ext = s1.getExtended(); // or getExtended(r1);
 ```
 The extended flat rectangle will have an area 9 times the area of original rectangle.
+
+The figure below shows the extended rectangle and the diagonals.
+red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines
+([source file](../misc/figures_src/src/frect_extended.cpp)).
+
+![Extended Rectangle](img/frect_extended.png)
 
 ### 3.3 - Circles
 <a id="p_circle"></a>
@@ -573,7 +582,7 @@ The `getBB()` member (or free) function return the corresponding Bounding box, s
 ![The same one, but closed](img/polyline1b.png)
 
 
-The open/close attribute can be read, but will return a constexpr value:
+The open/close attribute can be read, but will return a `constexpr` value:
 ```C++
 OPolyline p1;
 CPolyline p2;
@@ -589,12 +598,9 @@ auto n2 = size(pl);
 auto s1 = pl.nbSegs(); // nb of segments
 auto s2 = nbSegs(s2);
 
-auto length1 = pl.length();
-auto length2 = length(pl);
-auto rect1 = pl.getBB();
-auto rect2 = getBB(pl);
+auto length1 = pl.length(); // or  length(pl);
+auto rect1 = pl.getBB();    // or  getBB(pl);
 ```
-
 
 It has no orientation, meaning that the `OPolyline` build from this set of points:<br>
 `(0,0)-(1,0)-(1,1)`<br>
@@ -1250,7 +1256,12 @@ draw( img, c );
 draw( img, pt );
 ```
 
-The `getReal()` member function provides access to the image underlying object, here the Opencv cv:Mat.
+In case you need it for other tasks, the `getReal()` member function provides access to the image underlying object,
+here the Opencv cv::Mat:
+```C++
+img::Image<cv::Mat> img( 300, 400 );
+cv::Mat ocv = img.getReal()
+```
 
 
 ### 7.3 - Drawing parameters
@@ -1296,7 +1307,7 @@ The available functions are given in the table below:
 ------------------|------------------|---------|
 `setColor()`      | 3 ints ([0-255]) |  |
 `setColor()`      |  `img::Color`    |  |
-`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` | +,x,*, |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Dot` |  |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
