@@ -2827,6 +2827,13 @@ public:
 		return impl_getOrthogonalLine_B( pt, detail::RootHelper<LP>() );
 	}
 
+	/// Returns the segment from the point (not on line) to the line, shortest path
+	Segment_<FPT>
+	getOrthogSegment( const Point2d_<FPT>& pt ) const
+	{
+		return impl_getOrthogSegment( pt, detail::RootHelper<LP>() );
+	}
+
 	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
 	Line2d_<FPT>
 	getParallelLine( const Point2d_<FPT>& pt ) const
@@ -3203,6 +3210,11 @@ private:
 	constexpr Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const;
 	Line2d_<FPT>           impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+	Segment_<FPT>           impl_getOrthogSegment( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
+	constexpr Segment_<FPT> impl_getOrthogSegment( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+
 	Line2d_<FPT>           impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
 
@@ -6234,6 +6246,37 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail:
 
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
+/// Returns the shortest segment that joins a point and a line
+template<typename LP,typename FPT>
+Segment_<FPT>
+LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::RootHelper<type::IsLine>& ) const
+{
+	Line2d_<HOMOG2D_INUMTYPE> src = *this;  // copy to highest precision
+	auto dist = src.distTo(pt);
+#ifndef HOMOG2D_NOCHECKS
+	if( dist < thr::nullDistance() )   // sanity check
+		HOMOG2D_THROW_ERROR_1( "unable to compute segment" );
+#endif
+	auto pair_lines = getParallelLines( dist );
+
+// determine on which of the two parallel lines does the point lie?
+	Line2d_<HOMOG2D_INUMTYPE>* pline = &pair_lines.first;
+	if( pt.distTo(pair_lines.second) < thr::nullDistance() )
+		pline = &pair_lines.second;
+
+	auto oline = pline->getOrthogonalLine( pt );
+	auto p2 = *this * oline;
+	return Segment_<FPT>( pt, p2 );
+}
+
+template<typename LP,typename FPT>
+constexpr Segment_<FPT>
+LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid call" );
+}
+
+
 
 //------------------------------------------------------------------
 /// Illegal instanciation

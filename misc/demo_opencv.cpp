@@ -556,9 +556,12 @@ double action_SI_drawDist( const Segment& seg, void* param )
 		case +1:
 			draw( data.img, Segment( data.pt_mouse, seg.getPts().second ), col_B );
 		break;
-/*		default:
-			auto ortho = data.seg1.getLine().getOrthogonalLine( data.pt_mouse );
-			ortho.draw( data.img );*/
+		default:
+			if( data.pt_mouse.distTo( seg.getLine() ) > 3. )
+			{
+				auto orthog_seg = seg.getLine().getOrthogSegment( data.pt_mouse );
+				orthog_seg.draw( data.img, col_A );
+			}
 	}
 	return segDist;
 }
@@ -580,7 +583,7 @@ void action_SI( void* param )
 		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
 
 	auto inters = data.seg1.intersects( data.seg2 );
-	if( inters() ) //&& g_data.selected != -1 )
+	if( inters() )
 	{
 		auto pti = inters.get();
 		pti.draw( data.img );
