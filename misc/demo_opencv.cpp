@@ -539,6 +539,29 @@ struct Param_SI: Data
 	Segment seg1,seg2;
 };
 
+double action_SI_drawDist( const Segment& seg, void* param )
+{
+	auto& data = *reinterpret_cast<Param_SI*>(param);
+
+	int segDistCase;
+	auto segDist = seg.distTo( data.pt_mouse, &segDistCase );
+
+	auto col_A = img::DrawParams().setColor( 0,200,200 );
+	auto col_B = img::DrawParams().setColor( 200,200,0 );
+	switch( segDistCase )
+	{
+		case -1:
+			draw( data.img, Segment( data.pt_mouse, seg.getPts().first ), col_B );
+		break;
+		case +1:
+			draw( data.img, Segment( data.pt_mouse, seg.getPts().second ), col_B );
+		break;
+/*		default:
+			auto ortho = data.seg1.getLine().getOrthogonalLine( data.pt_mouse );
+			ortho.draw( data.img );*/
+	}
+	return segDist;
+}
 void action_SI( void* param )
 {
 	auto& data = *reinterpret_cast<Param_SI*>(param);
@@ -570,11 +593,17 @@ void action_SI( void* param )
 
 	Line2d li2( Point2d(350,120),Point2d(20,50));
 	li2.draw( data.img );
-	auto inters2 = data.seg1.intersects( li2 );
+
+	auto inters1 = data.seg1.intersects( li2 );
+	if( inters1() )
+		 inters1.get().draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam).setColor( 250,0,0));
+	auto inters2 = data.seg2.intersects( li2 );
 	if( inters2() )
-	{
 		 inters2.get().draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam).setColor( 250,0,0));
-	}
+
+	auto segDist1 = action_SI_drawDist( data.seg1, param );
+	auto segDist2 = action_SI_drawDist( data.seg2, param );
+	data.putTextLine( "distance mouse/s1=" + std::to_string(segDist1) + " mouse/s2=" + std::to_string(segDist2) ,0 );
 	data.showImage();
 }
 

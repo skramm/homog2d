@@ -2868,6 +2868,11 @@ public:
 	{
 		return impl_distToLine( li, detail::RootHelper<LP>() );
 	}
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Segment_<FPT2>& seg ) const
+	{
+		return impl_distToSegment( seg, detail::RootHelper<LP>() );
+	}
 
 	template<typename T,typename FPT2>
 	bool isParallelTo( const LPBase<T,FPT2>& li ) const
@@ -2958,6 +2963,11 @@ private:
 	HOMOG2D_INUMTYPE           impl_distToLine(  const Line2d_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename FPT2>
 	constexpr HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
+
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::RootHelper<type::IsPoint>& ) const;
+	template<typename FPT2>
+	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::RootHelper<type::IsLine>&  ) const;
 
 	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -3663,6 +3673,9 @@ the one with smallest y-coordinate will be returned first */
 		return Line2d_<FPT>(li);
 	}
 
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
+
 /// \name Intersection functions
 ///@{
 	template<typename FPT2>
@@ -3740,25 +3753,79 @@ Segment_<FPT>::getExtended() const
 	Segment_<HOMOG2D_INUMTYPE> seg(*this); // to get highest precision
 	auto li = seg.getLine();
 	auto rad1 = seg.length();
-//std::cout <<"rad=" << rad1 << '\n';
 	auto c1 = Circle_<HOMOG2D_INUMTYPE>( _ptS1, rad1 );
 	auto c2 = Circle_<HOMOG2D_INUMTYPE>( _ptS2, rad1 );
 
 	auto int1 = li.intersects( c1 );
 	auto int2 = li.intersects( c2 );
-//	std::cout << "nb intersect c1=" << int1.size() << std::endl;
-//	std::cout << "nb intersect c2=" << int2.size() << std::endl;
 	assert( int1() );
 	assert( int2() );
 	auto ppt1 = int1.get();
 	auto ppt2 = int2.get();
 
-//std::cout <<"ppt1="<< ppt1 << "\n-ppt2="<< ppt2 << '\n';
-
 	return Segment_<FPT>(
 		ppt1.first,
 		ppt2.second
 	);
+}
+
+//------------------------------------------------------------------
+/// Distance from point to segment
+/**
+source: https://stackoverflow.com/a/6853926/193789
+
+Temp implementation, until we get into this a bit more deeper
+*/
+template<typename FPT>
+template<typename FPT2>
+HOMOG2D_INUMTYPE
+Segment_<FPT>::distTo( const Point2d_<FPT2>& pt, int* segDistCase ) const
+{
+	auto ppts = getPts();
+	auto x1 = static_cast<HOMOG2D_INUMTYPE>( ppts.first.getX() );
+	auto y1 = static_cast<HOMOG2D_INUMTYPE>( ppts.first.getY() );
+	auto x2 = static_cast<HOMOG2D_INUMTYPE>( ppts.second.getX() );
+	auto y2 = static_cast<HOMOG2D_INUMTYPE>( ppts.second.getY() );
+
+	auto A = pt.getX() - x1;
+	auto B = pt.getY() - y1;
+	auto C = x2 - x1;
+	auto D = y2 - y1;
+
+	auto dot    = A * C + B * D;
+	auto len_sq = C * C + D * D;
+	auto param  = dot / len_sq;
+
+	HOMOG2D_INUMTYPE xx, yy;
+
+	if( param < 0. )
+	{
+		if( segDistCase )
+			*segDistCase = -1;
+		xx = x1;
+		yy = y1;
+	}
+	else
+	{
+		if( param > 1. )
+		{
+			if( segDistCase )
+				*segDistCase = +1;
+			xx = x2;
+			yy = y2;
+		}
+		else
+		{
+			if( segDistCase )
+				*segDistCase = 0;
+			xx = x1 + param * C;
+			yy = y1 + param * D;
+		}
+	}
+
+	auto dx = pt.getX() - xx;
+	auto dy = pt.getY() - yy;
+	return std::sqrt(dx * dx + dy * dy);
 }
 
 //------------------------------------------------------------------
@@ -6375,6 +6442,26 @@ LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::RootHelper<
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
 	return 0.;    // to avoid warning message on build
 }
+
+
+template<typename LP, typename FPT>
+template<typename FPT2>
+constexpr HOMOG2D_INUMTYPE
+LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between a line and a segment" );
+	return 0.;    // to avoid warning message on build
+}
+
+template<typename LP, typename FPT>
+template<typename FPT2>
+HOMOG2D_INUMTYPE
+LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::RootHelper<type::IsPoint>& ) const
+{
+	return seg.distTo( *this );
+}
+
+
 
 } // namespace base
 
