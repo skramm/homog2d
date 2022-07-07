@@ -355,8 +355,10 @@ auto seg_ext = s1.getExtended(); // or getExtended(s1);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.
+Below the original segment is blue and the extended segment is red.
+The support line is gray.
 
-![blue: original segment, red: extended segment, gray: support line](img/segment_extended1.png)
+![extended segment](img/segment_extended1.png)
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
@@ -460,9 +462,8 @@ auto rect_ext = s1.getExtended(); // or getExtended(r1);
 The extended flat rectangle will have an area 9 times the area of original rectangle.
 
 The figure below shows the extended rectangle and the diagonals.
-red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines.
-<br>
-[source file](misc/figures_src/srcfrect_extended.cpp)
+red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines
+([source file](../misc/figures_src/srcfrect_extended.cpp)).
 
 ![Extended Rectangle](img/frect_extended.png)
 
@@ -582,7 +583,7 @@ The `getBB()` member (or free) function return the corresponding Bounding box, s
 ![The same one, but closed](img/polyline1b.png)
 
 
-The open/close attribute can be read, but will return a constexpr value:
+The open/close attribute can be read, but will return a `constexpr` value:
 ```C++
 OPolyline p1;
 CPolyline p2;
@@ -598,12 +599,9 @@ auto n2 = size(pl);
 auto s1 = pl.nbSegs(); // nb of segments
 auto s2 = nbSegs(s2);
 
-auto length1 = pl.length();
-auto length2 = length(pl);
-auto rect1 = pl.getBB();
-auto rect2 = getBB(pl);
+auto length1 = pl.length(); // or  length(pl);
+auto rect1 = pl.getBB();    // or  getBB(pl);
 ```
-
 
 It has no orientation, meaning that the `OPolyline` build from this set of points:<br>
 `(0,0)-(1,0)-(1,1)`<br>
