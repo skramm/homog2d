@@ -355,6 +355,7 @@ auto seg_ext = s1.getExtended(); // or getExtended(s1);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.
+![blue: original segment, red: extended segment](img/segment_extended1.png)
 
 ### 3.2 - Flat rectangles
 <a name="p_frect"></a>
@@ -1250,7 +1251,12 @@ draw( img, c );
 draw( img, pt );
 ```
 
-The `getReal()` member function provides access to the image underlying object, here the Opencv cv:Mat.
+In case you need it for other tasks, the `getReal()` member function provides access to the image underlying object,
+here the Opencv cv::Mat:
+```C++
+img::Image<cv::Mat> img( 300, 400 );
+cv::Mat ocv = img.getReal()
+```
 
 
 ### 7.3 - Drawing parameters
@@ -1296,7 +1302,7 @@ The available functions are given in the table below:
 ------------------|------------------|---------|
 `setColor()`      | 3 ints ([0-255]) |  |
 `setColor()`      |  `img::Color`    |  |
-`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam` | +,x,*, |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Dot` |  |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |

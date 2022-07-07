@@ -90,6 +90,7 @@
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
 		<Unit filename="figures_src/src/segment1.cpp" />
+		<Unit filename="figures_src/src/segment_extended.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_circle_1.cpp" />
 		<Unit filename="figures_test/frect_intersect_1.code">
