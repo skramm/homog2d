@@ -7,7 +7,6 @@
 #include "../../homog2d.hpp"
 
 using namespace h2d;
-using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
@@ -15,7 +14,6 @@ int main( int argc, const char** argv )
 	auto Hdraw = Homogr().addTranslation(3,2).addScale(40);
 
 	auto k=1.5;
-//	uint8_t g = 100;
 	for( int i=0; i<nbim; i++ )
 	{
 		auto angle = i*360./nbim;
@@ -29,12 +27,35 @@ int main( int argc, const char** argv )
 		auto li = seg.getLine();
 		auto li_d = Hdraw * li;
 
-		Image<cv::Mat> im( 250, 200 );
-		pt_d.draw( im, DrawParams().setColor(250,0,0) );
-		li_d.draw( im, DrawParams().setColor(20,250,0) );
+		Segment seg2( -.7, +.8, +.63, +.6 );
+		auto seg2_d = Hdraw * seg2;
+
+		img::Image<cv::Mat> im( 250, 200 );
+		pt_d.draw(   im, img::DrawParams().setColor(250,0,0) );
+		li_d.draw(   im, img::DrawParams().setColor(20,250,0) );
+		seg2_d.draw( im, img::DrawParams().setColor(0,125,120) );
 
 		auto sego = li_d.getOrthogSegment( pt_d );
-		sego.draw( im, DrawParams().setColor(20,0,250) );
+		sego.draw( im, img::DrawParams().setColor(20,0,250) );
+
+		int segDistCase;
+		auto dist = seg2_d.distTo( pt_d, &segDistCase );
+		auto pts_seg2 = seg2_d.getPts();
+
+		auto colA = img::DrawParams().setColor(20,0,250);
+		switch( segDistCase )
+		{
+			case -1:
+				Segment( pt_d, pts_seg2.first ).draw( im, colA );
+			break;
+			case +1:
+				Segment( pt_d, pts_seg2.second ).draw( im, colA );
+			break;
+			default:
+				auto s = li_d.getOrthogSegment( pt_d );
+				s.draw( im, colA );
+		}
+
 		std::ostringstream oss;
 		oss << "showcase8_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		im.write( oss.str() );
