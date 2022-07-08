@@ -43,3 +43,13 @@ Building circles from two (blue) or three (red) points, with one of the points r
 Also shows intersection of circles with a segment.
 
 ![showcase6](showcase/showcase6.gif)
+
+
+* [Showcase 8](../misc/showcase/showcase8.cpp):
+<a id="sc8"></a>
+A rotating point, a fixed segment and a fixed line.
+The blue segment is generated between the point and the line, using `getOrthogSegment()`.
+The other segment shows the distance between the point and the fixed segment, with two alternate colors showing the case (orthogonal distance or distance to segment edge).
+
+![showcase8](showcase/showcase8.gif)
+

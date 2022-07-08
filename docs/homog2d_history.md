@@ -21,7 +21,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `type()` function to all primitives, will return a `Type` enum, that can be printed with `getString()`
   - added `getExtended()` to class `Segment_` and class `FRect_`
   - added computation of distance between `Point2d_`  and `Segment_`
-  - added `getOrthogSegment()` to class `Line2d_`
+  - added `getOrthogSegment(Point2d_)` to `Line2d_`
+  - added `distTo()`  between a point and a segment
 
 - [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`
