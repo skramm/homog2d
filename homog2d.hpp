@@ -1726,6 +1726,7 @@ public:
 		return std::make_pair( _ptR1, _ptR2 );
 	}
 
+/// Returns center of rectangle
 	Point2d_<FPT> center() const
 	{
 		return Point2d_<FPT>(

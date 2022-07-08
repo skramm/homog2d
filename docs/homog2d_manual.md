@@ -365,7 +365,8 @@ Line2d line;
 Point2d pt;
 auto seg_orth = line.getOrthogSegment( pt );
 ```
-This is illustrated on this figure, showing a rotating point and the computed orthogonal segment to a line [source](../misc/showcase/showcase8.cpp):
+This is illustrated on this figure, showing a rotating point and the computed orthogonal segment to a line
+([source](../misc/showcase/showcase8.cpp)):
 
 ![showcase8](showcase/showcase8.gif)
 
@@ -391,7 +392,7 @@ This means you can give either (p0,p1) or (p2,p3), only p0 and p1 will be stored
 The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
 
-You can also build the rectangle by giving the 4 coordinates, x1,y1 and x2,y2.
+You can also build the rectangle by giving the 4 coordinates x1,y1 and x2,y2.
 The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
@@ -457,8 +458,7 @@ rect.translate( dx, dy );
 you can get the circle that passes through the 4 points:
 ```C++
 FRect r1(...); // whatever
-auto c1 = r1.getBoundingCircle();
-auto c2 = getBoundingCircle(r1); // or use the free function
+auto c1 = r1.getBoundingCircle(); // or: getBoundingCircle(r1);
 ```
 
 ![showcase4b](showcase/showcase4b.gif)
@@ -640,7 +640,8 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 }
 ```
 
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the the `centroid()` function will throw.
+Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0
+but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -653,7 +654,7 @@ assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 
 #### Comparison of Polyline objects
 
-Polyline objects can be compared, however, the behavior differs whether it is closed or not.
+Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
 ```
 (1,1)--(3,4)--(1,3)
@@ -735,7 +736,6 @@ Ellipse ell;
 auto bb  = getBB(ell);
 auto obb = getOBB(ell);
 ```
-
 
 You can get the pair of axis lines:
 ```C++
