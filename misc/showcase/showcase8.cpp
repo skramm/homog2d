@@ -27,13 +27,13 @@ int main( int argc, const char** argv )
 		auto li = seg.getLine();
 		auto li_d = Hdraw * li;
 
-		Segment seg2( -.7, +.8, +.63, +.6 );
+		Segment seg2( -.9, +1.4, +.45, +1.0 );
 		auto seg2_d = Hdraw * seg2;
 
 		img::Image<cv::Mat> im( 250, 200 );
 		pt_d.draw(   im, img::DrawParams().setColor(250,0,0) );
-		li_d.draw(   im, img::DrawParams().setColor(20,250,0) );
-		seg2_d.draw( im, img::DrawParams().setColor(0,125,120) );
+		li_d.draw(   im, img::DrawParams().setColor(0,250,0) );
+		seg2_d.draw( im, img::DrawParams().setColor(0,250,0) );
 
 		auto sego = li_d.getOrthogSegment( pt_d );
 		sego.draw( im, img::DrawParams().setColor(20,0,250) );
@@ -42,7 +42,8 @@ int main( int argc, const char** argv )
 		auto dist = seg2_d.distTo( pt_d, &segDistCase );
 		auto pts_seg2 = seg2_d.getPts();
 
-		auto colA = img::DrawParams().setColor(20,0,250);
+		auto colA = img::DrawParams().setColor(200,200,0);
+		auto colB = img::DrawParams().setColor(0,200,200);
 		switch( segDistCase )
 		{
 			case -1:
@@ -52,8 +53,8 @@ int main( int argc, const char** argv )
 				Segment( pt_d, pts_seg2.second ).draw( im, colA );
 			break;
 			default:
-				auto s = li_d.getOrthogSegment( pt_d );
-				s.draw( im, colA );
+				auto s = seg2_d.getLine().getOrthogSegment( pt_d );
+				s.draw( im, colB );
 		}
 
 		std::ostringstream oss;

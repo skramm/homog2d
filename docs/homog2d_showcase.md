@@ -49,7 +49,7 @@ Also shows intersection of circles with a segment.
 <id name="sc8"></id>
 A rotating point, a fixed segment and a fixed line.
 The blue segment is generated between the point and the line, using `getOrthogSegment()`.
-The XXX segment shows the distance between the point and the fixed segment.
+The other segment shows the distance between the point and the fixed segment, with two alternate colors showing the case (orthogonal distance or distance to segment edge).
 
 ![showcase8](showcase/showcase8.gif)
 
