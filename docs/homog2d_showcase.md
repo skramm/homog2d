@@ -48,11 +48,17 @@ Also shows intersection of circles with a segment.
 
 * [Showcase 7](../misc/showcase/showcase7.cpp):
 <a id="sc7"></a>
-A demo showing when a closed polyline and a circle can be inside each other.
+A demo showing when a closed polyline and a circle are inside each other.
 Red and bold drawing when inside the other.
 Also shows the intersection points between these two primitives.
 
 ![showcase7](showcase/showcase7.gif)
+
+* [Showcase 7b](../misc/showcase/showcase7b.cpp):
+<a id="sc7b"></a>
+Same as above but with a rectangle and a cirle.
+
+![showcase7b](showcase/showcase7b.gif)
 
 
 * [Showcase 8](../misc/showcase/showcase8.cpp):
