@@ -12,26 +12,27 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 	auto n = 25; // nb images
-	Circle cir( 1.5, 0.8, 5.2 );
-	CPolyline pl;
+	Circle cir( 3. );
+
 	std::vector<Point2d> vpts{
-		{ 0,0 },
-		{ 2.,1. },
-		{ 5,-1 },
-		{ 6,2 },
-		{ 1,3 }
+		{ -1.0,  1.0 },
+		{ -1.2, -0.7 },
+		{  1.8, -0.5 },
+		{  1.6,  1.1 },
+		{  0.5,  0.8 }
 	};
-	pl.set( vpts );
-	pl = Homogr().addTranslation(-2.5,-1.5)*pl;
+	CPolyline pl( vpts );
 
-	auto Hdraw = Homogr().setScale(10).addTranslation(110,80);
+	auto Hdraw = Homogr().addTranslation(7,6).addScale(15);
 
-	img::Image<cv::Mat> im( 300, 250 );
+	img::Image<cv::Mat> im( 300, 200 );
 
 	auto col_outside = img::DrawParams().setColor(50,20,200);
-	auto col_inside  = img::DrawParams().setColor(200,20,20);
-	Homogr H1 = Homogr().addScale(    1.1,    1.2 );
-	Homogr H2 = Homogr().addScale( 1./1.1, 1./1.2 );
+	auto col_inside  = img::DrawParams().setColor(200,20,20).setThickness(2);
+	auto coeff_x = 1.12;
+	auto coeff_y = 1.16;
+	Homogr H1 = Homogr().addScale(    coeff_x,    coeff_y );
+	Homogr H2 = Homogr().addScale( 1./coeff_x, 1./coeff_y );
 
 	for( int i=0; i<n; i++ )
 	{
@@ -40,16 +41,26 @@ int main( int argc, const char** argv )
 		auto cir2 = Hdraw * cir;
 
 		auto col_c = col_outside;
-		if( pl.isInside( cir ) )
+		if( cir.isInside( pl ) )
 			col_c = col_inside;
 
 		auto col_p = col_outside;
-		if( cir.isInside( pl ) )
+		if( pl.isInside( cir ) )
 			col_p = col_inside;
 
 		pl2.draw( im, col_p );
 		cir2.draw( im, col_c );
 
+		auto inter =  cir.intersects(pl);
+		if( inter() )
+		{
+			auto inter_pts = inter.get();
+			for( const auto& pt: inter.get() )
+			{
+				auto pt2 = Hdraw * pt;
+				pt2.draw( im );
+			}
+		}
 		if( i<n/2 )
 			pl = H1*pl;
 		else

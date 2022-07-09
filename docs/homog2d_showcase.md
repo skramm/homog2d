@@ -45,7 +45,16 @@ Also shows intersection of circles with a segment.
 ![showcase6](showcase/showcase6.gif)
 
 
-* [Showcase 8](../misc/showcase/showcase8.cpp):
+* [Showcase 7](../misc/showcase/showcase7.cpp):
+<a id="sc7"></a>
+A demo showing when a closed polyline and a circle can be inside each other.
+Red and bold drawing when inside the other.
+Also shows the intersection points between these two primitives.
+
+![showcase7](showcase/showcase7.gif)
+
+
+* [Showcase 8](.v./misc/showcase/showcase8.cpp):
 <a id="sc8"></a>
 A rotating point, a fixed segment and a fixed line.
 The blue segment is generated between the point and the line, using `getOrthogSegment()`.

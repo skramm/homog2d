@@ -4057,6 +4057,7 @@ Will be true if three conditions are met:
 - the polyline object must be of type "closed" AND a polygon (no intersection points)
 - center point is inside the polygon
 - no intersection points
+- any point of the polygon must be outside of the circle
 */
 template<typename FPT>
 template<typename FPT2,typename PTYPE>
@@ -4071,7 +4072,8 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
 		auto inters = intersects( poly );
 		if( inters.size() == 0 )
-			return true;
+			if( !poly.getPts()[0].isInside(*this) )
+				return true;
 	}
 	return false;
 }
@@ -4454,8 +4456,8 @@ private:
 		return size();
 	}
 
-	bool impl_isPolygon( const detail::PlHelper<type::IsOpen>& )   const;
-	bool impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const;
+	constexpr bool impl_isPolygon( const detail::PlHelper<type::IsOpen>& )   const;
+	bool           impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -4928,7 +4930,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
-bool
+constexpr bool
 PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) const
 {
 	return false;
