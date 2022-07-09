@@ -4053,7 +4053,7 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 //------------------------------------------------------------------
 /// Returns true if circle is inside polyline
 /**
-Will be true if three conditions are met:
+Will be true if all these four conditions are met:
 - the polyline object must be of type "closed" AND a polygon (no intersection points)
 - center point is inside the polygon
 - no intersection points
@@ -4067,15 +4067,14 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	HOMOG2D_START;
 	if( !poly.isPolygon() )
 		return false;
+	if( poly.getPts()[0].isInside(*this) ) // if a point of the polygon is inside the circle,
+		return false;                      //  then the circle cannot be inside the polygon
 
-	if( _center.isInside( poly ) )
-	{
-		auto inters = intersects( poly );
-		if( inters.size() == 0 )
-			if( !poly.getPts()[0].isInside(*this) )
-				return true;
-	}
-	return false;
+	if( !_center.isInside( poly ) )
+		return false;
+
+	auto inters = intersects( poly );
+	return( inters() == 0 );
 }
 
 //------------------------------------------------------------------

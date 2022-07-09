@@ -25,7 +25,8 @@ Also show the rectangle's bounding circle and the circle's bounding box.
 ![showcase4](showcase/showcase4a.gif)
 
 
-* [Showcase 2](../misc/showcase/showcase2.cpp):
+* [Showcase 2a](../misc/showcase/showcase2a.cpp) and [Showcase 2b](../misc/showcase/showcase2b.cpp):
+
 Intersection and union areas of two rectangles.
 
 ![Example of intersection area](showcase/showcase2a.gif)
@@ -54,8 +55,8 @@ Also shows the intersection points between these two primitives.
 ![showcase7](showcase/showcase7.gif)
 
 
-* [Showcase 8](.v./misc/showcase/showcase8.cpp):
-<a id="sc8"></a>
+* [Showcase 8](../misc/showcase/showcase8.cpp):
+<a name="sc8"></a>
 A rotating point, a fixed segment and a fixed line.
 The blue segment is generated between the point and the line, using `getOrthogSegment()`.
 The other segment shows the distance between the point and the fixed segment, with two alternate colors showing the case (orthogonal distance or distance to segment edge).
