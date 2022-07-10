@@ -70,7 +70,7 @@ Shows a moving segment that turns red and bold when inside a rectangle, a circle
 
 * [Showcase 7d](../misc/showcase/showcase7d.cpp):
 <a id="sc7d"></a>
-Shows a fixed ellipse with other objects moving arroung and turning bold when inside the ellipse.
+Shows a fixed ellipse with other objects moving around and turning bold when inside the ellipse.
 
 ![showcase7d](showcase/showcase7d.gif)
 
