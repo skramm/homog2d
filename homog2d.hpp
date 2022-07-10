@@ -4164,7 +4164,6 @@ template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
 /// Traits class, used to determine if we can use some "isInside()" function
-/// \todo not used as present. Is that really useful?
 template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
@@ -7201,7 +7200,7 @@ template<typename FPT1,typename FPT2>
 Ellipse_<FPT1>
 operator * ( const Homogr_<FPT2>& h, const Ellipse_<FPT1>& ell_in )
 {
-	auto hm = static_cast<detail::Matrix_<FPT2>>(h);
+	auto hm = static_cast<detail::Matrix_<HOMOG2D_INUMTYPE>>(h);
 	hm.inverse();
 	auto hmt = hm;
 	hmt.transpose();
@@ -7550,6 +7549,14 @@ getSegs( const FRect_<FPT>& seg )
 }
 
 /// Free function, returns the pair of segments tangential to the two circles
+/** \todo fix this, is incorrect
+checkout:
+
+  - https://math.stackexchange.com/questions/719758/
+  - https://math.stackexchange.com/a/211854/133647
+  - https://en.wikipedia.org/wiki/Tangent_lines_to_circles
+  - https://gieseanw.wordpress.com/2012/09/12/finding-external-tangent-points-for-two-circles/
+*/
 template<typename FPT1,typename FPT2>
 std::pair<Segment_<FPT1>,Segment_<FPT1>>
 getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )

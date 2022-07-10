@@ -820,9 +820,9 @@ Similarly, applying a homography to a `Circle` will generate an `Ellipse` object
 
 ```C++
 FRect r1;
-auto r2 = Homogr() * r1; 
+auto r2 = Homogr() * r1;
 Circle c1;
-auto c2 = Homogr() * c1; 
+auto c2 = Homogr() * c1;
 cout << "r2 type=" << getString( r2.type() ) << '\n'; // will print "CPolyline"
 cout << "c2 type=" << getString( c2.type() ) << '\n'; // will print "Ellipse"
 ```
@@ -1149,7 +1149,8 @@ For the union, if there is no intersection, the function will return an empty `C
 ## 6 - Misc. features
 <a name="misc"></a>
 
-**Convex Hull**
+### 6.1 - Convex Hull
+
 You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with `convexHull()`,
 available as free or member function.
 This function will return a `CPolyline` object.
@@ -1162,7 +1163,7 @@ auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
 
-**Colinearity of 3 points**
+### 6.2 - Colinearity of 3 points
 
 You can check if three points lie on the same line with this:
 ```C++
@@ -1170,9 +1171,9 @@ bool b = areColinear( pt1, pt2, pt3 );
 ```
 
 
-**Extracting data from sets/containers of primitives**
+### 6.3 - Extracting data from sets/containers of primitives
 
-If you have a `std::vector<Segment>` named `v_segs`, then the following functions:
+If you have a `std::vector<Segment>` named `v_segs`, then the following function calls:
 
 - `auto v_pts   = getMiddlePoints( v_segs );`
 - `auto v_lines = getLines( v_segs );`
