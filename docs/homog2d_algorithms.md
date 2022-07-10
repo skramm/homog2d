@@ -119,6 +119,7 @@ If none of the segments fit, we double the number of segments by splitting each 
 
 Of course, their must be a stopping criterion for this iterative method.
 The number of iterations is determined by the symbol `HOMOG2D_MAXITER_PIP` (default value = 5), that you can define.
+If the function is unable to find a "good" reference segment after that threshold, it will throw an error.
 
 The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary (see [homog2d_thresholds.md](homog2d_thresholds.md)).
 
