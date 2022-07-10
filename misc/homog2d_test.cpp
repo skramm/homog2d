@@ -1065,13 +1065,7 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 
 	CHECK( !cpol2.isInside( pt1 ) );
 	CHECK( !cpol2.isInside( li1 ) );
-
-	std::cout << "==========================\n";
 	CHECK( !cpol2.isInside( rect1 ) );
-	std::cout << "cpol2=" << cpol2 << '\n';
-	std::cout << "rect1=" << rect1 << '\n';
-	std::cout << "==========================\n";
-
 	CHECK( !cpol2.isInside( cir1 ) );
 	CHECK( !cpol2.isInside( ell1  ) );
 	CHECK( !cpol2.isInside( cpol1 ) );

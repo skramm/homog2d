@@ -142,6 +142,11 @@ See https://github.com/skramm/homog2d
 #endif
 ///////////////////////////////////////
 
+/// Max number of iterations for "Point inside Polygon" algorithm.
+/// May be adjusted, see manual
+#ifndef HOMOG2D_MAXITER_PIP
+	#define HOMOG2D_MAXITER_PIP 5
+#endif
 
 namespace h2d {
 
@@ -3777,6 +3782,9 @@ public:
 	}
 
 /// Segment is inside CPolyline_
+/**
+Requires both points inside AND no intersections
+*/
 	template<typename FPT2>
 	bool isInside( const CPolyline_<FPT2>& cpoly ) const
 	{
@@ -6729,6 +6737,7 @@ namespace sub {
 
 /// Returns the index of the segment (among the ones in \c bbox)
 /// that is the farthest from point \c pt
+/// \todo DEPRECATE (unused)
 template<typename FPT1,typename FPT2>
 int
 getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
@@ -6755,6 +6764,19 @@ getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
 }
 
 } // namespace priv
+
+/// Returns a pair of segments, corresponding to the input segment split by middle point (free function)
+template<typename FPT>
+std::pair<Segment_<FPT>,Segment_<FPT>>
+splitSegment( const Segment_<FPT>& seg )
+{
+	auto ppts = seg.getPts();
+	auto pt_mid = seg.getMiddlePoint();
+	return std::make_pair(
+		Segment_<FPT>( ppts.first,  pt_mid ),
+		Segment_<FPT>( ppts.second, pt_mid )
+	);
+}
 
 //------------------------------------------------------------------
 /// Returns true if point is inside closed Polyline
@@ -6789,60 +6811,54 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 		if( seg.getLine().distTo( *this ) < thr::nullDistance() )
 				return false;
 
-#if 0
-// step 3: determine which segment of the BB is the farthest from the point, and
-// use its middle point
+	auto segarr = bbox.getExtended().getSegs();
+	std::vector<Segment_<HOMOG2D_INUMTYPE>> seg_bb( segarr.begin(), segarr.end() );
 
-	auto idx = sub::getFarthestSegment( *this, bbox );
-	auto segs = bbox.getSegs();
-	auto goodBbSeg = segs[ idx ]; // that segment is the farthest
-
-// build a segment
-	Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, goodBbSeg.getMiddlePoint() );
-//	std::cout << "seg_inf=" << seg_a << '\n';
-
-// step 4: count nb of intersections
-	size_t c = 0;
-	for( auto seg: poly.getSegs() )
+	int iter = 0;
+	do
 	{
-		if( seg.intersects(seg_ref)() )
-			c++;
-	}
-	return static_cast<bool>( c%2 );
-
-#else
-	auto bbox2 = bbox.getExtended();
-	auto seg_bb = bbox2.getSegs();
-	for( int i=0; i<4; i++ )        // iterate on all four segments of the extended bounding box
-	{
-		Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, seg_bb[i].getMiddlePoint() );
-		auto line_ref = seg_ref.getLine();
-
 		bool tooClose = false;
-		auto poly_pts = poly.getPts();
-		for( size_t j=0; j<poly_pts.size() && !tooClose; j++  )   // make sure that every point of the polyline is not on the reference segment
+		for( size_t i=0; i<seg_bb.size(); i++ )        // iterate on all segments of the extended bounding box
 		{
-			const auto& poly_pt = poly_pts[j];
-			if( poly_pt.distTo(line_ref) < thr::nullDistance() )
-				tooClose = true;
-		}
-		if( !tooClose )     // if no polyline points
-		{                   // was found on the segment supporting line
-			size_t c = 0;
-			for( auto seg: poly.getSegs() )  // iterate on the polyline segments
+			Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, seg_bb[i].getMiddlePoint() );
+
+			auto poly_pts = poly.getPts();
+			for( size_t j=0; j<poly_pts.size() && !tooClose; j++  )   // make sure that every point of the polyline is not on the reference segment
 			{
-				if( seg.intersects(seg_ref)() )
-					c++;
+				const auto& poly_pt = poly_pts[j];
+				if( poly_pt.distTo(seg_ref) < thr::nullDistance() )
+					tooClose = true;
 			}
-			return static_cast<bool>( c%2 );
+			if( !tooClose )     // if no polyline points
+			{                   // was found on the segment supporting line
+				size_t c = 0;
+				for( auto seg: poly.getSegs() )  // iterate on the polyline segments
+				{
+					if( seg.intersects(seg_ref)() )
+						c++;
+				}
+				return static_cast<bool>( c%2 );
+			}
 		}
-		if( i == 3 )
-			HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside" );
+		iter++;
+		if( tooClose )  // if unable to find a suitable reference segment,
+		{               //  we double the number of segments, by splitting each of them
+			if( iter < HOMOG2D_MAXITER_PIP ) // (only if not max iterations!)
+			{
+				std::vector<Segment_<HOMOG2D_INUMTYPE>> seg_bb2( seg_bb.size() * 2 );
+				for( size_t j=0; j<seg_bb.size(); j++ )
+				{
+					auto pseg      = splitSegment( seg_bb[j] );
+					seg_bb2[j*2]   = pseg.first;
+					seg_bb2[j*2+1] = pseg.second;
+				}
+				std::swap( seg_bb, seg_bb2 );
+			}
+		}
 	}
+	while( iter < HOMOG2D_MAXITER_PIP );
+	HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside after " + HOMOG2D_MAXITER_PIP );
 	return false; // to avoid a warning
-
-#endif
-
 }
 
 template<typename LP, typename FPT>

@@ -86,7 +86,7 @@ The table below summarizes what type (lines) can be used to check if it is insid
 | Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | FRect     |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | CPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
 | Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
 
