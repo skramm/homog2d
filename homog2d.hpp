@@ -3806,6 +3806,16 @@ Requires both points inside AND no intersections
 		return Line2d_<FPT>(li);
 	}
 
+	std::pair<Segment_<FPT>,Segment_<FPT>>
+	split() const
+	{
+		auto pt_mid = getMiddlePoint();
+		return std::make_pair(
+			Segment_<FPT>( _ptS1, pt_mid ),
+			Segment_<FPT>( _ptS2, pt_mid )
+		);
+	}
+
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
 
@@ -6765,19 +6775,6 @@ getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
 
 } // namespace priv
 
-/// Returns a pair of segments, corresponding to the input segment split by middle point (free function)
-template<typename FPT>
-std::pair<Segment_<FPT>,Segment_<FPT>>
-splitSegment( const Segment_<FPT>& seg )
-{
-	auto ppts = seg.getPts();
-	auto pt_mid = seg.getMiddlePoint();
-	return std::make_pair(
-		Segment_<FPT>( ppts.first,  pt_mid ),
-		Segment_<FPT>( ppts.second, pt_mid )
-	);
-}
-
 //------------------------------------------------------------------
 /// Returns true if point is inside closed Polyline
 /**
@@ -6848,7 +6845,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 				std::vector<Segment_<HOMOG2D_INUMTYPE>> seg_bb2( seg_bb.size() * 2 );
 				for( size_t j=0; j<seg_bb.size(); j++ )
 				{
-					auto pseg      = splitSegment( seg_bb[j] );
+					auto pseg      = seg_bb[j].split();
 					seg_bb2[j*2]   = pseg.first;
 					seg_bb2[j*2+1] = pseg.second;
 				}
@@ -7463,6 +7460,15 @@ template<typename FPT>
 Segment_<FPT> getExtended( const Segment_<FPT>& seg )
 {
 	return seg.getExtended();
+}
+
+/// Returns a pair of segments, corresponding to the input segment split by middle point (free function)
+/// \sa Segment_::split()
+template<typename FPT>
+std::pair<Segment_<FPT>,Segment_<FPT>>
+split( const Segment_<FPT>& seg )
+{
+	return seg.split();
 }
 
 //------------------------------------------------------------------

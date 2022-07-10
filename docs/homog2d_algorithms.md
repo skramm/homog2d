@@ -112,17 +112,15 @@ If so, we return `false`.
 What we want to avoid is selecting a point 'px' so that a segment [p,px] will not intersect with one of the points of the polygon.
 Because if it does, it will generate two crossings where there oughta be only one.
 
-So the algorithm sets up an iterative
+So the implementation sets up an iterative method:
+starting with the extended bounding box, we take each of the associated segments and check if taking the middle point as "reference" point does the job (i.e. the reference segment is far enough from all points of the polygon).
+If not, we check the following.
+If none of the segments fit, we double the number of segments by splitting each of them, and reiterate, until we find a suitable point on the extended BB edge to build our reference segment.
 
+Of course, their must be a stopping criterion for this iterative method.
+The number of iterations is determined by the symbol `HOMOG2D_MAXITER_PIP` (default value = 5), that you can define.
 
-the implementation checks if the point lies on any of the segments of the polygon.
-This is done by measuring the distance between the point and the line supporting the segment.
-If that distance is less than `thr::nullDistance()` (see [homog2d_thresholds.md](homog2d_thresholds.md) )  then we return `false`.
-- next, we need to find some point outside the polygon to build the "test" segment.
-Instead of taking a point at infinity, and to avoid any corner cases, we consider the middle point of the segment of the bounding box that is the farthest away from the considered point.
-
-
-
+The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary (see [homog2d_thresholds.md](homog2d_thresholds.md)).
 
 
 

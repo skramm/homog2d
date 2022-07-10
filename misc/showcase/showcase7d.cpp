@@ -33,6 +33,7 @@ int main( int argc, const char** argv )
 
 	FRect rect(15,110,40,150);
 	Circle cir( 170,120, 22 );
+	Segment seg( 50,10, 85,7 );
 	std::vector<Point2d> vpts{
 		{ 0, 0 },
 		{ 40,12 },
@@ -44,10 +45,6 @@ int main( int argc, const char** argv )
 	CPolyline pol( vpts );
 	pol.translate( 3, 5 );
 
-/*	auto col         = img::DrawParams().setColor(50,250,20);
-	auto col_outside = img::DrawParams().setColor(50,20,200);
-	auto col_inside  = img::DrawParams().setColor(200,20,20).setThickness(2);
-*/
 	auto col_ell     = img::DrawParams().setColor(250,20,20);
 
 	for( int i=0; i<n; i++ )
@@ -59,13 +56,15 @@ int main( int argc, const char** argv )
 		cir.draw(  im, img::DrawParams().setColor(50,120,250) );
 		pol.draw(  im, img::DrawParams().setColor(50,180,180) );
 	*/
-		draw_object( ell, rect, img::DrawParams().setColor(50,250,120) );
-		draw_object( ell, cir, img::DrawParams().setColor(50,120,250) );
-		draw_object( ell, pol, img::DrawParams().setColor(50,180,180) );
+		draw_object( ell, rect, img::DrawParams().setColor(10,250,120) );
+//		draw_object( ell, cir,  img::DrawParams().setColor(10,120,250) );
+		draw_object( ell, pol,  img::DrawParams().setColor(10,180,180) );
+		draw_object( ell, seg,  img::DrawParams().setColor(180,0,180) );
 
 		pol.translate( 8, 3) ;
 		cir.translate( -5, -1) ;
 		rect.translate( 9, -6) ;
+		seg.translate( 2, 7) ;
 
 		std::ostringstream oss;
 		oss << "showcase7d_" << std::setfill('0') << std::setw(2) <<i << ".png";

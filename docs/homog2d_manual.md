@@ -149,8 +149,6 @@ This is illustrated on this figure, showing a rotating point and the computed or
 ![showcase8](showcase/showcase8.gif)
 
 
-
-
 ### 2.2 - Get point(s) lying on line
 
 To get a point lying on a line, you can provide one of its coordinates and get the other coordinate value, using the enum
@@ -345,28 +343,32 @@ auto a2 = s1.getAngle( l1 );
 You can get the point lying in the middle of the segment:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
-auto p_middle = s1.getMiddlePoint();
-auto p_mid2 = getMiddlePoint(s1); // free function
+auto p_middle = s1.getMiddlePoint(); // or: getMiddlePoint(s1)
+```
+
+This middle point can be used to split a segment into two equal length segments,
+returned as a `std::pair`:
+```C++
+Segment seg( Point2d(1,2), Point2d(3,4) );
+auto p_segs = seg.split(); // or: split(seg)
 ```
 
 The bisector line is available, using a member or free function:
 ```C++
-Segment s1( Point2d(1,2), Point2d(3,4) );
-auto line1 = s1.getBisector();
-auto line2 = getBisector(s1);
+Segment seg( Point2d(1,2), Point2d(3,4) );
+auto line1 = seg.getBisector(); // or: getBisector(seg)
 ```
 
 The length is available with a member function or a free function:
 ```C++
-Segment s1( Point2d(1,2), Point2d(3,4) );
-auto length  = s1.length();
-auto length2 = length(s1); // free function
+Segment seg( Point2d(1,2), Point2d(3,4) );
+auto length  = seg.length(); // or: length(seg)
 ```
 
 The extended segment is available with a free of member function:
 ```C++
-Segment s1( pt1, pt2 );
-auto seg_ext = s1.getExtended(); // or getExtended(s1);
+Segment seg( pt1, pt2 );
+auto seg_ext = seg.getExtended(); // or getExtended(seg);
 ```
 The extended segment has the same support line, but is "extended" on both sides with the length of the segment.
 Thus its length is three times the original segments length.

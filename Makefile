@@ -3,7 +3,8 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase speed_test
 
-.PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png BUILD/no_build/%.cpp BUILD/showcase/%
+.PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png BUILD/no_build/%.cpp
+#BUILD/showcase/%
 .SECONDARY:
 
 #Disabling the built-in rules is done by writing an empty rule for .SUFFIXES:
