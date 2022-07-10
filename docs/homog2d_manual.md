@@ -22,12 +22,13 @@ For stable releases, see https://github.com/skramm/homog2d/releases .
 
 All the code is in the namespace `h2d`, so either add `using namespace h2d;`, either use it as a prefix on each type.
 
-This library provides several main data types: lines, points, segments, and homography matrices, that can be used to transform (planar transformation) one of the basic types.
+This library provides several main data types: lines, points, segments, circles, ellipses, polyline and homography matrices.
+These can be used to transform (planar transformation) one of the basic types.
 It is implemented as a homogeneous 3x3 matrix.
-It also provides some additional types, derived from these.
-All these implement a comparison operator ( `==` and  `!=`).
 
-It does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
+All the data types implement a comparison operator ( `==` and  `!=`).
+
+This library does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
 The types are fully templated by the underlying numerical type.
 To make things simple, we introduce here only the default type, based on `double` (see [Numerical data types](#numdt) for details).
 
@@ -813,7 +814,16 @@ pl = H * pl;
 auto a = H * rect; // a is a CPolyline
 ```
 It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `CPolyline`.
-Similarly, applying a homography to a `Circle` will generate an `Ellipse` object.
+Similarly, applying a homography to a `Circle` will generate an `Ellipse` object:
+
+```C++
+FRect r1;
+auto r2 = Homogr() * r1; 
+Circle c1;
+auto c2 = Homogr() * c1; 
+cout << "r2 type=" << getString( r2.type() ) << '\n'; // will print "CPolyline"
+cout << "c2 type=" << getString( c2.type() ) << '\n'; // will print "Ellipse"
+```
 
 ### 4.2 - Homographies for lines
 <a name="line_homography"></a>
