@@ -38,11 +38,9 @@ int main( int argc, const char** argv )
 
 		auto inter =  cir.intersects(rect);
 		if( inter() )
-		{
-			auto inter_pts = inter.get();
 			for( const auto& pt: inter.get() )
 				pt.draw( im );
-		}
+
 		if( i < n/2 )
 			cir.set( cir.radius() * 1.2 );
 		else

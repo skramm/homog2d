@@ -167,6 +167,7 @@
 		<Unit filename="showcase/showcase6.cpp" />
 		<Unit filename="showcase/showcase7.cpp" />
 		<Unit filename="showcase/showcase7b.cpp" />
+		<Unit filename="showcase/showcase7c.cpp" />
 		<Unit filename="showcase/showcase8.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />

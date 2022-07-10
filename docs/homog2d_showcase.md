@@ -61,6 +61,14 @@ Same as above but with a rectangle and a cirle.
 ![showcase7b](showcase/showcase7b.gif)
 
 
+* [Showcase 7c](../misc/showcase/showcase7c.cpp):
+<a id="sc7c"></a>
+Shows a moving segment that turns red and bold when inside a rectangle, a circle, and a closed polyline.
+
+![showcase7c](showcase/showcase7c.gif)
+
+
+
 * [Showcase 8](../misc/showcase/showcase8.cpp):
 <a name="sc8"></a>
 A rotating point, a fixed segment and a fixed line.
