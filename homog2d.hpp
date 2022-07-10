@@ -6844,7 +6844,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 			return static_cast<bool>( c%2 );
 		}
 		if( i == 3 )
-			HOMOG2D_THROW_ERROR_1( "unable to determine is point is inside" );
+			HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside" );
 	}
 	return false; // to avoid a warning
 

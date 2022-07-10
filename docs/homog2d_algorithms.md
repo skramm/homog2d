@@ -68,20 +68,28 @@ Thus we have between 0 and 4 intersections (equal intersection points are remove
 
 ## 2 - Enclosing algorithms
 
-The table below summarizes what type can be used to check if it is inside another object of same or different type.
+This library provides an answer to the question: "is this object inside this other object?", whatever their type.
+In many cases, the question doesnt really make any sense (a point cannot be inside a point, not can a line be inside a segment),
+but to have a homogeneous interface, the code `a.isInside(b)` will always compile.
 
-|           | Point2d | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
+In the nonsense situations described above, it will simply return false (as a `constexpr` value).
+
+The table below summarizes what type (lines) can be used to check if it is inside another object of same or different type (columns).
+ * F: (constexpr) false
+ * T/F: true or false
+ * NI: Not Implemented (yet), returns false
+
+|           | Point2d |        |         |       |           |           |        |         |
+|           | Line2d  | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
 |-----------|---------|--------|---------|-------|-----------|-----------|--------|---------|
-| Point2d   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| Line2d    |    N    |    N   |    N    |   N   |     N     |     N     |    N   |    N    |
-| Segment   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| FRect     |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| CPolyline |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| OPolyline |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| Circle    |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-| Ellipse   |    N    |    N   |    N    |   Y   |     Y     | Y (false) |    Y   |    Y    |
-
-
+| Point2d   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Line2d    |    F    |    F   |    F    |   F   |     F     |     F     |    F   |    F    |
+| Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| FRect     |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| CPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 
 
 
@@ -89,14 +97,15 @@ The table below summarizes what type can be used to check if it is inside anothe
 
 The algorithm will provide an answer to the question "is this point inside this polygon"
 So first, as polygons are implemented through the class `CPolyline_`, it will return `false`
-if it does not meet the "polygon" requirements (i.e. if there are some segments crossings).
+if it does not meet the "polygon" requirements (i.e. if there are some segments crossings, or if the polyline is not closed).
 
-The code uses the classical "ray casting" algorithm 
+The code uses the classical "ray casting" algorithm
 (see https://en.wikipedia.org/wiki/Point_in_polygon):
-we build a segment going from the considered point to infinity, and count the number of intersections.
+the algorithm states to build a segment going from the considered point to infinity, and count the number of intersections.
 It it is even, the point is outside, else it is inside.
 
 However, while mathematically exact, this algorithm needs to be implemented with caution, to avoid numerical issues.
+The most important point is how do we select the "outside" (infinity) point.
 
 - First, we check if the point is outside the bounding box of the polyline.
 If so, we return `false`.
