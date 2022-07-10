@@ -79,23 +79,22 @@ The table below summarizes what type (lines) can be used to check if it is insid
  * T/F: true or false
  * NI: Not Implemented (yet), returns false
 
-|           | Point2d |        |         |       |           |           |        |         |
-|           | Line2d  | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
+|           | Point2d | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
 |-----------|---------|--------|---------|-------|-----------|-----------|--------|---------|
-| Point2d   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Point2d   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | Line2d    |    F    |    F   |    F    |   F   |     F     |     F     |    F   |    F    |
-| Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | FRect     |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
 | CPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
 
 
 
 ### 2.1 - Point inside Polygon
 
-The algorithm will provide an answer to the question "is this point inside this polygon"
+The algorithm will provide an answer to the question "is this point 'p' inside this polygon"
 So first, as polygons are implemented through the class `CPolyline_`, it will return `false`
 if it does not meet the "polygon" requirements (i.e. if there are some segments crossings, or if the polyline is not closed).
 
@@ -105,11 +104,18 @@ the algorithm states to build a segment going from the considered point to infin
 It it is even, the point is outside, else it is inside.
 
 However, while mathematically exact, this algorithm needs to be implemented with caution, to avoid numerical issues.
-The most important point is how do we select the "outside" (infinity) point.
+The most important point is how do we select the "outside" (infinity) point 'px'.
 
-- First, we check if the point is outside the bounding box of the polyline.
+- First, we check if the point 'p' is outside the bounding box of the polyline.
 If so, we return `false`.
-- Second, the implementation checks if the point lies on any of the segments of the polygon.
+- Second, we build the "extended" bounding box and search for a suitable point lying on its edges.
+What we want to avoid is selecting a point 'px' so that a segment [p,px] will not intersect with one of the points of the polygon.
+Because if it does, it will generate two crossings where there oughta be only one.
+
+So the algorithm sets up an iterative
+
+
+the implementation checks if the point lies on any of the segments of the polygon.
 This is done by measuring the distance between the point and the line supporting the segment.
 If that distance is less than `thr::nullDistance()` (see [homog2d_thresholds.md](homog2d_thresholds.md) )  then we return `false`.
 - next, we need to find some point outside the polygon to build the "test" segment.

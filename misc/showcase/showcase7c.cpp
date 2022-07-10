@@ -56,8 +56,6 @@ int main( int argc, const char** argv )
 		pol.draw(  im, col );
 		seg.draw(  im, cols );
 
-		auto ptstyle = img::DrawParams().setPointStyle( img::PtStyle::Dot );
-
 		draw_intersect( seg, rect );
 		draw_intersect( seg, cir );
 		draw_intersect( seg, pol );

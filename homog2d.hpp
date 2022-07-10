@@ -1890,8 +1890,11 @@ private:
 
 public:
 
+/// \name Enclosing functions
+///@{
+
 /// Returns true if rectangle is inside \c shape (Circle_ or FRect_ or base::Polyline)
-/// \todo add some SFINAE to enable only for allowed types: Circle_ or FRect_
+/// \todo add some SFINAE to enable only for allowed types?
 	template<typename T>
 	bool isInside( const T& shape ) const
 	{
@@ -1926,8 +1929,8 @@ public:
 				return false;
 		return true;
 	}
+///@}
 
-public:
 /// \name Intersection functions
 ///@{
 
@@ -2256,6 +2259,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 ///@}
 
+/// \name Enclosing functions
+///@{
+
 /// Returns true if circle is inside \c other circle
 	template<typename FPT2>
 	bool isInside( const Circle_<FPT2>& other ) const
@@ -2281,7 +2287,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const;
 
-/// \name Intersection
+///@}
+
+/// \name Intersection functions
 ///@{
 
 /// Circle/Line intersection
@@ -3168,7 +3176,6 @@ public:
 	template<typename T>
 	bool isInside( const Circle_<T>& cir ) const
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
 		HOMOG2D_START;
 		return impl_isInsideCircle( cir.center(), cir.radius(), detail::RootHelper<LP>() );
 	}
@@ -3224,22 +3231,12 @@ public:
 	}
 #endif // HOMOG2D_USE_OPENCV
 
-#if 1
-//	static HOMOG2D_INUMTYPE& nullDenom()          { return _zeroDenom; }
-
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
 
 private:
 	std::array<FPT,3> _v; ///< data, uses the template parameter FPT (for "Floating Point Type")
-
-//	static HOMOG2D_INUMTYPE _zeroAngleValue;       /// Used in isParallel();
-//	static HOMOG2D_INUMTYPE _zeroDistance;         /// Used to define points as identical
-//	static HOMOG2D_INUMTYPE _zeroOffset;           /// Used to compare lines
-//	static HOMOG2D_INUMTYPE _zeroOrthoDistance;    /// Used to check for different points on a flat rectangle, see LPBase::getCorrectPoints()
-//	static HOMOG2D_INUMTYPE _zeroDenom;            /// Used to check for null denominator
-#endif
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -3358,18 +3355,6 @@ private:
 }; // class
 
 } // namespace base
-
-/////////////////////////////////////////////////////////////////////////////
-// SECTION  - INSTANCIATION OF STATIC VARIABLES
-/////////////////////////////////////////////////////////////////////////////
-
-
-//template<typename LP,typename FPT>
-//HOMOG2D_INUMTYPE LPBase<LP,FPT>::_zeroDenom = 1E-10;
-//template<typename FPT>
-//HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDeterminantValue = 1E-20;
-//template<typename FPT>
-//HOMOG2D_INUMTYPE detail::Matrix_<FPT>::_zeroDenomValue = 1E-15;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3763,28 +3748,35 @@ private:
 	}
 
 public:
+/// Segment is inside Circle
 	template<typename FPT2>
 	bool isInside( const Circle_<FPT2>& shape ) const
 	{
 		return p_bothPtsAreInside( shape );
 	}
+
+/// Segment is inside FRect
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& shape ) const
 	{
 		return p_bothPtsAreInside( shape );
 	}
+
+/// Segment is inside Ellipse
 	template<typename FPT2>
 	bool isInside( const Ellipse_<FPT2>& shape ) const
 	{
 		return p_bothPtsAreInside( shape );
 	}
 
+/// Segment is inside OPolyline_
 	template<typename FPT2>
 	constexpr bool isInside( const OPolyline_<FPT2>& ) const
 	{
 		return false;
 	}
 
+/// Segment is inside CPolyline_
 	template<typename FPT2>
 	bool isInside( const CPolyline_<FPT2>& cpoly ) const
 	{
@@ -4158,6 +4150,7 @@ template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std
 template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
+template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
