@@ -2901,6 +2901,15 @@ public:
 		return impl_getOrthogonalLine_B( pt, detail::RootHelper<LP>() );
 	}
 
+	/// Returns a line rotated at point \c pt with angle \c theta
+	template<typename FPT2, typename T>
+	Line2d_<FPT>
+	getRotatedLine( const Point2d_<FPT2>& pt, T theta ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+		return impl_getRotatedLine( pt, theta, detail::RootHelper<LP>() );
+	}
+
 	/// Returns the segment from the point (not on line) to the line, shortest path
 	Segment_<FPT>
 	getOrthogSegment( const Point2d_<FPT>& pt ) const
@@ -3288,10 +3297,15 @@ private:
 
 	void impl_normalizeLine( const detail::RootHelper<type::IsLine>& ) const;
 
-	Line2d_<FPT>           impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::RootHelper<type::IsLine>&  ) const;
-	constexpr Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::RootHelper<type::IsPoint>& ) const;
+	Line2d_<FPT>           impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::RootHelper<type::IsLine>&  ) const;
+	constexpr Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::RootHelper<type::IsPoint>& ) const;
 	Line2d_<FPT>           impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
+
+	template<typename FPT2,typename T>
+	Line2d_<FPT>           impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::RootHelper<type::IsLine>&  ) const;
+	template<typename FPT2,typename T>
+	constexpr Line2d_<FPT> impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::RootHelper<type::IsPoint>& ) const;
 
 	Segment_<FPT>           impl_getOrthogSegment( const Point2d_<FPT>&, const detail::RootHelper<type::IsLine>&  ) const;
 	constexpr Segment_<FPT> impl_getOrthogSegment( const Point2d_<FPT>&, const detail::RootHelper<type::IsPoint>& ) const;
@@ -6326,6 +6340,15 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::Ro
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
 }
 
+/// Illegal instanciation
+template<typename LP,typename FPT>
+template<typename FPT2,typename T>
+constexpr Line2d_<FPT>
+LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::RootHelper<type::IsPoint>& ) const
+{
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getLine(Point, Angle) on a point" );
+}
+
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Line2d_<FPT>
@@ -6356,6 +6379,25 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail:
 
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
+
+template<typename LP,typename FPT>
+template<typename FPT2,typename T>
+Line2d_<FPT>
+LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const detail::RootHelper<type::IsLine>& ) const
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( this->distTo( pt ) > thr::nullDistance() )
+	{
+		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
+			<< "> null distance (" << thr::nullDistance() << ")\n";
+		HOMOG2D_THROW_ERROR_2( "getLineAngle", "point is not on line" );
+	}
+#endif
+	Homogr_<HOMOG2D_INUMTYPE> H;
+	H.addTranslation( -pt.getX(), -pt.getY() ).addRotation(theta).addTranslation( pt.getX(), pt.getY() );
+	return H * *this;
+}
+
 /// Returns the shortest segment that joins a point and a line
 template<typename LP,typename FPT>
 Segment_<FPT>
@@ -7565,7 +7607,7 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	if( c1 == c2 )
 		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
 #endif
-
+#if 0
 	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
 	auto li1 = li0.getOrthogonalLine( c1.center() );
 	auto li2 = li0.getOrthogonalLine( c2.center() );
@@ -7580,6 +7622,43 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 		Segment_<FPT1>( ppts1.first,  ppts2.first  ),
 		Segment_<FPT1>( ppts1.second, ppts2.second )
 	);
+#else
+
+// check wich one is the smallest
+	Circle_<HOMOG2D_INUMTYPE> cA = c1;
+	Circle_<HOMOG2D_INUMTYPE> cB = c2;
+	if( c1.radius() < c1.radius() )
+		std::swap( cA, cB );
+
+	auto h = dist( cA.center(), cB.center() );
+	auto theta = std::asin( ( cA.radius() - cB.radius() ) / h ) ;
+
+// get rotated lines at center of CB
+	auto l0 = cA.center() * cB.center();
+	auto l1 = l0.getRotatedLine( cB.center(), +theta );
+	auto l2 = l0.getRotatedLine( cB.center(), -theta );
+
+// build segments by getting the opposite point
+	auto ppts1 = l1.getPoints( cB.center(), h*cos(theta) );
+	auto p1 = ppts1.first;
+	if( ppts1.second.distTo( cA.center()) < p1.distTo( cA.center()) )
+		p1 = ppts1.second;
+
+	auto ppts2 = l2.getPoints( cB.center(), h*cos(theta) );
+	auto p2 = ppts2.first;
+	if( ppts2.second.distTo( cA.center()) < p1.distTo( cA.center()) )
+		p2 = ppts2.second;
+
+// get parallel lines at a distance r2
+//	auto l1p = l1.getParallelLine( +cB.radius() );
+//	auto l2p = l2.getParallelLine( -cB.radius() );
+
+	return std::make_pair(
+		Segment_<FPT1>( p1, cB.center() ),
+		Segment_<FPT1>( p2, cB.center() )
+	);
+
+#endif
 }
 
 /// Returns the 4 points of the rectangle (free function)
