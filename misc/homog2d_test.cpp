@@ -2206,10 +2206,20 @@ TEST_CASE( "Segment", "[seg1]" )
 
 TEST_CASE( "Segment 2", "[seg2]" )
 {
-	Segment_<HOMOG2D_INUMTYPE> seg (0,0,1,0);
-	auto psegs = seg.getParallelSegs(1.);
-	CHECK( psegs.first  == Segment(0,-1,1,-1) );
-	CHECK( psegs.second == Segment(0,+1,1,+1) );
+	{
+		Segment_<HOMOG2D_INUMTYPE> seg (0,0,1,0); // horizontal segment
+		auto psegs  = seg.getParallelSegs(1.);
+		auto psegs2 = seg.getParallelSegs(1.);
+		CHECK( psegs == psegs2 );
+		CHECK( psegs.first  == Segment(0,-1,1,-1) );
+		CHECK( psegs.second == Segment(0,+1,1,+1) );
+	}
+	{
+		Segment_<HOMOG2D_INUMTYPE> seg (0,0,0,1); // vertical segment
+		auto psegs = seg.getParallelSegs(1.);
+		CHECK( psegs.first  == Segment(-1,0,-1,+1) );
+		CHECK( psegs.second == Segment(+1,0,+1,+1) );
+	}
 }
 
 TEST_CASE( "Segment extended", "[seg_extended]" )

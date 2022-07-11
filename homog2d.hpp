@@ -3715,6 +3715,7 @@ public:
 	getParallelSegs( T dist ) const
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T );
+
 		auto plines = getLine().getParallelLines( dist );
 		auto lo1 = getLine().getOrthogonalLine( _ptS1 );
 		auto lo2 = getLine().getOrthogonalLine( _ptS2 );
@@ -6381,7 +6382,7 @@ template<typename FPT2,typename T>
 constexpr Line2d_<FPT>
 LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::RootHelper<type::IsPoint>& ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getLine(Point, Angle) on a point" );
+	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getRotatedLine() on a point" );
 }
 
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
@@ -7582,6 +7583,18 @@ getBisector( const Segment_<FPT>& seg )
 	return seg.getBisector();
 }
 
+/// Free function, returns a pair of parallel segments at a distance \c dist
+/// \sa Segment_::getBisector()
+template<typename FPT,typename T>
+std::pair<Segment_<FPT>,Segment_<FPT>>
+getParallelSegs( const Segment_<FPT>& seg, T dist )
+{
+	return seg.getParallelSegs(dist);
+}
+
+
+
+
 /// Free function, returns middle point of set of segments
 /**
 \sa Segment_::getMiddlePoint()
@@ -7626,9 +7639,7 @@ getSegs( const FRect_<FPT>& seg )
 }
 
 /// Free function, returns the pair of segments tangential to the two circles
-/** \todo fix this, is incorrect
-checkout:
-
+/** Sources:
   - https://math.stackexchange.com/questions/719758/
   - https://math.stackexchange.com/a/211854/133647
   - https://en.wikipedia.org/wiki/Tangent_lines_to_circles
@@ -7643,7 +7654,14 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
 #endif
 
-// check wich one is the smallest
+// if same radius, return the two segments parallel to the one joining the centers
+	if( std::abs( c1.radius() - c2.radius() ) < thr::nullDistance() )
+	{
+		Segment_<HOMOG2D_INUMTYPE> seg_center( c1.center(), c2.center() );
+		return seg_center.getParallelSegs( c1.radius() );
+	}
+
+// check which one is the smallest
 	Circle_<HOMOG2D_INUMTYPE> cA = c1;
 	Circle_<HOMOG2D_INUMTYPE> cB = c2;
 	if( c1.radius() < c2.radius() )
@@ -7651,6 +7669,7 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 
 	auto h = dist( cA.center(), cB.center() );
 	auto theta = std::asin( ( cA.radius() - cB.radius() ) / h ) ;
+//	std::cout << "theta=" << theta << "\n";
 
 // get rotated lines at center of CB
 	auto l0 = cA.center() * cB.center();
@@ -7667,9 +7686,12 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	auto p2 = ppts2.first;
 	if( ppts2.second.distTo( cA.center()) < p2.distTo( cA.center()) )
 		p2 = ppts2.second;
+//	std::cout <<"p1=" << p1 << " p2=" << p2 << '\n';
 
 	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( p1, cB.center() );
 	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( p2, cB.center() );
+
+//	return std::make_pair( seg1, seg2 );
 
 	auto psegs1 = seg1.getParallelSegs( cB.radius() );
 	if( psegs1.first.distTo(cA.center()) <  psegs1.second.distTo(cA.center()) )
