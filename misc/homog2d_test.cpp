@@ -24,7 +24,7 @@ This file holds mostly "general" tests.
 
 It also holds some tests that are only related to the OpenCv binding
 Thus, they are run only if the symbol \c HOMOG2D_USE_OPENCV is defined.<br>
-This latter part starts around line 2565.
+This latter part starts around line 2880.
 */
 
 /// see test [gen_bind]
@@ -2202,6 +2202,14 @@ TEST_CASE( "Segment", "[seg1]" )
 		Segment_<NUMTYPE> s1( ppts.first, ppts.second );
 		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
 	}
+}
+
+TEST_CASE( "Segment 2", "[seg2]" )
+{
+	Segment_<HOMOG2D_INUMTYPE> seg (0,0,1,0);
+	auto psegs = seg.getParallelSegs(1.);
+	CHECK( psegs.first  == Segment(0,-1,1,-1) );
+	CHECK( psegs.second == Segment(0,+1,1,+1) );
 }
 
 TEST_CASE( "Segment extended", "[seg_extended]" )

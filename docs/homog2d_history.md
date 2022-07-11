@@ -24,6 +24,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `distTo()`  between a point and a segment
   - added `split()` to segments
   - fixed `isInside()` member functions
+  - added `getRotatedLine()` to class Line2d_
+  - added `getParallelSegs()` to class Segment_
+
 
 - [v2.7](https://github.com/skramm/homog2d/releases/tag/v2.7), released on 2022-05-18
   - added `translate()` to `Segment`

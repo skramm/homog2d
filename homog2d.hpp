@@ -2918,6 +2918,7 @@ public:
 	}
 
 	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
+	/// \todo clarify orientation: on wich side will that line appear?
 	Line2d_<FPT>
 	getParallelLine( const Point2d_<FPT>& pt ) const
 	{
@@ -3709,6 +3710,34 @@ public:
 		_ptS2.translate( dx, dy );
 	}
 
+	template<typename T>
+	std::pair<Segment_,Segment_>
+	getParallelSegs( T dist ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER( T );
+		auto plines = getLine().getParallelLines( dist );
+		auto lo1 = getLine().getOrthogonalLine( _ptS1 );
+		auto lo2 = getLine().getOrthogonalLine( _ptS2 );
+
+		auto pA1 = lo1 * plines.first;
+		auto pA2 = lo2 * plines.first;
+		auto pB1 = lo1 * plines.second;
+		auto pB2 = lo2 * plines.second;
+
+		return std::make_pair(
+			Segment_( pA1, pA2 ),
+			Segment_( pB1, pB2 )
+		);
+
+/*		auto psegs = std::make_pair(
+			Segment_( pA1, pA2 ),
+			Segment_( pB1, pB2 )
+		);
+		if( psegs.second < psegs.first )
+			std::swap( psegs.second, psegs.first );
+		return psegs; */
+	}
+
 /// \name Attributes access
 ///@{
 
@@ -3744,6 +3773,12 @@ in the range \f$ [0,\pi/2] \f$
 	{
 		return !(*this == s2);
 	}
+
+	bool operator < ( const Segment_& other ) const
+	{
+		return _ptS1 < other._ptS1;
+	}
+
 ///@}
 
 /// Returns the points as a std::pair
@@ -7607,27 +7642,11 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	if( c1 == c2 )
 		HOMOG2D_THROW_ERROR_1( "c1 and c2 identical" );
 #endif
-#if 0
-	auto li0 = Line2d_<FPT1>( c1.center(), c2.center() );
-	auto li1 = li0.getOrthogonalLine( c1.center() );
-	auto li2 = li0.getOrthogonalLine( c2.center() );
-
-	const auto ri1 = li1.intersects( c1 );
-	const auto ri2 = li2.intersects( c2 );
-	assert( ri1() && ri2() );
-	const auto& ppts1 = ri1.get();
-	const auto& ppts2 = ri2.get();
-
-	return std::make_pair(
-		Segment_<FPT1>( ppts1.first,  ppts2.first  ),
-		Segment_<FPT1>( ppts1.second, ppts2.second )
-	);
-#else
 
 // check wich one is the smallest
 	Circle_<HOMOG2D_INUMTYPE> cA = c1;
 	Circle_<HOMOG2D_INUMTYPE> cB = c2;
-	if( c1.radius() < c1.radius() )
+	if( c1.radius() < c2.radius() )
 		std::swap( cA, cB );
 
 	auto h = dist( cA.center(), cB.center() );
@@ -7646,19 +7665,24 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 
 	auto ppts2 = l2.getPoints( cB.center(), h*cos(theta) );
 	auto p2 = ppts2.first;
-	if( ppts2.second.distTo( cA.center()) < p1.distTo( cA.center()) )
+	if( ppts2.second.distTo( cA.center()) < p2.distTo( cA.center()) )
 		p2 = ppts2.second;
+
+	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( p1, cB.center() );
+	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( p2, cB.center() );
+
+	auto psegs1 = seg1.getParallelSegs( cB.radius() );
+	auto psegs2 = seg2.getParallelSegs( cB.radius() );
 
 // get parallel lines at a distance r2
 //	auto l1p = l1.getParallelLine( +cB.radius() );
 //	auto l2p = l2.getParallelLine( -cB.radius() );
 
 	return std::make_pair(
-		Segment_<FPT1>( p1, cB.center() ),
-		Segment_<FPT1>( p2, cB.center() )
+		psegs1.first,
+		psegs2.second
 	);
 
-#endif
 }
 
 /// Returns the 4 points of the rectangle (free function)

@@ -503,7 +503,7 @@ void action_C( void* param )
 	seg.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );
 	pseg.first.draw(  data.img, img::DrawParams().setColor(250, 250, 0) );
-	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
+//	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
 	data.showImage();
 }
 
@@ -575,9 +575,14 @@ void action_SI( void* param )
 
 	data.seg1.draw( data.img, img::DrawParams().setColor( 0,0,250).setThickness(2) );
 	data.seg2.draw( data.img, img::DrawParams().setColor( 250,0,0).setThickness(2) );
-	data.seg1.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
-	data.seg2.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
+	data.seg1.getLine().draw( data.img, img::DrawParams().setColor( 200,200,200) );
+	data.seg2.getLine().draw( data.img, img::DrawParams().setColor( 200,200,200) );
 	draw( data.img, data.vpt );
+
+	auto psegs = data.seg1.getParallelSegs( 40 );
+	draw( data.img, psegs.first,  img::DrawParams().setColor( 0,250,200) );
+	draw( data.img, psegs.second, img::DrawParams().setColor( 200,0,250) );
+
 
 	if( data.selected != -1 )
 		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
@@ -615,7 +620,8 @@ void demo_SI( int nd )
 {
 	Param_SI data( "segment_intersection" );
 	std::cout << "Demo " << nd << ": intersection of segments\n Select a point and move it around. "
-		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
+		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n"
+		<< "Also shows parallel segments\n";
 
 	data.vpt[0] = Point2d(100,200);
 	data.vpt[1] = Point2d(200,300);
