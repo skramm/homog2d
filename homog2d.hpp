@@ -7672,17 +7672,17 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( p2, cB.center() );
 
 	auto psegs1 = seg1.getParallelSegs( cB.radius() );
-	auto psegs2 = seg2.getParallelSegs( cB.radius() );
+	if( psegs1.first.distTo(cA.center()) <  psegs1.second.distTo(cA.center()) )
+		std::swap( psegs1.first, psegs1.second );
 
-// get parallel lines at a distance r2
-//	auto l1p = l1.getParallelLine( +cB.radius() );
-//	auto l2p = l2.getParallelLine( -cB.radius() );
+	auto psegs2 = seg2.getParallelSegs( cB.radius() );
+	if( psegs2.second.distTo(cA.center()) <  psegs2.first.distTo(cA.center()) )
+		std::swap( psegs2.first, psegs2.second );
 
 	return std::make_pair(
 		psegs1.first,
 		psegs2.second
 	);
-
 }
 
 /// Returns the 4 points of the rectangle (free function)

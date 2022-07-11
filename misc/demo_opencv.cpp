@@ -502,8 +502,12 @@ void action_C( void* param )
 	auto seg = getSegment( c1, c2 );
 	seg.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 	auto pseg = getTanSegs( c1, c2 );
+	std::cout
+		<< "* rad1=" << c1.radius()
+		<< " rad2=" << c2.radius()
+		<< " pseg=" << pseg.first << "--" << pseg.second << '\n';
 	pseg.first.draw(  data.img, img::DrawParams().setColor(250, 250, 0) );
-//	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
+	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
 	data.showImage();
 }
 
