@@ -29,7 +29,7 @@ int main( int argc, const char** argv )
 {
 	auto n = 25; // nb images
 
-	Ellipse ell( 100,100,50,90, 35/2./M_PI );
+	Ellipse ell( 100,70,50,90, 35 * M_PI/180. );
 
 	FRect rect(15,110,40,150);
 	Circle cir( 170,120, 22 );

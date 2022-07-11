@@ -208,7 +208,7 @@ struct KeyboardLoop
 
 private:
 	std::vector<KbLoopAction> _actions;
-	std::function<FuncType> _common = nullptr;
+	std::function<FuncType>   _common = nullptr;
 
 public:
 	void addKeyAction(
@@ -501,6 +501,7 @@ void action_C( void* param )
 
 	auto seg = getSegment( c1, c2 );
 	seg.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
+
 	auto pseg = getTanSegs( c1, c2 );
 	pseg.first.draw(  data.img, img::DrawParams().setColor(250, 250, 0) );
 	pseg.second.draw( data.img, img::DrawParams().setColor(0, 250, 250) );
@@ -575,9 +576,14 @@ void action_SI( void* param )
 
 	data.seg1.draw( data.img, img::DrawParams().setColor( 0,0,250).setThickness(2) );
 	data.seg2.draw( data.img, img::DrawParams().setColor( 250,0,0).setThickness(2) );
-	data.seg1.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
-	data.seg2.getLine().draw( data.img, img::DrawParams().setColor( 100,100,100) );
+	data.seg1.getLine().draw( data.img, img::DrawParams().setColor( 200,200,200) );
+	data.seg2.getLine().draw( data.img, img::DrawParams().setColor( 200,200,200) );
 	draw( data.img, data.vpt );
+
+	auto psegs = data.seg1.getParallelSegs( 40 );
+	draw( data.img, psegs.first,  img::DrawParams().setColor( 0,250,200) );
+	draw( data.img, psegs.second, img::DrawParams().setColor( 200,0,250) );
+
 
 	if( data.selected != -1 )
 		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
@@ -615,7 +621,8 @@ void demo_SI( int nd )
 {
 	Param_SI data( "segment_intersection" );
 	std::cout << "Demo " << nd << ": intersection of segments\n Select a point and move it around. "
-		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n";
+		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n"
+		<< "Also shows parallel segments\n";
 
 	data.vpt[0] = Point2d(100,200);
 	data.vpt[1] = Point2d(200,300);
@@ -644,11 +651,27 @@ void action_6( void* param )
 
 	data.clearImage();
 	double K = M_PI / 180.;
+	auto tx = data.pt_mouse.getX();
+	auto ty = data.pt_mouse.getY();
 
-	Homogr H( data.angle * K );
-	H.addTranslation(-50,0);
+	auto mouse_pos = std::make_pair(
+		Line2d( LineDir::H, ty ),
+		Line2d( LineDir::V, tx )
+	);
+	draw( data.img, mouse_pos, img::DrawParams().setColor( 200,200,200) );
+
+/*	auto org = std::make_pair(
+		Line2d( LineDir::H, ty ),
+		Line2d( LineDir::V, tx )
+	);
+	draw( data.img, org );
+*/
+	Homogr H = Homogr().addTranslation(-tx,-ty).addRotation( data.angle * K ).addTranslation(tx,ty);
+
+	draw( data.img, data.vpt[0] );
+	draw( data.img, data.vpt[1] );
 	Line2d l1( data.vpt[0], data.vpt[1] );
-	Line2d l2 = H*l1;
+	Line2d l2 = l1.getRotatedLine( data.vpt[0], data.angle * K );
 
 	auto dpar = img::DrawParams();
 	l1.draw( data.img, dpar.setColor( 250,0,0) );
@@ -656,8 +679,8 @@ void action_6( void* param )
 
 	Segment s1( data.vpt[2], data.vpt[3] );
 	Segment s2 = H*s1;
-	s1.draw( data.img, dpar.setColor( 0,0,250) );
-	s2.draw( data.img, dpar.setColor( 250,250,0) );
+	s1.draw( data.img, dpar.setColor( 250,0,0) );
+	s2.draw( data.img, dpar.setColor( 0,0,250) );
 	s1.getPts().first.draw( data.img, dpar.selectPoint() );
 	s1.getPts().second.draw( data.img, dpar.selectPoint() );
 }
@@ -675,8 +698,8 @@ void demo_6( int nd )
 	data.showImage();
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'm', [&](void*){ data.angle += angle_delta; } );
-	kbloop.addKeyAction( 'l', [&](void*){ data.angle -= angle_delta; } );
+	kbloop.addKeyAction( 'm', [&](void*){ data.angle += angle_delta; std::cout << "val=" <<data.angle<<'\n'; }, "increment angle" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.angle -= angle_delta; std::cout << "val=" <<data.angle<<'\n'; }, "decrement angle" );
 	kbloop.addCommonAction( [&](void*){ action_6(&data);} );
 	kbloop.start( data );
 }

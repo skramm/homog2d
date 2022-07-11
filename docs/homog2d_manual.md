@@ -262,6 +262,13 @@ auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 ); // free function
 ```
 
+You can rotate a line at a given point (must be lying on the line):
+```C++
+auto li1 = pt1 * pt2;
+auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
+```
+
+
 ## 3 - Other geometric primitives
 <a name="shapes"></a>
 
@@ -358,6 +365,13 @@ The bisector line is available, using a member or free function:
 Segment seg( Point2d(1,2), Point2d(3,4) );
 auto line1 = seg.getBisector(); // or: getBisector(seg)
 ```
+
+You can generates a `std::pair` of two parallel segments, lying at a distance `dist`, with:
+```C++
+Segment seg( pt1 , pt2 );
+auto p_segs = seg.getParallelSegs(dist); // or: getParallelSegs(seg,dist)
+```
+
 
 The length is available with a member function or a free function:
 ```C++
