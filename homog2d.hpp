@@ -6660,7 +6660,7 @@ However, in "some situations", even if the lines have been previously normalized
 we can encounter numerical issues, so here we "reinforce the normalization and compute:
 \f[
 \alpha = acos \left(
-	\frac{a_0*b_0 + a_1*b_1} { \sqrt{ a_0*a_0 + a_1*a_1 } * \sqrt{ b_0*b_0 + b_1*b_1 } }
+	\frac{a_0*b_0 + a_1*b_1} { \sqrt{ a_0^2 + a_1^2 } * \sqrt{ b_0^2 + b_1^2 } }
 \right)
 \f]
 In some situations, the value inside the parenthesis "may" be equal to \f$ 1+\epsilon \f$
