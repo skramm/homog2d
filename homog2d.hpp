@@ -5325,23 +5325,23 @@ namespace runion {
 template<typename T>
 struct Index
 {
-	T       value;
-	uint8_t rect_idx=0;   // 0 means none, will be 1 or 2
+	T       _value;
+	uint8_t _rect_idx=0;   // 0 means none, will be 1 or 2
 
 	Index() = default;
 	Index( T v, uint8_t r )
-		: value(v), rect_idx(r)
+		: _value(v), _rect_idx(r)
 	{}
 	friend bool operator < ( const Index& i1, const Index& i2 )
 	{
 
-		if( i1.value == i2.value )
-			return i1.rect_idx < i2.rect_idx;
-		return i1.value < i2.value;
+		if( i1._value == i2._value )
+			return i1._rect_idx < i2._rect_idx;
+		return i1._value < i2._value;
 	}
 	friend std::ostream& operator << ( std::ostream& f, const Index& idx )
 	{
-		f << idx.value << " ";
+		f << idx._value << " ";
 		return f;
 	}
 };
@@ -5353,17 +5353,17 @@ used in FRect_<FPT>::unionArea()
 */
 struct Cell
 {
-	bool isCorner = false;
+	bool _isCorner = false;
 	Cell() = default;
 #ifdef HOMOG2D_DEBUGMODE
-	Cell( bool b ) : isCorner(b)
+	Cell( bool b ) : _isCorner(b)
 	{}
 #endif
 	template<typename T>
 	Cell( const Index<T>& ix, const Index<T>& iy )
 	{
-		if( ix.rect_idx == iy.rect_idx )
-			isCorner = true;
+		if( ix._rect_idx == iy._rect_idx )
+			_isCorner = true;
 	}
 };
 
@@ -5421,7 +5421,7 @@ moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 - Start from 0,0, direction East
 */
 std::vector<PCoord>
-parseTable( Table& table)
+parseTable( Table& table )
 {
 	bool firstTime = true;
 	bool done = false;
@@ -5431,7 +5431,7 @@ parseTable( Table& table)
 	std::vector<PCoord> out;
 	do
 	{
-		if( table[row][col].isCorner )
+		if( table[row][col]._isCorner )
 		{
 			auto new_pair = std::make_pair(row,col);
 			if( out.size() > 0 )
@@ -5482,8 +5482,8 @@ template<typename FPT>
 CPolyline_<FPT>
 convertToCoord(
 	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
-	const std::array<Index<FPT>,4>& vx,      ///< holds x-coordinates
-	const std::array<Index<FPT>,4>& vy       ///< holds y-coordinates
+	const std::array<Index<FPT>,4>& v_x,      ///< holds x-coordinates
+	const std::array<Index<FPT>,4>& v_y       ///< holds y-coordinates
 )
 {
 	std::vector<Point2d_<FPT>> v_pts;
@@ -5493,7 +5493,7 @@ convertToCoord(
 		auto id_y = elem.second;
 		assert( id_x<4 && id_y<4 );
 
-		auto pt = Point2d_<FPT>( vx[id_x].value, vy[id_y].value );
+		auto pt = Point2d_<FPT>( v_x[id_x]._value, v_y[id_y]._value );
 		if( v_pts.empty() )
 			v_pts.push_back( pt );
 		else                             // add to vector only  if not same as previous
@@ -5594,7 +5594,7 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
   F F . .
 
   That would happen if we have an identical x in the two rect
-  (thus,they DO intersect), because when sorting, the rect with smallest index
+  (thus, they DO intersect), because when sorting, the rect with smallest index
   (1 or 2) is placed first in the vector of coordinates */
 	const auto* pr1 = this;
 	const auto* pr2 = &other;

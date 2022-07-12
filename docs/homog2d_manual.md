@@ -643,7 +643,7 @@ number of points, number of segments, length, and bounding box, all available as
 auto n1 = pl.size();  // nb of points
 auto n2 = size(pl);
 auto s1 = pl.nbSegs(); // nb of segments
-auto s2 = nbSegs(s2);
+auto s2 = nbSegs(pl);
 
 auto length1 = pl.length(); // or  length(pl);
 auto rect1 = pl.getBB();    // or  getBB(pl);
@@ -702,7 +702,7 @@ Consider these two sets of points:
 ![Same points, but closed type](img/polyline2_c.png)
 
 If they are not closed, then the `==` operator will return `false`.
-But is they are (both) closed, it will return `true`, as they obviously describe the same polygon.
+But if they are (both) closed, it will return `true`, as they obviously describe the same polygon.
 
 This is handled through a normalization step, called automatically.
   * if "closed" type, the normalization will reverse and rotate the points, so that the smallest point is first and the second one is smaller than the last one.
