@@ -9,7 +9,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - provide clear interface to extend drawing capabilities using other back-ends
   - add (optional) common root class, to be able to store heterogeneous objects in container
-  - add precision evaluation
+  - add polygon union and intersection
 
 - current master branch
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)

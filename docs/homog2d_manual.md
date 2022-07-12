@@ -536,7 +536,7 @@ c4.set( center_pt );         // radius doesn't change
 You can also compute the unique circle from points,
 either from 2 points (that define the diameter), or from 3 points:
 ```C++
-Circle c1( pt1, pt2, pt 3 );
+Circle c1( pt1, pt2, pt3 );
 // or
 c1.set( pt1, pt2, pt3 );
 
@@ -1096,39 +1096,30 @@ Similarly, in the situation as in the figure below, we will have **2** intersect
 
 ### 5.2 - Enclosing determination
 
-You can quickly check if a point lies within a flat rectangle (`FRect`), a circle, or an Ellipse:
-```C++
-bool b1 = pt.isInside( rect );
-bool b2 = pt.isInside( circle );
-bool b3 = pt.isInside( ellipse );
-```
+This library provides an answer to the question: "is this object inside this other object?", whatever their type.
+In many cases, the question doesnt really make any sense (a point cannot be inside a point, nor can a line be inside a segment),
+but to have a homogeneous interface, the code `a.isInside(b)` will always compile.
+In the nonsense situations described above, it will simply return false (as a `constexpr` value).
 
 **Note**:
-this uses a strict condition: if point is on an edge, it will **not** be considered as inside.
+these functions use a strict condition: if point is on an edge, it will **not** be considered as inside the other object.
 
-For conveniency, you can also pass two opposite points for the rectangle, or center point and radius for the circle.
-```C++
-bool b1 = pt.isInside( pt1, pt2 );
-bool b2 = pt.isInside( pt1, radius );
-```
+The table below summarizes what type (lines) can be used to check if it is inside another object of same or different type (columns).
+ * F: (constexpr) false
+ * T/F: true or false
+ * NI: Not Implemented (yet), returns false
 
-This is also available for segments, circles, or rectangles:
-```C++
-FRect rect2;
-Circle c2;
-Segment seg;
+|           | Point2d | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
+|-----------|---------|--------|---------|-------|-----------|-----------|--------|---------|
+| Point2d   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| Line2d    |    F    |    F   |    F    |   F   |     F     |     F     |    F   |    F    |
+| Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| FRect     |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| CPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
+| Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
+| Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
 
-bool ba1 = rect2.isInside( rect );
-bool ba2 = rect2.isInside( circle );
-bool ba2 = rect2.isInside( ell );
-bool bb1 = c2.isInside( rect );
-bool bb2 = c2.isInside( circle );
-bool bc1 = seg.isInside( rect );
-bool bc2 = seg.isInside( circle );
-bool bc2 = seg.isInside( ell );
-```
-
-(note: not yet available for ellipse type.)
 
 ### 5.3 - Union and Intersection area of two rectangles
 

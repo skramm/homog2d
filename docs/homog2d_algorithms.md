@@ -68,29 +68,6 @@ Thus we have between 0 and 4 intersections (equal intersection points are remove
 
 ## 2 - Enclosing algorithms
 
-This library provides an answer to the question: "is this object inside this other object?", whatever their type.
-In many cases, the question doesnt really make any sense (a point cannot be inside a point, not can a line be inside a segment),
-but to have a homogeneous interface, the code `a.isInside(b)` will always compile.
-
-In the nonsense situations described above, it will simply return false (as a `constexpr` value).
-
-The table below summarizes what type (lines) can be used to check if it is inside another object of same or different type (columns).
- * F: (constexpr) false
- * T/F: true or false
- * NI: Not Implemented (yet), returns false
-
-|           | Point2d | Line2d | Segment | Frect | CPolyline | OPolyline | Circle | Ellipse |
-|-----------|---------|--------|---------|-------|-----------|-----------|--------|---------|
-| Point2d   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| Line2d    |    F    |    F   |    F    |   F   |     F     |     F     |    F   |    F    |
-| Segment   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| FRect     |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| CPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| OPolyline |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |   T/F   |
-| Circle    |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
-| Ellipse   |    F    |    F   |    F    |  T/F  |    T/F    |     F     |   T/F  |    NI   |
-
-
 
 ### 2.1 - Point inside Polygon
 
