@@ -84,3 +84,12 @@ The other segment shows the distance between the point and the fixed segment, wi
 
 ![showcase8](showcase/showcase8.gif)
 
+
+* [Showcase 9](../misc/showcase/showcase9.cpp):
+<a name="sc9"></a>
+A circle rotating around another fixed one.
+Shows the segment joining the centers, the tangential segments, and the common bounding box.
+
+![showcase9](showcase/showcase9.gif)
+
+
