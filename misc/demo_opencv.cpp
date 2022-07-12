@@ -870,6 +870,7 @@ struct Param_PL : Data
 	OPolyline polyline_o;
 	CPolyline polyline_c;
 	bool showClosedPoly = false;
+	bool transformToPolygon = false;
 };
 
 void action_PL( void* param )
@@ -886,7 +887,11 @@ void action_PL( void* param )
 
 	auto len = data.showClosedPoly ? data.polyline_c.length() : data.polyline_o.length();
 	if( data.showClosedPoly )
+	{
+		if( data.transformToPolygon )
+			data.polyline_c.convertToPolygon();
 		data.polyline_c.draw( data.img, color );
+	}
 	else
 		data.polyline_o.draw( data.img, color );
 
@@ -980,6 +985,13 @@ void demo_PL( int nd )
 		},
 		"switch open/close"
 	);
+	kbloop.addKeyAction( 'p', [&](void*)
+		{
+			data.transformToPolygon = !data.transformToPolygon;
+		},
+		"switch transfrom to polygon"
+	);
+
 //	kbloop.addCommonAction( [&] { action_PL(&data); } );
 	kbloop.start( data );
 }

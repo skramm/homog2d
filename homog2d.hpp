@@ -246,6 +246,13 @@ using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 
+namespace priv {
+namespace chull {
+	template<typename T>
+	int orientation( const Point2d_<T>& p, const Point2d_<T>& q, const Point2d_<T>& r );
+}
+}
+
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
 namespace img {
@@ -4631,6 +4638,11 @@ private:
 		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
 	}
 
+/// Don't do anything
+	void impl_convertToPolygon( const detail::PlHelper<type::IsOpen>& )
+	{}
+	void impl_convertToPolygon( const detail::PlHelper<type::IsClosed>& );
+
 public:
 
 /// \name Modifiers (non-const member functions)
@@ -4642,6 +4654,10 @@ public:
 		_plinevec.clear();
 		_plIsNormalized=false;
 		_attribs.setBad();
+	}
+	void convertToPolygon()
+	{
+		impl_convertToPolygon( detail::PlHelper<PLT>() );
 	}
 
 /// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
@@ -4912,7 +4928,70 @@ Two tasks:
 
 
 //------------------------------------------------------------------
-/// Free function, called by PolylineBase::impl_minimizePL()
+/// 2022-07-12: WIP !!!
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClosed>& )
+{
+	minimize();
+	std::vector<Point2d_<FPT>> out;
+	out.reserve( size() );
+
+	auto nbs = size();
+	size_t i = 0;
+	bool notDone = true;
+	bool hasIntersections = false;
+	do
+	{
+		auto ptA1 = getPoint(i);
+		out.push_back( ptA1 );
+		auto ptA2 = getPoint(i+1);
+		Segment_<HOMOG2D_INUMTYPE> segA(ptA1,ptA2);
+		std::cout << "\n* i=" << i << " seg=" << segA << '\n';
+		auto lastone = i==0?nbs-1:nbs;
+		for( auto j=i+2; j<size()-1; j++ ) // iterate on all the other points
+		{
+			auto ptB1 = getPoint(j);
+			auto ptB2 = getPoint(j+1);
+			Segment_<HOMOG2D_INUMTYPE> segB( ptB1, ptB2 );
+			std::cout << "  -j=" << j << " segB=" << segB << '\n';
+			auto inter = segA.intersects(segB);
+			if( inter() )
+			{
+
+				hasIntersections = true;
+				auto itpt = inter.get();
+				out.push_back( itpt );
+				std::cout << "  Intersection: " << itpt << '\n';
+
+				auto orient = priv::chull::orientation( ptA1, itpt, ptB1 );
+				assert( orient != 0 );  // because we previously minimized !
+				if( orient == 1 )
+				{
+					std::cout << "  Adding point j and ptB1:" << ptB1 << '\n';
+					out.push_back( ptB1 );
+					i = j;
+				}
+				else
+				{
+					std::cout << "  Adding point j+1 and ptB2:" << ptB2 << '\n';
+					out.push_back( ptB2 );
+					i = j+1;
+				}
+			}
+			std::cout << "  NO Intersection\n";
+		}
+		i++;
+	}
+	while( i<size()-1 ); //&& notDone );
+
+	CPolyline_<FPT> pl_out(out);
+	std::swap( *this, pl_out );
+	_attribs._isPolygon.set( true );
+}
+
+//------------------------------------------------------------------
+/// Called by PolylineBase::impl_minimizePL()
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
@@ -8136,7 +8215,7 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 - 2 --> Counterclockwise
 */
 template<typename T>
-int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
+int orientation( const Point2d_<T>& p, const Point2d_<T>& q, const Point2d_<T>& r )
 {
 	HOMOG2D_INUMTYPE px = p.getX();
 	HOMOG2D_INUMTYPE py = p.getY();
@@ -8147,7 +8226,7 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
     if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
-		return 0;  // collinear
+		return 0;  // colinear
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
 }
 //------------------------------------------------------------------
