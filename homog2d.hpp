@@ -4340,6 +4340,11 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
+
+enum class Rotate: int8_t
+{
+	CCW, CW, Full
+};
 namespace base {
 
 //------------------------------------------------------------------
@@ -4644,6 +4649,8 @@ public:
 		_attribs.setBad();
 	}
 
+	void rotate( enum Rotate );
+
 /// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
 /**
 For example, if we have the following points ("Open" polyline):
@@ -4910,6 +4917,31 @@ Two tasks:
 
 }; // class Polyline_
 
+
+//------------------------------------------------------------------
+/// Rotate the object by either 90°, 180°, 270° (-90°)
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::rotate( enum Rotate rot )
+{
+	switch( rot )
+	{
+		case Rotate::CW:
+			for( auto pt: getPts() )
+				pt.set( -pt.getY(), pt.getX() );
+		break;
+
+		case Rotate::CCW:
+			for( auto pt: getPts() )
+				pt.set( pt.getY(), -pt.getX() );
+		break;
+		case Rotate::Full:
+			for( auto pt: getPts() )
+				pt.set( -pt.getX(), -pt.getY() );
+		break;
+		default: assert(0);
+	}
+}
 
 //------------------------------------------------------------------
 /// Free function, called by PolylineBase::impl_minimizePL()

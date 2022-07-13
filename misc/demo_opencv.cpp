@@ -1200,8 +1200,7 @@ void demo_CH( int nd )
 struct Param_SEG : Data
 {
 	explicit Param_SEG( std::string title ):Data(title)
-	{
-	}
+	{}
 	bool showIndexes      = false;
 	bool showIntersection = false;
 	bool showMiddlePoint  = false;
@@ -1313,6 +1312,59 @@ void demo_SEG( int nd )
 }
 
 //------------------------------------------------------------------
+/// polyline rotate demo (WIP...)
+struct Param_pol2 : Data
+{
+	explicit Param_pol2( std::string title ):Data(title)
+	{
+		pol.set(
+			std::vector<Point2d>{
+				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
+			}
+		);
+	}
+	CPolyline pol;
+
+	void rotate( int n )
+	{
+		switch( n )
+		{
+			case 1: pol.rotate( Rotate::CW ); break;
+			case 2: pol.rotate( Rotate::CCW ); break;
+			case 3: pol.rotate( Rotate::Full ); break;
+		}
+	}
+};
+
+void action_pol2( void* param )
+{
+	auto& data = *reinterpret_cast<Param_pol2*>(param);
+
+	data.clearImage();
+	data.pol.translate( 100,100); //set( data.vpt );
+	data.pol.draw( data.img );
+	data.pol.translate( -100,-100); //set( data.vpt );
+	data.showImage();
+}
+
+
+void demo_pol2( int nd )
+{
+	Param_pol2 data ( "Polyline rotate demo" );
+	std::cout << "Demo " << nd << ": Polyline rotate demo\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data.rotate(1); }, "rotate1" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.rotate(2); }, "rotate2" );
+	kbloop.addKeyAction( 'e', [&](void*){ data.rotate(3); }, "rotate3" );
+
+	kbloop.addCommonAction( action_pol2 );
+	action_pol2( &data );
+
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -1325,6 +1377,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+//		demo_pol2,
 		demo_CIR,
 		demo_CH,
 		demo_SEG,
