@@ -4614,7 +4614,7 @@ Segment \c n is the one between point \c n and point \c n+1
 		return impl_getSegment( idx, detail::PlHelper<PLT>() );
 	}
 
-	CPolyline_<FPT> convexHull( size_t* pivot=nullptr ) const;
+	CPolyline_<FPT> convexHull(/* size_t* pivot=nullptr */ ) const;
 ///@}
 
 private:
@@ -4933,63 +4933,67 @@ template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClosed>& )
 {
-	minimize();
+	std::cout << "START 1: first pt=" << getPoint(0) << '\n';
+	p_normalizePL();
+	std::cout << "START 2: first pt=" << getPoint(0) << '\n';
+
 	std::vector<Point2d_<FPT>> out;
 	out.reserve( size() );
 
-// the starting point NEEDS to be lying on the "outside" part.
-// Do ensure that, we first compute the hull, then select a point of the hull
-	size_t pivot;
-	auto hull = this->ConvexHull( &pivot );
-
-	std::cout << "START: pivot=" << pivot << '\n';
 	auto nbs = size();
 	size_t i = 0;
 	bool notDone = true;
-	bool hasIntersections = false;
 	do
 	{
+		std::cout << "\n* i=" << i << '\n';
+		priv::printVector( out, "out" );
+		bool hasIntersections = false;
 		auto ptA1 = getPoint(i);
 		out.push_back( ptA1 );
-		auto ptA2 = getPoint(i+1);
-		Segment_<HOMOG2D_INUMTYPE> segA(ptA1,ptA2);
-		std::cout << "\n* i=" << i << " seg=" << segA << '\n';
-		auto lastone = i==0?nbs-1:nbs;
-		for( auto j=i+2; j<size()-1; j++ ) // iterate on all the other points
+		if( i+1 < size() )
 		{
-			auto ptB1 = getPoint(j);
-			auto ptB2 = getPoint(j+1);
-			Segment_<HOMOG2D_INUMTYPE> segB( ptB1, ptB2 );
-			std::cout << "  -j=" << j << " segB=" << segB << '\n';
-			auto inter = segA.intersects(segB);
-			if( inter() )
+			auto ptA2 = getPoint(i+1);
+			Segment_<HOMOG2D_INUMTYPE> segA(ptA1,ptA2);
+			std::cout << " seg=" << segA << '\n';
+			auto lastone = i==0?nbs-1:nbs;
+			for( auto j=i+2; j<size()-1 && !hasIntersections; j++ ) // iterate on all the other points
 			{
-
-				hasIntersections = true;
-				auto itpt = inter.get();
-				out.push_back( itpt );
-				std::cout << "  Intersection: " << itpt << '\n';
-
-				auto orient = priv::chull::orientation( ptA1, itpt, ptB1 );
-				assert( orient != 0 );  // because we previously minimized !
-				if( orient == 1 )
+				auto ptB1 = getPoint(j);
+				auto ptB2 = getPoint(j+1);
+				Segment_<HOMOG2D_INUMTYPE> segB( ptB1, ptB2 );
+				std::cout << "  -j=" << j << " segB=" << segB << '\n';
+				auto inter = segA.intersects(segB);
+				if( inter() )
 				{
-					std::cout << "  Adding point j and ptB1:" << ptB1 << '\n';
-					out.push_back( ptB1 );
-					i = j;
+					hasIntersections = true;
+					auto itpt = inter.get();
+					out.push_back( itpt );
+					std::cout << "  Intersection: " << itpt << '\n';
+
+					auto orient = priv::chull::orientation( ptA1, itpt, ptB1 );
+					assert( orient != 0 );  // because we previously minimized !
+					if( orient == 1 )
+					{
+						std::cout << "  Adding point ptB2:" << ptB2 << '\n';
+	//					out.push_back( ptB2 );
+						i = j;
+					}
+					else
+					{
+						std::cout << "  Adding point ptB1:" << ptB1 << '\n';
+	//					out.push_back( ptB1 );
+						i = j+1;
+					}
 				}
 				else
-				{
-					std::cout << "  Adding point j+1 and ptB2:" << ptB2 << '\n';
-					out.push_back( ptB2 );
-					i = j+1;
-				}
+					std::cout << "  NO Intersection\n";
 			}
-			std::cout << "  NO Intersection\n";
 		}
 		i++;
+		std::cout << "LOOP OUT i=" << i << '\n';
+		priv::printVector( out, "out END" );
 	}
-	while( i<size()-1 ); //&& notDone );
+	while( i<size() ); //&& notDone );
 
 	CPolyline_<FPT> pl_out(out);
 	std::swap( *this, pl_out );
@@ -5555,7 +5559,7 @@ printTable( const Table& t, std::string msg )
 	{
 		std::cout << (int)r << " | ";
 		for( uint8_t c=0;c<4; c++ )
-			std::cout << (t[r][c].isCorner?'F':'.') << " ";
+			std::cout << (t[r][c]._isCorner?'F':'.') << " ";
 		std::cout << "|\n";
 	}
 }
@@ -5587,7 +5591,7 @@ convertToCoord(
 				v_pts.push_back( pt );
 		}
 	}
-//	printVector( v_pts, "polyline" );
+//	priv::printVector( v_pts, "polyline" );
 	return CPolyline_<FPT>( v_pts );//, IsClosed::Yes );
 }
 
@@ -8258,15 +8262,15 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 */
 template<typename FPT>
 CPolyline_<FPT>
-convexHull( const std::vector<Point2d_<FPT>>& input, size_t* pivot=nullptr )
+convexHull( const std::vector<Point2d_<FPT>>& input ) //, size_t* pivot=nullptr )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return CPolyline_<FPT>( input );
 
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
-	if( pivot )
-		*pivot = pivot_idx;
+//	if( pivot )
+//		*pivot = pivot_idx;
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
@@ -8335,18 +8339,18 @@ convexHull( const std::vector<Point2d_<FPT>>& input, size_t* pivot=nullptr )
 */
 template<typename CT,typename FPT>
 CPolyline_<FPT>
-convexHull( const base::PolylineBase<CT,FPT>& input, size_t* pivot=nullptr )
+convexHull( const base::PolylineBase<CT,FPT>& input ) //, size_t* pivot=nullptr )
 {
-	return convexHull( input.getPts(), pivot );
+	return convexHull( input.getPts() ); //, pivot );
 }
 
 
 /// Return convex hull (member function implementation)
 template<typename CT,typename FPT>
 CPolyline_<FPT>
-base::PolylineBase<CT,FPT>::convexHull( size_t* pivot ) const
+base::PolylineBase<CT,FPT>::convexHull( /*size_t* pivot*/ ) const
 {
-	return h2d::convexHull( *this, pivot );
+	return h2d::convexHull( *this ); //, pivot );
 }
 
 /////////////////////////////////////////////////////////////////////////////

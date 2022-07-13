@@ -40,7 +40,7 @@ This latter part starts around line 2880.
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -2464,11 +2464,24 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 
 TEST_CASE( "Polyline convert to polygon", "[polyline-ctp]" )
 {
-#include "figures_test/polyline_ctp_1.code" // open
+#include "figures_test/polyline_ctp_1.code"
 	std::cout << "START:" << pl << '\n';
-	CHECK( pl.size() == 6 );
-	pl.convertToPolygon();
-	CHECK( pl.size() == 5 );
+	auto pl0(pl);
+	{
+		CHECK( pl.size() == 6 );
+		pl.convertToPolygon();
+		CHECK( pl.size() == 5 );
+
+		std::vector<Point2d_<NUMTYPE>> vpt2{ {0,0}, {6,0}, {6,5}, {3,2}, {0,5} };
+		CPolyline pl2( vpt2 );
+		CHECK( pl == pl2 );
+	}
+	{
+		pl = Homogr().addRotation( M_PI/2.) * pl0;
+		std::cout << "START2:" << pl << '\n';
+		pl.convertToPolygon();
+		CHECK( pl.size() == 5 );
+	}
 }
 
 TEST_CASE( "Polyline minimization", "[polyline-min]" )
