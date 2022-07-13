@@ -1,0 +1,14 @@
+// polyline_ctp_1
+// (convert to polygon)
+
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif
+
+	CPolyline_<NUMTYPE> pl(
+		std::vector<Point2d>{
+			{0,0},{4,4},{4,-1},{-2,-1},{-2,4},{2,0}
+		}
+	);
+	pl.translate(2,1);
+

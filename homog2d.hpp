@@ -3874,7 +3874,7 @@ Requires both points inside AND no intersections
 	}
 
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
+	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=nullptr ) const;
 
 /// \name Intersection functions
 ///@{
@@ -4614,7 +4614,7 @@ Segment \c n is the one between point \c n and point \c n+1
 		return impl_getSegment( idx, detail::PlHelper<PLT>() );
 	}
 
-	CPolyline_<FPT> convexHull() const;
+	CPolyline_<FPT> convexHull( size_t* pivot=nullptr ) const;
 ///@}
 
 private:
@@ -4937,6 +4937,12 @@ PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClo
 	std::vector<Point2d_<FPT>> out;
 	out.reserve( size() );
 
+// the starting point NEEDS to be lying on the "outside" part.
+// Do ensure that, we first compute the hull, then select a point of the hull
+	size_t pivot;
+	auto hull = this->ConvexHull( &pivot );
+
+	std::cout << "START: pivot=" << pivot << '\n';
 	auto nbs = size();
 	size_t i = 0;
 	bool notDone = true;
@@ -8243,20 +8249,8 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 } // namespace chull
 } // namespace priv
 
-//------------------------------------------------------------------
-/// Compute Convex Hull (free function)
-/**
-- type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
-- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
-*/
-template<typename CT,typename FPT>
-CPolyline_<FPT>
-convexHull( const base::PolylineBase<CT,FPT>& input )
-{
-	return convexHull( input.getPts() );
-}
 
-namespace base {
+//namespace base {
 //------------------------------------------------------------------
 /// Computes and returns the convex hull of a set of points (free function)
 /**
@@ -8264,13 +8258,15 @@ namespace base {
 */
 template<typename FPT>
 CPolyline_<FPT>
-convexHull( const std::vector<Point2d_<FPT>>& input )
+convexHull( const std::vector<Point2d_<FPT>>& input, size_t* pivot=nullptr )
 {
 	if( input.size() < 4 )  // if 3 pts or less, then the hull is equal to input set
 		return CPolyline_<FPT>( input );
 
 // step 1: find pivot (point with smallest Y coord)
 	auto pivot_idx = priv::chull::getPivotPoint( input );
+	if( pivot )
+		*pivot = pivot_idx;
 
 // step 2: sort points by angle of lines between the current point and pivot point
 	auto v2 = priv::chull::sortPoints( input, pivot_idx );
@@ -8330,15 +8326,27 @@ convexHull( const std::vector<Point2d_<FPT>>& input )
 
 	return CPolyline_<FPT>( vout );
 }
+//} // namespace base
 
-} // namespace base
+//------------------------------------------------------------------
+/// Compute Convex Hull (free function)
+/**
+- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+*/
+template<typename CT,typename FPT>
+CPolyline_<FPT>
+convexHull( const base::PolylineBase<CT,FPT>& input, size_t* pivot=nullptr )
+{
+	return convexHull( input.getPts(), pivot );
+}
+
 
 /// Return convex hull (member function implementation)
 template<typename CT,typename FPT>
 CPolyline_<FPT>
-base::PolylineBase<CT,FPT>::convexHull() const
+base::PolylineBase<CT,FPT>::convexHull( size_t* pivot ) const
 {
-	return h2d::convexHull( *this );
+	return h2d::convexHull( *this, pivot );
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -2462,6 +2462,14 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 	}
 }
 
+TEST_CASE( "Polyline convert to polygon", "[polyline-ctp]" )
+{
+#include "figures_test/polyline_ctp_1.code" // open
+	std::cout << "START:" << pl << '\n';
+	CHECK( pl.size() == 6 );
+	pl.convertToPolygon();
+	CHECK( pl.size() == 5 );
+}
 
 TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
