@@ -2751,6 +2751,24 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 	}
 }
 
+TEST_CASE( "Polyline rotation", "[polyline-rot]" )
+{
+	OPolyline_<NUMTYPE> plc;
+	CPolyline_<NUMTYPE> plo;
+	std::vector<Point2d>  vpts{ {0,0}, {2,0}, {1,1} };
+	{
+		plo.set( vpts );
+		plc.set( vpts );
+		std::cout << "------------" << plo << '\n';
+		plo.rotate( Rotate::CCW );
+		plc.rotate( Rotate::CCW );
+		OPolyline_<NUMTYPE> plo2( std::vector<Point2d>{ {0,0},{0,2},{-1,-1} } );
+		std::cout << "------------" <<( plo == plo2?"EQ\n":"NEQ\n";
+		CHECK( plo == plo2 );
+//		CHECK( plc == CPolyline_<NUMTYPE>( std::vector<Point2d>{ {0,0},{0,2},{-1,-1} } ) );
+	}
+}
+
 TEST_CASE( "Polygon area", "[polyline-area]" )
 {
 	CPolyline_<NUMTYPE> pl1;
@@ -2832,6 +2850,8 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 		CHECK( pa != pb );
 	}
 }
+
+
 
 TEST_CASE( "general binding", "[gen_bind]" )
 {

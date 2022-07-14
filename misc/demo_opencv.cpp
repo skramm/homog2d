@@ -64,7 +64,6 @@ public:
 		vpt.resize(4);
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
-//		cv::setMouseCallback( win1, myMouseCB, this );
 		tline = 0;
 	}
 	void reset()
@@ -226,9 +225,9 @@ private:
 
 public:
 	void addKeyAction(
-		char key,
-		const std::function<FuncType>& action, // the CB, called on key hit
-		std::string text=std::string()
+		char key,                              ///< the key
+		const std::function<FuncType>& action, ///< the CB, called on key hit
+		std::string text=std::string()         ///< the message that will be printed
 	)
 	{
 		auto it = std::find_if(
@@ -1327,56 +1326,61 @@ void demo_SEG( int nd )
 
 //------------------------------------------------------------------
 /// Polyline rotate demo
-struct Param_pol2 : Data
+struct Param_polRot : Data
 {
-	explicit Param_pol2( std::string title ):Data(title)
+	explicit Param_polRot( std::string title ):Data(title)
 	{
-		pol.set(
+		_poly.set(
 			std::vector<Point2d>{
 				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
 			}
 		);
 	}
-	CPolyline pol;
-	Rotate _rotateType = Rotate::CW;
-	Point2d pt0 = Point2d(100,100);
-	int delta_draw = 80;
+	void nextRefPt()
+	{
+		_refPt++;
+		if( _refPt >= _poly.size() )
+			_refPt = 0;
+		std::cout << "move to next ref pt: " << _refPt << ": " << _poly.getPoint( _refPt ) <<  '\n';
+	}
+
+	CPolyline _poly;
+	Rotate    _rotateType = Rotate::CW;
+	Point2d    pt0 = Point2d(100,100);
+	int        _delta_draw = 180;
+	size_t     _refPt = 0;
 };
 
-/*void action_pol2M( void* param )
+void action_polRot( void* param )
 {
-}*/
-
-void action_pol2( void* param )
-{
-	auto& data = *reinterpret_cast<Param_pol2*>(param);
+	auto& data = *reinterpret_cast<Param_polRot*>(param);
 	data.clearImage();
-	std::cout << "data.pt_mouse=" << data.pt_mouse << '\n';
-//	data.pt0 = data.pt_mouse;
-	data.pol.translate( -data.pt0.getX(), -data.pt0.getY() );
-	data.pol.rotate( data._rotateType );
-	data.pol.translate( data.pt0.getX()+data.delta_draw, data.pt0.getY()+data.delta_draw );
-	data.pol.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
-	data.pol.translate( -data.delta_draw,-data.delta_draw);
 
+	data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
+	data._poly.translate( data._delta_draw, data._delta_draw );
+
+	data._poly.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
+	data._poly.getPoint( data._refPt ).draw( data.img, img::DrawParams().setColor( 0,0,250).setPointStyle(img::PtStyle::Dot) );
+	data._poly.translate( -data._delta_draw,-data._delta_draw);
 	data.showImage();
 }
 
 
-void demo_pol2( int nd )
+void demo_polRot( int nd )
 {
-	Param_pol2 data ( "Polyline rotate demo" );
+	Param_polRot data ( "Polyline rotate demo" );
 	std::cout << "Demo " << nd << ": Polyline rotate demo\n";
 //	data.setMouseCB( action_pol2M );
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType= Rotate::CW;      }, "rotate CW" );
-	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType= Rotate::CCW;     }, "rotate CCW" );
-	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType= Rotate::Full;    }, "rotate Full" );
-	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType= Rotate::VMirror; }, "VMirror" );
-	kbloop.addKeyAction( 's', [&](void*){ data._rotateType= Rotate::HMirror; }, "HMirror" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;      }, "rotate CW" );
+	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;     }, "rotate CCW" );
+	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType=Rotate::Full;    }, "rotate Full" );
+	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror; }, "VMirror" );
+	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror; }, "HMirror" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt(); }, "move to next reference point" );
 
-	kbloop.addCommonAction( action_pol2 );
-	action_pol2( &data );
+	kbloop.addCommonAction( action_polRot );
+	action_polRot( &data );
 
 	kbloop.start( data );
 }
@@ -1394,7 +1398,6 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
-//		demo_pol2,
 		demo_CIR,
 		demo_CH,
 		demo_SEG,
@@ -1405,7 +1408,8 @@ int main( int argc, const char** argv )
 		demo_1,
 		demo_C,
 		demo_SI,
-		demo_6
+		demo_6,
+		demo_polRot
 	};
 
 	if( argc > 1 )

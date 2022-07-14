@@ -4649,6 +4649,8 @@ public:
 		_attribs.setBad();
 	}
 
+	template<typename FPT2>
+	void rotate( enum Rotate, const Point2d_<FPT2>& );
 	void rotate( enum Rotate );
 
 /// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
@@ -4917,12 +4919,23 @@ Two tasks:
 
 }; // class Polyline_
 
+//------------------------------------------------------------------
+/// Rotate the object by either 90°, 180°, 270° (-90°)
+template<typename PLT,typename FPT>
+template<typename FPT2>
+void
+PolylineBase<PLT,FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
+{
+	translate( -refpt.getX(), -refpt.getY() );
+	rotate( rot );
+	translate( refpt.getX(), refpt.getY() );
+}
 
 //------------------------------------------------------------------
 /// Rotate the object by either 90°, 180°, 270° (-90°)
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::rotate( enum Rotate rot )
+PolylineBase<PLT,FPT>::rotate( Rotate rot )
 {
 	switch( rot )
 	{
