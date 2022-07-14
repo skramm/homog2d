@@ -1183,7 +1183,7 @@ public:
 		return *this;
 	}
 /// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPoints( bool b )
+	DrawParams& showPoints( bool b=true )
 	{
 		_dpValues._showPoints = b;
 		return *this;
@@ -4343,7 +4343,7 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 
 enum class Rotate: int8_t
 {
-	CCW, CW, Full
+	CCW, CW, Full, VMirror, HMirror
 };
 namespace base {
 
@@ -4927,18 +4927,27 @@ PolylineBase<PLT,FPT>::rotate( enum Rotate rot )
 	switch( rot )
 	{
 		case Rotate::CW:
-			for( auto pt: getPts() )
+			for( auto& pt: getPts() )
 				pt.set( -pt.getY(), pt.getX() );
 		break;
 
 		case Rotate::CCW:
-			for( auto pt: getPts() )
+			for( auto& pt: getPts() )
 				pt.set( pt.getY(), -pt.getX() );
 		break;
 		case Rotate::Full:
-			for( auto pt: getPts() )
+			for( auto& pt: getPts() )
 				pt.set( -pt.getX(), -pt.getY() );
 		break;
+		case Rotate::VMirror:
+			for( auto& pt: getPts() )
+				pt.set( -pt.getX(), pt.getY() );
+		break;
+		case Rotate::HMirror:
+			for( auto& pt: getPts() )
+				pt.set( pt.getX(), -pt.getY() );
+		break;
+
 		default: assert(0);
 	}
 }
