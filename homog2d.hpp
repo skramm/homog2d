@@ -1190,7 +1190,7 @@ public:
 		return *this;
 	}
 /// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPoints( bool b )
+	DrawParams& showPoints( bool b=true )
 	{
 		_dpValues._showPoints = b;
 		return *this;
@@ -4347,6 +4347,11 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
+/// used in base::PolylineBase_::rotate() member function
+enum class Rotate: int8_t
+{
+	CCW, CW, Full, VMirror, HMirror
+};
 namespace base {
 
 //------------------------------------------------------------------
@@ -4660,6 +4665,10 @@ public:
 		impl_convertToPolygon( detail::PlHelper<PLT>() );
 	}
 
+	template<typename FPT2>
+	void rotate( Rotate, const Point2d_<FPT2>& );
+	void rotate( Rotate );
+
 /// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
 /**
 For example, if we have the following points ("Open" polyline):
@@ -4926,6 +4935,51 @@ Two tasks:
 
 }; // class Polyline_
 
+//------------------------------------------------------------------
+/// Rotate the object by either 90°, 180°, 270° (-90°)
+template<typename PLT,typename FPT>
+template<typename FPT2>
+void
+PolylineBase<PLT,FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
+{
+	translate( -refpt.getX(), -refpt.getY() );
+	rotate( rot );
+	translate( refpt.getX(), refpt.getY() );
+}
+
+//------------------------------------------------------------------
+/// Rotate the object by either 90°, 180°, 270° (-90°)
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::rotate( Rotate rot )
+{
+	switch( rot )
+	{
+		case Rotate::CCW:
+			for( auto& pt: getPts() )
+				pt.set( -pt.getY(), pt.getX() );
+		break;
+
+		case Rotate::CW:
+			for( auto& pt: getPts() )
+				pt.set( pt.getY(), -pt.getX() );
+		break;
+		case Rotate::Full:
+			for( auto& pt: getPts() )
+				pt.set( -pt.getX(), -pt.getY() );
+		break;
+		case Rotate::VMirror:
+			for( auto& pt: getPts() )
+				pt.set( -pt.getX(), pt.getY() );
+		break;
+		case Rotate::HMirror:
+			for( auto& pt: getPts() )
+				pt.set( pt.getX(), -pt.getY() );
+		break;
+
+		default: assert(0);
+	}
+}
 
 //------------------------------------------------------------------
 /// 2022-07-12: WIP !!!

@@ -725,6 +725,34 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
+
+### Rotation/mirroring
+
+All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
+While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
+due to numerical nature of floating point computation.
+This can be undesirable, so an alternative is provided:
+You may rotate/mirror all the points of polyline objects with the `rotate()` member function.
+it takes as argument an enum value of type `Rotate`.
+
+The available values are:
+* `CW`: -90°
+* `CCW`: +90°
+* `Full`: 180°
+* `VMirror`: Mirror points relatively to vertical axis
+* `HMirror`: Mirror points relatively to horizontal axis
+
+These operations are done relatively to the origin `(0,0)`.
+If you need a rotation on a specific plane location, you may pass that location as second argument:
+
+```C++
+Cpolyline poly;
+// ... fill with points
+Point2d org( ..., ... );
+poly.rotate( Rotate::CW, org );
+```
+
+
 ### 3.5 - Ellipse
 <a name="p_ellipse"></a>
 

@@ -2772,6 +2772,46 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 	}
 }
 
+TEST_CASE( "Polyline rotation", "[polyline-rot]" )
+{
+	OPolyline_<NUMTYPE> plo;
+	CPolyline_<NUMTYPE> plc;
+	std::vector<Point2d>  vpts{ {0,0}, {2,0}, {1,1} };
+	{
+		plo.set( vpts );
+		plc.set( vpts );
+		plo.rotate( Rotate::CCW );
+		plc.rotate( Rotate::CCW );
+		std::vector<Point2d> vpts2{ {0,0},{0,2},{-1,1} };
+		OPolyline_<NUMTYPE> plo2( vpts2 );
+		CPolyline_<NUMTYPE> plc2( vpts2 );
+		CHECK( plo == plo2 );
+		CHECK( plc == plc2 );
+	}
+	{
+		plo.set( vpts );
+		plc.set( vpts );
+		plo.rotate( Rotate::VMirror );
+		plc.rotate( Rotate::VMirror );
+		std::vector<Point2d> vpts2{ {0,0},{-2,0},{-1,1} };
+		OPolyline_<NUMTYPE> plo2( vpts2 );
+		CPolyline_<NUMTYPE> plc2( vpts2 );
+		CHECK( plo == plo2 );
+		CHECK( plc == plc2 );
+	}
+	{
+		plo.set( vpts );
+		plc.set( vpts );
+		plo.rotate( Rotate::HMirror );
+		plc.rotate( Rotate::HMirror );
+		std::vector<Point2d> vpts2{ {0,0},{2,0},{1,-1} };
+		OPolyline_<NUMTYPE> plo2( vpts2 );
+		CPolyline_<NUMTYPE> plc2( vpts2 );
+		CHECK( plo == plo2 );
+		CHECK( plc == plc2 );
+	}
+}
+
 TEST_CASE( "Polygon area", "[polyline-area]" )
 {
 	CPolyline_<NUMTYPE> pl1;
@@ -2853,6 +2893,8 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 		CHECK( pa != pb );
 	}
 }
+
+
 
 TEST_CASE( "general binding", "[gen_bind]" )
 {

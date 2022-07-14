@@ -38,6 +38,8 @@ void myMouseCB( int event, int x, int y, int, void* param );
 /// General data struct used in demos, is inherited in each demo
 struct Data
 {
+	friend void myMouseCB( int, int, int, int, void* );
+
 	img::Image<cv::Mat> img;
 	int width = 700;
 	int height = 500;
@@ -49,8 +51,10 @@ struct Data
 	bool leftClicAddPoint = false;
 	int tline = 0;          ///< used to draw some lines of text inside window
 
-	std::function<void(void*)> _action = nullptr;
+private:
+	std::function<void(void*)> _mouseCB = nullptr;
 
+public:
 	explicit Data( std::string wname ): win1(wname)
 	{
 		cv::destroyAllWindows();
@@ -60,7 +64,6 @@ struct Data
 		vpt.resize(4);
 		pt_mouse.set( 10,10); // just to avoid it being 0,0
 		reset();
-		cv::setMouseCallback( win1, myMouseCB, this );
 		tline = 0;
 	}
 	void reset()
@@ -75,6 +78,12 @@ struct Data
 	{
 		pt_mouse.set(x,y);
 	}
+	void setMouseCB( std::function<void(void*)> cb )
+	{
+		_mouseCB = cb;
+		cv::setMouseCallback( win1, myMouseCB, this );
+	}
+
 	void addMousePoint()
 	{
 		vpt.push_back( pt_mouse );
@@ -137,6 +146,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
+	std::cout << __FUNCTION__ << '\n';
 	data.setMousePos(x,y);
 	bool doSomething = true;
 
@@ -181,8 +191,11 @@ myMouseCB( int event, int x, int y, int, void* param )
 	if( doSomething )
 	{
 		data.clearImage();
-		if( data._action )
-			data._action( param );
+		if( data._mouseCB )
+		{
+//			std::cout << "call mouse CB\n";
+			data._mouseCB( param );
+		}
 		data.showImage();
 	}
 }
@@ -212,9 +225,9 @@ private:
 
 public:
 	void addKeyAction(
-		char key,
-		const std::function<FuncType>& action,
-		std::string text=std::string()
+		char key,                              ///< the key
+		const std::function<FuncType>& action, ///< the CB, called on key hit
+		std::string text=std::string()         ///< the message that will be printed
 	)
 	{
 		auto it = std::find_if(
@@ -344,7 +357,7 @@ void demo_1( int nd )
 	Data data("lines");
 	std::cout << "Demo " << nd << ": click on points and move them\n";
 
-	data._action = action_1;
+	data.setMouseCB( action_1 );
 
 	int n=5;
 	data.vpt[0].set( data.width/2,       data.height/n );
@@ -522,7 +535,7 @@ void demo_C( int nd )
 	action_C( &data );
 	data.showImage();
 
-	data._action = action_C;
+	data.setMouseCB( action_C );
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'l', [&](void*){ data.radius += 10; }, "increment radius" );
@@ -630,7 +643,7 @@ void demo_SI( int nd )
 	data.vpt[3] = Point2d(300,250);
 
 	action_SI( &data );
-	data._action = action_SI;
+	data.setMouseCB( action_SI );
 
 	if( 27 == cv::waitKey(0) )
 		std::exit(0);
@@ -692,7 +705,7 @@ void demo_6( int nd )
 	Param_6 data( "homography_lines_seg" );
 	double angle_delta = 5.; // degrees
 
-	data._action = action_6;
+	data.setMouseCB( action_6 );
 	action_6( &data );
 
 	data.showImage();
@@ -841,7 +854,7 @@ void demo_H( int nd )
 		<< "and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
 
-	data._action = action_H;
+	data.setMouseCB( action_H );
 	action_H( &data );
 
 	KeyboardLoop kbloop;
@@ -974,7 +987,7 @@ void demo_PL( int nd )
 		<< "Lclick to add point, Rclick to remove\n";
 	data.leftClicAddPoint=true;
 
-	data._action = action_PL;
+	data.setMouseCB( action_PL );
 
 	action_PL( &data );
 
@@ -1140,7 +1153,7 @@ void demo_CIR( int nd )
 		<< "Colors: green if inside, blue if not\n";
 
 	action_CIR( &data );
-	data._action = action_CIR;
+	data.setMouseCB( action_CIR );
 
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_CIR );
@@ -1200,7 +1213,7 @@ void demo_CH( int nd )
 	Param_CH data ( "Convex Hull demo" );
 	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
-	data._action = action_CH;
+	data.setMouseCB( action_CH );
 
 	data.leftClicAddPoint=true;
 
@@ -1212,8 +1225,7 @@ void demo_CH( int nd )
 struct Param_SEG : Data
 {
 	explicit Param_SEG( std::string title ):Data(title)
-	{
-	}
+	{}
 	bool showIndexes      = false;
 	bool showIntersection = false;
 	bool showMiddlePoint  = false;
@@ -1325,6 +1337,67 @@ void demo_SEG( int nd )
 }
 
 //------------------------------------------------------------------
+/// Polyline rotate demo
+struct Param_polRot : Data
+{
+	explicit Param_polRot( std::string title ):Data(title)
+	{
+		_poly.set(
+			std::vector<Point2d>{
+				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
+			}
+		);
+	}
+	void nextRefPt()
+	{
+		_refPt++;
+		if( _refPt >= _poly.size() )
+			_refPt = 0;
+		std::cout << "move to next ref pt: " << _refPt << ": " << _poly.getPoint( _refPt ) <<  '\n';
+	}
+
+	CPolyline _poly;
+	Rotate    _rotateType = Rotate::CW;
+	Point2d    pt0 = Point2d(100,100);
+	int        _delta_draw = 180;
+	size_t     _refPt = 0;
+};
+
+void action_polRot( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polRot*>(param);
+	data.clearImage();
+
+	data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
+	data._poly.translate( data._delta_draw, data._delta_draw );
+
+	data._poly.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
+	data._poly.getPoint( data._refPt ).draw( data.img, img::DrawParams().setColor( 0,0,250).setPointStyle(img::PtStyle::Dot) );
+	data._poly.translate( -data._delta_draw,-data._delta_draw);
+	data.showImage();
+}
+
+
+void demo_polRot( int nd )
+{
+	Param_polRot data ( "Polyline rotate demo" );
+	std::cout << "Demo " << nd << ": Polyline rotate demo\n";
+//	data.setMouseCB( action_pol2M );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;      }, "rotate CW" );
+	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;     }, "rotate CCW" );
+	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType=Rotate::Full;    }, "rotate Full" );
+	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror; }, "VMirror" );
+	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror; }, "HMirror" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt(); }, "move to next reference point" );
+
+	kbloop.addCommonAction( action_polRot );
+	action_polRot( &data );
+
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -1347,7 +1420,8 @@ int main( int argc, const char** argv )
 		demo_1,
 		demo_C,
 		demo_SI,
-		demo_6
+		demo_6,
+		demo_polRot
 	};
 
 	if( argc > 1 )
