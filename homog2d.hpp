@@ -4340,7 +4340,7 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
-
+/// used in base::PolylineBase_::rotate() member function
 enum class Rotate: int8_t
 {
 	CCW, CW, Full, VMirror, HMirror
@@ -4650,8 +4650,8 @@ public:
 	}
 
 	template<typename FPT2>
-	void rotate( enum Rotate, const Point2d_<FPT2>& );
-	void rotate( enum Rotate );
+	void rotate( Rotate, const Point2d_<FPT2>& );
+	void rotate( Rotate );
 
 /// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
 /**
@@ -4939,12 +4939,12 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 {
 	switch( rot )
 	{
-		case Rotate::CW:
+		case Rotate::CCW:
 			for( auto& pt: getPts() )
 				pt.set( -pt.getY(), pt.getX() );
 		break;
 
-		case Rotate::CCW:
+		case Rotate::CW:
 			for( auto& pt: getPts() )
 				pt.set( pt.getY(), -pt.getX() );
 		break;
