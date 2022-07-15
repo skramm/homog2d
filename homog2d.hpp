@@ -4982,21 +4982,39 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 }
 
 //------------------------------------------------------------------
+namespace priv2 {
+
+/// Helper function for impl_convertToPolygon(), returns true if segments do not touch each other
+template<typename F>
+bool segmentsDoNotTouch( const Segment_<F>& s1, const Segment_<F>& s2 )
+{
+	auto ppts1 = s1.getPts();
+	auto ppts2 = s2.getPts();
+	if( ppts1.first.distTo( s2 ) > thr::nullDistance() )
+		if( ppts1.second.distTo( s2 ) > thr::nullDistance() )
+			if( ppts2.first.distTo( s1 ) > thr::nullDistance() )
+				if( ppts2.second.distTo( s1 ) > thr::nullDistance() )
+					return true;
+	return false;
+}
+
+} // namespace priv2
+
+//------------------------------------------------------------------
 /// 2022-07-12: WIP !!!
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClosed>& )
 {
-	std::cout << "START 1: first pt=" << getPoint(0) << '\n';
+	std::cout << "START impl_convertToPolygon: first pt=" << getPoint(0) << '\n';
 	p_normalizePL();
-	std::cout << "START 2: first pt=" << getPoint(0) << '\n';
+	std::cout << "After normalization: first pt=" << getPoint(0) << '\n';
 
 	std::vector<Point2d_<FPT>> out;
 	out.reserve( size() );
 
-	auto nbs = size();
+	auto nbPts = size();
 	size_t i = 0;
-	bool notDone = true;
 	do
 	{
 		std::cout << "\n* i=" << i << '\n';
@@ -5004,39 +5022,43 @@ PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClo
 		bool hasIntersections = false;
 		auto ptA1 = getPoint(i);
 		out.push_back( ptA1 );
-		if( i+1 < size() )
+		if( i+1 < nbPts )
 		{
 			auto ptA2 = getPoint(i+1);
 			Segment_<HOMOG2D_INUMTYPE> segA(ptA1,ptA2);
-			std::cout << " seg=" << segA << '\n';
-			auto lastone = i==0?nbs-1:nbs;
-			for( auto j=i+2; j<size()-1 && !hasIntersections; j++ ) // iterate on all the other points
+			std::cout << " seg= A1:" << ptA1 << " A2:" << ptA2 << '\n';
+			auto lastone = (i==0 ? nbPts-1 : nbPts);
+
+			for( auto j=i+2; j<lastone && !hasIntersections; j++ ) // iterate on all the other points
 			{
 				auto ptB1 = getPoint(j);
-				auto ptB2 = getPoint(j+1);
+				auto ptB2 = (j==nbPts-1 ? getPoint(0) : getPoint(j+1) );
 				Segment_<HOMOG2D_INUMTYPE> segB( ptB1, ptB2 );
-				std::cout << "  -j=" << j << " segB=" << segB << '\n';
+				std::cout << "  -j=" << j << " seg= B1:" << ptB1 << " B2:" << ptB2 << '\n';
 				auto inter = segA.intersects(segB);
 				if( inter() )
 				{
 					hasIntersections = true;
 					auto itpt = inter.get();
-					out.push_back( itpt );
-					std::cout << "  Intersection: " << itpt << '\n';
+					if( priv2::segmentsDoNotTouch( segA, segB ) )  // we add the point only if it does not lie on the line
+					{
+						out.push_back( itpt );
+						std::cout << "  Intersection: " << itpt << '\n';
 
-					auto orient = priv::chull::orientation( ptA1, itpt, ptB1 );
-					assert( orient != 0 );  // because we previously minimized !
-					if( orient == 1 )
-					{
-						std::cout << "  Adding point ptB2:" << ptB2 << '\n';
-	//					out.push_back( ptB2 );
-						i = j;
-					}
-					else
-					{
-						std::cout << "  Adding point ptB1:" << ptB1 << '\n';
-	//					out.push_back( ptB1 );
-						i = j+1;
+						auto orient = priv::chull::orientation( ptA1, itpt, ptB1 );
+						assert( orient != 0 );  // because we previously minimized !
+						if( orient == 1 )
+						{
+							std::cout << "  Adding point ptB2:" << ptB2 << '\n';
+		//					out.push_back( ptB2 );
+							i = j;
+						}
+						else
+						{
+							std::cout << "  Adding point ptB1:" << ptB1 << '\n';
+		//					out.push_back( ptB1 );
+							i = j+1;
+						}
 					}
 				}
 				else
@@ -5047,7 +5069,7 @@ PolylineBase<PLT,FPT>::impl_convertToPolygon( const detail::PlHelper<type::IsClo
 		std::cout << "LOOP OUT i=" << i << '\n';
 		priv::printVector( out, "out END" );
 	}
-	while( i<size() ); //&& notDone );
+	while( i<size() );
 
 	CPolyline_<FPT> pl_out(out);
 	std::swap( *this, pl_out );

@@ -40,7 +40,7 @@ This latter part starts around line 2880.
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -2462,82 +2462,94 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 	}
 }
 
-void drawpl( CPolyline pl, std::string num)
+void test_convertToPolygon( CPolyline& pl, CPolyline& plT, int idx, std::string num )
 {
-	pl.translate(8,8);
-	pl = Homogr().addScale( 10,10) * pl;
+	auto H = Homogr().addTranslation(8,8).addScale( 10,10);
+	std::cout << "START: idx=" << idx << " num=" << num << "\n-pl:" << pl << '\n';
+
+#ifdef HOMOG2D_USE_OPENCV
 	img::Image<cv::Mat> im(350,400);
-	pl.draw( im );
-	im.write( "BUILD/convertToPolygon_" + num + ".png" );
+
+	im.clear();
+	(H*plT).draw( im );
+	im.write( "BUILD/convertToPolygon_"+ std::to_string(idx) + num + "_T.png" );
+
+	im.clear();
+	(H*pl).draw( im );
+	im.write( "BUILD/convertToPolygon_"+ std::to_string(idx) + num + "_a.png" );
+#endif // HOMOG2D_USE_OPENCV
+
+	pl.convertToPolygon();
+
+#ifdef HOMOG2D_USE_OPENCV
+	im.clear();
+	(H*pl).draw( im );
+	im.write( "BUILD/convertToPolygon_"+ std::to_string(idx) + num + "_b.png" );
+#endif // HOMOG2D_USE_OPENCV
+
+	std::cout << "AFTER: " << pl << '\n';
+}
+
+template<typename F>
+void test_convToPoly_main(  const CPolyline_<F>& pl0, const CPolyline_<F>& pl0_T, int idx )
+{
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		test_convertToPolygon( pl, pl_T, idx, "1" );
+		CHECK( pl == pl_T );
+	}
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		pl.rotate( Rotate::CW );
+		pl_T.rotate( Rotate::CW );
+		test_convertToPolygon( pl, pl_T, idx, "2" );
+		CHECK( pl == pl_T );
+	}
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		pl.rotate( Rotate::CCW );
+		pl_T.rotate( Rotate::CCW );
+		test_convertToPolygon( pl, pl_T, idx, "3" );
+		CHECK( pl == pl_T );
+	}
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		pl.rotate( Rotate::Full );
+		pl_T.rotate( Rotate::Full );
+		test_convertToPolygon( pl, pl_T, idx, "4" );
+		CHECK( pl == pl_T );
+	}
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		pl.rotate( Rotate::HMirror );
+		pl_T.rotate( Rotate::HMirror );
+		test_convertToPolygon( pl, pl_T, idx, "5" );
+		CHECK( pl == pl_T );
+	}
+	{
+		auto pl(pl0);
+		auto pl_T(pl0_T);
+		pl.rotate( Rotate::VMirror );
+		pl_T.rotate( Rotate::VMirror );
+		test_convertToPolygon( pl, pl_T, idx, "6" );
+		CHECK( pl == pl_T );
+	}
 }
 
 TEST_CASE( "Polyline convert to polygon", "[polyline-ctp]" )
 {
+	{
 #include "figures_test/polyline_ctp_1.code"
-	auto pl0(pl);
-	{
-		CHECK( pl.size() == 6 );
-		std::cout << "START 1:" << pl << '\n';
-		drawpl( pl, "1a" );
-		pl.convertToPolygon();
-		drawpl( pl, "1b" );
-		std::cout << "AFTER 1:" << pl << '\n';
-		CHECK( pl.size() == 5 );
-
-		std::vector<Point2d_<NUMTYPE>> vpt2{ {0,0}, {6,0}, {6,5}, {3,2}, {0,5} };
-		CPolyline pl2( vpt2 );
-		CHECK( pl == pl2 );
+		test_convToPoly_main( pl, pl_T, 1 );
 	}
 	{
-		pl = pl0;
-		pl.rotate( Rotate::CW );
-		std::cout << "START 2:" << pl << '\n';
-		drawpl( pl, "2a" );
-		pl.convertToPolygon();
-		drawpl( pl, "2b" );
-
-		std::cout << "AFTER 2:" << pl << '\n';
-		CHECK( pl.size() == 5 );
-	}
-	{
-		pl = pl0;
-		pl.rotate( Rotate::CCW );
-		std::cout << "START 3:" << pl << '\n';
-		drawpl( pl, "3a" );
-		pl.convertToPolygon();
-		drawpl( pl, "3b" );
-		std::cout << "AFTER 3:" << pl << '\n';
-		CHECK( pl.size() == 5 );
-	}
-	{
-		pl = pl0;
-		pl.rotate( Rotate::Full );
-		std::cout << "START 4:" << pl << '\n';
-		drawpl( pl, "4a" );
-		pl.convertToPolygon();
-		drawpl( pl, "4b" );
-		std::cout << "AFTER 4:" << pl << '\n';
-		CHECK( pl.size() == 5 );
-	}
-	{
-		pl = pl0;
-		pl.rotate( Rotate::HMirror );
-		std::cout << "START 5:" << pl << '\n';
-		drawpl( pl, "5a" );
-		pl.convertToPolygon();
-		drawpl( pl, "5b" );
-		std::cout << "AFTER 5:" << pl << '\n';
-		CHECK( pl.size() == 5 );
-	}
-	{
-		pl = pl0;
-		pl.rotate( Rotate::VMirror );
-		std::cout << "START 6:" << pl << '\n';
-		drawpl( pl, "6a" );
-		pl.convertToPolygon();
-		drawpl( pl, "6b" );
-		std::cout << "AFTER 6:" << pl << '\n';
-		CHECK( pl.size() == 5 );
+#include "figures_test/polyline_ctp_2.code"
+		test_convToPoly_main( pl, pl_T, 2 );
 	}
 }
 
