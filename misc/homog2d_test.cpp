@@ -2464,7 +2464,7 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 
 void test_convertToPolygon( CPolyline& pl, CPolyline& plT, int idx, std::string num )
 {
-	auto H = Homogr().addTranslation(8,8).addScale( 10,10);
+	auto H = Homogr().addTranslation(8,8).addScale(20,20);
 	std::cout << "START: idx=" << idx << " num=" << num << "\n-pl:" << pl << '\n';
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -2550,6 +2550,14 @@ TEST_CASE( "Polyline convert to polygon", "[polyline-ctp]" )
 	{
 #include "figures_test/polyline_ctp_2.code"
 		test_convToPoly_main( pl, pl_T, 2 );
+	}
+	{
+#include "figures_test/polyline_ctp_3.code"
+		test_convToPoly_main( pl, pl_T, 3 );
+	}
+	{
+#include "figures_test/polyline_ctp_4.code"
+		test_convToPoly_main( pl, pl_T, 4 );
 	}
 }
 

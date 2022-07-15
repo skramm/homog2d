@@ -124,6 +124,8 @@
 		<Unit filename="figures_test/polyline_comp_1b.code" />
 		<Unit filename="figures_test/polyline_ctp_1.code" />
 		<Unit filename="figures_test/polyline_ctp_2.code" />
+		<Unit filename="figures_test/polyline_ctp_3.code" />
+		<Unit filename="figures_test/polyline_ctp_4.code" />
 		<Unit filename="figures_test/polyline_min_1C.code" />
 		<Unit filename="figures_test/polyline_min_1O.code" />
 		<Unit filename="figures_test/polyline_min_2C.code" />

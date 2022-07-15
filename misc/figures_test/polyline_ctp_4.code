@@ -1,4 +1,4 @@
-// polyline_ctp_1
+// polyline_ctp_4
 // (convert to polygon)
 
 #ifdef HOMOG2D_DEBUGMODE
@@ -7,13 +7,13 @@
 
 	CPolyline_<NUMTYPE> pl(
 		std::vector<Point2d>{
-			{0,0},{4,4},{4,-1},{-2,-1},{-2,4},{2,0}
+			{0,0},{0,1},{2,-1},{4,1},{4,0}
 		}
 	);
 
 	CPolyline_<NUMTYPE> pl_T(
 		std::vector<Point2d>{
-			{1,1},{4,4},{4,-1},{-2,-1},{-2,4}
+			{0,0},{0,1},{1,0},{3,0},{4,1},{4,0},{3,0},{2,-1},{1,0}
 		}
 	);
 

@@ -1,4 +1,4 @@
-// polyline_ctp_1
+// polyline_ctp_2
 // (convert to polygon)
 
 #ifdef HOMOG2D_DEBUGMODE
@@ -15,6 +15,4 @@
 			{4,4},{4,-1},{-2,-1},{-2,4},{1,1}
 		}
 	);
-
-//	pl.translate(2,1);
 
