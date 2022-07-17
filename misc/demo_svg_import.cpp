@@ -23,8 +23,8 @@
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
-#include "homog2d.hpp"
-
+#include "../homog2d.hpp"
+#include "tinyxml2.h"
 // additional Opencv header, needed for GUI stuff
 #include "opencv2/highgui.hpp"
 
@@ -41,16 +41,17 @@ int main( int argc, const char** argv )
 	}
 	doc.LoadFile( argv[1] );
 
-
+	img::Image<cv::Mat> im( 500,500 );
 	tinyxml2::XMLElement* e2 = doc.FirstChildElement( "svg" )->FirstChildElement( "g" );
 
+	int i = 0;
 	for( tinyxml2::XMLElement* child = e2->FirstChildElement("path"); child != NULL; child = child->NextSiblingElement())
-    {
-
+	{
 	    const char *d; // = s.data();
         child->QueryAttribute("d", &d );
 //        std::cout << "data=" << d << "\n";
 
 		auto v_polyline = svg::parsePath( std::string(d) );
-
-    }
+		img::draw( im, v_polyline );
+		im.write( "BUILD/poly_" + std::to_string(i++) + ".png" );
+	}

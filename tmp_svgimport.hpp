@@ -13,7 +13,7 @@ enum RelMode
 { Relative, Absolute };
 
 /// SVG commands (subset)
-enum class Action
+enum class Action: uint8_t
 {
 	LineTo,     ///< L
 	Horizontal, ///< H
@@ -22,6 +22,7 @@ enum class Action
 	ClosePath   ///< Z
 };
 
+//------------------------------------------------------------------
 Action getAction( char c )
 {
 	switch( c )
@@ -47,15 +48,6 @@ Action getAction( char c )
 			return Action::ClosePath;
 		break;
 	}
-}
-
-int getNbArgs( Action action )
-{
-	if( action == Horizontal || action == Vertical )
-		return 1;
-	if( action == ClosePath )
-		return 0;
-	return 2;
 }
 
 Type type( char c )
@@ -96,6 +88,7 @@ bool isAllowedLetter( char c )
 	return false;
 }
 
+//------------------------------------------------------------------
 struct SvgPathData
 {
 private:
@@ -103,6 +96,7 @@ private:
 	bool hasPointValue = false;
 	bool isFirstValue  = true;
 	std::vector<Point2d> vpts;
+	std::vector<double>  v_values;
 
 	bool isX = true;
 	std::ostringstream sstr;
@@ -111,34 +105,56 @@ private:
 	Action  _action;
 	bool _nextValueIsNeg = false;
 
+
 public:
+	size_t getNbArgs()
+	{
+		if( _action == Action::Horizontal || _action == Action::Vertical )
+			return 1;
+		if( _action == Action::ClosePath )
+			return 0;
+		return 2;
+	}
+
 	void addDigit( char current )
 	{
 		sstr << current;
 		hasNumValue = true;
 	}
 
-	void processCurrentValue() // we have a value !
+	void processCurrentValue() // we have a value that we want to process
 	{
 		if( hasNumValue ) // if we have already parsed a num value previously,
 		{                 // then store it
+			hasNumValue = false;
 			auto value = fetchValueAndClear(sstr);
-			if( isX )
+			if( _nextValueIsNeg )
 			{
-				isX  = false;
-				pt.x = value;
+				value = -value;
+				_nextValueIsNeg = false;
 			}
-			else
+			v_values.push_back( value );
+			if( v_values.size() == getNbArgs() ) // we are done
 			{
-				isX = true;
-				pt.y = value;
-				hasPointValue = true; // now we have a point !
-				hasNumValue   = false;
+				switch( v_values.size() )
+				{
+					case 0:
+					break;
+					case 1:
+						assert( _action == Action::Horizontal || _action == Action::Vertical );
+					break;
+					case 2:
+						pt.set( v_values[0], v_values[1] ); // \todo handle relative !!!
+						hasPointValue = true;
+					break;
+					default:assert(0);
+				}
+				v_values.clear();
 			}
 			if( hasPointValue )
 			{
 				vpts.push_back( pt );
-				std::cout << "adding pt " << pt.x << "-" << pt.y << ", size=" << vpts.size() << '\n';
+				std::cout << "adding pt " << pt << ", size=" << vpts.size() << '\n';
 				hasPointValue = false;
 			}
 		}
@@ -151,7 +167,7 @@ public:
 
 		_mode = Absolute;
 		if( islower(current) )
-			_mode = Relative
+			_mode = Relative;
 		_action = getAction( current );
 
 	}
@@ -161,12 +177,13 @@ public:
 	}
 };
 
+//------------------------------------------------------------------
+
 void parsePath( const std::string& s )
 {
-
 	bool Done = false;
 	size_t idx = 0;
-	Data data;
+	SvgPathData data;
 	double value = 0.;
 	do
 	{
