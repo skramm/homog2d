@@ -6,7 +6,7 @@ namespace h2d {
 namespace svg {
 
 enum Type {
-	Letter,DigitOrDot,Space,Minus
+	Letter,DigitOrDot,Space,MinusOrPlus
 };
 
 enum RelMode
@@ -56,8 +56,8 @@ Type type( char c )
 		return DigitOrDot;
 	if( c == ' ' )
 		return Space;
-	if( c == '-' )
-		return Minus;
+	if( c == '-' || c == '+' )
+		return MinusOrPlus;
 	return Letter;
 }
 
@@ -201,7 +201,7 @@ void parsePath( const std::string& s )
 			case Space:
 				data.processCurrentValue();
 			break;
-			case Minus:
+			case MinusOrPlus:
 				data.nextValueIsNeg();
 				data.processCurrentValue();
 			break;

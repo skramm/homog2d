@@ -59,6 +59,7 @@
 		<Unit filename="../homog2d.hpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="../tmp_svgimport.hpp" />
 		<Unit filename="build_gif.sh" />
 		<Unit filename="demo_check.cpp">
 			<Option target="demo" />
@@ -66,6 +67,7 @@
 		<Unit filename="demo_opencv.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="demo_svg_import.cpp" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

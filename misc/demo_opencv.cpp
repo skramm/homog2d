@@ -879,9 +879,13 @@ void demo_H( int nd )
 struct Param_PL : Data
 {
 	explicit Param_PL( std::string title ):Data(title)
-	{}
+	{
+		v_po.push_back( &polyline_o );
+		v_po.push_back( &polyline_c );
+	}
 	OPolyline polyline_o;
 	CPolyline polyline_c;
+	std::vector<detail::Common<double>*> v_po;
 	bool showClosedPoly = false;
 };
 
