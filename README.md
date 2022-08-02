@@ -38,7 +38,7 @@ int main()
 
 ### News ###
 
-- 2022-08-12: fresh 2.8 release, see https://github.com/skramm/homog2d/releases
+- 2022-08-02: fresh 2.8 release, see https://github.com/skramm/homog2d/releases
 - 2022-05-18: 2.7 release
 
 (see [history](docs/homog2d_history.md) for more)
