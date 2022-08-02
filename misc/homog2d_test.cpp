@@ -2193,7 +2193,7 @@ TEST_CASE( "Segment", "[seg1]" )
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,2) );
 		Segment_<NUMTYPE> s2( Point2d(2,0), Point2d(0,2) );
 		auto bis = s1.getBisector();
-		CHECK( bis == s2.getLine()  );
+		CHECK( bis == s2.getLine() );
 	}
 	{  // test that points on a line at equal distance from a point, when
 		// transformed in a segment, we get back as middle point the same one.
@@ -2202,6 +2202,17 @@ TEST_CASE( "Segment", "[seg1]" )
 		Segment_<NUMTYPE> s1( ppts.first, ppts.second );
 		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
 	}
+}
+
+TEST_CASE( "Segment-split", "[seg-split]" )
+{
+	Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,0) );
+	auto psegs1 = s1.split();
+	auto psegs2 = split(s1);
+	CHECK( psegs1 == psegs2 );
+
+	CHECK( psegs1.first  == Segment( Point2d(0,0), Point2d(1,0) ) );
+	CHECK( psegs1.second == Segment( Point2d(1,0), Point2d(2,0) ) );
 }
 
 TEST_CASE( "Segment 2", "[seg2]" )

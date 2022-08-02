@@ -43,7 +43,7 @@ See https://github.com/skramm/homog2d
 	#include <Eigen/Dense>
 #endif
 
-#define HOMOG2D_VERSION 2.71
+#define HOMOG2D_VERSION 2.8
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
