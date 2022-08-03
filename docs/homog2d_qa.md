@@ -11,6 +11,16 @@ A: I don't see any reason why that would not be the case, as long as you are abl
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 </dd>
 
+<dt>
+Q: How do I know the version that I have installed on my machine?
+</dt>
+<dd>
+A: easy, add this in your app (of check for that symbol in the file).
+<pre>
+   std::cout << "version: " << HOMOG2D_VERSION << '\n';
+</pre>
+</dd>
+
 <a name="assert_trigger"></a>
 <dt>
 Q: I have an unexpected assert that gets triggered when I use this library in my code.
@@ -67,6 +77,8 @@ Besides the fact that I have already used it with other projects, it also has th
 This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/) or other backends.
 <br>
 But writing a binding for other libraries shouldn't be too difficult, assuming they have these.
+<br>
+<b>Note (2022-08-02): future releases will include SVG I/O !</b>
 </dd>
 
 <dt>

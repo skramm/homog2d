@@ -4,14 +4,17 @@
 
 See [Release page](https://github.com/skramm/homog2d/releases).
 
-- planned:
-  - add inversion of a 8x8 Matrix using Gauss-Jordan Elimination, to remove dependency for computing H from 2x4 points
+- planned (no specific order):
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - provide clear interface to extend drawing capabilities using other back-ends
   - add (optional) common root class, to be able to store heterogeneous objects in container
   - add polygon union and intersection
+  - add SVG I/O
 
 - current master branch
+ - ...
+
+- [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)
   - added `isColinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
   - added `getBisector()` to class `Segment_`, return bisector line
@@ -21,7 +24,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `type()` function to all primitives, will return a `Type` enum, that can be printed with `getString()`
   - added `getExtended()` to class `Segment_` and class `FRect_`
   - added `getOrthogSegment(Point2d_)` to `Line2d_`
-  - added `distTo()`  between a point and a segment
+  - added `distTo()` between a point and a segment
   - added `split()` to segments
   - fixed `isInside()` member functions
   - added `getRotatedLine()` to class Line2d_

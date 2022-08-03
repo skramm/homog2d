@@ -146,7 +146,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
-	std::cout << __FUNCTION__ << '\n';
+//	std::cout << __FUNCTION__ << '\n';
 	data.setMousePos(x,y);
 	bool doSomething = true;
 
@@ -1122,7 +1122,14 @@ struct Param_CIR : Data
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
 				vpt[i].draw( img, par_pt );
+
+		cir.draw( imsvg, par_c );
+		imsvg.write( "aaa.svg" );
 	}
+
+// DATA SECTION
+	img::Image<img::SvgImage> imsvg;//(300,200);
+
 	Circle cir;
 	FRect rect;
 	bool buildFrom3Pts = true;
@@ -1157,7 +1164,7 @@ void demo_CIR( int nd )
 		"switch circle from 2 pts / 3 pts"
 	);
 
-	kbloop.start( data );
+	kbloop.start( data ); // blocking function
 }
 
 //------------------------------------------------------------------

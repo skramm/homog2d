@@ -27,6 +27,7 @@ See https://github.com/skramm/homog2d
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <numeric>
 #include <set>
@@ -47,7 +48,8 @@ See https://github.com/skramm/homog2d
 	#include <cctype>
 #endif
 
-#define HOMOG2D_VERSION 2.71
+#define HOMOG2D_VERSION 2.8
+
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -239,6 +241,10 @@ template<typename FPT> class Circle_;
 template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
 
+namespace img {
+struct SvgImage;
+}
+
 
 template<typename T>
 using Point2d_ = base::LPBase<type::IsPoint,T>;
@@ -270,6 +276,14 @@ struct Color
 	}
 };
 
+//namespace svg {
+struct SvgImage
+{
+	std::ostringstream _svgString;
+};
+//} // namespace svg
+
+
 /// Opaque data structure, will hold the image type, depending on back-end library.
 /// This type is the one used in all the drawing functions.
 /**
@@ -281,6 +295,7 @@ struct Image
 {
 private:
 	T _realImg;
+
 public:
 	Image() = default;
 	Image( T& m ): _realImg(m)
@@ -296,12 +311,19 @@ public:
 		return _realImg;
 	}
 
-#ifdef HOMOG2D_USE_OPENCV
 	Image( size_t width, size_t height )
+	{
+		assert(0);
+//		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
+//		static_assert( std::false_type, "no concrete implementation available" );
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+/*	Image( size_t width, size_t height )
 	{
 		_realImg.create( height, width, CV_8UC3 );
 		clear();
-	}
+	}*/
 	int cols() const { return _realImg.cols; }
 	int rows() const { return _realImg.rows; }
 	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
@@ -309,7 +331,7 @@ public:
 /// Write image to disk with name \c fname
 	void write( std::string fname ) const
 	{
-		cv::imwrite( fname, _realImg );
+//		cv::imwrite( fname, _realImg );
 	}
 /// Show image on window \c wname
 	void show( std::string wname )
@@ -317,13 +339,53 @@ public:
 		cv::imshow( wname, _realImg );
 	}
 #endif
-
-//#ifdef HOMOG2D_SOME_OTHER_LIB
-//	int cols() const { return _realImg.???; }
-//	int rows() const { return _realImg.???; }
-//#endif
-
 };
+
+
+#ifdef HOMOG2D_USE_OPENCV
+template <>
+Image<cv::Mat>::Image( size_t width, size_t height )
+{
+	_realImg.create( height, width, CV_8UC3 );
+	clear();
+}
+
+template <>
+void
+Image<cv::Mat>::write( std::string fname ) const
+{
+	cv::imwrite( fname, _realImg );
+}
+
+#endif
+
+template <>
+Image<SvgImage>::Image( size_t width, size_t height )
+{
+	_realImg._svgString << "<svg version=\"1.1\" width=\""
+	<< width << "\" height=\""
+	<< height << "\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+}
+
+template <>
+Image<SvgImage>::Image()
+{
+	_realImg._svgString << "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+}
+
+template <>
+void
+Image<SvgImage>::write( std::string fname ) const
+{
+	std::ofstream file( fname );
+	if( !file.is_open() )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to open output file '" + fname + "'" );
+	}
+	file << _realImg._svgString.str();
+	file << "</svg>\n";
+}
+
 
 } // namespace img
 
@@ -2381,6 +2443,10 @@ public:
 
 	template<typename T>
 	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
+
+private:
+	void impl_drawCircle( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void impl_drawCircle( img::Image<img::SvgImage>&, img::DrawParams ) const;
 
 }; // class Circle_
 
@@ -8561,6 +8627,13 @@ template<typename T>
 void
 Circle_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 {
+	impl_drawCircle( img, dp );
+}
+
+template<typename FPT>
+void
+Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+{
 	cv::circle(
 		img.getReal(),
 		_center.getCvPti(),
@@ -8570,6 +8643,23 @@ Circle_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
 }
+
+template<typename FPT>
+void
+Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& img, img::DrawParams dp ) const
+{
+	img.getReal()._svgString << "<circle fill=\"none\" cx=\""
+		<< center().getX()
+		<< "\" cy=\""
+		<< center().getY()
+		<< "\" r=\""
+		<< radius()
+		<< "\" stroke=\"rgb("
+		<< (int)dp._dpValues._color.r << ',' << (int)dp._dpValues._color.g << ',' << (int)dp._dpValues._color.b
+		<< ")\" stroke-width=\"1\""
+		<< "/>\n";
+}
+
 
 //------------------------------------------------------------------
 /// Draw ellipse using Opencv
