@@ -8774,7 +8774,8 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"1\""
-		<< "/>\n";
+		<< " transform=\"rotate(" << angle()*180/M_PI << ',' << center().getX() << ',' << center().getY()
+		<< ")\" />\n";
 }
 
 //------------------------------------------------------------------
