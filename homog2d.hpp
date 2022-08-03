@@ -276,12 +276,11 @@ struct Color
 	}
 };
 
-//namespace svg {
+/// A svg image, see \page Drawing
 struct SvgImage
 {
 	std::ostringstream _svgString;
 };
-//} // namespace svg
 
 
 /// Opaque data structure, will hold the image type, depending on back-end library.
@@ -291,7 +290,7 @@ To expand it, you need to add code for the other library for the
 two function cols() and rows(), bounded in a "#define" block, and define the drawing functions
 */
 template<typename T>
-struct Image
+class Image
 {
 private:
 	T _realImg;
@@ -324,17 +323,12 @@ public:
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
-/*	Image( size_t width, size_t height )
-	{
-		_realImg.create( height, width, CV_8UC3 );
-		clear();
-	}*/
 	int cols() const { return _realImg.cols; }
 	int rows() const { return _realImg.rows; }
 	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
-/// Write image to disk with name \c fname
-/// Show image on window \c wname
+
+/// Show image on window \c wname (not available for SVG !)
 	void show( std::string wname )
 	{
 		cv::imshow( wname, _realImg );
@@ -365,7 +359,7 @@ Image<SvgImage>::Image( size_t width, size_t height )
 {
 	_realImg._svgString << "<svg version=\"1.1\" width=\""
 	<< width << "\" height=\""
-	<< height << "\" xmlns=\"http://www.w3.org/2000/svg\">\n";
+	<< height << "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n";
 }
 
 template <>
@@ -4047,7 +4041,6 @@ private:
 #endif
 	void impl_drawSegment( img::Image<img::SvgImage>&, img::DrawParams ) const;
 
-
 }; // class Segment_
 
 
@@ -4964,7 +4957,6 @@ public:
 	isInside( const T& cont ) const
 	{
 		HOMOG2D_START;
-//		std::cout << " - other type=" << getString(cont.type()) << '\n';
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
@@ -4976,19 +4968,6 @@ public:
 	template<typename T1,typename T2>
 	friend std::ostream&
 	h2d::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
-
-	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
-
-private:
-#ifdef HOMOG2D_USE_OPENCV
-	template<typename T>
-	void impl_draw_pl( img::Image<T>& ) const;
-#else
-	template<typename T>
-	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
-	{}
-#endif
 
 public:
 #ifdef HOMOG2D_TEST_MODE
@@ -5033,6 +5012,28 @@ Two tasks:
 			_plIsNormalized=true;
 		}
 	}
+
+public:
+	template<typename T>
+	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		if( size() < 2 ) // nothing to draw
+			return;
+		impl_drawPolyline( im, dp );
+	}
+
+private:
+	void impl_drawPolyline( img::Image<img::SvgImage>&, img::DrawParams dp ) const;
+#ifdef HOMOG2D_USE_OPENCV
+	template<typename T>
+	void impl_draw_pl( img::Image<T>& ) const;
+
+	void impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const;
+#else
+	template<typename T>
+	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
+	{}
+#endif
 
 }; // class Polyline_
 
@@ -7721,21 +7722,12 @@ split( const Segment_<FPT>& seg )
 
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers (or ellipse)
-#if 0
-template<typename FPT1,typename FPT2>
-Segment_<FPT1>
-getSegment( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
-{
-	return Segment_<FPT1>( c1.center(), c2.center() );
-}
-#else
 template<typename T1,typename T2>
 Segment_<typename T1::FType>
 getSegment( const T1& c1, const T2& c2 )
 {
 	return Segment_<typename T1::FType>( c1.center(), c2.center() );
 }
-#endif
 
 /// Free function, returns line between two circle centers
 template<typename FPT1,typename FPT2,typename FPT3>
@@ -8075,7 +8067,7 @@ getAxisLines( const Ellipse_<FPT>& ell )
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
-/// Free function, draws any of the primitives
+/// Free function, draws any of the primitives by calling the relevant member function
 template<
 	typename U,
 	typename Prim,
@@ -8223,32 +8215,34 @@ drawPt(
 }
 
 } // namespace detail
-
+#if 0
 namespace base {
 
 //------------------------------------------------------------------
 /// Draw PolylineBase, independent of back-end library (calls the segment drawing function)
 template<typename PLT,typename FPT>
-template<typename T>
 void
+//void impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 PolylineBase<PLT,FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 {
 	if( size() < 2 ) // nothing to draw
 		return;
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
-
+#if 0
 	if( dp._dpValues._showPoints )
 	{
 		auto newPointStyle = dp._dpValues.nextPointStyle();
 		getPoint(0).draw( im, dp.setColor(10,10,10).setPointStyle( newPointStyle ) );
 	}
+
 	if( dp._dpValues._showIndex )
 		impl_draw_pl( im );
+#endif
 }
 
 } // namespace base
-
+#endif
 //------------------------------------------------------------------
 namespace priv {
 /// Holds convex hull code
@@ -8637,7 +8631,7 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 }
 
 //------------------------------------------------------------------
-/// Draw FRect_ (Opencv implementation)
+/// Draw \c FRect (Opencv implementation)
 template<typename FPT>
 void
 FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) const
@@ -8653,7 +8647,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) cons
 }
 
 //------------------------------------------------------------------
-/// Draw Segment_ (Opencv implementation)
+/// Draw \c Segment (Opencv implementation)
 template<typename FPT>
 void
 Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) const
@@ -8674,7 +8668,7 @@ Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) c
 }
 
 //------------------------------------------------------------------
-/// Draw \c Circle_ (Opencv implementation)
+/// Draw \c Circle (Opencv implementation)
 template<typename FPT>
 void
 Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) const
@@ -8690,7 +8684,7 @@ Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) con
 }
 
 //------------------------------------------------------------------
-/// Draw ellipse using Opencv
+/// Draw \c Ellipse (Opencv implementation)
 /**
 - see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
 */
@@ -8711,9 +8705,37 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<cv::Mat>& im, img::DrawParams dp )  
 	);
 }
 
+
+//------------------------------------------------------------------
+namespace base {
+/// Draw PolylineBase (Opencv implementation)
+//independent of back-end library (calls the segment drawing function)
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+{
+	if( size() < 2 ) // nothing to draw
+		return;
+	for( size_t i=0; i<nbSegs(); i++ )
+		getSegment(i).draw( im, dp );
+
+	if( dp._dpValues._showPoints )
+	{
+		auto newPointStyle = dp._dpValues.nextPointStyle();
+		getPoint(0).draw( im, dp.setColor(10,10,10).setPointStyle( newPointStyle ) );
+	}
+
+	if( dp._dpValues._showIndex )
+		impl_draw_pl( im );
+}
+
+} // namespace base
+
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
+
+//------------------------------------------------------------------
 /// Draw \c Circle (SVG implementation)
 template<typename FPT>
 void
@@ -8731,7 +8753,12 @@ Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp
 		<< "/>\n";
 }
 
+//------------------------------------------------------------------
 /// Draw \c Ellipse (SVG implementation)
+/** \todo add "transform" to take into account the angle, see:
+- https://developer.mozilla.org/en-US/docs/Web/SVG/Element/ellipse
+- https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/transform
+*/
 template<typename FPT>
 void
 Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
@@ -8750,6 +8777,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< "/>\n";
 }
 
+//------------------------------------------------------------------
 /// Draw \c FRect (SVG implementation)
 template<typename FPT>
 void
@@ -8769,6 +8797,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp )
 		<< "/>\n";
 }
 
+//------------------------------------------------------------------
 /// Draw \c Segment (SVG implementation)
 template<typename FPT>
 void
@@ -8788,6 +8817,25 @@ Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< "\" stroke-width=\"1\""
 		<< "/>\n";
 }
+
+//------------------------------------------------------------------
+namespace base {
+/// Draw Polyline (SVG implementation)
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+{
+	im.getReal()._svgString << '<' << (isClosed() ? "polygon" : "polyline")
+		<< " fill=\"none\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\" stroke-width=\"1\""
+		<< " points=\"";
+		for( const auto& pt: getPts() )
+			im.getReal()._svgString << pt.getX() << ',' << pt.getY() << ' ';
+		im.getReal()._svgString << "\" />\n";
+}
+
+} // namespace base
 
 
 /////////////////////////////////////////////////////////////////////////////
