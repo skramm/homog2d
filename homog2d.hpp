@@ -318,6 +318,11 @@ public:
 //		static_assert( std::false_type, "no concrete implementation available" );
 	}
 
+	void write( std::string fname ) const
+	{
+		assert(0);
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 /*	Image( size_t width, size_t height )
 	{
@@ -329,10 +334,6 @@ public:
 	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
 /// Write image to disk with name \c fname
-	void write( std::string fname ) const
-	{
-//		cv::imwrite( fname, _realImg );
-	}
 /// Show image on window \c wname
 	void show( std::string wname )
 	{
@@ -1180,7 +1181,7 @@ class DrawParams
 /// Returns the point style following the current one
 		PtStyle nextPointStyle() const
 		{
-			if( _ptStyle == PtStyle::Diam )
+			if( _ptStyle == PtStyle::Dot )
 				return PtStyle::Plus;
 			auto curr = static_cast<int>(_ptStyle);
 			return static_cast<PtStyle>(curr+1);
@@ -1262,6 +1263,16 @@ public:
 		return *this;
 	}
 
+	std::string getSvgRgbColor() const
+	{
+		std::ostringstream oss;
+		oss << "rgb("
+			<< (int)_dpValues._color.r << ','
+			<< (int)_dpValues._color.g << ','
+			<< (int)_dpValues._color.b
+			<< ')';
+		return oss.str();
+	}
 }; // class DrawParams
 
 } // namespace img
@@ -1409,9 +1420,6 @@ public:
 	template<typename FPT2>
 	bool pointIsInside( const Point2d_<FPT2>& ) const;
 
-	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
-
 /// \name attributes
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
@@ -1494,6 +1502,19 @@ is indeed a valid ellipse
 		_par.y0 = y0;
 #endif
 	}
+
+public:
+	template<typename T>
+	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		impl_drawEllipse( im, dp );
+	}
+private:
+#ifdef HOMOG2D_USE_OPENCV
+	void impl_drawEllipse( img::Image<cv::Mat>&,       img::DrawParams ) const;
+#endif
+	void impl_drawEllipse( img::Image<img::SvgImage>&, img::DrawParams ) const;
+
 
 //////////////////////////
 //      DATA SECTION    //
@@ -2087,9 +2108,6 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const FRect_<T>& r );
 
-	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
-
 private:
 	template<typename FPT2>
 	std::vector<Point2d_<FPT>> p_pointsInside( const FRect_<FPT2>& other ) const
@@ -2128,6 +2146,19 @@ private:
 			out.add( elem );
 		return out;
 	}
+
+public:
+	template<typename T>
+	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		impl_drawFRect( im, dp );
+	}
+
+private:
+#ifdef HOMOG2D_USE_OPENCV
+	void impl_drawFRect( img::Image<cv::Mat>&,       img::DrawParams ) const;
+#endif
+	void impl_drawFRect( img::Image<img::SvgImage>&, img::DrawParams ) const;
 
 }; // class FRect_
 
@@ -2442,10 +2473,15 @@ public:
 	operator << ( std::ostream& f, const Circle_<T>& r );
 
 	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
+	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		impl_drawCircle( im, dp );
+	}
 
 private:
+#ifdef HOMOG2D_USE_OPENCV
 	void impl_drawCircle( img::Image<cv::Mat>&,       img::DrawParams ) const;
+#endif
 	void impl_drawCircle( img::Image<img::SvgImage>&, img::DrawParams ) const;
 
 }; // class Circle_
@@ -3994,12 +4030,23 @@ Requires both points inside AND no intersections
 		return seg2.getLine().getOrthogonalLine( seg2.getMiddlePoint() );
 	}
 
-	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
 
 	template<typename T>
 	friend std::ostream&
 	operator << ( std::ostream& f, const Segment_<T>& seg );
+
+	template<typename T>
+	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		impl_drawSegment( im, dp );
+	}
+
+private:
+#ifdef HOMOG2D_USE_OPENCV
+	void impl_drawSegment( img::Image<cv::Mat>&,       img::DrawParams ) const;
+#endif
+	void impl_drawSegment( img::Image<img::SvgImage>&, img::DrawParams ) const;
+
 
 }; // class Segment_
 
@@ -7673,13 +7720,22 @@ split( const Segment_<FPT>& seg )
 }
 
 //------------------------------------------------------------------
-/// Free function, returns segment between two circle centers
+/// Free function, returns segment between two circle centers (or ellipse)
+#if 0
 template<typename FPT1,typename FPT2>
 Segment_<FPT1>
 getSegment( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 {
 	return Segment_<FPT1>( c1.center(), c2.center() );
 }
+#else
+template<typename T1,typename T2>
+Segment_<typename T1::FType>
+getSegment( const T1& c1, const T2& c2 )
+{
+	return Segment_<typename T1::FType>( c1.center(), c2.center() );
+}
+#endif
 
 /// Free function, returns line between two circle centers
 template<typename FPT1,typename FPT2,typename FPT3>
@@ -8580,13 +8636,11 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 	}
 }
 
-
 //------------------------------------------------------------------
-/// Draw FRect_
+/// Draw FRect_ (Opencv implementation)
 template<typename FPT>
-template<typename T>
 void
-FRect_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
+FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) const
 {
 	cv::rectangle(
 		img.getReal(),
@@ -8599,11 +8653,10 @@ FRect_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw Segment_
+/// Draw Segment_ (Opencv implementation)
 template<typename FPT>
-template<typename T>
 void
-Segment_<FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
+Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::line(
 		im.getReal(),
@@ -8621,21 +8674,13 @@ Segment_<FPT>::draw( img::Image<T>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw Circle_
-template<typename FPT>
-template<typename T>
-void
-Circle_<FPT>::draw( img::Image<T>& img, img::DrawParams dp ) const
-{
-	impl_drawCircle( img, dp );
-}
-
+/// Draw \c Circle_ (Opencv implementation)
 template<typename FPT>
 void
-Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::circle(
-		img.getReal(),
+		im.getReal(),
 		_center.getCvPti(),
 		static_cast<int>(_radius),
 		dp._dpValues.color(),
@@ -8644,36 +8689,18 @@ Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& img, img::DrawParams dp ) co
 	);
 }
 
-template<typename FPT>
-void
-Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& img, img::DrawParams dp ) const
-{
-	img.getReal()._svgString << "<circle fill=\"none\" cx=\""
-		<< center().getX()
-		<< "\" cy=\""
-		<< center().getY()
-		<< "\" r=\""
-		<< radius()
-		<< "\" stroke=\"rgb("
-		<< (int)dp._dpValues._color.r << ',' << (int)dp._dpValues._color.g << ',' << (int)dp._dpValues._color.b
-		<< ")\" stroke-width=\"1\""
-		<< "/>\n";
-}
-
-
 //------------------------------------------------------------------
 /// Draw ellipse using Opencv
 /**
 - see https://docs.opencv.org/3.4/d6/d6e/group__imgproc__draw.html#ga28b2267d35786f5f890ca167236cbc69
 */
 template<typename FPT>
-template<typename T>
 void
-Ellipse_<FPT>::draw( img::Image<T>& img, img::DrawParams dp )  const
+Ellipse_<FPT>::impl_drawEllipse( img::Image<cv::Mat>& im, img::DrawParams dp )  const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	cv::ellipse(
-		img.getReal(),
+		im.getReal(),
 		cv::Point( par.x0,par.y0 ),
 		cv::Size( par.a, par.b ),
 		par.theta*180./M_PI,
@@ -8686,6 +8713,81 @@ Ellipse_<FPT>::draw( img::Image<T>& img, img::DrawParams dp )  const
 
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
+
+/// Draw \c Circle (SVG implementation)
+template<typename FPT>
+void
+Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+{
+	im.getReal()._svgString << "<circle fill=\"none\" cx=\""
+		<< center().getX()
+		<< "\" cy=\""
+		<< center().getY()
+		<< "\" r=\""
+		<< radius()
+		<< "\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\" stroke-width=\"1\""
+		<< "/>\n";
+}
+
+/// Draw \c Ellipse (SVG implementation)
+template<typename FPT>
+void
+Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
+{
+	im.getReal()._svgString << "<ellipse fill=\"none\" cx=\""
+		<< center().getX()
+		<< "\" cy=\""
+		<< center().getY()
+		<< "\" rx=\""
+		<< getMajMin().first
+		<< "\" ry=\""
+		<< getMajMin().second
+		<< "\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\" stroke-width=\"1\""
+		<< "/>\n";
+}
+
+/// Draw \c FRect (SVG implementation)
+template<typename FPT>
+void
+FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+{
+	im.getReal()._svgString << "<rect fill=\"none\" x=\""
+		<< getPts().first.getX()
+		<< "\" y=\""
+		<< getPts().first.getY()
+		<< "\" width=\""
+		<< width()
+		<< "\" height=\""
+		<< height()
+		<< "\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\" stroke-width=\"1\""
+		<< "/>\n";
+}
+
+/// Draw \c Segment (SVG implementation)
+template<typename FPT>
+void
+Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+{
+	auto pts = getPts();
+	im.getReal()._svgString << "<line x1=\""
+		<< pts.first.getX()
+		<< "\" y1=\""
+		<< pts.first.getY()
+		<< "\" x2=\""
+		<< pts.second.getX()
+		<< "\" y2=\""
+		<< pts.second.getY()
+		<< "\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\" stroke-width=\"1\""
+		<< "/>\n";
+}
 
 
 /////////////////////////////////////////////////////////////////////////////

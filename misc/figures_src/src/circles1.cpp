@@ -11,12 +11,14 @@ int main()
 	auto seg = getSegment( c1, c2 );
 	auto pseg = getTanSegs( c1, c2 );
 
-	img::Image<cv::Mat> img2( 450,300 );
+//	img::Image<cv::Mat> img2( 450,300 );
+	img::Image<SvgImage> img2( 450,300 );
 
-	c1.draw( img2, DrawParams().setColor(0,0,100) );
-	c2.draw( img2, DrawParams().setColor(0,0,100) );
+	c1.draw( img2,  DrawParams().setColor(0,0,100) );
+	c2.draw( img2,  DrawParams().setColor(0,0,100) );
 	seg.draw( img2, DrawParams().setColor(250,0,0) );
 	pseg.first.draw( img2,  DrawParams().setColor(0,200,100) );
 	pseg.second.draw( img2, DrawParams().setColor(0,100,200) );
-	img2.write( "circles1.png" );
+//	img2.write( "circles1.png" );
+	img2.write( "circles1.svg" );
 }
