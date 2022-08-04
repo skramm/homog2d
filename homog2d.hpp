@@ -8519,7 +8519,45 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 #endif // HOMOG2D_USE_OPENCV
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
+// SECTION .1 - CLASS DRAWING MEMBER FUNCTIONS (backend-agnostic)
+/////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------
+/// Draw Line2d on image, backend independent
+/**
+Returns false if line is not in image.
+
+Steps:
+ -# builds the 4 corner points of the image
+ -# build the 4 corresponding lines (borders of the image)
+ -# find the intersection points between the line and these 4 lines. Should find 2
+ -# draw a line between these 2 points
+*/
+template<typename LP, typename FPT>
+template<typename T>
+bool
+base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
+{
+	assert( im.rows() > 2 );
+	assert( im.cols() > 2 );
+
+	HOMOG2D_SVG_CHECK_INIT( im ); // useless if opencv, but harmless
+
+	Point2d_<FPT> pt1; // 0,0
+	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
+	auto ri = this->intersects( pt1,  pt2 );
+	if( ri() )
+	{
+		auto ppts = ri.get();
+		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
+		seg.draw( im, dp );
+		return true;
+	}
+	return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION .2 - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -8562,40 +8600,6 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<cv::Mat>& im, img::DrawParams dp,
 		default: assert(0);
 	}
 	return true;
-}
-
-//------------------------------------------------------------------
-/// Draw Line2d on image, backend independent
-/**
-Returns false if line is not in image.
-
-Steps:
- -# builds the 4 corner points of the image
- -# build the 4 corresponding lines (borders of the image)
- -# find the intersection points between the line and these 4 lines. Should find 2
- -# draw a line between these 2 points
-*/
-template<typename LP, typename FPT>
-template<typename T>
-bool
-base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsLine>& ) const
-{
-	assert( im.rows() > 2 );
-	assert( im.cols() > 2 );
-
-	HOMOG2D_SVG_CHECK_INIT( im ); // useless if opencv, but harmless
-
-	Point2d_<FPT> pt1; // 0,0
-	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
-	auto ri = this->intersects( pt1,  pt2 );
-	if( ri() )
-	{
-		auto ppts = ri.get();
-		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
-		seg.draw( im, dp );
-		return true;
-	}
-	return false;
 }
 
 //------------------------------------------------------------------
@@ -8738,7 +8742,7 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawPara
 #endif // HOMOG2D_USE_OPENCV
 
 /////////////////////////////////////////////////////////////////////////////
-// SECTION  - CLASS DRAWING MEMBER FUNCTIONS (SVG)
+// SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
