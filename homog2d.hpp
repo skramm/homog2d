@@ -1198,7 +1198,7 @@ class DrawParams
 		int         _lineThickness = 1;
 		int         _pointSize     = 4;
 		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
-		uint8_t     _ptDelta       = 8;           ///< pixels, used for drawing points
+		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
 		bool        _enhancePoint  = false;       ///< to draw selected points
 		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
@@ -1212,13 +1212,8 @@ class DrawParams
 			auto curr = static_cast<int>(_ptStyle);
 			return static_cast<PtStyle>(curr+1);
 		}
-#ifdef HOMOG2D_USE_OPENCV
-		cv::Scalar color() const
-		{
-			return cv::Scalar( _color.b, _color.g, _color.r );
-		}
-#endif // HOMOG2D_USE_OPENCV
 	};
+
 
 public:
 	Dp_values _dpValues;
@@ -1299,6 +1294,19 @@ public:
 			<< ')';
 		return oss.str();
 	}
+
+	Color color() const
+	{
+		return _dpValues._color;
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	cv::Scalar cvColor() const
+	{
+		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
+	}
+#endif // HOMOG2D_USE_OPENCV
+
 }; // class DrawParams
 
 } // namespace img
@@ -8207,7 +8215,7 @@ drawPt(
 )
 {
 	auto delta  = dp._dpValues._ptDelta;
-	auto delta2 = std::round( 0.85 * delta);
+	auto delta2 = std::round( 0.7 * delta);
 	switch( ps )
 	{
 		case img::PtStyle::Times:
@@ -8219,10 +8227,10 @@ drawPt(
 
 		case img::PtStyle::Plus:
 		case img::PtStyle::Diam:
-			vpt[0].translate( -delta2, 0.      );
-			vpt[1].translate( +delta2, 0.      );
-			vpt[2].translate( 0.,      -delta2 );
-			vpt[3].translate( 0.,      +delta2 );
+			vpt[0].translate( -delta, 0.      );
+			vpt[1].translate( +delta, 0.      );
+			vpt[2].translate( 0.,      -delta );
+			vpt[3].translate( 0.,      +delta );
 		break;
 		default: assert(0);
 	}
@@ -8575,7 +8583,7 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 	switch( dp._dpValues._ptStyle )
 	{
 		case img::PtStyle::Dot:
-			Circle_<float>( *this, dp._dpValues._pointSize ).draw( im );
+			Circle_<float>( *this, dp._dpValues._pointSize ).draw( im, dp );
 		break;
 
 		case img::PtStyle::Plus:   // "+" symbol
@@ -8641,7 +8649,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) cons
 		img.getReal(),
 		_ptR1.getCvPti(),
 		_ptR2.getCvPti(),
-		dp._dpValues.color(),
+		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
@@ -8657,7 +8665,7 @@ Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) c
 		im.getReal(),
 		_ptS1.getCvPtd(),
 		_ptS2.getCvPtd(),
-		dp._dpValues.color(),
+		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
@@ -8678,7 +8686,7 @@ Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) con
 		im.getReal(),
 		_center.getCvPti(),
 		static_cast<int>(_radius),
-		dp._dpValues.color(),
+		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
@@ -8700,7 +8708,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<cv::Mat>& im, img::DrawParams dp )  
 		cv::Size( par.a, par.b ),
 		par.theta*180./M_PI,
 		0., 360.,
-		dp._dpValues.color(),
+		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);

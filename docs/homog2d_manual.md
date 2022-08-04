@@ -1322,6 +1322,17 @@ $ make demo
 This requires that Opencv is installed on your machine.
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 
+To have an idea, here are two renderings of the same objects done with the two backends
+(done with [this program](../misc/figures_src/src/comparison_svg_opencv.cpp).)
+
+ * with SVG:
+
+  ![SVG drawing](img/comparison_1.svg)
+
+ * with OpenCv:
+
+ ![Opencv drawing](img/comparison_2.png)
+
 
 ### 8.2 - Drawing objects
 

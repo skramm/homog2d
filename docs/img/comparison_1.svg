@@ -1,0 +1,53 @@
+<svg version="1.1" width="450" height="300" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<g>
+<polygon fill="none" stroke="rgb(0,150,150)" stroke-width="1" points="50,10 70,140 180,110 150,85 120,190 "/>
+<g>
+<line x1="45" y1="10" x2="55" y2="10" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="50" y1="5" x2="50" y2="15" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="65" y1="140" x2="75" y2="140" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="70" y1="135" x2="70" y2="145" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="175" y1="110" x2="185" y2="110" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="180" y1="105" x2="180" y2="115" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="145" y1="85" x2="155" y2="85" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="150" y1="80" x2="150" y2="90" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="115" y1="190" x2="125" y2="190" stroke="rgb(0,150,150)" stroke-width="1"/>
+<line x1="120" y1="185" x2="120" y2="195" stroke="rgb(0,150,150)" stroke-width="1"/>
+</g>
+</g>
+<g>
+<polyline fill="none" stroke="rgb(150,150,0)" stroke-width="1" points="285,150 155,170 185,280 210,250 105,220 "/>
+<g>
+<line x1="280" y1="150" x2="290" y2="150" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="285" y1="145" x2="285" y2="155" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="150" y1="170" x2="160" y2="170" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="155" y1="165" x2="155" y2="175" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="180" y1="280" x2="190" y2="280" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="185" y1="275" x2="185" y2="285" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="205" y1="250" x2="215" y2="250" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="210" y1="245" x2="210" y2="255" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="100" y1="220" x2="110" y2="220" stroke="rgb(150,150,0)" stroke-width="1"/>
+<line x1="105" y1="215" x2="105" y2="225" stroke="rgb(150,150,0)" stroke-width="1"/>
+</g>
+</g>
+<circle fill="none" cx="300" cy="200" r="60" stroke="rgb(0,0,100)" stroke-width="1"/>
+<ellipse fill="none" cx="150" cy="100" rx="60" ry="15" stroke="rgb(200,0,0)" stroke-width="1" transform="rotate(20,150,100)" />
+<line x1="150" y1="100" x2="300" y2="200" stroke="rgb(150,0,150)" stroke-width="1"/>
+<rect fill="none" x="40" y="30" width="180" height="82" stroke="rgb(150,200,0)" stroke-width="1"/>
+<line x1="35" y1="280" x2="45" y2="280" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="40" y1="275" x2="40" y2="285" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="66" y1="284" x2="74" y2="276" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="66" y1="276" x2="74" y2="284" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="95" y1="280" x2="105" y2="280" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="100" y1="275" x2="100" y2="285" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="96" y1="284" x2="104" y2="276" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="96" y1="276" x2="104" y2="284" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="125" y1="280" x2="130" y2="275" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="130" y1="275" x2="135" y2="280" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="130" y1="285" x2="135" y2="280" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="125" y1="280" x2="130" y2="285" stroke="rgb(250,0,0)" stroke-width="1"/>
+<circle fill="none" cx="160" cy="280" r="4" stroke="rgb(250,0,0)" stroke-width="1"/>
+<line x1="0" y1="243.116" x2="449" y2="138.698" stroke="rgb(80,80,80)" stroke-width="1"/>
+</svg>
