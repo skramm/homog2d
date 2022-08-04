@@ -84,6 +84,7 @@
 		<Unit filename="figures_src/latex/fig2.tex" />
 		<Unit filename="figures_src/latex/fig3.tex" />
 		<Unit filename="figures_src/src/circles1.cpp" />
+		<Unit filename="figures_src/src/comparison_svg_opencv.cpp" />
 		<Unit filename="figures_src/src/fig_src.header" />
 		<Unit filename="figures_src/src/frect1.cpp" />
 		<Unit filename="figures_src/src/frect2.cpp" />
@@ -95,7 +96,6 @@
 		<Unit filename="figures_src/src/segment_extended.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_circle_1.cpp" />
-		<Unit filename="figures_src/src/svg_test_1.cpp" />
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

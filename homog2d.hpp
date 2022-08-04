@@ -3482,10 +3482,13 @@ private:
 		impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 	}
 
-	bool impl_draw_LP( img::Image<cv::Mat>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
+//	bool impl_draw_LP( img::Image<cv::Mat>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
 #endif // HOMOG2D_USE_OPENCV
 
-	bool impl_draw_LP( img::Image<img::SvgImage>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
+//	bool impl_draw_LP( img::Image<img::SvgImage>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
+
+	template<typename T>
+	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& )  const;
 	template<typename T>
 	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::RootHelper<type::IsLine>& )  const;
 
@@ -8556,17 +8559,12 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 	return false;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// SECTION .2 - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
-/////////////////////////////////////////////////////////////////////////////
-
-#ifdef HOMOG2D_USE_OPENCV
-//------------------------------------------------------------------
-/// Draw points on Cv::Mat: implementation
+/// Draw points on image implementation, backend independent.
 /// Returns false if point not in image
 template<typename LP, typename FPT>
+template<typename T>
 bool
-base::LPBase<LP,FPT>::impl_draw_LP( img::Image<cv::Mat>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
+base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
 	if( getX()<0 || getX()>=im.cols() )
 		return false;
@@ -8577,7 +8575,7 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<cv::Mat>& im, img::DrawParams dp,
 	switch( dp._dpValues._ptStyle )
 	{
 		case img::PtStyle::Dot:
-			cv::circle( im.getReal(), getCvPti(), dp._dpValues._pointSize, dp._dpValues.color(), -1 );
+			Circle_<float>( *this, dp._dpValues._pointSize ).draw( im );
 		break;
 
 		case img::PtStyle::Plus:   // "+" symbol
@@ -8602,6 +8600,12 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<cv::Mat>& im, img::DrawParams dp,
 	return true;
 }
 
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION .2 - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_USE_OPENCV
 //------------------------------------------------------------------
 /// Extension to PolylineBase<PLT,FPT>::draw(), to draw point indexes
 /**
@@ -8744,25 +8748,6 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawPara
 /////////////////////////////////////////////////////////////////////////////
 // SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
-
-//------------------------------------------------------------------
-/// Draw \c Point2d (SVG implementation)
-template<typename LP, typename FPT>
-bool
-base::LPBase<LP,FPT>::impl_draw_LP( img::Image<img::SvgImage>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
-{
-	HOMOG2D_SVG_CHECK_INIT( im );
-
-	im.getReal()._svgString << "<circle fill=\""
-		<< dp.getSvgRgbColor()
-		<< "\" cx=\"" << getX()
-		<< "\" cy=\"" << getY()
-		<< "\" r=\"3\" stroke=\""
-		<< dp.getSvgRgbColor()
-		<< "\"/>\n";
-
-	return true;
-}
 
 //------------------------------------------------------------------
 /// Draw \c Circle (SVG implementation)
