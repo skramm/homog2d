@@ -12,10 +12,11 @@ For stable releases, see https://github.com/skramm/homog2d/releases .
 5. [Intersections and enclosings determination](#inter)
 6. [Misc. features](#misc)
 7. [Bindings](#bind)
-8. [Numerical data types](#numdt)
-9. [Technical details](#tech)
-10. [FAQ](homog2d_qa.md)
-11. [History](homog2d_history.md)
+8. [Drawing things](#drawing)
+9. [Numerical data types](#numdt)
+10. [Technical details](#tech)
+11. [FAQ](homog2d_qa.md)
+12. [History](homog2d_history.md)
 
 ## 1 - Introduction
 <a name="intro"></a>
@@ -1298,6 +1299,7 @@ H = m;        // or call assignment operator
 ```
 
 ## 8 - Drawing 
+<a name="drawing"></a>
 
 This library provides a way to render data graphically, using two backends.
 However please note that this is not a "high-end" drawing tool, the rendering has no
@@ -1308,12 +1310,12 @@ extended fine-tuning on how things are rendered, it is there only to quickly see
 The user can select between two backends, both can be usable at the same time.
 They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
 
-Two concrete types can be used, either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type, that requires that the symbol `HOMOG2D_USE_OPENCV` is defined
+The two concrete types can be used are either `img::SvgImage`, to generate a SVG file, and Opencv `cv::Mat` type, that requires that the symbol `HOMOG2D_USE_OPENCV` is defined
 (and of course that the library is installed on system).
 
 The difference between these two backends is that with SVG, you may only generate a file;
 with OpenCv, you can build an interactive app, through the "HighGui" part of that library, whith mouse and keyboard callbacks.
-This is demonstrated in a provided demo program that you can try with:
+This is demonstrated in a [provided demo program](../misc/demo_opencv.cpp) that you can try with:
 ```
 $ make demo
 ```
@@ -1321,6 +1323,7 @@ This requires that Opencv is installed on your machine.
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 
+### 8.2 - Drawing objects
 
 Generic drawing member functions are provided for all the types.
 For example, creating a SVG file in current folder, holding a circle:
@@ -1356,7 +1359,7 @@ img::Image<cv::Mat> img( 300, 400 );
 cv::Mat ocv = img.getReal()
 ```
 
-### 8.2 - Drawing parameters
+### 8.3 - Drawing parameters
 
 All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
@@ -1404,7 +1407,7 @@ The available functions are given in the table below:
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
 
-### 8.3 - Drawing containers
+### 8.4 - Drawing containers
 
 If you have a container (`std::vector`, `std::array` or `std::list`) filled with one of the primitives
 or a `std::pair` of primitives,
