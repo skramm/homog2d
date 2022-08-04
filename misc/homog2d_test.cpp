@@ -1190,7 +1190,7 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( cA.center() == Point2d(0,0) );
 
 		Circle_<NUMTYPE> cB( Point2d(5,0), 2.);
-		auto seg = getSegment<NUMTYPE>( cA, cB );
+		auto seg = getSegment( cA, cB );
 		CHECK( seg.getPts().first  == Point2d(0,0) );
 		CHECK( seg.getPts().second == Point2d(5,0) );
 		CHECK( seg.length() == 5 );

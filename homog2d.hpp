@@ -380,18 +380,17 @@ template <>
 void
 Image<SvgImage>::svgInit()
 {
-	_realImg._svgString << "<svg version=\"1.1\""
-		<< " width=\""    << _width
+	_realImg._svgString << "<svg version=\"1.1\" width=\"" << _width
 		<< "\" height=\"" << _height
 		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
 		<< "<style>\n"
 		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
-		<< "</style>\n"
-		<< "<defs>\n"
+		<< "</style>\n";
+/*		<< "<defs>\n"
 		<< "<marker id=\"dot\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" "  // marker for polyline points drawing
 		<< "markerWidth=\"5\" markerHeight=\"5\">"
 		<< "<circle cx=\"5\" cy=\"5\" r=\"3\" fill=\"red\" />"
-		<< "</marker>\n</defs>\n";
+		<< "</marker>\n</defs>\n";*/
 	_isInitialized = true;
 }
 
@@ -414,7 +413,6 @@ Image<SvgImage>::write( std::string fname ) const
 	file << _realImg._svgString.str();
 	file << "</svg>\n";
 }
-
 
 } // namespace img
 
@@ -3488,7 +3486,6 @@ private:
 #endif // HOMOG2D_USE_OPENCV
 
 	bool impl_draw_LP( img::Image<img::SvgImage>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
-
 	template<typename T>
 	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::RootHelper<type::IsLine>& )  const;
 
@@ -8596,16 +8593,6 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
     	auto ppts = ri.get();
     	h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts.first, ppts.second );
     	seg.draw( im, dp );
-/*		cv::Point2d ptcv1 = ppts.first.getCvPtd();
-		cv::Point2d ptcv2 = ppts.second.getCvPtd();
-		cv::line(
-			img.getReal(),
-			ptcv1,
-			ptcv2,
-			dp._dpValues.color(),
-			dp._dpValues._lineThickness,
-			dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
-		);*/
 		return true;
 	}
 	return false;
@@ -8750,19 +8737,28 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawPara
 //------------------------------------------------------------------
 #endif // HOMOG2D_USE_OPENCV
 
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - CLASS DRAWING MEMBER FUNCTIONS (SVG)
+/////////////////////////////////////////////////////////////////////////////
+
 //------------------------------------------------------------------
 /// Draw \c Point2d (SVG implementation)
-/// \todo write this !
 template<typename LP, typename FPT>
 bool
 base::LPBase<LP,FPT>::impl_draw_LP( img::Image<img::SvgImage>& im, img::DrawParams dp, const detail::RootHelper<type::IsPoint>& ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
+	im.getReal()._svgString << "<circle fill=\""
+		<< dp.getSvgRgbColor()
+		<< "\" cx=\"" << getX()
+		<< "\" cy=\"" << getY()
+		<< "\" r=\"3\" stroke=\""
+		<< dp.getSvgRgbColor()
+		<< "\"/>\n";
+
 	return true;
-
 }
-
 
 //------------------------------------------------------------------
 /// Draw \c Circle (SVG implementation)
@@ -8772,12 +8768,10 @@ Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
-	im.getReal()._svgString << "<circle fill=\"none\" cx=\""
-		<< center().getX()
-		<< "\" cy=\""
-		<< center().getY()
-		<< "\" r=\""
-		<< radius()
+	im.getReal()._svgString << "<circle fill=\"none"
+		<< "\" cx=\"" << center().getX()
+		<< "\" cy=\"" << center().getY()
+		<< "\" r=\"" << radius()
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
@@ -8855,11 +8849,17 @@ Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams 
 //------------------------------------------------------------------
 namespace base {
 /// Draw Polyline (SVG implementation)
+/**
+\note To show the points index, we don't use the svg "marker-start/marker-mid/marker-end" syntax so that the dots always have the same color as the segments
+*/
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
+
+	if( dp._dpValues._showIndex || dp._dpValues._showPoints )
+		im.getReal()._svgString << "<g>\n";
 
 	im.getReal()._svgString << '<' << (isClosed() ? "polygon" : "polyline")
 		<< " fill=\"none\" stroke=\""
@@ -8868,14 +8868,11 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::Dr
 		<< " points=\"";
 	for( const auto& pt: getPts() )
 		im.getReal()._svgString << pt.getX() << ',' << pt.getY() << ' ';
-	im.getReal()._svgString << '"';
-
-	if( dp._dpValues._showPoints )
-		im.getReal()._svgString << " marker-start=\"url(#dot)\" marker-mid=\"url(#dot)\" marker-end=\"url(#dot)\"";
-
-	im.getReal()._svgString << "/>\n";
+	im.getReal()._svgString << "\"/>\n";
 
 	if( dp._dpValues._showIndex )
+	{
+		im.getReal()._svgString << "<g>\n";
 		for( size_t i=0; i<size(); i++ )
 		{
 			auto pt = getPoint(i);
@@ -8887,6 +8884,19 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::Dr
 				<< i
 				<< "</text>\n";
 		}
+		im.getReal()._svgString << "</g>\n";
+	}
+
+	if( dp._dpValues._showPoints )
+	{
+		im.getReal()._svgString << "<g>\n";
+		for( size_t i=0; i<size(); i++ )
+			getPoint(i).draw( im, dp );
+		im.getReal()._svgString << "</g>\n";
+	}
+
+	if( dp._dpValues._showIndex || dp._dpValues._showPoints )
+		im.getReal()._svgString << "</g>\n";
 }
 
 } // namespace base

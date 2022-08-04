@@ -23,7 +23,7 @@ For stable releases, see https://github.com/skramm/homog2d/releases .
 All the code is in the namespace `h2d`, so either add `using namespace h2d;`, either use it as a prefix on each type.
 
 This library provides several main data types: lines, points, segments, circles, ellipses, polyline and homography matrices.
-These can be used to transform (planar transformation) one of the basic types.
+These can be used to transform one of the basic types (planar transformation).
 It is implemented as a homogeneous 3x3 matrix.
 
 All the data types implement a comparison operator ( `==` and  `!=`).
@@ -1238,7 +1238,8 @@ just define the symbol `HOMOG2D_BIND_X` and `HOMOG2D_BIND_Y` with the ones you u
 For homographies, you can import directly from
 `std::vector<std::vector<T>>` or `std::array<std::array<T,3>,3>`.
 
-For the first case, it is mandatory that all the vectors sizes are equal to 3 (the 3 embedded ones and the global one).
+For the first case, it is mandatory that all the vectors sizes are equal to 3
+(the 3 embedded ones and the global one).
 
 ### 7.1 - Data conversion from/to Opencv data types
 
@@ -1296,33 +1297,49 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 7.2 - Drawing functions
+## 8 - Drawing 
 
-The demo demonstrating this Opencv binding is provided, try it with
-`$ make demo` (requires that Opencv is installed on your machine).
+This library provides a way to render data graphically, using two backends.
+However please note that this is not a "high-end" drawing tool, the rendering has no
+extended fine-tuning on how things are rendered, it is there only to quickly see what is going on.
 
+### 8.1 - Available backends
+
+The user can select between two backends, both can be usable at the same time.
+They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
+
+Two concrete types can be used, either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type, that requires that the symbol `HOMOG2D_USE_OPENCV` is defined
+(and of course that the library is installed on system).
+
+The difference between these two backends is that with SVG, you may only generate a file;
+with OpenCv, you can build an interactive app, through the "HighGui" part of that library, whith mouse and keyboard callbacks.
+This is demonstrated in a provided demo program that you can try with:
+```
+$ make demo
+```
+This requires that Opencv is installed on your machine.
 In case you have some trouble building this program, please [read this](opencv_notes.md).
 
 
-Generic drawing member functions are provided for all the types, using an opaque image datatype and some other classes,
-all lying in the sub-namespace `img` :
 
+Generic drawing member functions are provided for all the types.
+For example, creating a SVG file in current folder, holding a circle:
 ```C++
-template<typename T>
-void draw( img::Image<T>&, img::DrawParams dp=img::DrawParams() ) const;
-```
-At present, this templated image datatype only implements drawing on a OpenCv image (`cv::Mat` type),
-but the idea is to make it easily adaptable for other back-end graphical libraries.
+img::Image<img::SvgImage> im1( 300, 400 ); // 300 x 400 pixels
 
-To use it in a program linked with Opencv:
+Circle c1( 100,100,80 );
+c1.draw( im1 );
+im1.write( "circles1.svg" );
+```
+
+Same, using Opencv to create a png file:
 ```C++
-img::Image<cv::Mat> img( 300, 400 ); // new image, white
+img::Image<cv::Mat> im2( 300, 400 ); // new image, white
 
-Circle c( 100,100,80 );
-c.draw( img );
-img.write( "circles1.png" );
+Circle c2( 100,100,80 );
+c2.draw( im2 );
+im2.write( "circles2.png" );
 ```
-This will create a png file in current folder, holding a circle.
 
 A corresponding free function is available, can be used for any type:
 ```C++
@@ -1339,8 +1356,7 @@ img::Image<cv::Mat> img( 300, 400 );
 cv::Mat ocv = img.getReal()
 ```
 
-
-### 7.3 - Drawing parameters
+### 8.2 - Drawing parameters
 
 All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
@@ -1388,7 +1404,7 @@ The available functions are given in the table below:
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
 
-### 7.4 - Drawing containers
+### 8.3 - Drawing containers
 
 If you have a container (`std::vector`, `std::array` or `std::list`) filled with one of the primitives
 or a `std::pair` of primitives,
@@ -1427,11 +1443,10 @@ std::function<DrawParams(int)> func(fl);
 draw( img, vseg, func );
 ```
 
-
-## 8 - Numerical data types
+## 9 - Numerical data types
 <a name="numdt"></a>
 
-### 8.1 - Underlying data type
+### 9.1 - Underlying data type
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -1478,7 +1493,7 @@ CircleF c2;
 assert( dtype(c2) == Dtype::Float );
 ```
 
-### 8.2 - Numerical type conversion
+### 9.2 - Numerical type conversion
 
 It is possible to convert to/from an object templated by a different type (at the cost of a potential precision loss):
 ```C++
@@ -1490,7 +1505,7 @@ SegmentD sd;
 SegmentL sl = sd;
 ```
 
-### 8.3 - Numerical issues
+### 9.3 - Numerical issues
 <a name="num_issues"></a>
 
 For the tests on null values and floating-point comparisons, some compromises had to be done.
@@ -1505,7 +1520,7 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
-## 9 - Technical details
+## 10 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
@@ -1518,7 +1533,7 @@ Normalization is done for comparison but not saved.
 
 For more details on the code, check [this page](homog2d_devinfo.md).
 
-### 9.1 - Testing
+### 10.1 - Testing
 
 A unit-test program is included.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
@@ -1549,7 +1564,7 @@ user   1m21,940s
 sys    0m1,699s
 ```
 
-### 9.2 - Build options
+### 10.2 - Build options
 <a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
