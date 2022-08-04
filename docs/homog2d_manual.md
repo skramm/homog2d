@@ -582,7 +582,7 @@ auto line = getLine( c1, c2 );    // as a line
 // same result than: getSegment( c1, c2 ).getLine();
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
-![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles1.png)
+![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles2.svg)
 
 
 ### 3.4 - Polyline
@@ -1298,7 +1298,7 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-## 8 - Drawing 
+## 8 - Drawing
 <a name="drawing"></a>
 
 This library provides a way to render data graphically, using two backends.

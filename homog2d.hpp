@@ -48,7 +48,7 @@ See https://github.com/skramm/homog2d
 	#include <cctype>
 #endif
 
-#define HOMOG2D_VERSION 2.8
+#define HOMOG2D_VERSION 2.81
 
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -8587,12 +8587,12 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
-    auto ri = this->intersects( pt1,  pt2 );
-    if( ri() )
-    {
-    	auto ppts = ri.get();
-    	h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts.first, ppts.second );
-    	seg.draw( im, dp );
+	auto ri = this->intersects( pt1,  pt2 );
+	if( ri() )
+	{
+		auto ppts = ri.get();
+		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
+		seg.draw( im, dp );
 		return true;
 	}
 	return false;
@@ -8970,10 +8970,6 @@ using OPolylineD = base::PolylineBase<type::IsOpen,double>;
 using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
 } // namespace h2d end
-
-#ifdef HOMOG2D_USE_SVG_IMPORT
-	#include "tmp_svgimport.hpp"
-#endif
 
 
 #endif // HG_HOMOG2D_HPP
