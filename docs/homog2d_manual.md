@@ -1329,7 +1329,6 @@ Generic drawing member functions are provided for all the types.
 For example, creating a SVG file in current folder, holding a circle:
 ```C++
 img::Image<img::SvgImage> im1( 300, 400 ); // 300 x 400 pixels
-
 Circle c1( 100,100,80 );
 c1.draw( im1 );
 im1.write( "circles1.svg" );
@@ -1337,8 +1336,7 @@ im1.write( "circles1.svg" );
 
 Same, using Opencv to create a png file:
 ```C++
-img::Image<cv::Mat> im2( 300, 400 ); // new image, white
-
+img::Image<cv::Mat> im2( 300, 400 );
 Circle c2( 100,100,80 );
 c2.draw( im2 );
 im2.write( "circles2.png" );
@@ -1410,16 +1408,17 @@ The available functions are given in the table below:
 ### 8.4 - Drawing containers
 
 If you have a container (`std::vector`, `std::array` or `std::list`) filled with one of the primitives
-or a `std::pair` of primitives,
+or a `std::pair` of primitives (can be different types),
 you can draw them at once with a call to the same function:
 ```C++
 std::vector<Segment> vseg;
 // ... fill vseg with data
-std::pair<Circle,Circle> p_cir;
+std::pair<Circle,FRect> pair;
 // ... fill the pair
 draw( img, vseg );      // use default parameters
 draw( img, vseg, dp );  // pass some drawing parameters
-draw( img, p_cir );     // draw the pair of circles
+draw( img, pair );      // draw the pair circle, rectangle
+draw( img, pair, dp );  // you can even pass drawing parameters
 ```
 
 For containers, a second generic function is provided that has as third argument a `std::function`.

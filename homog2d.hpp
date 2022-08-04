@@ -8181,13 +8181,13 @@ void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)
 //------------------------------------------------------------------
 /// Free function, draws a pair of objects
 /**
-Type \c T can be anything drawable
+Type \c T1 and \c T2 can be anything drawable
 */
-template<typename T,typename U>
-void draw( img::Image<U>& img, const std::pair<T,T>& ppts, const img::DrawParams& dp=img::DrawParams() )
+template<typename T1,typename T2,typename U>
+void draw( img::Image<U>& img, const std::pair<T1,T2>& pa, const img::DrawParams& dp=img::DrawParams() )
 {
-	ppts.first.draw(  img, dp );
-	ppts.second.draw( img, dp );
+	pa.first.draw(  img, dp );
+	pa.second.draw( img, dp );
 }
 
 namespace detail {
