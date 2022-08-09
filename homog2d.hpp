@@ -5092,7 +5092,7 @@ void
 PolylineBase<PLT,FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
 {
 	translate( -refpt.getX(), -refpt.getY() );
-	rotate( rot );
+	this->rotate( rot );
 	translate( refpt.getX(), refpt.getY() );
 }
 
@@ -5108,7 +5108,6 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 			for( auto& pt: getPts() )
 				pt.set( -pt.getY(), pt.getX() );
 		break;
-
 		case Rotate::CW:
 			for( auto& pt: getPts() )
 				pt.set( pt.getY(), -pt.getX() );
@@ -7080,11 +7079,7 @@ Implementing this algorithm in a naive way may encounter some issue:
 if the main segment used to compute the number of intersections is colinear with
 one of the points of the polyline, we might run into a numerical issue.
 
-Thus
-Algo:
-\verbatim
-aaa
-\endverbatim
+See page \ref md_docs_homog2d_algorithms for details.
 */
 template<typename LP, typename FPT>
 template<typename T,typename PTYPE>
@@ -7569,6 +7564,7 @@ operator * (
 
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
+
 template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
@@ -7627,7 +7623,8 @@ isConvex( const base::PolylineBase<PLT,FPT>& poly )
 /// Returns the number of segments (free function)
 /// \sa PolylineBase::nbSegs()
 template<typename PLT,typename FPT>
-size_t nbSegs( const base::PolylineBase<PLT,FPT>& pl )
+size_t
+nbSegs( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.nbSegs();
 }
@@ -7644,9 +7641,26 @@ getSegs( const base::PolylineBase<PLT,FPT>& pl )
 /// Returns the number of points (free function)
 /// \sa PolylineBase::size()
 template<typename PLT,typename FPT>
-size_t size( const base::PolylineBase<PLT,FPT>& pl )
+size_t
+size( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.size();
+}
+
+/// Rotates the primitive (only available for Polyline at present) around
+template<typename T>
+void
+rotate( T& pl, Rotate rot )
+{
+	pl.rotate( rot );
+}
+
+/// Rotates the primitive (only available for Polyline at present) around \c refpt
+template<typename T,typename FPT>
+void
+rotate( T& pl, Rotate rot, const Point2d_<FPT>& refpt )
+{
+	pl.rotate( rot, refpt );
 }
 
 /// Returns width, height of rectangle (free function)
@@ -7801,9 +7815,6 @@ getParallelSegs( const Segment_<FPT>& seg, T dist )
 {
 	return seg.getParallelSegs(dist);
 }
-
-
-
 
 /// Free function, returns middle point of set of segments
 /**
@@ -8828,6 +8839,9 @@ Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams 
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
+	if( dp._dpValues._showPoints )
+		im.getReal()._svgString << "<g>\n";
+
 	auto pts = getPts();
 	im.getReal()._svgString << "<line x1=\""
 		<< pts.first.getX()
@@ -8841,6 +8855,13 @@ Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
 		<< "/>\n";
+
+	if( dp._dpValues._showPoints )
+	{
+		_ptS1.draw( im, dp );
+		_ptS2.draw( im, dp );
+		im.getReal()._svgString << "</g>\n";
+	}
 }
 
 //------------------------------------------------------------------

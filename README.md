@@ -52,7 +52,7 @@ This will copy that file in `/usr/local/include`.
 
 - Usage: see [full manual](docs/homog2d_manual.md)
 
-- Reference: once downloaded, enter `make doc` (requires Doxygen).
+- Reference: once downloaded, enter `$ make doc` (requires Doxygen).
 
 - A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).

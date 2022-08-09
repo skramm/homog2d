@@ -71,7 +71,7 @@ Thus we have between 0 and 4 intersections (equal intersection points are remove
 
 ### 2.1 - Point inside Polygon
 
-The algorithm will provide an answer to the question "is this point 'p' inside this polygon"
+The algorithm will provide an answer to the question "is this point 'p' inside this polygon".
 So first, as polygons are implemented through the class `CPolyline_`, it will return `false`
 if it does not meet the "polygon" requirements (i.e. if there are some segments crossings, or if the polyline is not closed).
 
@@ -84,13 +84,13 @@ However, while mathematically exact, this algorithm needs to be implemented with
 The most important point is how do we select the "outside" (infinity) point 'px'.
 
 - First, we check if the point 'p' is outside the bounding box of the polyline.
-If so, we return `false`.
+This implies that the point is not inside, thus we return `false`.
 - Second, we build the "extended" bounding box and search for a suitable point lying on its edges.
-What we want to avoid is selecting a point 'px' so that a segment [p,px] will not intersect with one of the points of the polygon.
+What we want to avoid is selecting a point 'px' so that a segment [p,px] will intersect with one of the points of the polygon.
 Because if it does, it will generate two crossings where there oughta be only one.
 
 So the implementation sets up an iterative method:
-starting with the extended bounding box, we take each of the associated segments and check if taking the middle point as "reference" point does the job (i.e. the reference segment is far enough from all points of the polygon).
+starting with the extended bounding box (see FRect_::getExtended() ), we take each of the associated segments and check if taking the middle point as "reference" point does the job (i.e. the reference segment is far enough from all points of the polygon).
 If not, we check the following.
 If none of the segments fit, we double the number of segments by splitting each of them, and reiterate, until we find a suitable point on the extended BB edge to build our reference segment.
 

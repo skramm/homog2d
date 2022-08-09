@@ -2766,6 +2766,8 @@ TEST_CASE( "Polyline rotation", "[polyline-rot]" )
 {
 	OPolyline_<NUMTYPE> plo;
 	CPolyline_<NUMTYPE> plc;
+	OPolyline_<NUMTYPE> plo_ff;
+	CPolyline_<NUMTYPE> plc_ff;
 	std::vector<Point2d>  vpts{ {0,0}, {2,0}, {1,1} };
 	{
 		plo.set( vpts );
@@ -2777,6 +2779,13 @@ TEST_CASE( "Polyline rotation", "[polyline-rot]" )
 		CPolyline_<NUMTYPE> plc2( vpts2 );
 		CHECK( plo == plo2 );
 		CHECK( plc == plc2 );
+
+		plo_ff.set( vpts );
+		plc_ff.set( vpts );
+		rotate( plo_ff, Rotate::CCW );
+		rotate( plc_ff, Rotate::CCW );
+		CHECK( plo == plo_ff );
+		CHECK( plc == plc_ff );
 	}
 	{
 		plo.set( vpts );

@@ -743,6 +743,12 @@ The available values are:
 * `VMirror`: Mirror points relatively to vertical axis
 * `HMirror`: Mirror points relatively to horizontal axis
 
+```C++
+Cpolyline poly;
+// ... fill with points
+poly.rotate( Rotate::CW ); // or free function: rotate( poly, Rotate::CW );
+```
+
 These operations are done relatively to the origin `(0,0)`.
 If you need a rotation on a specific plane location, you may pass that location as second argument:
 
@@ -750,9 +756,8 @@ If you need a rotation on a specific plane location, you may pass that location 
 Cpolyline poly;
 // ... fill with points
 Point2d org( ..., ... );
-poly.rotate( Rotate::CW, org );
+poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
-
 
 ### 3.5 - Ellipse
 <a name="p_ellipse"></a>
@@ -1310,8 +1315,8 @@ extended fine-tuning on how things are rendered, it is there only to quickly see
 The user can select between two backends, both can be usable at the same time.
 They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
 
-The two concrete types can be used are either `img::SvgImage`, to generate a SVG file, and Opencv `cv::Mat` type, that requires that the symbol `HOMOG2D_USE_OPENCV` is defined
-(and of course that the library is installed on system).
+The two concrete types can be used are either `img::SvgImage`, to generate a SVG file, and Opencv `cv::Mat` type,
+that requires that the symbol `HOMOG2D_USE_OPENCV` is defined and that the library is installed on system.
 
 The difference between these two backends is that with SVG, you may only generate a file;
 with OpenCv, you can build an interactive app, through the "HighGui" part of that library, whith mouse and keyboard callbacks.
