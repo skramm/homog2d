@@ -504,9 +504,15 @@ auto c1 = r1.getBoundingCircle(); // or: getBoundingCircle(r1);
 The extended flat rectangle is available with a free of member function:
 ```C++
 FRect  r1( pt1, pt2 );
-auto rect_ext = s1.getExtended(); // or getExtended(r1);
+auto rect_ext = r1.getExtended(); // or getExtended(r1);
 ```
 The extended flat rectangle will have an area 9 times the area of original rectangle.
+
+The diagonal segments are available with a call to a member or free function:
+```C++
+FRect  r1( pt1, pt2 );
+auto p_diags = = r1.getDiagonals(); // or getDiagonals(r1);
+```
 
 The figure below shows the extended rectangle and the diagonals.
 red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines

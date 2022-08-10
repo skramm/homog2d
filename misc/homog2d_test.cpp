@@ -2437,6 +2437,7 @@ TEST_CASE( "FRect extended", "[frect-ext]" )
 	auto r1b = getExtended(rect);
 	CHECK( r1a == r1b );
 	CHECK( r1a == FRect(-1,-1,2,2 ) );
+	CHECK( r1a.area() == 9 * rect.area() );
 
 	FRect_<NUMTYPE> rect2(4,5,6,6);
 	CHECK( rect2.getExtended() == FRect(2,4,8,7) );
