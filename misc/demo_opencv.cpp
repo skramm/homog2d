@@ -971,9 +971,10 @@ void action_PL( void* param )
 		auto YN = data.pt_mouse.isInside(data.polyline_c)?"Y":"N";
 		data.putTextLine( std::string("IsInside=") + std::string( YN ) );
 
-		auto idx = base::sub::getFarthestSegment( data.pt_mouse, bb );
+/*		auto idx = base::sub::getFarthestSegment( data.pt_mouse, bb );
 		auto seg_f = bb.getSegs()[idx];
 		seg_f.draw( data.img, img::DrawParams().setColor(250,20,120) );
+*/
 	}
 	data.showImage();
 }

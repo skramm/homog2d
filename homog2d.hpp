@@ -7038,6 +7038,7 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::Root
 }
 
 //------------------------------------------------------------------
+#if 0
 namespace sub {
 
 /// Returns the index of the segment (among the ones in \c bbox)
@@ -7068,8 +7069,8 @@ getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
 	return dist_array[3].second;
 }
 
-} // namespace priv
-
+} // namespace sub
+#endif
 //------------------------------------------------------------------
 /// Returns true if point is inside closed Polyline
 /**
