@@ -65,6 +65,7 @@
 			<Option target="demo" />
 		</Unit>
 		<Unit filename="demo_opencv.cpp" />
+		<Unit filename="demo_svg_import.cpp" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

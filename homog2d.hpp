@@ -8989,6 +8989,9 @@ using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
 } // namespace h2d end
 
+#ifdef HOMOG2D_USE_SVG_IMPORT
+	#include "tmp_svgimport.hpp"
+#endif
 
 #endif // HG_HOMOG2D_HPP
 
