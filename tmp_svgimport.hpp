@@ -9,12 +9,23 @@ namespace svg {
 
 
 //------------------------------------------------------------------
+template<typename FPT>
 class XmlVisitor: public tinyxml2::XMLVisitor
 {
+private:
+	std::vector<detail::Common<FPT>*> vec;
+public:
+	std::vector<detail::Common<FPT>*> get() const
+	{
+		return vec;
+	}
+	void processElem( const tinyxml2::XMLElement& e );
+
 	bool VisitExit( const tinyxml2::XMLElement& elem )
 	{
-//		cout << __PRETTY_FUNCTION__ << '\n';
+
 		std::cout << "-exit: name=" << elem.Name() << '\n';
+		processElem( elem );
 		return true;
 	}
 	bool VisitEnter( const tinyxml2::XMLElement& elem, const tinyxml2::XMLAttribute* a )
@@ -25,6 +36,8 @@ class XmlVisitor: public tinyxml2::XMLVisitor
 		{
 			cout << "   first attr: " << a->Name() << ":" << a->Value() << '\n';
 		}*/
+
+
 		std::cout << "Attrib list:\n";
 
 		for( const tinyxml2::XMLAttribute* a = elem.FirstAttribute(); a; a=a->Next() )
@@ -35,6 +48,28 @@ class XmlVisitor: public tinyxml2::XMLVisitor
 	}
 
 };
+
+template<typename FPT>
+void XmlVisitor<FPT>::processElem( const tinyxml2::XMLElement& e )
+{
+	std::string n = e.Name();
+std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
+	if( n == "circle" )
+	{
+		std::cout << "creating circle!\n";
+		double cx,cy,rad;
+		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "cx", &cx ) )
+			throw "failed to read attribute x\n";
+		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "cy", &cy ) )
+			throw "failed to read attribute cy\n";
+		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "r", &rad ) )
+			throw "failed to read attribute r\n";
+//		cout << "x=" << value << '\n';
+		Circle* c = new Circle( cx, cy, rad );
+		vec.push_back( c );
+	}
+
+}
 
 #if 0
 enum Type {

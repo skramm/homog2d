@@ -41,22 +41,15 @@ int main( int argc, const char** argv )
 	}
 	doc.LoadFile( argv[1] );
 
-	h2d::svg::XmlVisitor visitor;
+	h2d::svg::XmlVisitor<double> visitor;
 	doc.LoadFile( argv[1] );
 	doc.Accept( &visitor );
+	auto data = visitor.get();
+	img::Image<img::SvgImage> out( 500,500);
+	img::DrawParams dp;
 
+	for( const auto e: data )
+		e->draw( out, dp );
 
-/*	tinyxml2::XMLElement* e2 = doc.FirstChildElement( "svg" )->FirstChildElement( "g" );
-
-	for( tinyxml2::XMLElement* child = e2->FirstChildElement("path"); child != NULL; child = child->NextSiblingElement())
-    {
-
-	    const char *d; // = s.data();
-        child->QueryAttribute("d", &d );
-//        std::cout << "data=" << d << "\n";
-
-		auto v_polyline = svg::parsePath( std::string(d) );
-
-    }
-*/
+	out.write( "test.svg" ) ;
 }

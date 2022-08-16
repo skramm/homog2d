@@ -414,6 +414,145 @@ Image<SvgImage>::write( std::string fname ) const
 	file << "</svg>\n";
 }
 
+
+//------------------------------------------------------------------
+/// Point drawing style, see DrawParams
+/**
+\warning Check nextPointStyle() in case of added values here!
+*/
+enum class PtStyle: uint8_t
+{
+	Plus,   ///< "+" symbol
+	Times,  ///< "times" symbol
+	Star,   ///< "*" symbol
+	Diam,   ///< diamond
+	Dot     ///< dot (circle)
+};
+
+//------------------------------------------------------------------
+/// Draw parameters, independent of back-end library
+class DrawParams
+{
+
+/// Inner struct, holds the values. Needed so we can assign a default value as static member
+	struct Dp_values
+	{
+		Color       _color;
+		int         _lineThickness = 1;
+		int         _pointSize     = 4;
+		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
+		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
+		PtStyle     _ptStyle       = PtStyle::Plus;
+		bool        _enhancePoint  = false;       ///< to draw selected points
+		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
+		bool        _showIndex     = false;     ///< show the index as number
+
+/// Returns the point style following the current one
+		PtStyle nextPointStyle() const
+		{
+			if( _ptStyle == PtStyle::Dot )
+				return PtStyle::Plus;
+			auto curr = static_cast<int>(_ptStyle);
+			return static_cast<PtStyle>(curr+1);
+		}
+	};
+
+
+public:
+	Dp_values _dpValues;
+
+private:
+	static Dp_values& p_getDefault()
+	{
+		static Dp_values s_defValue;
+		return s_defValue;
+	}
+
+public:
+	DrawParams()
+	{
+		_dpValues = p_getDefault();
+	}
+	void setDefault()
+	{
+		p_getDefault() = this->_dpValues;
+	}
+	static void resetDefault()
+	{
+		p_getDefault() = Dp_values();
+	}
+	DrawParams& setPointStyle( PtStyle ps )
+	{
+		if( (int)ps > (int)PtStyle::Dot )
+			throw std::runtime_error( "Error: invalid value for point style");
+		_dpValues._ptStyle = ps;
+		return *this;
+	}
+	DrawParams& setPointSize( uint8_t ps )
+	{
+		_dpValues._ptDelta = ps;
+		return *this;
+	}
+	DrawParams& setThickness( uint8_t t )
+	{
+		_dpValues._lineThickness = t;
+		return *this;
+	}
+	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	{
+		_dpValues._color = Color{r,g,b};
+		return *this;
+	}
+	DrawParams& setColor( Color col )
+	{
+		_dpValues._color = col;
+		return *this;
+	}
+	DrawParams& selectPoint()
+	{
+		_dpValues._enhancePoint = true;
+		return *this;
+	}
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showPoints( bool b=true )
+	{
+		_dpValues._showPoints = b;
+		return *this;
+	}
+
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showIndex( bool b=true )
+	{
+		_dpValues._showIndex = b;
+		return *this;
+	}
+
+	std::string getSvgRgbColor() const
+	{
+		std::ostringstream oss;
+		oss << "rgb("
+			<< (int)_dpValues._color.r << ','
+			<< (int)_dpValues._color.g << ','
+			<< (int)_dpValues._color.b
+			<< ')';
+		return oss.str();
+	}
+
+	Color color() const
+	{
+		return _dpValues._color;
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	cv::Scalar cvColor() const
+	{
+		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
+	}
+#endif // HOMOG2D_USE_OPENCV
+
+}; // class DrawParams
+
+
 } // namespace img
 
 /////////////////////////////////////////////////////////////////////////////
@@ -575,12 +714,17 @@ public:
 	{
 		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
-    template<typename T>
-    constexpr bool isInside( const Common<T>& ) const
-    {
+	template<typename T>
+	constexpr bool isInside( const Common<T>& ) const
+	{
 //    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
-        return false;
-    }
+		return false;
+	}
+	template<typename T>
+	void draw( img::Image<T>&, img::DrawParams dp ) const
+	{
+		std::cout << __PRETTY_FUNCTION__ << '\n';
+	}
 };
 
 //------------------------------------------------------------------
@@ -1168,148 +1312,6 @@ private:
 	}
 
 }; // class Hmatrix_
-
-
-namespace img {
-
-//------------------------------------------------------------------
-/// Point drawing style, see DrawParams
-/**
-\warning Check nextPointStyle() in case of added values here!
-*/
-enum class PtStyle: uint8_t
-{
-	Plus,   ///< "+" symbol
-	Times,  ///< "times" symbol
-	Star,   ///< "*" symbol
-	Diam,   ///< diamond
-	Dot     ///< dot (circle)
-};
-
-//------------------------------------------------------------------
-/// Draw parameters, independent of back-end library
-class DrawParams
-{
-
-/// Inner struct, holds the values. Needed so we can assign a default value as static member
-	struct Dp_values
-	{
-		Color       _color;
-		int         _lineThickness = 1;
-		int         _pointSize     = 4;
-		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
-		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
-		PtStyle     _ptStyle       = PtStyle::Plus;
-		bool        _enhancePoint  = false;       ///< to draw selected points
-		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
-		bool        _showIndex     = false;     ///< show the index as number
-
-/// Returns the point style following the current one
-		PtStyle nextPointStyle() const
-		{
-			if( _ptStyle == PtStyle::Dot )
-				return PtStyle::Plus;
-			auto curr = static_cast<int>(_ptStyle);
-			return static_cast<PtStyle>(curr+1);
-		}
-	};
-
-
-public:
-	Dp_values _dpValues;
-
-private:
-	static Dp_values& p_getDefault()
-	{
-		static Dp_values s_defValue;
-		return s_defValue;
-	}
-
-public:
-	DrawParams()
-	{
-		_dpValues = p_getDefault();
-	}
-	void setDefault()
-	{
-		p_getDefault() = this->_dpValues;
-	}
-	static void resetDefault()
-	{
-		p_getDefault() = Dp_values();
-	}
-	DrawParams& setPointStyle( PtStyle ps )
-	{
-		if( (int)ps > (int)PtStyle::Dot )
-			throw std::runtime_error( "Error: invalid value for point style");
-		_dpValues._ptStyle = ps;
-		return *this;
-	}
-	DrawParams& setPointSize( uint8_t ps )
-	{
-		_dpValues._ptDelta = ps;
-		return *this;
-	}
-	DrawParams& setThickness( uint8_t t )
-	{
-		_dpValues._lineThickness = t;
-		return *this;
-	}
-	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
-	{
-		_dpValues._color = Color{r,g,b};
-		return *this;
-	}
-	DrawParams& setColor( Color col )
-	{
-		_dpValues._color = col;
-		return *this;
-	}
-	DrawParams& selectPoint()
-	{
-		_dpValues._enhancePoint = true;
-		return *this;
-	}
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPoints( bool b=true )
-	{
-		_dpValues._showPoints = b;
-		return *this;
-	}
-
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showIndex( bool b=true )
-	{
-		_dpValues._showIndex = b;
-		return *this;
-	}
-
-	std::string getSvgRgbColor() const
-	{
-		std::ostringstream oss;
-		oss << "rgb("
-			<< (int)_dpValues._color.r << ','
-			<< (int)_dpValues._color.g << ','
-			<< (int)_dpValues._color.b
-			<< ')';
-		return oss.str();
-	}
-
-	Color color() const
-	{
-		return _dpValues._color;
-	}
-
-#ifdef HOMOG2D_USE_OPENCV
-	cv::Scalar cvColor() const
-	{
-		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
-	}
-#endif // HOMOG2D_USE_OPENCV
-
-}; // class DrawParams
-
-} // namespace img
 
 //------------------------------------------------------------------
 namespace detail {
