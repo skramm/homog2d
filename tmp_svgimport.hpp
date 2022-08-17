@@ -7,68 +7,89 @@
 namespace h2d {
 namespace svg {
 
+void printFileAttrib( const tinyxml2::XMLDocument& doc )
+{
+	const tinyxml2::XMLElement* root = doc.RootElement();
+
+	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();
+	while(pAttrib)
+	{
+		std::cout << "Value: " << pAttrib->Name() << ":" << pAttrib->Value() << '\n';
+		pAttrib=pAttrib->Next();
+	}
+}
+
 
 //------------------------------------------------------------------
-template<typename FPT>
-class XmlVisitor: public tinyxml2::XMLVisitor
+/// Visitor class, derived from the tinyxml2 one
+class Visitor: public tinyxml2::XMLVisitor
 {
 private:
-	std::vector<detail::Common<FPT>*> vec;
+	std::vector<detail::Root*> vec;
 public:
-	std::vector<detail::Common<FPT>*> get() const
+	std::vector<detail::Root*> get() const
 	{
 		return vec;
 	}
-	void processElem( const tinyxml2::XMLElement& e );
 
-	bool VisitExit( const tinyxml2::XMLElement& elem )
-	{
-
-		std::cout << "-exit: name=" << elem.Name() << '\n';
-		processElem( elem );
-		return true;
-	}
-	bool VisitEnter( const tinyxml2::XMLElement& elem, const tinyxml2::XMLAttribute* a )
-	{
-//		cout << __PRETTY_FUNCTION__ << '\n';
-		std::cout << "-start elem: name=" << elem.Name() << '\n';
-/*		if( a )
-		{
-			cout << "   first attr: " << a->Name() << ":" << a->Value() << '\n';
-		}*/
-
-
-		std::cout << "Attrib list:\n";
-
-		for( const tinyxml2::XMLAttribute* a = elem.FirstAttribute(); a; a=a->Next() )
-		{
-			std::cout << " -attr: " << a->Name() << ":" << a->Value() << '\n';
-		}
-		return true;
-	}
-
+	bool VisitExit( const tinyxml2::XMLElement& elem );
 };
 
-template<typename FPT>
-void XmlVisitor<FPT>::processElem( const tinyxml2::XMLElement& e )
+/// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
+double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
+{
+	double value;
+	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
+		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
+	return value;
+}
+
+/// This is the place where actual SVG data is converted and stored into vector
+bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
-std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
+	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
 	if( n == "circle" )
 	{
-		std::cout << "creating circle!\n";
-		double cx,cy,rad;
-		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "cx", &cx ) )
-			throw "failed to read attribute x\n";
-		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "cy", &cy ) )
-			throw "failed to read attribute cy\n";
-		if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( "r", &rad ) )
-			throw "failed to read attribute r\n";
-//		cout << "x=" << value << '\n';
-		Circle* c = new Circle( cx, cy, rad );
+		Circle* c = new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) );
 		vec.push_back( c );
 	}
+	if( n == "rect" )
+	{
+		auto x1 = getValue( e, "x", n );
+		auto y1 = getValue( e, "y", n );
+		auto w  = getValue( e, "width", n );
+		auto h  = getValue( e, "height", n );
+		FRect* r = new FRect( x1, y1, x1+w, y1+h );
+		vec.push_back( r );
+	}
+	if( n == "line" )
+	{
+		Segment* s = new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) );
+		vec.push_back( s );
+	}
+	if( n == "polygon" )
+	{
+//		CPolyline* p = new CPolyline(  // TODO
+//		vec.push_back( p );
+	}
+	if( n == "polyline" )
+	{
+//		OPolyline* p = new OPolyline(  // TODO
+//		vec.push_back( p );
+	}
 
+	if( n == "ellipse" )
+	{
+		auto x  = getValue( e, "cx", n );
+		auto y  = getValue( e, "cy", n );
+		auto rx = getValue( e, "rx", n );
+		auto ry = getValue( e, "ry", n );
+		Ellipse* p = new Ellipse( x, y, rx, ry );
+		vec.push_back( p );
+	}
+
+	return true;
 }
 
 #if 0

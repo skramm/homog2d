@@ -720,13 +720,19 @@ public:
 //    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
 		return false;
 	}
-	template<typename T>
-	void draw( img::Image<T>&, img::DrawParams dp ) const
+};
+
+
+//------------------------------------------------------------------
+/// Non-templated root class, to achieve dynamic (runtime) polymorphism
+class Root
+{
+public:
+	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp ) const
 	{
 		std::cout << __PRETTY_FUNCTION__ << '\n';
 	}
 };
-
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
@@ -1384,7 +1390,7 @@ Q' = H^{-T} \cdot Q \cdot H^{-1}
 
 */
 template<typename FPT>
-class Ellipse_: public detail::Matrix_<FPT>
+class Ellipse_: public detail::Matrix_<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -1759,7 +1765,7 @@ public:
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
-class FRect_: public detail::Common<FPT>
+class FRect_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -2184,17 +2190,10 @@ private:
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawFRect( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawFRect( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawFRect( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class FRect_
 
@@ -2202,7 +2201,7 @@ private:
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
-class Circle_: public detail::Common<FPT>
+class Circle_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -2508,17 +2507,10 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const Circle_<T>& r );
 
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawCircle( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawCircle( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams=img::DrawParams() ) const;
 #endif
-	void impl_drawCircle( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams=img::DrawParams() ) const;
 
 }; // class Circle_
 
@@ -3769,7 +3761,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 - Storage: "smallest" point is always stored as first element (see constructor)
 */
 template<typename FPT>
-class Segment_: public detail::Common<FPT>
+class Segment_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -4078,17 +4070,10 @@ Requires both points inside AND no intersections
 	friend std::ostream&
 	operator << ( std::ostream& f, const Segment_<T>& seg );
 
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawSegment( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawSegment( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawSegment( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class Segment_
 
@@ -8656,7 +8641,7 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>
 void
-FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<cv::Mat>& img, img::DrawParams dp ) const
 {
 	cv::rectangle(
 		img.getReal(),
@@ -8672,7 +8657,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) cons
 /// Draw \c Segment (Opencv implementation)
 template<typename FPT>
 void
-Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::line(
 		im.getReal(),
@@ -8693,7 +8678,7 @@ Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) c
 /// Draw \c Circle (Opencv implementation)
 template<typename FPT>
 void
-Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+Circle_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::circle(
 		im.getReal(),
@@ -8774,7 +8759,7 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawPara
 /// Draw \c Circle (SVG implementation)
 template<typename FPT>
 void
-Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+Circle_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8815,7 +8800,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 /// Draw \c FRect (SVG implementation)
 template<typename FPT>
 void
-FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8837,7 +8822,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp )
 /// Draw \c Segment (SVG implementation)
 template<typename FPT>
 void
-Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 

@@ -26,10 +26,10 @@
 #include "../homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
-#include "opencv2/highgui.hpp"
+//#include "opencv2/highgui.hpp"
 
 using namespace h2d;
-//using namespace h2d::img;
+
 
 int main( int argc, const char** argv )
 {
@@ -41,10 +41,13 @@ int main( int argc, const char** argv )
 	}
 	doc.LoadFile( argv[1] );
 
-	h2d::svg::XmlVisitor<double> visitor;
+	svg::printFileAttrib( doc );
+
+	h2d::svg::Visitor visitor;
 	doc.LoadFile( argv[1] );
 	doc.Accept( &visitor );
 	auto data = visitor.get();
+
 	img::Image<img::SvgImage> out( 500,500);
 	img::DrawParams dp;
 
