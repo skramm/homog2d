@@ -52,6 +52,7 @@
 		</Unit>
 		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
+		<Unit filename="../docs/homog2d_svgimport.md" />
 		<Unit filename="../docs/homog2d_thresholds.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />

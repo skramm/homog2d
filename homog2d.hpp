@@ -722,16 +722,20 @@ public:
 	}
 };
 
-
 //------------------------------------------------------------------
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 class Root
 {
 public:
-	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp ) const
+#if 1
+	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+#else
+	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const
 	{
 		std::cout << __PRETTY_FUNCTION__ << '\n';
 	}
+#endif
+	virtual ~Root() {}
 };
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
@@ -1546,17 +1550,10 @@ is indeed a valid ellipse
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawEllipse( im, dp );
-	}
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawEllipse( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawEllipse( img::Image<img::SvgImage>&, img::DrawParams ) const;
-
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 //////////////////////////
 //      DATA SECTION    //
@@ -3484,10 +3481,7 @@ private:
 		impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 	}
 
-//	bool impl_draw_LP( img::Image<cv::Mat>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
 #endif // HOMOG2D_USE_OPENCV
-
-//	bool impl_draw_LP( img::Image<img::SvgImage>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
 
 	template<typename T>
 	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& )  const;
@@ -4504,7 +4498,7 @@ template args:
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
-class PolylineBase: public detail::Common<FPT>
+class PolylineBase: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -5048,21 +5042,13 @@ Two tasks:
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		if( size() < 2 ) // nothing to draw
-			return;
-		impl_drawPolyline( im, dp );
-	}
 
-private:
-	void impl_drawPolyline( img::Image<img::SvgImage>&, img::DrawParams dp ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
+
 	template<typename T>
 	void impl_draw_pl( img::Image<T>& ) const;
-
-	void impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const;
 #else
 	template<typename T>
 	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
@@ -8697,7 +8683,7 @@ Circle_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 */
 template<typename FPT>
 void
-Ellipse_<FPT>::impl_drawEllipse( img::Image<cv::Mat>& im, img::DrawParams dp )  const
+Ellipse_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp )  const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	cv::ellipse(
@@ -8717,9 +8703,10 @@ namespace base {
 /// Draw PolylineBase (Opencv implementation)
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
-	assert( size() > 1 );
+	if( size() < 2 ) // nothing to draw
+		return;
 
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
@@ -8777,7 +8764,7 @@ Circle_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 /// Draw \c Ellipse (SVG implementation)
 template<typename FPT>
 void
-Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
+Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8792,7 +8779,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< " transform=\"rotate(" << angle()*180/M_PI << ',' << center().getX() << ',' << center().getY()
+		<< " transform=\"rotate(" << angle()*180./M_PI << ',' << center().getX() << ',' << center().getY()
 		<< ")\" />\n";
 }
 
@@ -8859,9 +8846,12 @@ namespace base {
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
+
+	if( size() < 2 ) // nothing to draw
+		return;
 
 	if( dp._dpValues._showIndex || dp._dpValues._showPoints )
 		im.getReal()._svgString << "<g>\n";

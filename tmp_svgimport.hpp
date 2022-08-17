@@ -79,7 +79,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 //		vec.push_back( p );
 	}
 
-	if( n == "ellipse" )
+	if( n == "ellipse" ) // TODO: handle ellipse angle
 	{
 		auto x  = getValue( e, "cx", n );
 		auto y  = getValue( e, "cy", n );

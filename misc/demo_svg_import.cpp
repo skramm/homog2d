@@ -49,10 +49,10 @@ int main( int argc, const char** argv )
 	auto data = visitor.get();
 
 	img::Image<img::SvgImage> out( 500,500);
-	img::DrawParams dp;
+//	img::DrawParams dp;
 
 	for( const auto e: data )
-		e->draw( out, dp );
+		e->draw( out );
 
 	out.write( "test.svg" ) ;
 }
