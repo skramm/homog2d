@@ -6,7 +6,7 @@ Reference: https://www.w3.org/TR/SVG2/shapes.html
 
 A minimal import code is present, it relies on the well-known
 [tinyxml2](https://github.com/leethomason/tinyxml2)
-library, thus it needs to be present on machine.
+library, thus it needs to be present on machine to build an application using this.
 On Debian-based distros, this can be easily done with
 `$ sudo apt install libtinyxml2-dev`
 

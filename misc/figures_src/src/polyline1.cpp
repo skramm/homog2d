@@ -22,16 +22,24 @@ int main()
 
 	opl = Homogr().setScale(30).addTranslation(10,30) * opl;
 
-	img::Image<cv::Mat> img2( 350,250 );
+	img::Image<cv::Mat>       img1( 350,250 );
+	img::Image<img::SvgImage> img2( 350,250 );
 
+	opl.draw( img1, DrawParams().setColor(250,0,20) );
 	opl.draw( img2, DrawParams().setColor(250,0,20) );
+	opl.getBB().draw( img1, DrawParams().setColor(150,150,120) );
 	opl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	img2.write( "polyline1a.png" );
+	img1.write( "polyline1a.png" );
+	img2.write( "polyline1a.svg" );
 
 	CPolyline cpl(opl);
 
+	img1.clear();
 	img2.clear();
+	cpl.draw( img1, DrawParams().setColor(250,0,20) );
 	cpl.draw( img2, DrawParams().setColor(250,0,20) );
+	cpl.getBB().draw( img1, DrawParams().setColor(150,150,120) );
 	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	img2.write( "polyline1b.png" );
+	img1.write( "polyline1b.png" );
+	img2.write( "polyline1b.svg" );
 }

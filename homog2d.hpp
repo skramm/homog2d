@@ -345,9 +345,12 @@ public:
 
 	int cols() const { return _width; }
 	int rows() const { return _height; }
-#ifdef HOMOG2D_USE_OPENCV
-	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
+
+	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 )
+	{ assert(0); }
+
+#ifdef HOMOG2D_USE_OPENCV
 
 /// Show image on window \c wname (not available for SVG !)
 	void show( std::string wname )
@@ -367,12 +370,6 @@ Image<cv::Mat>::Image( size_t width, size_t height )
 	clear();
 }
 
-template <>
-void
-Image<cv::Mat>::write( std::string fname ) const
-{
-	cv::imwrite( fname, _realImg );
-}
 
 #endif
 
@@ -414,6 +411,29 @@ Image<SvgImage>::write( std::string fname ) const
 	file << "</svg>\n";
 }
 
+template <>
+void
+Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
+{
+	_realImg._svgString.clear();
+//	_realImg = cv::Scalar(b,g,r);
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+template <>
+void
+Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
+{
+	_realImg = cv::Scalar(b,g,r);
+}
+
+template <>
+void
+Image<cv::Mat>::write( std::string fname ) const
+{
+	cv::imwrite( fname, _realImg );
+}
+#endif
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
