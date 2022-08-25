@@ -20,8 +20,52 @@ void printFileAttrib( const tinyxml2::XMLDocument& doc )
 }
 
 
+namespace priv {
+//-------------------------------------------------------------------
+/// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
+/**
+- see also this one: http://stackoverflow.com/a/53878/193789
+*/
+inline
+std::vector<std::string>
+tokenize( const std::string &s, char delim )
+{
+	std::vector<std::string> velems;
+//    std::stringstream ss( TrimSpaces(s) );
+    std::stringstream ss( s );
+    std::string item;
+    while( std::getline( ss, item, delim ) )
+        velems.push_back(item);
+
+    return velems;
+}
+
+} // namespace priv
+
+
+/// Basic parsing of points that are in the format "10,20 30,40 50,60"
+std::vector<Point2d>
+parsePoints( const char* pts )
+{
+	std::vector<Point2d> out;
+	std::string s(pts);
+	std::cout << "processing " << s << '\n';
+//	trimString( s );
+	auto v1 = priv::tokenize( s, ' ' );
+	for( const auto& pt: v1 )
+	{
+		auto v2 = priv::tokenize( pt, ',' );
+		if( v2.size() != 2 )
+			throw "h2d:img::svg: invalid point format in importing svg element: " + s;
+		auto x = std::stod( v2[0] );
+		auto y = std::stod( v2[1] );
+		out.emplace_back( Point2d(x,y) );
+	}
+	return out;
+}
+
 //------------------------------------------------------------------
-/// Visitor class, derived from the tinyxml2 one
+/// Visitor class, derived from the tinyxml2 visitor class
 class Visitor: public tinyxml2::XMLVisitor
 {
 private:
@@ -70,13 +114,23 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	}
 	if( n == "polygon" )
 	{
-//		CPolyline* p = new CPolyline(  // TODO
-//		vec.push_back( p );
+		CPolyline* p = new CPolyline();
+		const char *pts = e.Attribute( "points" );
+		auto vec_pts = parsePoints( pts );
+		std::cout << "importing " << vec_pts.size() << " pts\n";
+		p->set( vec_pts );
+		vec.push_back( p );
 	}
 	if( n == "polyline" )
 	{
-//		OPolyline* p = new OPolyline(  // TODO
-//		vec.push_back( p );
+		OPolyline* p = new OPolyline();
+		const char *pts = e.Attribute( "points" );
+		auto vec_pts = parsePoints( pts );
+		std::cout << "importing " << vec_pts.size() << " pts\n";
+		p->set( vec_pts );
+		vec.push_back( p );
+
+
 	}
 
 	if( n == "ellipse" ) // TODO: handle ellipse angle
