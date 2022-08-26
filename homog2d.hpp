@@ -725,7 +725,7 @@ using matrix_t = std::array<std::array<T,3>,3>;
 
 
 //------------------------------------------------------------------
-/// Common class for all the geometric primitives
+/// Common templated class for all the geometric primitives
 template<typename FPT>
 class Common
 {
@@ -737,7 +737,6 @@ public:
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
-//    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
 		return false;
 	}
 };
@@ -747,18 +746,9 @@ public:
 class Root
 {
 public:
-#if 1
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
-#else
-	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const
-	{
-		std::cout << __PRETTY_FUNCTION__ << '\n';
-	}
-#endif
 	virtual ~Root() {}
 	Type virtual type() const = 0;
-/*	{
-	}*/
 };
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities

@@ -69,9 +69,9 @@ parsePoints( const char* pts )
 class Visitor: public tinyxml2::XMLVisitor
 {
 private:
-	std::vector<detail::Root*> vec;
+	std::vector<std::unique_ptr<detail::Root>> vec;
 public:
-	std::vector<detail::Root*> get() const
+	std::vector<std::unique_ptr<detail::Root>> get() const
 	{
 		return vec;
 	}
@@ -89,13 +89,14 @@ double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_n
 }
 
 /// This is the place where actual SVG data is converted and stored into vector
+/// \todo Handle ellipse angle
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
 	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
 	if( n == "circle" )
 	{
-		Circle* c = new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) );
+		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
 		vec.push_back( c );
 	}
 	if( n == "rect" )
@@ -104,17 +105,17 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		auto y1 = getValue( e, "y", n );
 		auto w  = getValue( e, "width", n );
 		auto h  = getValue( e, "height", n );
-		FRect* r = new FRect( x1, y1, x1+w, y1+h );
+		std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
 		vec.push_back( r );
 	}
 	if( n == "line" )
 	{
-		Segment* s = new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) );
+		std::unique_ptr<detail::Root> s( new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) ) );
 		vec.push_back( s );
 	}
 	if( n == "polygon" )
 	{
-		CPolyline* p = new CPolyline();
+		std::unique_ptr<detail::Root> p( new CPolyline() );
 		const char *pts = e.Attribute( "points" );
 		auto vec_pts = parsePoints( pts );
 		std::cout << "importing " << vec_pts.size() << " pts\n";
@@ -123,23 +124,20 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	}
 	if( n == "polyline" )
 	{
-		OPolyline* p = new OPolyline();
+		std::unique_ptr<detail::Root> p( new OPolyline() );
 		const char *pts = e.Attribute( "points" );
 		auto vec_pts = parsePoints( pts );
 		std::cout << "importing " << vec_pts.size() << " pts\n";
 		p->set( vec_pts );
 		vec.push_back( p );
-
-
 	}
-
 	if( n == "ellipse" ) // TODO: handle ellipse angle
 	{
 		auto x  = getValue( e, "cx", n );
 		auto y  = getValue( e, "cy", n );
 		auto rx = getValue( e, "rx", n );
 		auto ry = getValue( e, "ry", n );
-		Ellipse* p = new Ellipse( x, y, rx, ry );
+		std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
 		vec.push_back( p );
 	}
 
