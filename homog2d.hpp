@@ -9076,7 +9076,7 @@ double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_n
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
-	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
+//	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
 	if( n == "circle" )
 	{
 		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
