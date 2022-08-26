@@ -347,7 +347,8 @@ TEST_CASE( "types testing 3", "[test-types-3]" )
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
-does not trigger a build failure. The checking is only there to avoid a warning/
+does not trigger a build failure.
+The checking is only there to avoid a warning about "unused variable".
 \todo Once we switch to C++17, we can remove the checking and use:
 https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 */
@@ -2284,10 +2285,8 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 	}
 }
 
-
 TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 {
-
 	FRect_<NUMTYPE> r1(0,3, 2,0);
 	FRect_<NUMTYPE> r2(4,5, 6,8);
 	FRect_<NUMTYPE> bbr(0,0, 6,8);

@@ -1350,11 +1350,30 @@ namespace detail {
 template<typename T>
 struct EllParams
 {
-	T x0, y0; ///< center
+	template<typename U> friend struct EllParams;
+
+	EllParams() = default;
+
+	/// Copy-constructor is needed when converting from one type to another type
+	template<typename U>
+	EllParams( const EllParams<U>& p )
+	{
+		x0   = p.x0;
+		y0   = p.y0;
+		theta= p.theta;
+		sint = p.sint;
+		cost = p.cost;
+		a    = p.a;
+		b    = p.b;
+		a2   = p.a2;
+		b2   = p.b2;
+	}
+
+	T x0, y0;     ///< center
 	T theta = 0.; ///< angle
 	T sint, cost; ///< \f$ \sin( \theta), \cos( \theta) \f$
 	T a, b;
-	T a2, b2; ///< squared values of a and b
+	T a2, b2;     ///< squared values of a and b
 
 	template<typename U>
 	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par );
@@ -2276,7 +2295,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( std::abs(rad) < thr::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must value too small: " << std::scientific << std::abs(rad) );
+			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << std::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
 #endif
