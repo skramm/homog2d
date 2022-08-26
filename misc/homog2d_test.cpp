@@ -2977,12 +2977,12 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 
 		h2d::svg::Visitor visitor;
 		doc.Accept( &visitor );
-		auto data = visitor.get();
+		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
 		const auto& elem = data.at(0);
 		CHECK( elem->type() == Type::Circle );
 
-//		const Circle* pc2 = reinterpret_cast<Circle*>( elem );
+//		const Circle pc2 = reinterpret_cast<Circle*>( elem );
 //		CHECK( pc2->radius() == 20 );
 	}
 	{
@@ -2990,7 +2990,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.LoadFile( "misc/other/test_svg_import_1.svg" );
 		h2d::svg::Visitor visitor;
 		doc.Accept( &visitor );
-		auto data = visitor.get();
+		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 /*		CHECK( data.at(0)->type() == Type::Circle );
 		CHECK( data.at(1)->type() == Type::Circle );

@@ -9053,7 +9053,7 @@ class Visitor: public tinyxml2::XMLVisitor
 private:
 	std::vector<std::unique_ptr<detail::Root>> vec;
 public:
-	std::vector<std::unique_ptr<detail::Root>> get() const
+	const std::vector<std::unique_ptr<detail::Root>>& get() const
 	{
 		return vec;
 	}
@@ -9080,7 +9080,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	if( n == "circle" )
 	{
 		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
-		vec.push_back( c );
+		vec.push_back( std::move(c) );
 	}
 	if( n == "rect" )
 	{
@@ -9089,12 +9089,12 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		auto w  = getValue( e, "width", n );
 		auto h  = getValue( e, "height", n );
 		std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-		vec.push_back( r );
+		vec.push_back( std::move(r) );
 	}
 	if( n == "line" )
 	{
 		std::unique_ptr<detail::Root> s( new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) ) );
-		vec.push_back( s );
+		vec.push_back( std::move(s) );
 	}
 	if( n == "polygon" )
 	{
@@ -9102,8 +9102,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		auto vec_pts = parsePoints( pts );
 		std::cout << "importing " << vec_pts.size() << " pts\n";
 		std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
-//		p->set( vec_pts );
-		vec.push_back( p );
+		vec.push_back( std::move(p) );
 	}
 	if( n == "polyline" )
 	{
@@ -9111,7 +9110,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		auto vec_pts = parsePoints( pts );
 		std::cout << "importing " << vec_pts.size() << " pts\n";
 		std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
-		vec.push_back( p );
+		vec.push_back( std::move(p) );
 	}
 	if( n == "ellipse" ) // TODO: handle ellipse angle
 	{
@@ -9120,7 +9119,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		auto rx = getValue( e, "rx", n );
 		auto ry = getValue( e, "ry", n );
 		std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
-		vec.push_back( p );
+		vec.push_back( std::move(p) );
 	}
 
 	return true;
