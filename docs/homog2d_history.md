@@ -9,10 +9,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - provide clear interface to extend drawing capabilities using other back-ends
   - add (optional) common root class, to be able to store heterogeneous objects in container
   - add polygon union and intersection
-  - add SVG import
 
 - current master branch
   - added SVG drawing
+  - added SVG import (very basic)
 
 - [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)

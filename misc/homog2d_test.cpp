@@ -2957,6 +2957,36 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	}
 }
 
+
+//////////////////////////////////////////////////////////////
+/////               SVG IMPORT TESTS                     /////
+//////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_USE_SVG_IMPORT
+TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
+{
+/// \note Here, we use only the "double" type, because that is the one used on import
+
+	Circle c( 50,50,20);
+	img::Image<img::SvgImage> im(200,200);
+	c.draw( im );
+	im.write( "BUILD/test_svg_11.svg" );
+
+	tinyxml2::XMLDocument doc;
+	doc.LoadFile( "BUILD/test_svg_11.svg" );
+
+	h2d::svg::Visitor visitor;
+	doc.Accept( &visitor );
+	auto data = visitor.get();
+	CHECK( data.size() == 1 );
+	auto elem = data.at(0);
+	CHECK( elem->type() == Type::Circle );
+
+	const Circle* pc2 = reinterpret_cast<Circle*>( elem );
+	CHECK( pc2->radius() == 20 );
+}
+#endif
+
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////

@@ -27,6 +27,16 @@ ifeq ($(USE_OPENCV),Y)
 	LDFLAGS += `pkg-config --libs opencv`
 endif
 
+ifeq "$(USE_TINYXML2)" ""
+	USE_TINYXML2=N
+endif
+
+ifeq ($(USE_TINYXML2),Y)
+	CXXFLAGS += -DHOMOG2D_USE_SVG_IMPORT
+	LDFLAGS += `pkg-config --libs tinyxml2`
+endif
+
+
 ifeq ($(USE_EIGEN),Y)
 	CXXFLAGS += -DHOMOG2D_USE_EIGEN
 endif

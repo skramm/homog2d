@@ -44,7 +44,6 @@ int main( int argc, const char** argv )
 	svg::printFileAttrib( doc );
 
 	h2d::svg::Visitor visitor;
-	doc.LoadFile( argv[1] );
 	doc.Accept( &visitor );
 	auto data = visitor.get();
 

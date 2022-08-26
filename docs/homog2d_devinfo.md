@@ -47,6 +47,7 @@ $ make <target> <option=Y|N>
 ```
 
 * `USE_OPENCV`: enables the OpenCv additional features (useful for "test" targets)
+* `USE_TINYXML2`: enables the SVG import (through Tinyxml2) additional features (useful for "test" targets)
 * `USE_EIGEN`: enables the Eigen3 additional features
 * `DEBUG`:  adds `-g` flag to compiler options
 

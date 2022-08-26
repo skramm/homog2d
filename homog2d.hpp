@@ -588,7 +588,7 @@ enum class LineDir: uint8_t { H, V };
 // Used in Polyline_ constructors
 //enum class IsClosed: uint8_t { Yes, No };
 
-/// Type of Root object, see Root::type()
+/// Type of Root object, see detail::Root::type()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
 /// Type of underlying floating point, see LPBase::dtype()
@@ -756,6 +756,9 @@ public:
 	}
 #endif
 	virtual ~Root() {}
+	Type virtual type() const = 0;
+/*	{
+	}*/
 };
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities

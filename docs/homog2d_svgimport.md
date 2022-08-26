@@ -10,7 +10,13 @@ library, thus it needs to be present on machine to build an application using th
 On Debian-based distros, this can be easily done with
 `$ sudo apt install libtinyxml2-dev`
 
-To enable its usage, one must define the symbol `HOMOG2D_USE_SVG_IMPORT` before including `homog2d.hpp`.
+To enable its usage in your code you need to do two things
+* define the symbol `HOMOG2D_USE_SVG_IMPORT` before including `homog2d.hpp`
+* add the library to the compile line.
+That can be done by adding this to the linking command-line:
+```
+$(pkg-config --libs tinyxml2)
+```
 
 The following points must be considered:
 

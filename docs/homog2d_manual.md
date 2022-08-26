@@ -1570,6 +1570,12 @@ If you have Opencv installed on your machine, you can run the additional tests t
 make test USE_OPENCV=Y
 ```
 
+
+Similarly, if you have Tinyxml2 installed, you can run the additional SVG import tests by passing this flag:
+```
+make test USE_TINYXML2=Y
+```
+
 A second test target is included: `$ make testall`.
 It will build and run the test program 3 times, one for each numerical data
 type (`float`, `double`, and `long double`), through the symbol `HOMOG2D_INUMTYPE`.
