@@ -2966,24 +2966,37 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 {
 /// \note Here, we use only the "double" type, because that is the one used on import
+	{
+		Circle c( 50,50,20);
+		img::Image<img::SvgImage> im(200,200);
+		c.draw( im );
+		im.write( "BUILD/test_svg_11.svg" );
 
-	Circle c( 50,50,20);
-	img::Image<img::SvgImage> im(200,200);
-	c.draw( im );
-	im.write( "BUILD/test_svg_11.svg" );
+		tinyxml2::XMLDocument doc;                // load the file that we just created
+		doc.LoadFile( "BUILD/test_svg_11.svg" );
 
-	tinyxml2::XMLDocument doc;
-	doc.LoadFile( "BUILD/test_svg_11.svg" );
+		h2d::svg::Visitor visitor;
+		doc.Accept( &visitor );
+		auto data = visitor.get();
+		CHECK( data.size() == 1 );
+		const auto& elem = data.at(0);
+		CHECK( elem->type() == Type::Circle );
 
-	h2d::svg::Visitor visitor;
-	doc.Accept( &visitor );
-	auto data = visitor.get();
-	CHECK( data.size() == 1 );
-	auto elem = data.at(0);
-	CHECK( elem->type() == Type::Circle );
-
-	const Circle* pc2 = reinterpret_cast<Circle*>( elem );
-	CHECK( pc2->radius() == 20 );
+//		const Circle* pc2 = reinterpret_cast<Circle*>( elem );
+//		CHECK( pc2->radius() == 20 );
+	}
+	{
+		tinyxml2::XMLDocument doc;
+		doc.LoadFile( "misc/other/test_svg_import_1.svg" );
+		h2d::svg::Visitor visitor;
+		doc.Accept( &visitor );
+		auto data = visitor.get();
+		CHECK( data.size() == 3 );
+/*		CHECK( data.at(0)->type() == Type::Circle );
+		CHECK( data.at(1)->type() == Type::Circle );
+		CHECK( data.at(2)->type() == Type::Circle );
+*/
+	}
 }
 #endif
 

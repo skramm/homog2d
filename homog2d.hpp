@@ -46,6 +46,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 	#include <cctype>
+	#include "tinyxml2.h"
 #endif
 
 #define HOMOG2D_VERSION 2.81
@@ -8996,11 +8997,141 @@ using OPolylineF = base::PolylineBase<type::IsOpen,float>;
 using OPolylineD = base::PolylineBase<type::IsOpen,double>;
 using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
-} // namespace h2d end
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
-	#include "tmp_svgimport.hpp"
-#endif
+
+namespace svg {
+
+namespace priv {
+//-------------------------------------------------------------------
+/// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
+/**
+- see also this one: http://stackoverflow.com/a/53878/193789
+*/
+inline
+std::vector<std::string>
+tokenize( const std::string &s, char delim )
+{
+	std::vector<std::string> velems;
+//    std::stringstream ss( TrimSpaces(s) );
+    std::stringstream ss( s );
+    std::string item;
+    while( std::getline( ss, item, delim ) )
+        velems.push_back(item);
+
+    return velems;
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
+std::vector<Point2d>
+parsePoints( const char* pts )
+{
+	std::vector<Point2d> out;
+	std::string s(pts);
+	std::cout << "processing " << s << '\n';
+//	trimString( s );
+	auto v1 = priv::tokenize( s, ' ' );
+	for( const auto& pt: v1 )
+	{
+		auto v2 = priv::tokenize( pt, ',' );
+		if( v2.size() != 2 )
+			throw "h2d:img::svg: invalid point format in importing svg element: " + s;
+		auto x = std::stod( v2[0] );
+		auto y = std::stod( v2[1] );
+		out.emplace_back( Point2d(x,y) );
+	}
+	return out;
+}
+
+//------------------------------------------------------------------
+/// Visitor class, derived from the tinyxml2 visitor class
+class Visitor: public tinyxml2::XMLVisitor
+{
+private:
+	std::vector<std::unique_ptr<detail::Root>> vec;
+public:
+	std::vector<std::unique_ptr<detail::Root>> get() const
+	{
+		return vec;
+	}
+
+	bool VisitExit( const tinyxml2::XMLElement& elem );
+};
+
+//------------------------------------------------------------------
+/// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
+double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
+{
+	double value;
+	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
+		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
+	return value;
+}
+
+/// This is the place where actual SVG data is converted and stored into vector
+/// \todo Handle ellipse angle
+bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
+{
+	std::string n = e.Name();
+	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
+	if( n == "circle" )
+	{
+		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
+		vec.push_back( c );
+	}
+	if( n == "rect" )
+	{
+		auto x1 = getValue( e, "x", n );
+		auto y1 = getValue( e, "y", n );
+		auto w  = getValue( e, "width", n );
+		auto h  = getValue( e, "height", n );
+		std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+		vec.push_back( r );
+	}
+	if( n == "line" )
+	{
+		std::unique_ptr<detail::Root> s( new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) ) );
+		vec.push_back( s );
+	}
+	if( n == "polygon" )
+	{
+		const char *pts = e.Attribute( "points" );
+		auto vec_pts = parsePoints( pts );
+		std::cout << "importing " << vec_pts.size() << " pts\n";
+		std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
+//		p->set( vec_pts );
+		vec.push_back( p );
+	}
+	if( n == "polyline" )
+	{
+		const char *pts = e.Attribute( "points" );
+		auto vec_pts = parsePoints( pts );
+		std::cout << "importing " << vec_pts.size() << " pts\n";
+		std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
+		vec.push_back( p );
+	}
+	if( n == "ellipse" ) // TODO: handle ellipse angle
+	{
+		auto x  = getValue( e, "cx", n );
+		auto y  = getValue( e, "cy", n );
+		auto rx = getValue( e, "rx", n );
+		auto ry = getValue( e, "ry", n );
+		std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
+		vec.push_back( p );
+	}
+
+	return true;
+}
+
+} // namespace svg
+
+#endif // HOMOG2D_USE_SVG_IMPORT
+
+
+} // namespace h2d
 
 #endif // HG_HOMOG2D_HPP
 

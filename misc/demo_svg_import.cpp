@@ -17,19 +17,14 @@
 
 /**
 \file demo_svg_import.cpp
-\brief demo of reading svg files (polylines only)
+\brief demo of reading svg files
 */
 
-//#define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
 #include "../homog2d.hpp"
 
-// additional Opencv header, needed for GUI stuff
-//#include "opencv2/highgui.hpp"
-
 using namespace h2d;
-
 
 int main( int argc, const char** argv )
 {
@@ -48,7 +43,6 @@ int main( int argc, const char** argv )
 	auto data = visitor.get();
 
 	img::Image<img::SvgImage> out( 500,500);
-//	img::DrawParams dp;
 
 	for( const auto e: data )
 		e->draw( out );
