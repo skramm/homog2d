@@ -5694,7 +5694,7 @@ printTable( const Table& t, std::string msg )
 	{
 		std::cout << (int)r << " | ";
 		for( uint8_t c=0;c<4; c++ )
-			std::cout << (t[r][c].isCorner?'F':'.') << " ";
+			std::cout << (t[r][c]._isCorner?'F':'.') << " ";
 		std::cout << "|\n";
 	}
 }
