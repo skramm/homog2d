@@ -67,7 +67,7 @@ But the point to remember is that "master" will always stay clean (build and tes
 
 
 <dt>
-Q: Why is there only Opencv provided as backend?
+Q: Why Opencv as backend?
 </dt>
 <dd>
 -Short answer: because it works fine!
@@ -76,9 +76,7 @@ Q: Why is there only Opencv provided as backend?
 Besides the fact that I have already used it with other projects, it also has the great advantage of having all the drawing code for "advanced" primitives (circle, ellipse).
 This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/) or other backends.
 <br>
-But writing a binding for other libraries shouldn't be too difficult, assuming they have these.
-<br>
-<b>Note (2022-08-02): future releases will include SVG I/O !</b>
+Alternatively, the library provides also SVG drawing.
 </dd>
 
 <dt>

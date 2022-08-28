@@ -1544,7 +1544,75 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
-## 10 - Technical details
+## 10 - SVG import
+<a name="svg_import"></a>
+
+## Technical details on svg file import
+
+A minimal SVG import code is present, it relies on the well-known
+[tinyxml2](https://github.com/leethomason/tinyxml2)
+library, thus it needs to be present on machine to build an application using this feature.
+
+On Debian-based distros, this can be easily done with
+`$ sudo apt install libtinyxml2-dev`
+
+To enable its usage in your code, you need to do two things:
+* define the symbol `HOMOG2D_USE_SVG_IMPORT` before including `homog2d.hpp`
+* add the library to the compile line.
+That can be done by adding this to the linking command-line:
+```
+$(pkg-config --libs tinyxml2)
+```
+
+Importing is pretty simple:
+Instanciate a Tinyxml `XMLDocument` object, and use it to read the file.
+Then create a "visitor" object (provided), and fetch a vector of the objects in the file:
+```C++
+tinyxml2::XMLDocument doc;
+doc.LoadFile( "filename.svg" );
+
+h2d::svg::Visitor visitor;
+doc.Accept( &visitor );
+auto data = visitor.get();
+```
+
+The latter function returns a vector of polymorphic (smart) pointers (of type `priv::Root` ).
+You can determine the actual type of the object by using the abstract `type()` function.
+It will return an enum value of type `Type` having one of these values:<br>
+`Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+
+You can use this information to convert the pointer into the right type:
+
+```C++
+for( const auto& p: data )
+{
+	if( p->type() == Type::Circle )
+	{
+		const Circle* c = static_cast<Circle*>( p->get() );
+		std::cout << "circle radius=" << c->radius() << '\n';
+	}
+}
+```
+
+
+When importing a SVG file, the following points must be considered:
+
+* All the color, style,etc. Svg attributes present in file are lost, as this library does not store them.
+* All groups (`<g>` tags) are ignored.
+* Svg has no "line" object, what is called a line is actually a segment and it will be imported as such.
+* Svg has no "point" object, thus it cannot be imported.
+However, if you try to import a file that was created with the Svg drawing subsystem, points will be plotted with a shape defined by
+[its parameters](https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#83---drawing-parameters).
+* Svg has two ways to define a polyline (or polygon):
+either with the dedicated keywords
+([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
+or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
+[`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
+<br>
+At present this import subsystem only handles the `polyline`/`polygon` elements.
+
+
+## 11 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
@@ -1557,7 +1625,7 @@ Normalization is done for comparison but not saved.
 
 For more details on the code, check [this page](homog2d_devinfo.md).
 
-### 10.1 - Testing
+### 11.1 - Testing
 
 A unit-test program is included.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
@@ -1569,7 +1637,6 @@ If you have Opencv installed on your machine, you can run the additional tests t
 ```
 make test USE_OPENCV=Y
 ```
-
 
 Similarly, if you have Tinyxml2 installed, you can run the additional SVG import tests by passing this flag:
 ```
@@ -1594,7 +1661,7 @@ user   1m21,940s
 sys    0m1,699s
 ```
 
-### 10.2 - Build options
+### 11.2 - Build options
 <a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
@@ -1605,6 +1672,7 @@ or just add a `#define` on top of your program
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
+- `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
