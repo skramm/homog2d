@@ -36,16 +36,25 @@ int main( int argc, const char** argv )
 	}
 	doc.LoadFile( argv[1] );
 
-	svg::printFileAttrib( doc );
+//	svg::printFileAttrib( doc );
 
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
-	auto data = visitor.get();
+	const auto& data = visitor.get();
 
-	img::Image<img::SvgImage> out( 500,500);
+	img::Image<img::SvgImage> out( 500, 500 );
 
-	for( const auto e: data )
+	for( const auto& e: data )
 		e->draw( out );
+	out.write( "test.svg" );
 
-	out.write( "test.svg" ) ;
+	for( const auto& e: data )
+	{
+		if( e->type() == Type::Circle )
+		{
+			const Circle* c = static_cast<Circle*>( e.get() );
+			std::cout << "circle radius=" << c->radius() << '\n';
+		}
+	}
+
 }

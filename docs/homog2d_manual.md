@@ -1547,7 +1547,7 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 ## 10 - SVG import
 <a name="svg_import"></a>
 
-## Technical details on svg file import
+### 10.1 - Requirements
 
 A minimal SVG import code is present, it relies on the well-known
 [tinyxml2](https://github.com/leethomason/tinyxml2)
@@ -1563,10 +1563,13 @@ That can be done by adding this to the linking command-line:
 ```
 $(pkg-config --libs tinyxml2)
 ```
+(double the `$` if in a makefile)
+
+### 10.2 - Example
 
 Importing is pretty simple:
 Instanciate a Tinyxml `XMLDocument` object, and use it to read the file.
-Then create a "visitor" object (provided), and fetch a vector of the objects in the file:
+Then create a "visitor" object, and fetch a vector of the objects in the file:
 ```C++
 tinyxml2::XMLDocument doc;
 doc.LoadFile( "filename.svg" );
@@ -1576,24 +1579,32 @@ doc.Accept( &visitor );
 auto data = visitor.get();
 ```
 
-The latter function returns a vector of polymorphic (smart) pointers (of type `priv::Root` ).
+The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `priv::Root`.
 You can determine the actual type of the object by using the abstract `type()` function.
 It will return an enum value of type `Type` having one of these values:<br>
 `Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
 
-You can use this information to convert the pointer into the right type:
+At present, the only polymorphic function available is `draw()`.
+So if you are able to do this:
+```C++
+for( const auto& p: data )
+	p.draw( img );
+```
+
+You can use the type information to convert the pointer into the right type:
 
 ```C++
 for( const auto& p: data )
 {
 	if( p->type() == Type::Circle )
 	{
-		const Circle* c = static_cast<Circle*>( p->get() );
+		const Circle* c = static_cast<Circle*>( p.get() );
 		std::cout << "circle radius=" << c->radius() << '\n';
 	}
 }
 ```
 
+### 10.3 - Technical details on svg file import
 
 When importing a SVG file, the following points must be considered:
 

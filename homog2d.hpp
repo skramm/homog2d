@@ -9031,7 +9031,7 @@ parsePoints( const char* pts )
 {
 	std::vector<Point2d> out;
 	std::string s(pts);
-	std::cout << "processing " << s << '\n';
+//	std::cout << "processing " << s << '\n';
 //	trimString( s );
 	auto v1 = priv::tokenize( s, ' ' );
 	for( const auto& pt: v1 )
@@ -9048,6 +9048,9 @@ parsePoints( const char* pts )
 
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class
+/**
+Holds the imported data through std::unique_ptr
+*/
 class Visitor: public tinyxml2::XMLVisitor
 {
 private:
@@ -9058,7 +9061,7 @@ public:
 		return vec;
 	}
 
-	bool VisitExit( const tinyxml2::XMLElement& elem );
+	bool VisitExit( const tinyxml2::XMLElement& );
 };
 
 //------------------------------------------------------------------
@@ -9071,8 +9074,25 @@ double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_n
 	return value;
 }
 
+/// helper function
+/**
+\todo Who owns the data? Should we return a string and/or release the memory?
+\todo Seems that the tinyxml function crashes if no attribute of that name is found!
+*/
+const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElement& e )
+{
+	const char *pts = e.Attribute( attribName );
+	if( !pts )
+		throw std::string("h2d::img::svg Error: unable to find attribute ") + attribName + " in tag " + e.Name();
+	return pts;
+}
+
+
 /// This is the place where actual SVG data is converted and stored into vector
-/// \todo Handle ellipse angle
+/**
+ \todo Handle ellipse angle
+ \todo maybe handle this through a switch, based on type, to avoid the ugly "if" chaining
+*/
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
@@ -9093,22 +9113,24 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	}
 	if( n == "line" )
 	{
-		std::unique_ptr<detail::Root> s( new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) ) );
+		std::unique_ptr<detail::Root> s(
+			new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) )
+		);
 		vec.push_back( std::move(s) );
 	}
 	if( n == "polygon" )
 	{
-		const char *pts = e.Attribute( "points" );
-		auto vec_pts = parsePoints( pts );
-		std::cout << "importing " << vec_pts.size() << " pts\n";
+		auto pts_str = fetchAttribString( "points", e );
+		auto vec_pts = parsePoints( pts_str );
+//		std::cout << "importing " << vec_pts.size() << " pts\n";
 		std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
 		vec.push_back( std::move(p) );
 	}
 	if( n == "polyline" )
 	{
-		const char *pts = e.Attribute( "points" );
-		auto vec_pts = parsePoints( pts );
-		std::cout << "importing " << vec_pts.size() << " pts\n";
+		auto pts_str = fetchAttribString( "points", e );
+		auto vec_pts = parsePoints( pts_str );
+//		std::cout << "importing " << vec_pts.size() << " pts\n";
 		std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
 		vec.push_back( std::move(p) );
 	}
