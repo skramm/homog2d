@@ -347,7 +347,8 @@ TEST_CASE( "types testing 3", "[test-types-3]" )
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
-does not trigger a build failure. The checking is only there to avoid a warning/
+does not trigger a build failure.
+The checking is only there to avoid a warning about "unused variable".
 \todo Once we switch to C++17, we can remove the checking and use:
 https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 */
@@ -2284,10 +2285,8 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 	}
 }
 
-
 TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 {
-
 	FRect_<NUMTYPE> r1(0,3, 2,0);
 	FRect_<NUMTYPE> r2(4,5, 6,8);
 	FRect_<NUMTYPE> bbr(0,0, 6,8);
@@ -2957,6 +2956,47 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 		CHECK( ch2.size() == 2 );
 	}
 }
+
+
+//////////////////////////////////////////////////////////////
+/////               SVG IMPORT TESTS                     /////
+//////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_USE_SVG_IMPORT
+TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
+{
+/// \note Here, we use only the "double" type, because that is the one used on import
+	{
+		Circle c( 50,50,20);
+		img::Image<img::SvgImage> im(200,200);
+		c.draw( im );
+		im.write( "BUILD/test_svg_11.svg" );
+
+		tinyxml2::XMLDocument doc;                // load the file that we just created
+		doc.LoadFile( "BUILD/test_svg_11.svg" );
+
+		h2d::svg::Visitor visitor;
+		doc.Accept( &visitor );
+		const auto& data = visitor.get();
+		CHECK( data.size() == 1 );
+		const auto& elem = data.at(0);
+		CHECK( elem->type() == Type::Circle );
+
+		const Circle* pc2 = static_cast<Circle*>( elem.get() );
+		CHECK( pc2->radius() == 20 );
+	}
+	{                               // this test makes sure the <g> element is ignored
+		tinyxml2::XMLDocument doc;
+		doc.LoadFile( "misc/other/test_svg_import_1.svg" );
+		h2d::svg::Visitor visitor;
+		doc.Accept( &visitor );
+		const auto& data = visitor.get();
+		CHECK( data.size() == 3 );
+		for( const auto& elem: data )
+			CHECK( data.at(0)->type() == Type::Circle );
+	}
+}
+#endif
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

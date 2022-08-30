@@ -52,6 +52,7 @@
 		</Unit>
 		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
+		<Unit filename="../docs/homog2d_svgimport.md" />
 		<Unit filename="../docs/homog2d_thresholds.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
@@ -65,6 +66,7 @@
 			<Option target="demo" />
 		</Unit>
 		<Unit filename="demo_opencv.cpp" />
+		<Unit filename="demo_svg_import.cpp" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -154,6 +156,8 @@
 		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
 		<Unit filename="no_build/readme.txt" />
+		<Unit filename="other/test_svg_import_1.svg" />
+		<Unit filename="other/test_svg_import_2.svg" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

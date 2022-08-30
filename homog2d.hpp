@@ -46,6 +46,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 	#include <cctype>
+	#include "tinyxml2.h"
 #endif
 
 #define HOMOG2D_VERSION 2.81
@@ -345,9 +346,12 @@ public:
 
 	int cols() const { return _width; }
 	int rows() const { return _height; }
-#ifdef HOMOG2D_USE_OPENCV
-	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 ) { _realImg = cv::Scalar(b,g,r); }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
+
+	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 )
+	{ assert(0); }
+
+#ifdef HOMOG2D_USE_OPENCV
 
 /// Show image on window \c wname (not available for SVG !)
 	void show( std::string wname )
@@ -367,12 +371,6 @@ Image<cv::Mat>::Image( size_t width, size_t height )
 	clear();
 }
 
-template <>
-void
-Image<cv::Mat>::write( std::string fname ) const
-{
-	cv::imwrite( fname, _realImg );
-}
 
 #endif
 
@@ -414,6 +412,168 @@ Image<SvgImage>::write( std::string fname ) const
 	file << "</svg>\n";
 }
 
+template <>
+void
+Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
+{
+	_realImg._svgString.clear();
+//	_realImg = cv::Scalar(b,g,r);
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+template <>
+void
+Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
+{
+	_realImg = cv::Scalar(b,g,r);
+}
+
+template <>
+void
+Image<cv::Mat>::write( std::string fname ) const
+{
+	cv::imwrite( fname, _realImg );
+}
+#endif
+
+//------------------------------------------------------------------
+/// Point drawing style, see DrawParams
+/**
+\warning Check nextPointStyle() in case of added values here!
+*/
+enum class PtStyle: uint8_t
+{
+	Plus,   ///< "+" symbol
+	Times,  ///< "times" symbol
+	Star,   ///< "*" symbol
+	Diam,   ///< diamond
+	Dot     ///< dot (circle)
+};
+
+//------------------------------------------------------------------
+/// Draw parameters, independent of back-end library
+class DrawParams
+{
+
+/// Inner struct, holds the values. Needed so we can assign a default value as static member
+	struct Dp_values
+	{
+		Color       _color;
+		int         _lineThickness = 1;
+		int         _pointSize     = 4;
+		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
+		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
+		PtStyle     _ptStyle       = PtStyle::Plus;
+		bool        _enhancePoint  = false;       ///< to draw selected points
+		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
+		bool        _showIndex     = false;     ///< show the index as number
+
+/// Returns the point style following the current one
+		PtStyle nextPointStyle() const
+		{
+			if( _ptStyle == PtStyle::Dot )
+				return PtStyle::Plus;
+			auto curr = static_cast<int>(_ptStyle);
+			return static_cast<PtStyle>(curr+1);
+		}
+	};
+
+
+public:
+	Dp_values _dpValues;
+
+private:
+	static Dp_values& p_getDefault()
+	{
+		static Dp_values s_defValue;
+		return s_defValue;
+	}
+
+public:
+	DrawParams()
+	{
+		_dpValues = p_getDefault();
+	}
+	void setDefault()
+	{
+		p_getDefault() = this->_dpValues;
+	}
+	static void resetDefault()
+	{
+		p_getDefault() = Dp_values();
+	}
+	DrawParams& setPointStyle( PtStyle ps )
+	{
+		if( (int)ps > (int)PtStyle::Dot )
+			throw std::runtime_error( "Error: invalid value for point style");
+		_dpValues._ptStyle = ps;
+		return *this;
+	}
+	DrawParams& setPointSize( uint8_t ps )
+	{
+		_dpValues._ptDelta = ps;
+		return *this;
+	}
+	DrawParams& setThickness( uint8_t t )
+	{
+		_dpValues._lineThickness = t;
+		return *this;
+	}
+	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	{
+		_dpValues._color = Color{r,g,b};
+		return *this;
+	}
+	DrawParams& setColor( Color col )
+	{
+		_dpValues._color = col;
+		return *this;
+	}
+	DrawParams& selectPoint()
+	{
+		_dpValues._enhancePoint = true;
+		return *this;
+	}
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showPoints( bool b=true )
+	{
+		_dpValues._showPoints = b;
+		return *this;
+	}
+
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showIndex( bool b=true )
+	{
+		_dpValues._showIndex = b;
+		return *this;
+	}
+
+	std::string getSvgRgbColor() const
+	{
+		std::ostringstream oss;
+		oss << "rgb("
+			<< (int)_dpValues._color.r << ','
+			<< (int)_dpValues._color.g << ','
+			<< (int)_dpValues._color.b
+			<< ')';
+		return oss.str();
+	}
+
+	Color color() const
+	{
+		return _dpValues._color;
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	cv::Scalar cvColor() const
+	{
+		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
+	}
+#endif // HOMOG2D_USE_OPENCV
+
+}; // class DrawParams
+
+
 } // namespace img
 
 /////////////////////////////////////////////////////////////////////////////
@@ -423,13 +583,13 @@ Image<SvgImage>::write( std::string fname ) const
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: uint8_t { X, Y };
 
-/// Used in line constructor, to instanciate a H or V line, see \ref LPBase( LineDir, T )
+/// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
 // Used in Polyline_ constructors
 //enum class IsClosed: uint8_t { Yes, No };
 
-/// Type of Root object, see Root::type()
+/// Type of Root object, see detail::Root::type()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
 /// Type of underlying floating point, see LPBase::dtype()
@@ -566,7 +726,7 @@ using matrix_t = std::array<std::array<T,3>,3>;
 
 
 //------------------------------------------------------------------
-/// Common class for all the geometric primitives
+/// Common templated class for all the geometric primitives
 template<typename FPT>
 class Common
 {
@@ -575,14 +735,24 @@ public:
 	{
 		return priv::impl_dtype( detail::RootDataType<FPT>() );
 	}
-    template<typename T>
-    constexpr bool isInside( const Common<T>& ) const
-    {
-//    	std::cout << "DEFAULT " << __PRETTY_FUNCTION__ << "\n";
-        return false;
-    }
+	template<typename T>
+	constexpr bool isInside( const Common<T>& ) const
+	{
+		return false;
+	}
 };
 
+//------------------------------------------------------------------
+/// Non-templated root class, to achieve dynamic (runtime) polymorphism
+class Root
+{
+public:
+	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+	virtual HOMOG2D_INUMTYPE length() const = 0;
+	virtual HOMOG2D_INUMTYPE area() const = 0;
+	virtual ~Root() {}
+	Type virtual type() const = 0;
+};
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
@@ -1169,148 +1339,6 @@ private:
 
 }; // class Hmatrix_
 
-
-namespace img {
-
-//------------------------------------------------------------------
-/// Point drawing style, see DrawParams
-/**
-\warning Check nextPointStyle() in case of added values here!
-*/
-enum class PtStyle: uint8_t
-{
-	Plus,   ///< "+" symbol
-	Times,  ///< "times" symbol
-	Star,   ///< "*" symbol
-	Diam,   ///< diamond
-	Dot     ///< dot (circle)
-};
-
-//------------------------------------------------------------------
-/// Draw parameters, independent of back-end library
-class DrawParams
-{
-
-/// Inner struct, holds the values. Needed so we can assign a default value as static member
-	struct Dp_values
-	{
-		Color       _color;
-		int         _lineThickness = 1;
-		int         _pointSize     = 4;
-		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
-		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
-		PtStyle     _ptStyle       = PtStyle::Plus;
-		bool        _enhancePoint  = false;       ///< to draw selected points
-		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
-		bool        _showIndex     = false;     ///< show the index as number
-
-/// Returns the point style following the current one
-		PtStyle nextPointStyle() const
-		{
-			if( _ptStyle == PtStyle::Dot )
-				return PtStyle::Plus;
-			auto curr = static_cast<int>(_ptStyle);
-			return static_cast<PtStyle>(curr+1);
-		}
-	};
-
-
-public:
-	Dp_values _dpValues;
-
-private:
-	static Dp_values& p_getDefault()
-	{
-		static Dp_values s_defValue;
-		return s_defValue;
-	}
-
-public:
-	DrawParams()
-	{
-		_dpValues = p_getDefault();
-	}
-	void setDefault()
-	{
-		p_getDefault() = this->_dpValues;
-	}
-	static void resetDefault()
-	{
-		p_getDefault() = Dp_values();
-	}
-	DrawParams& setPointStyle( PtStyle ps )
-	{
-		if( (int)ps > (int)PtStyle::Dot )
-			throw std::runtime_error( "Error: invalid value for point style");
-		_dpValues._ptStyle = ps;
-		return *this;
-	}
-	DrawParams& setPointSize( uint8_t ps )
-	{
-		_dpValues._ptDelta = ps;
-		return *this;
-	}
-	DrawParams& setThickness( uint8_t t )
-	{
-		_dpValues._lineThickness = t;
-		return *this;
-	}
-	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
-	{
-		_dpValues._color = Color{r,g,b};
-		return *this;
-	}
-	DrawParams& setColor( Color col )
-	{
-		_dpValues._color = col;
-		return *this;
-	}
-	DrawParams& selectPoint()
-	{
-		_dpValues._enhancePoint = true;
-		return *this;
-	}
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPoints( bool b=true )
-	{
-		_dpValues._showPoints = b;
-		return *this;
-	}
-
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showIndex( bool b=true )
-	{
-		_dpValues._showIndex = b;
-		return *this;
-	}
-
-	std::string getSvgRgbColor() const
-	{
-		std::ostringstream oss;
-		oss << "rgb("
-			<< (int)_dpValues._color.r << ','
-			<< (int)_dpValues._color.g << ','
-			<< (int)_dpValues._color.b
-			<< ')';
-		return oss.str();
-	}
-
-	Color color() const
-	{
-		return _dpValues._color;
-	}
-
-#ifdef HOMOG2D_USE_OPENCV
-	cv::Scalar cvColor() const
-	{
-		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
-	}
-#endif // HOMOG2D_USE_OPENCV
-
-}; // class DrawParams
-
-} // namespace img
-
 //------------------------------------------------------------------
 namespace detail {
 
@@ -1318,11 +1346,30 @@ namespace detail {
 template<typename T>
 struct EllParams
 {
-	T x0, y0; ///< center
+	template<typename U> friend struct EllParams;
+
+	EllParams() = default;
+
+	/// Copy-constructor is needed when converting from one type to another type
+	template<typename U>
+	EllParams( const EllParams<U>& p )
+	{
+		x0   = p.x0;
+		y0   = p.y0;
+		theta= p.theta;
+		sint = p.sint;
+		cost = p.cost;
+		a    = p.a;
+		b    = p.b;
+		a2   = p.a2;
+		b2   = p.b2;
+	}
+
+	T x0, y0;     ///< center
 	T theta = 0.; ///< angle
 	T sint, cost; ///< \f$ \sin( \theta), \cos( \theta) \f$
 	T a, b;
-	T a2, b2; ///< squared values of a and b
+	T a2, b2;     ///< squared values of a and b
 
 	template<typename U>
 	friend std::ostream& operator << ( std::ostream& f, const EllParams<U>& par );
@@ -1382,7 +1429,7 @@ Q' = H^{-T} \cdot Q \cdot H^{-1}
 
 */
 template<typename FPT>
-class Ellipse_: public detail::Matrix_<FPT>
+class Ellipse_: public detail::Matrix_<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -1538,17 +1585,10 @@ is indeed a valid ellipse
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawEllipse( im, dp );
-	}
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawEllipse( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawEllipse( img::Image<img::SvgImage>&, img::DrawParams ) const;
-
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 //////////////////////////
 //      DATA SECTION    //
@@ -1757,7 +1797,7 @@ public:
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
-class FRect_: public detail::Common<FPT>
+class FRect_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -2182,17 +2222,10 @@ private:
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawFRect( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawFRect( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawFRect( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class FRect_
 
@@ -2200,7 +2233,7 @@ private:
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
-class Circle_: public detail::Common<FPT>
+class Circle_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -2258,7 +2291,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( std::abs(rad) < thr::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius must value too small: " << std::scientific << std::abs(rad) );
+			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << std::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
 #endif
@@ -2506,17 +2539,10 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const Circle_<T>& r );
 
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawCircle( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawCircle( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams=img::DrawParams() ) const;
 #endif
-	void impl_drawCircle( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams=img::DrawParams() ) const;
 
 }; // class Circle_
 
@@ -3490,10 +3516,7 @@ private:
 		impl_init_1_Point<FPT>( p, detail::RootHelper<type::IsLine>() );
 	}
 
-//	bool impl_draw_LP( img::Image<cv::Mat>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
 #endif // HOMOG2D_USE_OPENCV
-
-//	bool impl_draw_LP( img::Image<img::SvgImage>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& ) const;
 
 	template<typename T>
 	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::RootHelper<type::IsPoint>& )  const;
@@ -3767,7 +3790,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 - Storage: "smallest" point is always stored as first element (see constructor)
 */
 template<typename FPT>
-class Segment_: public detail::Common<FPT>
+class Segment_: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -3777,7 +3800,7 @@ public:
 
 	Type type() const
 	{
-		return Type::Ellipse;
+		return Type::Segment;
 	}
 
 private:
@@ -3876,14 +3899,6 @@ public:
 			Segment_( pA1, pA2 ),
 			Segment_( pB1, pB2 )
 		);
-
-/*		auto psegs = std::make_pair(
-			Segment_( pA1, pA2 ),
-			Segment_( pB1, pB2 )
-		);
-		if( psegs.second < psegs.first )
-			std::swap( psegs.second, psegs.first );
-		return psegs; */
 	}
 
 /// \name Attributes access
@@ -3893,6 +3908,11 @@ public:
 	HOMOG2D_INUMTYPE length() const
 	{
 		return _ptS1.distTo( _ptS2 );
+	}
+/// A segment always has a null area
+	constexpr HOMOG2D_INUMTYPE area() const
+	{
+		return 0.;
 	}
 
 /// Get angle between segment and other segment/line
@@ -4076,17 +4096,10 @@ Requires both points inside AND no intersections
 	friend std::ostream&
 	operator << ( std::ostream& f, const Segment_<T>& seg );
 
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		impl_drawSegment( im, dp );
-	}
-
-private:
 #ifdef HOMOG2D_USE_OPENCV
-	void impl_drawSegment( img::Image<cv::Mat>&,       img::DrawParams ) const;
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
-	void impl_drawSegment( img::Image<img::SvgImage>&, img::DrawParams ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class Segment_
 
@@ -4517,7 +4530,7 @@ template args:
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
-class PolylineBase: public detail::Common<FPT>
+class PolylineBase: public detail::Common<FPT>, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -4731,7 +4744,6 @@ public:
 		{
 			const auto& pt1 = _plinevec[i];
 			const auto& pt2 = _plinevec[i+1];
-//			out.push_back( Segment_<FPT>(pt1,pt2) );
 			out.emplace_back( Segment_<FPT>(pt1,pt2) );
 		}
 		impl_getSegs( out, detail::PlHelper<PLT>() );
@@ -5061,21 +5073,13 @@ Two tasks:
 	}
 
 public:
-	template<typename T>
-	void draw( img::Image<T>& im, img::DrawParams dp=img::DrawParams() ) const
-	{
-		if( size() < 2 ) // nothing to draw
-			return;
-		impl_drawPolyline( im, dp );
-	}
 
-private:
-	void impl_drawPolyline( img::Image<img::SvgImage>&, img::DrawParams dp ) const;
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
+
 	template<typename T>
 	void impl_draw_pl( img::Image<T>& ) const;
-
-	void impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const;
 #else
 	template<typename T>
 	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
@@ -5688,7 +5692,7 @@ printTable( const Table& t, std::string msg )
 	{
 		std::cout << (int)r << " | ";
 		for( uint8_t c=0;c<4; c++ )
-			std::cout << (t[r][c].isCorner?'F':'.') << " ";
+			std::cout << (t[r][c]._isCorner?'F':'.') << " ";
 		std::cout << "|\n";
 	}
 }
@@ -8655,7 +8659,7 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>
 void
-FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<cv::Mat>& img, img::DrawParams dp ) const
 {
 	cv::rectangle(
 		img.getReal(),
@@ -8671,7 +8675,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<cv::Mat>& img, img::DrawParams dp ) cons
 /// Draw \c Segment (Opencv implementation)
 template<typename FPT>
 void
-Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::line(
 		im.getReal(),
@@ -8692,7 +8696,7 @@ Segment_<FPT>::impl_drawSegment( img::Image<cv::Mat>& im, img::DrawParams dp ) c
 /// Draw \c Circle (Opencv implementation)
 template<typename FPT>
 void
-Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+Circle_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::circle(
 		im.getReal(),
@@ -8711,7 +8715,7 @@ Circle_<FPT>::impl_drawCircle( img::Image<cv::Mat>& im, img::DrawParams dp ) con
 */
 template<typename FPT>
 void
-Ellipse_<FPT>::impl_drawEllipse( img::Image<cv::Mat>& im, img::DrawParams dp )  const
+Ellipse_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp )  const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	cv::ellipse(
@@ -8731,9 +8735,10 @@ namespace base {
 /// Draw PolylineBase (Opencv implementation)
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
-	assert( size() > 1 );
+	if( size() < 2 ) // nothing to draw
+		return;
 
 	for( size_t i=0; i<nbSegs(); i++ )
 		getSegment(i).draw( im, dp );
@@ -8773,7 +8778,7 @@ PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<cv::Mat>& im, img::DrawPara
 /// Draw \c Circle (SVG implementation)
 template<typename FPT>
 void
-Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+Circle_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8791,7 +8796,7 @@ Circle_<FPT>::impl_drawCircle( img::Image<img::SvgImage>& im, img::DrawParams dp
 /// Draw \c Ellipse (SVG implementation)
 template<typename FPT>
 void
-Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
+Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8806,7 +8811,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< " transform=\"rotate(" << angle()*180/M_PI << ',' << center().getX() << ',' << center().getY()
+		<< " transform=\"rotate(" << angle()*180./M_PI << ',' << center().getX() << ',' << center().getY()
 		<< ")\" />\n";
 }
 
@@ -8814,7 +8819,7 @@ Ellipse_<FPT>::impl_drawEllipse( img::Image<img::SvgImage>& im, img::DrawParams 
 /// Draw \c FRect (SVG implementation)
 template<typename FPT>
 void
-FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8836,7 +8841,7 @@ FRect_<FPT>::impl_drawFRect( img::Image<img::SvgImage>& im, img::DrawParams dp )
 /// Draw \c Segment (SVG implementation)
 template<typename FPT>
 void
-Segment_<FPT>::impl_drawSegment( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
@@ -8873,9 +8878,12 @@ namespace base {
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_drawPolyline( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
+PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
+
+	if( size() < 2 ) // nothing to draw
+		return;
 
 	if( dp._dpValues._showIndex || dp._dpValues._showPoints )
 		im.getReal()._svgString << "<g>\n";
@@ -8988,8 +8996,162 @@ using OPolylineF = base::PolylineBase<type::IsOpen,float>;
 using OPolylineD = base::PolylineBase<type::IsOpen,double>;
 using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
-} // namespace h2d end
 
+#ifdef HOMOG2D_USE_SVG_IMPORT
+
+namespace svg {
+
+namespace priv {
+//-------------------------------------------------------------------
+/// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
+/**
+- see also this one: http://stackoverflow.com/a/53878/193789
+*/
+inline
+std::vector<std::string>
+tokenize( const std::string &s, char delim )
+{
+	std::vector<std::string> velems;
+//    std::stringstream ss( TrimSpaces(s) );
+    std::stringstream ss( s );
+    std::string item;
+    while( std::getline( ss, item, delim ) )
+        velems.push_back(item);
+
+    return velems;
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
+std::vector<Point2d>
+parsePoints( const char* pts )
+{
+	std::vector<Point2d> out;
+	std::string s(pts);
+//	std::cout << "processing " << s << '\n';
+//	trimString( s );
+	auto v1 = priv::tokenize( s, ' ' );
+	for( const auto& pt: v1 )
+	{
+		auto v2 = priv::tokenize( pt, ',' );
+		if( v2.size() != 2 )
+			throw "h2d:img::svg: invalid point format in importing svg element: " + s;
+		auto x = std::stod( v2[0] );
+		auto y = std::stod( v2[1] );
+		out.emplace_back( Point2d(x,y) );
+	}
+	return out;
+}
+
+//------------------------------------------------------------------
+/// Visitor class, derived from the tinyxml2 visitor class
+/**
+Holds the imported data through std::unique_ptr
+*/
+class Visitor: public tinyxml2::XMLVisitor
+{
+private:
+	std::vector<std::unique_ptr<detail::Root>> vec;
+public:
+	const std::vector<std::unique_ptr<detail::Root>>& get() const
+	{
+		return vec;
+	}
+
+	bool VisitExit( const tinyxml2::XMLElement& );
+};
+
+//------------------------------------------------------------------
+/// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
+double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
+{
+	double value;
+	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
+		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
+	return value;
+}
+
+/// helper function
+/**
+\todo Who owns the data? Should we return a string and/or release the memory?
+\todo Seems that the tinyxml function crashes if no attribute of that name is found!
+*/
+const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElement& e )
+{
+	const char *pts = e.Attribute( attribName );
+	if( !pts )
+		throw std::string("h2d::img::svg Error: unable to find attribute ") + attribName + " in tag " + e.Name();
+	return pts;
+}
+
+
+/// This is the place where actual SVG data is converted and stored into vector
+/**
+ \todo Handle ellipse angle
+ \todo maybe handle this through a switch, based on type, to avoid the ugly "if" chaining
+*/
+bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
+{
+	std::string n = e.Name();
+//	std::cout << "PROCESS n="<< n << " s=" << n.size() << "\n";
+	if( n == "circle" )
+	{
+		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
+		vec.push_back( std::move(c) );
+	}
+	if( n == "rect" )
+	{
+		auto x1 = getValue( e, "x", n );
+		auto y1 = getValue( e, "y", n );
+		auto w  = getValue( e, "width", n );
+		auto h  = getValue( e, "height", n );
+		std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+		vec.push_back( std::move(r) );
+	}
+	if( n == "line" )
+	{
+		std::unique_ptr<detail::Root> s(
+			new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) )
+		);
+		vec.push_back( std::move(s) );
+	}
+	if( n == "polygon" )
+	{
+		auto pts_str = fetchAttribString( "points", e );
+		auto vec_pts = parsePoints( pts_str );
+//		std::cout << "importing " << vec_pts.size() << " pts\n";
+		std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
+		vec.push_back( std::move(p) );
+	}
+	if( n == "polyline" )
+	{
+		auto pts_str = fetchAttribString( "points", e );
+		auto vec_pts = parsePoints( pts_str );
+//		std::cout << "importing " << vec_pts.size() << " pts\n";
+		std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
+		vec.push_back( std::move(p) );
+	}
+	if( n == "ellipse" ) // TODO: handle ellipse angle
+	{
+		auto x  = getValue( e, "cx", n );
+		auto y  = getValue( e, "cy", n );
+		auto rx = getValue( e, "rx", n );
+		auto ry = getValue( e, "ry", n );
+		std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
+		vec.push_back( std::move(p) );
+	}
+
+	return true;
+}
+
+} // namespace svg
+
+#endif // HOMOG2D_USE_SVG_IMPORT
+
+
+} // namespace h2d
 
 #endif // HG_HOMOG2D_HPP
 

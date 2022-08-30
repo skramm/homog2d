@@ -1544,7 +1544,103 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
-## 10 - Technical details
+## 10 - SVG import
+<a name="svg_import"></a>
+
+### 10.1 - Requirements
+
+A minimal SVG import code is present, it relies on the well-known
+[tinyxml2](https://github.com/leethomason/tinyxml2)
+library, thus it needs to be present on machine to build an application using this feature.
+
+On Debian-based distros, this can be easily done with
+`$ sudo apt install libtinyxml2-dev`
+
+To enable its usage in your code, you need to do two things:
+* define the symbol `HOMOG2D_USE_SVG_IMPORT` before including `homog2d.hpp`
+* add the library to the compile line.
+That can be done by adding this to the linking command-line:
+```
+$(pkg-config --libs tinyxml2)
+```
+(double the `$` if in a makefile)
+
+### 10.2 - Example
+
+Importing is pretty simple:
+Instanciate a Tinyxml `XMLDocument` object, and use it to read the file.
+Then create a "visitor" object, and fetch a vector of the objects in the file:
+```C++
+tinyxml2::XMLDocument doc;
+doc.LoadFile( "filename.svg" );
+
+h2d::svg::Visitor visitor;
+doc.Accept( &visitor );
+auto data = visitor.get();
+```
+
+The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `priv::Root`.
+You can determine the actual type of the object by using the abstract `type()` function.
+It will return an enum value of type `Type` having one of these values:<br>
+`Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+
+There are three polymorphic functions available: `draw()`, `length()`, and `area()`.
+And you can get a human-readable value ot the object type with `getString(Type)`:
+
+```C++
+for( const auto& p: data )
+{
+	std::cout << "Element is a " << getString( p->type() )
+		<<", length=" << p->length() << ", area=" << p->area() << '\n';
+}
+```
+
+You can use the type information to convert the pointer into the right type.
+
+```C++
+for( const auto& p: data )
+{
+	if( p->type() == Type::Circle )
+	{
+		const Circle* c = static_cast<Circle*>( p.get() );
+		std::cout << "circle radius=" << c->radius() << '\n';
+	}
+}
+```
+
+### 10.3 - Technical details on svg file import
+
+When importing a SVG file, the following points must be considered:
+
+* All the color, style,etc. Svg attributes present in file are lost, as this library does not store them.
+* All groups (`<g>` tags) are ignored.
+* Svg has no "line" object, what is called a line is actually a segment and it will be imported as such.
+* Svg has no "point" object, thus it cannot be imported.
+However, if you try to import a file that was created with the Svg drawing subsystem, points will be plotted with a shape defined by
+[its parameters](https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#83---drawing-parameters).
+* Svg has two ways to define a polyline (or polygon):
+either with the dedicated keywords
+([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
+or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
+[`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
+<br>
+At present this import subsystem only handles the `polyline`/`polygon` elements.
+
+### 10.4 - Demo
+
+If you have cloned the whole repo and have `Tinyxml2` installed, you may build a demo program with:
+<br>
+`$ make demo_import`
+
+This will build the file `BUILD/demo_svg_import` that can import any SVG file, print its content on screen
+and generate another svg file `test.svg` in current folder.
+
+For example:
+<br>
+`$ BUILD/demo_svg_import docs/comparison_1.svg`
+
+
+## 11 - Technical details
 <a name="tech"></a>
 
 - The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
@@ -1557,7 +1653,7 @@ Normalization is done for comparison but not saved.
 
 For more details on the code, check [this page](homog2d_devinfo.md).
 
-### 10.1 - Testing
+### 11.1 - Testing
 
 A unit-test program is included.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
@@ -1568,6 +1664,11 @@ It has been tested both with gcc7.5 (Ubuntu 18) and gcc9.4 (Ubuntu 20).
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
 make test USE_OPENCV=Y
+```
+
+Similarly, if you have Tinyxml2 installed, you can run the additional SVG import tests by passing this flag:
+```
+make test USE_TINYXML2=Y
 ```
 
 A second test target is included: `$ make testall`.
@@ -1588,7 +1689,7 @@ user   1m21,940s
 sys    0m1,699s
 ```
 
-### 10.2 - Build options
+### 11.2 - Build options
 <a name="build_options"></a>
 
 Below are some options that can be passed, to activate them, just define the symbol.
@@ -1599,6 +1700,7 @@ or just add a `#define` on top of your program
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
+- `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.

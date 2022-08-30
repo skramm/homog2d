@@ -51,7 +51,7 @@ int main()
 	img::PtStyle newPointStyle = img::PtStyle::Plus;
 	for( int i=0;i<=(int)img::PtStyle::Dot; i++ )
 	{
-		std::cout << i << " color=" << dp.color() << '\n';
+//		std::cout << i << " color=" << dp.color() << '\n';
 		pt.draw( im1, dp.setPointStyle( newPointStyle ) );
 		pt.draw( im2, dp.setPointStyle( newPointStyle ) );
 		newPointStyle = dp._dpValues.nextPointStyle();

@@ -27,6 +27,16 @@ ifeq ($(USE_OPENCV),Y)
 	LDFLAGS += `pkg-config --libs opencv`
 endif
 
+ifeq "$(USE_TINYXML2)" ""
+	USE_TINYXML2=N
+endif
+
+ifeq ($(USE_TINYXML2),Y)
+	CXXFLAGS += -DHOMOG2D_USE_SVG_IMPORT
+	LDFLAGS += `pkg-config --libs tinyxml2`
+endif
+
+
 ifeq ($(USE_EIGEN),Y)
 	CXXFLAGS += -DHOMOG2D_USE_EIGEN
 endif
@@ -55,6 +65,9 @@ install:
 
 demo: BUILD/demo_opencv
 	BUILD/demo_opencv
+
+demo_import: BUILD/demo_svg_import
+	@echo "done target $@"
 
 clean:
 	@-rm -r BUILD/*
@@ -242,12 +255,15 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
 
-# this target REQUIRES Opencv
+# this target requires Opencv
 BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-demo_sdl2: misc/demo_sdl2.cpp homog2d.hpp
-	$(CXX) $(CXXFLAGS) `pkg-config --cflags sdl2` -I. -o demo_sdl2 $< `pkg-config --libs sdl2`
+
+# this target requires Tinyxml2
+BUILD/demo_svg_import: misc/demo_svg_import.cpp homog2d.hpp
+	$(CXX) $(CXXFLAGS) -I. -o $@ $< $$(pkg-config --libs tinyxml2)
+
 
 diff:
 	git diff | colordiff | aha > diff.html
