@@ -16,10 +16,11 @@ compiler:
 install:
  - wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp
  - mv catch.hpp misc/
+ - apt install libtinyxml2-dev
  - ls
 
 script:
- - make testall
+ - make testall USE_TINYXML2=Y
 
 # build useless on "dev" branches
 branches:
