@@ -93,3 +93,10 @@ Shows the segment joining the centers, the tangential segments, and the common b
 ![showcase9](showcase/showcase9.gif)
 
 
+* [Showcase 11](../misc/showcase/showcase11.cpp):
+<a name="sc11"></a>
+a moving segment, its supporting line, and its two parallel segments
+
+![showcase11](showcase/showcase11.gif)
+
+

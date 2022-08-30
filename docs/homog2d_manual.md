@@ -374,6 +374,7 @@ Segment seg( pt1 , pt2 );
 auto p_segs = seg.getParallelSegs(dist); // or: getParallelSegs(seg,dist)
 ```
 
+![showcase11](showcase/showcase11.gif)
 
 The length is available with a member function or a free function:
 ```C++
@@ -1381,6 +1382,7 @@ cv::Mat ocv = img.getReal()
 ```
 
 ### 8.3 - Drawing parameters
+<a name="drawing_params"></a>
 
 All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
@@ -1591,12 +1593,13 @@ And you can get a human-readable value ot the object type with `getString(Type)`
 ```C++
 for( const auto& p: data )
 {
+	p->draw( image );
 	std::cout << "Element is a " << getString( p->type() )
 		<<", length=" << p->length() << ", area=" << p->area() << '\n';
 }
 ```
 
-You can use the type information to convert the pointer into the right type.
+You can use the type information to convert the pointer into the right type:
 
 ```C++
 for( const auto& p: data )
@@ -1618,14 +1621,15 @@ When importing a SVG file, the following points must be considered:
 * Svg has no "line" object, what is called a line is actually a segment and it will be imported as such.
 * Svg has no "point" object, thus it cannot be imported.
 However, if you try to import a file that was created with the Svg drawing subsystem, points will be plotted with a shape defined by
-[its parameters](https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#83---drawing-parameters).
+[its parameters](#drawing_params).
 * Svg has two ways to define a polyline (or polygon):
 either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-<br>
-At present this import subsystem only handles the `polyline`/`polygon` elements.
+At present this import subsystem only handles the `polyline` and `polygon` elements.
+
+SVG Reference: https://www.w3.org/TR/SVG2/shapes.html
 
 ### 10.4 - Demo
 

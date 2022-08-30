@@ -12,7 +12,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - current master branch
   - added SVG drawing
-  - added SVG import, see [related manual section](homog2d_manual#svg_import.md).
+  - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
 
 - [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)

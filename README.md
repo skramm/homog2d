@@ -46,7 +46,7 @@ int main()
 
 ### Details ##
 
-- Install: to install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `sudo make install` after cloning repo.
+- Install: to install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `$ sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.
 
 - Audience: any C++ dev requiring some basic computational geometry, without the burden of large scale framework.
