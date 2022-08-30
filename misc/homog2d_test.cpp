@@ -2174,6 +2174,7 @@ TEST_CASE( "Segment", "[seg1]" )
 	{
 		Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(3,4) );
 		CHECK( s1.length() == 5 );
+		CHECK( s1.area() == 0 );
 
 		Segment_<NUMTYPE> s2( Point2d(9,9), Point2d(8,8) );
 		auto pts = s2.getPts();
