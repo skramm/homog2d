@@ -1,7 +1,7 @@
 
 # focal  = Ubuntu 20.04
 # bionic = Ubuntu 18.04
-dist: bionic
+dist: focal
 language: cpp
 
 before_install:
