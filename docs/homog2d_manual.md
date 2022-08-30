@@ -1582,16 +1582,20 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `priv::Root`.
 You can determine the actual type of the object by using the abstract `type()` function.
 It will return an enum value of type `Type` having one of these values:<br>
-`Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+`Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
 
-At present, the only polymorphic function available is `draw()`.
-So if you are able to do this:
+There are three polymorphic functions available: `draw()`, `length()`, and `area()`.
+And you can get a human-readable value ot the object type with `getString(Type)`:
+
 ```C++
 for( const auto& p: data )
-	p.draw( img );
+{
+	std::cout << "Element is a " << getString( p->type() )
+		<<", length=" << p->length() << ", area=" << p->area() << '\n';
+}
 ```
 
-You can use the type information to convert the pointer into the right type:
+You can use the type information to convert the pointer into the right type.
 
 ```C++
 for( const auto& p: data )
@@ -1621,6 +1625,19 @@ or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by us
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
 <br>
 At present this import subsystem only handles the `polyline`/`polygon` elements.
+
+### 10.4 - Demo
+
+If you have cloned the whole repo and have `Tinyxml2` installed, you may build a demo program with:
+<br>
+`$ make demo_import`
+
+This will build the file `BUILD/demo_svg_import` that can import any SVG file, print its content on screen
+and generate another svg file `test.svg` in current folder.
+
+For example:
+<br>
+`$ BUILD/demo_svg_import docs/comparison_1.svg`
 
 
 ## 11 - Technical details

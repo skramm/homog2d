@@ -41,6 +41,7 @@ int main( int argc, const char** argv )
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
 	const auto& data = visitor.get();
+	std::cout << argv[0] << ": Read " << data.size() << " shapes in file\n";
 
 	img::Image<img::SvgImage> out( 500, 500 );
 
@@ -48,13 +49,20 @@ int main( int argc, const char** argv )
 		e->draw( out );
 	out.write( "test.svg" );
 
-	for( const auto& e: data )
+	auto c = 0;
+	for( const auto& p: data )
 	{
-		if( e->type() == Type::Circle )
+		std::cout << ++c << ": " << getString( p->type() )
+			<<", length=" << p->length() << ", area=" << p->area() << '\n';
+		if( p->type() == Type::Circle )
 		{
-			const Circle* c = static_cast<Circle*>( e.get() );
-			std::cout << "circle radius=" << c->radius() << '\n';
+			const Circle* cir = static_cast<Circle*>( p.get() );
+			std::cout << " - Circle radius=" << cir->radius() << '\n';
+		}
+		if( p->type() == Type::CPolyline )
+		{
+			const CPolyline* pl = static_cast<CPolyline*>( p.get() );
+			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
 		}
 	}
-
 }

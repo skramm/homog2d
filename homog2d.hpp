@@ -583,7 +583,7 @@ public:
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: uint8_t { X, Y };
 
-/// Used in line constructor, to instanciate a H or V line, see \ref LPBase( LineDir, T )
+/// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
 // Used in Polyline_ constructors
@@ -748,6 +748,8 @@ class Root
 {
 public:
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+	virtual HOMOG2D_INUMTYPE length() const = 0;
+	virtual HOMOG2D_INUMTYPE area() const = 0;
 	virtual ~Root() {}
 	Type virtual type() const = 0;
 };
@@ -3798,7 +3800,7 @@ public:
 
 	Type type() const
 	{
-		return Type::Ellipse;
+		return Type::Segment;
 	}
 
 private:
@@ -3897,14 +3899,6 @@ public:
 			Segment_( pA1, pA2 ),
 			Segment_( pB1, pB2 )
 		);
-
-/*		auto psegs = std::make_pair(
-			Segment_( pA1, pA2 ),
-			Segment_( pB1, pB2 )
-		);
-		if( psegs.second < psegs.first )
-			std::swap( psegs.second, psegs.first );
-		return psegs; */
 	}
 
 /// \name Attributes access
@@ -3914,6 +3908,11 @@ public:
 	HOMOG2D_INUMTYPE length() const
 	{
 		return _ptS1.distTo( _ptS2 );
+	}
+/// A segment always has a null area
+	constexpr HOMOG2D_INUMTYPE area() const
+	{
+		return 0.;
 	}
 
 /// Get angle between segment and other segment/line
@@ -9096,7 +9095,7 @@ const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElemen
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
-//	std::cout << "PROCESS n="<< n << " s="<< n.size() <<"\n";
+//	std::cout << "PROCESS n="<< n << " s=" << n.size() << "\n";
 	if( n == "circle" )
 	{
 		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
