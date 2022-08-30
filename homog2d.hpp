@@ -4744,7 +4744,6 @@ public:
 		{
 			const auto& pt1 = _plinevec[i];
 			const auto& pt2 = _plinevec[i+1];
-//			out.push_back( Segment_<FPT>(pt1,pt2) );
 			out.emplace_back( Segment_<FPT>(pt1,pt2) );
 		}
 		impl_getSegs( out, detail::PlHelper<PLT>() );

@@ -156,6 +156,8 @@
 		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
 		<Unit filename="no_build/readme.txt" />
+		<Unit filename="other/test_svg_import_1.svg" />
+		<Unit filename="other/test_svg_import_2.svg" />
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
