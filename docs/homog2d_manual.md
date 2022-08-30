@@ -14,9 +14,10 @@ For stable releases, see https://github.com/skramm/homog2d/releases .
 7. [Bindings](#bind)
 8. [Drawing things](#drawing)
 9. [Numerical data types](#numdt)
-10. [Technical details](#tech)
-11. [FAQ](homog2d_qa.md)
-12. [History](homog2d_history.md)
+10. [SVG import](#svg_import)
+11. [Technical details](#tech)
+12. [FAQ](homog2d_qa.md)
+13. [History](homog2d_history.md)
 
 ## 1 - Introduction
 <a name="intro"></a>
