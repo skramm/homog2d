@@ -16,7 +16,7 @@ compiler:
 install:
  - wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp
  - mv catch.hpp misc/
- - sudo apt install libtinyxml2-dev
+ - sudo apt-get -y install libtinyxml2-dev
  - ls
 
 script:
