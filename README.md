@@ -38,6 +38,7 @@ int main()
 
 ### News ###
 
+- 2022-08-30: added SVG import
 - 2022-08-02: fresh 2.8 release, see https://github.com/skramm/homog2d/releases
 - 2022-05-18: 2.7 release
 
