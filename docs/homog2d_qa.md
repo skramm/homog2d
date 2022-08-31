@@ -60,9 +60,18 @@ A contrario, the second function will return a <code>Polyline</code> object, and
 Q: I notice the repo has a lot of branches. What's the point with all these branches?
 </dt>
 <dd>
-Probably bad branch managment...
+A: Probably bad branch managment...
 As "branching is free", I tend to create branches on the fly, but sometimes forget, and/or they are too different to sync up, so I just let them go.
 But the point to remember is that "master" will always stay clean (build and tests ok), and will regularly be updated with bugfixes and new features.
+</dd>
+
+<dt>
+Q: Any plans to deliver this as a (deb or rpm) package?
+</dt>
+<dd>
+A: As the whole library is contained in a single file, there's not much difference between downloading  it or a package, so, no, not at present due to lack of time.
+<br>
+But if you feel like adding required code to build a package through a PR, you are welcome!
 </dd>
 
 
@@ -83,7 +92,7 @@ Alternatively, the library provides also SVG drawing.
 Q: Why do yo use (Gnu)Make as build tool (and not CMake or another fancy thing)?
 </dt>
 <dd>
-Because:<br>
+A: Because:<br>
  1. it is really powerful<br>
  2. there is no need for more<br>
  3. I like it
