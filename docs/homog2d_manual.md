@@ -1394,7 +1394,7 @@ with r,g,b as bytes (`uint8_t`) in the range [0,255].
 
 A local type holding these 3 values can also be used:
 ```C++
-auto c = img::Color c(255,0,222);
+auto c = img::Color(255,0,222);
 li.draw( img, img::DrawParams().setColor(c) );
 ```
 
@@ -1428,7 +1428,7 @@ The available functions are given in the table below:
 `setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Dot` |  |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
-`showPoints()`    |  bool            | Draws the points for<br>Segment and Polyline |
+`showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline |
 
 ### 8.4 - Drawing containers
 
@@ -1452,7 +1452,7 @@ This is useful to enable having different drawing properties (think: color) for 
 void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
 ```
 
-The passed function must return a valid img::DrawParams() object.
+The passed function must return a valid `img::DrawParams` object.
 It may be build depending on the index of the object.
 
 A typical example would be:

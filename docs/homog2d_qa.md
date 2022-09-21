@@ -15,7 +15,7 @@ However, all the additional stuff here (Opencv graphical demo, test files, ...) 
 Q: How do I know the version that I have installed on my machine?
 </dt>
 <dd>
-A: easy, add this in your app (of check for that symbol in the file).
+A: easy, add this in your app (or check for that symbol in the file).
 <pre>
    std::cout << "version: " << HOMOG2D_VERSION << '\n';
 </pre>
@@ -33,7 +33,7 @@ To get this solved,
 please add <code>#define HOMOG2D_DEBUGMODE</code> just above <code>#include "homog2d.hpp"</code>,
 and log the error stream of your program:<br>
 <code>./myapp 2>stderr</code><br>
-then open an issue [here](https://github.com/skramm/homog2d/issues) and include that output (after removing non relevant parts), so this can be checked and corrected.
+then open an issue (https://github.com/skramm/homog2d/issues) and include that output after removing non relevant parts, so this can be checked and corrected.
 </dd>
 
 <dt>
@@ -76,14 +76,14 @@ But if you feel like adding required code to build a package through a PR, you a
 
 
 <dt>
-Q: Why Opencv as backend?
+Q: Why Opencv as drawing backend?
 </dt>
 <dd>
 -Short answer: because it works fine!
 <br>
 -Long(er) answer:
 Besides the fact that I have already used it with other projects, it also has the great advantage of having all the drawing code for "advanced" primitives (circle, ellipse).
-This doesn't seem to be the case for, say, [SDL2](https://www.libsdl.org/) or other backends.
+This doesn't seem to be the case for, say SDL2 (https://www.libsdl.org/) or other backends.
 <br>
 Alternatively, the library provides also SVG drawing.
 </dd>
@@ -99,8 +99,8 @@ A: Because:<br>
 
 (Actually, I have the feeling that most people criticizing that tool never really understood how it works.)
 
-Anyway, the library end-user doesn't need to use it.
-As this is a "header-only" lib, he can use the tool he wants.
+Anyway, the library user doesn't need to use it:
+as this is a "header-only" lib, he can use the tool he wants.
 </dd>
 
 
