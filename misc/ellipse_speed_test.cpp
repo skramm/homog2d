@@ -52,7 +52,7 @@ int main( int argc, const char** argv )
 		c2 += bb.size();
 //		if( dummy_pt.isInside(bb) )
 //			c2++;
-		auto center = ell.center();
+		auto center = ell.getCenter();
 		if( dummy_pt.distTo(center) < range_center )
 			c3++;
 
