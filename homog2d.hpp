@@ -1504,7 +1504,7 @@ public:
 /// \name attributes
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
-	Point2d_<FPT>                                center()    const;
+	Point2d_<FPT>                                getCenter() const;
 	CPolyline_<FPT>                              getOBB()    const;
 	FRect_<FPT>                                  getBB()     const;
 	HOMOG2D_INUMTYPE                             angle()     const;
@@ -1919,7 +1919,7 @@ public:
 	}
 
 /// Returns center of rectangle
-	Point2d_<FPT> center() const
+	Point2d_<FPT> getCenter() const
 	{
 		return Point2d_<FPT>(
 			(static_cast<HOMOG2D_INUMTYPE>(_ptR1.getX() ) + _ptR2.getX() ) * 0.5,
@@ -4026,7 +4026,7 @@ Requires both points inside AND no intersections
 	std::pair<Segment_<FPT>,Segment_<FPT>>
 	split() const
 	{
-		auto pt_mid = getMiddlePoint();
+		auto pt_mid = getCenter();
 		return std::make_pair(
 			Segment_<FPT>( _ptS1, pt_mid ),
 			Segment_<FPT>( _ptS2, pt_mid )
@@ -4074,7 +4074,7 @@ Requires both points inside AND no intersections
 
 	/// Returns point that at middle distance between \c p1 and \c p2
 	Point2d_<FPT>
-	getMiddlePoint() const
+	getCenter() const
 	{
 		return Point2d_<FPT>(
 			( static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX()) + _ptS2.getX() ) / 2.,
@@ -4088,7 +4088,7 @@ Requires both points inside AND no intersections
 	getBisector() const
 	{
 		Segment_<HOMOG2D_INUMTYPE> seg2 = *this; // convert to (possibly) enhance precision
-		return seg2.getLine().getOrthogonalLine( seg2.getMiddlePoint() );
+		return seg2.getLine().getOrthogonalLine( seg2.getCenter() );
 	}
 
 
@@ -4203,7 +4203,7 @@ void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 #endif
 
 	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
-	_center = seg.getMiddlePoint();
+	_center = seg.getCenter();
 	_radius = seg.length() / 2.0;
 }
 
@@ -6280,7 +6280,7 @@ Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 /// \sa center( const T& )
 template<typename FPT>
 Point2d_<FPT>
-Ellipse_<FPT>::center() const
+Ellipse_<FPT>::getCenter() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	return Point2d_<FPT>( par.x0, par.y0 );
@@ -7113,7 +7113,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 		bool tooClose = false;
 		for( size_t i=0; i<seg_bb.size(); i++ )        // iterate on all segments of the extended bounding box
 		{
-			Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, seg_bb[i].getMiddlePoint() );
+			Segment_<HOMOG2D_INUMTYPE> seg_ref( *this, seg_bb[i].getCenter() );
 
 			auto poly_pts = poly.getPts();
 			for( size_t j=0; j<poly_pts.size() && !tooClose; j++  )   // make sure that every point of the polyline is not on the reference segment
@@ -7795,12 +7795,12 @@ getLine( const Circle_<FPT2>& c1, const Circle_<FPT3>& c2 )
 }
 
 /// Free function, returns middle point of segment
-/// \sa Segment_::getMiddlePoint()
+/// \sa Segment_::getCenter()
 template<typename FPT>
 Point2d_<FPT>
-getMiddlePoint( const Segment_<FPT>& seg )
+getCenter( const Segment_<FPT>& seg )
 {
-	return seg.getMiddlePoint();
+	return seg.getCenter();
 }
 
 /// Free function, returns bisector line of segment
@@ -7823,19 +7823,19 @@ getParallelSegs( const Segment_<FPT>& seg, T dist )
 
 /// Free function, returns middle point of set of segments
 /**
-\sa Segment_::getMiddlePoint()
+\sa Segment_::getCenter()
 - input: set of segments
 - output: set of points (same container)
 */
 template<typename FPT>
 std::vector<Point2d_<FPT>>
-getMiddlePoints( const std::vector<Segment_<FPT>>& vsegs )
+getCenters( const std::vector<Segment_<FPT>>& vsegs )
 {
 	std::vector<Point2d_<FPT>> vout( vsegs.size() );
 
 	auto it = std::begin( vout );
 	for( const auto& seg: vsegs )
-		*it++ = getMiddlePoint( seg );
+		*it++ = getCenter( seg );
 	return vout;
 }
 
@@ -8088,14 +8088,15 @@ angle( const Ellipse_<FPT>& ell )
 	return ell.angle();
 }
 
-/// Return center of Circle_ or Ellipse_ (free function)
-/// \sa Ellipse_::center()
-/// \sa Circle_::center()
+/// Return center of Segment_, FRect_, or Ellipse_ (free function)
+/// \sa Ellipse_::getCenter()
+/// \sa FRect_::getCenter()
+/// \sa Segment_::getCenter()
 template<typename T>
 Point2d_<typename T::FType>
-center(const T& other )
+getCenter(const T& other )
 {
-	return other.center();
+	return other.getCenter();
 }
 
 /// Returns true if ellipse is a circle
@@ -8149,7 +8150,7 @@ void
 impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
 {
 	if( dp._dpValues._showIndex )
-		cv::putText( img.getReal(), std::to_string(c), seg.getMiddlePoint().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
+		cv::putText( img.getReal(), std::to_string(c), seg.getCenter().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 #endif
 
@@ -8801,9 +8802,9 @@ Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 	HOMOG2D_SVG_CHECK_INIT( im );
 
 	im.getReal()._svgString << "<ellipse fill=\"none\" cx=\""
-		<< center().getX()
+		<< getCenter().getX()
 		<< "\" cy=\""
-		<< center().getY()
+		<< getCenter().getY()
 		<< "\" rx=\""
 		<< getMajMin().first
 		<< "\" ry=\""
@@ -8811,7 +8812,7 @@ Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< " transform=\"rotate(" << angle()*180./M_PI << ',' << center().getX() << ',' << center().getY()
+		<< " transform=\"rotate(" << angle()*180./M_PI << ',' << getCenter().getX() << ',' << getCenter().getY()
 		<< ")\" />\n";
 }
 

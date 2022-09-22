@@ -6,17 +6,20 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - planned (no specific order):
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
-  - provide clear interface to extend drawing capabilities using other back-ends
-  - add (optional) common root class, to be able to store heterogeneous objects in container
   - add polygon union and intersection
 
 - current master branch
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
+  - enable run-time polymorphism (wip), through class \ref detail::Common
+  - \b breaking:
+    - renamed Segment_::getMiddlePoint() by Segment_::getCenter()
+    - renamed FRect_::center() by FRect_::getCenter()
+
 
 - [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)
-  - added `isColinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
+  - added `areColinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
   - added `getBisector()` to class `Segment_`, return bisector line
   - added `area()` and `length()` to class `Circle_` and class `Ellipse_` (member and free functions)
   - improved ellipse demo (Opencv-dependent)

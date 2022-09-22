@@ -35,7 +35,7 @@ void recurseTriangles(
 	int b = std::rand()*max_color/RAND_MAX;
 	for( const auto& pl: v_pl )	{
 		auto v_segs = pl.getSegs();
-		auto v_mid = getMiddlePoints( v_segs );
+		auto v_mid = getCenters( v_segs );
 		auto v_pts  = pl.getPts();
 		auto pl1 = CPolyline( std::vector<Point2d>{ v_pts[0], v_mid[0], v_mid[2] } );
 		auto pl2 = CPolyline( std::vector<Point2d>{ v_pts[1], v_mid[1], v_mid[0] } );

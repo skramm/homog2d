@@ -2064,8 +2064,8 @@ TEST_CASE( "Ellipse", "[ell1]" )
 {
 	{
 		Ellipse_<NUMTYPE> el;
-		CHECK( el.center() == Point2d(0,0) );
-		CHECK( center(el)  == Point2d(0,0) );
+		CHECK( el.getCenter() == Point2d(0,0) );
+		CHECK( getCenter(el)  == Point2d(0,0) );
 		CHECK( el.getMajMin().first == 2.0 );
 		CHECK( el.getMajMin().second == 1.0 );
 		CHECK( el.angle() == 0.0 );
@@ -2077,8 +2077,8 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	{
 		Circle c(1,2,3);
 		Ellipse_<NUMTYPE> el(c);
-		CHECK( el.center() == Point2d(1,2) );
-		CHECK( center(el)  == Point2d(1,2) );
+		CHECK( el.getCenter() == Point2d(1,2) );
+		CHECK( getCenter(el)  == Point2d(1,2) );
 		CHECK( el.getMajMin().first == 3.0 );
 		CHECK( el.getMajMin().second == 3.0 );
 		CHECK( el.angle() == 0.0 );
@@ -2089,7 +2089,7 @@ TEST_CASE( "Ellipse", "[ell1]" )
 
 	{
 		Ellipse_<NUMTYPE> el(1,2,3.0,3.00001);
-		CHECK( el.center() == Point2d(1,2) );
+		CHECK( el.getCenter() == Point2d(1,2) );
 		CHECK( el.isCircle() == false );       // using default threshold
 		CHECK( isCircle(el) == false );
 
@@ -2099,7 +2099,7 @@ TEST_CASE( "Ellipse", "[ell1]" )
 
 	{
 		Ellipse_<NUMTYPE> el(4,5,6,7);
-		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getCenter() == Point2d(4,5) );
 		CHECK( el.getMajMin().first  == Approx(7.0) );
 		CHECK( el.getMajMin().second == Approx(6.0) );
 		CHECK( el.angle() == 0.0 );
@@ -2107,7 +2107,7 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	}
 	{
 		Ellipse_<NUMTYPE> el(4,5, 6, 7, 1 /*rad.*/ );
-		CHECK( el.center() == Point2d(4,5) );
+		CHECK( el.getCenter() == Point2d(4,5) );
 		CHECK( el.getMajMin().first  == Approx(7.0) );
 		CHECK( el.getMajMin().second == Approx(6.0) );
 		CHECK( el.angle() == Approx(1.0) );
@@ -2188,7 +2188,7 @@ TEST_CASE( "Segment", "[seg1]" )
 		CHECK( si() == true );
 		CHECK( si.get() == Point2d_<NUMTYPE>(1,1) );
 
-		auto pt = s1.getMiddlePoint();
+		auto pt = s1.getCenter();
 		CHECK( pt == Point2d_<NUMTYPE>(1,1) );
 	}
 	{
@@ -2202,7 +2202,7 @@ TEST_CASE( "Segment", "[seg1]" )
 		Line2d li(9,9);   // diagonal line (0,0) - (9,9)
 		auto ppts = li.getPoints( GivenCoord::X, 5, 1 );
 		Segment_<NUMTYPE> s1( ppts.first, ppts.second );
-		CHECK( s1.getMiddlePoint() == Point2d_<NUMTYPE>(5,5) );
+		CHECK( s1.getCenter() == Point2d_<NUMTYPE>(5,5) );
 	}
 }
 
@@ -2367,14 +2367,14 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r1.height() == 1. );
 		CHECK( r1.length() == 4 );
 		CHECK( r1.area()   == 1 );
-		CHECK( r1.center() == Point2d(0.5,0.5) );
+		CHECK( r1.getCenter() == Point2d(0.5,0.5) );
 
 // free functions
 		CHECK( width(r1)  == 1. );
 		CHECK( height(r1) == 1. );
 		CHECK( length(r1) == 4 );
 		CHECK( area(r1)   == 1 );
-		CHECK( center(r1) == Point2d(0.5,0.5) );
+		CHECK( getCenter(r1) == Point2d(0.5,0.5) );
 
 		auto p_pts = r1.getPts();
 		CHECK( p_pts.first  == Point2d() );
@@ -2420,7 +2420,7 @@ TEST_CASE( "FRect", "[frect]" )
 		CHECK( r.height() == 50 );
 		CHECK( r.length() == 300 );
 		CHECK( r.area() == 5000 );
-		CHECK( r.center() == Point2d(0,0) );
+		CHECK( r.getCenter() == Point2d(0,0) );
 	}
 	{
 		FRect_<NUMTYPE> r1( 0,0, 5, 3 );

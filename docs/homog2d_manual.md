@@ -352,7 +352,7 @@ auto a2 = s1.getAngle( l1 );
 You can get the point lying in the middle of the segment:
 ```C++
 Segment s1( Point2d(1,2), Point2d(3,4) );
-auto p_middle = s1.getMiddlePoint(); // or: getMiddlePoint(s1)
+auto p_middle = s1.getCenter(); // or: getCenter(s1)
 ```
 
 This middle point can be used to split a segment into two equal length segments,
@@ -1222,7 +1222,7 @@ bool b = areColinear( pt1, pt2, pt3 );
 
 If you have a `std::vector<Segment>` named `v_segs`, then the following function calls:
 
-- `auto v_pts   = getMiddlePoints( v_segs );`
+- `auto v_pts   = getCenters( v_segs );`
 - `auto v_lines = getLines( v_segs );`
 
 will return a vector holding the middle points of all the segments and a vector holding the supporting lines of all the segments.

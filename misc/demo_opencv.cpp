@@ -834,7 +834,7 @@ void action_H( void* param )
 	c_ell.draw( data.img );
 	auto ell = H * c_ell;
 	ell.draw( data.img2 );
-	auto ecenter = ell.center();
+	auto ecenter = ell.getCenter();
 	ecenter.draw( data.img2 );
 
 	auto ell_bb = ell.getBB();
@@ -1302,7 +1302,7 @@ void action_SEG( void* param )
 	if( data.showMiddlePoint )
 	{
 		for( const auto& seg: data.vseg )
-			seg.getMiddlePoint().draw( data.img, img::DrawParams().setColor( 0,0,250) );
+			seg.getCenter().draw( data.img, img::DrawParams().setColor( 0,0,250) );
 	}
 	if( data.showBisector )
 	{

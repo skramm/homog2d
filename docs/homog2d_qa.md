@@ -17,7 +17,7 @@ Q: How do I know the version that I have installed on my machine?
 <dd>
 A: easy, add this in your app (or check for that symbol in the file).
 <pre>
-   std::cout << "version: " << HOMOG2D_VERSION << '\n';
+   std::cout << "version: " << HOMOG2D_VERSION << '\\n';
 </pre>
 </dd>
 
@@ -55,6 +55,20 @@ However, both can fail (if there is no common part of course), but you cannot re
 Thus the first function returns a type that can be checked for success.
 A contrario, the second function will return a <code>Polyline</code> object, and in case of failure, it will just be empty, which is perfectly valid.
 </dd>
+
+
+<dt>
+Q: Circle_::center() and FRect_::getCenter()? Why not the same identifier?
+</dt>
+<dd>
+A: because the first function returns a reference, and can be used to edit the value.
+A contrario, the second function returns a value, and cannot be used to edit the value.
+Thus, the intent is clearer.
+</dd>
+
+
+
+
 
 <dt>
 Q: I notice the repo has a lot of branches. What's the point with all these branches?
