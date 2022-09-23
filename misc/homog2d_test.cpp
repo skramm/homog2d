@@ -65,18 +65,27 @@ int main( int argc, char* argv[] )
 		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
 		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
 		<< "\n - build option:"
+
 		<< "\n  - HOMOG2D_OPTIMIZE_SPEED: "
 #ifdef HOMOG2D_OPTIMIZE_SPEED
 		<< "YES"
 #else
 		<< "NO"
-#endif // HOMOG2D_OPTIMIZE_SPEED
+#endif
+
 		<< "\n  - HOMOG2D_USE_OPENCV: "
 #ifdef HOMOG2D_USE_OPENCV
 		<< "YES"
 #else
 		<< "NO"
-#endif // HOMOG2D_USE_OPENCV
+#endif
+
+		<< "\n  - HOMOG2D_USE_SVG_IMPORT: "
+#ifdef HOMOG2D_USE_SVG_IMPORT
+		<< "YES"
+#else
+		<< "NO"
+#endif
 		<< '\n';
 
 	Catch::StringMaker<float>::precision = 25;
@@ -2994,7 +3003,18 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 		for( const auto& elem: data )
-			CHECK( data.at(0)->type() == Type::Circle );
+			CHECK( elem->type() == Type::Circle );
+	}
+	{                            // read a file with 3 circles, one rect, one segment and a polygon
+		tinyxml2::XMLDocument doc;
+		doc.LoadFile( "misc/other/test_svg_import_2.svg" );
+		h2d::svg::Visitor visitor;
+		doc.Accept( &visitor );
+		const auto& data = visitor.get();
+		CHECK( data.size() == 6 );
+		CHECK( data.at(3)->type() == Type::Segment );
+		CHECK( data.at(4)->type() == Type::FRect );
+		CHECK( data.at(5)->type() == Type::CPolyline );
 	}
 }
 #endif
