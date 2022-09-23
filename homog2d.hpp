@@ -117,13 +117,22 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_THROW_ERROR_1( msg ) \
 	{ \
 		std::ostringstream oss; \
-		oss << "homog2d: line " <<  __LINE__  << ", " << + __FUNCTION__ << "(): " << msg; \
+		oss << "homog2d: line " <<  __LINE__  << ", function:" << __FUNCTION__ << "(): " \
+			<< msg << "\n -full function name: " << __PRETTY_FUNCTION__ \
+			<< "\n -Error count=" << ++errorCount(); \
 		throw std::runtime_error( oss.str() ); \
 	}
 
 /// Error throw wrapper macro, first arg is the function name
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
-	throw std::runtime_error( std::string("homog2d: line ") + std::to_string( __LINE__ ) + ", " + func + "(): " + msg )
+	{ \
+		std::ostringstream oss; \
+		oss << "homog2d: line " <<  __LINE__  << ", function:" << func << "(): " \
+			<< msg << "\n -full function name: " << __PRETTY_FUNCTION__ \
+			<< "\n -Error count=" << ++errorCount(); \
+		throw std::runtime_error( oss.str() ); \
+	}
+
 
 #define HOMOG2D_SVG_CHECK_INIT( im ) \
 	if( !im.isInit() ) \
@@ -160,6 +169,13 @@ See https://github.com/skramm/homog2d
 #endif
 
 namespace h2d {
+
+/// Use to count the errors
+size_t& errorCount()
+{
+	static size_t c;
+	return c;
+}
 
 /// Holds the types needed for policy based design
 namespace type {
@@ -2585,7 +2601,7 @@ This will return the same points as given in input but ordered as:
 
 \todo 20220520: needs some optimization, once it has been extensively tested
 
-We have theses 6 situations, with the desired output order:
+We have theses 6 situations described on below diagrams A through F, with the desired output order:
 \verbatim
  1 +                       1 +
    |    A => 3,1,2           |     B => 2,1,3
@@ -4210,9 +4226,17 @@ void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 //------------------------------------------------------------------
 /// Set circle from 3 points
 /**
-\warning Not sure this will not suffer from numerical instability
+Algorithm: we get the two largest segments and compute their bisector line.
+Their intersection point will be the center of circle, and the radius is the distance between
+center and any of the three points.
+
+We consider the the largest segments to improve numerical stability.
 
 Will throw if unable (numerical issue)
+
+One could think that the first checking would be enough, but experience shows that some times,
+the point are not colinear, but the two bisector lines are still parallel.
+Thus the second checking.
 */
 template<typename FPT>
 template<typename T>
@@ -4223,61 +4247,18 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 	if( areColinear( pt1, pt2, pt3 ) )
 		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
 #endif
+	auto pts = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
-#if 0
-
-//	std::cout << "\n* pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << '\n';
-	HOMOG2D_INUMTYPE x1 = pt1.getX();
-	HOMOG2D_INUMTYPE x2 = pt2.getX();
-	HOMOG2D_INUMTYPE x3 = pt3.getX();
-
-	HOMOG2D_INUMTYPE y1 = pt1.getY();
-	HOMOG2D_INUMTYPE y2 = pt2.getY();
-	HOMOG2D_INUMTYPE y3 = pt3.getY();
-
-	auto dx12 = x1 - x2;
-	auto dx13 = x1 - x3;
-	auto dy12 = y1 - y2;
-	auto dy13 = y1 - y3;
-
-	auto sx12 = x1*x1 - x2*x2;
-	auto sx13 = x1*x1 - x3*x3;
-	auto sy12 = y1*y1 - y2*y2;
-	auto sy13 = y1*y1 - y3*y3;
-
-	auto B1 = (sx12 + sy12) * dx13 - ( sx13 + sy13 ) * dx12;
-	auto B2 = dy13 * dx12 - dy12 * dx13;
-	auto B = B1 / B2;
-	if( std::isnan(B) )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, B term is nan" );
-
-	auto y0 = - B / 2.0;
-
-	auto Am = ( sx12 + sy12 + B * dy12 ) / dx12;
-	if( std::isnan(Am) )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, A term is nan" );
-
-	auto x0 = Am / 2.0;
-
-	_center.set( x0, y0 );
-
-	auto C = x1*x1 + y1*y1 - Am * x1 + B * y1;
-	auto sq_value = x0*x0 + y0*y0 + C;
-	if( sq_value < 0 )
-		HOMOG2D_THROW_ERROR_1( "Unable to compute, no sqrt of a negative value" );
-	_radius = std::sqrt( sq_value );
-//	std::cout << *this << '\n';
-#else
-	auto pt = priv::getLargestDistancePoints( pt1, pt2, pt3 );
-
-	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( pt[0], pt[1] );
-	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( pt[0], pt[2] );
+	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( pts[0], pts[1] );
+	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( pts[0], pts[2] );
 	auto li1 = seg1.getBisector();
 	auto li2 = seg2.getBisector();
-	HOMOG2D_ASSERT( !li1.isParallelTo(li2) );
+#ifndef HOMOG2D_NOCHECKS
+	if( li1.isParallelTo(li2) )
+		HOMOG2D_THROW_ERROR_1( "unable, bisector lines are parallel" )
+#endif
 	center() = li1 * li2;
 	radius() = center().distTo(pt1);
-#endif
 }
 
 //------------------------------------------------------------------
