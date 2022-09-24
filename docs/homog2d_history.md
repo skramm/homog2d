@@ -11,10 +11,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
-  - enable run-time polymorphism (wip), through class \ref detail::Common
-  - \b breaking:
-    - renamed Segment_::getMiddlePoint() by Segment_::getCenter()
-    - renamed FRect_::center() by FRect_::getCenter()
+  - enable run-time polymorphism (wip), through class detail::Common
+  - __breaking changes__:
+    - renamed `Segment_::getMiddlePoint()` by `Segment_::getCenter()`
+    - renamed `FRect_::center()` by `FRect_::getCenter()`
 
 
 - [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02

@@ -554,7 +554,8 @@ Circle c2( pt1, pt2 );
 c2.set( pt1, pt2 );
 ```
 For these latter functions, the 2 (or 3) points must be different, and not colinear (for 3 points).
-This is checked for and will throw if not the case (unless the "no error" build option is activated).
+This is checked for and will throw if not the case
+(unless the "no checking" build option is activated, (see here)[#build_options]).
 
 ![showcase6](showcase/showcase6.gif)
 
@@ -1706,7 +1707,8 @@ or just add a `#define` on top of your program
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
 - `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
-- `HOMOG2D_NOCHECKS`: will disable run-time checking. If not defined, incorrect situations will throw a `std::runtime_error`.
+- `HOMOG2D_NOCHECKS`: will disable run-time checking.
+If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.

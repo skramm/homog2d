@@ -3361,7 +3361,7 @@ public:
 		return impl_isInsideRect( rect, detail::RootHelper<LP>() );
 	}
 
-/// Point is inside circle
+/// Point is inside circle defined by center and radius
 	template<typename T>
 	bool isInside( const Point2d_<FPT>& center, T radius ) const
 	{
@@ -3470,7 +3470,6 @@ private:
 	template<typename FPT2>
 	constexpr bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::RootHelper<type::IsLine>& ) const;
 
-/// \todo add impl_isInsideCircle( const Circle<T>&,  ...)
 	template<typename T>
 	bool           impl_isInsideCircle( const Point2d_<FPT>&, T r, const detail::RootHelper<type::IsPoint>& ) const;
 	template<typename T>
@@ -7969,7 +7968,7 @@ base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl 
 	return pl.centroid();
 }
 
-/// Returns radius of circle (free function)
+/// Returns reference on radius of circle (free function)
 /// \sa Circle_::radius()
 template<typename FPT>
 FPT&
@@ -7978,7 +7977,7 @@ radius( Circle_<FPT>& cir )
 	return cir.radius();
 }
 
-/// Returns radius of circle (free function) const version
+/// Returns reference on radius of circle (free function), const version
 /// \sa Circle_::radius()
 template<typename FPT>
 const FPT&
@@ -7987,7 +7986,7 @@ radius( const Circle_<FPT>& cir )
 	return cir.radius();
 }
 
-/// Returns center of circle (free function)
+/// Returns reference on center of circle (free function)
 /// \sa Circle_::center()
 template<typename FPT>
 Point2d_<FPT>&
@@ -7996,7 +7995,7 @@ center( Circle_<FPT>& cir )
 	return cir.center();
 }
 
-/// Returns center of circle (free function), const version
+/// Returns reference on center of circle (free function), const version
 /// \sa Circle_::center()
 template<typename FPT>
 const Point2d_<FPT>&

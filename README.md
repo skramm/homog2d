@@ -18,7 +18,7 @@ Also handles other geometric primitives.
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
 - Author: Sebastien Kramm, firstname.lastname@univ-rouen.fr
-- Licence: MPLv2
+- Licence: (MPLv2)[https://www.mozilla.org/en-US/MPL/2.0/]
 
 
 Short preview:
@@ -30,7 +30,7 @@ int main()
 {
 	Line2d l1( Point2d(10,10) );               // a line passing through (0,0) and (10,10)
 	Line2d l2( Point2d(0,10), Point2d(10,0) ); // a line passing through (0,10) and (10,0)
-	Point2d pt = l1 * l2;                      // intersection point (5,5)
+	auto pt = l1 * l2;                         // intersection point (5,5)
 	Homogr H(2,3);                             // a translation matrix
 	std::cout << H * pt;                       // prints [7,8]
 }
