@@ -18,7 +18,7 @@ Also handles other geometric primitives.
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
 - Author: Sebastien Kramm, firstname.lastname@univ-rouen.fr
-- Licence: (MPLv2)[https://www.mozilla.org/en-US/MPL/2.0/]
+- Licence: [MPLv2](https://www.mozilla.org/en-US/MPL/2.0/)
 
 
 Short preview:

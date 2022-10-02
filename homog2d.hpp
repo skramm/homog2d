@@ -4292,8 +4292,6 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 /**
 Ref:
 - https://stackoverflow.com/questions/3349125/
-
-\todo benchmark the two approaches below
 */
 template<typename FPT>
 template<typename FPT2>
