@@ -257,7 +257,7 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 
 # this target requires Opencv
 BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv` $$(pkg-config --libs tinyxml2)
 
 
 # this target requires Tinyxml2
