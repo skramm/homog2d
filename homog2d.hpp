@@ -9036,7 +9036,9 @@ class Visitor: public tinyxml2::XMLVisitor
 {
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
-	enum SvgType { T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse };
+	enum SvgType {
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+	};
 
 /// A map holding correspondences between type as a string and type as a SvgType.
 /// Populated in constructor
@@ -9068,9 +9070,10 @@ public:
 				return t.first == s;
 			}
 		);
-		return it->second;
 		if( it == _svgTypesTable.end() )
-			HOMOG2D_THROW_ERROR_1( "Invalid svg type in file:" + s );
+			return T_other;
+//			HOMOG2D_THROW_ERROR_1( "Invalid svg element in file:'" + s + "'" );
+		return it->second;
 	}
 	const std::vector<std::unique_ptr<detail::Root>>& get() const
 	{
@@ -9084,7 +9087,7 @@ public:
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
 double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
 {
-	double value;
+	double value=0.;
 	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
 		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
 	return value;
@@ -9110,11 +9113,13 @@ const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElemen
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
+//	std::cout << "VisitExit elem=" << e.Name() << '\n';
 	std::string n = e.Name();
 	switch( getSvgType( n ) )
 	{
 		case T_circle:
 		{
+//			std::cout << "importing circle\n";
 			std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
 			vec.push_back( std::move(c) );
 		}
@@ -9169,6 +9174,9 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
 			vec.push_back( std::move(p) );
 		}
+		break;
+
+		default:  // for T_other elements
 		break;
 	}
 	return true;
