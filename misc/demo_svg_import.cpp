@@ -34,14 +34,24 @@ int main( int argc, const char** argv )
 		std::cout << "arg missing!\n";
 		return 1;
 	}
-	doc.LoadFile( argv[1] );
+	auto err = doc.LoadFile( argv[1] );
+	if( err != tinyxml2::XML_SUCCESS )
+	{
+		std::cout << "...exiting, failed to read file '" << argv[1]  << "'\n";
+		return 1;
+	}
 
 //	svg::printFileAttrib( doc );
 
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
 	const auto& data = visitor.get();
-	std::cout << argv[0] << ": Read " << data.size() << " shapes in file\n";
+	std::cout << argv[0] << ": Read " << data.size() << " shapes in file '" << argv[1] << "'\n";
+	if( !data.size() )
+	{
+		std::cout << "...exiting, no data!\n";
+		return 1;
+	}
 
 	img::Image<img::SvgImage> out( 500, 500 );
 

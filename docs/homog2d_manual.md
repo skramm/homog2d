@@ -1642,7 +1642,7 @@ and generate another svg file `test.svg` in current folder.
 
 For example:
 <br>
-`$ BUILD/demo_svg_import docs/comparison_1.svg`
+`$ BUILD/demo_svg_import docs/img/comparison_1.svg`
 
 
 ## 11 - Technical details
