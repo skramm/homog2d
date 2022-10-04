@@ -9031,9 +9031,47 @@ Holds the imported data through std::unique_ptr
 */
 class Visitor: public tinyxml2::XMLVisitor
 {
+/// This type is used to provide a type that can be used in a switch (see VisitExit() ),
+/// as this cannot be done with a string |-(
+	enum SvgType {
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+	};
+
+/// A map holding correspondences between type as a string and type as a SvgType.
+/// Populated in constructor
+	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
+
 private:
 	std::vector<std::unique_ptr<detail::Root>> vec;
+
 public:
+/// Constructor, populates the table giving type from svg string
+	Visitor()
+	{
+		_svgTypesTable.push_back( std::make_pair("circle",   T_circle)   );
+		_svgTypesTable.push_back( std::make_pair("rect",     T_rect)     );
+		_svgTypesTable.push_back( std::make_pair("line",     T_line)     );
+		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
+		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
+		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
+	}
+/// Returns the type as a member of enum SvgType, so the type can be used in a switch
+	SvgType getSvgType( std::string s ) const
+	{
+		auto it = std::find_if(
+			_svgTypesTable.begin(),
+			_svgTypesTable.end(),
+			[s]                                                 // lambda
+			(const std::pair<std::string,SvgType>& t) -> bool
+			{
+				return t.first == s;
+			}
+		);
+		if( it == _svgTypesTable.end() )
+			return T_other;
+//			HOMOG2D_THROW_ERROR_1( "Invalid svg element in file:'" + s + "'" );
+		return it->second;
+	}
 	const std::vector<std::unique_ptr<detail::Root>>& get() const
 	{
 		return vec;
@@ -9046,7 +9084,7 @@ public:
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
 double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
 {
-	double value;
+	double value=0.;
 	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
 		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
 	return value;
@@ -9068,60 +9106,76 @@ const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElemen
 
 /// This is the place where actual SVG data is converted and stored into vector
 /**
- \todo Handle ellipse angle
- \todo maybe handle this through a switch, based on type, to avoid the ugly "if" chaining
+\todo Handle ellipse angle
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
+//	std::cout << "VisitExit elem=" << e.Name() << '\n';
 	std::string n = e.Name();
-//	std::cout << "PROCESS n="<< n << " s=" << n.size() << "\n";
-	if( n == "circle" )
+	switch( getSvgType( n ) )
 	{
-		std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
-		vec.push_back( std::move(c) );
-	}
-	if( n == "rect" )
-	{
-		auto x1 = getValue( e, "x", n );
-		auto y1 = getValue( e, "y", n );
-		auto w  = getValue( e, "width", n );
-		auto h  = getValue( e, "height", n );
-		std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-		vec.push_back( std::move(r) );
-	}
-	if( n == "line" )
-	{
-		std::unique_ptr<detail::Root> s(
-			new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) )
-		);
-		vec.push_back( std::move(s) );
-	}
-	if( n == "polygon" )
-	{
-		auto pts_str = fetchAttribString( "points", e );
-		auto vec_pts = parsePoints( pts_str );
-//		std::cout << "importing " << vec_pts.size() << " pts\n";
-		std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
-		vec.push_back( std::move(p) );
-	}
-	if( n == "polyline" )
-	{
-		auto pts_str = fetchAttribString( "points", e );
-		auto vec_pts = parsePoints( pts_str );
-//		std::cout << "importing " << vec_pts.size() << " pts\n";
-		std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
-		vec.push_back( std::move(p) );
-	}
-	if( n == "ellipse" ) // TODO: handle ellipse angle
-	{
-		auto x  = getValue( e, "cx", n );
-		auto y  = getValue( e, "cy", n );
-		auto rx = getValue( e, "rx", n );
-		auto ry = getValue( e, "ry", n );
-		std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
-		vec.push_back( std::move(p) );
-	}
+		case T_circle:
+		{
+//			std::cout << "importing circle\n";
+			std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
+			vec.push_back( std::move(c) );
+		}
+		break;
 
+		case T_rect:
+		{
+			auto x1 = getValue( e, "x", n );
+			auto y1 = getValue( e, "y", n );
+			auto w  = getValue( e, "width", n );
+			auto h  = getValue( e, "height", n );
+			std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+			vec.push_back( std::move(r) );
+		}
+		break;
+
+		case T_line:
+		{
+			std::unique_ptr<detail::Root> s(
+				new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) )
+			);
+			vec.push_back( std::move(s) );
+		}
+		break;
+
+		case T_polygon:
+		{
+			auto pts_str = fetchAttribString( "points", e );
+			auto vec_pts = parsePoints( pts_str );
+	//		std::cout << "importing " << vec_pts.size() << " pts\n";
+			std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
+			vec.push_back( std::move(p) );
+		}
+		break;
+
+		case T_polyline:
+		{
+			auto pts_str = fetchAttribString( "points", e );
+			auto vec_pts = parsePoints( pts_str );
+	//		std::cout << "importing " << vec_pts.size() << " pts\n";
+			std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
+			vec.push_back( std::move(p) );
+		}
+		break;
+
+		case T_ellipse: // TODO: handle ellipse angle
+		{
+			auto x  = getValue( e, "cx", n );
+			auto y  = getValue( e, "cy", n );
+			auto rx = getValue( e, "rx", n );
+			auto ry = getValue( e, "ry", n );
+			std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
+			vec.push_back( std::move(p) );
+		}
+		break;
+
+		default:  // for T_other elements
+		break;
+	}
 	return true;
 }
 
