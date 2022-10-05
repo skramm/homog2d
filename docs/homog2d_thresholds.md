@@ -46,8 +46,7 @@ In your code, these values can be read/written any time, using the same function
 They all lie in the sub-namespace `thr`:
 
 Example:
-```
-C++
+```C++
 auto curr = thr::nullDistance();  // store current value
 thr::nullDistance() = 1E-6;       // change value
 ...                               // do some stuff
@@ -63,8 +62,7 @@ There is one function per symbol above:
 
 All the threshold current values can be printed at once with:
 
-```
-C++
+```C++
 thr::printThresholds( std::cout );
 ```
 
@@ -73,7 +71,7 @@ thr::printThresholds( std::cout );
 
 Precision of computation and the associated threshold values greatly depend on the numerical range of your data.
 
-Below is a plot that shows the result of an experiment (code is provided).
+Below is a plot that shows the result of an experiment ([code provided](misc/dtest1.cpp)).
 It shows the distance (max and mean value) between a line and the points it was generated with.
 When you build a line using two points (line = pt1 * pt2), the distance between the computed line and both of the points should be 0.
 But (as you got it), its not. And that is the distance that is shown on the plot below.

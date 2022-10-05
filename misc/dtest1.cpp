@@ -1,6 +1,29 @@
 /**
 \file
 \brief generates data for precision test
+
+This program will run 1 million of the following experiment:<br>
+- generate two random points in the range given by the first argument
+- compute the line joining these two points
+- compute the distance between the points and the line
+
+Eventually, it will print several computed value:
+-# range
+-# min coordinate value
+-# max coordinate value
+-# mean distance value
+-# max distance value
+-# mean distance value (computed with the "running std" method)
+-# standard deviation of distance value
+
+Standard deviation is computed using a "single pass" algorithm,
+see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+
+To run that experiment on several ranges use the provided target:
+<br>
+<pre>
+$ make dtest1
+</pre>
 */
 
 
@@ -22,14 +45,12 @@ double gk = 1000.;
 
 double grmin = std::numeric_limits<double>::max();
 double grmax = std::numeric_limits<double>::min();
-double grsum = 0.;
 
 NUMTYPE getRandom()
 {
 	double r = (2.0*rand()/RAND_MAX -1.) * gk;
 	grmin = std::min( std::abs(r), grmin );
 	grmax = std::max( std::abs(r), grmax );
-	grsum += r;
 	return r;
 }
 
@@ -65,12 +86,8 @@ int main( int argc, const char **argv )
 	auto sigma = M2 / (nb-1);
 	std::cout << std::scientific
 		<< gk << sep
-//		<< "random coordinates: min=" << grmin << " max=" << grmax << " mean=" << grsum/nb/4. << "\n";
-		 << grmin << sep
-		 << grmax << sep
-		 << grsum/nb/4.
-
-//		<< "-results:"
+		<< grmin << sep
+		<< grmax << sep
 		<< sep << sum / nb
 		<< sep << vmax
 		<< sep << mean

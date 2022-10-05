@@ -340,13 +340,8 @@ DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
 BUILD/$(FNAME1)_f.png: $(DTEST1_DATA) misc/dtest1.plt
 	misc/dtest1.plt
 
-
-showdtest1:
-	@echo "DTEST1_BIN=$(DTEST1_BIN)"
-	@echo "DTEST1_DATA=$(DTEST1_DATA)"
-
 BUILD/$(FNAME1)_%.data:BUILD/$(FNAME1)_%
-	@echo "#" > $@
+	@echo "# fields description: see misc/dtest1.spp" > $@
 	./$< .0001 >> $@
 	./$< .001 >> $@
 	./$< .01 >> $@
