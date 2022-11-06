@@ -5088,11 +5088,11 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 	{
 		case Rotate::CCW:
 			for( auto& pt: getPts() )
-				pt.set( -pt.getY(), pt.getX() );
+				pt.set( pt.getY(), -pt.getX() );
 		break;
 		case Rotate::CW:
 			for( auto& pt: getPts() )
-				pt.set( pt.getY(), -pt.getX() );
+				pt.set( -pt.getY(), pt.getX() );
 		break;
 		case Rotate::Full:
 			for( auto& pt: getPts() )

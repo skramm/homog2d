@@ -24,5 +24,5 @@ fi
 #echo "fn=$filename"
 
 convert -delay $d -loop 0 BUILD/showcase/${fn}_*.png $1
-rm BUILD/showcase/${fn}_*.png
+#rm BUILD/showcase/${fn}_*.png
 

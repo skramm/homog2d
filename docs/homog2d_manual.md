@@ -746,8 +746,8 @@ You may rotate/mirror all the points of polyline objects with the `rotate()` mem
 it takes as argument an enum value of type `Rotate`.
 
 The available values are:
-* `CW`: -90°
-* `CCW`: +90°
+* `CW`: -90° (Clockwise)
+* `CCW`: +90° (Counter Clockwise)
 * `Full`: 180°
 * `VMirror`: Mirror points relatively to vertical axis
 * `HMirror`: Mirror points relatively to horizontal axis
