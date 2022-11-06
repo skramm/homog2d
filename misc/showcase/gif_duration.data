@@ -1,0 +1,15 @@
+# this file can be used to specify a duration between gif frames
+# for a given showcase.
+# It is read when processing target `showcase` of makefile
+
+# if the filename is not present, the default duration will be used
+# (see file build_gif.sh)
+
+showcase1 12
+showcase2 12
+showcase3 12
+showcase4 12
+showcase5 24
+showcase10 80
+
+
