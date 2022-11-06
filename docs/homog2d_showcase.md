@@ -64,6 +64,7 @@ Same as above but with a rectangle and a cirle.
 * [Showcase 7c](../misc/showcase/showcase7c.cpp):
 <a id="sc7c"></a>
 Shows a moving segment that turns red and bold when inside a rectangle, a circle, and a closed polyline.
+Also draws the intersection point, if any.
 
 ![showcase7c](showcase/showcase7c.gif)
 

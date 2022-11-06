@@ -35,7 +35,7 @@ int main( int argc, const char** argv )
 		auto ell2 = Hdraw * ell;
 
 		img::Image<cv::Mat> im( 250, 200 );
-		ell2.center().draw( im, img::DrawParams().setColor(0,250,0) );
+		ell2.getCenter().draw( im, img::DrawParams().setColor(0,250,0) );
 		auto lines = ell2.getAxisLines();
 		lines.first.draw( im );
 		lines.second.draw( im );

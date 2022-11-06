@@ -31,7 +31,7 @@ int main( int argc, const char** argv )
 		FRect obj1( Point2d( x1+x0, y1+x0), r_w, r_h0 );
 		Circle obj2( Point2d(-x1+x0,-y1+x0), 2.-.5*r_w );
 		auto bcir = obj1.getBoundingCircle();
-		auto center = obj1.center();
+		auto center = obj1.getCenter();
 //		std::cout << "radius=" << obj2.radius() << "\n";
 
 		auto obj1_d = Hdraw * obj1;

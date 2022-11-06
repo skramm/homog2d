@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# This file is used to build the final gif for showcase demos.
+# It relies on Imagemagick, so must be installed.
+
+# This script is called by `make` for target `showcase`.
+
 set +x
 echo " -processing $1"
 

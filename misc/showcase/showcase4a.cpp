@@ -31,7 +31,7 @@ int main( int argc, const char** argv )
 		Circle obj2( Point2d(-x1+x0,-y1+x0), 2.-.5*r_w );
 		auto bcir = obj1.getBoundingCircle();
 		auto cbb = getBB(obj2);
-		auto center = obj1.center();
+		auto center = obj1.getCenter();
 
 		auto obj1_d = Hdraw * obj1;
 		auto obj2_d = Hdraw * obj2;
