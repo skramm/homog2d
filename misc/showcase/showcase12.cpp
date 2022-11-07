@@ -11,45 +11,38 @@ using namespace h2d;
 img::Image<cv::Mat> im( 300, 400 );
 
 void processRot(
-	const CPolyline& pl_src,      ///< Polyline
+	CPolyline&  pl,      ///< Polyline
 	std::string msg,
-	Rotate     rot,     ///< What kind of rotation?
-	int        nb_img,  ///< How many images
-	int        pt_idx   ///< index of Polyline point that will be the center point
+	Rotate      rot,     ///< What kind of rotation?
+	int         nb_img,  ///< How many images
+	int         pt_idx   ///< index of Polyline point that will be the center point
 )
 {
 	static int out_idx;
 	for( int i=0; i<nb_img; i++ )
 	{
 		im.clear();
-		cv::putText( im.getReal(), msg, cv::Point2i( 20, 40 ), 0, 0.6, cv::Scalar( 50,0,0 ), 1 );
+		cv::putText(
+			im.getReal(),
+			std::to_string(out_idx) + ": " + msg + ": " + std::to_string(i+1) + "/" + std::to_string(nb_img),
+			cv::Point2i( 20, 40 ), 0, 0.6, cv::Scalar( 50,0,0 ), 1
+		);
 
-		pl_src.getPoint(0).draw( im, img::DrawParams().setColor(250,120,20).setPointStyle(img::PtStyle::Diam) );
-		pl_src.draw( im, img::DrawParams().setColor(20,20,250) );
+		pl.rotate( rot, pl.getPoint(pt_idx) );
+		pl.getPoint(0).draw( im, img::DrawParams().setColor(250,120,20).setPointStyle(img::PtStyle::Diam) );
+		draw( im, Line2d( LineDir::H, pl.getPoint(0) ), img::DrawParams().setColor(200,200,200) );
+		draw( im, Line2d( LineDir::V, pl.getPoint(0) ), img::DrawParams().setColor(200,200,200) );
+		pl.draw( im, img::DrawParams().setColor(250,0,20) );
 //		pl.getBB().draw( im, img::DrawParams().setColor(150,150,120) );
 
-		std::ostringstream ossa;
-		ossa << "showcase12_" << std::setfill('0') << std::setw(2) << out_idx++ << ".png";
-		im.write( ossa.str() );
-
-		CPolyline pl2 = pl_src;
-		pl2.rotate( rot, pl2.getPoint(pt_idx) );
-		im.clear();
-		cv::putText( im.getReal(), msg, cv::Point2i( 20, 40 ), 0, 0.6, cv::Scalar( 50,0,0 ), 1 );
-		pl2.getPoint(0).draw( im, img::DrawParams().setColor(250,120,20).setPointStyle(img::PtStyle::Diam) );
-		pl2.draw( im, img::DrawParams().setColor(250,0,20) );
-//		pl.getBB().draw( im, img::DrawParams().setColor(150,150,120) );
-
-		std::ostringstream ossb;
-		ossb << "showcase12_" << std::setfill('0') << std::setw(2) << out_idx++ << ".png";
-		im.write( ossb.str() );
+		std::ostringstream oss;
+		oss << "showcase12_" << std::setfill('0') << std::setw(2) << out_idx++ << ".png";
+		im.write( oss.str() );
 	}
 }
 
-
 int main( int argc, const char** argv )
 {
-//	auto n = 25; // nb images
 	CPolyline pl;
 	std::vector<Point2d> vpts{
 		{ 5,5 },
@@ -71,8 +64,8 @@ int main( int argc, const char** argv )
 	auto pl2 = Hdraw * pl;
 	processRot( pl2, "VMirror",    Rotate::VMirror, nbpts, 0 );
 	processRot( pl2, "HMirror",    Rotate::HMirror, nbpts, 0 );
-	processRot( pl2, "ClockWise",  Rotate::CW,      nbpts, 0 );
-	processRot( pl2, "CClockWise", Rotate::CCW,     nbpts, 0 );
+	processRot( pl2, "ClockWise",  Rotate::CW,      5, 0 );
+	processRot( pl2, "CClockWise", Rotate::CCW,     5, 0 );
 	processRot( pl2, "Full",       Rotate::Full,    nbpts, 0 );
 }
 
