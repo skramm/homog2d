@@ -16,8 +16,8 @@
 **************************************************************************/
 
 /**
-\file demo_svg_import.cpp
-\brief demo of reading svg files
+\file
+\brief Demo of reading svg files. Build with `$ make demo_import`
 */
 
 //#define HOMOG2D_DEBUGMODE
@@ -41,7 +41,7 @@ int main( int argc, const char** argv )
 		return 1;
 	}
 
-//	svg::printFileAttrib( doc );
+	svg::printFileAttrib( doc );
 
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );

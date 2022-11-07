@@ -2772,7 +2772,7 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 	}
 }
 
-TEST_CASE( "Polyline rotation", "[polyline-rot]" )
+TEST_CASE( "Polyline fullstep rotation", "[polyline-rot]" )
 {
 	OPolyline_<NUMTYPE> plo;
 	CPolyline_<NUMTYPE> plc;

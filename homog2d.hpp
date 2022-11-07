@@ -9082,24 +9082,25 @@ public:
 
 //------------------------------------------------------------------
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
-double getValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
+double
+getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
 {
 	double value=0.;
 	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
-		throw "h2d::svg::import error, failed to read attribute " + std::string{str} + " while reading element " + e_name + "\n";
+		throw std::string("h2d::svg::import error, failed to read attribute '") + std::string{str} + "' while reading element '" + e_name + "'\n";
 	return value;
 }
 
 /// helper function
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
-\todo Seems that the tinyxml function crashes if no attribute of that name is found!
 */
-const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElement& e )
+const char*
+getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 {
 	const char *pts = e.Attribute( attribName );
 	if( !pts )
-		throw std::string("h2d::img::svg Error: unable to find attribute ") + attribName + " in tag " + e.Name();
+		throw std::string("h2d::img::svg Error: unable to find attribute '") + attribName + "' in tag " + e.Name();
 	return pts;
 }
 
@@ -9110,73 +9111,93 @@ const char* fetchAttribString( const char* attribName, const tinyxml2::XMLElemen
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
-//	std::cout << "VisitExit elem=" << e.Name() << '\n';
 	std::string n = e.Name();
-	switch( getSvgType( n ) )
+	try
 	{
-		case T_circle:
+		switch( getSvgType( n ) )
 		{
-//			std::cout << "importing circle\n";
-			std::unique_ptr<detail::Root> c( new Circle( getValue( e, "cx", n ), getValue( e, "cy", n ), getValue( e, "r", n ) ) );
-			vec.push_back( std::move(c) );
-		}
-		break;
+			case T_circle:
+			{
+	//			std::cout << "importing circle\n";
+				std::unique_ptr<detail::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
+				vec.push_back( std::move(c) );
+			}
+			break;
 
-		case T_rect:
-		{
-			auto x1 = getValue( e, "x", n );
-			auto y1 = getValue( e, "y", n );
-			auto w  = getValue( e, "width", n );
-			auto h  = getValue( e, "height", n );
-			std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-			vec.push_back( std::move(r) );
-		}
-		break;
+			case T_rect:
+			{
+				auto x1 = getAttribValue( e, "x", n );
+				auto y1 = getAttribValue( e, "y", n );
+				auto w  = getAttribValue( e, "width", n );
+				auto h  = getAttribValue( e, "height", n );
+				std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+				vec.push_back( std::move(r) );
+			}
+			break;
 
-		case T_line:
-		{
-			std::unique_ptr<detail::Root> s(
-				new Segment( getValue( e, "x1", n ), getValue( e, "y1", n ), getValue( e, "x2", n ), getValue( e, "y2", n ) )
-			);
-			vec.push_back( std::move(s) );
-		}
-		break;
+			case T_line:
+			{
+				std::unique_ptr<detail::Root> s(
+					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
+				);
+				vec.push_back( std::move(s) );
+			}
+			break;
 
-		case T_polygon:
-		{
-			auto pts_str = fetchAttribString( "points", e );
-			auto vec_pts = parsePoints( pts_str );
-	//		std::cout << "importing " << vec_pts.size() << " pts\n";
-			std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
-			vec.push_back( std::move(p) );
-		}
-		break;
+			case T_polygon:
+			{
+				auto pts_str = getAttribString( "points", e );
+				auto vec_pts = parsePoints( pts_str );
+		//		std::cout << "importing " << vec_pts.size() << " pts\n";
+				std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
+				vec.push_back( std::move(p) );
+			}
+			break;
 
-		case T_polyline:
-		{
-			auto pts_str = fetchAttribString( "points", e );
-			auto vec_pts = parsePoints( pts_str );
-	//		std::cout << "importing " << vec_pts.size() << " pts\n";
-			std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
-			vec.push_back( std::move(p) );
-		}
-		break;
+			case T_polyline:
+			{
+				auto pts_str = getAttribString( "points", e );
+				auto vec_pts = parsePoints( pts_str );
+		//		std::cout << "importing " << vec_pts.size() << " pts\n";
+				std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
+				vec.push_back( std::move(p) );
+			}
+			break;
 
-		case T_ellipse: // TODO: handle ellipse angle
-		{
-			auto x  = getValue( e, "cx", n );
-			auto y  = getValue( e, "cy", n );
-			auto rx = getValue( e, "rx", n );
-			auto ry = getValue( e, "ry", n );
-			std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
-			vec.push_back( std::move(p) );
-		}
-		break;
+			case T_ellipse: // TODO: handle ellipse angle
+			{
+				auto x  = getAttribValue( e, "cx", n );
+				auto y  = getAttribValue( e, "cy", n );
+				auto rx = getAttribValue( e, "rx", n );
+				auto ry = getAttribValue( e, "ry", n );
+				std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
+				vec.push_back( std::move(p) );
+			}
+			break;
 
-		default:  // for T_other elements
-		break;
+			default:  // for T_other elements
+			break;
+		}
+	}
+	catch( std::string& msg )
+	{
+		std::cout << "ERROR: " << msg;
+		return false;
 	}
 	return true;
+}
+
+void printFileAttrib( const tinyxml2::XMLDocument& doc )
+{
+	const tinyxml2::XMLElement* root = doc.RootElement();
+
+	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();
+	size_t i=0;
+	while( pAttrib )
+	{
+		std::cout << "Attrib " << i++ << ": Name=" << pAttrib->Name() << "; Value=" << pAttrib->Value() << '\n';
+		pAttrib=pAttrib->Next();
+	}
 }
 
 } // namespace svg

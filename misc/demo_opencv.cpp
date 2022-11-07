@@ -1330,7 +1330,7 @@ void demo_SEG( int demidx )
 }
 
 //------------------------------------------------------------------
-/// Polyline full step rotate demo
+/// Polyline full step rotate demo parameters
 struct Param_polRot : Data
 {
 	explicit Param_polRot( int demidx, std::string title ): Data( demidx, title )
@@ -1356,8 +1356,8 @@ struct Param_polRot : Data
 
 	CPolyline _poly;
 	Rotate    _rotateType = Rotate::CW;
-	size_t     _refPt = 0;
-	bool       _doIt = false;
+	size_t    _refPt = 0;                 ///< default index of center point
+	bool      _doIt = false;
 };
 
 void action_polRot( void* param )
@@ -1376,7 +1376,8 @@ void action_polRot( void* param )
 void demo_polRot( int demidx )
 {
 	Param_polRot data( demidx, "Polyline full step rotate demo" );
-	std::cout << "Demo " << demidx << ": Polyline rotate demo\n";
+	std::cout << "Demo " << demidx << ": Polyline full step rotate demo\n"
+		<< "Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!\n";
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );
 	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;      data.doIt(); }, "rotate CCW" );
