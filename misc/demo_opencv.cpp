@@ -55,8 +55,9 @@ private:
 	std::function<void(void*)> _mouseCB = nullptr;
 
 public:
-	explicit Data( std::string wname ): win1(wname)
+	explicit Data( int demidx, std::string wname )
 	{
+		win1 = std::string("Demo ") + std::to_string(demidx) + ": " + wname;
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
 		img.getReal().create( height, width, CV_8UC3 );
@@ -352,10 +353,10 @@ void action_1( void* param )
 	p_lines_o.second.draw( data.img, dp );
 }
 
-void demo_1( int nd )
+void demo_1( int demidx )
 {
-	Data data("lines");
-	std::cout << "Demo " << nd << ": click on points and move them\n";
+	Data data( demidx, "lines" );
+	std::cout << "Demo " << demidx << ": click on points and move them\n";
 
 	data.setMouseCB( action_1 );
 
@@ -376,7 +377,7 @@ void demo_1( int nd )
 //------------------------------------------------------------------
 struct Param_B: public Data
 {
-	explicit Param_B(std::string wname): Data(wname)
+	explicit Param_B( int demidx, std::string wname ): Data( demidx, wname )
 	{}
 	void initPts()
 	{
@@ -390,10 +391,10 @@ struct Param_B: public Data
 };
 
 /// Build H from R,T,S (no mouse)
-void demo_B( int n )
+void demo_B( int demidx )
 {
-	Param_B data( "build Homography" );
-	std::cout << "Demo " << n << ": build Homography from Rotation, Translation, Scale\n"
+	Param_B data( demidx, "build Homography" );
+	std::cout << "Demo " << demidx << ": build Homography from Rotation, Translation, Scale\n"
 		<< "Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
 
 	double angle = 0.;
@@ -437,7 +438,7 @@ void demo_B( int n )
 //------------------------------------------------------------------
 struct Param_C: public Data
 {
-	explicit Param_C(std::string wname): Data(wname)
+	explicit Param_C( int demidx, std::string wname ): Data( demidx, wname )
 	{
 		rect.set( Point2d( 180,120), Point2d( 380,280) );
 		vpt[0] = Point2d( 70,70 );
@@ -521,10 +522,10 @@ void action_C( void* param )
 	data.showImage();
 }
 
-void demo_C( int nd )
+void demo_C( int demidx )
 {
-	std::cout << "Demo " << nd << ": move circle over line, hit [lm] to change circle radius\n";
-	Param_C data("circle demo");
+	std::cout << "Demo " << demidx << ": move circle over line, hit [lm] to change circle radius\n";
+	Param_C data( demidx, "circle demo" );
 
 	data.li[0] = Point2d() * Point2d(200,100);
 	data.li[1] = Point2d(200,0) * Point2d(200,200);
@@ -547,7 +548,7 @@ void demo_C( int nd )
 //------------------------------------------------------------------
 struct Param_SI: Data
 {
-	explicit Param_SI(std::string wname): Data(wname)
+	explicit Param_SI( int demidx, std::string wname): Data( demidx, wname )
 	{}
 
 	Segment seg1,seg2;
@@ -630,10 +631,10 @@ void action_SI( void* param )
 }
 
 /// Segment intersection demo
-void demo_SI( int nd )
+void demo_SI( int demidx )
 {
-	Param_SI data( "segment_intersection" );
-	std::cout << "Demo " << nd << ": intersection of segments\n Select a point and move it around. "
+	Param_SI data( demidx, "segment_intersection" );
+	std::cout << "Demo " << demidx << ": intersection of segments\n Select a point and move it around. "
 		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n"
 		<< "Also shows parallel segments\n";
 
@@ -652,7 +653,7 @@ void demo_SI( int nd )
 //------------------------------------------------------------------
 struct Param_6 : Data
 {
-	explicit Param_6(std::string wname): Data(wname)
+	explicit Param_6( int demidx, std::string wname): Data( demidx, wname )
 	{}
 
 	float angle = 20;
@@ -698,11 +699,11 @@ void action_6( void* param )
 	s1.getPts().second.draw( data.img, dpar.selectPoint() );
 }
 
-void demo_6( int nd )
+void demo_6( int demidx )
 {
-	std::cout << "Demo " << nd << ": apply homography to lines and segments\n Hit [lm] to change angle, "
+	std::cout << "Demo " << demidx << ": apply homography to lines and segments\n Hit [lm] to change angle, "
 		<< "and select points of blue segment with mouse\n";
-	Param_6 data( "homography_lines_seg" );
+	Param_6 data( demidx, "homography_lines_seg" );
 	double angle_delta = 5.; // degrees
 
 	data.setMouseCB( action_6 );
@@ -724,7 +725,7 @@ struct Param_H: public Data
 	img::Image<cv::Mat> img2;
 	std::string win2 = "Computed projection";
 
-	explicit Param_H(std::string wname): Data(wname)
+	explicit Param_H( int demidx, std::string wname ): Data( demidx, wname )
 	{
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, width, 50 );
@@ -844,12 +845,12 @@ void action_H( void* param )
 }
 
 /// Demo of computing a homography from two sets of 4 points
-void demo_H( int nd )
+void demo_H( int demidx )
 {
-	Param_H data( "Compute Homography from 4 points" );
+	Param_H data( demidx, "Compute Homography from 4 points" );
 	data.vpt.resize(8);
 	data.reset();
-	std::cout << "Demo " << nd << ": compute homography from two sets of 4 points\n"
+	std::cout << "Demo " << demidx << ": compute homography from two sets of 4 points\n"
 		<< " - usage: move points with mouse in left window, right window will show source rectangle (blue)\n"
 		<< "and computed projected rectangle (green)\n"
 		<< " - keys:\n  -a: switch backend computing library\n  -r: reset points\n";
@@ -878,7 +879,7 @@ void demo_H( int nd )
 /// we switch drawing
 struct Param_PL : Data
 {
-	explicit Param_PL( std::string title ):Data(title)
+	explicit Param_PL( int demidx, std::string title ):Data( demidx, title )
 	{
 		v_po.push_back( &polyline_o );
 		v_po.push_back( &polyline_c );
@@ -979,10 +980,10 @@ void action_PL( void* param )
 	data.showImage();
 }
 
-void demo_PL( int nd )
+void demo_PL( int demidx )
 {
-	Param_PL data( "Polyline demo" );
-	std::cout << "Demo " << nd
+	Param_PL data( demidx, "Polyline demo" );
+	std::cout << "Demo " << demidx
 		<< ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n"
 		<< "Lclick to add point, Rclick to remove\n";
 	data.leftClicAddPoint=true;
@@ -1005,7 +1006,7 @@ void demo_PL( int nd )
 //------------------------------------------------------------------
 struct Param_ELL : Data
 {
-	explicit Param_ELL( std::string title ):Data(title)
+	explicit Param_ELL(  int demidx, std::string title ):Data( demidx, title )
 	{}
 	void draw()
 	{
@@ -1055,10 +1056,10 @@ void action_ELL( void* param )
 }
 
 /// Ellipse demo
-void demo_ELL( int nd )
+void demo_ELL( int demidx )
 {
-	Param_ELL data( "Ellipse demo" );
-	std::cout << "Demo " << nd
+	Param_ELL data( demidx, "Ellipse demo" );
+	std::cout << "Demo " << demidx
 		<< ": Ellipse (no mouse, enter 'h' for valid keys)\n"
 		<< " -blue rectangle: ellipse bounding box\n"
 		<< " -green rectangle: blue rectangle bounding box\n";
@@ -1085,7 +1086,7 @@ void demo_ELL( int nd )
 /// Circle demo
 struct Param_CIR : Data
 {
-	explicit Param_CIR( std::string title ): Data(title)
+	explicit Param_CIR( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{
 			{150,120}, {220,240},            // initial rectangle
@@ -1123,13 +1124,9 @@ struct Param_CIR : Data
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
 				vpt[i].draw( img, par_pt );
-
-		cir.draw( imsvg, par_c );
-		imsvg.write( "aaa.svg" );
 	}
 
 // DATA SECTION
-	img::Image<img::SvgImage> imsvg;//(300,200);
 
 	Circle cir;
 	FRect rect;
@@ -1146,10 +1143,10 @@ void action_CIR( void* param )
 	data.showImage();
 }
 
-void demo_CIR( int nd )
+void demo_CIR( int demidx )
 {
-	Param_CIR data ( "Circle demo" );
-	std::cout << "Demo " << nd << ": Compute circle from 3 points/2 points\n"
+	Param_CIR data( demidx, "Circle demo" );
+	std::cout << "Demo " << demidx << ": Compute circle from 3 points/2 points\n"
 		<< "Colors: green if inside, blue if not\n";
 
 	action_CIR( &data );
@@ -1172,7 +1169,7 @@ void demo_CIR( int nd )
 /// Convex hull demo
 struct Param_CH : Data
 {
-	explicit Param_CH( std::string title ): Data(title)
+	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
 	}
@@ -1208,10 +1205,10 @@ void action_CH( void* param )
 	data.showImage();
 }
 
-void demo_CH( int nd )
+void demo_CH( int demidx )
 {
-	Param_CH data ( "Convex Hull demo" );
-	std::cout << "Demo " << nd << ": Convex hull. Lclick to add points, Rclick to remove\n";
+	Param_CH data( demidx, "Convex Hull demo" );
+	std::cout << "Demo " << demidx << ": Convex hull. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
 	data.setMouseCB( action_CH );
 
@@ -1224,7 +1221,7 @@ void demo_CH( int nd )
 /// Segments demo
 struct Param_SEG : Data
 {
-	explicit Param_SEG( std::string title ):Data(title)
+	explicit Param_SEG( int demidx, std::string title ):Data( demidx, title )
 	{}
 	bool showIndexes      = false;
 	bool showIntersection = false;
@@ -1256,10 +1253,6 @@ struct Param_SEG : Data
 			auto line = Line2d( p1x, p1y, p2x, p2y );
 			auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
 			vseg.push_back( Segment( ppts ) );
-/*			auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
-			auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
-			auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-			vcol.push_back( img::Color(colR,colG,colB) );*/
 		}
 		vcol = genRandomColors( nbSegs );
 		regen = false;
@@ -1314,10 +1307,10 @@ void action_SEG( void* param )
 	data.showImage();
 }
 
-void demo_SEG( int nd )
+void demo_SEG( int demidx )
 {
-	Param_SEG data ( "Segments demo" );
-	std::cout << "Demo " << nd << ": Segments demo\n";
+	Param_SEG data( demidx, "Segments demo" );
+	std::cout << "Demo " << demidx << ": Segments demo\n";
 	data.generateSegments();
 
 	KeyboardLoop kbloop;
@@ -1337,16 +1330,17 @@ void demo_SEG( int nd )
 }
 
 //------------------------------------------------------------------
-/// Polyline rotate demo
+/// Polyline full step rotate demo
 struct Param_polRot : Data
 {
-	explicit Param_polRot( std::string title ):Data(title)
+	explicit Param_polRot( int demidx, std::string title ): Data( demidx, title )
 	{
 		_poly.set(
 			std::vector<Point2d>{
 				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
 			}
 		);
+		_poly.translate( 180,180); // so it lies in the window
 	}
 	void nextRefPt()
 	{
@@ -1355,12 +1349,15 @@ struct Param_polRot : Data
 			_refPt = 0;
 		std::cout << "move to next ref pt: " << _refPt << ": " << _poly.getPoint( _refPt ) <<  '\n';
 	}
+	void doIt( bool b = true )
+	{
+		_doIt = b;
+	}
 
 	CPolyline _poly;
 	Rotate    _rotateType = Rotate::CW;
-	Point2d    pt0 = Point2d(100,100);
-	int        _delta_draw = 180;
 	size_t     _refPt = 0;
+	bool       _doIt = false;
 };
 
 void action_polRot( void* param )
@@ -1368,28 +1365,25 @@ void action_polRot( void* param )
 	auto& data = *reinterpret_cast<Param_polRot*>(param);
 	data.clearImage();
 
-	data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
-	data._poly.translate( data._delta_draw, data._delta_draw );
+	if( data._doIt )
+		data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
 
 	data._poly.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
 	data._poly.getPoint( data._refPt ).draw( data.img, img::DrawParams().setColor( 0,0,250).setPointStyle(img::PtStyle::Dot) );
-	data._poly.translate( -data._delta_draw,-data._delta_draw);
 	data.showImage();
 }
 
-
-void demo_polRot( int nd )
+void demo_polRot( int demidx )
 {
-	Param_polRot data ( "Polyline rotate demo" );
-	std::cout << "Demo " << nd << ": Polyline rotate demo\n";
-//	data.setMouseCB( action_pol2M );
+	Param_polRot data( demidx, "Polyline full step rotate demo" );
+	std::cout << "Demo " << demidx << ": Polyline rotate demo\n";
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;      }, "rotate CW" );
-	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;     }, "rotate CCW" );
-	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType=Rotate::Full;    }, "rotate Full" );
-	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror; }, "VMirror" );
-	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror; }, "HMirror" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt(); }, "move to next reference point" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );
+	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;      data.doIt(); }, "rotate CCW" );
+	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType=Rotate::Full;     data.doIt(); }, "rotate Full" );
+	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror;  data.doIt(); }, "VMirror" );
+	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror;  data.doIt(); }, "HMirror" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt();                  data.doIt(false); }, "move to next reference point" );
 
 	kbloop.addCommonAction( action_polRot );
 	action_polRot( &data );
