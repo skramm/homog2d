@@ -63,6 +63,13 @@ Line2d li3( LineDir::H, 15 ); // horizontal line at y=15
 Line2d li4( LineDir::V, -2 ); // vertical line at x=-2
 ```
 
+- For horizontal or vertical lines, you can also just provide a point, the constructor will handle it:
+```C++
+Point pt(x,y)
+Line2d liH( LineDir::H, pt );
+Line2d liV( LineDir::V, pt );
+```
+
 - Create a point from two lines, and a line from two points:
 ```C++
 Point2d pt3( li1, li2 );

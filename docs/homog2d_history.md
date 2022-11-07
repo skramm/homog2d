@@ -13,6 +13,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
   - enable run-time polymorphism (wip), through class detail::Common
   - added variable frame rate for showcase demos, see `misc/showcase/gif_duration.data`
+  - added constructor for horizontal or vertical line using a point
   - __breaking changes__:
     - renamed `Segment_::getMiddlePoint()` by `Segment_::getCenter()`
     - renamed `FRect_::center()` by `FRect_::getCenter()`

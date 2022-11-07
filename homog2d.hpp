@@ -2953,7 +2953,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	template<typename T>
 	LPBase( LineDir orient, T value )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+//		HOMOG2D_CHECK_IS_NUMBER(T);
 		impl_init_or( orient, value, detail::RootHelper<LP>() );
 	}
 
@@ -2997,7 +2997,14 @@ private:
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a horiz/vertical point" );
 	}
-	template<typename T>
+
+	template<
+		typename T,
+		typename std::enable_if<
+			std::is_arithmetic<T>::value
+			,T
+		>::type* = nullptr
+	>
 	void impl_init_or( LineDir dir, T value, const detail::RootHelper<type::IsLine>& )
 	{
 		_v[2] = -value;
@@ -3007,6 +3014,20 @@ private:
 		}
 		else  // = LineDir::H
 		{
+			_v[0] = 0.; _v[1] = 1.;
+		}
+	}
+	template<typename T>
+	void impl_init_or( LineDir dir, const Point2d_<T>& pt, const detail::RootHelper<type::IsLine>& )
+	{
+		if( dir == LineDir::V )
+		{
+			_v[2] = -pt.getX();
+			_v[0] = 1.; _v[1] = 0.;
+		}
+		else  // = LineDir::H
+		{
+			_v[2] = -pt.getY();
 			_v[0] = 0.; _v[1] = 1.;
 		}
 	}
