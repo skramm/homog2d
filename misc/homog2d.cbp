@@ -164,6 +164,7 @@
 		<Unit filename="showcase/showcase1.cpp" />
 		<Unit filename="showcase/showcase10.cpp" />
 		<Unit filename="showcase/showcase11.cpp" />
+		<Unit filename="showcase/showcase12.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
