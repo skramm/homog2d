@@ -2708,6 +2708,19 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 }
 
+TEST_CASE( "Bounding Box of set of points", "[BB-pts]" )
+{
+	{
+		std::vector<Point2d> vpt{ {0,0}, {1,1.5}, {3,5}, {1,4} };
+		FRect bb1( 0,0, 3,5);
+		CHECK( getBB(vpt) == bb1 );
+	}
+	{
+		std::vector<Point2d> vpt{ {0,11} };
+		CHECK_THROWS( getBB(vpt) );         // need at least 2 points !
+	}
+}
+
 TEST_CASE( "Polygon convexity", "[polyline-convex]" )
 {
 	OPolyline_<NUMTYPE> plo;

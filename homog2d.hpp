@@ -4448,7 +4448,7 @@ struct PolylineAttribs
 };
 
 //------------------------------------------------------------------
-/// Returns the bounding box of points in vector/list/array \c vpts
+/// Returns the bounding box of points in vector/list/array of points \c vpts
 /**
 \todo This loops twice on the points. Maybe some improvement here.
 */
@@ -4464,9 +4464,10 @@ getPointsBB( const T& vpts )
 {
 	using FPT = typename T::value_type::FType;
 #ifndef HOMOG2D_NOCHECKS
-	if( vpts.empty() )
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of empty set" );
+	if( vpts.size()<2 )
+		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of set with size < 2" );
 #endif
+
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
 		std::end( vpts ),
@@ -4486,10 +4487,13 @@ getPointsBB( const T& vpts )
 		}
 	);
 
-	return FRect_<typename T::value_type::FType>(
-		mm_x.first->getX(),  mm_y.first->getY(),
-		mm_x.second->getX(), mm_y.second->getY()
-	);
+	auto p1 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.first->getX(),   mm_y.first->getY()  );
+	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
+
+	if( p1.distTo( p2 ) < thr::nullDistance() )
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box of set, identical points" );
+
+	return FRect_<typename T::value_type::FType>( p1, p2 );
 }
 
 } // namespace priv

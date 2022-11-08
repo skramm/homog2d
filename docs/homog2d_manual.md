@@ -1220,14 +1220,18 @@ auto ch3 = pl.convexHull(); // member function
 
 ### 6.2 - Bounding Box of a set of points
 
-You can compute the Bounding Boxof a set of points.
+You can compute the Bounding Box of a set of points.
 This function will return a `Frect_` object:
 
 ```C++
 std::vector<Point2d> vec;
-// ... fill with at least 3 points
+// ... fill with at least 2 points
 auto bb = getBB( vec );
+draw( img, vec );
+bb.draw( img );
 ```
+
+The set must have at least 2 (distinct) points, else this function will throw.
 
 
 ![Example of bounding box of a set of points](img/bbPoints.svg)
