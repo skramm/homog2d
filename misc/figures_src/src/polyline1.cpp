@@ -20,8 +20,9 @@ int main()
 	};
 	OPolyline opl(vpts);
 
-	opl = Homogr().setScale(30).addTranslation(10,30) * opl;
-
+	auto H = Homogr().setScale(30).addTranslation(10,30);
+	opl = H * opl;
+	H.applyTo( vpts );
 	img::Image<cv::Mat>       img1( 350,250 );
 	img::Image<img::SvgImage> img2( 350,250 );
 
@@ -42,4 +43,14 @@ int main()
 	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
 	img1.write( "polyline1b.png" );
 	img2.write( "polyline1b.svg" );
+
+	img1.clear();
+	img2.clear();
+	auto bbpts = getBB( vpts );
+	bbpts.draw( img1, DrawParams().setColor(250,50,20) );
+	bbpts.draw( img2, DrawParams().setColor(250,50,20) );
+	draw( img1, vpts );
+	draw( img2, vpts );
+	img1.write( "bbPoints.png" );
+	img2.write( "bbPoints.svg" );
 }

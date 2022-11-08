@@ -638,7 +638,7 @@ OPolyline op(vpts);
 CPolyline cp(vpts);
 ```
 
-The minimum number of points is 2, initializing with a vector holding 1 points will throw.
+The minimum number of points is 2, initializing with a vector holding 1 point will throw.
 
 The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
@@ -1218,7 +1218,22 @@ auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
 
-### 6.2 - Colinearity of 3 points
+### 6.2 - Bounding Box of a set of points
+
+You can compute the Bounding Boxof a set of points.
+This function will return a `Frect_` object:
+
+```C++
+std::vector<Point2d> vec;
+// ... fill with at least 3 points
+auto bb = getBB( vec );
+```
+
+
+![Example of bounding box of a set of points](img/bbPoints.svg)
+
+
+### 6.3 - Colinearity of 3 points
 
 You can check if three points lie on the same line with this:
 ```C++
@@ -1226,7 +1241,7 @@ bool b = areColinear( pt1, pt2, pt3 );
 ```
 
 
-### 6.3 - Extracting data from sets/containers of primitives
+### 6.4 - Extracting data from sets/containers of primitives
 
 If you have a `std::vector<Segment>` named `v_segs`, then the following function calls:
 

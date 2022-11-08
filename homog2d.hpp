@@ -314,7 +314,7 @@ template<typename T>
 class Image
 {
 private:
-	T _realImg;
+	T      _realImg;
 	size_t _width  = 500;
 	size_t _height = 500;
 	bool   _isInitialized = false;
@@ -432,8 +432,9 @@ template <>
 void
 Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
 {
+	_realImg._svgString.str("");
 	_realImg._svgString.clear();
-//	_realImg = cv::Scalar(b,g,r);
+	_isInitialized = false;
 }
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -2369,6 +2370,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 	Point2d_<FPT>&       center()       { return _center; }
 	const Point2d_<FPT>& center() const { return _center; }
+	const Point2d_<FPT>& getCenter() const { return _center; }
+
+
 
 	HOMOG2D_INUMTYPE area() const
 	{
@@ -7782,7 +7786,7 @@ template<typename T1,typename T2>
 Segment_<typename T1::FType>
 getSegment( const T1& c1, const T2& c2 )
 {
-	return Segment_<typename T1::FType>( c1.center(), c2.center() );
+	return Segment_<typename T1::FType>( c1.getCenter(), c2.getCenter() );
 }
 
 /// Free function, returns line between two circle centers
@@ -8137,16 +8141,16 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 
 namespace priv {
 #ifdef HOMOG2D_USE_OPENCV
-template<typename U,typename FPT>
+template<typename FPT>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt )
+impl_drawIndexes( img::Image<cv::Mat>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt )
 {
 	if( dp._dpValues._showIndex )
 		cv::putText( img.getReal(), std::to_string(c), pt.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
-template<typename U,typename FPT>
+template<typename FPT>
 void
-impl_drawIndexes( img::Image<U>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
+impl_drawIndexes( img::Image<cv::Mat>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
 {
 	if( dp._dpValues._showIndex )
 		cv::putText( img.getReal(), std::to_string(c), seg.getCenter().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
