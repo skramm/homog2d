@@ -4407,6 +4407,11 @@ struct Is_std_array: std::false_type {};
 template <typename V, size_t n>
 struct Is_std_array<std::array<V, n>>: std::true_type {};
 
+/// Traits class
+template<class>   struct IsSegment              : std::false_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class>   struct IsPoint                : std::false_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
 
 //------------------------------------------------------------------
 /// A value that needs some computing, associated with its flag
@@ -4495,6 +4500,35 @@ getPointsBB( const T& vpts )
 
 	return FRect_<typename T::value_type::FType>( p1, p2 );
 }
+
+//------------------------------------------------------------------
+/// Returns the bounding box of points in vector/list/array of points \c vpts
+/**
+\todo This loops twice on the points. Maybe some improvement here.
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		priv::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+FRect_<typename T::value_type::FType>
+getSegmentsBB( const T& vsegs )
+{
+	using FPT = typename T::value_type::FType;
+
+	std::vector<Point2d_<FPT>> vpts( vsegs.size()*2 );
+	auto it = vpts.begin();
+	for( const auto& seg: vsegs )
+	{
+		auto ppts = seg.getPts();
+		*it++ = ppts.first;
+		*it++ = ppts.second;
+	}
+	return getPointsBB( vpts );
+}
+
 
 } // namespace priv
 
@@ -7734,19 +7768,32 @@ getBB( const T1& elem1, const T2& elem2 )
 	return priv::getBB( r1, r2 );
 }
 
-/// Returns Bounding Box of arbitrary container holding points (free function)
+/// Returns Bounding Box of arbitrary container (std:: vector, arrary or list) holding points (free function)
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		( priv::IsContainer<T>::value && priv::IsPoint<typename T::value_type>::value ),
 		T
 	>::type* = nullptr
 >
-//FRect_<typename T::value_type::FType> // if we dont have C++14 but only C++11
 auto
 getBB( const T& vpts )
 {
 	return priv::getPointsBB( vpts );
+}
+
+/// Returns Bounding Box of arbitrary container (std:: vector, arrary or list) holding segments (free function)
+template<
+	typename T,
+	typename std::enable_if<
+		( priv::IsContainer<T>::value && priv::IsSegment<typename T::value_type>::value ),
+		T
+	>::type* = nullptr
+>
+auto
+getBB( const T& vpts )
+{
+	return priv::getSegmentsBB( vpts );
 }
 
 //------------------------------------------------------------------
