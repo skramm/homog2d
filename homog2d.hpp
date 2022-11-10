@@ -307,8 +307,9 @@ struct SvgImage
 /// Opaque data structure, will hold the image type, depending on back-end library.
 /// This type is the one used in all the drawing functions.
 /**
-To expand it, you need to add code for the other library for the
-two function cols() and rows(), bounded in a "#define" block, and define the drawing functions
+At present the two allowed types are cv::Mat
+(external Opencv library, requires the symbol HOMOG2D_USE_OPENCV to be defined)
+or SvgImage (no dependency)
 */
 template<typename T>
 class Image
@@ -386,8 +387,6 @@ Image<cv::Mat>::Image( size_t width, size_t height )
 	_realImg.create( height, width, CV_8UC3 );
 	clear();
 }
-
-
 #endif
 
 template <>
@@ -4689,7 +4688,7 @@ public:
 	HOMOG2D_INUMTYPE area()      const;
 	bool             isPolygon() const;
 
-/// Returns Bounding Box
+/// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
 	{
 		return priv::getPointsBB( getPts() );
