@@ -7,19 +7,23 @@
 int main()
 {
 	std::vector<Segment> vsegs;
-
+	int xmax = 300;
+	int xmin = 20;
+	int seg_max = 40;
+	int seg_min = 10;
 	srand( time(0) );
 	int n = 40;
 	for( int i=0; i<n; i++ )
 	{
-		auto x1 = 1.*std::rand()/RAND_MAX * 300 + 20;
-		auto y1 = 1.*std::rand()/RAND_MAX * 300 + 20;
-		auto x2 = 1.*std::rand()/RAND_MAX * 300 + 20;
-		auto y2 = 1.*std::rand()/RAND_MAX * 300 + 20;
+		auto x1 = 1.*std::rand()/RAND_MAX * xmax + xmin;
+		auto y1 = 1.*std::rand()/RAND_MAX * xmax + xmin;
+
+		auto x2 = x1+1.*std::rand()/RAND_MAX * seg_max + seg_min;
+		auto y2 = y1+1.*std::rand()/RAND_MAX * seg_max + seg_min;
 		vsegs.push_back( Segment( x1,y1,x2,y2) );
 	}
-	img::Image<cv::Mat>       img1( 350,250 );
-	img::Image<img::SvgImage> img2( 350,250 );
+	img::Image<cv::Mat>       img1( 1.5*xmax,1.5*xmax );
+	img::Image<img::SvgImage> img2( 1.5*xmax,1.5*xmax );
 
 
 	img1.clear();
