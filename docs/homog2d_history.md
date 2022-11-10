@@ -15,6 +15,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added variable frame rate for showcase demos, see `misc/showcase/gif_duration.data`
   - added constructor for horizontal or vertical line using a point
   - added bounding box for a set of segments
+  - added `Frect` constructor using a pair of points
   - __breaking changes__:
     - renamed `Segment_::getMiddlePoint()` by `Segment_::getCenter()`
     - renamed `FRect_::center()` by `FRect_::getCenter()`

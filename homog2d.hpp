@@ -347,11 +347,11 @@ public:
 		_isInitialized = true; // default implementation, for opencv
 	}
 
-	void setSize( size_t width, size_t height )
-	{
+	void setSize( size_t width, size_t height );
+/*	{
 		_width = width;
 		_height = height;
-	}
+	}*/
 	bool isInit() const
 	{
 		return _isInitialized;
@@ -383,11 +383,32 @@ public:
 template <>
 Image<cv::Mat>::Image( size_t width, size_t height )
 {
-	 setSize( width, height );
+	_width = width;
+	_height = height;
+	_realImg.create( height, width, CV_8UC3 );
+	clear();
+}
+
+template <>
+void
+Image<cv::Mat>::setSize( size_t width, size_t height )
+{
+	_width = width;
+	_height = height;
 	_realImg.create( height, width, CV_8UC3 );
 	clear();
 }
 #endif
+
+template <typename T>
+void
+Image<T>::setSize( size_t width, size_t height )
+{
+	_width = width;
+	_height = height;
+}
+
+
 
 template <>
 void
@@ -1842,6 +1863,13 @@ public:
 	FRect_( const Point2d_<FPT2>& pa, const Point2d_<FPT2>& pb )
 	{
 		set( pa, pb );
+	}
+
+/// Constructor from pair of points
+	template<typename FPT2>
+	FRect_( const std::pair<Point2d_<FPT2>,Point2d_<FPT2>>& ppts )
+	{
+		set( ppts.first, ppts.second );
 	}
 
 /// Constructor from center point, width and height
@@ -4386,6 +4414,7 @@ template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
 /// Traits class, used to determine if we can use some "isInside()" function
+/// \todo 20221110: shouldn't this be false for OPolyline? Because we cannot compute area of such a type.
 template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
@@ -4406,11 +4435,17 @@ struct Is_std_array: std::false_type {};
 template <typename V, size_t n>
 struct Is_std_array<std::array<V, n>>: std::true_type {};
 
-/// Traits class
+/// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
 template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
 template<class>   struct IsPoint                : std::false_type {};
 template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+
+template<class>   struct HasBB              : std::false_type {};
+template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
+template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
+template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
+template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 //------------------------------------------------------------------
 /// A value that needs some computing, associated with its flag
@@ -4464,7 +4499,7 @@ template<
 	>::type* = nullptr
 >
 FRect_<typename T::value_type::FType>
-getPointsBB( const T& vpts )
+getBB_Points( const T& vpts )
 {
 	using FPT = typename T::value_type::FType;
 #ifndef HOMOG2D_NOCHECKS
@@ -4501,10 +4536,7 @@ getPointsBB( const T& vpts )
 }
 
 //------------------------------------------------------------------
-/// Returns the bounding box of points in vector/list/array of points \c vpts
-/**
-\todo This loops twice on the points. Maybe some improvement here.
-*/
+/// Returns the bounding box of segments in vector/list/array of points \c vsegs
 template<
 	typename T,
 	typename std::enable_if<
@@ -4513,7 +4545,7 @@ template<
 	>::type* = nullptr
 >
 FRect_<typename T::value_type::FType>
-getSegmentsBB( const T& vsegs )
+getBB_Segments( const T& vsegs )
 {
 	using FPT = typename T::value_type::FType;
 
@@ -4525,7 +4557,26 @@ getSegmentsBB( const T& vsegs )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-	return getPointsBB( vpts );
+	return getBB_Points( vpts );
+}
+
+/// get BB for a set of FRect_ objects
+/// \todo same as getBB_Segments() ???
+template<typename FPT>
+auto
+getBB_FRect( const std::vector<FRect_<FPT>>& v_bb )
+{
+//	using FPT = typename T::value_type::FType;
+
+	std::vector<Point2d_<FPT>> vpts( v_bb.size()*2 );
+	auto it = vpts.begin();
+	for( const auto& seg: v_bb )
+	{
+		auto ppts = seg.getPts();
+		*it++ = ppts.first;
+		*it++ = ppts.second;
+	}
+	return getBB_Points( vpts );
 }
 
 
@@ -4691,7 +4742,7 @@ public:
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
 	{
-		return priv::getPointsBB( getPts() );
+		return priv::getBB_Points( getPts() );
 	}
 
 	LPBase<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
@@ -7754,7 +7805,7 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 }
 } // namespace priv
 
-/// Returns Bounding Box of two arbitrary objects (free function)
+/// Returns Bounding Box of two arbitrary objects. Can be of different types (free function)
 /**
 - available only for Circles, Ellipse, FRect, Polyline
 */
@@ -7767,7 +7818,7 @@ getBB( const T1& elem1, const T2& elem2 )
 	return priv::getBB( r1, r2 );
 }
 
-/// Returns Bounding Box of arbitrary container (std:: vector, arrary or list) holding points (free function)
+/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)
 template<
 	typename T,
 	typename std::enable_if<
@@ -7778,10 +7829,12 @@ template<
 auto
 getBB( const T& vpts )
 {
-	return priv::getPointsBB( vpts );
+	if( vpts.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
+	return priv::getBB_Points( vpts );
 }
 
-/// Returns Bounding Box of arbitrary container (std:: vector, arrary or list) holding segments (free function)
+/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding segments (free function)
 template<
 	typename T,
 	typename std::enable_if<
@@ -7792,7 +7845,34 @@ template<
 auto
 getBB( const T& vpts )
 {
-	return priv::getSegmentsBB( vpts );
+	if( vpts.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "unable, need at least two segments" );
+	return priv::getBB_Segments( vpts );
+}
+
+/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding other primitives (free function)
+template<
+	typename T,
+	typename std::enable_if<
+		( priv::IsContainer<T>::value && priv::HasBB<typename T::value_type>::value ),
+		T
+	>::type* = nullptr
+>
+auto
+getBB( const T& cont )
+{
+	using ElemType = typename T::value_type;
+	using FPT      = typename ElemType::FType;
+
+	if( cont.empty() )
+		HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
+	std::vector<FRect_<FPT>> v_bb( cont.size() );
+
+	auto it = v_bb.begin();
+	for( const ElemType& elem: cont ) // compute bounding box of each element
+		*it++ = elem.getBB();
+
+	return priv::getBB_FRect( v_bb ); // compute BB of all the BB
 }
 
 //------------------------------------------------------------------

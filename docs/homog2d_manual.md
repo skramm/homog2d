@@ -449,6 +449,12 @@ Or by giving the center point and width and height:
 FRect r1( p0, w, h );
 ```
 
+Or by providing a `std::pair` of points:
+```C++
+std::pair<Point2d,Point2d> ppts = std::make_pair( Point2d(0,0), Point2d(10,10) );
+FRect rect( ppts );
+```
+
 You can get the points with two different member functions:
 ```C++
 FRect rect( pt1, pt2 );

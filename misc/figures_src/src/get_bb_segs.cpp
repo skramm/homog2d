@@ -4,6 +4,9 @@
 
 #include "fig_src.header"
 
+img::Image<cv::Mat>       img1;
+img::Image<img::SvgImage> img2;
+
 std::vector<img::Color> genRandomColors( size_t nb )
 {
 	std::vector<img::Color> vcol( nb );
@@ -20,9 +23,32 @@ std::vector<img::Color> genRandomColors( size_t nb )
 	return vcol;
 }
 
+template<typename T>
+void process( const T& vec, std::string fname )
+{
+	auto vcol = genRandomColors( vec.size() );
+	auto lamb_func = [&](int i)   // lambda, needed to fetch color from index
+	{
+		return img::DrawParams().setColor( vcol[i] );
+	};
+	std::function<img::DrawParams(int)> f(lamb_func);
+
+	img1.clear();
+	img2.clear();
+	draw( img1, vec, f );
+	draw( img2, vec, f );
+	auto bb = getBB( vec );
+	bb.draw( img1, DrawParams().setColor(250,50,20) );
+	bb.draw( img2, DrawParams().setColor(250,50,20) );
+
+	img1.write( fname + ".png" );
+	img2.write( fname + ".svg" );
+}
+
 int main()
 {
 	std::vector<Segment> vsegs;
+	std::vector<Point2d> vpts;
 	int xmax = 300;
 	int xmin = 40;
 	int seg_max = 50;
@@ -33,31 +59,32 @@ int main()
 	{
 		auto x1 = 1.*std::rand()/RAND_MAX * xmax + xmin;
 		auto y1 = 1.*std::rand()/RAND_MAX * xmax + xmin;
-
+		vpts.emplace_back( Point2d(x1,y1) );
 		auto x2 = x1 + ((2.*std::rand()/RAND_MAX)-1.) * seg_max + seg_min;
 		auto y2 = y1 + ((2.*std::rand()/RAND_MAX)-1.) * seg_max + seg_min;
-		vsegs.push_back( Segment( x1,y1,x2,y2) );
+		vpts.emplace_back( Point2d(x2,y2) );
+		vsegs.emplace_back( Segment( x1,y1,x2,y2) );
 	}
-	auto k = 1.3;
+	auto k = 1.4;
 
-	img::Image<cv::Mat>       img1( k*xmax, k*xmax );
-	img::Image<img::SvgImage> img2( k*xmax, k*xmax );
+//	img::Image<cv::Mat>       img1.setSize( k*xmax, k*xmax );
+//	img::Image<img::SvgImage> img2.setSize( k*xmax, k*xmax );
+	img1.setSize( k*xmax, k*xmax );
+	img2.setSize( k*xmax, k*xmax );
 
-//	img1.clear();
-//	img2.clear();
-	auto bbpts = getBB( vsegs );
-	bbpts.draw( img1, DrawParams().setColor(250,50,20) );
-	bbpts.draw( img2, DrawParams().setColor(250,50,20) );
+	process( vpts,  "bb_Points" );
+	process( vsegs, "bb_Segs" );
 
-	auto vcol = genRandomColors( nbSegs );
-	auto lamb_func = [&](int i)   // lambda, needed to fetch color from index
+	std::vector<FRect>   vrects;
+	for( const auto& seg: vsegs )
+		vrects.emplace_back( seg.getPts() );
+	process( vrects, "bb_Rects" );
+
+	std::vector<FRect> vcircles;
+	for( const auto& seg: vsegs )
 	{
-		return img::DrawParams().setColor( vcol[i] );
-	};
-	std::function<img::DrawParams(int)> f(lamb_func);
-
-	draw( img1, vsegs, f );
-	draw( img2, vsegs, f );
-	img1.write( "bbSegs.png" );
-	img2.write( "bbSegs.svg" );
+		auto ppts = seg.getPts();
+		vcircles.emplace_back( ppts.first, ppts.second );
+	}
+	process( vcircles, "bb_Circles" );
 }
