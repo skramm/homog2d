@@ -1400,12 +1400,11 @@ Circle c( pt,80 );
 draw( img, c );
 draw( img, pt );
 ```
-
-In case you need it for other tasks, the `getReal()` member function provides access to the image underlying object,
-here the Opencv cv::Mat:
+If you use Opencv, you might need the `cv::Mat` object for other tasks.
+It is available with the `getReal()` member function that returns a reference on that object (`const` or not):
 ```C++
 img::Image<cv::Mat> img( 300, 400 );
-cv::Mat ocv = img.getReal()
+cv::Mat& ocv = img.getReal()
 ```
 
 ### 8.3 - Drawing parameters
@@ -1474,7 +1473,7 @@ draw( img, pair, dp );  // you can even pass drawing parameters
 ```
 
 For containers, a second generic function is provided that has as third argument a `std::function`.
-This is useful to enable having different drawing properties (think: color) for each element:
+This is useful to enable having different drawing properties (think: color) for each element of the set:
 ```C++
 void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
 ```
@@ -1490,9 +1489,9 @@ std::vector<Color> vcol( vseg.size() );
 /// fill vcol with colors
 
 auto fl = [&](int i)   // lambda
-	{
-		return img::DrawParams().setColor( vcol[i] );
-	};
+{
+	return img::DrawParams().setColor( vcol[i] );
+};
 std::function<DrawParams(int)> func(fl);
 draw( img, vseg, func );
 ```
