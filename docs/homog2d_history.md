@@ -7,6 +7,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - planned (no specific order):
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - add polygon union and intersection
+  - add polyline splitting into polygons
+  - add SVG import for angled ellipses
+  - extend run-time polymorphism capabilities
 
 - current master branch
   - added SVG drawing
@@ -14,7 +17,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - enable run-time polymorphism (wip), through class detail::Common
   - added variable frame rate for showcase demos, see `misc/showcase/gif_duration.data`
   - added constructor for horizontal or vertical line using a point
-  - added bounding box for a set of segments
+  - added bounding box for a container holding any primitive (see [manual/misc. section](homog2d_manual.md#misc))
   - added `Frect` constructor using a pair of points
   - __breaking changes__:
     - renamed `Segment_::getMiddlePoint()` by `Segment_::getCenter()`

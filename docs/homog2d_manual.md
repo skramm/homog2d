@@ -1601,7 +1601,7 @@ On Debian-based distros, this can be easily done with
 
 To enable its usage in your code, you need to do two things:
 * define the symbol `HOMOG2D_USE_SVG_IMPORT` before including `homog2d.hpp`
-* add the library to the compile line.
+* add the library to the build process.
 That can be done by adding this to the linking command-line:
 ```
 $(pkg-config --libs tinyxml2)
@@ -1627,7 +1627,7 @@ You can determine the actual type of the object by using the abstract `type()` f
 It will return an enum value of type `Type` having one of these values:<br>
 `Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
 
-There are three polymorphic functions available: `draw()`, `length()`, and `area()`.
+At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
 And you can get a human-readable value ot the object type with `getString(Type)`:
 
 ```C++
