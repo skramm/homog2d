@@ -2708,17 +2708,49 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 }
 
-TEST_CASE( "Bounding Box of set of points", "[BB-pts]" )
+TEST_CASE( "Bounding Box of set of objects", "[BB-cont]" )
 {
+	std::vector<Point2d> vpts1{ {0,0}, {1,1.5}, {3,5}, {1,4} };
+	FRect bb1( 0,0, 3,5 );
 	{
-		std::vector<Point2d> vpt{ {0,0}, {1,1.5}, {3,5}, {1,4} };
-		FRect bb1( 0,0, 3,5);
-		CHECK( getBB(vpt) == bb1 );
+		CHECK( getBB(vpts1) == bb1 );
+
+		CPolyline cpol( vpts1 );
+		OPolyline opol( vpts1 );
+		std::vector<CPolyline> vec_c{ cpol };
+		std::vector<OPolyline> vec_o{ opol };
+		CHECK( getBB(vec_c) == bb1 );
+		CHECK( getBB(vec_o) == bb1 );
+	}
+	{
+		std::vector<Segment> vseg;
+		CHECK_THROWS( getBB(vseg) );
+		vseg.emplace_back( Segment(0,0,0,1) );
+		CHECK_THROWS( getBB(vseg) );     // no area !
+
+		vseg.emplace_back( Segment(4,5,6,7) );
+		FRect bb2( 0,0, 6,7 );
+		CHECK( getBB(vseg) == bb2 );
+	}
+	{
+		std::list<Circle> vcir;
+		CHECK_THROWS( getBB(vcir) );     // empty !
+		vcir.emplace_back( Circle(1,1,1) );
+		FRect bb3( 0,0, 2,2 );
+		CHECK( getBB(vcir) == bb3 );
 	}
 	{
 		std::vector<Point2d> vpt{ {0,11} };
 		CHECK_THROWS( getBB(vpt) );         // need at least 2 points !
+
+		std::list<Point2d> lpt{ {2,11} };
+		CHECK_THROWS( getBB(lpt) );         // need at least 2 points !
+
+		std::array<Point2d,1> apt;
+		apt[0] = Point2d{2,11};
+		CHECK_THROWS( getBB(apt) );         // need at least 2 points !
 	}
+
 }
 
 TEST_CASE( "Polygon convexity", "[polyline-convex]" )

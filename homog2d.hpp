@@ -7845,8 +7845,8 @@ template<
 auto
 getBB( const T& vpts )
 {
-	if( vpts.size() < 2 )
-		HOMOG2D_THROW_ERROR_1( "unable, need at least two segments" );
+//	if( vpts.size() < 2 )
+//		HOMOG2D_THROW_ERROR_1( "unable, need at least two segments" );
 	return priv::getBB_Segments( vpts );
 }
 

@@ -27,5 +27,5 @@ int main()
 	pseg.second.draw( im1, DrawParams().setColor(0,100,200) );
 	pseg.second.draw( im2, DrawParams().setColor(0,100,200) );
 	im1.write( "circles1.png" );
-	im2.write( "circles2.svg" );
+	im2.write( "circles1.svg" );
 }
