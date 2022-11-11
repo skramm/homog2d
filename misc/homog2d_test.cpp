@@ -2750,7 +2750,34 @@ TEST_CASE( "Bounding Box of set of objects", "[BB-cont]" )
 		apt[0] = Point2d{2,11};
 		CHECK_THROWS( getBB(apt) );         // need at least 2 points !
 	}
+}
 
+TEST_CASE( "getCenters()", "[getCenters]" )
+{
+	{
+		std::vector<Segment> vec;
+		auto out1 = getCenters( vec );
+		CHECK( out1.empty() );
+
+		vec.emplace_back( Segment( 0,0,2,0) );
+		vec.emplace_back( Segment( 0,1,2,1) );
+		auto out2 = getCenters( vec );
+		CHECK( out2.size() == 2 );
+		CHECK( out2[0] == Point2d(1,0) );
+		CHECK( out2[1] == Point2d(1,1) );
+	}
+	{
+		std::list<Circle> vec;
+		auto out1 = getCenters( vec );
+		CHECK( out1.empty() );
+
+		vec.emplace_back( Circle( 0,0, 2) );
+		vec.emplace_back( Circle( 1,1, 3) );
+		auto out2 = getCenters( vec );
+		CHECK( out2.size() == 2 );
+		CHECK( out2[0] == Point2d(0,0) );
+		CHECK( out2[1] == Point2d(1,1) );
+	}
 }
 
 TEST_CASE( "Polygon convexity", "[polyline-convex]" )

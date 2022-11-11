@@ -7954,17 +7954,24 @@ getParallelSegs( const Segment_<FPT>& seg, T dist )
 	return seg.getParallelSegs(dist);
 }
 
-/// Free function, returns middle point of set of segments
+/// Free function, returns middle points of set of segments/circles
 /**
 \sa Segment_::getCenter()
+\sa Center_::getCenter()
 - input: set of segments
 - output: set of points (same container)
 */
-template<typename FPT>
-std::vector<Point2d_<FPT>>
-getCenters( const std::vector<Segment_<FPT>>& vsegs )
+template<
+	typename T,
+	typename std::enable_if<
+		priv::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+auto
+getCenters( const T& vsegs )
 {
-	std::vector<Point2d_<FPT>> vout( vsegs.size() );
+	std::vector<Point2d_<typename T::value_type::FType>> vout( vsegs.size() );
 
 	auto it = std::begin( vout );
 	for( const auto& seg: vsegs )
@@ -7976,11 +7983,17 @@ getCenters( const std::vector<Segment_<FPT>>& vsegs )
 /**
 \sa Segment_::getLine()
 */
-template<typename FPT>
-std::vector<Line2d_<FPT>>
-getLines( const std::vector<Segment_<FPT>>& vsegs )
+template<
+	typename T,
+	typename std::enable_if<
+		priv::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+auto
+getLines( const T& vsegs )
 {
-	std::vector<Line2d_<FPT>> vout( vsegs.size() );
+	std::vector<Line2d_<typename T::value_type::FType>> vout( vsegs.size() );
 
 	auto it = std::begin( vout );
 	for( const auto& seg: vsegs )
