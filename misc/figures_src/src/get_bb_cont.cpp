@@ -48,8 +48,8 @@ void process( const T& vec, std::string fname )
 
 int main()
 {
-	std::vector<Segment> vsegs;
-	std::vector<Point2d> vpts;
+	std::vector<Segment>   v_segs;
+	std::vector<Point2d>   v_pts;
 	std::vector<Point2d>   v_polypts;
 	std::vector<CPolyline> v_poly;
 	auto nb_pts_poly_max = 5;
@@ -70,12 +70,12 @@ int main()
 	{
 		auto x1 = 1.*std::rand()/RAND_MAX * xmax + xmin;
 		auto y1 = 1.*std::rand()/RAND_MAX * ymax + xmin;
-		vpts.emplace_back( Point2d(x1,y1) );
+		v_pts.emplace_back( Point2d(x1,y1) );
 
 		auto x2 = x1 + ((2.*std::rand()/RAND_MAX)-1.) * seg_max + seg_min;
 		auto y2 = y1 + ((2.*std::rand()/RAND_MAX)-1.) * seg_max + seg_min;
-		vpts.emplace_back( Point2d(x2,y2) );
-		vsegs.emplace_back( Segment( x1,y1,x2,y2) );
+		v_pts.emplace_back( Point2d(x2,y2) );
+		v_segs.emplace_back( Segment( x1,y1,x2,y2) );
 
 		v_polypts.emplace_back( Point2d(x1,y1) );
 		if( v_polypts.size() == polySize )
@@ -90,20 +90,33 @@ int main()
 //	img1.setSize( k*xmax, k*ymax );
 	img2.setSize( k*xmax, k*ymax );
 
-	std::vector<FRect> vrects;
-	for( const auto& seg: vsegs )
-		vrects.emplace_back( seg.getPts() );
+	std::vector<FRect> v_rects;
+	for( const auto& seg: v_segs )
+		v_rects.emplace_back( seg.getPts() );
 
-	std::vector<Circle> vcircles;
-	for( const auto& seg: vsegs )
+	std::vector<Circle> v_circles;
+	for( const auto& seg: v_segs )
 	{
 		auto ppts = seg.getPts();
-		vcircles.emplace_back( ppts.first, ppts.second );
+		v_circles.emplace_back( ppts.first, ppts.second );
 	}
 
-	process( vrects,   "bb_Rects" );
-	process( vpts,     "bb_Points" );
-	process( vsegs,    "bb_Segs" );
-	process( vcircles, "bb_Circles" );
-	process( v_poly,   "bb_Poly" );
+	std::vector<Ellipse> v_ell;
+	for( const auto& seg: v_segs )
+	{
+		auto a     = 1.*std::rand()/RAND_MAX * 40 + 5;
+		auto b     = 1.*std::rand()/RAND_MAX * 10 + 5;
+		auto angle = M_PI*std::rand()/RAND_MAX;
+
+		Ellipse ell( seg.getPts().first, a, b, angle );
+		v_ell.push_back( ell );
+	}
+
+	process( v_rects,   "bb_Rects" );
+	process( v_pts,     "bb_Points" );
+	process( v_segs,    "bb_Segs" );
+	process( v_circles, "bb_Circles" );
+	process( v_poly,    "bb_Poly" );
+	process( v_ell,     "bb_Ellipses" );
 }
+

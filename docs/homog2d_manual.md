@@ -1249,7 +1249,7 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 ![bounding box of a set of polygons](img/bb_Poly.svg)
 ![bounding box of a set of circles](img/bb_Circles.svg)
 ![bounding box of a set of segments](img/bb_Segs.svg)
-
+![bounding box of a set of ellipses](img/bb_Ellipses.svg)
 
 ### 6.3 - Colinearity of 3 points
 
