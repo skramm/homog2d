@@ -1226,7 +1226,7 @@ auto ch3 = pl.convexHull(); // member function
 
 ### 6.2 - Bounding Box of a set of objects
 
-You can compute the Bounding Box of a set of objects that lie in a  container, whatever that container type
+You can compute the Bounding Box of a set of objects that lie in a container, whatever that container type
 (`std::vector`, `std::list` or `std::array`).
 This function will return a `Frect` object:
 
@@ -1239,15 +1239,15 @@ bb.draw( img );
 ```
 
 This function will throw if the returned rectangle ends up in an invalid state.
-This means that for points or segments, its size needs to be at least 2.
+This means that for points or segments, the container's size needs to be at least 2.
 For polylines, circles and rectangles, the size needs to be at least 1.
 
-Examples: (generated with [this file](misc/figures_src/src/get_bb_cont.cpp).)
+Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 
 ![bounding box of a set of points](img/bb_Points.svg)
 ![bounding box of a set of rectangles](img/bb_Rects.svg)
 ![bounding box of a set of polygons](img/bb_Poly.svg)
-![bounding box of a set of circles](img/bb_Circle.svg)
+![bounding box of a set of circles](img/bb_Circles.svg)
 ![bounding box of a set of segments](img/bb_Segs.svg)
 
 

@@ -93,7 +93,6 @@ int main()
 	std::vector<FRect> vrects;
 	for( const auto& seg: vsegs )
 		vrects.emplace_back( seg.getPts() );
-	process( vrects, "bb_Rects" );
 
 	std::vector<Circle> vcircles;
 	for( const auto& seg: vsegs )
@@ -101,6 +100,8 @@ int main()
 		auto ppts = seg.getPts();
 		vcircles.emplace_back( ppts.first, ppts.second );
 	}
+
+	process( vrects,   "bb_Rects" );
 	process( vpts,     "bb_Points" );
 	process( vsegs,    "bb_Segs" );
 	process( vcircles, "bb_Circles" );
