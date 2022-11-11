@@ -2752,7 +2752,7 @@ TEST_CASE( "Bounding Box of set of objects", "[BB-cont]" )
 	}
 }
 
-TEST_CASE( "getCenters()", "[getCenters]" )
+TEST_CASE( "getCenters() and getLines()", "[getCenters]" )
 {
 	{
 		std::vector<Segment> vec;
@@ -2765,6 +2765,11 @@ TEST_CASE( "getCenters()", "[getCenters]" )
 		CHECK( out2.size() == 2 );
 		CHECK( out2[0] == Point2d(1,0) );
 		CHECK( out2[1] == Point2d(1,1) );
+
+		auto out3 = getLines( vec );
+		CHECK( out3.size() == 2 );
+		CHECK( out3[0] == Line2d( Point2d(0,0), Point2d(5,0) ) );
+		CHECK( out3[1] == Line2d( Point2d(0,1), Point2d(5,1) ) );
 	}
 	{
 		std::list<Circle> vec;
@@ -2773,6 +2778,18 @@ TEST_CASE( "getCenters()", "[getCenters]" )
 
 		vec.emplace_back( Circle( 0,0, 2) );
 		vec.emplace_back( Circle( 1,1, 3) );
+		auto out2 = getCenters( vec );
+		CHECK( out2.size() == 2 );
+		CHECK( out2[0] == Point2d(0,0) );
+		CHECK( out2[1] == Point2d(1,1) );
+	}
+	{
+		std::array<Ellipse,2> vec;
+		auto out1 = getCenters( vec );
+		CHECK( out1.size() == 2 );    // because input array has size=2
+
+		vec[0] = Ellipse( 0,0, 2, 3 );
+		vec[1] = Ellipse( 1,1, 3, 8 );
 		auto out2 = getCenters( vec );
 		CHECK( out2.size() == 2 );
 		CHECK( out2[0] == Point2d(0,0) );

@@ -1261,12 +1261,25 @@ bool b = areColinear( pt1, pt2, pt3 );
 
 ### 6.4 - Extracting data from sets/containers of primitives
 
-If you have a `std::vector<Segment>` named `v_segs`, then the following function calls:
+If you have a container (`std::vector`, `std::list` or `std::array`) holding either segments, circles or ellipses, you can get at once all the center points, grouped in a vector:
 
-- `auto v_pts   = getCenters( v_segs );`
-- `auto v_lines = getLines( v_segs );`
+```C++
+std::vector<Circle>  vec1;
+std::vector<Segment> vec2;
+std::vector<Ellipse> vec3;
+ ... fill these
+auto v1 = getCenters( vec1 );   // v1, v2, v3 hold a vector of Point2d
+auto v2 = getCenters( vec2 );
+auto v3 = getCenters( vec3 );
+```
 
-will return a vector holding the middle points of all the segments and a vector holding the supporting lines of all the segments.
+Similarly, if you have a container holding segments, you can get at once all the supporting lines:
+
+```C++
+std::list<Segment> vec;
+ ... fill vec
+auto v_lines = getLines( vec );
+```
 
 
 ## 7 - Bindings with other libraries
