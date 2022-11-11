@@ -1,0 +1,14 @@
+<svg version="1.1" width="450" height="375" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<polygon fill="none" stroke="rgb(161,112,41)" stroke-width="1" points="169.128,231.591 68.0442,144.211 254.47,279.066 193.75,94.2513 267.239,125.334 82.9253,69.9227 "/>
+<polygon fill="none" stroke="rgb(149,109,209)" stroke-width="1" points="105.836,115.459 113.834,266.983 299.632,134.879 "/>
+<polygon fill="none" stroke="rgb(177,17,187)" stroke-width="1" points="126.434,289.296 330.839,88.9782 62.249,235.093 326.116,83.1934 59.5949,55.7735 "/>
+<polygon fill="none" stroke="rgb(49,171,19)" stroke-width="1" points="305.525,193.317 227.723,208.999 327.484,119.764 40.7406,246.429 294.587,193.321 232.892,267.464 "/>
+<polygon fill="none" stroke="rgb(132,149,207)" stroke-width="1" points="145.438,260.266 114.465,198.144 172.939,149.284 48.713,94.7325 111.623,48.2183 "/>
+<polygon fill="none" stroke="rgb(45,16,104)" stroke-width="1" points="204.685,268.271 202.623,93.5144 48.941,139.552 78.4469,243.979 52.1977,45.1412 192.338,120.748 "/>
+<polygon fill="none" stroke="rgb(128,20,66)" stroke-width="1" points="296.481,281.367 48.9787,137.769 328.648,183.989 132.192,192.47 "/>
+<polygon fill="none" stroke="rgb(88,84,112)" stroke-width="1" points="75.0658,248.417 218.32,275.677 "/>
+<rect fill="none" x="40.7406" y="45.1412" width="290.099" height="244.155" stroke="rgb(250,50,20)" stroke-width="1"/>
+</svg>

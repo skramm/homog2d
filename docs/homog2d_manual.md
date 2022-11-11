@@ -1224,10 +1224,11 @@ auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
 
-### 6.2 - Bounding Box of a set of points
+### 6.2 - Bounding Box of a set of objects
 
-You can compute the Bounding Box of a set of points.
-This function will return a `Frect_` object:
+You can compute the Bounding Box of a set of objects that lie in a  container, whatever that container type
+(`std::vector`, `std::list` or `std::array`).
+This function will return a `Frect` object:
 
 ```C++
 std::vector<Point2d> vec;
@@ -1237,10 +1238,17 @@ draw( img, vec );
 bb.draw( img );
 ```
 
-The set must have at least 2 (distinct) points, else this function will throw.
+This function will throw if the returned rectangle ends up in an invalid state.
+This means that for points or segments, its size needs to be at least 2.
+For polylines, circles and rectangles, the size needs to be at least 1.
 
+Examples: (generated with [this file](misc/figures_src/src/get_bb_cont.cpp).)
 
-![Example of bounding box of a set of points](img/bbPoints.svg)
+![bounding box of a set of points](img/bb_Points.svg)
+![bounding box of a set of rectangles](img/bb_Rects.svg)
+![bounding box of a set of polygons](img/bb_Poly.svg)
+![bounding box of a set of circles](img/bb_Circle.svg)
+![bounding box of a set of segments](img/bb_Segs.svg)
 
 
 ### 6.3 - Colinearity of 3 points

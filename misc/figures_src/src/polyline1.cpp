@@ -43,14 +43,4 @@ int main()
 	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
 	img1.write( "polyline1b.png" );
 	img2.write( "polyline1b.svg" );
-
-	img1.clear();
-	img2.clear();
-	auto bbpts = getBB( vpts );
-	bbpts.draw( img1, DrawParams().setColor(250,50,20) );
-	bbpts.draw( img2, DrawParams().setColor(250,50,20) );
-	draw( img1, vpts );
-	draw( img2, vpts );
-	img1.write( "bbPoints.png" );
-	img2.write( "bbPoints.svg" );
 }

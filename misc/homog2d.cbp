@@ -89,7 +89,7 @@
 		<Unit filename="figures_src/src/frect1.cpp" />
 		<Unit filename="figures_src/src/frect2.cpp" />
 		<Unit filename="figures_src/src/frect_extended.cpp" />
-		<Unit filename="figures_src/src/get_bb_segs.cpp" />
+		<Unit filename="figures_src/src/get_bb_cont.cpp" />
 		<Unit filename="figures_src/src/getbb1.cpp" />
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
