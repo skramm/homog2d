@@ -69,7 +69,7 @@ depending on the basic type (Line or Point), and still templatize on the numeric
 C++ does not allow this.
 
 Thus, the trick here is to call in each function a "sub" private function (prefixed with `impl_`) that gets overloaded by the datatype (point or line).
-To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type `RootHelper`, templated by the numerical type.
+To achieve this overloading, each of these functions receives as additional (dummy) argument an object of type `BaseHelper`, templated by the numerical type.
 In the definition of the function, this additional argument value is ignored,
 it is there just so that the compiler can select the correct overload.
 

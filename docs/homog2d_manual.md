@@ -1665,6 +1665,12 @@ for( const auto& p: data )
 }
 ```
 
+
+This polymorphic behavior is kept optional.
+It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
+(which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
+
+
 ### 10.3 - Technical details on svg file import
 
 When importing a SVG file, the following points must be considered:
@@ -1767,6 +1773,9 @@ The default behavior for class `Ellipse` is to store only the homogeneous matrix
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is immediate.
 For more on this, [see this page](homog2d_speed.md).
+- `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
+Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
+This will add a common base class `detail::Root` to all the geometric primitives.
 
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
