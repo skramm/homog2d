@@ -2857,7 +2857,10 @@ Type parameters:
 - FPT: Floating Point Type (float, double or long double)
 */
 template<typename LP,typename FPT>
-class LPBase: public detail::Common<FPT> //, public detail::Root
+class LPBase: public detail::Common<FPT>
+#ifdef HOMOG2D_ENABLE_RTP
+//, public detail::Root
+#endif
 {
 public:
 	using FType = FPT;
@@ -3473,9 +3476,9 @@ public:
 	}
 
 	template<typename T>
-	bool draw( img::Image<T>& img, img::DrawParams dp=img::DrawParams() ) const
+	void draw( img::Image<T>& img, img::DrawParams dp=img::DrawParams() ) const
 	{
-		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
+		impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -3597,9 +3600,9 @@ private:
 #endif // HOMOG2D_USE_OPENCV
 
 	template<typename T>
-	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsPoint>& )  const;
+	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsPoint>& )  const;
 	template<typename T>
-	bool impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsLine>& )  const;
+	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsLine>& )  const;
 
 	/// Called by default constructor, overload for lines
 	void impl_init( const detail::BaseHelper<type::IsLine>& )
@@ -8726,7 +8729,7 @@ Steps:
 */
 template<typename LP, typename FPT>
 template<typename T>
-bool
+void
 base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::BaseHelper<type::IsLine>& ) const
 {
 	assert( im.rows() > 2 );
@@ -8742,22 +8745,20 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 		auto ppts = ri.get();
 		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
 		seg.draw( im, dp );
-		return true;
 	}
-	return false;
 }
 
 /// Draw points on image implementation, backend independent.
 /// Returns false if point not in image
 template<typename LP, typename FPT>
 template<typename T>
-bool
+void
 base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::BaseHelper<type::IsPoint>& ) const
 {
-	if( getX()<0 || getX()>=im.cols() )
-		return false;
+	if( getX()<0 || getX()>=im.cols() )      // check if point is in image
+		return;
 	if( getY()<0 || getY()>=im.rows() )
-		return false;
+		return;
 
 	std::vector<Point2d_<float>> vpt( 4, *this );
 	switch( dp._dpValues._ptStyle )
@@ -8785,7 +8786,6 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 
 		default: assert(0);
 	}
-	return true;
 }
 
 
