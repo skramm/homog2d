@@ -787,8 +787,10 @@ public:
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area() const = 0;
+	virtual Type type() const = 0;
+
+	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
-	Type virtual type() const = 0;
 };
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
@@ -2843,7 +2845,7 @@ Type parameters:
 - FPT: Floating Point Type (float, double or long double)
 */
 template<typename LP,typename FPT>
-class LPBase: public detail::Common<FPT>
+class LPBase: public detail::Common<FPT> //, public detail::Root
 {
 public:
 	using FType = FPT;
@@ -2877,11 +2879,6 @@ private:
 	friend auto
 	operator << ( std::ostream& f, const h2d::base::LPBase<U,V>& r )
 	-> std::ostream&;
-/*
-{
-	r.impl_op_stream( f, r );
-	return f;
-}*/
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend void
@@ -3231,6 +3228,8 @@ Please check out warning described in impl_getAngle()
 	{
 		return impl_isInf( detail::RootHelper<LP>() );
 	}
+	HOMOG2D_INUMTYPE length() const { return 0.; }
+	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
 private:
 	FPT impl_getX( const detail::RootHelper<type::IsPoint>& ) const
@@ -9018,10 +9017,82 @@ Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
+namespace detail {
+/// Stream operator for \c Root type
+/** \todo replace this by a call to a virtual function `print()`
+(that needs to be defined in all the child classes as:
+\code
+void print( std::ostream& f )
+{
+	f << *this;
+}
+\endcode
+*/
+std::ostream& operator << ( std::ostream& f, const Root& p )
+{
+	f << "type="<< getString( p.type() ) << std::endl;
+	switch( p.type() )
+	{
+		case Type::Circle:
+		{
+			const Circle_<double>* p2 = static_cast<const Circle_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+		case Type::Ellipse:
+		{
+			const Ellipse_<double>* p2 = static_cast<const Ellipse_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+		case Type::FRect:
+		{
+			const FRect_<double>* p2 = static_cast<const FRect_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+/*		case Type::Line2d:
+		{
+			const Line2d_<double>* p2 = static_cast<const Line2d_<double>*>( &p );
+			f << *p2;
+		}
+		case Type::Point2d:
+		{
+			const Point2d_<double>* p2 = static_cast<const Point2d_<double>*>( &p );
+			f << *p2;
+		}
+*/
+		case Type::Segment:
+		{
+			const Segment_<double>* p2 = static_cast<const Segment_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+		case Type::OPolyline:
+		{
+			const OPolyline_<double>* p2 = static_cast<const OPolyline_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+		case Type::CPolyline:
+		{
+			const CPolyline_<double>* p2 = static_cast<const CPolyline_<double>*>( &p );
+			f << *p2;
+		}
+		break;
+		default: assert(0);
+	}
+	return f;
+}
+
+} // namespace detail
+
+//------------------------------------------------------------------
 namespace base {
 /// Draw Polyline (SVG implementation)
 /**
-\note To show the points index, we don't use the svg "marker-start/marker-mid/marker-end" syntax so that the dots always have the same color as the segments
+\note To show the points index, we don't use the svg "marker-start/marker-mid/marker-end" syntax
+so that the dots always have the same color as the segments
 */
 template<typename PLT,typename FPT>
 void
@@ -9166,6 +9237,36 @@ tokenize( const std::string &s, char delim )
         velems.push_back(item);
 
     return velems;
+}
+//------------------------------------------------------------------
+std::pair<Point2d_<HOMOG2D_INUMTYPE>,HOMOG2D_INUMTYPE>
+getEllipseRotateAttr( const char* rot_str )
+{
+	std::string s(rot_str);
+//	std::cout << __FUNCTION__ << "(): " << s << "\n";
+	auto v1 = tokenize( s, '(' );
+	if( v1.size() == 2 )
+		if( v1[0] == "rotate" )
+		{
+			auto v2 = v1[1].substr(0, v1[1].size() - 1 );
+//			std::cout << __FUNCTION__ << "(): v2=" << v2 << "\n";
+			auto v3 = tokenize( v2, ',' );
+			if( v3.size() == 3 )
+			{
+				try  // in case of an incorrect numerical string
+				{
+					auto angle = std::stod( v3[0] );
+					auto x0    = std::stod( v3[1] );
+					auto y0    = std::stod( v3[2] );
+					return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(x0,y0),angle*M_PI/180. );
+				}
+				catch( std::exception& err )
+				{
+					HOMOG2D_THROW_ERROR_2( "invalid 'transform' attribute for svg ellipse import",  err.what() );
+				}
+			}
+		}
+	HOMOG2D_THROW_ERROR_1( "invalid 'transform' attribute for svg ellipse import" );
 }
 
 } // namespace priv
@@ -9338,7 +9439,13 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y  = getAttribValue( e, "cy", n );
 				auto rx = getAttribValue( e, "rx", n );
 				auto ry = getAttribValue( e, "ry", n );
-				std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
+				auto rot = priv::getEllipseRotateAttr( getAttribString( "transform", e ) );
+				Ellipse* ell = new Ellipse( x, y, rx, ry );
+
+				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
+				*ell = H * *ell;
+				std::unique_ptr<detail::Root> p( ell );
+//				std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
 				vec.push_back( std::move(p) );
 			}
 			break;

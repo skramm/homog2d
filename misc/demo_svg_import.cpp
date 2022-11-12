@@ -74,5 +74,6 @@ int main( int argc, const char** argv )
 			const CPolyline* pl = static_cast<CPolyline*>( p.get() );
 			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
 		}
+		std::cout << *p << '\n';
 	}
 }
