@@ -3471,12 +3471,24 @@ public:
 	{
 		return impl_op_sort( other, detail::BaseHelper<LP>() );
 	}
-
+/*
 	template<typename T>
 	bool draw( img::Image<T>& img, img::DrawParams dp=img::DrawParams() ) const
 	{
 		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
 	}
+*/
+#ifdef HOMOG2D_USE_OPENCV
+	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const
+	{
+		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
+	}
+#endif
+	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const
+	{
+		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
+	}
+
 
 #ifdef HOMOG2D_USE_OPENCV
 	template<typename RT>
