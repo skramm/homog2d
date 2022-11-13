@@ -64,7 +64,7 @@ int main( int argc, char* argv[] )
 		<< "\n - numerical type: " << XSTR(NUMTYPE)
 		<< "\n - internal numerical type=" << XSTR(HOMOG2D_INUMTYPE)
 		<< "\n - Catch lib version: " << CATCH_VERSION_MAJOR << '.' << CATCH_VERSION_MINOR << '.' << CATCH_VERSION_PATCH
-		<< "\n - build option:"
+		<< "\n - build options:"
 
 		<< "\n  - HOMOG2D_OPTIMIZE_SPEED: "
 #ifdef HOMOG2D_OPTIMIZE_SPEED
@@ -86,6 +86,14 @@ int main( int argc, char* argv[] )
 #else
 		<< "NO"
 #endif
+
+		<< "\n  - HOMOG2D_ENABLE_RTP: "
+#ifdef HOMOG2D_ENABLE_RTP
+		<< "YES"
+#else
+		<< "NO"
+#endif
+
 		<< '\n';
 
 	Catch::StringMaker<float>::precision = 25;
@@ -189,9 +197,12 @@ TEST_CASE( "types testing 1", "[test-types-1]" )
 		Point2d_<long double> pt2F3;
 		pt2F1.set(4.,5); // checking with 2 different types
 
+// removed on 20221113 because this is platform-dependent!
+#if 0
 		CHECK( sizeof(Point2dF) == 12 );
 		CHECK( sizeof(Point2dD) == 24 );
 		CHECK( sizeof(Point2dL) == 48 );
+#endif
 
 		CHECK( ptF.type() == Type::Point2d );
 		CHECK( liF.type() == Type::Line2d );
