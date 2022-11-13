@@ -2859,7 +2859,7 @@ Type parameters:
 template<typename LP,typename FPT>
 class LPBase: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-//, public detail::Root
+, public detail::Root
 #endif
 {
 public:
@@ -3474,26 +3474,18 @@ public:
 	{
 		return impl_op_sort( other, detail::BaseHelper<LP>() );
 	}
-/*
-	template<typename T>
-	void draw( img::Image<T>& img, img::DrawParams dp=img::DrawParams() ) const
+
+	void draw( img::Image<img::SvgImage>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
-		impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
-	}
-*/
-#ifdef HOMOG2D_USE_OPENCV
-	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const
-	{
-		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
-	}
-#endif
-	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const
-	{
-		return impl_draw_LP( img, dp, detail::BaseHelper<LP>() );
+		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
 	}
 
-
 #ifdef HOMOG2D_USE_OPENCV
+	void draw( img::Image<cv::Mat>& im, img::DrawParams dp=img::DrawParams() ) const
+	{
+		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
+	}
+
 	template<typename RT>
 	RT getCvPt() const { return RT( getX(), getY() ); }
 
