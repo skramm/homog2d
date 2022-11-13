@@ -267,7 +267,6 @@ namespace img {
 struct SvgImage;
 }
 
-
 template<typename T>
 using Point2d_ = base::LPBase<type::IsPoint,T>;
 template<typename T>
@@ -298,7 +297,7 @@ struct Color
 	}
 };
 
-/// A svg image, see \page Drawing
+/// A svg image as a wrapper around a string, see manual, "Drawing things" section
 struct SvgImage
 {
 	std::ostringstream _svgString;
@@ -783,13 +782,16 @@ public:
 //------------------------------------------------------------------
 #ifdef HOMOG2D_ENABLE_RTP
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
+/**
+Only exists if symbol HOMOG2D_ENABLE_RTP is defined
+*/
 class Root
 {
 public:
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
 	virtual HOMOG2D_INUMTYPE length() const = 0;
-	virtual HOMOG2D_INUMTYPE area() const = 0;
-	virtual Type type() const = 0;
+	virtual HOMOG2D_INUMTYPE area()   const = 0;
+	virtual Type type()               const = 0;
 
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
@@ -4414,7 +4416,8 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 }
 
 //------------------------------------------------------------------
-namespace priv {
+/// Holds traits classes
+namespace trait {
 
 /// Traits class, used in generic draw() function
 template<typename T> struct IsDrawable              : std::false_type {};
@@ -4422,7 +4425,7 @@ template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<Point2d_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
 template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 /// Traits class, used in intersects() for Polyline
@@ -4444,17 +4447,15 @@ template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
-template <typename T>               struct IsContainer: std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>:     std::true_type { };
+template <typename T>               struct IsContainer                     : std::false_type { };
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
 template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
 template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
 
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
-template <typename T>
-struct Is_std_array: std::false_type {};
-template <typename V, size_t n>
-struct Is_std_array<std::array<V, n>>: std::true_type {};
+template <typename T> struct Is_std_array                             : std::false_type {};
+template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
 
 /// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
@@ -4468,6 +4469,9 @@ template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
 template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
 template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
 
+} // namespace trait
+
+namespace priv {
 //------------------------------------------------------------------
 /// A value that needs some computing, associated with its flag
 template<typename T>
@@ -4515,7 +4519,7 @@ struct PolylineAttribs
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -4561,7 +4565,7 @@ getBB_Points( const T& vpts )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -4585,13 +4589,11 @@ getBB_Segments( const T& vsegs )
 /// \todo same as getBB_Segments() ???
 template<typename FPT>
 auto
-getBB_FRect( const std::vector<FRect_<FPT>>& v_bb )
+getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 {
-//	using FPT = typename T::value_type::FType;
-
-	std::vector<Point2d_<FPT>> vpts( v_bb.size()*2 );
+	std::vector<Point2d_<FPT>> vpts( v_rects.size()*2 );
 	auto it = vpts.begin();
-	for( const auto& seg: v_bb )
+	for( const auto& seg: v_rects )
 	{
 		auto ppts = seg.getPts();
 		*it++ = ppts.first;
@@ -4599,7 +4601,6 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_bb )
 	}
 	return getBB_Points( vpts );
 }
-
 
 } // namespace priv
 
@@ -4707,7 +4708,7 @@ public:
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -4979,7 +4980,7 @@ at 180° of the previous one.
 	template<
 		typename CONT,
 		typename std::enable_if<
-			priv::IsContainer<CONT>::value,
+			trait::IsContainer<CONT>::value,
 			CONT
 		>::type* = nullptr
 	>
@@ -5104,7 +5105,7 @@ public:
 	template<
 		typename T,
 		typename std::enable_if<
-			priv::IsShape<T>::value,
+			trait::IsShape<T>::value,
 			T
 		>::type* = nullptr
 	>
@@ -5124,7 +5125,7 @@ public:
 	template<
 		typename T,
 		typename std::enable_if<
-			priv::HasArea<T>::value,T
+			trait::HasArea<T>::value,T
 		>::type* = nullptr
 	>
 	bool
@@ -6207,7 +6208,7 @@ operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& r )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -7635,7 +7636,7 @@ namespace priv {
 template<
 	typename Cont,
 	typename std::enable_if<
-		Is_std_array<Cont>::value,
+		trait::Is_std_array<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -7649,7 +7650,7 @@ alloc( std::size_t /* unused here */ )
 template<
 	typename Cont,
 	typename std::enable_if<
-		!Is_std_array<Cont>::value,
+		!trait::Is_std_array<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -7665,7 +7666,7 @@ alloc( std::size_t nb )
 /// Used to proceed multiple products, whatever the container (\c std::list, \c std::vector, or \c std::array).
 /// Returned container is of same type as given input
 template<typename FPT,typename Cont>
-typename std::enable_if<priv::IsContainer<Cont>::value,Cont>::type
+typename std::enable_if<trait::IsContainer<Cont>::value,Cont>::type
 operator * (
 	const Hmatrix_<type::IsHomogr,FPT>& h,    ///< Matrix
 	const Cont&                         vin   ///< Input container
@@ -7846,7 +7847,7 @@ getBB( const T1& elem1, const T2& elem2 )
 template<
 	typename T,
 	typename std::enable_if<
-		( priv::IsContainer<T>::value && priv::IsPoint<typename T::value_type>::value ),
+		( trait::IsContainer<T>::value && trait::IsPoint<typename T::value_type>::value ),
 		T
 	>::type* = nullptr
 >
@@ -7862,7 +7863,7 @@ getBB( const T& vpts )
 template<
 	typename T,
 	typename std::enable_if<
-		( priv::IsContainer<T>::value && priv::IsSegment<typename T::value_type>::value ),
+		( trait::IsContainer<T>::value && trait::IsSegment<typename T::value_type>::value ),
 		T
 	>::type* = nullptr
 >
@@ -7878,7 +7879,7 @@ getBB( const T& vpts )
 template<
 	typename T,
 	typename std::enable_if<
-		( priv::IsContainer<T>::value && priv::HasBB<typename T::value_type>::value ),
+		( trait::IsContainer<T>::value && trait::HasBB<typename T::value_type>::value ),
 		T
 	>::type* = nullptr
 >
@@ -7988,7 +7989,7 @@ getParallelSegs( const Segment_<FPT>& seg, T dist )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -8010,7 +8011,7 @@ getCenters( const T& vsegs )
 template<
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -8297,7 +8298,7 @@ template<
 	typename U,
 	typename Prim,
 	typename std::enable_if<
-		priv::IsDrawable<Prim>::value,
+		trait::IsDrawable<Prim>::value,
 		Prim
 	>::type* = nullptr
 >
@@ -8340,7 +8341,7 @@ template<
 	typename U,
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -8360,7 +8361,7 @@ template<
 	typename U,
 	typename T,
 	typename std::enable_if<
-		priv::IsContainer<T>::value,
+		trait::IsContainer<T>::value,
 		T
 	>::type* = nullptr
 >
@@ -8382,7 +8383,10 @@ void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)
 Type \c T1 and \c T2 can be anything drawable
 */
 template<typename T1,typename T2,typename U>
-void draw( img::Image<U>& img, const std::pair<T1,T2>& pa, const img::DrawParams& dp=img::DrawParams() )
+void draw(
+	img::Image<U>&          img,
+	const std::pair<T1,T2>& pa,
+	const img::DrawParams&  dp=img::DrawParams() )
 {
 	pa.first.draw(  img, dp );
 	pa.second.draw( img, dp );
