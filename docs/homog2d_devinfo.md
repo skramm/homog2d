@@ -83,7 +83,7 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 ## Coding style
 
 - TABS, not spaces (1 byte per level)
-- types have first character upper case, variables are lowercase
+- types have first character uppercase, variables and functions are lowercase
 - `camelCase` for identifiers
 - class member variables are prefixed with an underscore (`_`)
 - spaces after parenthesis (`if( someBool )`)

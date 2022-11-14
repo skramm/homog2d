@@ -3,6 +3,9 @@
 
 .PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase speed_test
 
+
+.PHONY:BUILD/html/index.html
+
 .PRECIOUS: BUILD/figures_test/%.cpp BUILD/%.png BUILD/no_build/%.cpp
 #BUILD/showcase/%
 .SECONDARY:
@@ -53,8 +56,14 @@ check:
 	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
 	xdg-open cppcheck.log
 
+doc: DOX_FILE=doxyfile
 doc: BUILD/html/index.html
 	xdg-open BUILD/html/index.html
+
+doc-dev: DOX_FILE=doxyfile_dev
+doc-dev: BUILD/html/index.html
+	xdg-open BUILD/html/index.html
+
 
 # also (re)builds the figures, but requires Opencv AND Latex!
 docall: BUILD/html/index.html doc_fig doc_fig_tex
@@ -252,7 +261,7 @@ BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $
 DOC_MD_PAGES=$(wildcard docs/*.md)
 BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
 	@mkdir -p BUILD/html
-	doxygen misc/doxyfile 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
+	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
 
 # this target requires Opencv
