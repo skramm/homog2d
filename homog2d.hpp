@@ -1570,9 +1570,39 @@ public:
 
 	std::pair<Line2d_<FPT>,Line2d_<FPT>> getAxisLines() const;
 
+//////////////////////////
+//       OPERATORS      //
+//////////////////////////
+
 	template<typename T>
 	friend std::ostream&
 	operator << ( std::ostream& f, const Ellipse_<T>& ell );
+
+/// Comparison operator. Does normalization if required
+	bool operator == ( const Ellipse_& h ) const
+	{
+		auto& data = detail::Matrix_<FPT>::_mdata;
+
+		if( !detail::Matrix_<FPT>::isNormalized() )
+			detail::Matrix_<FPT>::p_normalize(2,2);
+		if( !h.isNormalized() )
+			h.p_normalize(2,2);
+
+		for( int i=0; i<3; i++ )
+			for( int j=0; j<3; j++ )
+				if( std::fabs(
+					static_cast<HOMOG2D_INUMTYPE>( data[i][j] ) - h.value(i,j) )
+					>= thr::nullDeter()
+				)
+					return false;
+		return true;
+	}
+
+/// Comparison operator. Does normalization if required
+	bool operator != ( const Ellipse_& e ) const
+	{
+		return !(*this == e);
+	}
 
 //////////////////////////
 //   PRIVATE FUNCTIONS  //
@@ -1640,7 +1670,8 @@ public:
 //////////////////////////
 //      DATA SECTION    //
 //////////////////////////
-// (matrix is inherited from base class)
+private:
+// (matrix holding the data is inherited from base class)
 #ifdef HOMOG2D_OPTIMIZE_SPEED
 	mutable bool _epHasChanged = true;   ///< if true, means we need to recompute parameters
 	mutable detail::EllParams<FPT> _par;

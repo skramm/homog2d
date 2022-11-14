@@ -175,6 +175,43 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( dtype(rF)  == Dtype::Float );
 }
 
+TEST_CASE( "comparison testing", "[comparison-test]" )
+{
+	{
+		Segment_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		Circle_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		FRect_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		Line2d_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		Point2d_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		Ellipse_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		CPolyline_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+	{
+		OPolyline_<NUMTYPE>
+		a1, a2; CHECK( a1 == a2 );
+	}
+}
+
+
 TEST_CASE( "types testing 1", "[test-types-1]" )
 {
 	INFO( "type size" )
@@ -3115,6 +3152,26 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		CHECK( data.at(3)->type() == Type::Segment );
 		CHECK( data.at(4)->type() == Type::FRect );
 		CHECK( data.at(5)->type() == Type::CPolyline );
+	}
+}
+
+TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
+{
+	tinyxml2::XMLDocument doc;
+	doc.LoadFile( "misc/other/test_svg_import_3.svg" );
+	h2d::svg::Visitor visitor;
+	doc.Accept( &visitor );
+	const auto& data = visitor.get();
+	CHECK( data.size() == 3 );
+	for( const auto& p: data )
+	{
+		std::cout << *p << '\n';
+		if( p->type() == Type::Ellipse )
+		{
+			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
+			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
+			CHECK( ell == *pell );
+		}
 	}
 }
 #endif
