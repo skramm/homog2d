@@ -70,6 +70,7 @@
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="doxyfile_dev" />
 		<Unit filename="doxyfile_opencv">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
