@@ -4816,7 +4816,7 @@ public:
 		return impl_nbSegs( detail::PlHelper<PLT>() );
 	}
 
-	Point2d_<FPT> getExtremePoint( CardDir ) const;
+//	Point2d_<FPT> getExtremePoint( CardDir ) const;
 	Point2d_<FPT> getTmPoint() const;
 	Point2d_<FPT> getBmPoint() const;
 	Point2d_<FPT> getLmPoint() const;
@@ -5246,6 +5246,7 @@ public:
 }; // class Polyline_
 
 //------------------------------------------------------------------
+/*
 template<typename PLT,typename FPT>
 Point2d_<PLT>
 PolylineBase<PLT,FPT>::getExtremePoint( CardDir dir ) const
@@ -5267,14 +5268,18 @@ PolylineBase<PLT,FPT>::getExtremePoint( CardDir dir ) const
 		default: assert(0);
 	}
 }
-
+*/
+/// Return Leftmost point
 template<typename PLT,typename FPT>
 Point2d_<PLT>
 PolylineBase<PLT,FPT>::getLmPoint() const
 {
+	if( size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
 	auto it = std::min_element(
-		getPts().begin(),
-		getPts().end(),
+		this->getPts().begin(),
+		this->getPts().end(),
 		[]                  // lambda
 		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
