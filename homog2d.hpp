@@ -4659,6 +4659,10 @@ enum class Rotate: int8_t
 {
 	CCW, CW, Full, VMirror, HMirror
 };
+
+enum class CardDir: int8_t { North, South, West, East };
+
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -4811,6 +4815,12 @@ public:
 			return 0;
 		return impl_nbSegs( detail::PlHelper<PLT>() );
 	}
+
+	Point2d_<FPT> getExtremePoint( CardDir ) const;
+	Point2d_<FPT> getTmPoint() const;
+	Point2d_<FPT> getBmPoint() const;
+	Point2d_<FPT> getLmPoint() const;
+	Point2d_<FPT> getRmPoint() const;
 
 	bool isConvex() const;
 
@@ -5234,6 +5244,50 @@ public:
 #endif
 
 }; // class Polyline_
+
+//------------------------------------------------------------------
+template<typename PLT,typename FPT>
+Point2d_<PLT>
+PolylineBase<PLT,FPT>::getExtremePoint( CardDir dir ) const
+{
+	switch( dir )
+	{
+		case CardDir::North:
+			return getTmPoint();
+		break;
+		case CardDir::South:
+			return getBmPoint();
+		break;
+		case CardDir::West:
+			return getLmPoint();
+		break;
+		case CardDir::East:
+			return getRmPoint();
+		break;
+		default: assert(0);
+	}
+}
+
+template<typename PLT,typename FPT>
+Point2d_<PLT>
+PolylineBase<PLT,FPT>::getLmPoint() const
+{
+	auto it = std::min_element(
+		getPts().begin(),
+		getPts().end(),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getY() < pt2.getY() )
+				return true;
+			if( pt1.getY() > pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	return *it;
+}
+
 
 //------------------------------------------------------------------
 /// Rotate the object by either 90°, 180°, 270° (-90°)
@@ -8482,6 +8536,8 @@ namespace priv {
 namespace chull {
 
 //------------------------------------------------------------------
+/// Used int the convex hull algorithm
+/// \todo check if this cannot be merged with \ref getLmPoint()
 template<typename FPT>
 size_t
 getPivotPoint( const std::vector<Point2d_<FPT>>& in )
