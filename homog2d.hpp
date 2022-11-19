@@ -409,7 +409,6 @@ Image<T>::setSize( size_t width, size_t height )
 }
 
 
-
 template <>
 void
 Image<SvgImage>::svgInit()
@@ -3965,6 +3964,9 @@ public:
 	{}
 ///@}
 
+/// \name Modifying functions
+///@{
+
 /// Setter
 	template<typename FPT2>
 	void set( const Point2d_<FPT>& p1, const Point2d_<FPT2>& p2 )
@@ -4000,27 +4002,7 @@ public:
 		_ptS1.translate( dx, dy );
 		_ptS2.translate( dx, dy );
 	}
-
-	template<typename T>
-	std::pair<Segment_,Segment_>
-	getParallelSegs( T dist ) const
-	{
-		HOMOG2D_CHECK_IS_NUMBER( T );
-
-		auto plines = getLine().getParallelLines( dist );
-		auto lo1 = getLine().getOrthogonalLine( _ptS1 );
-		auto lo2 = getLine().getOrthogonalLine( _ptS2 );
-
-		auto pA1 = lo1 * plines.first;
-		auto pA2 = lo2 * plines.first;
-		auto pB1 = lo1 * plines.second;
-		auto pB2 = lo2 * plines.second;
-
-		return std::make_pair(
-			Segment_( pA1, pA2 ),
-			Segment_( pB1, pB2 )
-		);
-	}
+///@}
 
 /// \name Attributes access
 ///@{
@@ -4067,17 +4049,7 @@ in the range \f$ [0,\pi/2] \f$
 	{
 		return _ptS1 < other._ptS1;
 	}
-
 ///@}
-
-/// Returns the points as a std::pair
-/** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
-the one with smallest y-coordinate will be returned first */
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
-	getPts() const
-	{
-		return std::make_pair( _ptS1, _ptS2 );
-	}
 
 private:
 	template<typename S>
@@ -4091,6 +4063,9 @@ private:
 	}
 
 public:
+/// \name Enclosing functions
+///@{
+
 /// Segment is inside Circle
 	template<typename FPT2>
 	bool isInside( const Circle_<FPT2>& shape ) const
@@ -4134,6 +4109,40 @@ Requires both points inside AND no intersections
 				return false;
 		return true;
 	}
+///@}
+
+/// \name Other const functions
+///@{
+
+/// Returns the points as a std::pair
+/** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
+the one with smallest y-coordinate will be returned first */
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	getPts() const
+	{
+		return std::make_pair( _ptS1, _ptS2 );
+	}
+
+	template<typename T>
+	std::pair<Segment_,Segment_>
+	getParallelSegs( T dist ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER( T );
+
+		auto plines = getLine().getParallelLines( dist );
+		auto lo1 = getLine().getOrthogonalLine( _ptS1 );
+		auto lo2 = getLine().getOrthogonalLine( _ptS2 );
+
+		auto pA1 = lo1 * plines.first;
+		auto pA2 = lo2 * plines.first;
+		auto pB1 = lo1 * plines.second;
+		auto pB2 = lo2 * plines.second;
+
+		return std::make_pair(
+			Segment_( pA1, pA2 ),
+			Segment_( pB1, pB2 )
+		);
+	}
 
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
@@ -4144,6 +4153,7 @@ Requires both points inside AND no intersections
 		return Line2d_<FPT>(li);
 	}
 
+/// Returns a pair of segments split by the middle
 	std::pair<Segment_<FPT>,Segment_<FPT>>
 	split() const
 	{
@@ -4156,31 +4166,6 @@ Requires both points inside AND no intersections
 
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
-
-/// \name Intersection functions
-///@{
-	template<typename FPT2>
-	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
-	template<typename FPT2>
-	detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
-	template<typename FPT2>
-	detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
-/// Segment/FRect intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
-	{
-//		HOMOG2D_START;
-		return r.intersects( *this );
-	}
-
-/// Segment/Polyline intersection
-	template<typename PLT,typename FPT2>
-	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
-	{
-//		HOMOG2D_START;
-		return other.intersects( *this );
-	}
-///@}
 
 	template<typename T>
 	constexpr bool
@@ -4211,7 +4196,32 @@ Requires both points inside AND no intersections
 		Segment_<HOMOG2D_INUMTYPE> seg2 = *this; // convert to (possibly) enhance precision
 		return seg2.getLine().getOrthogonalLine( seg2.getCenter() );
 	}
+///@}
 
+/// \name Intersection functions
+///@{
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& ) const;
+	template<typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const Line2d_<FPT2>&  ) const;
+	template<typename FPT2>
+	detail::IntersectM<FPT>                 intersects( const Circle_<FPT2>&  ) const;
+/// Segment/FRect intersection
+	template<typename FPT2>
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
+	{
+//		HOMOG2D_START;
+		return r.intersects( *this );
+	}
+
+/// Segment/Polyline intersection
+	template<typename PLT,typename FPT2>
+	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
+	{
+//		HOMOG2D_START;
+		return other.intersects( *this );
+	}
+///@}
 
 	template<typename T>
 	friend std::ostream&

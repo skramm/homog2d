@@ -25,7 +25,7 @@ everything that gets build ends up in the `BUILD` folder
 * `check`: runs cppcheck (static analysis) ( https://cppcheck.sourceforge.io/ )
 * `install`: `cp homog2d.hpp /usr/local/include`
 * `doc`: build html reference (requires doxygen), with only public user API
-* `doc-dev`: build full html reference (requires doxygen), public an privateclass members
+* `doc-dev`: build full html reference (requires doxygen), including private class members
 * `nobuild`: checks that the files in `misc/no_build` contain illegal code (part of the test process)
 
 
