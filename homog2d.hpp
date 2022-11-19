@@ -7312,11 +7312,11 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::Base
 
 //------------------------------------------------------------------
 #if 0
+// deprecated. kept here just in case it would be useful in the future (who knows?)
 namespace sub {
 
 /// Returns the index of the segment (among the ones in \c bbox)
 /// that is the farthest from point \c pt
-/// \todo DEPRECATE (unused)
 template<typename FPT1,typename FPT2>
 int
 getFarthestSegment( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bbox )
