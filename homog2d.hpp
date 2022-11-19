@@ -4660,7 +4660,7 @@ enum class Rotate: int8_t
 	CCW, CW, Full, VMirror, HMirror
 };
 
-enum class CardDir: int8_t { North, South, West, East };
+enum class CardDir: int8_t { Bottom,Top, Left, Right };
 
 
 namespace base {
@@ -4816,7 +4816,7 @@ public:
 		return impl_nbSegs( detail::PlHelper<PLT>() );
 	}
 
-//	Point2d_<FPT> getExtremePoint( CardDir ) const;
+	Point2d_<FPT> getExtremePoint( CardDir ) const;
 	Point2d_<FPT> getTmPoint() const;
 	Point2d_<FPT> getBmPoint() const;
 	Point2d_<FPT> getLmPoint() const;
@@ -5246,33 +5246,25 @@ public:
 }; // class Polyline_
 
 //------------------------------------------------------------------
-/*
+/// Get Top-most / Bottom-most / Left-most / Right-most point
 template<typename PLT,typename FPT>
-Point2d_<PLT>
+Point2d_<FPT>
 PolylineBase<PLT,FPT>::getExtremePoint( CardDir dir ) const
 {
 	switch( dir )
 	{
-		case CardDir::North:
-			return getTmPoint();
-		break;
-		case CardDir::South:
-			return getBmPoint();
-		break;
-		case CardDir::West:
-			return getLmPoint();
-		break;
-		case CardDir::East:
-			return getRmPoint();
-		break;
+		case CardDir::Top:    return getTmPoint(); break;
+		case CardDir::Bottom: return getBmPoint(); break;
+		case CardDir::Left:   return getLmPoint(); break;
+		case CardDir::Right:  return getRmPoint(); break;
 		default: assert(0);
 	}
 }
-*/
-/// Return Leftmost point
+
+/// Return Bottom-most point of Polyline
 template<typename PLT,typename FPT>
-Point2d_<PLT>
-PolylineBase<PLT,FPT>::getLmPoint() const
+Point2d_<FPT>
+PolylineBase<PLT,FPT>::getBmPoint() const
 {
 	if( size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
@@ -5288,6 +5280,77 @@ PolylineBase<PLT,FPT>::getLmPoint() const
 			if( pt1.getY() > pt2.getY() )
 				return false;
 			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	return *it;
+}
+
+/// Return Top-most point of Polyline
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+PolylineBase<PLT,FPT>::getTmPoint() const
+{
+	if( size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		this->getPts().begin(),
+		this->getPts().end(),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getY() > pt2.getY() )
+				return true;
+			if( pt1.getY() < pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	return *it;
+}
+
+/// Return Left-most point of Polyline
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+PolylineBase<PLT,FPT>::getLmPoint() const
+{
+	if( size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		this->getPts().begin(),
+		this->getPts().end(),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getX() < pt2.getX() )
+				return true;
+			if( pt1.getX() > pt2.getX() )
+				return false;
+			return( pt1.getY() < pt2.getY() );
+		}
+	);
+	return *it;
+}
+/// Return Right-most point of Polyline
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+PolylineBase<PLT,FPT>::getRmPoint() const
+{
+	if( size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		this->getPts().begin(),
+		this->getPts().end(),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getX() > pt2.getX() )
+				return true;
+			if( pt1.getX() < pt2.getX() )
+				return false;
+			return( pt1.getY() < pt2.getY() );
 		}
 	);
 	return *it;

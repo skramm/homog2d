@@ -644,7 +644,7 @@ OPolyline op(vpts);
 CPolyline cp(vpts);
 ```
 
-The minimum number of points is 2, initializing with a vector holding 1 point will throw.
+An empty polyline is allowed, but the minimum number of points is 2, initializing with a vector holding 1 point will throw.
 
 The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
 
@@ -686,6 +686,23 @@ auto vec_pts  = pl.getPts();
 auto vec_segs = pl.getSegs();
 auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
+```
+
+
+You can get the top-most, left-most, bottom-most, or right-most with these dedicated functions:
+```C++
+Point2d_<FPT> getTmPoint() const;
+Point2d_<FPT> getBmPoint() const;
+Point2d_<FPT> getLmPoint() const;
+Point2d_<FPT> getRmPoint() const;
+```
+
+Or use the `getExtremePoint( CardDir )` function and passing one of these:
+```C++
+CardDir::Bottom
+CardDir::Top
+CardDir::Left
+CardDir::Right
 ```
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
