@@ -1,0 +1,22 @@
+<svg version="1.1" width="300" height="300" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="155" y1="160" x2="165" y2="160" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="160" y1="155" x2="160" y2="165" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="235" y1="140" x2="245" y2="140" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="240" y1="135" x2="240" y2="145" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="155" y1="120" x2="165" y2="120" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="160" y1="115" x2="160" y2="125" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="135" y1="40" x2="145" y2="40" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="140" y1="35" x2="140" y2="45" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="115" y1="120" x2="125" y2="120" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="120" y1="115" x2="120" y2="125" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="15" y1="140" x2="25" y2="140" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="20" y1="135" x2="20" y2="145" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="115" y1="160" x2="125" y2="160" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="120" y1="155" x2="120" y2="165" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="135" y1="260" x2="145" y2="260" stroke="rgb(250,0,20)" stroke-width="1"/>
+<line x1="140" y1="255" x2="140" y2="265" stroke="rgb(250,0,20)" stroke-width="1"/>
+<polygon fill="none" stroke="rgb(80,80,80)" stroke-width="1" points="140,40 240,140 140,260 20,140 "/>
+</svg>

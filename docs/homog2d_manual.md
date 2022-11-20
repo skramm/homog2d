@@ -635,8 +635,7 @@ CPolyline cp2(rect);
 // OPolyline op2(rect); // this does not build
 ```
 
-
-Warning: you may not add a point identical to the previous one.
+**Warning**: you may not add a point identical to the previous one.
 Whatever the type, this code will throw:
 ```C++
 std::vector<Point2d> vpts{ {0,0},{1,1},{3,1},{3,1} };
@@ -1266,6 +1265,11 @@ CPolyline pl( vec );
 auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
+
+![Convex hull of a set of points](img/convex-hull-1.svg)
+![Convex hull of a polygon](img/convex-hull-2.svg)
+
+[source](../misc/figures_src/src/convex_full.cpp)
 
 ### 6.2 - Bounding Box of a set of objects
 
