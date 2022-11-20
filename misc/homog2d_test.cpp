@@ -2770,6 +2770,11 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getRmPoint() == Point2d_<NUMTYPE>(1,0) );
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,1) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,-1) );
+
+		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(-1,0) );
+		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(1,0) );
+		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,1) );
+		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,-1) );
 	}
 	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {0,0}, {1,0}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {0,1} };
@@ -2779,6 +2784,11 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getRmPoint() == Point2d_<NUMTYPE>(2,0) );
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,2) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,0) );
+
+		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
+		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(2,0) );
+		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,2) );
+		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
 	}
 }
 

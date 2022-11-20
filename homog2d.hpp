@@ -5255,6 +5255,193 @@ public:
 
 }; // class Polyline_
 
+
+} // namespace base
+
+/// FREE FUNCTIONS
+/// (need to be here because the 5 below are being called by some member functions
+/// of class PolylineBase
+
+//------------------------------------------------------------------
+/// Return Bottom-most point of container holding points
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+Point2d_<typename T::value_type::FType>
+getBmPoint( const T& t )
+{
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		{
+			if( pt1.getY() < pt2.getY() )
+				return true;
+			if( pt1.getY() > pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	return *it;
+}
+
+
+
+
+//------------------------------------------------------------------
+/// Return Top-most point of Polyline
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+Point2d_<typename T::value_type::FType>
+getTmPoint( const T& t )
+{
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		{
+			if( pt1.getY() > pt2.getY() )
+				return true;
+			if( pt1.getY() < pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+	return *it;
+}
+
+//------------------------------------------------------------------
+/// Return Left-most point of Polyline
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+Point2d_<typename T::value_type::FType>
+getLmPoint( const T& t )
+{
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		{
+			if( pt1.getX() < pt2.getX() )
+				return true;
+			if( pt1.getX() > pt2.getX() )
+				return false;
+			return( pt1.getY() < pt2.getY() );
+		}
+	);
+	return *it;
+}
+
+//------------------------------------------------------------------
+/// Return Right-most point of container holding points
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value,
+		T
+	>::type* = nullptr
+>
+Point2d_<typename T::value_type::FType>
+getRmPoint( const T& t )
+{
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+
+	auto it = std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		{
+			if( pt1.getX() > pt2.getX() )
+				return true;
+			if( pt1.getX() < pt2.getX() )
+				return false;
+			return( pt1.getY() < pt2.getY() );
+		}
+	);
+	return *it;
+}
+
+//------------------------------------------------------------------
+/// Return Bottom-most point of Polyline (free function)
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+getBmPoint( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return getBmPoint( poly.getPts() );
+}
+/// Return Top-most point of Polyline (free function)
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+getTmPoint( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return getTmPoint( poly.getPts() );
+}
+/// Return Left-most point of Polyline (free function)
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+getLmPoint( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return getLmPoint( poly.getPts() );
+}
+/// Return Right-most point of Polyline (free function)
+template<typename PLT,typename FPT>
+Point2d_<FPT>
+getRmPoint( const base::PolylineBase<PLT,FPT>& poly )
+{
+	return getRmPoint( poly.getPts() );
+}
+
+//------------------------------------------------------------------
+/// Get Top-most / Bottom-most / Left-most / Right-most point, depending on \c dir
+/// (free function)
+/**
+Type \c T can be either a Polyline (open or closed), or a container
+*/
+template<typename T>
+Point2d_<T>
+getExtremePoint( CardDir dir, const T& t )
+{
+	switch( dir )
+	{
+		case CardDir::Top:    return getTmPoint(t); break;
+		case CardDir::Bottom: return getBmPoint(t); break;
+		case CardDir::Left:   return getLmPoint(t); break;
+		case CardDir::Right:  return getRmPoint(t); break;
+		default: assert(0);
+	}
+}
+
+
+namespace base {
+
 //------------------------------------------------------------------
 /// Get Top-most / Bottom-most / Left-most / Right-most point
 template<typename PLT,typename FPT>
@@ -5533,6 +5720,10 @@ This implies that:
  - the Polyline is a Polygon
  - cross product of consecutive points have same sign
  (see https://stackoverflow.com/a/1881201/193789 )
+
+\todo 20221120: as points are homogeneous, the cross product can probably be computed
+in a different way (quicker? simpler?).
+Need to check this.
 */
 template<typename PLT,typename FPT>
 bool
@@ -5658,7 +5849,7 @@ base::PolylineBase<PLT,FPT>::centroid() const
 } // namespace base
 
 //------------------------------------------------------------------
-/// Returns Rectangle of the intersection area
+/// Returns Rectangle of the intersection area of two rectangles
 /**
 \return An object of type detail::RectArea, that can be checked for success using the ()
 operator, and if success, will hold the resulting FRect_
@@ -7921,6 +8112,7 @@ getSegs( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.getSegs();
 }
+
 
 /// Returns the number of points (free function)
 /// \sa PolylineBase::size()

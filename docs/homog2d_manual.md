@@ -688,8 +688,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-
-You can get the top-most, left-most, bottom-most, or right-most with these dedicated functions:
+You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
 ```C++
 Point2d_<FPT> getTmPoint() const;
 Point2d_<FPT> getBmPoint() const;
@@ -704,6 +703,25 @@ CardDir::Top
 CardDir::Left
 CardDir::Right
 ```
+
+For example:
+```C++
+Cpolyline pol;
+// .. fill with points
+auto top_pt   = pl.getTmPoint();
+auto left_pt  = pol.getExtremePoint( CardDir::Left );
+```
+
+These are also available as free functions:
+```C++
+Cpolyline pol;
+// .. fill with points
+auto top_pt   = getTmPoint( pol );
+auto left_pt  = getLmPoint( pol );
+auto right_pt = getExtremePoint( CardDir::Right, pol );
+```
+
+
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
@@ -1267,6 +1285,11 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 ![bounding box of a set of circles](img/bb_Circles.svg)
 ![bounding box of a set of segments](img/bb_Segs.svg)
 ![bounding box of a set of ellipses](img/bb_Ellipses.svg)
+
+### 6.3 - Extremum points
+
+
+
 
 ### 6.3 - Colinearity of 3 points
 
