@@ -1291,6 +1291,9 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 ![bounding box of a set of segments](img/bb_Segs.svg)
 ![bounding box of a set of ellipses](img/bb_Ellipses.svg)
 
+For points, the Top-most and Left-most point are shown in green, and the Right-most and Bottom-most points are shown in blue
+(see next section about this).
+
 ### 6.3 - Extremum points
 <a name="extremum_points"></a>
 
@@ -1314,8 +1317,9 @@ std::vector<Point2d> vec { ... fill with points... };
 auto pt_R = getExtremePoint( Card::Right, vec ) // Right-most
 ```
 
-
 [see here for Polyline equivalent functions](#poly_extremum_points)
+
+For an example, see previous section.
 
 ### 6.4 - Colinearity of 3 points
 

@@ -24,6 +24,39 @@ std::vector<img::Color> genRandomColors( size_t nb )
 	return vcol;
 }
 
+template<
+	typename T,
+	typename std::enable_if<
+	(
+		std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		||
+		std::is_same<typename T::value_type,CPolyline_<typename T::value_type::FType>>::value
+	),T
+	>::type* = nullptr
+>
+void DrawExtremePoints( img::Image<img::SvgImage>& img, const T& vec )
+{
+	auto style1 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(3).setColor(0,250,0);
+	auto style2 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(3).setColor(0,0,250);
+	getTmPoint( vec ).draw( img, style1 );
+	getRmPoint( vec ).draw( img, style2 );
+	getLmPoint( vec ).draw( img, style1 );
+	getBmPoint( vec ).draw( img, style2 );
+}
+
+template<
+	typename T,
+	typename std::enable_if<
+	(
+		!std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		&&
+		!std::is_same<typename T::value_type,CPolyline_<typename T::value_type::FType>>::value
+	),T
+	>::type* = nullptr
+>
+void DrawExtremePoints( img::Image<img::SvgImage>&, const T& )
+{}
+
 template<typename T>
 void process( const T& vec, std::string fname )
 {
@@ -41,7 +74,7 @@ void process( const T& vec, std::string fname )
 	auto bb = getBB( vec );
 //	bb.draw( img1, DrawParams().setColor(250,50,20) );
 	bb.draw( img2, DrawParams().setColor(250,50,20) );
-
+	DrawExtremePoints( img2, vec );
 //	img1.write( fname + ".png" );
 	img2.write( fname + ".svg" );
 }
@@ -116,7 +149,7 @@ int main()
 	process( v_pts,     "bb_Points" );
 	process( v_segs,    "bb_Segs" );
 	process( v_circles, "bb_Circles" );
-	process( v_poly,    "bb_Poly" );
+//	process( v_poly,    "bb_Poly" );
 	process( v_ell,     "bb_Ellipses" );
 }
 
