@@ -5255,33 +5255,37 @@ public:
 
 }; // class Polyline_
 
-
 } // namespace base
 
-/// FREE FUNCTIONS
-/// (need to be here because the 5 below are being called by some member functions
-/// of class PolylineBase
+
+// FREE FUNCTIONS
+// (need to be here because the 5 below are being called by some member functions
+// of class PolylineBase, that is implemented further below
 
 //------------------------------------------------------------------
 /// Return Bottom-most point of container holding points
 template<
 	typename T,
 	typename std::enable_if<
-		trait::IsContainer<T>::value,
-		T
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
 	>::type* = nullptr
 >
 Point2d_<typename T::value_type::FType>
 getBmPoint( const T& t )
 {
-	if( t.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+	using FPT = typename T::value_type::FType;
 
-	auto it = std::min_element(
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+
+	return *std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
-		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
 			if( pt1.getY() < pt2.getY() )
 				return true;
@@ -5290,32 +5294,32 @@ getBmPoint( const T& t )
 			return( pt1.getX() < pt2.getX() );
 		}
 	);
-	return *it;
 }
-
-
-
 
 //------------------------------------------------------------------
 /// Return Top-most point of Polyline
 template<
 	typename T,
 	typename std::enable_if<
-		trait::IsContainer<T>::value,
-		T
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
 	>::type* = nullptr
 >
 Point2d_<typename T::value_type::FType>
 getTmPoint( const T& t )
 {
-	if( t.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+	using FPT = typename T::value_type::FType;
 
-	auto it = std::min_element(
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+
+	return *std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
-		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
 			if( pt1.getY() > pt2.getY() )
 				return true;
@@ -5324,7 +5328,6 @@ getTmPoint( const T& t )
 			return( pt1.getX() < pt2.getX() );
 		}
 	);
-	return *it;
 }
 
 //------------------------------------------------------------------
@@ -5332,21 +5335,25 @@ getTmPoint( const T& t )
 template<
 	typename T,
 	typename std::enable_if<
-		trait::IsContainer<T>::value,
-		T
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
 	>::type* = nullptr
 >
 Point2d_<typename T::value_type::FType>
 getLmPoint( const T& t )
 {
-	if( t.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+	using FPT = typename T::value_type::FType;
 
-	auto it = std::min_element(
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+
+	return *std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
-		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
 			if( pt1.getX() < pt2.getX() )
 				return true;
@@ -5355,7 +5362,6 @@ getLmPoint( const T& t )
 			return( pt1.getY() < pt2.getY() );
 		}
 	);
-	return *it;
 }
 
 //------------------------------------------------------------------
@@ -5363,21 +5369,25 @@ getLmPoint( const T& t )
 template<
 	typename T,
 	typename std::enable_if<
-		trait::IsContainer<T>::value,
-		T
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
 	>::type* = nullptr
 >
 Point2d_<typename T::value_type::FType>
 getRmPoint( const T& t )
 {
-	if( t.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
+	using FPT = typename T::value_type::FType;
 
-	auto it = std::min_element(
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+
+	return *std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
-		( const Point2d_<T>& pt1, const Point2d_<T>& pt2 )
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
 		{
 			if( pt1.getX() > pt2.getX() )
 				return true;
@@ -5386,7 +5396,6 @@ getRmPoint( const T& t )
 			return( pt1.getY() < pt2.getY() );
 		}
 	);
-	return *it;
 }
 
 //------------------------------------------------------------------
@@ -5448,14 +5457,7 @@ template<typename PLT,typename FPT>
 Point2d_<FPT>
 PolylineBase<PLT,FPT>::getExtremePoint( CardDir dir ) const
 {
-	switch( dir )
-	{
-		case CardDir::Top:    return getTmPoint(); break;
-		case CardDir::Bottom: return getBmPoint(); break;
-		case CardDir::Left:   return getLmPoint(); break;
-		case CardDir::Right:  return getRmPoint(); break;
-		default: assert(0);
-	}
+	return getExtremePoint( dir, *this );
 }
 
 /// Return Bottom-most point of Polyline
@@ -5463,23 +5465,7 @@ template<typename PLT,typename FPT>
 Point2d_<FPT>
 PolylineBase<PLT,FPT>::getBmPoint() const
 {
-	if( size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
-
-	auto it = std::min_element(
-		this->getPts().begin(),
-		this->getPts().end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() < pt2.getY() )
-				return true;
-			if( pt1.getY() > pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
-	return *it;
+	return h2d::getBmPoint( *this );
 }
 
 /// Return Top-most point of Polyline
@@ -5487,23 +5473,7 @@ template<typename PLT,typename FPT>
 Point2d_<FPT>
 PolylineBase<PLT,FPT>::getTmPoint() const
 {
-	if( size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
-
-	auto it = std::min_element(
-		this->getPts().begin(),
-		this->getPts().end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() > pt2.getY() )
-				return true;
-			if( pt1.getY() < pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
-	return *it;
+	return h2d::getTmPoint( *this );
 }
 
 /// Return Left-most point of Polyline
@@ -5511,46 +5481,15 @@ template<typename PLT,typename FPT>
 Point2d_<FPT>
 PolylineBase<PLT,FPT>::getLmPoint() const
 {
-	if( size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
-
-	auto it = std::min_element(
-		this->getPts().begin(),
-		this->getPts().end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getX() < pt2.getX() )
-				return true;
-			if( pt1.getX() > pt2.getX() )
-				return false;
-			return( pt1.getY() < pt2.getY() );
-		}
-	);
-	return *it;
+	return h2d::getLmPoint( *this );
 }
+
 /// Return Right-most point of Polyline
 template<typename PLT,typename FPT>
 Point2d_<FPT>
 PolylineBase<PLT,FPT>::getRmPoint() const
 {
-	if( size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "invalid call, polyline is empty" );
-
-	auto it = std::min_element(
-		this->getPts().begin(),
-		this->getPts().end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getX() > pt2.getX() )
-				return true;
-			if( pt1.getX() < pt2.getX() )
-				return false;
-			return( pt1.getY() < pt2.getY() );
-		}
-	);
-	return *it;
+	return h2d::getRmPoint( *this );
 }
 
 

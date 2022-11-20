@@ -2763,6 +2763,15 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK_THROWS( cp_empty.getLmPoint() );
 	}
 	{
+		Point2d_<NUMTYPE> pt( 3, 4 );
+		std::vector<Point2d_<NUMTYPE>> vpt{ pt };
+
+		CHECK( getLmPoint(vpt) == pt );
+		CHECK( getRmPoint(vpt) == pt );
+		CHECK( getTmPoint(vpt) == pt );
+		CHECK( getBmPoint(vpt) == pt );
+	}
+	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {1,0}, {0,1}, {-1,0}, {0,-1} };
 		CPolyline cp( vpt );
 		CHECK( cp.size() == 4 );

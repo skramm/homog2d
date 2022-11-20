@@ -688,6 +688,9 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
+#### Extremum points
+<a name="poly_extremum_points"></a>
+
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
 ```C++
 Point2d_<FPT> getTmPoint() const;
@@ -697,6 +700,7 @@ Point2d_<FPT> getRmPoint() const;
 ```
 
 Or use the `getExtremePoint( CardDir )` function and passing one of these:
+<a name="enum_carddir"></a>
 ```C++
 CardDir::Bottom
 CardDir::Top
@@ -708,7 +712,7 @@ For example:
 ```C++
 Cpolyline pol;
 // .. fill with points
-auto top_pt   = pl.getTmPoint();
+auto top_pt   = pol.getTmPoint();
 auto left_pt  = pol.getExtremePoint( CardDir::Left );
 ```
 
@@ -720,8 +724,9 @@ auto top_pt   = getTmPoint( pol );
 auto left_pt  = getLmPoint( pol );
 auto right_pt = getExtremePoint( CardDir::Right, pol );
 ```
+(see [misc. section for point set equivalent function](#extremum_points)).
 
-
+#### Type of Polyline
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
@@ -1287,11 +1292,32 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 ![bounding box of a set of ellipses](img/bb_Ellipses.svg)
 
 ### 6.3 - Extremum points
+<a name="extremum_points"></a>
+
+Given a set of points in a container
+(`std::vector`, `std::list` or `std::array`),
+you can get the Top-most / Bottom-most / Left-most / Right-most point with a simple call to one of these:
+
+```C++
+std::vector<Point2d> vec { ... fill with points... };
+auto pt_L = getLmPoint( vec );                  // Left-most
+auto pt_R = getRmPoint( vec );                  // Right-most
+auto pt_T = getTmPoint( vec );                  // Top-most
+auto pt_B = getBmPoint( vec );                  // Bottom-most
+auto ptR = getExtremePoint( Card::Right, vec ) // Right-most
+```
+
+Or use the generic function with a `CardDir` value
+(see [here for that enum definition](#enum_carddir)).
+```C++
+std::vector<Point2d> vec { ... fill with points... };
+auto pt_R = getExtremePoint( Card::Right, vec ) // Right-most
+```
 
 
+[see here for Polyline equivalent functions](#poly_extremum_points)
 
-
-### 6.3 - Colinearity of 3 points
+### 6.4 - Colinearity of 3 points
 
 You can check if three points lie on the same line with this:
 ```C++
@@ -1299,7 +1325,7 @@ bool b = areColinear( pt1, pt2, pt3 );
 ```
 
 
-### 6.4 - Extracting data from sets/containers of primitives
+### 6.5 - Extracting data from sets/containers of primitives
 
 If you have a container (`std::vector`, `std::list` or `std::array`) holding either segments, circles or ellipses, you can get at once all the center points, grouped in a vector:
 
