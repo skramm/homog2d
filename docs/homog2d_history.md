@@ -19,7 +19,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added bounding box for a container holding any primitive (see [manual/misc. section](homog2d_manual.md#misc))
   - added `Frect` constructor using a pair of points
   - added SVG import for angled ellipses
-  - added code to get the extreme points (bottom, top, left,right) of a Polyline
+  - added code to get the extreme points (bottom, top, left,right) of a Polyline and a set of points
+  ([see here](homog2d_manual.md#poly_extremum_points))
   - __breaking changes__:
     - renamed `Segment_::getMiddlePoint()` by `Segment_::getCenter()`
     - renamed `FRect_::center()` by `FRect_::getCenter()`

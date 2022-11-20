@@ -4,10 +4,27 @@
 
 #include "fig_src.header"
 
+template<typename T>
+void process( img::Image<img::SvgImage>& im, const T& poly, std::string fn )
+{
+	im.clear();
+	poly.draw( im, DrawParams().setColor(250,0,20) );
+	poly.getBB().draw( im, DrawParams().setColor(150,150,120) );
+
+	auto style1 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(2).setColor(0,250,0);
+	auto style2 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(2).setColor(0,0,250);
+	getTmPoint( poly ).draw( im, style1 );
+	getRmPoint( poly ).draw( im, style2 );
+	getLmPoint( poly ).draw( im, style1 );
+	getBmPoint( poly ).draw( im, style2 );
+
+	im.write( fn );
+}
+
 int main()
 {
 	std::vector<Point2d> vpts{
-		{5,5},
+		{4.5,4.2},
 		{7,3},
 		{6,2},
 		{7.5, 1.},
@@ -17,30 +34,16 @@ int main()
 		{3., 2.2},
 		{3.6, 4.1},
 		{1.6, 5.4}
+		,{4.5, 6.2}
 	};
 	OPolyline opl(vpts);
 
 	auto H = Homogr().setScale(30).addTranslation(10,30);
 	opl = H * opl;
-	H.applyTo( vpts );
-	img::Image<cv::Mat>       img1( 350,250 );
-	img::Image<img::SvgImage> img2( 350,250 );
-
-	opl.draw( img1, DrawParams().setColor(250,0,20) );
-	opl.draw( img2, DrawParams().setColor(250,0,20) );
-	opl.getBB().draw( img1, DrawParams().setColor(150,150,120) );
-	opl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	img1.write( "polyline1a.png" );
-	img2.write( "polyline1a.svg" );
-
 	CPolyline cpl(opl);
 
-	img1.clear();
-	img2.clear();
-	cpl.draw( img1, DrawParams().setColor(250,0,20) );
-	cpl.draw( img2, DrawParams().setColor(250,0,20) );
-	cpl.getBB().draw( img1, DrawParams().setColor(150,150,120) );
-	cpl.getBB().draw( img2, DrawParams().setColor(150,150,120) );
-	img1.write( "polyline1b.png" );
-	img2.write( "polyline1b.svg" );
+	img::Image<img::SvgImage> img2( 350,250 );
+
+	process( img2, opl, "polyline1a.svg" );
+	process( img2, cpl, "polyline1b.svg" );
 }

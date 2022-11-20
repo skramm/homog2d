@@ -24,14 +24,11 @@ std::vector<img::Color> genRandomColors( size_t nb )
 	return vcol;
 }
 
+/// This one is enabled only for points, and will draw the extremum points
 template<
 	typename T,
 	typename std::enable_if<
-	(
-		std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
-		||
-		std::is_same<typename T::value_type,CPolyline_<typename T::value_type::FType>>::value
-	),T
+		std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value,T
 	>::type* = nullptr
 >
 void DrawExtremePoints( img::Image<img::SvgImage>& img, const T& vec )
@@ -44,14 +41,11 @@ void DrawExtremePoints( img::Image<img::SvgImage>& img, const T& vec )
 	getBmPoint( vec ).draw( img, style2 );
 }
 
+/// This one is enabled for all other types, and will do nothing
 template<
 	typename T,
 	typename std::enable_if<
-	(
-		!std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
-		&&
-		!std::is_same<typename T::value_type,CPolyline_<typename T::value_type::FType>>::value
-	),T
+		!std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value,T
 	>::type* = nullptr
 >
 void DrawExtremePoints( img::Image<img::SvgImage>&, const T& )
@@ -149,7 +143,7 @@ int main()
 	process( v_pts,     "bb_Points" );
 	process( v_segs,    "bb_Segs" );
 	process( v_circles, "bb_Circles" );
-//	process( v_poly,    "bb_Poly" );
+	process( v_poly,    "bb_Poly" );
 	process( v_ell,     "bb_Ellipses" );
 }
 

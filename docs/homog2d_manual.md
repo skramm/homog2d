@@ -646,11 +646,14 @@ CPolyline cp(vpts);
 
 An empty polyline is allowed, but the minimum number of points is 2, initializing with a vector holding 1 point will throw.
 
-The `getBB()` member (or free) function return the corresponding Bounding box, shown here in gray, for two `Polyline` objects, one closed, the other open:
+The `getBB()` member (or free) function returns the corresponding Bounding Box.
+this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
 
-![An open Polyline and its bounding box](img/polyline1a.png)
-![The same one, but closed](img/polyline1b.png)
+![An open Polyline and its bounding box](img/polyline1a.svg)
+![The same one, but closed](img/polyline1b.svg)
 
+On these figure is also shown the extreme points, Top-most and Left-most are green, the two others are blue.
+(see [code here](../misc/figures_src/src/polyline1.cpp)).
 
 The open/close attribute can be read, but will return a `constexpr` value:
 ```C++
