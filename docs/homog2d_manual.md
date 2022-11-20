@@ -690,6 +690,12 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
+#### Convex Hull
+
+The convex hull of a Polyline can be computed with the member function `convexHUll()`,
+[see here](#convex-hull) for an example.
+
+
 #### Extremum points
 <a name="poly_extremum_points"></a>
 
@@ -1253,6 +1259,7 @@ For the union, if there is no intersection, the function will return an empty `C
 <a name="misc"></a>
 
 ### 6.1 - Convex Hull
+<a name="convex-hull"></a>
 
 You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with `convexHull()`,
 available as free or member function.
@@ -1269,7 +1276,8 @@ auto ch3 = pl.convexHull(); // member function
 ![Convex hull of a set of points](img/convex-hull-1.svg)
 ![Convex hull of a polygon](img/convex-hull-2.svg)
 
-[source](../misc/figures_src/src/convex_full.cpp)
+[source](../misc/figures_src/src/convex_hull.cpp)
+
 
 ### 6.2 - Bounding Box of a set of objects
 
