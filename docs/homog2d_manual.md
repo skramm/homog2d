@@ -645,16 +645,26 @@ CPolyline cp(vpts);
 
 An empty polyline is allowed, but the minimum number of points is 2, initializing with a vector holding 1 point will throw.
 
+It has no orientation, meaning that the `OPolyline` build from this set of points:<br>
+`(0,0)-(1,0)-(1,1)`<br>
+will be identical as this one:<br>
+`(1,1)-(1,0)-(0,0)`
+
+
+#### Bounding Box
+
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
 
 ![An open Polyline and its bounding box](img/polyline1a.svg)
 ![The same one, but closed](img/polyline1b.svg)
 
-On these figure is also shown the extreme points, Top-most and Left-most are green, the two others are blue.
+On these figures is also shown the extreme points, Top-most and Left-most are green, the two others are blue.
 (see [code here](../misc/figures_src/src/polyline1.cpp)).
 
-The open/close attribute can be read, but will return a `constexpr` value:
+#### Basic attributes
+
+The open/close status can be read, but will return a `constexpr` value:
 ```C++
 OPolyline p1;
 CPolyline p2;
@@ -673,11 +683,6 @@ auto s2 = nbSegs(pl);
 auto length1 = pl.length(); // or  length(pl);
 auto rect1 = pl.getBB();    // or  getBB(pl);
 ```
-
-It has no orientation, meaning that the `OPolyline` build from this set of points:<br>
-`(0,0)-(1,0)-(1,1)`<br>
-will be identical as this one:<br>
-`(1,1)-(1,0)-(0,0)`
 
 You can extract either points or segments.
 The number of segments is related to the open/close condition.
@@ -733,6 +738,8 @@ auto left_pt  = getLmPoint( pol );
 auto right_pt = getExtremePoint( CardDir::Right, pol );
 ```
 (see [misc. section for point set equivalent function](#extremum_points)).
+
+**Warning**: These functions will throw if passed an empty polyline object.
 
 #### Type of Polyline
 
@@ -1261,9 +1268,12 @@ For the union, if there is no intersection, the function will return an empty `C
 ### 6.1 - Convex Hull
 <a name="convex-hull-ff"></a>
 
-You can compute the convex hull of a set of points or of a `CPolyline` of `OPolyline` with `convexHull()`,
-available as free or member function.
+You can compute the convex hull of a set of points that are stored in a standard container
+(`std::vector`, `std::list`, or `std::array`)
+with the `convexHull()` free function.
 This function will return a `CPolyline` object.
+This function can also take a Polyline (`CPolyline` or `OPolyline`) object as input:
+
 ```C++
 std::vector<Point2d> vec;
 // ... fill with at least 3 points
@@ -1276,7 +1286,7 @@ auto ch3 = pl.convexHull(); // member function
 ![Convex hull of a set of points](img/convex-hull-1.svg)
 ![Convex hull of a polygon](img/convex-hull-2.svg)
 
-[source](../misc/figures_src/src/convex_hull.cpp)
+[source code included](../misc/figures_src/src/convex_hull.cpp)
 
 
 ### 6.2 - Bounding Box of a set of objects
