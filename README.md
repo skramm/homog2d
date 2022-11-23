@@ -2,12 +2,14 @@
 
 Current test status:
 [![Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
+<br>
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
+![](https://img.shields.io/github/stars/skramm/homog2d)
 
 A single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D planar transformations),
-using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
-Also handles other geometric primitives.
+using internally [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
+Also handles other geometric primitives, see full manual.
 
 ![showcase1](docs/showcase/showcase1.gif)
 

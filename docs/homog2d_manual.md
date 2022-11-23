@@ -650,18 +650,6 @@ It has no orientation, meaning that the `OPolyline` build from this set of point
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
 
-
-#### Bounding Box
-
-The `getBB()` member (or free) function returns the corresponding Bounding Box.
-this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
-
-![An open Polyline and its bounding box](img/polyline1a.svg)
-![The same one, but closed](img/polyline1b.svg)
-
-On these figures is also shown the extreme points, Top-most and Left-most are green, the two others are blue.
-(see [code here](../misc/figures_src/src/polyline1.cpp)).
-
 #### Basic attributes
 
 The open/close status can be read, but will return a `constexpr` value:
@@ -695,7 +683,16 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### Convex Hull
+#### Bounding Box and Convex Hull
+
+The `getBB()` member (or free) function returns the corresponding Bounding Box.
+this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
+
+![An open Polyline and its bounding box](img/polyline1a.svg)
+![The same one, but closed](img/polyline1b.svg)
+
+On these figures is also shown the extreme points, Top-most and Left-most are green, the two others are blue.
+(see [code here](../misc/figures_src/src/polyline1.cpp)).
 
 The convex hull of a Polyline can be computed with the member function `convexHull()`,
 [see here](#convex-hull-ff) for an example.
