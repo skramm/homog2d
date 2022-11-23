@@ -40,9 +40,10 @@ int main()
 
 ### News ###
 
+- 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
-- 2022-08-02: fresh 2.8 release, see https://github.com/skramm/homog2d/releases
+- 2022-08-02: 2.8 release
 - 2022-05-18: 2.7 release
 
 (see [history](docs/homog2d_history.md) for more)
