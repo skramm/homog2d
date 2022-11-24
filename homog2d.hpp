@@ -50,7 +50,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_ENABLE_RTP
 #endif
 
-#define HOMOG2D_VERSION 2.81
+#define HOMOG2D_VERSION "2.9.1"
 
 
 #ifdef HOMOG2D_USE_OPENCV

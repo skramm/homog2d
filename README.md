@@ -2,12 +2,14 @@
 
 Current test status:
 [![Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
+<br>
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
+![](https://img.shields.io/github/stars/skramm/homog2d)
 
 A single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D planar transformations),
-using (internally) [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
-Also handles other geometric primitives.
+using internally [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
+Also handles other geometric primitives, see full manual.
 
 ![showcase1](docs/showcase/showcase1.gif)
 
@@ -38,9 +40,10 @@ int main()
 
 ### News ###
 
-- 2022-09-23: passed the 1000 unit tests threshold !! (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
+- 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
+- 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
-- 2022-08-02: fresh 2.8 release, see https://github.com/skramm/homog2d/releases
+- 2022-08-02: 2.8 release
 - 2022-05-18: 2.7 release
 
 (see [history](docs/homog2d_history.md) for more)
