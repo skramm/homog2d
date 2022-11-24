@@ -1273,8 +1273,9 @@ auto ch2 = convexHull( pl ); // will be the same as ch1
 auto ch3 = pl.convexHull(); // member function
 ```
 
-![Convex hull of a set of points](img/convex-hull-1.svg)
-![Convex hull of a polygon](img/convex-hull-2.svg)
+| CH of a set of points | CH of a Polyline |
+|------|------|
+| ![Convex hull of a set of points](img/convex-hull-1.svg) | ![Convex hull of a polygon](img/convex-hull-2.svg) |
 
 [source](../misc/figures_src/src/convex_hull.cpp)
 
