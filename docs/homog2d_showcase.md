@@ -90,8 +90,18 @@ The other segment shows the distance between the point and the fixed segment, wi
 <a name="sc9"></a>
 A circle rotating around another fixed one.
 Shows the segment joining the centers, the tangential segments, and the common bounding box.
+Also shows the lines orthogonal to the joining segment at circles center.
 
 ![showcase9](showcase/showcase9.gif)
+
+* [Showcase 10](../misc/showcase/showcase10.cpp):
+<a name="sc10"></a>
+Recursive building of a
+[Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle)
+that slowly rotates in the image.
+
+
+![showcase11](showcase/showcase10.gif)
 
 
 * [Showcase 11](../misc/showcase/showcase11.cpp):

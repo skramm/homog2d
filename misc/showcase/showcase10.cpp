@@ -16,16 +16,16 @@ auto max_color = 200.;
 
 /// Each polyline in the input vector \c v_pl will be replaced by 3
 void recurseTriangles(
-	std::vector<CPolyline>& v_pl,  ///< the set of triangles that will be split
-	std::vector<DrawType>&  v_all, ///< what we actually draw
-	int max_depth,
-	Homogr& H,
-	img::Image<cv::Mat>& im
+	std::vector<CPolyline>& v_pl,       ///< the set of triangles that will be split
+	std::vector<DrawType>&  v_all,      ///< what we actually draw
+	int                     max_depth,
+	Homogr&                 H,
+	img::Image<cv::Mat>&    im          ///< output image
 )
 {
 	static int depth;
 	depth++;
-	H.addTranslation(-50,-50).addRotation( 8.*M_PI/180. ).addTranslation(50,50).addScale(1.2,1.2);
+	H.addTranslation(-50,-50).addRotation( 5.*M_PI/180. ).addTranslation(50,50).addScale(1.1,1.1);
 	std::cout << "depth=" << depth << " nb pl input=" << v_pl.size() << '\n';
 	if( depth == max_depth )
 		return;
@@ -66,10 +66,10 @@ int main()
 {
 	Homogr H;
 	std::srand( std::time(0) ); // to get random colors
-	auto x0 = 20;
-	auto y0 = 20;
+	auto x0 = 10;
+	auto y0 = 10;
 	auto l = 500;
-	auto max_depth = 9;
+	auto max_depth = 10;
 	std::vector<Point2d> vpts{
 		{x0,y0}, {x0+l,y0}, {x0+l/2.,y0+l/2.*sqrt(3.)}
 	};
@@ -78,10 +78,9 @@ int main()
 	std::vector<DrawType> v_draw(1);
 	v_draw[0] = std::make_pair( pl, img::Color(250,0,20) );
 
-	img::Image<cv::Mat> im( 500, 500 );
+	img::Image<cv::Mat> im( 600, 600 );
+	pl.draw( im, img::DrawParams().setColor(250,0,20) );
 	im.write( "showcase10_00.png" );
 
-	pl.draw( im, img::DrawParams().setColor(250,0,20) );
 	recurseTriangles( v_pl, v_draw, max_depth, H, im );
-
 }
