@@ -44,6 +44,10 @@ ifeq ($(USE_EIGEN),Y)
 	CXXFLAGS += -DHOMOG2D_USE_EIGEN
 endif
 
+ifeq ($(USE_RTP),Y)
+	CXXFLAGS += -DHOMOG2D_ENABLE_RTP
+endif
+
 ifeq ($(DEBUG),Y)
 	CXXFLAGS += -g
 endif

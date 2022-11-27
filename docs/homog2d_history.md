@@ -11,6 +11,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - extend run-time polymorphism capabilities
   - add list-initialization with points to PolylineBase class
 
+- current master branch
+
+
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).

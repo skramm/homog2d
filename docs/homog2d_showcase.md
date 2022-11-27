@@ -7,7 +7,8 @@ On this page, some graphical demos, all generated with programs in misc/showcase
 Requires Opencv (to generate images) and ImageMagick (to generate the final gif).
 
 
-* [Showcase 1](../misc/showcase/showcase1.cpp):The front page demo. The moving circle turns red when it is detected as inside the rectangle or the other circle.
+* [Showcase 1](../misc/showcase/showcase1.cpp): The front page demo.
+The moving circle turns red when it is detected as inside the rectangle or the other circle.
 
 ![showcase1](showcase/showcase1.gif)
 

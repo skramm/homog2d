@@ -791,6 +791,7 @@ public:
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area()   const = 0;
 	virtual Type type()               const = 0;
+//	virtual void translate( double, double ) = 0;
 
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
@@ -1544,9 +1545,6 @@ public:
 		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
 	}
 
-	template<typename FPT2>
-	bool pointIsInside( const Point2d_<FPT2>& ) const;
-
 /// \name attributes
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
@@ -1568,6 +1566,9 @@ public:
 	HOMOG2D_INUMTYPE length() const;
 
 	std::pair<Line2d_<FPT>,Line2d_<FPT>> getAxisLines() const;
+
+	template<typename FPT2>
+	bool pointIsInside( const Point2d_<FPT2>& ) const;
 
 //////////////////////////
 //       OPERATORS      //
