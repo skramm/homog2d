@@ -4,6 +4,7 @@
 
 # if the filename is not present, the default duration will be used
 # (see file build_gif.sh)
+# if value is 0, then no gif will be generated
 
 showcase1 12
 showcase2 12
@@ -12,5 +13,6 @@ showcase4 12
 showcase5 24
 showcase10 80
 showcase12 80
+showcase13 0
 
 

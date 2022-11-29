@@ -337,7 +337,9 @@ BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
 	@b=$(notdir $(basename $@)); \
 	a=$$(grep $$b misc/showcase/gif_duration.data); arr=($$a); \
 	duration=$${arr[1]}; \
-	misc/build_gif.sh $@ $$duration
+	if [[ $$duration != 0 ]]; then \
+	misc/build_gif.sh $@ $$duration; \
+	fi
 
 showcase: $(SHOWCASE_GIF)
 	@echo "-done target $@"

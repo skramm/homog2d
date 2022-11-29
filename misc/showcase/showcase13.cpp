@@ -13,23 +13,23 @@ using namespace h2d::img;
 int main( int argc, const char** argv )
 {
 	auto im_size = 400;
-	auto nbim = 65; // nb images
+	auto nbim = 300; // nb images
 	auto drawscale = 12.;
 	auto Hdraw = Homogr().addScale(drawscale,drawscale).addTranslation(im_size/2.,im_size/2.);
 	auto pt0d =  Hdraw * Point2d();
 	std::vector<Segment> vecseg;
 
-	auto k1=3;
-	auto k2=9;
+	auto k1=7; // radius of the orbits
+	auto k2=13;
 
-	auto a1=1.;
-	auto a2=1.5;
+	auto a1=1.5;
+	auto a2=1.;
 
-	auto r1=0.7;
+	auto r1=0.7;  // radius of the two points
 	auto r2=0.5;
 	for( int i=0; i<nbim; i++ )
 	{
-		auto angle = 11.0*i; // step in degrees between each image
+		auto angle = 21.0*i; // step in degrees between each image
 		auto angle_1 = a1 * angle * M_PI / 180.;
 		auto angle_2 = a2 * angle * M_PI / 180.;
 		auto x1 = std::cos(angle_1)*k1;
@@ -52,11 +52,10 @@ int main( int argc, const char** argv )
 		Segment( cir1d.getCenter(), pt0d ).draw( im, DrawParams().setColor(150,0,150) );
 
 		vecseg.push_back( getSegment( cir1d, cir2d ) );
-		draw( im, vecseg, DrawParams().setColor(150,150,0) );
+		draw( im, vecseg, DrawParams().setColor(150,200,0) );
 
 		cir1d.draw( im, DrawParams().setColor(250,0,0) );
 		cir2d.draw( im, DrawParams().setColor(0,0,250) );
-
 
 		std::ostringstream ossa;
 		ossa << "showcase13_" << std::setfill('0') << std::setw(2) << i << ".png";
