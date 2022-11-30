@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates two rotating points at different periods and the segments between them
+\brief "Spirograph demo": Generates two rotating points at different periods and the segments between them
 */
 
 #define HOMOG2D_USE_OPENCV
@@ -51,8 +51,10 @@ int main( int argc, const char** argv )
 		Circle( pt0d, k2*drawscale ).draw(im);
 		Segment( cir1d.getCenter(), pt0d ).draw( im, DrawParams().setColor(150,0,150) );
 
-		vecseg.push_back( getSegment( cir1d, cir2d ) );
+		auto current = getSegment( cir1d, cir2d );
+		vecseg.push_back( current );
 		draw( im, vecseg, DrawParams().setColor(150,200,0) );
+		current.draw( im, DrawParams().setColor(50,20,0) );
 
 		cir1d.draw( im, DrawParams().setColor(250,0,0) );
 		cir2d.draw( im, DrawParams().setColor(0,0,250) );
