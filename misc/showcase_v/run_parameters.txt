@@ -4,6 +4,8 @@
 # - program to run
 # - arguments
 
-spirograph_01 showcase_v_01 10 0.4 1.6 
+spirograph_01 showcase_v_01 10 0.4 1.6
+spirograph_02 showcase_v_01 10 0.4 1.4
+spirograph_03 showcase_v_01 10 0.5 1.6
 
 
