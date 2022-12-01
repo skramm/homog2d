@@ -170,7 +170,6 @@
 		<Unit filename="showcase/showcase10.cpp" />
 		<Unit filename="showcase/showcase11.cpp" />
 		<Unit filename="showcase/showcase12.cpp" />
-		<Unit filename="showcase/showcase13.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
@@ -184,6 +183,9 @@
 		<Unit filename="showcase/showcase7d.cpp" />
 		<Unit filename="showcase/showcase8.cpp" />
 		<Unit filename="showcase/showcase9.cpp" />
+		<Unit filename="showcase_v/build_vid.sh" />
+		<Unit filename="showcase_v/run_parameters.txt" />
+		<Unit filename="showcase_v/showcase_v_01.cpp" />
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

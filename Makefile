@@ -318,7 +318,7 @@ BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
 SHOWCASE_SRC_LOC=misc/showcase
 SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 #SHOWCASE_BIN=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%, $(SHOWCASE_SRC))
-SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/showcase%.gif, $(SHOWCASE_SRC))
+SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
 BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
@@ -332,6 +332,9 @@ BUILD/showcase/%_00.png: BUILD/showcase/%
 	@echo " -Running program $< to generate images"
 	@cd BUILD/showcase/; ./$(notdir $<)
 
+BUILD/showcase/gif/showcase%.gif: BUILD/showcase/showcase%.gif
+	@mv $< $@
+
 # build final gif by running script
 BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
 	@echo " -Generating gif $@ from images"
@@ -343,6 +346,31 @@ BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
 	fi
 
 showcase: $(SHOWCASE_GIF)
+	@echo "-done target $@"
+
+#------------------------------------------------------------------------------
+# 20221201: PRELIMINARY !!
+SHOWCASEV_SRC_LOC=misc/showcase_v
+SHOWCASEV_SRC=$(wildcard $(SHOWCASEV_SRC_LOC)/showcase_v*.cpp)
+SHOWCASE_VID=$(patsubst $(SHOWCASEV_SRC_LOC)/showcase_v%.cpp,BUILD/showcase_v/vid/showcase_v%.mp4, $(SHOWCASEV_SRC))
+
+# compile program that will generate the set of png files
+BUILD/showcase_v/showcase_v%: $(SHOWCASEV_SRC_LOC)/showcase_v%.cpp homog2d.hpp Makefile
+	@mkdir -p BUILD/showcase_v/vid
+	@echo " -Building program $@"
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+# build png files by running program
+BUILD/showcase_v/%_00.png: BUILD/showcase_v/%
+	@echo " -Running program $< to generate images"
+	@cd BUILD/showcase_v/; ./$(notdir $<)
+
+# build video file from png
+#BUILD/showcase_v/vid/%.mp4: BUILD/showcase_v/%_00.png
+#	ffmpeg -y -framerate 8 -s 400x400 -i BUILD/showcase_v/vid/showcase${id}_%02d.png BUILD/showcase_v/vid/showcase${id}.mp4
+
+
+showcase_vid:$(SHOWCASE_VID)
 	@echo "-done target $@"
 
 #------------------------------------------------------------------------------
