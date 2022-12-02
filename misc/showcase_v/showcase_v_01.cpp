@@ -13,7 +13,10 @@ using namespace h2d::img;
 /// Arguments:
 /**
 -# angle step in degrees for outer point
-
+-# scale factor for inner radius
+-# inner period coeff:
+  - >1 => inner point will be faster than outer point
+  - <1 => inner point will be slower than outer point
 */
 int main( int argc, const char** argv )
 {
@@ -22,7 +25,7 @@ int main( int argc, const char** argv )
 		angle_step = std::stod( argv[1] );
 	std::cout << argv[0] << ": \n - angle_step=" << angle_step << '\n';
 
-	auto outer_radius = 16.;
+	auto outer_radius = 17.;
 	auto inner_radius_scale = 7. / outer_radius;
 	if( argc > 2 )
 		inner_radius_scale = std::stod( argv[2] );
@@ -79,7 +82,7 @@ int main( int argc, const char** argv )
 		cir2d.draw( im, DrawParams().setColor(0,0,250) );
 
 		std::ostringstream ossa;
-		ossa << "showcase_v_01_" << std::setfill('0') << std::setw(2) << i << ".png";
+		ossa << "showcase_v_01_" << std::setfill('0') << std::setw(3) << i << ".png";
 		im.write( ossa.str() );
 	}
 }

@@ -1,11 +1,12 @@
 # this file holds the run-time parameters and the program name to build video demos
-# fields
+# fields:
 # - output file name
 # - program to run
 # - arguments
 
 spirograph_01 showcase_v_01 10 0.4 1.6
 spirograph_02 showcase_v_01 10 0.4 1.4
-spirograph_03 showcase_v_01 10 0.5 1.6
+spirograph_03 showcase_v_01 10 0.5 1.2
+spirograph_04 showcase_v_01 10 0.3 0.7
 
 
