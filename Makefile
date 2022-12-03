@@ -349,6 +349,22 @@ showcase: $(SHOWCASE_GIF)
 	@echo "-done target $@"
 
 #------------------------------------------------------------------------------
+
+SHOWCASEV_SRC_LOC=misc/showcase_v
+SHOWCASEV_SRC=$(wildcard $(SHOWCASEV_SRC_LOC)/showcase*.cpp)
+SHOWCASEV=$(patsubst $(SHOWCASEV_SRC_LOC)/%.cpp,BUILD/showcase_v/%, $(SHOWCASEV_SRC))
+
+# compile program that will generate the set of png files
+BUILD/showcase_v/showcase%: $(SHOWCASEV_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
+	@mkdir -p BUILD/showcase/
+	@mkdir -p BUILD/showcase/gif
+	@echo " -Building program $@"
+	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
+showcase_v: $(SHOWCASEV)
+	@echo "-done target $@"
+
+#------------------------------------------------------------------------------
 FNAME1:=dtest1
 
 .PHONY: $(FNAME1)
