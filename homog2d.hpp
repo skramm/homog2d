@@ -30,6 +30,7 @@ See https://github.com/skramm/homog2d
 #include <fstream>
 #include <algorithm>
 #include <numeric>
+#include <array>
 #include <set>
 #include <list>
 #include <vector>
@@ -58,8 +59,14 @@ See https://github.com/skramm/homog2d
 	#include "opencv2/highgui.hpp"
 #endif
 
+#ifdef _MSC_VER
+	#define HOMOG2D_PRETTY_FUNCTION __FUNCSIG__
+#else
+	#define HOMOG2D_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_START std::cout << __PRETTY_FUNCTION__ << "() line:" << __LINE__ << "\n"
+	#define HOMOG2D_START std::cout << HOMOG2D_PRETTY_FUNCTION << "() line:" << __LINE__ << "\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -67,7 +74,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) \
-		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
+		std::cout << '-' << HOMOG2D_PRETTY_FUNCTION << "(), line " << __LINE__ << ": " \
 		<< std::scientific << std::setprecision(10) \
 		<< a << std::endl;
 #else
@@ -119,7 +126,7 @@ See https://github.com/skramm/homog2d
 	{ \
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << __FUNCTION__ << "(): " \
-			<< msg << "\n -full function name: " << __PRETTY_FUNCTION__ \
+			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
 			<< "\n -Error count=" << ++errorCount(); \
 		throw std::runtime_error( oss.str() ); \
 	}
@@ -129,7 +136,7 @@ See https://github.com/skramm/homog2d
 	{ \
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << func << "(): " \
-			<< msg << "\n -full function name: " << __PRETTY_FUNCTION__ \
+			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
 			<< "\n -Error count=" << ++errorCount(); \
 		throw std::runtime_error( oss.str() ); \
 	}
