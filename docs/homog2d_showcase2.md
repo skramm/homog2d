@@ -16,8 +16,10 @@ $ misc/showcase_v/build_vid.sh
 
 
 * Spirograph-like generated images
-([source](../misc/showcase_v/showcase_v_01.cpp))
 <br>
-([see here](../misc/showcase_v/run_parameters.txt) for argument examples)
+[source](../misc/showcase_v/showcase_v_01.cpp)
+<br>
+[See here](../misc/showcase_v/run_parameters.txt) for argument examples
+<br>
     * Demo 1: (arguments: 10 0.4 1.6) <br> ![Demo 1](showcase2/showcase_v_01_01_250.png)
     * Demo 2: (arguments: 10 0.4 1.4) <br> ![Demo 2](showcase2/showcase_v_01_02_200.png)
