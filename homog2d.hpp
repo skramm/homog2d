@@ -335,7 +335,7 @@ public:
 		return _realImg;
 	}
 
-	Image( size_t width, size_t height )
+	Image( size_t, size_t )
 	{
 		assert(0);
 //		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
@@ -356,7 +356,7 @@ public:
 	{
 		return _isInitialized;
 	}
-	void write( std::string fname ) const
+	void write( std::string ) const
 	{
 		assert(0);
 	}
@@ -365,8 +365,10 @@ public:
 	int rows() const { return _height; }
 	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
 
-	void clear( uint8_t r, uint8_t g=255, uint8_t b=255 )
-	{ assert(0); }
+	void clear( uint8_t, uint8_t, uint8_t )
+	{
+		assert(0);
+	}
 
 #ifdef HOMOG2D_USE_OPENCV
 
@@ -2749,6 +2751,21 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 }
 
 } // namespace priv
+
+
+/// Free function template, product of two points, returns a line
+template<typename FPT,typename FPT2>
+Line2d_<FPT>
+operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
+{
+#ifndef HOMOG2D_NOCHECKS
+	if( lhs == rhs )
+		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product:" << lhs );
+#endif
+	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
+	line.p_normalizeLine();
+	return line;
+}
 
 //------------------------------------------------------------------
 /// Returns true if the 3 points are on the same line
@@ -7560,7 +7577,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 		}
 	}
 	while( iter < HOMOG2D_MAXITER_PIP );
-	HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside after " + HOMOG2D_MAXITER_PIP );
+	HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside after " + std::to_string(HOMOG2D_MAXITER_PIP) + " iterations" );
 	return false; // to avoid a warning
 }
 
@@ -7792,6 +7809,9 @@ operator * ( const Segment_<FPT>& lhs, const Segment_<FPT2>& rhs )
 	return lhs.getLine() * rhs.getLine();
 }
 
+#if 0
+20221205: Moved this above function areColinear because is needed in that function
+(remove this once fine checked)
 /// Free function template, product of two points, returns a line
 template<typename FPT,typename FPT2>
 Line2d_<FPT>
@@ -7805,6 +7825,7 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 	line.p_normalizeLine();
 	return line;
 }
+#endif
 
 #ifdef HOMOG2D_FUTURE_STUFF
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.

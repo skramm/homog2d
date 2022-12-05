@@ -6,23 +6,15 @@
 # Run from root level of repo with:
 # $ misc/showcase_v/build_vid.sh
 
-# step 1: build programs
-mkdir -p BUILD/showcase_v/vid
-rm BUILD/showcase_v/vid/*.mp4
+# You need to build the apps before, this is done with:
+# $ make showcase2
 
-for f in misc/showcase_v/*.cpp
-do
-	fn=$(basename -- "$f")
-	ext="${fn##*.}"
-	fn2="${fn%.*}"
-#	echo "f=$f fn=$fn ext=$ext fn2=$fn2"
-	g++ `pkg-config --cflags opencv` -o BUILD/showcase_v/$fn2 $f `pkg-config --libs opencv`
-done
+# run programs (will generate png images in BUILD/showcase2) and build videos
+# note: ffmpeg option -nostdin is there to avoid bash variable values to be crunched, see https://unix.stackexchange.com/a/718279/73337
 
-# step 2: run programs (will generate png images in BUILD/showcase_v/png) and build videos
-# ffmpeg option -nostdin is there to avoid bash variable values to be crunched, see https://unix.stackexchange.com/a/718279/73337
-
-cd BUILD/showcase_v/
+mkdir -p BUILD/showcase2/vid/
+rm BUILD/showcase2/vid/*.mp4
+cd BUILD/showcase2/
 while read -r fname app arg1 arg2 arg3;
 do
 	if [ "$fname" != "" ] && [ "$fname" != "#" ]; then
