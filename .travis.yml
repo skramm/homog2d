@@ -10,7 +10,7 @@ before_install:
 # build using these two compilers
 # 2022-03-04: remove clang because of unexplained test app build failure (only the test app!!)
 compiler:
-#  - clang
+  - clang++
   - gcc
 
 install:

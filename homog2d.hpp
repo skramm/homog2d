@@ -109,7 +109,7 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type of value must be numerical" )
 
-/// Internal type used for numerical computations, possible	values: \c double, <code>long double</code>
+/// Internal type used for numerical computations, possible values: \c double, <code>long double</code>
 #if !defined(HOMOG2D_INUMTYPE)
 	#define HOMOG2D_INUMTYPE double
 #endif
