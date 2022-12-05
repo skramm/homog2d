@@ -6,6 +6,7 @@ On this page, some graphical demos, all generated with programs in misc/showcase
 <br>
 Requires Opencv (to generate images) and ImageMagick (to generate the final gif).
 
+Note: 20221205: check out [this other page](homog2d_showcase2.md) for more demos.
 
 * [Showcase 1](../misc/showcase/showcase1.cpp): The front page demo.
 The moving circle turns red when it is detected as inside the rectangle or the other circle.

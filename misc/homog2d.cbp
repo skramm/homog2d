@@ -37,7 +37,6 @@
 		<Unit filename="../README.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../docs/future_stuff_doc.txt" />
 		<Unit filename="../docs/homog2d_Polyline.md" />
 		<Unit filename="../docs/homog2d_algorithms.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
@@ -51,17 +50,16 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../docs/homog2d_showcase.md" />
+		<Unit filename="../docs/homog2d_showcase2.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
 		<Unit filename="../docs/homog2d_svgimport.md" />
 		<Unit filename="../docs/homog2d_thresholds.md" />
-		<Unit filename="../docs/homog2d_video_showcase.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="../homog2d.hpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="../tmp_svgimport.hpp" />
 		<Unit filename="build_gif.sh" />
 		<Unit filename="demo_check.cpp">
 			<Option target="demo" />
