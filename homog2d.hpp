@@ -4038,7 +4038,7 @@ public:
 		return _ptS1.distTo( _ptS2 );
 	}
 /// A segment always has a null area
-	constexpr HOMOG2D_INUMTYPE area() const
+	/*constexpr*/ HOMOG2D_INUMTYPE area() const
 	{
 		return 0.;
 	}
