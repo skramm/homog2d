@@ -40,6 +40,7 @@ int main()
 
 ### News ###
 
+- 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
