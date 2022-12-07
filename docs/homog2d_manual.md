@@ -1433,9 +1433,17 @@ cv::Point2i ptcv3 = getCvPti(pt);
 auto ptcv3 = getCvPt<cv::Point2d>(pt); // templated version
 ```
 
+You can also convert a whole vector in a single call:
+```C++
+std::vectot<Point2d> vec;
+// ... fill vector
+auto vec_cv1 = getCvPts<cv::Point2d>(vec); // convert to 'double' points'
+auto vec_cv2 = getCvPts<cv::Point2f>(vec); // convert to 'float' points'
+```
+
+
 Reverse operation as simple as this:
 ```C++
-
 cv::Point2d ptcv(4,5);
 Point2d pt1(ptcv);      // using constructor
 Point2d pt2 = ptcv;     // or assignment operator
