@@ -2,7 +2,7 @@
 
 [Manual main page](homog2d_manual.md)
 
-On this page, some graphical demos, all generated with programs in misc/showcase, with `$ make showcase`
+On this page, some graphical demos as gif images, all generated with programs in misc/showcase with `$ make showcase`
 <br>
 Requires Opencv (to generate images) and ImageMagick (to generate the final gif).
 
@@ -96,12 +96,12 @@ Also shows the lines orthogonal to the joining segment at circles center.
 
 ![showcase9](showcase/showcase9.gif)
 
+
 * [Showcase 10](../misc/showcase/showcase10.cpp):
 <a name="sc10"></a>
 Recursive building of a
 [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle)
 that slowly rotates in the image.
-
 
 ![showcase11](showcase/showcase10.gif)
 
@@ -111,5 +111,12 @@ that slowly rotates in the image.
 a moving segment, its supporting line, and its two parallel segments
 
 ![showcase11](showcase/showcase11.gif)
+
+
+* [Showcase 13](../misc/showcase/showcase13.cpp):
+<a name="sc13"></a>
+Random points, the corresponding Convex Hull and Bounding Box, and the extremum points (green).
+
+![showcase13](showcase/showcase13.gif)
 
 

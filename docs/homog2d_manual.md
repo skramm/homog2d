@@ -1330,14 +1330,13 @@ auto pt_L = getLmPoint( vec );                  // Left-most
 auto pt_R = getRmPoint( vec );                  // Right-most
 auto pt_T = getTmPoint( vec );                  // Top-most
 auto pt_B = getBmPoint( vec );                  // Bottom-most
-auto ptR = getExtremePoint( Card::Right, vec ) // Right-most
 ```
 
 Or use the generic function with a `CardDir` value
 (see [here for that enum definition](#enum_carddir)).
 ```C++
 std::vector<Point2d> vec { ... fill with points... };
-auto pt_R = getExtremePoint( Card::Right, vec ) // Right-most
+auto pt_R = getExtremePoint( Card::Right, vec );      // Right-most
 ```
 
 [see here for Polyline equivalent functions](#poly_extremum_points)

@@ -376,6 +376,10 @@ public:
 	{
 		assert(0);
 	}
+	void clear( uint8_t )
+	{
+		assert(0);
+	}
 
 #ifdef HOMOG2D_USE_OPENCV
 
@@ -471,6 +475,12 @@ void
 Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
 {
 	_realImg = cv::Scalar(b,g,r);
+}
+template <>
+void
+Image<cv::Mat>::clear( uint8_t col )
+{
+	_realImg = cv::Scalar(col,col,col);
 }
 
 template <>
