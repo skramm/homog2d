@@ -78,7 +78,6 @@ Shows a fixed ellipse with other objects moving around and turning bold when ins
 ![showcase7d](showcase/showcase7d.gif)
 
 
-
 * [Showcase 8](../misc/showcase/showcase8.cpp):
 <a name="sc8"></a>
 A rotating point, a fixed segment and a fixed line.
@@ -108,7 +107,7 @@ that slowly rotates in the image.
 
 * [Showcase 11](../misc/showcase/showcase11.cpp):
 <a name="sc11"></a>
-a moving segment, its supporting line, and its two parallel segments
+a moving segment, its supporting line, and its two parallel segments.
 
 ![showcase11](showcase/showcase11.gif)
 
@@ -119,4 +118,10 @@ Random points, the corresponding Convex Hull and Bounding Box, and the extremum 
 
 ![showcase13](showcase/showcase13.gif)
 
+
+* [Showcase 14](../misc/showcase/showcase14.cpp):
+<a name="sc14"></a>
+Two moving polygons, show their intersection points.
+
+![showcase14](showcase/showcase14.gif)
 

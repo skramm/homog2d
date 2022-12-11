@@ -7,9 +7,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - planned (no specific order):
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - add polygon union and intersection
-  - add polyline splitting into polygons
+  - add non-convex polyline splitting into polygons
   - extend run-time polymorphism capabilities
-  - add list-initialization with points to PolylineBase class
+  - add list-initialization with points to `PolylineBase` class
+  - cleanout the `Intersect()` family of functions, so that they always return the same type
 
 - current master branch
 
@@ -17,7 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
-  - enable run-time polymorphism (wip), through class detail::Common
+  - enable run-time polymorphism (wip), through class `detail::Common`
   - added variable frame rate for showcase demos, see `misc/showcase/gif_duration.data`
   - added constructor for horizontal or vertical line using a point
   - added bounding box for a container holding any primitive (see [manual/misc. section](homog2d_manual.md#misc))
