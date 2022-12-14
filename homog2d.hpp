@@ -5889,7 +5889,13 @@ FRect_<FPT>::intersectArea( const FRect_<FPT2>& other ) const
 	auto inter = this->intersects( other );
 
 	if( !inter() )                        // rectangles do not intersect
+	{
+		if( this->isInside( other ) )
+			return detail::RectArea<FPT>(*this);
+		if( other.isInside( *this ) )
+			return detail::RectArea<FPT>(other);
 		return detail::RectArea<FPT>();
+	}
 
 	if( inter.size() < 2 )                // only one intersection point
 		return detail::RectArea<FPT>();   // => no intersection area!
@@ -6249,7 +6255,13 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 		return CPolyline_<FPT>( other );   // returns one of them
 
 	if( !this->intersects(other)() )  // if no intersection,
+	{
+		if( this->isInside( other ) )
+			return CPolyline_<FPT>(other);
+		if( other.isInside( *this ) )
+			return CPolyline_<FPT>(*this);
 		return CPolyline_<FPT>();      // return empty polygon
+	}
 
 /* step 0: make sure the rect with highest x is first.
  This is needed to avoid this kind of situation in table:
