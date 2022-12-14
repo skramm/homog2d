@@ -1221,6 +1221,54 @@ void demo_CH( int demidx )
 }
 //------------------------------------------------------------------
 /// Segments demo
+struct Param_RI : Data
+{
+	explicit Param_RI( int demidx, std::string title ):Data( demidx, title )
+	{}
+	bool doUnion = true;
+};
+
+void action_RI( void* param )
+{
+	auto& data = *reinterpret_cast<Param_RI*>(param);
+
+	data.clearImage();
+	draw( data.img, data.vpt );
+	FRect r1( data.vpt[0], data.vpt[1] );
+	FRect r2( data.vpt[2], data.vpt[3] );
+	r1.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	r2.draw( data.img, img::DrawParams().setColor(0,250,0) );
+	if( data.doUnion )
+	{
+		auto res = r1 & r2;
+		if( res() )
+			res.get().draw( data.img, img::DrawParams().setColor(0,0,250) );
+	}
+	else
+	{
+		auto res = r1 | r2;
+		res.draw( data.img, img::DrawParams().setColor(0,0,250) );
+	}
+
+	data.showImage();
+}
+
+void demo_RI( int demidx )
+{
+	Param_RI data( demidx, "Rectangle intersection demo" );
+	std::cout << "Demo " << demidx << ": RI demo\n";
+
+	data.setMouseCB( action_RI );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data.doUnion  = !data.doUnion; }, "Toggle union/intersection" );
+	kbloop.addCommonAction( action_RI );
+	action_RI( &data );
+	kbloop.start( data );
+}
+
+
+//------------------------------------------------------------------
+/// Segments demo
 struct Param_SEG : Data
 {
 	explicit Param_SEG( int demidx, std::string title ):Data( demidx, title )
@@ -1407,6 +1455,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_RI,   // rectangle intersection
 		demo_CIR,
 		demo_CH,
 		demo_SEG,
