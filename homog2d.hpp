@@ -2947,12 +2947,15 @@ private:
 	friend auto
 	h2d::operator * ( const h2d::Point2d_<FPT1>&, const h2d::Point2d_<FPT2>& )
 	-> h2d::Line2d_<FPT1>;
-
+#if 1
 	template<typename T,typename U>
 	friend auto
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
 	-> h2d::Line2d_<T>;
-
+#else
+ WIP: ABOVE CODE DOES NOT BUILD WITH msvc
+ https://github.com/skramm/homog2d/issues/2
+#endif
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend base::LPBase<T1,FPT1>
 	detail::crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );

@@ -1632,7 +1632,9 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 		CHECK( r1.intersects(r2)() == false );
 		auto inters = r1.intersects(r2);
 		CHECK( inters.size() == 0 );
-		CHECK( r1.intersectArea(r2)() == false );
+		auto inters2 = r1.intersectArea(r2);
+		CHECK( inters2() == true );
+		CHECK( inters2.get() == r2 );
 	}
 	{ // one rectangle inside the other, with a common segment
 #include "figures_test/frect_intersect_11.code"

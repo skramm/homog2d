@@ -1236,21 +1236,26 @@ one can use either the `intersectArea()` member function or (same name) free fun
 This will return an object that can be checked for with the `()` operator (returns a bool).
 It will return `false` if there is no intersection.
 
-For the union of two rectangles, the usage is similar, but it will return a (closed) `Polyline` object.
-You may use either the `unionArea()` (member or free) function, or the `|` operator.
-
-Additionaly, the `getBB()` free function returns the bounding box holding the two rectangles, as shown in gray in the two examples below.
-
 ```C++
 auto a1 = r1.intersectArea(r2);
 auto a2 = r1 & r2;
 auto a3 = intersectArea( r1, r2 ); // free function
 if( a1() )
 	std::cout << "common area is " << a1.get(); // prints the FRect object of the intersection
+```
+
+For the union of two rectangles, the usage is similar, but it will return a (closed) `Polyline` object.
+You may use either the `unionArea()` (member or free) function, or the `|` operator.
+And there is no `get()` function, as you will always get a valid Polyline object.
+
+```C++
 auto b1 = r1.unionArea( r2 );
 auto b2 = r1 | r2;
 auto b3 = unionArea( r1, r2 ); // free function
+std::cout << "union is " << b1.get();
 ```
+
+Additionaly, the `getBB()` free function returns the bounding box holding the two rectangles, as shown in gray in the two examples below.
 
 ![Example of intersection area](showcase/showcase2a.gif)
 ![Example of union area](showcase/showcase2b.gif)
@@ -1258,6 +1263,8 @@ auto b3 = unionArea( r1, r2 ); // free function
 Note that we may not have an intersection area **even** if there are some intersection points found, because these can be due to a shared segment,
 or a single intersection point.<br>
 For the union, if there is no intersection, the function will return an empty `CPolyline` object.
+
+If one rectangle is inside the other one, then the union will return the largest rectangle (as a Polyline object), ant the intersection will return the smallest one.
 
 ## 6 - Misc. features
 <a name="misc"></a>
