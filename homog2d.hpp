@@ -2956,9 +2956,11 @@ private:
 	-> h2d::Line2d_<T>;
 #else
 	template<typename T,typename U>
-	friend h2d::Line2d_<T>
+	friend
+	typename std::enable_if<std::is_same<T, FPT>::value, h2d::Line2d_<T> >::type
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& );
 #endif
+
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend base::LPBase<T1,FPT1>
 	detail::crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
