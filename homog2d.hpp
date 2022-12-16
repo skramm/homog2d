@@ -741,6 +741,12 @@ auto
 operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& )
 -> std::ostream&;
 }
+
+// forward declaration
+template<typename T,typename U>
+Line2d_<T>
+operator * ( const Homogr_<U>&, const Line2d_<T>& );
+
 /*
 template<typename LP,typename FPT>
 auto
@@ -2949,12 +2955,13 @@ private:
 	-> h2d::Line2d_<FPT1>;
 
 // handling of issue https://github.com/skramm/homog2d/issues/2
-#ifndef _MSC_VER
-#warning "GCC-style friend declaration"
+//#ifndef _MSC_VER
+//#warning "GCC-style friend declaration"
 	template<typename T,typename U>
 	friend auto
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
 	-> h2d::Line2d_<T>;
+/*
 #else
 #pragma message("msvc-style friend declaration (not fixed!)")
 	template<typename T,typename U>
@@ -2962,6 +2969,7 @@ private:
 	typename std::enable_if<std::is_same<T, FPT>::value, h2d::Line2d_<T> >::type
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& );
 #endif
+*/
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
 	friend base::LPBase<T1,FPT1>
