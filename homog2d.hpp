@@ -2956,7 +2956,7 @@ private:
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
 	-> h2d::Line2d_<T>;
 #else
-#warning "msvc-style friend declaration (not fixed!)"
+#pragma "msvc-style friend declaration (not fixed!)"
 	template<typename T,typename U>
 	friend
 	typename std::enable_if<std::is_same<T, FPT>::value, h2d::Line2d_<T> >::type
