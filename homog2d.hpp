@@ -2961,7 +2961,12 @@ private:
 	friend auto
 	h2d::operator * ( const h2d::Homogr_<U>&, const h2d::Line2d_<T>& )
 	-> h2d::Line2d_<T>;
+
+#ifdef _MSC_VER
+#pragma message("msvc: added forward declaration")
+#endif
 /*
+
 #else
 #pragma message("msvc-style friend declaration (not fixed!)")
 	template<typename T,typename U>
