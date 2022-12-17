@@ -13,7 +13,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - cleanout the `Intersect()` family of functions, so that they always return the same type
 
 - current master branch
-
+  - fixed normalization for points and lines
+  - added points at infinity tests
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

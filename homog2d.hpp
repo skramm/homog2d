@@ -2778,8 +2778,8 @@ operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
 	if( lhs == rhs )
 		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product:" << lhs );
 #endif
-	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
-	line.p_normalizeLine();
+	Line2d_<FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
+	line.p_normalizePL();
 	return line;
 }
 
@@ -2868,7 +2868,7 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 		arr[0],
 		arr[1] * pt.getX() - arr[0] * pt.getY()
 	);
-	out.p_normalizeLine();
+	out.p_normalizePL();
 	return out;
 }
 
@@ -2980,6 +2980,7 @@ public:
 			HOMOG2D_THROW_ERROR_1( "unable to build point from these two lines, are parallel" );
 #endif
 		*this = detail::crossProduct<type::IsPoint>( v1, v2 );
+		p_normalizePL();
 	}
 
 /// Constructor: build a line from two points
@@ -2991,7 +2992,7 @@ public:
 			HOMOG2D_THROW_ERROR_1( "unable to build line from these two points, are the same: " << v1 );
 #endif
 		*this = detail::crossProduct<type::IsLine>( v1, v2 );
-		p_normalizeLine();
+		p_normalizePL();
 	}
 
 /// Constructor: copy-constructor for lines
@@ -3035,6 +3036,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		_v[0] = v0;
 		_v[1] = v1;
 		_v[2] = v2;
+		p_normalizePL();
 	}
 
 /// Constructor of line from 4 values x1,y1,x2,y2
@@ -3085,7 +3087,7 @@ private:
 	void impl_init_1_Point( const Point2d_<T>& pt, const detail::BaseHelper<type::IsLine>& )
 	{
 		*this = detail::crossProduct<type::IsLine>( pt, Point2d_<FPT>() );
-		p_normalizeLine();
+		p_normalizePL();
 	}
 
 	/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
@@ -3256,10 +3258,16 @@ public:
 		impl_move( dx, dy, detail::BaseHelper<LP>() );
 	}
 
-	std::array<FPT,3> get() const { return impl_get( detail::BaseHelper<LP>() ); }
+	std::array<FPT,3> get() const
+	{
+		return std::array<FPT,3> { _v[0], _v[1], _v[2] };
+	}
 
 	template<typename T1,typename T2>
-	void set( T1 x, T2 y ) { impl_set( x, y, detail::BaseHelper<LP>() ); }
+	void set( T1 x, T2 y )
+	{
+		impl_set( x, y, detail::BaseHelper<LP>() );
+	}
 
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>& pt ) const
@@ -3322,22 +3330,13 @@ private:
 		return _v[1]/_v[2];
 	}
 
-	constexpr std::array<FPT,3>
-	impl_get( const detail::BaseHelper<type::IsPoint>& ) const
-	{
-		static_assert( detail::AlwaysFalse<LP>::value, "illegal for points" );
-	}
-	std::array<FPT,3>
-	impl_get( const detail::BaseHelper<type::IsLine>& ) const
-	{
-		return std::array<FPT,3> { _v[0], _v[1], _v[2] };
-	}
 	template<typename T1,typename T2>
 	void impl_set( T1 x, T2 y, const detail::BaseHelper<type::IsPoint>& )
 	{
 		_v[0] = x;
 		_v[1] = y;
 		_v[2] = 1.;
+		p_normalizePL();
 	}
 	template<typename T1,typename T2>
 	constexpr void
@@ -3352,6 +3351,7 @@ private:
 		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
 		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
 		_v[2] = 1.;
+		p_normalizePL();
 	}
 	template<typename T1,typename T2>
 	constexpr void
@@ -3425,14 +3425,12 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 	{
-//		HOMOG2D_START;
 		return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
 	}
 /// Line/FRect intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-//		HOMOG2D_START;
 		return impl_intersectsFRect( rect, detail::BaseHelper<LP>() );
 	}
 
@@ -3441,7 +3439,6 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
-//		HOMOG2D_START;
 		return seg.intersects( *this );
 	}
 
@@ -3458,7 +3455,6 @@ public:
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Point2d_<FPT>& pt0, T radius ) const
 	{
-//		HOMOG2D_START;
 		return impl_intersectsCircle( pt0, radius, detail::BaseHelper<LP>() );
 	}
 
@@ -3466,7 +3462,6 @@ public:
 	template<typename T>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
 	{
-//		HOMOG2D_START;
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::BaseHelper<LP>() );
 	}
 
@@ -3474,7 +3469,6 @@ public:
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
 	{
-//		HOMOG2D_START;
 		return pl.intersects( *this );
 	}
 
@@ -3541,6 +3535,7 @@ public:
 		return impl_op_sort( other, detail::BaseHelper<LP>() );
 	}
 
+/// Generic draw function
 	void draw( img::Image<img::SvgImage>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
@@ -3578,10 +3573,12 @@ private:
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 private:
-	void p_normalizeLine() const
+	void p_normalizePL() const
 	{
-		impl_normalizeLine( detail::BaseHelper<LP>() );
+		impl_normalize( detail::BaseHelper<LP>() );
 	}
+	void impl_normalize( const detail::BaseHelper<type::IsLine>& ) const;
+	void impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const;
 
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT>
@@ -3619,8 +3616,6 @@ private:
 	template<typename T,typename PTYPE>
 	constexpr bool impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::BaseHelper<type::IsLine>&  ) const;
 
-	void impl_normalizeLine( const detail::BaseHelper<type::IsLine>& ) const;
-
 	Line2d_<FPT>           impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::BaseHelper<type::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::BaseHelper<type::IsPoint>& ) const;
 	Line2d_<FPT>           impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
@@ -3633,7 +3628,6 @@ private:
 
 	Segment_<FPT>           impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
 	constexpr Segment_<FPT> impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<type::IsPoint>& ) const;
-
 
 	Line2d_<FPT>           impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<type::IsPoint>& ) const;
@@ -5150,8 +5144,8 @@ private:
 	template<typename FPT2>
 	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
 	{
-		p_normalizePL();
-		other.p_normalizePL();
+		p_normalizePoly();
+		other.p_normalizePoly();
 
 		auto it = other._plinevec.begin();
 		for( const auto& elem: _plinevec )
@@ -5239,7 +5233,7 @@ public:
 #endif
 
 private:
-	void impl_normalizePL( const detail::PlHelper<type::IsClosed>& ) const
+	void impl_normalizePoly( const detail::PlHelper<type::IsClosed>& ) const
 	{
 		auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 		std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
@@ -5252,26 +5246,26 @@ private:
 			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 		}
 	}
-	void impl_normalizePL( const detail::PlHelper<type::IsOpen>& ) const
+	void impl_normalizePoly( const detail::PlHelper<type::IsOpen>& ) const
 	{
 		if( _plinevec.back() < _plinevec.front() )
 			std::reverse( _plinevec.begin(), _plinevec.end() );
 	}
 
-/// Normalisation of CPolyline_
+/// Normalization of CPolyline_
 /**
 Two tasks:
 - rotating so that the smallest one is first
 - reverse if needed, so that the second point is smaller than the last one
 */
-	void p_normalizePL() const
+	void p_normalizePoly() const
 	{
 		if( size() == 0 )
 			return;
 
 		if( !_plIsNormalized )
 		{
-			impl_normalizePL( detail::PlHelper<PLT>() );
+			impl_normalizePoly( detail::PlHelper<PLT>() );
 			_plIsNormalized=true;
 		}
 	}
@@ -6932,7 +6926,7 @@ Is the test below relevant? Clarify.
 */
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_normalizeLine( const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
 {
 	auto sq = std::hypot( _v[0], _v[1] );
 	if( sq <= std::numeric_limits<double>::epsilon() )
@@ -6953,6 +6947,19 @@ LPBase<LP,FPT>::impl_normalizeLine( const detail::BaseHelper<type::IsLine>& ) co
 		}
 }
 
+//------------------------------------------------------------------
+/// Point normalization. Just make sure a>0
+template<typename LP,typename FPT>
+void
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
+{
+	if( std::signbit(_v[0]) )
+	{
+		const_cast<LPBase<LP,FPT>*>(this)->_v[0] = -_v[0];
+		const_cast<LPBase<LP,FPT>*>(this)->_v[1] = -_v[1];
+		const_cast<LPBase<LP,FPT>*>(this)->_v[2] = -_v[2];
+	}
+}
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
 constexpr FPT
@@ -7148,7 +7155,6 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseH
 }
 
 
-
 //------------------------------------------------------------------
 /// Illegal instanciation
 template<typename LP,typename FPT>
@@ -7165,7 +7171,7 @@ LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::Bas
 {
 	Line2d_<FPT> out = *this;
 	out._v[2] = static_cast<HOMOG2D_INUMTYPE>(-_v[0]) * pt.getX() - _v[1] * pt.getY();
-	out.p_normalizeLine();
+	out.p_normalizePL();
 	return out;
 }
 
@@ -7299,8 +7305,9 @@ LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelpe
 {
 	Point2d_<FPT> pt1;                // 0,0
 	Point2d_<FPT> pt2(v1,v2);
+	pt2.p_normalizePL();
 	*this = detail::crossProduct<type::IsLine>( pt1, pt2 );
-	p_normalizeLine();
+	p_normalizePL();
 }
 
 /// Overload for point to point distance
@@ -7843,24 +7850,6 @@ operator * ( const Segment_<FPT>& lhs, const Segment_<FPT2>& rhs )
 	return lhs.getLine() * rhs.getLine();
 }
 
-#if 0
-20221205: Moved this above function areColinear because is needed in that function
-(remove this once fine checked)
-/// Free function template, product of two points, returns a line
-template<typename FPT,typename FPT2>
-Line2d_<FPT>
-operator * ( const Point2d_<FPT>& lhs, const Point2d_<FPT2>& rhs )
-{
-#ifndef HOMOG2D_NOCHECKS
-	if( lhs == rhs )
-		HOMOG2D_THROW_ERROR_1( "points are identical, unable to compute product:" << lhs );
-#endif
-	Line2d_< FPT> line = detail::crossProduct<type::IsLine,type::IsPoint,FPT>(lhs, rhs);
-	line.p_normalizeLine();
-	return line;
-}
-#endif
-
 #ifdef HOMOG2D_FUTURE_STUFF
 /// Apply Epipolar matrix to a point or line, this will return the opposite type.
 /// Free function, templated by point or line
@@ -7905,7 +7894,7 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 
 	Line2d_<T> out;
 	detail::product( out, *h._hmt, in );
-	out.p_normalizeLine();
+	out.p_normalizePL();
 	return out;
 }
 

@@ -1817,8 +1817,9 @@ For example:
 - The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
 behavior differs due to some policy-based design.
 Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `PolylineBase`.
-- Points are stored as non-normalized values, any computation will keep the resulting values.
-Normalization is done for comparison but not saved.
+- Points are stored as non-normalized values, except for the sign: the first value will always be positive.
+So the point `[-1,1,1]` will be automatically converted to `[1,-1,-1]`.
+Besides that, any computation will keep the resulting values.
 - Lines are always stored as normalized values (a^2+b^2 = 1)
 - Homographies are stored as normalized values, either as h33=1, or (if null) as h23=1, or (if null) as h13=1
 

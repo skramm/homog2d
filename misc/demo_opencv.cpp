@@ -65,7 +65,7 @@ public:
 		img.getReal().create( height, width, CV_8UC3 );
 		img.clear(255);
 		vpt.resize(4);
-		pt_mouse.set( 10,10); // just to avoid it being 0,0
+		pt_mouse.set(10,10); // just to avoid it being 0,0
 		reset();
 		tline = 0;
 	}
