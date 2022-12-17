@@ -150,7 +150,9 @@ BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp M
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
 
 
-testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
+# temporarly removed from target testall: speed_test_b
+
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
 

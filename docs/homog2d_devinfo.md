@@ -78,6 +78,11 @@ The different implementations are written as two `impl_` private functions that 
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
 the implementation of that type only holds a `static_assert`, so that can be catched at build time.
 
+## Testing
+
+20221217: recently found out that Travis, that was support to offer illimited credits to OSS... has in fact allowed a limited
+number of credits to free plans. And, guess what, I incidentally discovered that my test builds were not done!
+So currently migrating the CI test process to Github Actions (see folder .github/workflows).
 
 
 

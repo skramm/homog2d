@@ -1,8 +1,11 @@
 # homog2d
 
 Current test status:
-[![Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
 <br>
+Travis: [![Travis Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
+<br>
+GH actions: ![GH actions build status](https://github.com/skramm/homog2d/actions/workflows/github-actions-test.yml/badge.svg)
+
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 ![](https://img.shields.io/github/stars/skramm/homog2d)
 
@@ -40,6 +43,7 @@ int main()
 
 ### News ###
 
+- 2022-12-17: currently moving CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
