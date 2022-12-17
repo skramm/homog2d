@@ -28,6 +28,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="../.github/workflows/github-actions-demo.yml" />
+		<Unit filename="../.github/workflows/github-actions-test.yml" />
 		<Unit filename="../.travis.yml">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
