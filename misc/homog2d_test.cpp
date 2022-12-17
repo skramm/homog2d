@@ -324,6 +324,22 @@ TEST_CASE( "types testing 2", "[test-types-2]" )
 	}
 }
 
+// WIP !!
+TEST_CASE( "infinity point", "[points-inf]" )
+{
+	Point2d pta1(1,0,0);
+	Point2d pt2(-1,-1,0);
+	CHECK( pta1.isInf() );
+	CHECK( pt2.isInf() );
+
+/*	auto li1 = Point2d() * pta1;
+	CHECK( std::abs(li1.distTo( Point2d(10,0) )) < g_epsilon );
+
+	auto li2 = Point2d(1,0,0) * Point2d(-1,0,0); // horizontal line
+	std::cout << "li2=============" << li2 << "\n";
+*/
+}
+
 TEST_CASE( "types testing 3", "[test-types-3]" )
 {
 	Point2dD ptD0(1,1);

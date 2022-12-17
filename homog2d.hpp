@@ -3582,7 +3582,10 @@ private:
 //   PRIVATE FUNCTIONS  //
 //////////////////////////
 private:
-	void p_normalizeLine() const { impl_normalizeLine( detail::BaseHelper<LP>() ); }
+	void p_normalizeLine() const
+	{
+		impl_normalizeLine( detail::BaseHelper<LP>() );
+	}
 
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT>
@@ -6519,13 +6522,17 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 
 //------------------------------------------------------------------
 /// Overload for points
+/// \todo 20221217: add a global switch (static function) to select a printing mode: either [x, y], either [a,b,c]
 template<typename LP,typename FPT>
 void
-base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& r ) const
+base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& pt ) const
 {
-	f
+	if( pt.isInf() )
+		f << '[' << pt._v[0] << ',' << pt._v[1] << ',' << pt._v[2] << "]";
+	else
+		f
 //	<< std::scientific << std::setprecision(25)
-	 << '[' << r.getX() << ',' << r.getY() << "]";
+			<< '[' << pt.getX() << ',' << pt.getY() << "]";
 }
 
 /// Overload for lines
@@ -6914,7 +6921,6 @@ Ellipse_<FPT>::pointIsInside( const Point2d_<FPT2>& pt ) const
 	if( sum < 1. )
 		return true;
 	return false;
-
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -6934,7 +6940,7 @@ LPBase<LP,FPT>::impl_normalizeLine( const detail::BaseHelper<type::IsLine>& ) co
 {
 	auto sq = std::hypot( _v[0], _v[1] );
 	if( sq <= std::numeric_limits<double>::epsilon() )
-		throw std::runtime_error( "unable to normalize line, sq=" + std::to_string(sq) );
+		HOMOG2D_THROW_ERROR_1( "unable to normalize line, sq=" << sq << " values: a=" << _v[0] << " b=" << _v[1] << " c=" << _v[2] );
 
 	for( int i=0; i<3; i++ )
 		const_cast<LPBase<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
