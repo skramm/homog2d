@@ -15,15 +15,15 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: download Catch2
-        run:
+        run: |
           wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp
           mv catch.hpp misc/
       - name: download libtinyxml2
-        run:
+        run: |
           sudo apt-get -y install libtinyxml2-dev
           pwd
        - name: Run tests!
-         run:
+         run: |
           make testall USE_TINYXML2=Y
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
