@@ -25,5 +25,5 @@ jobs:
        - name: Run tests!
          run: |
           make testall USE_TINYXML2=Y
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+       - run: echo "🍏 This job's status is ${{ job.status }}."
 
