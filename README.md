@@ -1,10 +1,6 @@
 # homog2d
 
-Current test status:
-<br>
-Travis: [![Travis Build Status](https://api.travis-ci.com/skramm/homog2d.svg?branch=master)](https://app.travis-ci.com/github/skramm/homog2d)
-<br>
-GH actions (WIP!!!): [![GH actions build status](https://github.com/skramm/homog2d/actions/workflows/github-actions-test.yml/badge.svg)](https://github.com/skramm/homog2d/actions)
+Current test status: [![GH actions build status](https://github.com/skramm/homog2d/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/skramm/homog2d/actions)
 
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 ![](https://img.shields.io/github/stars/skramm/homog2d)
