@@ -17,5 +17,5 @@ jobs:
       run: wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
     - name: download Tinyxml2
       run: sudo apt-get -y install libtinyxml2-dev
-    - name: make
+    - name: pwd && make
       run: make testall
