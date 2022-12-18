@@ -13,9 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: download catch
+    - name:  --- Download catch ---
       run: wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
-    - name: download Tinyxml2
+    - name: --- Download Tinyxml2 ---
       run: sudo apt-get -y install libtinyxml2-dev
-    - name: pwd && make
-      run: make testall
+    - name:  --- Start make  ---
+      run: pwd && make testall USE_TINYXML2=Y
