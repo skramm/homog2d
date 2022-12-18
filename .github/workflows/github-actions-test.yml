@@ -1,9 +1,13 @@
 name: GitHub Actions test
-on: [push]
+on:
+  push:
+    branches:
+      - master
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Some echoing...
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
@@ -15,7 +19,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - name: download Catch2
-        run: |
+      - run: |
           wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp
           mv catch.hpp misc/
       - name: download libtinyxml2
