@@ -14,4 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: make
+      run: |
+        wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
       run: make test
