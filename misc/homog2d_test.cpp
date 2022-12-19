@@ -347,10 +347,17 @@ TEST_CASE( "homogeneous coordinates testing", "[homogeneous]" )
 		Line2d_<NUMTYPE> li4(6,8,10);
 		CHECK( li3 == li4 );
 	}
-/*	std::array<float,3> arr{3,2,1};
-	Point2d_<NUMTYPE> pt(arr);
-	CHECK( pt == Point2d_<NUMTYPE>(3,2,1) );
-*/
+	{
+		INFO( "constructors using a container of values as single argument" );
+
+		std::array<float,3> arr{3,2,1};
+		Point2d_<NUMTYPE> pt1(arr);
+		CHECK( pt1 == Point2d_<NUMTYPE>(3,2,1) );
+
+		std::vector<float> vec{3,2,1};
+		Point2d_<NUMTYPE> pt2(vec);
+		CHECK( pt2 == Point2d_<NUMTYPE>(3,2,1) );
+	}
 }
 
 TEST_CASE( "infinity point", "[points-inf]" )
@@ -369,9 +376,9 @@ TEST_CASE( "infinity point", "[points-inf]" )
 	auto li2 = pt2 * Point2d();
 	CHECK( li2 == liH );
 
-	Point2d pt3(3,3,0);
+	Point2d pt3(3,3,0);  // infinite points at an angle of 45°
 	auto li3 = pt3 * Point2d();
-	CHECK( li3.getAngle( liH ) == M_PI/4. );
+	CHECK( std::abs(li3.getAngle( liH ) - M_PI/4.) < g_epsilon );
 
 	Segment seg( Point2d(), pt1 );
 	auto ppts = seg.getPts();
@@ -626,6 +633,13 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lih2( Point2d(0,10), Point2d(20,10) );
 		CHECK( lih1 == lih2 );
 	}
+}
+
+TEST_CASE( "build point line from containe", "[build-cont]" )
+{
+	std::array<double,3> arr{3,2,1};
+	Point2d_<NUMTYPE> pt( arr );
+	CHECK( pt == Point2d(3,2,1) );
 }
 
 TEST_CASE( "test throw", "[test_thr]" )

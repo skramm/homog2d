@@ -2913,6 +2913,69 @@ template<typename FPT1,typename FPT2>
 Point2d_<FPT1>
 operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
 
+
+//------------------------------------------------------------------
+/// Holds traits classes
+namespace trait {
+
+/// Traits class, used in generic draw() function
+template<typename T> struct IsDrawable              : std::false_type {};
+template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
+template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+/// Traits class, used in intersects() for Polyline
+template<typename T> struct IsShape              : std::false_type {};
+template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
+//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
+
+/// Traits class, used to determine if we can use some "isInside()" function
+/// \todo 20221110: shouldn't this be false for OPolyline? Because we cannot compute area of such a type.
+template<typename T> struct HasArea              : std::false_type {};
+template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
+template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
+template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
+template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
+/// used to detect if container is valid
+template <typename T>               struct IsContainer                     : std::false_type { };
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
+
+
+template <typename T> struct IsArray                  : std::false_type { };
+template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
+
+
+/// Traits class used to detect if container \c T is a \c std::array
+/** (because allocation is different, see \ref alloc() ) */
+template <typename T> struct Is_std_array                             : std::false_type {};
+template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+
+/// Traits class, used for getBB() set of functions
+template<class>   struct IsSegment              : std::false_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class>   struct IsPoint                : std::false_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+
+template<class>   struct HasBB              : std::false_type {};
+template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
+template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
+template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
+template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+} // namespace trait
+
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -3047,11 +3110,53 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_4( x1, y1, x2, y2, detail::BaseHelper<LP>() );
 	}
 
-/// Constructor of Point/Line from random type
-	template<typename T>
+/// Constructor of Point/Line from random type holding x,y values
+	template<
+		typename T,
+		typename std::enable_if<
+			! trait::IsContainer<T>::value,
+			T
+		>::type* = nullptr
+	>
 	LPBase( T val )
 	{
 		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::BaseHelper<LP>() );
+	}
+
+/// Constructor from an array holding 3 values of same type (a direct copy can be done)
+	template<
+		typename T,
+		typename std::enable_if<
+			std::is_same<T,std::array<FPT,3>>::value,
+			T
+		>::type* = nullptr
+	>
+	LPBase( const T& arr )
+	{
+		_v = arr;
+		p_normalizePL();
+	}
+
+/// Constructor from an array/vector holding 3 values of different type
+	template<
+		typename T,
+		typename std::enable_if<
+			(
+				!std::is_same<T,std::array<FPT,3>>::value &&
+				(
+					std::is_same<T,std::array<typename T::value_type,3>>::value
+					|| std::is_same<T,std::vector<typename T::value_type>>::value
+				)
+			),
+			T
+		>::type* = nullptr
+	>
+	LPBase( const T& arr )
+	{
+		_v[0] = static_cast<FPT>(arr[0]);
+		_v[1] = static_cast<FPT>(arr[1]);
+		_v[2] = static_cast<FPT>(arr[2]);
+		p_normalizePL();
 	}
 
 /// Default constructor, depends on the type
@@ -3333,6 +3438,8 @@ private:
 	template<typename T1,typename T2>
 	void impl_set( T1 x, T2 y, const detail::BaseHelper<type::IsPoint>& )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( T1 );
+		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_v[0] = x;
 		_v[1] = y;
 		_v[2] = 1.;
@@ -4487,61 +4594,6 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
 }
 
-//------------------------------------------------------------------
-/// Holds traits classes
-namespace trait {
-
-/// Traits class, used in generic draw() function
-template<typename T> struct IsDrawable              : std::false_type {};
-template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
-template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-/// Traits class, used in intersects() for Polyline
-template<typename T> struct IsShape              : std::false_type {};
-template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
-template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
-//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
-
-/// Traits class, used to determine if we can use some "isInside()" function
-/// \todo 20221110: shouldn't this be false for OPolyline? Because we cannot compute area of such a type.
-template<typename T> struct HasArea              : std::false_type {};
-template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
-template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
-template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
-/// used to detect if container is valid
-template <typename T>               struct IsContainer                     : std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
-
-/// Traits class used to detect if container \c T is a \c std::array
-/** (because allocation is different, see \ref alloc() ) */
-template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
-
-/// Traits class, used for getBB() set of functions
-template<class>   struct IsSegment              : std::false_type {};
-template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
-template<class>   struct IsPoint                : std::false_type {};
-template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
-
-template<class>   struct HasBB              : std::false_type {};
-template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
-template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
-template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
-template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-} // namespace trait
 
 namespace priv {
 //------------------------------------------------------------------

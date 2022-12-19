@@ -283,6 +283,16 @@ auto li1 = Line2d( 0, 1, 0 );  // or: Line2d li( 0, 1, 0 );
 auto pt1 = Point2d( 1, 1, 1 ); //: or Point2d pt1( 1, 1, 1 );
 ```
 
+A container such as `std::vector` or `std::array` can be used too:
+
+```C++
+std::vector<float> vec{1,2,3};
+Line2d li( vec );
+
+std::array<double,3> arr{1,2,3};
+Point2d pt( arr );
+```
+
 Storing points and lines with homogeneous coordinates allows us to handle points at infinity:
 
 ```C++
