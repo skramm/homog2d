@@ -22,9 +22,9 @@ jobs:
     name: CI-testing
     strategy:
       matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
         compiler: [g++, clang++]
     runs-on: ubuntu-latest
-    compiler: ${{ matrix.compiler }}
 
     steps:
     - name:  --- Start make  ---
