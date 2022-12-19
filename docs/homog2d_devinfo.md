@@ -80,9 +80,11 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 
 ## Testing
 
-20221217: recently found out that Travis, that was support to offer illimited credits to OSS... has in fact allowed a limited
-number of credits to free plans. And, guess what, I incidentally discovered that my test builds were not done!
-So currently migrating the CI test process to Github Actions (see folder .github/workflows).
+20221217: recently found out that Travis, that claimed to offer illimited credits to OSS... has in fact (recently) allowed a limited
+number of credits to free plans.
+And, guess what, I incidentally discovered that my test builds were not done anymore (without any warning, of course, why would they do that...)
+Thus the recent migration of the CI test process to Github Actions (see folder .github/workflows).
+
 
 
 

@@ -117,8 +117,9 @@ variants=test_SY test_SN
 newtests_before: CXXFLAGS += -Wno-unused-but-set-variable
 
 newtests: newtests_before
-	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
-	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_test.stderr;)
+	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_ntest.stderr; fi
+	@echo "COUCOU"
+	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
 
 .PHONY: pretest test test2 nobuild
 
@@ -140,14 +141,14 @@ pretest:
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
-test_SY: pretest BUILD/homog2d_test_SY
+test_SY: BUILD/homog2d_test_SY
 	@echo "done target $@"
 
-test_SN: pretest BUILD/homog2d_test_SN
+test_SN: BUILD/homog2d_test_SN
 	@echo "done target $@"
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/homog2d_test.stderr
+	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
 
 # temporarly removed from target testall: speed_test_b
 
