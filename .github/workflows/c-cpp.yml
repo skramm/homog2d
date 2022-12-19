@@ -11,7 +11,7 @@ jobs:
     name: preconfigure
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+#    - uses: actions/checkout@v3
     - name:  --- Download catch ---
       run: wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
     - name: --- Download Tinyxml2 ---
@@ -22,10 +22,12 @@ jobs:
     name: CI-testing
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
+#        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-22.04]
         compiler: [g++, clang++]
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v3
     - name:  --- Start make  ---
       run: whoami && pwd && make testall USE_TINYXML2=Y
