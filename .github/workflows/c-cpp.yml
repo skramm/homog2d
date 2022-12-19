@@ -7,27 +7,20 @@ on:
     branches: [ "master" ]
 
 jobs:
-  job1:
-    name: preconfigure
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name:  --- Download catch ---
-      run: wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
-    - name: --- Download Tinyxml2 ---
-      run: sudo apt-get -y install libtinyxml2-dev
-
   job2:
-    needs: job1
     name: CI-testing
     strategy:
       matrix:
 #        os: [ubuntu-18.04, ubuntu-20.04, ubuntu-22.04]
         os: [ubuntu-20.04, ubuntu-22.04]
         compiler: [g++, clang++]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
+    - name:  --- Download catch ---
+      run: wget https://github.com/catchorg/Catch2/releases/download/v2.13.6/catch.hpp && mv catch.hpp misc/
+    - name: --- Download Tinyxml2 ---
+      run: sudo apt-get -y install libtinyxml2-dev
     - name:  --- Start make  ---
       run: whoami && pwd && make testall USE_TINYXML2=Y
