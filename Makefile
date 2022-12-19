@@ -124,10 +124,11 @@ newtests: newtests_before
 
 test: pretest test2 nobuild
 	@echo "Make: run test, build using $(CXX)"
-	BUILD/homog2d_test_SY
-	BUILD/homog2d_test_SN
 
 test2: test_SY test_SN
+	@echo "Make: run test2, build using $(CXX)"
+	BUILD/homog2d_test_SY
+	BUILD/homog2d_test_SN
 
 test-list: test_SY
 	@echo "Tests available:"

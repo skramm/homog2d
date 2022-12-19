@@ -334,6 +334,9 @@ TEST_CASE( "normalization", "[normaliz]" )
 
 TEST_CASE( "infinity point", "[points-inf]" )
 {
+	CHECK_THROWS( Point2d(0,0,0) );
+	CHECK_THROWS( Line2d(0,0,0) );
+
 	Point2d pt1(1,0,0);
 	Point2d pt2(-1,0,0);
 	CHECK( pt1.isInf() );
@@ -343,6 +346,12 @@ TEST_CASE( "infinity point", "[points-inf]" )
 	CHECK( li1 == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
 	auto li2 = pt2 * Point2d();
 	CHECK( li2 == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
+
+	Segment seg( Point2d(), pt1 );
+	auto ppts = seg.getPts();
+
+	auto line = seg.getLine();
+	CHECK( line == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
 }
 
 TEST_CASE( "types testing 3", "[test-types-3]" )

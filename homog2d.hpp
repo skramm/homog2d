@@ -6959,6 +6959,12 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
 		const_cast<LPBase<LP,FPT>*>(this)->_v[1] = -_v[1];
 		const_cast<LPBase<LP,FPT>*>(this)->_v[2] = -_v[2];
 	}
+	if(
+		std::abs(_v[2]) < thr::nullDenom()
+		&&
+		( _v[0] < thr::nullOrthogDistance() && std::abs(_v[1]) < thr::nullOrthogDistance() )
+	)
+		HOMOG2D_THROW_ERROR_1( "invalid point values" );
 }
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
