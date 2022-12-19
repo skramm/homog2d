@@ -109,12 +109,6 @@ auto x = getX(pt);
 auto y = getY(pt);
 ```
 
-This library is designed to handle points at infinity, you can check if they are:
-```C++
-Point2d pt(1,2,0);
-assert( pt.isInf() );
-```
-
 To get the 3 components of a line as a homogeneous array, one may use:
 ```C++
 auto v = line.get();
@@ -199,7 +193,7 @@ You can compute the two points that are lying on a line and at a given distance 
 
 The API provides two ways to get these:
 
-- either you provide the x or y coordinate of p0:
+1 - either you provide the x or y coordinate of p0:
 ```C++
 Line2d li( ..., ... ); // some line
 auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
@@ -208,7 +202,7 @@ Point2d p2 = ppts.second;
 ```
 The drawback is same as the above paragraph: if line is vertical/horizontal (or near), these can fail.
 
-- either you provide directly the point:
+2 - either you provide directly the point:
 ```C++
 Line2d li( ..., ... ); // some line
 Point2d pt_on_line;
@@ -275,6 +269,31 @@ You can rotate a line at a given point (must be lying on the line):
 ```C++
 auto li1 = pt1 * pt2;
 auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
+```
+
+### 2.5 - Homogeneous coordinates and infinity
+
+As points and lines are stored with homogeneous coordinates, one can also build theses using 3 values:
+
+```C++
+// horizontal line at y=0
+auto li1 = Line2d( 0, 1, 0 );  // or: Line2d li( 0, 1, 0 );
+
+// a point at x=1, y=1
+auto pt1 = Point2d( 1, 1, 1 ); //: or Point2d pt1( 1, 1, 1 );
+```
+
+Storing points and lines with homogeneous coordinates allows us to handle points at infinity:
+
+```C++
+Point2d pt(1,2,0);
+assert( pt.isInf() );
+```
+
+Such points can still be used, for example to build a line or a segment:
+```C++
+Point2d pt(1,0,0);
+Line2d li = pt * Point2d();
 ```
 
 

@@ -6929,9 +6929,10 @@ void
 LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
 {
 	auto sq = std::hypot( _v[0], _v[1] );
+#ifndef HOMOG2D_NOCHECKS
 	if( sq <= std::numeric_limits<double>::epsilon() )
 		HOMOG2D_THROW_ERROR_1( "unable to normalize line, sq=" << sq << " values: a=" << _v[0] << " b=" << _v[1] << " c=" << _v[2] );
-
+#endif
 	for( int i=0; i<3; i++ )
 		const_cast<LPBase<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
 
@@ -6959,12 +6960,14 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
 		const_cast<LPBase<LP,FPT>*>(this)->_v[1] = -_v[1];
 		const_cast<LPBase<LP,FPT>*>(this)->_v[2] = -_v[2];
 	}
+#ifndef HOMOG2D_NOCHECKS
 	if(
 		std::abs(_v[2]) < thr::nullDenom()
 		&&
 		( _v[0] < thr::nullOrthogDistance() && std::abs(_v[1]) < thr::nullOrthogDistance() )
 	)
 		HOMOG2D_THROW_ERROR_1( "invalid point values" );
+#endif
 }
 //------------------------------------------------------------------
 template<typename LP,typename FPT>

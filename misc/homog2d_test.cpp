@@ -332,8 +332,30 @@ TEST_CASE( "normalization", "[normaliz]" )
 	CHECK( pt2.get() == std::array<NUMTYPE,3>{1,-2,-3} );
 }
 
+TEST_CASE( "homogeneous coordinates testing", "[homogeneous]" )
+{
+	{
+		Point2d_<NUMTYPE> pt1(2,2,1);
+		Point2d_<NUMTYPE> pt2(4,4,2);
+		CHECK( pt1 == pt2 );
+
+		Line2d_<NUMTYPE> li1(0,1,0);
+		Line2d_<NUMTYPE> li2(0,2,0);
+		CHECK( li1 == li2 );
+
+		Line2d_<NUMTYPE> li3(3,4,5);
+		Line2d_<NUMTYPE> li4(6,8,10);
+		CHECK( li3 == li4 );
+	}
+/*	std::array<float,3> arr{3,2,1};
+	Point2d_<NUMTYPE> pt(arr);
+	CHECK( pt == Point2d_<NUMTYPE>(3,2,1) );
+*/
+}
+
 TEST_CASE( "infinity point", "[points-inf]" )
 {
+	Line2d liH( LineDir::H, Point2d() ); // horizontal line at y=0
 	CHECK_THROWS( Point2d(0,0,0) );
 	CHECK_THROWS( Line2d(0,0,0) );
 
@@ -343,15 +365,19 @@ TEST_CASE( "infinity point", "[points-inf]" )
 	CHECK( pt2.isInf() );
 
 	auto li1 = pt1 * Point2d();
-	CHECK( li1 == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
+	CHECK( li1 == liH );
 	auto li2 = pt2 * Point2d();
-	CHECK( li2 == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
+	CHECK( li2 == liH );
+
+	Point2d pt3(3,3,0);
+	auto li3 = pt3 * Point2d();
+	CHECK( li3.getAngle( liH ) == M_PI/4. );
 
 	Segment seg( Point2d(), pt1 );
 	auto ppts = seg.getPts();
 
 	auto line = seg.getLine();
-	CHECK( line == Line2d( Point2d(-1,0), Point2d(1,0) ) ); // horizontal line
+	CHECK( line == liH );
 }
 
 TEST_CASE( "types testing 3", "[test-types-3]" )
