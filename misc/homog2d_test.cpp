@@ -338,7 +338,7 @@ TEST_CASE( "homogeneous coordinates testing", "[homogeneous]" )
 		Point2d_<NUMTYPE> pt1(2,2,1);
 		Point2d_<NUMTYPE> pt2(4,4,2);
 		CHECK( pt1 == pt2 );
-		pt2.set(8,8,4);
+		pt2.set(8.,8.,4.);
 		CHECK( pt1 == pt2 );
 
 		Line2d_<NUMTYPE> li1(0,1,0);

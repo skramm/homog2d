@@ -8988,18 +8988,6 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 } // namespace chull
 } // namespace priv
 
-//------------------------------------------------------------------
-/// Compute Convex Hull (free function)
-/**
-- type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
-- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
-*/
-template<typename CT,typename FPT>
-CPolyline_<FPT>
-convexHull( const base::PolylineBase<CT,FPT>& input )
-{
-	return convexHull( input.getPts() );
-}
 
 //namespace base {
 //------------------------------------------------------------------
@@ -9075,9 +9063,23 @@ convexHull( const std::vector<Point2d_<FPT>>& input )
 
 	return CPolyline_<FPT>( vout );
 }
+//------------------------------------------------------------------
+/// Compute Convex Hull (free function)
+/**
+- type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
+- Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+*/
+template<typename CT,typename FPT>
+CPolyline_<FPT>
+convexHull( const base::PolylineBase<CT,FPT>& input )
+{
+	return convexHull( input.getPts() );
+}
 
 //} // namespace base
 
+namespace base {
+//------------------------------------------------------------------
 /// Return convex hull (member function implementation)
 template<typename CT,typename FPT>
 CPolyline_<FPT>
@@ -9086,7 +9088,6 @@ base::PolylineBase<CT,FPT>::convexHull() const
 	return h2d::convexHull( *this );
 }
 
-namespace base {
 //------------------------------------------------------------------
 /// WIP: attempt to compute union of two polygons
 template<typename PLT,typename FPT>
@@ -9103,8 +9104,6 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		HOMOG2D_THROW_ERROR_1( "object is not a polygon" );
 	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
 
-	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
-	std::vector<std::vector<IntPointIdx>> vseg( p1.nbSegs() );  // one vector per segment of p1
 
 	if( !p1.intersects(p2)() )
 	{
@@ -9117,6 +9116,10 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	auto c_seg = 0;
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
 	auto it_vseg = std::begin( vseg );
+	using std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator = ItPts;
+	std::vector<std::vector<ItPts>> vseg( p1.nbSegs() );  // one vector per segment of p1
+
+	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
 
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
@@ -9148,8 +9151,8 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	}
 
 //	std::cout << "AFTER: #alliPts=" << alliPts.size() << "\n";
-	h2d::priv::printVector( alliPts, "allipts" );
-	h2d::priv::printVector( vseg, "vseg" );
+//	h2d::priv::printVector( alliPts, "allipts" );
+//	h2d::priv::printVector( vseg, "vseg" );
 
 
 // step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
@@ -9157,6 +9160,8 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	std::vector<Point2d_<FPT>> vout{ p1.getPoint(0) };
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
+		vout.push_back( p1.getPoint(ip1) );
+
 		const auto& seg1      = p1.getSegment( ip1 );
 		const auto& currentPt = p1.getPoint( ip1 );
 
@@ -9171,7 +9176,6 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		else
 		{
 			std::cout << " -No intersection points on this segment\n";
-			vout.push_back( p1.getPoint(ip1+1) );
 		}
 	}
 	return PolylineBase<type::IsClosed,FPT>(vout);
