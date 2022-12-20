@@ -43,8 +43,8 @@ struct Data
 	friend void myMouseCB( int, int, int, int, void* );
 
 	img::Image<cv::Mat> img;
-	int width = 700;
-	int height = 500;
+	int _imWidth = 700;
+	int _imHeight = 500;
 
 	std::string win1;   ///< Window name (appears in title)
 	int selected = -1;  ///< Mouse selected point
@@ -62,7 +62,7 @@ public:
 		win1 = std::string("Demo ") + std::to_string(demidx) + ": " + wname;
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
-		img.getReal().create( height, width, CV_8UC3 );
+		img.setSize( _imWidth, _imHeight );
 		img.clear(255);
 		vpt.resize(4);
 		pt_mouse.set(10,10); // just to avoid it being 0,0
@@ -363,10 +363,10 @@ void demo_1( int demidx )
 	data.setMouseCB( action_1 );
 
 	int n=5;
-	data.vpt[0].set( data.width/2,       data.height/n );
-	data.vpt[1].set( data.width/2,       data.height*(n-1)/n );
-	data.vpt[2].set( data.width/n,       data.height/2 );
-	data.vpt[3].set( data.width*(n-1)/n, data.height/2 );
+	data.vpt[0].set( data._imWidth/2,       data._imHeight/n );
+	data.vpt[1].set( data._imWidth/2,       data._imHeight*(n-1)/n );
+	data.vpt[2].set( data._imWidth/n,       data._imHeight/2 );
+	data.vpt[3].set( data._imWidth*(n-1)/n, data._imHeight/2 );
 
 	data.clearImage();
 	action_1( &data );
@@ -730,8 +730,8 @@ struct Param_H: public Data
 	explicit Param_H( int demidx, std::string wname ): Data( demidx, wname )
 	{
 		cv::namedWindow( win2 );
-		cv::moveWindow( win2, width, 50 );
-		img2.getReal().create( height, width, CV_8UC3 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imHeight, _imWidth );
 	}
 	void showImage()
 	{
@@ -1219,6 +1219,7 @@ void demo_CH( int demidx )
 	KeyboardLoop kbloop;
 	kbloop.start( data );
 }
+
 //------------------------------------------------------------------
 /// Segments demo
 struct Param_RI : Data
@@ -1266,7 +1267,6 @@ void demo_RI( int demidx )
 	kbloop.start( data );
 }
 
-
 //------------------------------------------------------------------
 /// Segments demo
 struct Param_SEG : Data
@@ -1283,8 +1283,8 @@ struct Param_SEG : Data
 
 	int nbSegs = 100;
 	int delta = 40;
-	int width2  = width-delta;
-	int height2 = height-delta;
+	int width2  = _imWidth-delta;
+	int height2 = _imHeight-delta;
 	int k_col  = 200;
 	int k_min  = 15;
 
@@ -1428,6 +1428,7 @@ void demo_polRot( int demidx )
 	Param_polRot data( demidx, "Polyline full step rotate demo" );
 	std::cout << "Demo " << demidx << ": Polyline full step rotate demo\n"
 		<< "Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!\n";
+
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );
 	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;      data.doIt(); }, "rotate CCW" );

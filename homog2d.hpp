@@ -343,6 +343,10 @@ public:
 		return _realImg;
 	}
 
+	std::pair<size_t,size_t> getSize() const
+	{
+		return std::make_pair( _width, _height );
+	}
 	Image( size_t, size_t )
 	{
 		assert(0);
