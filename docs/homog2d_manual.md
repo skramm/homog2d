@@ -180,7 +180,7 @@ For example, if you try to get the 'y' coordinate from a vertical line, this wil
 The following code will throw:
 
 ```C++
-Line2d li;
+Line2d li;    // vertical line at x=0
 auto y = li.getCoord( GivenCoord::X, 0 );
 ```
 
@@ -200,7 +200,8 @@ auto ppts = li.getPoints( GivenCoord::X, coord, dist ); // returns a std::pair
 Point2d p1 = ppts.first;
 Point2d p2 = ppts.second;
 ```
-The drawback is same as the above paragraph: if line is vertical/horizontal (or near), these can fail.
+The drawback is same as the above paragraph: if line is vertical and you provide a 'x' coordinate, this will throw
+(and similarly with an horizontal line and a 'y' coordinate).
 
 2 - either you provide directly the point:
 ```C++
@@ -257,7 +258,7 @@ If you know that two lines are parallel and you want the distance between them, 
 ```C++
 auto dist = getParallelDistance( li1, li2 );
 ```
-This will throw if lines are not parallel.
+This will throw if lines are not parallel (unless error checking is disabled).
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function:
 ```C++
@@ -274,13 +275,18 @@ auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
 ### 2.5 - Homogeneous coordinates and infinity
 
 As points and lines are stored with homogeneous coordinates, one can also build theses using 3 values:
-
 ```C++
 // horizontal line at y=0
 auto li1 = Line2d( 0, 1, 0 );  // or: Line2d li( 0, 1, 0 );
 
 // a point at x=1, y=1
 auto pt1 = Point2d( 1, 1, 1 ); //: or Point2d pt1( 1, 1, 1 );
+```
+
+It is also possible to initialize existing variables with homogeneous coordinates:
+```C++
+li1.set( 1, 2, 3 );
+pt1.set( 4, 6, 2 );  // point lies at x=2, y=3
 ```
 
 A container such as `std::vector` or `std::array` can be used too:
@@ -1904,7 +1910,7 @@ or just add a `#define` on top of your program
 - `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
 - `HOMOG2D_NOCHECKS`: will disable run-time checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
-If defined, program will very likely crash.
+If defined, program will very likely crash in case an abnormal situation is encountered.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.

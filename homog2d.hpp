@@ -3092,16 +3092,28 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	}
 
 /// Constructor of line/point from 3 values
-	template<typename T>
-	LPBase( T v0, T v1, T v2 )
+	template<typename T0,typename T1,typename T2>
+	LPBase( T0 v0, T1 v1, T2 v2 )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		set( v0, v1, v2 );
+/*		HOMOG2D_CHECK_IS_NUMBER(T);
+		_v[0] = v0;
+		_v[1] = v1;
+		_v[2] = v2;
+		p_normalizePL();*/
+	}
+/// Assign homogeneous values
+	template<typename T0,typename T1,typename T2>
+	void set( T0 v0, T1 v1, T2 v2 )
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T0);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
 		_v[0] = v0;
 		_v[1] = v1;
 		_v[2] = v2;
 		p_normalizePL();
 	}
-
 /// Constructor of line from 4 values x1,y1,x2,y2
 	template<typename T>
 	LPBase( T x1, T y1, T x2, T y2 )
@@ -3797,7 +3809,7 @@ private:
 	template<typename T1,typename T2>
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsLine>& );
 
-}; // class
+}; // class LPBase
 
 } // namespace base
 
