@@ -23,7 +23,7 @@
 */
 
 #define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 //#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
@@ -1443,6 +1443,52 @@ void demo_polRot( int demidx )
 }
 
 //------------------------------------------------------------------
+/// Polyline union demo parameters
+struct Param_polUnion : Data
+{
+	explicit Param_polUnion( int demidx, std::string title ): Data( demidx, title )
+	{
+		_poly1.set(
+			std::vector<Point2d>{
+				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
+			}
+		);
+		_poly1.translate( 180,180); // so it lies in the window
+		_poly2 = _poly1;
+		_poly2.rotate( Rotate::CW );
+		_poly2.translate( 70,400 );
+	}
+
+	CPolyline _poly1, _poly2;
+
+};
+
+void action_polUnion( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polUnion*>(param);
+	data.clearImage();
+	data._poly1.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
+	data._poly2.draw( data.img, img::DrawParams().setColor( 0,250,0).showPoints() );
+
+	auto pol = data._poly1.unionPoly( data._poly2 );
+	std::cout << "pol=" << pol << "\n";
+//	std::cout << "poly2=" << data._poly2 << "\n";
+	data.showImage();
+}
+
+void demo_PolUnion( int demidx )
+{
+	Param_polUnion data( demidx, "Polyline union demo" );
+	std::cout << "Demo " << demidx << ": Polyline union demo\n";
+	data.setMouseCB( action_polUnion );
+	KeyboardLoop kbloop;
+	kbloop.addCommonAction( action_polUnion );
+	action_polUnion( &data );
+
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -1455,6 +1501,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_PolUnion, // polygon Union
 		demo_RI,   // rectangle intersection
 		demo_CIR,
 		demo_CH,

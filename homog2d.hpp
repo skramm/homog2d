@@ -34,6 +34,7 @@ See https://github.com/skramm/homog2d
 #include <set>
 #include <list>
 #include <vector>
+#include <map>
 #include <stack>
 #include <iomanip>
 #include <cassert>
@@ -5290,6 +5291,10 @@ public:
 	friend std::ostream&
 	h2d::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
 
+	template<typename FPT2>
+	PolylineBase<type::IsClosed,FPT>
+	unionPoly( const PolylineBase<type::IsClosed,FPT2>& ) const;
+
 public:
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
@@ -5544,6 +5549,31 @@ getExtremePoint( CardDir dir, const T& t )
 }
 
 
+//------------------------------------------------------------------
+namespace priv {
+
+/// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
+/// Returns an index on \v vecPts corresponding on closest point to \c pt
+template<typename FPT>
+size_t
+findClosestPoint( const Point2d_<FPT>& pt, const std::vector<Point2d_<FPT>>& vecPts )
+{
+	assert( !vecPts.emtpy() );
+	auto minDist = pt.distTo( vecPts[0] );
+	size_t resIdx = 0;
+	for( size_t i=1; i<vecPts.size(); i++ )
+	{
+		auto currentDist = pt.distTo( vecPts[i] );
+		if( currentDist < minDist )
+		{
+			resIdx = i;
+			minDist = currentDist;
+		}
+	}
+}
+
+} // namespace priv
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -5587,6 +5617,93 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 	return h2d::getRmPoint( *this );
 }
 
+
+//------------------------------------------------------------------
+/// WIP: attempt to compute union of two polygons
+template<typename PLT,typename FPT>
+template<typename FPT2>
+PolylineBase<type::IsClosed,FPT>
+PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) const
+{
+	using IntPointIdx = size_t;
+	using SegmentIdx  = size_t;
+
+	if( !p2.isPolygon() )
+		HOMOG2D_THROW_ERROR_1( "argument is not a polygon" );
+	if( !this->isPolygon() )
+		HOMOG2D_THROW_ERROR_1( "object is not a polygon" );
+	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
+
+	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
+	std::vector<std::vector<IntPointIdx>> vseg( p1.nbSegs() );  // one vector per segment of p1
+
+// step 1: identify all the intersection points
+	auto c_seg = 0;
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
+	auto it_vseg = std::begin( vseg );
+
+	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
+	{
+		const auto& seg1 = p1.getSegment( ip1 );
+
+		std::cout << "S1: Segment p1: " << ip1 << ", currently nbIntersPts=" << alliPts.size() << '\n';
+		for( size_t ip2=0; ip2<p2.nbSegs(); ip2++ )
+		{
+			const auto& seg2 = p2.getSegment( ip2 );
+			auto li1 = seg1.getLine();
+			auto li2 = seg2.getLine();
+			if( li1 == li2 )
+			{
+				std::cout << "Joined segments!\n";
+			}
+			else
+			{
+				auto inters = seg1.intersects( seg2 );
+				if( inters() )
+				{
+					it_vseg->push_back( alliPts.size() );
+					segmap[alliPts.size()] = ip2;
+					alliPts.push_back( inters.get() );
+
+				}
+			}
+
+		}
+		it_vseg++; // switch to next segment
+	}
+
+//	std::cout << "AFTER: #alliPts=" << alliPts.size() << "\n";
+	h2d::priv::printVector( alliPts, "allipts" );
+	h2d::priv::printVector( vseg, "vseg" );
+
+
+// step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
+#if 1
+	std::vector<Point2d_<FPT>> vout{ p1.getPoint(0) };
+	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
+	{
+		const auto& seg1      = p1.getSegment( ip1 );
+		const auto& currentPt = p1.getPoint( ip1 );
+
+		std::cout << "S2: Segment p1: " << ip1 << ", currently nbIntersPts=" << alliPts.size() << '\n';
+		if( vseg[ip1].size() != 0 )
+		{
+			std::cout << " -has #inters=" << vseg[ip1].size() << "\n";
+// among all the intersection points, find the one closest to the current point
+			auto closestIdx = priv::findClosestPoint( currentPt, vseg[ip1] );
+
+		}
+		else
+		{
+			std::cout << " -No intersection points on this segment\n";
+			vout.push_back( p1.getPoint(ip1+1) );
+		}
+	}
+	return PolylineBase<type::IsClosed,FPT>(vout);
+#endif
+
+	return PolylineBase<type::IsClosed,FPT>();
+}
 
 //------------------------------------------------------------------
 /// Rotate the object by either 90°, 180°, 270° (-90°)
