@@ -24,7 +24,6 @@
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_DEBUGMODE
-//#define HOMOG2D_USE_ROOT_CLASS
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1455,9 +1454,9 @@ struct Param_polUnion : Data
 			}
 		);
 		_poly1.translate( 180,180); // so it lies in the window
-		_poly2 = _poly1;
-		_poly2.rotate( Rotate::CW );
-		_poly2.translate( 70,400 );
+		reset();
+		vpt = std::vector<Point2d>{ {110,45}, {150,35}, {210,190}, {75,240} };
+		_poly2.set( vpt );
 	}
 
 	CPolyline _poly1, _poly2;
@@ -1468,12 +1467,13 @@ void action_polUnion( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polUnion*>(param);
 	data.clearImage();
-	data._poly1.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
-	data._poly2.draw( data.img, img::DrawParams().setColor( 0,250,0).showPoints() );
+	data._poly1.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
+	data._poly2.set( data.vpt );
+	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
 
 	auto pol = data._poly1.unionPoly( data._poly2 );
-	std::cout << "pol=" << pol << "\n";
-//	std::cout << "poly2=" << data._poly2 << "\n";
+//	std::cout << "pol=" << pol << "\n";
+	pol.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
 	data.showImage();
 }
 
@@ -1481,7 +1481,10 @@ void demo_PolUnion( int demidx )
 {
 	Param_polUnion data( demidx, "Polyline union demo" );
 	std::cout << "Demo " << demidx << ": Polyline union demo\n";
+
 	data.setMouseCB( action_polUnion );
+	data.leftClicAddPoint=true;
+
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_polUnion );
 	action_polUnion( &data );
