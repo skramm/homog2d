@@ -8704,6 +8704,84 @@ getAxisLines( const Ellipse_<FPT>& ell )
 	return ell.getAxisLines();
 }
 
+//------------------------------------------------------------------
+/// Returns index of point in container \c cont that is the nearest to \c pt
+/// \todo add some sfinae and/or checking on type T
+/// \todo perform some speed analysis, and check if usage of squared distance is really better
+/// \todo add other distance computations (Manhattan?)
+/// \todo Would it be better to return an iterator?
+template<typename FPT, typename T>
+size_t
+findNearestPoint( const Point2d_<FPT>& pt, const T& cont )
+{
+	if( cont.empty() )
+		HOMOG2D_THROW_ERROR_1( "container is empty" );
+
+	auto minDist = priv::sqDist( pt, cont[0] );
+	size_t resIdx = 0;
+	for( size_t i=1; i<cont.size(); i++ )
+	{
+		auto currentDist = priv::sqDist( pt, cont[i] );
+		if( currentDist < minDist )
+		{
+			resIdx  = i;
+			minDist = currentDist;
+		}
+	}
+	return resIdx;
+}
+//------------------------------------------------------------------
+/// Returns index of point in container \c cont that is the farthest to \c pt
+template<typename FPT, typename T>
+size_t
+findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
+{
+	if( cont.empty() )
+		HOMOG2D_THROW_ERROR_1( "container is empty" );
+
+	auto maxDist = priv::sqDist( pt, cont[0] );
+	size_t resIdx = 0;
+	for( size_t i=1; i<cont.size(); i++ )
+	{
+		auto currentDist = priv::sqDist( pt, cont[i] );
+		if( currentDist > maxDist )
+		{
+			resIdx  = i;
+			maxDist = currentDist;
+		}
+	}
+	return resIdx;
+}
+//------------------------------------------------------------------
+/// Returns index of point in container \c cont that is the farthest to \c pt
+template<typename FPT, typename T>
+std::pair<size_t,size_t>
+findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
+{
+	if( cont.empty() )
+		HOMOG2D_THROW_ERROR_1( "container is empty" );
+
+	auto maxDist = priv::sqDist( pt, cont[0] );
+	auto minDist = maxDist;
+	size_t idxMin = 0;
+	size_t idxMax = 0;
+	for( size_t i=1; i<cont.size(); i++ )
+	{
+		auto currentDist = priv::sqDist( pt, cont[i] );
+		if( currentDist > maxDist )
+		{
+			idxMax  = i;
+			maxDist = currentDist;
+		}
+		if( currentDist < minDist )
+		{
+			idxMin  = i;
+			minDist = currentDist;
+		}
+	}
+	return std::make_pair(idxMin, idxMax);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - GENERIC DRAWING FREE FUNCTIONS (BACK-END INDEPENDENT)
 /////////////////////////////////////////////////////////////////////////////

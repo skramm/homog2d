@@ -1392,8 +1392,32 @@ You can check if three points lie on the same line with this:
 bool b = areColinear( pt1, pt2, pt3 );
 ```
 
+### 6.5 - Finding nearest/farthest point in a container
 
-### 6.5 - Extracting data from sets/containers of primitives
+Say you have container (`std::vector` or `std::array`) holding a bunch of points.
+Three functions allow you to find among these wich one is the closest or the farthest to a given point.
+
+```C++
+Point2d SomePoint( ...,...);
+std::vector<Point2d> vpts;
+// fill vector
+auto idx1 = findNearestPoint( SomePoint, vpts );
+cout << "nearest point is " << vpts[idx1] << '\n';
+auto idx2 = findFarthestPoint( SomePoint, vpts );
+cout << "farthest point is " << vpts[idx2] << '\n';
+```
+
+If you need to get both:
+```C++
+auto pidx = findNearestFarthestPoint( SomePoint, vpts );
+cout << "nearest point is " << vpts[pidx.first]
+     << ", farthest point is " << vpts[pidx.second] << '\n';
+```
+
+(you could of course call the two previous function ssequentially but at the cost of time.)
+
+
+### 6.6 - Extracting data from sets/containers of primitives
 
 If you have a container (`std::vector`, `std::list` or `std::array`) holding either segments, circles or ellipses, you can get at once all the center points, grouped in a vector:
 
