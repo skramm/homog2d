@@ -75,7 +75,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) \
-		std::cout << '-' << HOMOG2D_PRETTY_FUNCTION << "(), line " << __LINE__ << ": " \
+		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
 		<< std::scientific << std::setprecision(10) \
 		<< a << std::endl;
 #else
@@ -5556,18 +5556,28 @@ getExtremePoint( CardDir dir, const T& t )
 //------------------------------------------------------------------
 namespace priv {
 
+using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
+
 /// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
 /// Returns an index on \v vecPts corresponding on closest point to \c pt
 template<typename FPT>
 size_t
-findClosestPoint( const Point2d_<FPT>& pt, const std::vector<Point2d_<FPT>>& vecPts )
+findClosestPoint(
+	const Point2d_<FPT>& pt,
+//	const std::vector<std::vector<Point2d_<FPT>>::const_iterator>& vecPts
+	const std::vector<ItPts>& vecPts
+)
 {
-	assert( !vecPts.emtpy() );
-	auto minDist = pt.distTo( vecPts[0] );
+	assert( !vecPts.empty() );
+	HOMOG2D_LOG( "size=" << vecPts.size() << " pt=" << pt << '\n');
+	for( const auto& itpt: vecPts )
+		std::cout << "It:" << *itpt << '\n';
+
+	auto minDist = pt.distTo( *vecPts[0] );
 	size_t resIdx = 0;
 	for( size_t i=1; i<vecPts.size(); i++ )
 	{
-		auto currentDist = pt.distTo( vecPts[i] );
+		auto currentDist = pt.distTo( *vecPts[i] );
 		if( currentDist < minDist )
 		{
 			resIdx = i;
@@ -9115,9 +9125,10 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 // step 1: identify all the intersection points
 	auto c_seg = 0;
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
-	auto it_vseg = std::begin( vseg );
-	using std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator = ItPts;
+
+	using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
 	std::vector<std::vector<ItPts>> vseg( p1.nbSegs() );  // one vector per segment of p1
+	auto it_vseg = std::begin( vseg );
 
 	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
 
@@ -9140,9 +9151,9 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
 				{
-					it_vseg->push_back( alliPts.size() ); // add to vector of current segment the index of the added point
 					segmap[alliPts.size()] = ip2;
 					alliPts.push_back( inters.get() ); // add the point
+					it_vseg->push_back( alliPts.end()-1 ); // add to vector of current segment the index of the added point
 				}
 			}
 
@@ -9151,12 +9162,12 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	}
 
 //	std::cout << "AFTER: #alliPts=" << alliPts.size() << "\n";
-//	h2d::priv::printVector( alliPts, "allipts" );
+	h2d::priv::printVector( alliPts, "allipts" );
 //	h2d::priv::printVector( vseg, "vseg" );
 
 
 // step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
-#if 0
+#if 1
 	std::vector<Point2d_<FPT>> vout{ p1.getPoint(0) };
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
