@@ -23,8 +23,8 @@
 */
 
 #define HOMOG2D_USE_OPENCV
+//#define HOMOG2D_NOCHECKS
 #define HOMOG2D_DEBUGMODE
-#define HOMOG2D_NOCHECKS
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1442,6 +1442,81 @@ void demo_polRot( int demidx )
 
 	kbloop.start( data );
 }
+//------------------------------------------------------------------
+/// Polyline full step rotate demo parameters
+struct Param_NFP : Data
+{
+	explicit Param_NFP( int demidx, std::string title ): Data( demidx, title )
+	{
+		genRandomPoints();
+	}
+	int _mode = 0;
+
+	void genRandomPoints()
+	{
+		vpt.clear();
+/*		std::cout << "generating " << nbSegs << " segments\n";
+		vseg.clear();
+		vcol.clear();*/
+		int nbPts = 1.0*rand() / RAND_MAX * 40 + 10;
+		for( auto i=0; i<nbPts; i++ )
+		{
+			auto x = 1.0*rand() / RAND_MAX * (_imWidth-20) + 10;
+			auto y = 1.0*rand() / RAND_MAX * (_imHeight-20) + 10;
+			vpt.push_back( Point2d(x,y) );
+		}
+//		vcol = genRandomColors( nbSegs );
+	}
+};
+
+void action_NFP( void* param )
+{
+	auto& data = *reinterpret_cast<Param_NFP*>(param);
+	data.clearImage();
+	draw( data.img, data.vpt );
+	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	switch( data._mode )
+	{
+		case 0:
+		{
+			auto idx = findNearestPoint( data.pt_mouse, data.vpt );
+			Segment(data.vpt[idx], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
+		}
+		break;
+		case 1:
+		{
+			auto idx = findFarthestPoint( data.pt_mouse, data.vpt );
+			Segment(data.vpt[idx], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
+		}
+		break;
+		case 2:
+		{
+			auto pidx = findNearestFarthestPoint( data.pt_mouse, data.vpt );
+			Segment(data.vpt[pidx.first], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
+			Segment(data.vpt[pidx.second], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
+		}
+		break;
+		default: assert(0);
+	}
+
+	data.showImage();
+}
+
+void demo_NFP( int demidx )
+{
+	Param_NFP data( demidx, "Closest/Farthest Point" );
+	std::cout << "Demo " << demidx << ": Closest/Farthest Point\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._mode==2? data._mode=0: data._mode++; }, "switch mode (nearest/farthest/both)" );
+	kbloop.addKeyAction( 'b', [&](void*){ data.genRandomPoints(); }, "Re-generate random points" );
+
+	kbloop.addCommonAction( action_NFP );
+	action_NFP( &data );
+	data.setMouseCB( action_NFP );
+
+	kbloop.start( data );
+}
 
 //------------------------------------------------------------------
 /// Polyline union demo parameters
@@ -1507,9 +1582,10 @@ int main( int argc, const char** argv )
 
 	std::vector<std::function<void(int)>> v_demo{
 		demo_PolUnion, // polygon Union
-		demo_RI,   // rectangle intersection
+		demo_NFP,   // Nearest/Farthest Point
+		demo_RI,    // rectangle intersection
 		demo_CIR,
-		demo_CH,
+		demo_CH,    // Convex Hull
 		demo_SEG,
 		demo_B,
 		demo_ELL,

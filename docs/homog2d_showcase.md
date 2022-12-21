@@ -121,7 +121,14 @@ Random points, the corresponding Convex Hull and Bounding Box, and the extremum 
 
 * [Showcase 14](../misc/showcase/showcase14.cpp):
 <a name="sc14"></a>
-Two moving polygons, show their intersection points.
+Two moving polygons, shows their intersection points.
 
 ![showcase14](showcase/showcase14.gif)
+
+
+* [Showcase 15](../misc/showcase/showcase15.cpp):
+<a name="sc15"></a>
+A rotating circle, a bunch of random points, and the segment between the point and the nearest/farthest point of the set.
+
+![showcase15](showcase/showcase15.gif)
 

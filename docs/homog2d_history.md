@@ -16,6 +16,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch
   - fixed normalization for points and lines
   - added points at infinity tests
+  - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
