@@ -1414,8 +1414,9 @@ cout << "nearest point is " << vpts[pidx.first]
      << ", farthest point is " << vpts[pidx.second] << '\n';
 ```
 
-(you could of course call the two previous function ssequentially but at the cost of time.)
+(or you could of course call the two previous function sequentially.)
 
+[see showcase](homog2d_showcase.md#sc_15)
 
 ### 6.6 - Extracting data from sets/containers of primitives
 
