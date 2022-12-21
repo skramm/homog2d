@@ -5556,7 +5556,7 @@ getExtremePoint( CardDir dir, const T& t )
 //------------------------------------------------------------------
 namespace priv {
 
-using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
+//using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
 
 /// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
 /// Returns an index on \v vecPts corresponding on closest point to \c pt
@@ -5564,20 +5564,21 @@ template<typename FPT>
 size_t
 findClosestPoint(
 	const Point2d_<FPT>& pt,
-//	const std::vector<std::vector<Point2d_<FPT>>::const_iterator>& vecPts
-	const std::vector<ItPts>& vecPts
+
+	const std::vector<size_t>& vecIdx,
+	const std::vector<Point2d_<FPT>>& vecPts
 )
 {
+	assert( !vecIdx.empty() );
 	assert( !vecPts.empty() );
-	HOMOG2D_LOG( "size=" << vecPts.size() << " pt=" << pt << '\n');
-	for( const auto& itpt: vecPts )
-		std::cout << "It:" << *itpt << '\n';
+	assert( vecIdx[0] < vecPts.size() );
 
-	auto minDist = pt.distTo( *vecPts[0] );
+	auto minDist = pt.distTo( vecPts[vecIdx[0]] );
 	size_t resIdx = 0;
-	for( size_t i=1; i<vecPts.size(); i++ )
+	for( size_t i=1; i<vecIdx.size(); i++ )
 	{
-		auto currentDist = pt.distTo( *vecPts[i] );
+		assert( vecIdx[i] < vecPts.size() );
+		auto currentDist = pt.distTo( vecPts[vecIdx[i]] );
 		if( currentDist < minDist )
 		{
 			resIdx = i;
@@ -8793,7 +8794,7 @@ findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 	return resIdx;
 }
 //------------------------------------------------------------------
-/// Returns index of point in container \c cont that is the farthest to \c pt
+/// Returns a pair of indexes on point in container \c cont that are the nearest/farthest to \c pt
 template<typename FPT, typename T>
 std::pair<size_t,size_t>
 findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
@@ -9193,21 +9194,30 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
 
 
-	if( !p1.intersects(p2)() )
+	if( !p1.intersects(p2)() ) // if no intersection return the convex hull
 	{
+		if( p1.isInside(p2) )
+			return h2d::convexHull( p2 );
+		if( p2.isInside(p1) )
+			return h2d::convexHull( p1 );
+
 		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vout( p1.size() + p2.size() );
 		std::copy( std::begin( p1.getPts() ), std::end( p1.getPts() ), std::begin( vout ) );
 		std::copy( std::begin( p2.getPts() ), std::end( p2.getPts() ), std::begin( vout )+p1.size() );
 		return h2d::convexHull( vout );
 	}
-// step 1: identify all the intersection points
+
+// step 1: register all the intersection points in alliPts
 	auto c_seg = 0;
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
 
-	using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
-	std::vector<std::vector<ItPts>> vseg( p1.nbSegs() );  // one vector per segment of p1
+//	using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
+
+// vseg will hold for each segment of p1 a vector of iterators on the intersection points lying in alliPts
+	std::vector<std::vector<size_t>> vseg( p1.nbSegs() );  // one vector per segment of p1
 	auto it_vseg = std::begin( vseg );
 
+// this will store for each intersection point the segment index of p2 that it lies on
 	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
 
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
@@ -9231,7 +9241,7 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 				{
 					segmap[alliPts.size()] = ip2;
 					alliPts.push_back( inters.get() ); // add the point
-					it_vseg->push_back( alliPts.end()-1 ); // add to vector of current segment the index of the added point
+					it_vseg->push_back( alliPts.size()-1 ); // add to vector of current segment the index of the added point
 				}
 			}
 
@@ -9241,12 +9251,12 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 
 //	std::cout << "AFTER: #alliPts=" << alliPts.size() << "\n";
 	h2d::priv::printVector( alliPts, "allipts" );
-//	h2d::priv::printVector( vseg, "vseg" );
+	h2d::priv::printVector( vseg, "vseg" );
 
 
 // step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
-#if 1
-	std::vector<Point2d_<FPT>> vout{ p1.getPoint(0) };
+
+	std::vector<Point2d_<FPT>> vout;//{ p1.getPoint(0) };
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
 		vout.push_back( p1.getPoint(ip1) );
@@ -9258,9 +9268,21 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		if( vseg[ip1].size() != 0 )
 		{
 			std::cout << " -has #inters=" << vseg[ip1].size() << "\n";
+			size_t itPtIdx = 0; // dummy value
 // among all the intersection points, find the one closest to the current point
-			auto closestIdx = priv::findClosestPoint( currentPt, vseg[ip1] );
-
+			if( vseg[ip1].size() > 1 ) // if more than 1 intersection point on this segment
+			{
+				itPtIdx = priv::findClosestPoint( currentPt, vseg[ip1], alliPts );
+			}
+			else
+			{
+				itPtIdx = vseg[ip1].at(0);
+			}
+			auto p2_seg = segmap[itPtIdx];
+			std::cout << " -itPtIdx=" << itPtIdx << " p2_seg=" << p2_seg << '\n';
+			auto seg2 = p2.getSegment( p2_seg );
+			std::cout << " -seg2=" << seg2 << '\n';
+			vout.push_back( alliPts[itPtIdx] );
 		}
 		else
 		{
@@ -9268,10 +9290,8 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		}
 	}
 	return PolylineBase<type::IsClosed,FPT>(vout);
-#endif
-
-	return PolylineBase<type::IsClosed,FPT>();
 }
+
 } // namespace base
 
 /////////////////////////////////////////////////////////////////////////////

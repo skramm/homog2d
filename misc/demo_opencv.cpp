@@ -1533,23 +1533,39 @@ struct Param_polUnion : Data
 		reset();
 		vpt = std::vector<Point2d>{ {110,45}, {150,35}, {210,190}, {75,240} };
 		_poly2.set( vpt );
+
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imHeight, _imWidth );
+
+	}
+	void showImage()
+	{
+		img.show( win1 );
+		img2.show( win2 );
+	}
+	void clearImage()
+	{
+		img.clear();
+		img2.clear();
 	}
 
+	img::Image<cv::Mat> img2;
+	std::string win2 = "Union polygon";
 	CPolyline _poly1, _poly2;
-
 };
 
 void action_polUnion( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polUnion*>(param);
 	data.clearImage();
-	data._poly1.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
+	data._poly1.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints().showIndex() );
 	data._poly2.set( data.vpt );
-	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
+	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints().showIndex() );
 
 	auto pol = data._poly1.unionPoly( data._poly2 );
 //	std::cout << "pol=" << pol << "\n";
-	pol.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
+	pol.draw( data.img2, img::DrawParams().setColor(0,0,250).showPoints().showIndex() );
 	data.showImage();
 }
 
