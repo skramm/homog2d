@@ -2889,6 +2889,18 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 		std::cout << elem << "-";
 	std::cout << '\n';
 }
+template<typename T1,typename T2>
+void printMap( const std::map<T1,T2>& m, std::string msg=std::string() )
+{
+	std::cout << "--------------------------------- \n";
+	std::cout << "std::map: ";
+	if( !msg.empty() )
+		std::cout << msg;
+	std::cout << " #=" << m.size() << '\n';
+	for(const auto& it: m )
+		std::cout << " -" << it.first << "-" << it.second << '\n';
+	std::cout << "--------------------------------- \n";
+}
 template<typename T,size_t N>
 void printArray( const std::array<T,N>& v, std::string msg=std::string() )
 {
@@ -5585,6 +5597,7 @@ findClosestPoint(
 			minDist = currentDist;
 		}
 	}
+	return resIdx;
 }
 
 } // namespace priv
@@ -9060,7 +9073,7 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
     if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
-		return 0;  // collinear
+		return 0;  // colinear
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
 }
 //------------------------------------------------------------------
@@ -9164,6 +9177,15 @@ convexHull( const base::PolylineBase<CT,FPT>& input )
 	return convexHull( input.getPts() );
 }
 
+//------------------------------------------------------------------
+/// Return convex hull (member function implementation)
+template<typename CT,typename FPT>
+CPolyline_<FPT>
+base::PolylineBase<CT,FPT>::convexHull() const
+{
+	return h2d::convexHull( *this );
+}
+
 
 namespace base {
 
@@ -9173,10 +9195,12 @@ using IntPointIdx = size_t;
 using SegmentIdx  = size_t;
 
 //------------------------------------------------------------------
+/// Holds data used to compute the merging of two polygons
 struct PolyIntersectData
 {
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
 
+// these vectors hold for each segment the set of intersection points on that segment
 	std::vector<std::vector<size_t>> vseg1; //( p1.nbSegs() );  // one vector per segment of p1
 	std::vector<std::vector<size_t>> vseg2; //( p2.nbSegs() );  // one vector per segment of p1
 
@@ -9189,41 +9213,53 @@ struct PolyIntersectData
 		vseg1.resize( nbPtsP1 );
 		vseg2.resize( nbPtsP2 );
 	}
-	void addIndexes( size_t ip1, size_t ip2 )
+	void addIntersection( size_t ip1, size_t ip2, Point2d_<HOMOG2D_INUMTYPE> pt )
 	{
-		segmap_p1[alliPts.size()] = ip1;
-		segmap_p2[alliPts.size()] = ip2;
-	}
-
-	void addPoint( Point2d_<HOMOG2D_INUMTYPE> pt )
-	{
+		assert( ip1<vseg1.size() );
+		assert( ip2<vseg2.size() );
+		segmap_p1[size()] = ip1;
+		segmap_p2[size()] = ip2;
+		vseg1[ip1].push_back( size() );
+		vseg2[ip2].push_back( size() );
 		alliPts.push_back( pt );
 	}
-
+	size_t size() const
+	{
+		return alliPts.size();
+	}
+	void print() const
+	{
+		std::cout << "PolyIntersectData:\n";
+		h2d::priv::printVector( alliPts, "alliPts" );
+		h2d::priv::printVector( vseg1, "vseg1" );
+		h2d::priv::printVector( vseg2, "vseg2" );
+		h2d::priv::printMap( segmap_p1, "segmap_p1" );
+		h2d::priv::printMap( segmap_p2, "segmap_p2" );
+	}
 };
 
 //------------------------------------------------------------------
-template<typename PLT,typename FPT>
+//template<typename PLT,typename FPT>
+template<typename FPT>
 PolyIntersectData
 buildPolyIntersectData(
 	const PolylineBase<type::IsClosed,FPT>& p1,
 	const PolylineBase<type::IsClosed,FPT>& p2
 )
 {
+	HOMOG2D_START;
+
 	PolyIntersectData data( p1.size(), p2. size() );
 
-	auto it_vseg1 = std::begin( data.vseg1 );
-	auto it_vseg2 = std::begin( data.vseg2 );
-
-// this will store for each intersection point the segment index of p2 that it lies on
 
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
 		const auto& seg1 = p1.getSegment( ip1 );
 
-		std::cout << "S1: Segment p1: " << ip1 << ", currently nbIntersPts=" << data.alliPts.size() << '\n';
+		std::cout << "ip1: " << ip1 << ", #nbIntersPts=" << data.size() << '\n';
 		for( size_t ip2=0; ip2<p2.nbSegs(); ip2++ )
 		{
+			std::cout << "ip2: " << ip2 << ", #nbIntersPts=" << data.size() << '\n';
 			const auto& seg2 = p2.getSegment( ip2 );
 			auto li1 = seg1.getLine();
 			auto li2 = seg2.getLine();
@@ -9235,22 +9271,33 @@ buildPolyIntersectData(
 			{
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
-				{
-					data.addIndexes( ip1, ip2 );
-					it_vseg1->at( ip1 ) = data.alliPts.size(); // add to vector of current segment the index of the added point
-					it_vseg2->at( ip2 ) = data.alliPts.size(); // add to vector of current segment the index of the added point
-					data.addPoint( inters.get() ); // add the point
-				}
+					data.addIntersection( ip1, ip2, inters.get() ); // add the point
 			}
 		}
-		it_vseg1++; // switch to next segment
 	}
-
 	return data;
 }
 
 //------------------------------------------------------------------
-template<typename PLT,typename FPT>
+/// Returns the first point of \c p1 that is outside \c p2
+template<typename FPT>
+size_t
+firstIdxPointOutside(
+	const PolylineBase<type::IsClosed,FPT>& p1,
+	const PolylineBase<type::IsClosed,FPT>& p2
+)
+{
+	for( size_t i=0; i<p1.size(); i++ )
+		if( !p1.getPoint(i). isInside( p2 ) )
+			return i;
+// should never happen, as this function is called once we made sure that p1
+// is not entirely inside p2
+	assert(0);
+}
+
+//------------------------------------------------------------------
+//template<typename PLT,typename FPT>
+template<typename FPT>
 std::vector<Point2d_<FPT>>
 buildUnionPolygon(
 	const PolyIntersectData&                data,
@@ -9258,7 +9305,7 @@ buildUnionPolygon(
 	const PolylineBase<type::IsClosed,FPT>& p2
 )
 {
-// first, create some pointers so that its easy to switch
+// first, create some pointers so that its easy to switch parsing from one polygon to the other
 	const PolylineBase<type::IsClosed,FPT>* pA      = &p1;
 	const PolylineBase<type::IsClosed,FPT>* pB      = &p2;
 	const std::vector<std::vector<size_t>>* pvseg_A = &data.vseg1;
@@ -9267,56 +9314,72 @@ buildUnionPolygon(
 	const std::map<IntPointIdx,SegmentIdx>* pmap_B  = &data.segmap_p2;
 
 	std::vector<Point2d_<FPT>> vout;
-	size_t idxA=0;
+	auto idx = firstIdxPointOutside( *pA, *pB );
+
 	bool done = false;
+	int c=0;
 	do
 	{
-		std::cout << "S2: Segment: " << idxA << "\n";
-		const auto& currentPt = pA->getPoint( idxA );
-		const auto& seg       = pA->getSegment( idxA );
+		const auto& currentPt = pA->getPoint( idx );
+		std::cout << "START c=" << c <<  ", Index=" << idx << " pt=" << currentPt << "\n";
+		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size()  << '\n';
 		vout.push_back( currentPt );
 
-		if( pvseg_A->at(idxA).size() != 0 )
+		if( pvseg_A->at(idx).size() != 0 )
 		{
-			std::cout << " -has #inters=" << pvseg_A->at(idxA).size()  << "\n";
+			std::cout << " -has #inters=" << pvseg_A->at(idx).size()  << "\n";
 			size_t itPtIdx = 0; // dummy value
+
 // among all the intersection points, find the one closest to the current point
-			if( pvseg_A->at(idxA).size() > 1 ) // if more than 1 intersection point on this segment
+			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
-				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idxA), data.alliPts );
+				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
 			}
 			else
 			{
-				itPtIdx = pvseg_A->at(idxA).at(0);
+				itPtIdx = pvseg_A->at(idx).at(0);
 			}
 			auto idxB = pmap_B->at(itPtIdx);
-			std::cout << " -itPtIdx=" << itPtIdx << " p2_seg=" << idxB << '\n';
-			auto segB = pB->getSegment( idxB );
-			std::cout << " -segB=" << segB << '\n';
+			std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << '\n';
+
+// add intersection point
+			std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << '\n';
 			vout.push_back( data.alliPts[itPtIdx] );
 
+// select which point of pb is the next one to consider
+			auto pptsB = pB->getSegment( idxB ).getPts();
+			std::cout << " -segB: " << pptsB.first << "-" << pptsB.second << '\n';
+
+			auto ptx = currentPt;
+			auto pty = data.alliPts[itPtIdx];
+			auto orient1 = h2d::priv::chull::orientation( ptx, pty, pptsB.first );
+			auto orient2 = h2d::priv::chull::orientation( ptx, pty, pptsB.second );
+			assert( orient1 != 0 && orient2 != 0 );
+			if( orient1 == 1 )
+				idx = pmap_B->at(idx);
+			else
+				idx = pmap_B->at(idx+1);
+			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint( idx) << '\n';
+
+// reverse
+			std::swap( pA, pB );
+			std::swap( pmap_A, pmap_B );
+			std::swap( pvseg_A, pvseg_B );
 		}
 		else
 		{
 			std::cout << " -No intersection points on this segment\n";
-			idxA++;
+			idx++;
 		}
+		c++;
 	}
-	while( !done );
+	while( !done && c<20 );
 	return vout;
 }
 
 } // namespace priv
 
 //namespace base {
-//------------------------------------------------------------------
-/// Return convex hull (member function implementation)
-template<typename CT,typename FPT>
-CPolyline_<FPT>
-base::PolylineBase<CT,FPT>::convexHull() const
-{
-	return h2d::convexHull( *this );
-}
 
 //------------------------------------------------------------------
 /// WIP: attempt to compute union of two polygons
@@ -9347,8 +9410,9 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 
 // step 1: register all the intersection points in alliPts
 	auto pid = priv::buildPolyIntersectData( p1, p2 );
+	pid.print();
 
-//	std::cout << "AFTER: #alliPts=" << alliPts.size() << "\n";
+	std::cout << "AFTER: #alliPts=" << pid.alliPts.size() << "\n";
 //	h2d::priv::printVector( alliPts, "allipts" );
 //	h2d::priv::printVector( vseg, "vseg" );
 

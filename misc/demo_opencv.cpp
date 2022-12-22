@@ -1524,14 +1524,10 @@ struct Param_polUnion : Data
 {
 	explicit Param_polUnion( int demidx, std::string title ): Data( demidx, title )
 	{
-		_poly1.set(
-			std::vector<Point2d>{
-				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
-			}
-		);
-		_poly1.translate( 180,180); // so it lies in the window
+		_poly1.set( std::vector<Point2d>{ {20,20}, {100,20}, {100,100}, {20,100} } );
+//		_poly1.translate( 180,180); // so it lies in the window
 		reset();
-		vpt = std::vector<Point2d>{ {110,45}, {150,35}, {210,190}, {75,240} };
+		vpt = std::vector<Point2d>{ {50,50}, {150,50}, {150,150}, {50,150} };
 		_poly2.set( vpt );
 
 		cv::namedWindow( win2 );
