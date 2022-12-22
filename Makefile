@@ -266,7 +266,7 @@ BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $
 #=======================================================================
 
 DOC_MD_PAGES=$(wildcard docs/*.md)
-BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/$(DOX_FILE) README.md $(DOC_MD_PAGES)
 	@mkdir -p BUILD/html
 	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 

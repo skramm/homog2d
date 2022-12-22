@@ -9208,17 +9208,20 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	}
 
 // step 1: register all the intersection points in alliPts
-	auto c_seg = 0;
+
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
 
 //	using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
 
-// vseg will hold for each segment of p1 a vector of iterators on the intersection points lying in alliPts
-	std::vector<std::vector<size_t>> vseg( p1.nbSegs() );  // one vector per segment of p1
-	auto it_vseg = std::begin( vseg );
+// vseg will hold for each segment of p1 a vector of indexes on the intersection points lying in alliPts
+	std::vector<std::vector<size_t>> vseg1( p1.nbSegs() );  // one vector per segment of p1
+	std::vector<std::vector<size_t>> vseg2( p2.nbSegs() );  // one vector per segment of p1
+	auto it_vseg1 = std::begin( vseg1 );
+	auto it_vseg2 = std::begin( vseg2 );
 
 // this will store for each intersection point the segment index of p2 that it lies on
-	std::map<IntPointIdx,SegmentIdx> segmap; // for p2
+	std::map<IntPointIdx,SegmentIdx> segmap_p1; // for p1
+	std::map<IntPointIdx,SegmentIdx> segmap_p2; // for p2
 
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
@@ -9239,12 +9242,13 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
 				{
-					segmap[alliPts.size()] = ip2;
+					segmap_p1[alliPts.size()] = ip1;
+					segmap_p2[alliPts.size()] = ip2;
+					it_vseg1->push_back( alliPts.size() ); // add to vector of current segment the index of the added point
+					it_vseg2->push_back( alliPts.size() ); // add to vector of current segment the index of the added point
 					alliPts.push_back( inters.get() ); // add the point
-					it_vseg->push_back( alliPts.size()-1 ); // add to vector of current segment the index of the added point
 				}
 			}
-
 		}
 		it_vseg++; // switch to next segment
 	}
@@ -9256,39 +9260,51 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 
 // step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
 
-	std::vector<Point2d_<FPT>> vout;//{ p1.getPoint(0) };
-	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
+// first, create some pointers so that its easy to switch
+	const PolylineBase<type::IsClosed,FPT2>* pA = &p1;
+	const PolylineBase<type::IsClosed,FPT2>* pB = &p2;
+	const std::vector<std::vector<size_t>>* pvseg_A = &vseg1;
+	const std::vector<std::vector<size_t>>* pvseg_B = &vseg2;
+	const std::map<IntPointIdx,SegmentIdx> pmap_A = &segmap_p1;
+	const std::map<IntPointIdx,SegmentIdx> pmap_B = &segmap_p2;
+
+	std::vector<Point2d_<FPT>> vout;
+	size_t idxA=0;
+	bool done = false;
+	do
 	{
-		vout.push_back( p1.getPoint(ip1) );
+		std::cout << "S2: Segment: " << idxA << \n";
+		const auto& currentPt = pA->getPoint( idxA );
+		const auto& seg       = pA->getSegment( idxA );
+		vout.push_back( currentPt );
 
-		const auto& seg1      = p1.getSegment( ip1 );
-		const auto& currentPt = p1.getPoint( ip1 );
-
-		std::cout << "S2: Segment p1: " << ip1 << ", currently nbIntersPts=" << alliPts.size() << '\n';
-		if( vseg[ip1].size() != 0 )
+		if( pvseg_A->at(idxA).size() != 0 )
 		{
-			std::cout << " -has #inters=" << vseg[ip1].size() << "\n";
+			std::cout << " -has #inters=" << pvseg_A->at(idxA).size()  << "\n";
 			size_t itPtIdx = 0; // dummy value
 // among all the intersection points, find the one closest to the current point
-			if( vseg[ip1].size() > 1 ) // if more than 1 intersection point on this segment
+			if( pvseg_A->at(idxA).size() > 1 ) // if more than 1 intersection point on this segment
 			{
-				itPtIdx = priv::findClosestPoint( currentPt, vseg[ip1], alliPts );
+				itPtIdx = priv::findClosestPoint( currentPt, pvseg_A->at(idxA), alliPts );
 			}
 			else
 			{
-				itPtIdx = vseg[ip1].at(0);
+				itPtIdx = pvseg_A->at(idxA).at(0);
 			}
-			auto p2_seg = segmap[itPtIdx];
-			std::cout << " -itPtIdx=" << itPtIdx << " p2_seg=" << p2_seg << '\n';
-			auto seg2 = p2.getSegment( p2_seg );
-			std::cout << " -seg2=" << seg2 << '\n';
+			auto idxB = segmap_p1->at(itPtIdx);
+			std::cout << " -itPtIdx=" << itPtIdx << " p2_seg=" << idxB << '\n';
+			auto segB = pB->getSegment( idxB );
+			std::cout << " -segB=" << segB << '\n';
 			vout.push_back( alliPts[itPtIdx] );
+
 		}
 		else
 		{
 			std::cout << " -No intersection points on this segment\n";
+			idxA++;
 		}
 	}
+	while( !done );
 	return PolylineBase<type::IsClosed,FPT>(vout);
 }
 
