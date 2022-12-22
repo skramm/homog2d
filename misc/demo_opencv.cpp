@@ -1525,9 +1525,14 @@ struct Param_polUnion : Data
 	explicit Param_polUnion( int demidx, std::string title ): Data( demidx, title )
 	{
 		_poly1.set( std::vector<Point2d>{ {20,20}, {100,20}, {100,100}, {20,100} } );
-//		_poly1.translate( 180,180); // so it lies in the window
-		reset();
-		vpt = std::vector<Point2d>{ {50,50}, {150,50}, {150,150}, {50,150} };
+
+//		vpt = std::vector<Point2d>{ {50,50}, {150,50}, {200,100}, {150,150}, {50,150} };
+//		vpt = std::vector<Point2d>{ {50,50}, {180,30}, {150,80} };
+
+// one of the points lying on segment of other polygon
+		vpt = std::vector<Point2d>{ {100,50}, {180,30}, {150,80} };
+
+
 		_poly2.set( vpt );
 
 		cv::namedWindow( win2 );

@@ -154,7 +154,7 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifndef HOMOG2D_THR_ZERO_ORTHO_DIST
-	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-14
+	#define HOMOG2D_THR_ZERO_ORTHO_DIST 1E-8
 #endif
 
 // default value: 1 thousand of a radian (tan = 0.001 too)
@@ -3651,7 +3651,6 @@ public:
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
-		HOMOG2D_START;
 		return impl_isInsidePoly( poly, detail::BaseHelper<LP>() );
 	}
 
@@ -9205,6 +9204,8 @@ struct PolyIntersectData
 	std::vector<std::vector<size_t>> vseg2; //( p2.nbSegs() );  // one vector per segment of p1
 
 // this will store for each intersection point the segment index of p2 that it lies on
+// -key: intersection point index
+// -value: segment (point, actually) index of the polygon
 	std::map<IntPointIdx,SegmentIdx> segmap_p1; // for p1
 	std::map<IntPointIdx,SegmentIdx> segmap_p2; // for p2
 
@@ -9251,30 +9252,43 @@ buildPolyIntersectData(
 
 	PolyIntersectData data( p1.size(), p2. size() );
 
-
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
 		const auto& seg1 = p1.getSegment( ip1 );
 
-		std::cout << "ip1: " << ip1 << ", #nbIntersPts=" << data.size() << '\n';
+//		std::cout << "ip1: " << ip1 << ", #nbIntersPts=" << data.size() << '\n';
 		for( size_t ip2=0; ip2<p2.nbSegs(); ip2++ )
 		{
-			std::cout << "ip2: " << ip2 << ", #nbIntersPts=" << data.size() << '\n';
+//			std::cout << "ip2: " << ip2 << ", #nbIntersPts=" << data.size() << '\n';
 			const auto& seg2 = p2.getSegment( ip2 );
 			auto li1 = seg1.getLine();
 			auto li2 = seg2.getLine();
 			if( li1 == li2 )
 			{
-				std::cout << "Joined segments!\n";
+				std::cout << "Joined segments!\n"; // TODO need to process that case!
 			}
 			else
 			{
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
-					data.addIntersection( ip1, ip2, inters.get() ); // add the point
+				{
+					const auto& pt = inters.get();
+					const auto& ppts1 = seg1.getPts();
+					const auto& ppts2 = seg2.getPts();
+// add intersection point only if its not one one the four points of the segments
+					if(
+						pt.distTo(    ppts1.first  ) > thr::nullDistance()
+						&& pt.distTo( ppts1.second ) > thr::nullDistance()
+						&& pt.distTo( ppts2.first  ) > thr::nullDistance()
+						&& pt.distTo( ppts2.second ) > thr::nullDistance()
+					)
+						data.addIntersection( ip1, ip2, inters.get() ); // add the point
+				}
 			}
 		}
 	}
+	if( data.size()%2 != 0 )
+		HOMOG2D_THROW_ERROR_1( "computed odd number of intersections:" << data.size() << ", must be even" );
 	return data;
 }
 
@@ -9313,15 +9327,20 @@ buildUnionPolygon(
 	const std::map<IntPointIdx,SegmentIdx>* pmap_A  = &data.segmap_p1;
 	const std::map<IntPointIdx,SegmentIdx>* pmap_B  = &data.segmap_p2;
 
+// the output set of points
 	std::vector<Point2d_<FPT>> vout;
-	auto idx = firstIdxPointOutside( *pA, *pB );
 
+// get the first point of p1 that is outside of p2
+	auto idx = firstIdxPointOutside( p1, p2 );
+
+
+	bool iterateP1 = true;
 	bool done = false;
 	int c=0;
 	do
 	{
 		const auto& currentPt = pA->getPoint( idx );
-		std::cout << "START c=" << c <<  ", Index=" << idx << " pt=" << currentPt << "\n";
+		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << "\n";
 		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size()  << '\n';
 		vout.push_back( currentPt );
 
@@ -9347,31 +9366,41 @@ buildUnionPolygon(
 			vout.push_back( data.alliPts[itPtIdx] );
 
 // select which point of pb is the next one to consider
-			auto pptsB = pB->getSegment( idxB ).getPts();
-			std::cout << " -segB: " << pptsB.first << "-" << pptsB.second << '\n';
+			auto ptB1 = pB->getPoint( idxB );
+			auto ptB2 = pB->getPoint( idxB==pB->size()-1?0:idxB+1 );
+			std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << '\n';
 
 			auto ptx = currentPt;
 			auto pty = data.alliPts[itPtIdx];
-			auto orient1 = h2d::priv::chull::orientation( ptx, pty, pptsB.first );
-			auto orient2 = h2d::priv::chull::orientation( ptx, pty, pptsB.second );
-			assert( orient1 != 0 && orient2 != 0 );
-			if( orient1 == 1 )
-				idx = pmap_B->at(idx);
-			else
-				idx = pmap_B->at(idx+1);
-			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint( idx) << '\n';
+			std::cout << " ptx=" << ptx << " pty=" << pty << "\n";
+//				<< "ptz=" << pptsB.first << " or " << pptsB.second << '\n';
 
-// reverse
+			auto orient1 = h2d::priv::chull::orientation( ptx, pty, ptB1 );
+			auto orient2 = h2d::priv::chull::orientation( ptx, pty, ptB2 );
+			assert( orient1 != 0 && orient2 != 0 );
+/*			if( orient1 == 1 )
+				idx = pmap_B->at(itPtIdx);
+			else
+				idx = pmap_B->at(itPtIdx)+1;*/
+			if( orient1 == 1 )
+				idx = idxB;
+			else
+				idx = idxB==pB->size()-1 ? 0 : idxB+1;
+			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << '\n';
+
+// reverse pointers, to iterate on the other polygon
 			std::swap( pA, pB );
 			std::swap( pmap_A, pmap_B );
 			std::swap( pvseg_A, pvseg_B );
+			iterateP1 = !iterateP1;
 		}
 		else
 		{
-			std::cout << " -No intersection points on this segment\n";
 			idx++;
+			std::cout << " -No intersection points on this segment, switch idx to " << idx << "\n";
 		}
-		c++;
+		if (iterateP1 && idx == p1.size() )
+			done = true;
 	}
 	while( !done && c<20 );
 	return vout;
@@ -9408,14 +9437,9 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		return h2d::convexHull( vout );
 	}
 
-// step 1: register all the intersection points in alliPts
+// step 1: register all the intersection points
 	auto pid = priv::buildPolyIntersectData( p1, p2 );
 	pid.print();
-
-	std::cout << "AFTER: #alliPts=" << pid.alliPts.size() << "\n";
-//	h2d::priv::printVector( alliPts, "allipts" );
-//	h2d::priv::printVector( vseg, "vseg" );
-
 
 // step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
 	auto vout = priv::buildUnionPolygon( pid, p1, p2 );
