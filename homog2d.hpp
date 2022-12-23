@@ -73,10 +73,11 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
+//		<< std::scientific << std::setprecision(10)
+
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) \
 		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
-		<< std::scientific << std::setprecision(10) \
 		<< a << std::endl;
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -5570,13 +5571,12 @@ namespace priv {
 //using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
 
 /// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
-/// Returns an index on \v vecPts corresponding on closest point to \c pt
+/// Returns an index on \c vecPts corresponding on closest point to \c pt
 template<typename FPT>
 size_t
 findClosestPoint(
-	const Point2d_<FPT>& pt,
-
-	const std::vector<size_t>& vecIdx,
+	const Point2d_<FPT>&              pt,
+	const std::vector<size_t>&        vecIdx,
 	const std::vector<Point2d_<FPT>>& vecPts
 )
 {
@@ -5586,14 +5586,17 @@ findClosestPoint(
 
 	auto minDist = pt.distTo( vecPts[vecIdx[0]] );
 	size_t resIdx = 0;
+//	HOMOG2D_LOG( "min=" << minDist << " resIdx=" << resIdx );
 	for( size_t i=1; i<vecIdx.size(); i++ )
 	{
 		assert( vecIdx[i] < vecPts.size() );
 		auto currentDist = pt.distTo( vecPts[vecIdx[i]] );
+//		HOMOG2D_LOG( "i=" << i << " currentDist=" << currentDist );
 		if( currentDist < minDist )
 		{
-			resIdx = i;
+			resIdx = vecIdx[i];
 			minDist = currentDist;
+//			HOMOG2D_LOG( "new min=" << minDist << " resIdx=" << resIdx );
 		}
 	}
 	return resIdx;
@@ -9352,7 +9355,12 @@ buildUnionPolygon(
 // among all the intersection points, find the one closest to the current point
 			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
+/*				std::cout << "FCP: search for closest point to: " << currentPt << "\n";
+				for( const auto& i: pvseg_A->at(idx) )
+					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << "dist=" << currentPt.distTo(data.alliPts.at(i)) << '\n';
+*/
 				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
+				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")\n";
 			}
 			else
 			{
@@ -9382,7 +9390,7 @@ buildUnionPolygon(
 				idx = pmap_B->at(itPtIdx);
 			else
 				idx = pmap_B->at(itPtIdx)+1;*/
-			if( orient1 == 1 )
+			if( orient1 == -1 )
 				idx = idxB;
 			else
 				idx = idxB==pB->size()-1 ? 0 : idxB+1;
@@ -9422,7 +9430,6 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	if( !this->isPolygon() )
 		HOMOG2D_THROW_ERROR_1( "object is not a polygon" );
 	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
-
 
 	if( !p1.intersects(p2)() ) // if no intersection, return the convex hull
 	{

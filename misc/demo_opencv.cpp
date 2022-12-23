@@ -1530,8 +1530,11 @@ struct Param_polUnion : Data
 //		vpt = std::vector<Point2d>{ {50,50}, {180,30}, {150,80} };
 
 // one of the points lying on segment of other polygon
-		vpt = std::vector<Point2d>{ {100,50}, {180,30}, {150,80} };
+//		vpt = std::vector<Point2d>{ {100,50}, {180,30}, {150,80} };
 
+// one going through another
+		_poly1 = CPolyline( FRect(100,100,200,200) );
+		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
 
 		_poly2.set( vpt );
 
