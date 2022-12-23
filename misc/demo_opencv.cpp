@@ -1524,7 +1524,7 @@ struct Param_polUnion : Data
 {
 	explicit Param_polUnion( int demidx, std::string title ): Data( demidx, title )
 	{
-		_poly1.set( std::vector<Point2d>{ {20,20}, {100,20}, {100,100}, {20,100} } );
+//		_poly1.set( std::vector<Point2d>{ {20,20}, {100,20}, {100,100}, {20,100} } );
 
 //		vpt = std::vector<Point2d>{ {50,50}, {150,50}, {200,100}, {150,150}, {50,150} };
 //		vpt = std::vector<Point2d>{ {50,50}, {180,30}, {150,80} };
@@ -1534,7 +1534,8 @@ struct Param_polUnion : Data
 
 // one going through another
 		_poly1 = CPolyline( FRect(100,100,200,200) );
-		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
+//		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
+		vpt = std::vector<Point2d>{ {150,150}, {220,220}, {250,120} };
 
 		_poly2.set( vpt );
 

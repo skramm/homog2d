@@ -5585,13 +5585,13 @@ findClosestPoint(
 	assert( vecIdx[0] < vecPts.size() );
 
 	auto minDist = pt.distTo( vecPts[vecIdx[0]] );
-	size_t resIdx = 0;
+	size_t resIdx = vecIdx[0];
 //	HOMOG2D_LOG( "min=" << minDist << " resIdx=" << resIdx );
 	for( size_t i=1; i<vecIdx.size(); i++ )
 	{
 		assert( vecIdx[i] < vecPts.size() );
 		auto currentDist = pt.distTo( vecPts[vecIdx[i]] );
-//		HOMOG2D_LOG( "i=" << i << " currentDist=" << currentDist );
+//		HOMOG2D_LOG( "i=" << i << " resIdx=" << resIdx << " currentDist=" << currentDist );
 		if( currentDist < minDist )
 		{
 			resIdx = vecIdx[i];
@@ -5599,6 +5599,7 @@ findClosestPoint(
 //			HOMOG2D_LOG( "new min=" << minDist << " resIdx=" << resIdx );
 		}
 	}
+//	HOMOG2D_LOG( "done, returns " << resIdx );
 	return resIdx;
 }
 
@@ -9240,10 +9241,30 @@ struct PolyIntersectData
 		h2d::priv::printMap( segmap_p1, "segmap_p1" );
 		h2d::priv::printMap( segmap_p2, "segmap_p2" );
 	}
+
+/// Needed to remove duplicates that will occur
+/// \note if nb of pts large enough it **could** be faster to switch first to a set, see https://stackoverflow.com/a/1041939/193789
+	void postProcess()
+	{
+		sort( alliPts.begin(), alliPts.end() );
+		alliPts.erase(
+			unique(
+				alliPts.begin(),
+				alliPts.end(),
+				[]
+				( const Point2d_<HOMOG2D_INUMTYPE>& pt1, const Point2d_<HOMOG2D_INUMTYPE>& pt2 )
+				{
+					auto b= dist(pt1,pt2) < thr::nullDistance();
+//					std::cout << "LAMBDA pt1=" << pt1 << " pt2=" << pt2 << " return:" << b << '\n';
+					return b;
+				}
+			),
+			alliPts.end()
+		);
+	}
 };
 
 //------------------------------------------------------------------
-//template<typename PLT,typename FPT>
 template<typename FPT>
 PolyIntersectData
 buildPolyIntersectData(
@@ -9274,22 +9295,13 @@ buildPolyIntersectData(
 			{
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
-				{
-					const auto& pt = inters.get();
-					const auto& ppts1 = seg1.getPts();
-					const auto& ppts2 = seg2.getPts();
-// add intersection point only if its not one one the four points of the segments
-					if(
-						pt.distTo(    ppts1.first  ) > thr::nullDistance()
-						&& pt.distTo( ppts1.second ) > thr::nullDistance()
-						&& pt.distTo( ppts2.first  ) > thr::nullDistance()
-						&& pt.distTo( ppts2.second ) > thr::nullDistance()
-					)
-						data.addIntersection( ip1, ip2, inters.get() ); // add the point
-				}
+					data.addIntersection( ip1, ip2, inters.get() ); // add the point
 			}
 		}
 	}
+//	data.print();
+	data.postProcess();
+	data.print();
 	if( data.size()%2 != 0 )
 		HOMOG2D_THROW_ERROR_1( "computed odd number of intersections:" << data.size() << ", must be even" );
 	return data;
@@ -9343,48 +9355,51 @@ buildUnionPolygon(
 	do
 	{
 		const auto& currentPt = pA->getPoint( idx );
-		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << "\n";
-		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size()  << '\n';
+		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << std::endl;
+		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
 		vout.push_back( currentPt );
 
 		if( pvseg_A->at(idx).size() != 0 )
 		{
-			std::cout << " -has #inters=" << pvseg_A->at(idx).size()  << "\n";
+			std::cout << " -has #inters=" << pvseg_A->at(idx).size() << std::endl;
 			size_t itPtIdx = 0; // dummy value
 
 // among all the intersection points, find the one closest to the current point
 			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
-/*				std::cout << "FCP: search for closest point to: " << currentPt << "\n";
+				std::cout << "FCP: search for closest point to: " << currentPt << std::endl;
 				for( const auto& i: pvseg_A->at(idx) )
-					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << "dist=" << currentPt.distTo(data.alliPts.at(i)) << '\n';
-*/
+					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << " dist=" << currentPt.distTo(data.alliPts.at(i)) << std::endl;
+
 				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
-				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")\n";
+				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")" << std::endl;
 			}
 			else
 			{
+				std::cout << " -Only 1 inters" << std::endl;
 				itPtIdx = pvseg_A->at(idx).at(0);
 			}
 			auto idxB = pmap_B->at(itPtIdx);
-			std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << '\n';
+			std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
 
 // add intersection point
-			std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << '\n';
+			std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << std::endl;
 			vout.push_back( data.alliPts[itPtIdx] );
 
 // select which point of pb is the next one to consider
 			auto ptB1 = pB->getPoint( idxB );
 			auto ptB2 = pB->getPoint( idxB==pB->size()-1?0:idxB+1 );
-			std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << '\n';
+			std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << std::endl;
 
 			auto ptx = currentPt;
 			auto pty = data.alliPts[itPtIdx];
-			std::cout << " ptx=" << ptx << " pty=" << pty << "\n";
+			std::cout << " ptx=" << ptx << " pty=" << pty << std::endl;
 //				<< "ptz=" << pptsB.first << " or " << pptsB.second << '\n';
 
 			auto orient1 = h2d::priv::chull::orientation( ptx, pty, ptB1 );
 			auto orient2 = h2d::priv::chull::orientation( ptx, pty, ptB2 );
+			std::cout << " orient1=" << orient1 << " orient2=" << orient2 << std::endl;
+
 			assert( orient1 != 0 && orient2 != 0 );
 /*			if( orient1 == 1 )
 				idx = pmap_B->at(itPtIdx);
@@ -9394,7 +9409,7 @@ buildUnionPolygon(
 				idx = idxB;
 			else
 				idx = idxB==pB->size()-1 ? 0 : idxB+1;
-			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << '\n';
+			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << std::endl;
 
 // reverse pointers, to iterate on the other polygon
 			std::swap( pA, pB );
