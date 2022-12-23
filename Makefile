@@ -251,17 +251,23 @@ BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@echo "Building $<"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
-# build source file
+# build source file (for files starting with 'frect')
 BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
 	@echo "generating $<"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_frect_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
-# build source file
+# build source file (for files starting with 'polyline')
 BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx
 	@echo "generating $<"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyline_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
+
+# build source file (for files starting with 'polym')
+BUILD/figures_test/polym_%.cpp: $(TEST_FIG_LOC)/polym_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyunion_1.cxx
+	@echo "generating $<"
+	@mkdir -p BUILD/figures_test/
+	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyunion_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 #=======================================================================
 

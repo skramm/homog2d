@@ -2,7 +2,7 @@
 // used in makefile target `test_fig`
 
 #define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 
 #include "../../homog2d.hpp"
 

@@ -1,0 +1,12 @@
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif
+
+	CPolyline_<NUMTYPE> poly1( FRect(20,20,100,100) );
+
+	CPolyline_<NUMTYPE> poly2(
+		std::vector<Point2d>{
+			{100,50}, {180,30}, {150,80}
+		}
+	);
+

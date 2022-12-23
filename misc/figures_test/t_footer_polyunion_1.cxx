@@ -1,7 +1,7 @@
-// file: t_footer_polyline_1.cxx
+// file: t_footer_polyunion.cxx
 // used in makefile target test_fig
 
-	Homogr H;
+/*	Homogr H;
 	H.addScale( 50 );
 	H.addTranslation( 20,20 );
 
@@ -29,10 +29,13 @@
 	}
 
 	auto poly2 = H*pl;
+*/
 //	poly2.draw( img2, img::DrawParams().setColor(250,0,20).showPoints(true) );
 
 	auto dp = img::DrawParams().setColor(250,0,20).showPoints(true).setPointStyle(img::PtStyle::Times).showIndex(true);
-	poly2.draw( img2, dp );
+
+	poly1.draw( img2, dp.setColor(250,0,0) );
+	poly2.draw( img2, dp.setColor(0,250,0) );
 	img2.write( std::string(argv[0])+ ".png" );
 }
 
