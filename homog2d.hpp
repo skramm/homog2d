@@ -2886,8 +2886,9 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 	if( !msg.empty() )
 		std::cout << msg;
 	std::cout << " #=" << v.size() << '\n';
+	auto c=0;
 	for( const auto& elem: v )
-		std::cout << elem << "-";
+		std::cout << c++ << ":" << elem << "-";
 	std::cout << '\n';
 }
 template<typename T1,typename T2>
@@ -2899,7 +2900,7 @@ void printMap( const std::map<T1,T2>& m, std::string msg=std::string() )
 		std::cout << msg;
 	std::cout << " #=" << m.size() << '\n';
 	for(const auto& it: m )
-		std::cout << " -" << it.first << "-" << it.second << '\n';
+		std::cout << " [" << it.first << "]=" << it.second << '\n';
 	std::cout << "--------------------------------- \n";
 }
 template<typename T,size_t N>
@@ -9207,7 +9208,7 @@ struct PolyIntersectData
 	std::vector<std::vector<size_t>> vseg1; //( p1.nbSegs() );  // one vector per segment of p1
 	std::vector<std::vector<size_t>> vseg2; //( p2.nbSegs() );  // one vector per segment of p1
 
-// this will store for each intersection point the segment index of p2 that it lies on
+// this will store for each intersection point the segment index that it lies on
 // -key: intersection point index
 // -value: segment (point, actually) index of the polygon
 	std::map<IntPointIdx,SegmentIdx> segmap_p1; // for p1
@@ -9222,11 +9223,22 @@ struct PolyIntersectData
 	{
 		assert( ip1<vseg1.size() );
 		assert( ip2<vseg2.size() );
-		segmap_p1[size()] = ip1;
-		segmap_p2[size()] = ip2;
 		vseg1[ip1].push_back( size() );
 		vseg2[ip2].push_back( size() );
-		alliPts.push_back( pt );
+
+		bool isThere = false;
+		for( const auto& pt2: alliPts )
+			if( dist(pt,pt2) < thr::nullDistance() )
+			{
+				isThere = true;
+				break;
+			}
+		if( !isThere )
+		{
+			segmap_p1[size()] = ip1;
+			segmap_p2[size()] = ip2;
+			alliPts.push_back( pt );
+		}
 	}
 	size_t size() const
 	{
@@ -9246,7 +9258,7 @@ struct PolyIntersectData
 /// \note if nb of pts large enough it **could** be faster to switch first to a set, see https://stackoverflow.com/a/1041939/193789
 	void postProcess()
 	{
-		sort( alliPts.begin(), alliPts.end() );
+/*		sort( alliPts.begin(), alliPts.end() );
 		alliPts.erase(
 			unique(
 				alliPts.begin(),
@@ -9261,6 +9273,7 @@ struct PolyIntersectData
 			),
 			alliPts.end()
 		);
+*/
 	}
 };
 
@@ -9348,7 +9361,6 @@ buildUnionPolygon(
 // get the first point of p1 that is outside of p2
 	auto idx = firstIdxPointOutside( p1, p2 );
 
-
 	bool iterateP1 = true;
 	bool done = false;
 	int c=0;
@@ -9367,7 +9379,7 @@ buildUnionPolygon(
 // among all the intersection points, find the one closest to the current point
 			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
-				std::cout << "FCP: search for closest point to: " << currentPt << std::endl;
+				std::cout << "FCP: search for closest point to: " << currentPt << ", #vector=" << pvseg_A->at(idx).size() << std::endl;
 				for( const auto& i: pvseg_A->at(idx) )
 					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << " dist=" << currentPt.distTo(data.alliPts.at(i)) << std::endl;
 
