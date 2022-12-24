@@ -1568,9 +1568,18 @@ void action_polUnion( void* param )
 	data._poly2.set( data.vpt );
 	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints().showIndex() );
 
-	auto pol = data._poly1.unionPoly( data._poly2 );
+	try
+	{
+		auto pol = data._poly1.unionPoly( data._poly2 );
 //	std::cout << "pol=" << pol << "\n";
-	pol.draw( data.img2, img::DrawParams().setColor(0,0,250).showPoints().showIndex() );
+		pol.draw( data.img2, img::DrawParams().setColor(0,0,250).showPoints().showIndex() );
+		data.img.write( "polyunion.png");
+	}
+	catch( std::exception& err )
+	{
+		std::cout << "ERROR: " << err .what();
+		throw;
+	}
 	data.showImage();
 }
 

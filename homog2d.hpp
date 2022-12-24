@@ -9219,25 +9219,42 @@ struct PolyIntersectData
 		vseg1.resize( nbPtsP1 );
 		vseg2.resize( nbPtsP2 );
 	}
-	void addIntersection( size_t ip1, size_t ip2, Point2d_<HOMOG2D_INUMTYPE> pt )
+/// Add intersection point to data (if some conditions are met!)
+	void addIntersection(
+		size_t ip1,                    ///< index of segment on poly 1
+		size_t ip2,                    ///< index of segment on poly 2
+		Point2d_<HOMOG2D_INUMTYPE> pt  ///< the point that will be added (maybe...)
+	)
 	{
 		assert( ip1<vseg1.size() );
 		assert( ip2<vseg2.size() );
-		vseg1[ip1].push_back( size() );
-		vseg2[ip2].push_back( size() );
 
 		bool isThere = false;
-		for( const auto& pt2: alliPts )
-			if( dist(pt,pt2) < thr::nullDistance() )
+		size_t foundAt = 0;
+		HOMOG2D_LOG( "try to add pt:" << pt );
+		for( size_t i=0; i<alliPts.size(); i++ )
+		{
+			const auto& pt2 = alliPts[i];
+			if( dist(pt,pt2) < thr::nullDistance() ) // if that point is the same as one already there
 			{
 				isThere = true;
+				foundAt = i;
+				HOMOG2D_LOG( "found point at pos=" << i << " value=" << pt2 );
 				break;
 			}
-		if( !isThere )
-		{
-			segmap_p1[size()] = ip1;
-			segmap_p2[size()] = ip2;
+		}
+		if( !isThere )                    // if intersection point not already registered,
+		{                                 // then store it and add it to the list of intersection points
+			segmap_p1[size()] = ip1;      // for the segments ip1, ip2
+			segmap_p2[size()] = ip2;      // Also, add to the maps
+			vseg1[ip1].push_back( size() );
+			vseg2[ip2].push_back( size() );
 			alliPts.push_back( pt );
+		}
+		else                                  // if intersection point is already registered,
+		{                                     // then add to the list of intersection points
+			vseg1[ip1].push_back( foundAt );  // the position where it was found
+			vseg2[ip2].push_back( foundAt );
 		}
 	}
 	size_t size() const
@@ -9254,11 +9271,32 @@ struct PolyIntersectData
 		h2d::priv::printMap( segmap_p2, "segmap_p2" );
 	}
 
+	void removeDupes( std::vector<std::vector<size_t>>& vseg )
+	{
+		if( !vseg.empty() )
+			for( auto& v: vseg )
+				if( v.size()>1 )
+				{
+					h2d::priv::printVector( v, "v");
+					sort( v.begin(), v.end() );
+					v.erase(
+						unique(
+							v.begin(),
+							v.end()
+						),
+						v.end()
+					);
+				}
+	};
+
 /// Needed to remove duplicates that will occur
-/// \note if nb of pts large enough it **could** be faster to switch first to a set, see https://stackoverflow.com/a/1041939/193789
 	void postProcess()
 	{
-/*		sort( alliPts.begin(), alliPts.end() );
+		removeDupes(vseg1);
+		removeDupes(vseg2);
+
+#if 0
+		sort( alliPts.begin(), alliPts.end() );
 		alliPts.erase(
 			unique(
 				alliPts.begin(),
@@ -9273,7 +9311,7 @@ struct PolyIntersectData
 			),
 			alliPts.end()
 		);
-*/
+#endif
 	}
 };
 
@@ -9298,17 +9336,28 @@ buildPolyIntersectData(
 		{
 //			std::cout << "ip2: " << ip2 << ", #nbIntersPts=" << data.size() << '\n';
 			const auto& seg2 = p2.getSegment( ip2 );
-			auto li1 = seg1.getLine();
+/*			auto li1 = seg1.getLine();
 			auto li2 = seg2.getLine();
 			if( li1 == li2 )
 			{
 				std::cout << "Joined segments!\n"; // TODO need to process that case!
 			}
-			else
+			else*/
 			{
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
-					data.addIntersection( ip1, ip2, inters.get() ); // add the point
+				{
+					auto pt_intersect = inters.get();
+/*					auto ppts1 = seg1.getPts();
+					auto ppts2 = seg2.getPts();
+					if(
+						dist( pt_intersect, ppts1.first ) > thr::nullOrthogDistance()
+						&& dist( pt_intersect, ppts1.second ) > thr::nullOrthogDistance()
+						&& dist( pt_intersect, ppts2.first ) > thr::nullOrthogDistance()
+						&& dist( pt_intersect, ppts2.second ) > thr::nullOrthogDistance()
+					)*/
+					data.addIntersection( ip1, ip2, pt_intersect ); // add the point
+				}
 			}
 		}
 	}
@@ -9368,66 +9417,77 @@ buildUnionPolygon(
 	{
 		const auto& currentPt = pA->getPoint( idx );
 		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << std::endl;
-		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
+//		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
 		vout.push_back( currentPt );
 
 		if( pvseg_A->at(idx).size() != 0 )
 		{
 			std::cout << " -has #inters=" << pvseg_A->at(idx).size() << std::endl;
-			size_t itPtIdx = 0; // dummy value
+			int itPtIdx = -1;
 
 // among all the intersection points, find the one closest to the current point
 			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
-				std::cout << "FCP: search for closest point to: " << currentPt << ", #vector=" << pvseg_A->at(idx).size() << std::endl;
+				std::cout << "FCP: search for closest point to: " << currentPt << std::endl;
+				h2d::priv::printVector(pvseg_A->at(idx) );
 				for( const auto& i: pvseg_A->at(idx) )
 					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << " dist=" << currentPt.distTo(data.alliPts.at(i)) << std::endl;
 
 				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
 				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")" << std::endl;
 			}
-			else
+			else // only one intersection point
 			{
-				std::cout << " -Only 1 inters" << std::endl;
-				itPtIdx = pvseg_A->at(idx).at(0);
+				auto cand = pvseg_A->at(idx).at(0);
+				std::cout << " -Only 1 inter, cand=" << data.alliPts[cand] << ", currentPt=" << currentPt << std::endl;
+				if( data.alliPts[cand] != currentPt )
+					itPtIdx = pvseg_A->at(idx).at(0);
 			}
-			auto idxB = pmap_B->at(itPtIdx);
-			std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
+			if( itPtIdx != -1 )
+			{
+				auto idxB = pmap_B->at(itPtIdx);
+				std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
 
-// add intersection point
-			std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << std::endl;
-			vout.push_back( data.alliPts[itPtIdx] );
 
-// select which point of pb is the next one to consider
-			auto ptB1 = pB->getPoint( idxB );
-			auto ptB2 = pB->getPoint( idxB==pB->size()-1?0:idxB+1 );
-			std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << std::endl;
+	// select which point of pb is the next one to consider
+				auto ptB1 = pB->getPoint( idxB );
+				auto ptB2 = pB->getPoint( idxB==pB->size()-1?0:idxB+1 );
+				std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << std::endl;
 
-			auto ptx = currentPt;
-			auto pty = data.alliPts[itPtIdx];
-			std::cout << " ptx=" << ptx << " pty=" << pty << std::endl;
-//				<< "ptz=" << pptsB.first << " or " << pptsB.second << '\n';
+				auto ptx = currentPt;
+				auto pty = data.alliPts[itPtIdx];
+				std::cout << " ptx=" << ptx << " pty=" << pty << std::endl;
+	//				<< "ptz=" << pptsB.first << " or " << pptsB.second << '\n';
 
-			auto orient1 = h2d::priv::chull::orientation( ptx, pty, ptB1 );
-			auto orient2 = h2d::priv::chull::orientation( ptx, pty, ptB2 );
-			std::cout << " orient1=" << orient1 << " orient2=" << orient2 << std::endl;
+				auto orient1 = h2d::priv::chull::orientation( ptx, pty, ptB1 );
+				auto orient2 = h2d::priv::chull::orientation( ptx, pty, ptB2 );
+				std::cout << " orient1=" << orient1 << " orient2=" << orient2 << std::endl;
 
-			assert( orient1 != 0 && orient2 != 0 );
-/*			if( orient1 == 1 )
-				idx = pmap_B->at(itPtIdx);
-			else
-				idx = pmap_B->at(itPtIdx)+1;*/
-			if( orient1 == -1 )
-				idx = idxB;
-			else
-				idx = idxB==pB->size()-1 ? 0 : idxB+1;
-			std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << std::endl;
+	//			assert( orient1 != 0 && orient2 != 0 );
+				if( orient1 != orient2 ) // if point is NOT aligned with the two others, then
+				{                       // add intersection point
+					if( orient1 != 0 || orient2 !=0 )
+					{
+						if( vout.back() != data.alliPts[itPtIdx] )
+						{
+							std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << std::endl;
+							vout.push_back( data.alliPts[itPtIdx] );
+						}
+					}
+				}
 
-// reverse pointers, to iterate on the other polygon
-			std::swap( pA, pB );
-			std::swap( pmap_A, pmap_B );
-			std::swap( pvseg_A, pvseg_B );
-			iterateP1 = !iterateP1;
+				if( orient1 == -1 )
+					idx = idxB;
+				else
+					idx = idxB==pB->size()-1 ? 0 : idxB+1;
+				std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << std::endl;
+
+	// reverse pointers, to iterate on the other polygon
+				std::swap( pA, pB );
+				std::swap( pmap_A, pmap_B );
+				std::swap( pvseg_A, pvseg_B );
+				iterateP1 = !iterateP1;
+			}
 		}
 		else
 		{
@@ -9438,6 +9498,7 @@ buildUnionPolygon(
 			done = true;
 	}
 	while( !done && c<20 );
+	HOMOG2D_LOG( "c=" << c << ", final point set size=" << vout.size() );
 	return vout;
 }
 
