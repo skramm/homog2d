@@ -8317,6 +8317,110 @@ getBB( const T& cont )
 }
 
 //------------------------------------------------------------------
+// forward declaration
+namespace priv {
+template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
+class ClosestPoints;
+}
+
+// forward declaration
+template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
+priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
+getClosestPoints(
+	const base::PolylineBase<PLT1,FPT1>& poly1,
+	const base::PolylineBase<PLT2,FPT2>& poly2
+);
+
+namespace priv {
+/// used in getClosestPoints()
+template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
+class ClosestPoints
+{
+	friend priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
+	h2d::getClosestPoints<>( const base::PolylineBase<PLT1,FPT1>&,const base::PolylineBase<PLT2,FPT2>& );
+
+public:
+private:
+	size_t _pt1_min = 0;
+	size_t _pt2_min = 0;
+	HOMOG2D_INUMTYPE _minDist;
+	Point2d_<HOMOG2D_INUMTYPE> _pt1;
+	Point2d_<HOMOG2D_INUMTYPE> _pt2;
+	const base::PolylineBase<PLT1,FPT1>& _poly1;
+	const base::PolylineBase<PLT2,FPT2>& _poly2;
+
+	ClosestPoints( const base::PolylineBase<PLT1,FPT1>& poly1, const base::PolylineBase<PLT2,FPT2>& poly2 )
+		: _poly1(poly1), _poly2(poly2)
+	{
+		_minDist = dist( poly1.getPoint(0), poly2.getPoint(0) );
+	}
+	void store( HOMOG2D_INUMTYPE d, size_t idx1, size_t idx2 )
+	{
+		_minDist = d;
+		_pt1_min = idx1;
+		_pt2_min = idx2;
+	}
+
+public:
+	std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+	getPoints() const
+	{
+		return std::make_pair(
+			_poly1.getPoint(_pt1_min),
+			_poly2.getPoint(_pt2_min)
+		);
+	}
+	HOMOG2D_INUMTYPE getMinDist() const
+	{
+		return _minDist;
+	}
+	std::pair<size_t,size_t>
+	getIndexes() const
+	{
+		return std::make_pair( _pt1_min, _pt2_min );
+	}
+	void print() const
+	{
+		std::cout << "ClosestPoints:\n _pt1_min=" << _pt1_min << " _pt2_min=" << _pt2_min
+			<< "\n_minDist=" << _minDist
+			<< "\npt1=" << _pt1 << " pt2=" << _pt2
+		<< std::endl;
+	}
+};
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Computes the closest points between two polylines
+template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
+priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
+getClosestPoints(
+	const base::PolylineBase<PLT1,FPT1>& poly1,
+	const base::PolylineBase<PLT2,FPT2>& poly2
+)
+{
+	if( poly1.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "arg 1 is empty" );
+	if( poly2.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "arg 2 is empty" );
+
+	priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2> out( poly1, poly2 );
+	for( size_t i=0; i<poly1.size(); i++ )
+	{
+		const auto& pt1 = poly1.getPoint(i);
+		for( size_t j=0; j<poly2.size(); j++ )
+		{
+			const auto& pt2 = poly2.getPoint(j);
+			auto currentDist = dist( pt1, pt2 );
+			if( currentDist < out._minDist )
+				out.store( currentDist, i, j );
+		}
+	}
+//	out.print();
+	return out;
+}
+
+//------------------------------------------------------------------
 /// Returns the points of Segment as a std::pair (free function)
 /// \sa Segment_::getPts()
 template<typename FPT>

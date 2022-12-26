@@ -121,7 +121,7 @@ Random points, the corresponding Convex Hull and Bounding Box, and the extremum 
 
 * [Showcase 14](../misc/showcase/showcase14.cpp):
 <a name="sc14"></a>
-Two moving polygons, shows their intersection points.
+Two moving polygons, shows their intersection points and the closest points between them (blue segment).
 
 ![showcase14](showcase/showcase14.gif)
 
