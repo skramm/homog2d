@@ -9446,7 +9446,7 @@ buildUnionPolygon(
 			if( itPtIdx != -1 )
 			{
 				auto idxB = pmap_B->at(itPtIdx);
-				std::cout << " -itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
+				std::cout << " INTERSECTION!, itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
 
 
 	// select which point of pb is the next one to consider
@@ -9464,7 +9464,7 @@ buildUnionPolygon(
 				std::cout << " orient1=" << orient1 << " orient2=" << orient2 << std::endl;
 
 	//			assert( orient1 != 0 && orient2 != 0 );
-				if( orient1 != orient2 ) // if point is NOT aligned with the two others, then
+//				if( orient1 != orient2 ) // if point is NOT aligned with the two others, then
 				{                       // add intersection point
 					if( orient1 != 0 || orient2 !=0 )
 					{

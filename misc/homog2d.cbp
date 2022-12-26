@@ -139,6 +139,7 @@
 		<Unit filename="figures_test/readme.txt" />
 		<Unit filename="figures_test/t_footer_frect_1.cxx" />
 		<Unit filename="figures_test/t_footer_polyline_1.cxx" />
+		<Unit filename="figures_test/t_footer_polyunion_1.cxx" />
 		<Unit filename="figures_test/t_header.cxx" />
 		<Unit filename="gitlog.sh">
 			<Option target="&lt;{~None~}&gt;" />
