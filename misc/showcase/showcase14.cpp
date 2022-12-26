@@ -12,9 +12,6 @@ int main( int argc, const char** argv )
 {
 	auto nbim = 20; // nb images
 
-//	auto nbpts_max = 20;
-//	auto nbpts_min = 5;
-
 	std::vector<Point2d> vpts1{
 		{ 0, 0 },
 		{ 140,30 },
@@ -42,17 +39,24 @@ int main( int argc, const char** argv )
 	for( int i=0; i<nbim; i++ )
 	{
 		img::Image<cv::Mat> im( 300, 220 );
-		poly1.draw( im, img::DrawParams().setColor(200,50,0) );
-		poly2.draw( im, img::DrawParams().setColor(0,50,200) );
-		auto res = poly1.intersects(poly2);
-//		if( res() )
-		{
-			auto ptInt = res.get();
-			for( const auto& pt: ptInt )
-				pt.draw( im, img::DrawParams().setColor(0,250,0).setPointStyle( img::PtStyle::Dot ) );
-		}
+		poly1.draw( im, img::DrawParams().setColor(250,128,0) );
+		poly2.draw( im, img::DrawParams().setColor(250,0,128) );
+
+		auto res = poly1.intersects(poly2);  // intersection points
+		auto ptInt = res.get();
+		for( const auto& pt: ptInt )
+			pt.draw( im, img::DrawParams().setColor(0,250,0).setPointStyle( img::PtStyle::Dot ) );
+
+		auto closest = getClosestPoints( poly1, poly2 );
+		auto ppts = closest.getPoints();
+		Segment( closest.getPoints() ).draw( im, img::DrawParams().setColor(0,0,250) );
+
 		poly1.translate( 10, 6 );
 		poly2.translate( -7, -7 );
+
+		auto c2 = poly2.centroid();
+		poly2 = Homogr().addTranslation( -c2.getX(), -c2.getY() ).addRotation(10.*M_PI/180.).addTranslation( c2.getX(), c2.getY() ) * poly2;
+
 		std::ostringstream oss;
 		oss << "showcase14_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );

@@ -744,7 +744,7 @@ Point2d_<FPT> getLmPoint() const;
 Point2d_<FPT> getRmPoint() const;
 ```
 
-Or use the `getExtremePoint( CardDir )` function and passing one of these:
+Or use the `getExtremePoint( CardDir )` member function and passing one of these:
 <a name="enum_carddir"></a>
 ```C++
 CardDir::Bottom
@@ -867,6 +867,17 @@ Cpolyline poly;
 Point2d org( ..., ... );
 poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
+
+You can get the closest distance between two polyline objects with `getClosestPoints()`.
+This will return an object on with you can fetch the corresponding pair of points, as indexes or as points and the distance value:
+```C++
+auto closest = getClosestPoints( poly1, poly2 );
+auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
+auto d = closest.getMinDist()     // get the distance value
+auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
+```
+See [an example here](homog2d_showcase.md#sc14).
+
 
 ### 3.5 - Ellipse
 <a name="p_ellipse"></a>
