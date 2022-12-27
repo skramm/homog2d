@@ -8163,6 +8163,7 @@ template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt ) { return pt.getY(); }
 
 //------------------------------------------------------------------
+/// Free function, returns -1 or +1 depending on the side of \c pt, related to \c li
 template<typename FPT1,typename FPT2>
 int
 side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
@@ -9473,15 +9474,16 @@ buildPolyIntersectData(
 	HOMOG2D_START;
 
 	PolyIntersectData data( p1.size(), p2. size() );
+	std::cout << "#p1=" << p1.size() << " #p2=" << p2.size() << std::endl;
 
 	for( size_t ip1=0; ip1<p1.nbSegs(); ip1++ )
 	{
 		const auto& seg1 = p1.getSegment( ip1 );
 
-//		std::cout << "ip1: " << ip1 << ", #nbIntersPts=" << data.size() << '\n';
+		std::cout << " -ip1: " << ip1 << ", #nbIntersPts=" << data.size() << std::endl;
 		for( size_t ip2=0; ip2<p2.nbSegs(); ip2++ )
 		{
-//			std::cout << "ip2: " << ip2 << ", #nbIntersPts=" << data.size() << '\n';
+			std::cout << "   -ip2: " << ip2 << ", #nbIntersPts=" << data.size() << std::endl;
 			const auto& seg2 = p2.getSegment( ip2 );
 /*			auto li1 = seg1.getLine();
 			auto li2 = seg2.getLine();
@@ -9499,25 +9501,33 @@ buildPolyIntersectData(
 					auto ppts1 = seg1.getPts();
 					auto ppts2 = seg2.getPts();
 					bool addPoint = false;
-					if( pti != ppts1.first )
-						if( pti != ppts1.second)
+
+					if( pti != ppts1.first )            // intersection is NOT
+						if( pti != ppts1.second)        // on seg1
 						{
 							itIsNotOnSeg1 = true;
-							if( pti != ppts2.first )
-								if( pti != ppts2.second)
-									addPoint = true;
+							if( pti != ppts2.first )       // and is not either
+								if( pti != ppts2.second)   // on seg2
+									addPoint = true;       // so we add the point
 						}
 
-					if( addPoint == false )    // then, we check for side
+					if( addPoint == false )    // means intersection lies either on seg1 or seg2
 					{
+						std::cout << "itIsNotOnSeg1=" << itIsNotOnSeg1 << " ip1=" << ip1 << " ip2=" << ip2 << std::endl;
 // first, check what segment we need to check
-						auto ptA = p1.getPoint( ip1 );
-						auto ptB = p1.getPoint( ip1==p1.size()-2?1:ip1+2 );
+						auto s       = itIsNotOnSeg1 ? p2.size() : p1.size();
+						auto idx     = itIsNotOnSeg1 ? ip2 : ip1;
+						auto nextIdx = idx >= s-2 ? idx+2-s : idx+2;
+
+						std::cout <<"s=" << s << " idx=" << idx << " nextIndex=" << nextIdx << std::endl;
+
+						auto ptA = p1.getPoint( idx );
+						auto ptB = p1.getPoint( nextIdx );
 						auto li = seg2.getLine();
-						if( itIsNotOnSeg1 ) // it is on seg2
+						if( itIsNotOnSeg1 )          // it is on seg2
 						{
-							ptA = p2.getPoint( ip2 );
-							ptB = p2.getPoint( ip2==p2.size()-2?1:ip2+2 );
+							ptA = p2.getPoint( idx );
+							ptB = p2.getPoint( nextIdx );
 							li = seg1.getLine();
 						}
 						auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
@@ -9529,7 +9539,7 @@ buildPolyIntersectData(
 					if( addPoint )
 					{
 						std::cout << "add point " << pti
-							<< "\n -seg1=" << seg1 << "\n -seg2=" << seg2 << '\n';
+							<< "\n -seg1=" << seg1 << "\n -seg2=" << seg2 << std::endl;
 						data.addIntersection( ip1, ip2, pti ); // add the point
 					}
 				}
