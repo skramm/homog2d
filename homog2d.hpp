@@ -8157,10 +8157,19 @@ operator * (
 /////////////////////////////////////////////////////////////////////////////
 
 template<typename FPT>
-FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
+FPT getX( const Point2d_<FPT>& pt ) { return pt.getX(); }
 
 template<typename FPT>
-FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
+FPT getY( const Point2d_<FPT>& pt ) { return pt.getY(); }
+
+//------------------------------------------------------------------
+template<typename FPT1,typename FPT2>
+int
+side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
+{
+	const auto& arr = li.get();
+	return (std::signbit( arr[0] * pt.getX() + arr[1] * pt.getY() + arr[2] ) ? -1 : +1);
+}
 
 /// Free function, distance between points
 /// \sa Point2d_::distTo()
@@ -9356,7 +9365,7 @@ struct PolyIntersectData
 			alliPts.push_back( pt );
 		}
 		else                                  // if intersection point is already registered,
-		{                                     // then add to the list of intersection points
+		{                                     // then add to the list of intersection points per segment
 			vseg1[ip1].push_back( foundAt );  // the position where it was found
 			vseg2[ip2].push_back( foundAt );
 		}
@@ -9373,6 +9382,7 @@ struct PolyIntersectData
 		h2d::priv::printVector( vseg2, "vseg2" );
 		h2d::priv::printMap( segmap_p1, "segmap_p1" );
 		h2d::priv::printMap( segmap_p2, "segmap_p2" );
+		std::cout << std::endl;
 	}
 
 	void removeDupes( std::vector<std::vector<size_t>>& vseg )
@@ -9420,6 +9430,39 @@ struct PolyIntersectData
 };
 
 //------------------------------------------------------------------
+/// Create data on intersection points
+/**
+If the intersection point IP is equal to one of the four points of the two segments,
+we do some more checking:
+
+* if the other points of segment n and n+1 are on the same side, then IP
+is not added.
+\verbatim
+
+       +
+        \     +
+      n+1\   /n
+          \ /
+  ---------+--------
+
+\endverbatim
+
+* if the other points of segment n and n+1 are NOT on the same side, then IP
+is added to the set of intersection points.
+\verbatim
+
+       +
+        \
+      n+1\
+          \
+  ---------+--------
+          /
+         /n
+        /
+       +
+\endverbatim
+*/
+
 template<typename FPT>
 PolyIntersectData
 buildPolyIntersectData(
@@ -9451,16 +9494,44 @@ buildPolyIntersectData(
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
 				{
-					auto pt_intersect = inters.get();
-/*					auto ppts1 = seg1.getPts();
+					bool itIsNotOnSeg1 = false;
+					auto pti = inters.get();
+					auto ppts1 = seg1.getPts();
 					auto ppts2 = seg2.getPts();
-					if(
-						dist( pt_intersect, ppts1.first ) > thr::nullOrthogDistance()
-						&& dist( pt_intersect, ppts1.second ) > thr::nullOrthogDistance()
-						&& dist( pt_intersect, ppts2.first ) > thr::nullOrthogDistance()
-						&& dist( pt_intersect, ppts2.second ) > thr::nullOrthogDistance()
-					)*/
-					data.addIntersection( ip1, ip2, pt_intersect ); // add the point
+					bool addPoint = false;
+					if( pti != ppts1.first )
+						if( pti != ppts1.second)
+						{
+							itIsNotOnSeg1 = true;
+							if( pti != ppts2.first )
+								if( pti != ppts2.second)
+									addPoint = true;
+						}
+
+					if( addPoint == false )    // then, we check for side
+					{
+// first, check what segment we need to check
+						auto ptA = p1.getPoint( ip1 );
+						auto ptB = p1.getPoint( ip1==p1.size()-2?1:ip1+2 );
+						auto li = seg2.getLine();
+						if( itIsNotOnSeg1 ) // it is on seg2
+						{
+							ptA = p2.getPoint( ip2 );
+							ptB = p2.getPoint( ip2==p2.size()-2?1:ip2+2 );
+							li = seg1.getLine();
+						}
+						auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
+						auto side2 = side( ptB, li );
+						if( side1 != side2 )
+							addPoint = true;
+					}
+
+					if( addPoint )
+					{
+						std::cout << "add point " << pti
+							<< "\n -seg1=" << seg1 << "\n -seg2=" << seg2 << '\n';
+						data.addIntersection( ip1, ip2, pti ); // add the point
+					}
 				}
 			}
 		}
@@ -9522,8 +9593,16 @@ buildUnionPolygon(
 		const auto& currentPt = pA->getPoint( idx );
 		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << std::endl;
 //		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
-		vout.push_back( currentPt );
 
+		if( !vout.empty() )
+		{
+			if( currentPt != vout.back() )
+				vout.push_back( currentPt );
+		}
+		else
+			vout.push_back( currentPt );
+
+		bool specialCase = false;
 		if( pvseg_A->at(idx).size() != 0 )
 		{
 			std::cout << " -has #inters=" << pvseg_A->at(idx).size() << std::endl;
@@ -9546,6 +9625,8 @@ buildUnionPolygon(
 				std::cout << " -Only 1 inter, cand=" << data.alliPts[cand] << ", currentPt=" << currentPt << std::endl;
 				if( data.alliPts[cand] != currentPt )
 					itPtIdx = pvseg_A->at(idx).at(0);
+				else
+					specialCase = true;
 			}
 			if( itPtIdx != -1 )
 			{
@@ -9592,16 +9673,23 @@ buildUnionPolygon(
 				std::swap( pvseg_A, pvseg_B );
 				iterateP1 = !iterateP1;
 			}
+			else
+			{
+				if( specialCase ) // no swapping !
+					idx++;
+			}
 		}
 		else
 		{
 			idx++;
 			std::cout << " -No intersection points on this segment, switch idx to " << idx << "\n";
 		}
-		if (iterateP1 && idx == p1.size() )
+		if( ( iterateP1 && idx == p1.size() ) || idx == 0 )
 			done = true;
 	}
 	while( !done && c<20 );
+
+	h2d::priv::printVector( vout, "final-vout" );
 	HOMOG2D_LOG( "c=" << c << ", final point set size=" << vout.size() );
 	return vout;
 }
@@ -9621,8 +9709,8 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 		HOMOG2D_THROW_ERROR_1( "argument is not a polygon" );
 	if( !this->isPolygon() )
 		HOMOG2D_THROW_ERROR_1( "object is not a polygon" );
-	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
 
+	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
 	if( !p1.intersects(p2)() ) // if no intersection, return the convex hull
 	{
 		if( p1.isInside(p2) )
