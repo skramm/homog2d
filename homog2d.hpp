@@ -5569,8 +5569,6 @@ getExtremePoint( CardDir dir, const T& t )
 //------------------------------------------------------------------
 namespace priv {
 
-//using ItPts = std::vector<Point2d_<HOMOG2D_INUMTYPE>>::const_iterator;
-
 /// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
 /// Returns an index on \c vecPts corresponding on closest point to \c pt
 template<typename FPT>
@@ -9388,6 +9386,7 @@ struct PolyIntersectData
 
 	void removeDupes( std::vector<std::vector<size_t>>& vseg )
 	{
+		HOMOG2D_LOG( "size before=" << vseg.size() );
 		if( !vseg.empty() )
 			for( auto& v: vseg )
 				if( v.size()>1 )
@@ -9402,6 +9401,7 @@ struct PolyIntersectData
 						v.end()
 					);
 				}
+		HOMOG2D_LOG( "size after=" << vseg.size() );
 	};
 
 /// Needed to remove duplicates that will occur
@@ -9431,7 +9431,7 @@ struct PolyIntersectData
 };
 
 //------------------------------------------------------------------
-/// Create data on intersection points
+/// Populate data on intersection points
 /**
 If the intersection point IP is equal to one of the four points of the two segments,
 we do some more checking:
@@ -9593,7 +9593,8 @@ buildUnionPolygon(
 	std::vector<Point2d_<FPT>> vout;
 
 // get the first point of p1 that is outside of p2
-	auto idx = firstIdxPointOutside( p1, p2 );
+	auto startIdx = firstIdxPointOutside( p1, p2 );
+	auto idx = startIdx;
 
 	bool iterateP1 = true;
 	bool done = false;
@@ -9602,11 +9603,11 @@ buildUnionPolygon(
 	{
 		const auto& currentPt = pA->getPoint( idx );
 		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << std::endl;
-//		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
+		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
 
 		if( !vout.empty() )
-		{
-			if( currentPt != vout.back() )
+		{                                        // adding the current point only if it is not the same
+			if( currentPt != vout.back() )       // as the last one
 				vout.push_back( currentPt );
 		}
 		else
@@ -9622,10 +9623,10 @@ buildUnionPolygon(
 			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
 			{
 				std::cout << "FCP: search for closest point to: " << currentPt << std::endl;
-				h2d::priv::printVector(pvseg_A->at(idx) );
+/*				h2d::priv::printVector(pvseg_A->at(idx) );
 				for( const auto& i: pvseg_A->at(idx) )
 					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << " dist=" << currentPt.distTo(data.alliPts.at(i)) << std::endl;
-
+*/
 				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
 				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")" << std::endl;
 			}
@@ -9686,15 +9687,16 @@ buildUnionPolygon(
 			else
 			{
 				if( specialCase ) // no swapping !
-					idx++;
+//					idx++;
+					idx = (idx==pA->size()-1 ? 0 : idx+1);
 			}
 		}
 		else
 		{
-			idx++;
-			std::cout << " -No intersection points on this segment, switch idx to " << idx << "\n";
+			idx = (idx==pA->size()-1 ? 0 : idx+1);
+			std::cout << " -No intersection points on this segment, switch idx to " << idx << std::endl;
 		}
-		if( ( iterateP1 && idx == p1.size() ) || idx == 0 )
+		if( ( iterateP1 && idx == p1.size() ) || (idx == startIdx&&iterateP1) )
 			done = true;
 	}
 	while( !done && c<20 );
@@ -9724,9 +9726,11 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	if( !p1.intersects(p2)() ) // if no intersection, return the convex hull
 	{
 		if( p1.isInside(p2) )
-			return h2d::convexHull( p2 );
+//			return h2d::convexHull( p2 );
+			return p2;
 		if( p2.isInside(p1) )
-			return h2d::convexHull( p1 );
+//			return h2d::convexHull( p1 );
+			return p1;
 
 		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vout( p1.size() + p2.size() );
 		std::copy( std::begin( p1.getPts() ), std::end( p1.getPts() ), std::begin( vout ) );
