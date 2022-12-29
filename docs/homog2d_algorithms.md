@@ -101,4 +101,33 @@ If the function is unable to find a "good" reference segment after that threshol
 The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary (see [homog2d_thresholds.md](homog2d_thresholds.md)).
 
 
+## 3 - Polyline related algorithms
+
+### 3.1 Polygons merging
+
+API:
+```C++
+CPolygon p1;
+CPolygon p2;
+auto p = unionPoly( p1, p2 );
+```
+
+Several steps:
+- first step: make sure one of the polygons is not inside the other. If so, then return the "outside" polygon.
+- It they do not intersect, then return the Convex Hull of the two polygons.
+
+
+Then:
+  - compute all the intersection points and build a datastructure holding:
+    - a list of all these
+    - for each polygon, a vector holding for each segment the indexes on the intersection points lying on that segment
+	- a map... TODO
+  - find for p1 the first point that is not inside the other, and iterate starting from that point.
+
+do:
+	- add current point to output set
+	- if current segment holds an intersection
+		If it holds only one intersection
+
+while( notFinished )
 

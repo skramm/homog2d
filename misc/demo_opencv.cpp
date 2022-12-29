@@ -1533,11 +1533,13 @@ struct Param_polUnion : Data
 //		vpt = std::vector<Point2d>{ {100,50}, {180,30}, {150,80} };
 
 // one going through another
+
 		_poly1 = CPolyline( FRect(100,100,200,200) );
 //		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
-		vpt = std::vector<Point2d>{ {150,150}, {220,220}, {250,120} };
-
+//		vpt = std::vector<Point2d>{ {150,150}, {220,220}, {250,120} };
+		vpt = std::vector<Point2d>{ {84,96},{320,220},{200,100} };
 		_poly2.set( vpt );
+
 
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );
@@ -1567,13 +1569,14 @@ void action_polUnion( void* param )
 	data._poly1.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints().showIndex() );
 	data._poly2.set( data.vpt );
 	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints().showIndex() );
+	data.img.write( "polyunion.png");
 
 	try
 	{
+		std::cout << "p1=" << data._poly1 << "p2=" << data._poly2;
 		auto pol = data._poly1.unionPoly( data._poly2 );
 //	std::cout << "pol=" << pol << "\n";
 		pol.draw( data.img2, img::DrawParams().setColor(0,0,250).showPoints().showIndex() );
-		data.img.write( "polyunion.png");
 	}
 	catch( std::exception& err )
 	{

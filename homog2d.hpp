@@ -1577,7 +1577,6 @@ public:
 	FRect_<FPT>                                  getBB()     const;
 	HOMOG2D_INUMTYPE                             angle()     const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
-
 ///@}
 
 /// Area of ellipse
@@ -2894,14 +2893,14 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 template<typename T1,typename T2>
 void printMap( const std::map<T1,T2>& m, std::string msg=std::string() )
 {
-	std::cout << "--------------------------------- \n";
+	std::cout << "---------------------------------\n";
 	std::cout << "std::map: ";
 	if( !msg.empty() )
 		std::cout << msg;
 	std::cout << " #=" << m.size() << '\n';
 	for(const auto& it: m )
 		std::cout << " [" << it.first << "]=" << it.second << '\n';
-	std::cout << "--------------------------------- \n";
+	std::cout << '\n';
 }
 template<typename T,size_t N>
 void printArray( const std::array<T,N>& v, std::string msg=std::string() )
@@ -9320,11 +9319,15 @@ struct PolyIntersectData
 	std::vector<std::vector<size_t>> vseg1; //( p1.nbSegs() );  // one vector per segment of p1
 	std::vector<std::vector<size_t>> vseg2; //( p2.nbSegs() );  // one vector per segment of p1
 
-// this will store for each intersection point the segment index that it lies on
-// -key: intersection point index
-// -value: segment (point, actually) index of the polygon
+///@{
+/** This will store for each intersection point the segment index that it lies on.
+ (size= nb of intersection points detected)
+  -key: intersection point index
+  -value: segment (point, actually) index of the polygon
+ */
 	std::map<IntPointIdx,SegmentIdx> segmap_p1; // for p1
 	std::map<IntPointIdx,SegmentIdx> segmap_p2; // for p2
+///@}
 
 	explicit PolyIntersectData( size_t nbPtsP1, size_t nbPtsP2 )
 	{
@@ -9391,7 +9394,7 @@ struct PolyIntersectData
 			for( auto& v: vseg )
 				if( v.size()>1 )
 				{
-					h2d::priv::printVector( v, "v");
+//					h2d::priv::printVector( v, "v");
 					sort( v.begin(), v.end() );
 					v.erase(
 						unique(
@@ -9409,24 +9412,6 @@ struct PolyIntersectData
 	{
 		removeDupes(vseg1);
 		removeDupes(vseg2);
-
-#if 0
-		sort( alliPts.begin(), alliPts.end() );
-		alliPts.erase(
-			unique(
-				alliPts.begin(),
-				alliPts.end(),
-				[]
-				( const Point2d_<HOMOG2D_INUMTYPE>& pt1, const Point2d_<HOMOG2D_INUMTYPE>& pt2 )
-				{
-					auto b= dist(pt1,pt2) < thr::nullDistance();
-//					std::cout << "LAMBDA pt1=" << pt1 << " pt2=" << pt2 << " return:" << b << '\n';
-					return b;
-				}
-			),
-			alliPts.end()
-		);
-#endif
 	}
 };
 
@@ -9496,22 +9481,38 @@ buildPolyIntersectData(
 				auto inters = seg1.intersects( seg2 );
 				if( inters() )
 				{
-					bool itIsNotOnSeg1 = false;
 					auto pti = inters.get();
+					std::cout << "  -seg1=" << seg1 << " seg2=" << seg2 << "\n";
+					std::cout << "  -handling IP=" << pti << "\n";
+
 					auto ppts1 = seg1.getPts();
 					auto ppts2 = seg2.getPts();
 					bool addPoint = false;
 
-					if( pti != ppts1.first )            // intersection is NOT
-						if( pti != ppts1.second)        // on seg1
-						{
+					bool isEquPtSeg1 = true;
+					bool isEquPtSeg2 = true;
+					if( pti != ppts1.first )         // intersection is NOT one of the
+						if( pti != ppts1.second)     // points of seg1
+							isEquPtSeg1 = false;
+					if( pti != ppts2.first )       //  intersection is NOT one of the
+						if( pti != ppts2.second)   // points of seg2
+							isEquPtSeg2 = false;
+
+					if( !isEquPtSeg1 && !isEquPtSeg2 )
+						addPoint = true;       // so we add the point
+
+					bool itIsNotOnSeg1 = false;      // TEMP !!!
+					if( !isEquPtSeg1 )
+						itIsNotOnSeg1 = true;
+/*						{
 							itIsNotOnSeg1 = true;
-							if( pti != ppts2.first )       // and is not either
-								if( pti != ppts2.second)   // on seg2
+							if( pti != ppts2.first )       // and is not either one of the
+								if( pti != ppts2.second)   // points of seg2
 									addPoint = true;       // so we add the point
 						}
-
-					if( addPoint == false )    // means intersection lies either on seg1 or seg2
+*/
+					if( !isEquPtSeg1 && !isEquPtSeg2     // means IP is the same as one of the points of seg1 or seg2
+						&& addPoint == false )    // means IP is the same as one of the points of seg1 or seg2
 					{
 						std::cout << "itIsNotOnSeg1=" << itIsNotOnSeg1 << " ip1=" << ip1 << " ip2=" << ip2 << std::endl;
 // first, check what segment we need to check
@@ -9524,16 +9525,22 @@ buildPolyIntersectData(
 						auto ptA = p1.getPoint( idx );
 						auto ptB = p1.getPoint( nextIdx );
 						auto li = seg2.getLine();
-						if( itIsNotOnSeg1 )          // it is on seg2
+						if( itIsNotOnSeg1 )          // then, it is on seg2
 						{
+							std::cout << "  -IP on seg2\n";
 							ptA = p2.getPoint( idx );
 							ptB = p2.getPoint( nextIdx );
 							li = seg1.getLine();
 						}
+						else
+							std::cout << "  -IP on seg1\n";
+
 						auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
 						auto side2 = side( ptB, li );
 						if( side1 != side2 )
 							addPoint = true;
+						else
+							std::cout << "  -point NOT added\n";
 					}
 
 					if( addPoint )
@@ -9548,6 +9555,8 @@ buildPolyIntersectData(
 	}
 //	data.print();
 	data.postProcess();
+//	std::cout << "p1=" << p1 << '\n';
+//	std::cout << "p2=" << p2 << '\n';
 	data.print();
 	if( data.size()%2 != 0 )
 		HOMOG2D_THROW_ERROR_1( "computed odd number of intersections:" << data.size() << ", must be even" );
@@ -9726,10 +9735,8 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 	if( !p1.intersects(p2)() ) // if no intersection, return the convex hull
 	{
 		if( p1.isInside(p2) )
-//			return h2d::convexHull( p2 );
 			return p2;
 		if( p2.isInside(p1) )
-//			return h2d::convexHull( p1 );
 			return p1;
 
 		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vout( p1.size() + p2.size() );
