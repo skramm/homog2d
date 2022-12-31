@@ -1537,7 +1537,11 @@ struct Param_polUnion : Data
 		_poly1 = CPolyline( FRect(100,100,200,200) );
 //		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
 //		vpt = std::vector<Point2d>{ {150,150}, {220,220}, {250,120} };
-		vpt = std::vector<Point2d>{ {84,96},{320,220},{200,100} };
+
+		vpt = std::vector<Point2d>{ {84,96},{320,220},{200,102} };
+
+		vpt = std::vector<Point2d>{ {60,166},{320,220},{172,72} };
+
 		_poly2.set( vpt );
 
 
