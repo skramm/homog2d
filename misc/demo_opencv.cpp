@@ -1542,8 +1542,13 @@ struct Param_polUnion : Data
 
 		vpt = std::vector<Point2d>{ {60,166},{320,220},{172,72} };
 
-		_poly2.set( vpt );
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,100} };
 
+//		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,200} };
+
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,100}, {156,219} };
+
+		_poly2.set( vpt );
 
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );

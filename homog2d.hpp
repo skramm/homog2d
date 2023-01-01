@@ -9419,6 +9419,78 @@ struct PolyIntersectData
 };
 
 //------------------------------------------------------------------
+/// Returns true if point \c pti must be added to the set of intersection points
+template<typename FPT>
+bool checkForIdenticalPts(
+	const Point2d_<FPT>& pti,   ///< intersection point
+	const PolylineBase<type::IsClosed,FPT>& pol1,
+	const PolylineBase<type::IsClosed,FPT>& pol2,
+	size_t ip1,
+	size_t ip2
+)
+{
+	HOMOG2D_START;
+	auto s1 = pol1.size();
+	auto s2 = pol2.size();
+	const auto& pt1a = pol1.getPoint( ip1 );
+	const auto& pt1b = pol1.getPoint( ip1>=s1-1 ? ip1+1-s1 : ip1+1 );
+	const auto& pt1c = pol1.getPoint( ip1>=s1-2 ? ip1+2-s1 : ip1+2 );
+
+	const auto& pt2a = pol2.getPoint( ip2 );
+	const auto& pt2b = pol2.getPoint( ip2>=s2-2 ? ip2+2-s2 : ip2+2 );
+	const auto& pt2c = pol2.getPoint( ip2>=s2-2 ? ip2+2-s2 : ip2+2 );
+
+	std::cout << "     pt1a=" << pt1a << " pt1B=" << pt1b << " ptC=" << pt1c << std::endl;
+	std::cout << "     pt2a=" << pt2a << " pt2B=" << pt2b << " ptC=" << pt2c << std::endl;
+
+	if( pti == pt1b && pti == pt2b ) // both !
+	{
+		Line2d_<HOMOG2D_INUMTYPE> liA( pt2a, pt2b );
+		Line2d_<HOMOG2D_INUMTYPE> liB( pt2c, pt2b );
+		std::cout << "     side( pt1a, liA )=" << side( pt1a, liA ) << " side( pt1c, liA )=" << side( pt1c, liA )  << "\n";
+		std::cout << "     side( pt1a, liB )=" << side( pt1a, liB ) << " side( pt1c, liB )=" << side( pt1c, liB ) << "\n";
+
+		if( side( pt1a, liA ) ==  side( pt1c, liA ) )
+			if( side( pt1a, liB ) ==  side( pt1c, liB ) )
+				return false;
+		return true;
+	}
+	else     // only one !
+	{
+		bool isEquPtSeg1 = false;
+		if( pti == pt1b )
+			isEquPtSeg1 = true;
+
+		if( pti != pt1b && pti != pt2b )
+			return false;
+
+		auto ptA = isEquPtSeg1 ? pt1a : pt2a;
+		auto ptB = isEquPtSeg1 ? pt1b : pt2b;
+		auto ptC = isEquPtSeg1 ? pt1c : pt2c;
+
+		if( isEquPtSeg1 )
+		{
+			auto li1 = Line2d_<HOMOG2D_INUMTYPE>( pt1a, pt1b );
+			auto li2 = Line2d_<HOMOG2D_INUMTYPE>( pt2a, pt2b );
+			auto li = (isEquPtSeg1 ? li2 : li1);
+
+			std::cout << "     li1=" << li1 << " li2=" << li2 << " li=" << li << std::endl;
+			std::cout << "     ptA=" << ptA << " ptB=" << ptB << " ptC=" << ptC << std::endl;
+			auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
+			auto side2 = side( ptC, li );
+			std::cout << "     side1=" << side1 << " side2=" << side2 << std::endl;
+			if( side1 != side2 )
+				return true;
+			else
+				std::cout << "    -side equal, point NOT added\n";
+		}
+	}
+	std::cout << "END, false\n";
+	return false;
+
+}
+
+//------------------------------------------------------------------
 /// Populate data on intersection points
 /**
 If the intersection point IP is equal to one of the four points of the two segments n and m,
@@ -9494,7 +9566,7 @@ buildPolyIntersectData(
 				else
 				{
 					auto pti = inters.get();
-					std::cout << "   -seg1=" << seg1 << " seg2=" << seg2 << std::endl;
+//					std::cout << "   -seg1=" << seg1 << " seg2=" << seg2 << std::endl;
 					std::cout << "   -handling IP=" << pti << std::endl;
 
 					bool addPoint = false;
@@ -9512,32 +9584,8 @@ buildPolyIntersectData(
 					if( !isEquPtSeg1 && !isEquPtSeg2 ) // if intersection does not lie on  one of the points
 						addPoint = true;               // of the 2 segments, then we add the point
 
-//					if( !isEquPtSeg1 && !isEquPtSeg2 &&    // means IP is the same as one of the points of seg1 or seg2
-					if( addPoint == false )    // means IP is the same as one of the points of seg1 or seg2
-					{
-// first, check what segment we need to check
-						auto s    = isEquPtSeg1 ? pol1.size() : pol2.size();
-						auto idx  = isEquPtSeg1 ?  ip1    : ip2;
-						auto idx2 = idx == s-1  ?    0    : idx+1;
-						auto idx3 = idx >= s-2  ? idx+2-s : idx+2;
-						std::cout << "idx=" << idx << " idx2="  << idx2 << " idx3=" << idx3 << std::endl;
-						auto ptA = isEquPtSeg1 ? p1a : p2a;
-						auto ptB = isEquPtSeg1 ? pol1.getPoint(idx3) : pol2.getPoint(idx3);
-
-						auto li1 = Line2d_<HOMOG2D_INUMTYPE>( p1a, p1b );
-						auto li2 = Line2d_<HOMOG2D_INUMTYPE>( p2a, p2b );
-						auto li = (isEquPtSeg1 ? li2 : li1);
-
-						std::cout << "     li1=" << li1 << " li2=" << li2 << " li=" << li << std::endl;
-						std::cout << "     ptA=" << ptA << " ptB=" << ptB << std::endl;
-						auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
-						auto side2 = side( ptB, li );
-						std::cout << "     side1=" << side1 << " side2=" << side2 << std::endl;
-						if( side1 != side2 )
-							addPoint = true;
-						else
-							std::cout << "    -point NOT added\n";
-					}
+					if( addPoint == false )
+						addPoint = checkForIdenticalPts( pti, pol1, pol2, ip1, ip2 );
 
 					if( addPoint )
 					{
