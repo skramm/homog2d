@@ -9350,7 +9350,7 @@ struct PolyIntersectData
 		for( size_t i=0; i<alliPts.size(); i++ )
 		{
 			const auto& pt2 = alliPts[i];
-			if( dist(pt,pt2) < thr::nullDistance() ) // if that point is the same as one already there
+			if( pt == pt2 )                    // if that point is the same as one already there
 			{
 				isThere = true;
 				foundAt = i;
@@ -9420,6 +9420,9 @@ struct PolyIntersectData
 
 //------------------------------------------------------------------
 /// Returns true if point \c pti must be added to the set of intersection points
+/**
+This is called ONLY if \c pti is equal to one of the points of one of the polygons
+*/
 template<typename FPT>
 bool checkForIdenticalPts(
 	const Point2d_<FPT>& pti,   ///< intersection point
@@ -9437,9 +9440,10 @@ bool checkForIdenticalPts(
 	const auto& pt1c = pol1.getPoint( ip1>=s1-2 ? ip1+2-s1 : ip1+2 );
 
 	const auto& pt2a = pol2.getPoint( ip2 );
-	const auto& pt2b = pol2.getPoint( ip2>=s2-2 ? ip2+2-s2 : ip2+2 );
+	const auto& pt2b = pol2.getPoint( ip2>=s2-1 ? ip2+1-s2 : ip2+1 );
 	const auto& pt2c = pol2.getPoint( ip2>=s2-2 ? ip2+2-s2 : ip2+2 );
 
+	std::cout << "     pti=" << pti << std::endl;
 	std::cout << "     pt1a=" << pt1a << " pt1B=" << pt1b << " ptC=" << pt1c << std::endl;
 	std::cout << "     pt2a=" << pt2a << " pt2B=" << pt2b << " ptC=" << pt2c << std::endl;
 
@@ -9447,32 +9451,53 @@ bool checkForIdenticalPts(
 	{
 		Line2d_<HOMOG2D_INUMTYPE> liA( pt2a, pt2b );
 		Line2d_<HOMOG2D_INUMTYPE> liB( pt2c, pt2b );
-		std::cout << "     side( pt1a, liA )=" << side( pt1a, liA ) << " side( pt1c, liA )=" << side( pt1c, liA )  << "\n";
+		std::cout << "BOTH!\n     side( pt1a, liA )=" << side( pt1a, liA ) << " side( pt1c, liA )=" << side( pt1c, liA )  << "\n";
 		std::cout << "     side( pt1a, liB )=" << side( pt1a, liB ) << " side( pt1c, liB )=" << side( pt1c, liB ) << "\n";
 
-		if( side( pt1a, liA ) ==  side( pt1c, liA ) )
-			if( side( pt1a, liB ) ==  side( pt1c, liB ) )
+		if(
+			( side( pt1a, liA ) ==  side( pt1c, liA ) && side( pt1a, liB ) ==  side( pt1c, liB ) )
+			||
+			( side( pt1a, liA ) !=  side( pt1c, liA ) && side( pt1a, liB ) !=  side( pt1c, liB ) )
+		)
+			{
+				std::cout << "Add point: NO!\n";
 				return false;
+			}
+		std::cout << "Add point: YES!\n";
 		return true;
 	}
 	else     // only one !
 	{
+		if( pti == pt1a || pti == pt1c || pti == pt2a || pti == pt2c )
+			return false;
+
+		std::cout << "ONLY ONE\n";
 		bool isEquPtSeg1 = false;
+		bool isEquPtSeg2 = false;
 		if( pti == pt1b )
 			isEquPtSeg1 = true;
+		if( pti == pt2b )
+			isEquPtSeg2 = true;
 
-		if( pti != pt1b && pti != pt2b )
+		std::cout << "-isEquPtSeg1=" << isEquPtSeg1 << " isEquPtSeg2=" << isEquPtSeg2 << "\n";
+
+		if( !isEquPtSeg1 && !isEquPtSeg2 )
 			return false;
 
 		auto ptA = isEquPtSeg1 ? pt1a : pt2a;
 		auto ptB = isEquPtSeg1 ? pt1b : pt2b;
 		auto ptC = isEquPtSeg1 ? pt1c : pt2c;
 
-		if( isEquPtSeg1 )
+//		if( isEquPtSeg1 )
 		{
 			auto li1 = Line2d_<HOMOG2D_INUMTYPE>( pt1a, pt1b );
 			auto li2 = Line2d_<HOMOG2D_INUMTYPE>( pt2a, pt2b );
 			auto li = (isEquPtSeg1 ? li2 : li1);
+
+			if( li == Line2d_<HOMOG2D_INUMTYPE>(ptB,ptA) )
+				return false;
+			if( li == Line2d_<HOMOG2D_INUMTYPE>(ptB,ptC) )
+				return false;
 
 			std::cout << "     li1=" << li1 << " li2=" << li2 << " li=" << li << std::endl;
 			std::cout << "     ptA=" << ptA << " ptB=" << ptB << " ptC=" << ptC << std::endl;
@@ -9542,15 +9567,14 @@ buildPolyIntersectData(
 		const auto& p1a = pol1.getPoint( ip1 );
 		const auto& p1b = pol1.getPoint( ip1==pol1.size()-1 ? 0 : ip1+1 );
 
-		std::cout << "-ip1: " << ip1 << ", #nbIntersPts=" << data.size() << std::endl;
-		std::cout << "  p1a=" << p1a << " p1b=" << p1b << "\n";
 		for( size_t ip2=0; ip2<pol2.nbSegs(); ip2++ )
 		{
-			std::cout << "\n  -ip2: " << ip2 << ", #nbIntersPts=" << data.size() << std::endl;
+			std::cout << "\nip1=" << ip1 << " ip2=" << ip2 << ", #nbIntersPts=" << data.size() << std::endl;
 			const auto& seg2 = pol2.getSegment( ip2 );
 			const auto& p2a = pol2.getPoint( ip2 );
 			const auto& p2b = pol2.getPoint( ip2==pol2.size()-1 ? 0 : ip2+1 );
-			std::cout << "    p2a=" << p2a << " p2b=" << p2b << "\n";
+			std::cout << "  p1a=" << p1a << " p1b=" << p1b << "\n";
+			std::cout << "  p2a=" << p2a << " p2b=" << p2b << "\n";
 /*			auto li1 = seg1.getLine();
 			auto li2 = seg2.getLine();
 			if( li1 == li2 )
@@ -9560,7 +9584,6 @@ buildPolyIntersectData(
 			else*/
 			{
 				auto inters = seg1.intersects( seg2 );
-
 				if( !inters() )
 					std::cout << "   -No intersection\n";
 				else
@@ -9581,7 +9604,7 @@ buildPolyIntersectData(
 							isEquPtSeg2 = false;
 					std::cout << "   -isEquPtSeg1=" << isEquPtSeg1 << " -isEquPtSeg2=" << isEquPtSeg2 << std::endl;
 
-					if( !isEquPtSeg1 && !isEquPtSeg2 ) // if intersection does not lie on  one of the points
+					if( !isEquPtSeg1 && !isEquPtSeg2 ) // if intersection does not lie on one of the points
 						addPoint = true;               // of the 2 segments, then we add the point
 
 					if( addPoint == false )
