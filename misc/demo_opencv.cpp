@@ -1609,6 +1609,72 @@ void demo_PolUnion( int demidx )
 }
 
 //------------------------------------------------------------------
+struct Param_SideTest : Data
+{
+	explicit Param_SideTest( int demidx, std::string title ): Data( demidx, title )
+	{
+		pt0 = Point2d( img.cols()/2, img.rows()/2 );
+	}
+	void process()
+	{
+		clearImage();
+		uint8_t g = 200;
+		std::vector<Segment> vseg(4);
+		std::vector<Line2d> vli(4);
+		for( int i=0; i<4; i++ )
+		{
+			vseg[i] = Segment( vpt[i], pt0 );
+			vli[i] = Line2d( vpt[i], pt0 );
+			vli[i].draw( img, img::DrawParams().setColor(g,g,g) );
+			cv::putText( img.getReal(), std::to_string(i), getCvPti(vpt[i]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+		}
+		auto style1 = img::DrawParams().setThickness(2);
+		vseg[0].draw( img, style1.setColor(255,0,0) );
+		vseg[1].draw( img, style1.setColor(255,0,0) );
+		vseg[2].draw( img, style1.setColor(0,255,0) );
+		vseg[3].draw( img, style1.setColor(0,255,0) );
+
+		auto style2 = img::DrawParams().setPointStyle( img::PtStyle::Dot );
+		vpt[0].draw( img, style2.setColor(255,0,0) );
+		vpt[1].draw( img, style2.setColor(255,0,0) );
+		vpt[2].draw( img, style2.setColor(0,255,0) );
+		vpt[3].draw( img, style2.setColor(0,255,0) );
+
+		pt0.draw( img, style2 );
+		std::cout << "\n        Point\nLine |  0 |  1 | \n  2  | "
+			<< (side( vpt[0], vli[2] )==1?"+1 | ":"-1 | ")
+			<< (side( vpt[1], vli[2] )==1?"+1":"-1")
+			<< " |\n  3  | "
+			<< (side( vpt[0], vli[3] )==1?"+1 | ":"-1 | ")
+			<< (side( vpt[1], vli[3] )==1?"+1 |\n":"-1 |\n");
+		showImage();
+	}
+	Point2d pt0;
+};
+
+void action_SideTest( void* param )
+{
+	auto& data = *reinterpret_cast<Param_SideTest*>(param);
+	data.process();
+}
+
+void demo_SideTest( int demidx )
+{
+	Param_SideTest data( demidx, "side demo" );
+	std::cout << "Demo " << demidx << ": side demo\n";
+
+	data.setMouseCB( action_SideTest );
+
+	KeyboardLoop kbloop;
+	kbloop.addCommonAction( action_SideTest );
+	action_SideTest( &data );
+
+	kbloop.start( data );
+}
+
+
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -1621,6 +1687,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_SideTest,
 		demo_PolUnion, // polygon Union
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection
