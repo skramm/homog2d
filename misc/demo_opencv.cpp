@@ -1619,34 +1619,81 @@ struct Param_SideTest : Data
 	{
 		clearImage();
 		uint8_t g = 200;
-		std::vector<Segment> vseg(4);
-		std::vector<Line2d> vli(4);
-		for( int i=0; i<4; i++ )
-		{
-			vseg[i] = Segment( vpt[i], pt0 );
-			vli[i] = Line2d( vpt[i], pt0 );
-			vli[i].draw( img, img::DrawParams().setColor(g,g,g) );
-			cv::putText( img.getReal(), std::to_string(i), getCvPti(vpt[i]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-		}
-		auto style1 = img::DrawParams().setThickness(2);
-		vseg[0].draw( img, style1.setColor(255,0,0) );
-		vseg[1].draw( img, style1.setColor(255,0,0) );
-		vseg[2].draw( img, style1.setColor(0,255,0) );
-		vseg[3].draw( img, style1.setColor(0,255,0) );
 
-		auto style2 = img::DrawParams().setPointStyle( img::PtStyle::Dot );
+		Segment seg0( vpt[2], pt0 );
+		Segment seg1( vpt[3], pt0 );
+		Line2d li0( vpt[2], pt0 );
+		Line2d li1( vpt[3], pt0 );
+
+		li0.draw( img, img::DrawParams().setColor(g,g,g) );
+		li1.draw( img, img::DrawParams().setColor(g,g,g) );
+
+		cv::putText( img.getReal(), "0", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+		cv::putText( img.getReal(), "1", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+
+		auto style1 = img::DrawParams().setThickness(2);
+		seg0.draw( img, style1.setColor(255,0,0) );
+		seg1.draw( img, style1.setColor(255,0,0) );
+//		vseg[2].draw( img, style1.setColor(0,255,0) );
+//		vseg[3].draw( img, style1.setColor(0,255,0) );
+
+		auto style2 = img::DrawParams(); //.setPointStyle( img::PtStyle::Dot );
 		vpt[0].draw( img, style2.setColor(255,0,0) );
 		vpt[1].draw( img, style2.setColor(255,0,0) );
-		vpt[2].draw( img, style2.setColor(0,255,0) );
-		vpt[3].draw( img, style2.setColor(0,255,0) );
 
+		int segDistCase;
+		auto dist = seg0.distTo( vpt[0], &segDistCase );
+		auto pts_seg0 = seg0.getPts();
+std::cout << "segDistCase=" << segDistCase << "\n";
+		auto colA = img::DrawParams().setColor(200,200,0);
+		auto colB = img::DrawParams().setColor(0,200,200);
+		switch( segDistCase )
+		{
+			case -1:
+				Segment( vpt[0], pts_seg0.first ).draw( img, colA );
+			break;
+			case +1:
+				Segment( vpt[0], pts_seg0.second ).draw( img, colA );
+			break;
+			default:
+				try
+				{
+					auto s = li0.getOrthogSegment( vpt[0] );
+					s.draw( img, colB );
+				}
+				catch( std::exception& err ){}
+		}
+
+//		vpt[2].draw( img, style2.setColor(0,255,0) );
+//		vpt[3].draw( img, style2.setColor(0,255,0) );
+
+/*		Circle c(pt0,50);
+		c.draw( img );
+		std::vector<Point2d> vci(4);
+		for( int i=0; i<4; i++ )
+		{
+			auto ci = c.intersects( vseg[i] );
+			assert( ci() );
+			vci[i]= ci.get()[0];
+			vci[i].draw( img );
+		}*/
 		pt0.draw( img, style2 );
-		std::cout << "\n        Point\nLine |  0 |  1 | \n  2  | "
-			<< (side( vpt[0], vli[2] )==1?"+1 | ":"-1 | ")
-			<< (side( vpt[1], vli[2] )==1?"+1":"-1")
-			<< " |\n  3  | "
-			<< (side( vpt[0], vli[3] )==1?"+1 | ":"-1 | ")
-			<< (side( vpt[1], vli[3] )==1?"+1 |\n":"-1 |\n");
+		auto s02 = side( vpt[0], li0 );
+		auto s12 = side( vpt[1], li0 );
+		auto s03 = side( vpt[0], li1 );
+		auto s13 = side( vpt[1], li1 );
+		std::cout << "\n        Point\nLine |  0 |  1 |  S   P   D\n-----+----+----+\n  2  | "
+			<< std::showpos
+			<< s02 << " | "
+			<< s12 << " | "
+			<< s02+s12  << "  " << s02*s12 << "  " << s02-s12 << "\n  3  | "
+			<< s03 << " | "
+			<< s13 << " | "
+			<< s03+s13 << "  " << s03*s13 << "  " << s03-s13
+			<< "\n-----+----+----+\n  S  | "
+			<< s02 + s03 << " | "
+			<< s12 + s13 << " | " << s02+s03+s12+s13 << "\n  P  | "
+			<< s02 * s03 << " | " << s12 * s13 << " |     "<< s02 * s03 * s12 * s13 << "\n";
 		showImage();
 	}
 	Point2d pt0;
@@ -1671,8 +1718,6 @@ void demo_SideTest( int demidx )
 
 	kbloop.start( data );
 }
-
-
 
 //------------------------------------------------------------------
 /// Demo program, using Opencv.

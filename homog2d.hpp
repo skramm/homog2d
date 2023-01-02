@@ -7265,7 +7265,7 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::Ba
 	auto dist = src.distTo(pt);
 #ifndef HOMOG2D_NOCHECKS
 	if( dist < thr::nullDistance() )   // sanity check
-		HOMOG2D_THROW_ERROR_1( "unable to compute segment" );
+		HOMOG2D_THROW_ERROR_2( "getOrthogSegment", "unable to compute segment, distance from point to line too small" );
 #endif
 	auto pair_lines = getParallelLines( dist );
 
