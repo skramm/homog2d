@@ -1620,28 +1620,36 @@ struct Param_SideTest : Data
 		clearImage();
 		uint8_t g = 200;
 
-		Segment seg0( vpt[2], pt0 );
-		Segment seg1( vpt[3], pt0 );
-		Line2d li0( vpt[2], pt0 );
-		Line2d li1( vpt[3], pt0 );
+		auto ptli1 = vpt[2];
+		auto ptli2 = vpt[3];
+		auto ptA   = vpt[0];
+		auto ptB   = vpt[1];
 
-		li0.draw( img, img::DrawParams().setColor(g,g,g) );
+		Segment seg1( ptli1, pt0 );
+		Segment seg2( ptli2, pt0 );
+		Line2d li1( ptli1, pt0 );
+		Line2d li2( ptli2, pt0 );
+
 		li1.draw( img, img::DrawParams().setColor(g,g,g) );
+		li2.draw( img, img::DrawParams().setColor(g,g,g) );
 
-		cv::putText( img.getReal(), "0", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-		cv::putText( img.getReal(), "1", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+		cv::putText( img.getReal(), "A", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+		cv::putText( img.getReal(), "B", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+
+		cv::putText( img.getReal(), "pt1", getCvPti(ptli1), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+		cv::putText( img.getReal(), "pt2", getCvPti(ptli2), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
 
 		auto style1 = img::DrawParams().setThickness(2);
-		seg0.draw( img, style1.setColor(255,0,0) );
 		seg1.draw( img, style1.setColor(255,0,0) );
+		seg2.draw( img, style1.setColor(255,0,0) );
 //		vseg[2].draw( img, style1.setColor(0,255,0) );
 //		vseg[3].draw( img, style1.setColor(0,255,0) );
 
 		auto style2 = img::DrawParams(); //.setPointStyle( img::PtStyle::Dot );
-		vpt[0].draw( img, style2.setColor(255,0,0) );
-		vpt[1].draw( img, style2.setColor(255,0,0) );
+		ptA.draw( img, style2.setColor(255,0,0) );
+		ptB.draw( img, style2.setColor(255,0,0) );
 
-		int segDistCase;
+/*		int segDistCase;
 		auto dist = seg0.distTo( vpt[0], &segDistCase );
 		auto pts_seg0 = seg0.getPts();
 std::cout << "segDistCase=" << segDistCase << "\n";
@@ -1662,10 +1670,11 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 					s.draw( img, colB );
 				}
 				catch( std::exception& err ){}
-		}
+		}*/
 
-//		vpt[2].draw( img, style2.setColor(0,255,0) );
-//		vpt[3].draw( img, style2.setColor(0,255,0) );
+		ptli1.draw( img, style2.setColor(0,255,0) );
+		ptli2.draw( img, style2.setColor(0,255,0) );
+
 
 /*		Circle c(pt0,50);
 		c.draw( img );
@@ -1678,22 +1687,24 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 			vci[i].draw( img );
 		}*/
 		pt0.draw( img, style2 );
-		auto s02 = side( vpt[0], li0 );
-		auto s12 = side( vpt[1], li0 );
-		auto s03 = side( vpt[0], li1 );
-		auto s13 = side( vpt[1], li1 );
-		std::cout << "\n        Point\nLine |  0 |  1 |  S   P   D\n-----+----+----+\n  2  | "
+		auto sA1 = side( ptA, li1 );
+		auto sB1 = side( ptB, li1 );
+		auto sA2 = side( ptA, li2 );
+		auto sB2 = side( ptB, li2 );
+		std::cout << "\n side pt1/pt2=" << side( ptli1, li2);
+		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
 			<< std::showpos
-			<< s02 << " | "
-			<< s12 << " | "
-			<< s02+s12  << "  " << s02*s12 << "  " << s02-s12 << "\n  3  | "
-			<< s03 << " | "
-			<< s13 << " | "
-			<< s03+s13 << "  " << s03*s13 << "  " << s03-s13
+			<< sA1 << " | "
+			<< sB1 << " | "
+			<< sA1+sB1  << "  " << sA1*sB1 << "  " << sA1-sB1 << "   " << (sA1==sB1?"Y":"N") << "\n  2  | "
+			<< sA2 << " | "
+			<< sB2 << " | "
+			<< sA2+sB2 << "  " << sA2*sB2 << "  " << sA2-sB2 << "   " << (sA2==sB2?"Y":"N")
 			<< "\n-----+----+----+\n  S  | "
-			<< s02 + s03 << " | "
-			<< s12 + s13 << " | " << s02+s03+s12+s13 << "\n  P  | "
-			<< s02 * s03 << " | " << s12 * s13 << " |     "<< s02 * s03 * s12 * s13 << "\n";
+			<< sA1 + sA2 << " | "
+			<< sB1 + sB2 << " | " << sA1+sA2+sB1+sB2 << "\n  P  | "
+			<< sA1 * sA2 << " | " << sB1 * sB2 << " |     "<< sA1 * sA2 * sB1 * sB2 << "\n equ |  "
+			<< (sA1==sA2?"Y":"N") << " |  " << (sB1==sB2?"Y":"N") << " |\n";
 		showImage();
 	}
 	Point2d pt0;
