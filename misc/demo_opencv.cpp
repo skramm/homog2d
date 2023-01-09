@@ -1609,6 +1609,36 @@ void demo_PolUnion( int demidx )
 }
 
 //------------------------------------------------------------------
+int segArea( Point2d ptA_, Point2d ptB_, Point2d pt0 )
+{
+	Segment s( ptA_, ptB_ );
+	auto ppts = s.getPts();
+
+	auto ptA = ppts.first; // smallest
+	auto ptB = ppts.second; // smallest
+
+	auto x0 = pt0.getX();
+	auto y0 = pt0.getY();
+
+	auto xA = ptA.getX();
+	auto yA = ptA.getY();
+
+	auto xB = ptB.getX();
+	auto yB = ptB.getY();
+
+	if( xA > x0 && xB > x0 )
+		return 3;
+	if( xA < x0 && xB < x0 )
+		return 2;
+
+	if( yA < y0 && yB < y0 )
+		return 1;
+	if( yA > y0 && yB > y0 )
+		return 0;
+
+	return 4;
+}
+
 struct Param_SideTest : Data
 {
 	explicit Param_SideTest( int demidx, std::string title ): Data( demidx, title )
@@ -1675,6 +1705,15 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 		ptli1.draw( img, style2.setColor(0,255,0) );
 		ptli2.draw( img, style2.setColor(0,255,0) );
 
+		auto orthog_A1 = seg1.getLine().getOrthogSegment(ptA);
+		auto orthog_A2 = seg2.getLine().getOrthogSegment(ptA);
+		auto orthog_B1 = seg1.getLine().getOrthogSegment(ptB);
+		auto orthog_B2 = seg2.getLine().getOrthogSegment(ptB);
+
+		draw( img, orthog_A1 );
+		draw( img, orthog_A2 );
+		draw( img, orthog_B1 );
+		draw( img, orthog_B2 );
 
 /*		Circle c(pt0,50);
 		c.draw( img );
@@ -1691,7 +1730,8 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 		auto sB1 = side( ptB, li1 );
 		auto sA2 = side( ptA, li2 );
 		auto sB2 = side( ptB, li2 );
-		std::cout << "\n side pt1/pt2=" << side( ptli1, li2);
+		std::cout << "\n side pt1/pt2=" << side( ptli1, li2)
+		<< "\n segArea=" << segArea( ptli1, ptli2, pt0 );
 		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
 			<< std::showpos
 			<< sA1 << " | "
