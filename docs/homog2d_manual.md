@@ -442,7 +442,7 @@ shorted distance can be the orthogonal distance to the supporting line, or the d
 ```C++
 Point2d pt;
 Segment seg;
-auto dist = set.dist( pt );
+auto dist = seg.distTo( pt );
 ```
 This function has an optional second argument:
 a pointer to an int, that will hold upon return one of these three values:

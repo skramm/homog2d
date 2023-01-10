@@ -1609,6 +1609,36 @@ void demo_PolUnion( int demidx )
 }
 
 //------------------------------------------------------------------
+int segArea( Point2d ptA_, Point2d ptB_, Point2d pt0 )
+{
+	Segment s( ptA_, ptB_ );
+	auto ppts = s.getPts();
+
+	auto ptA = ppts.first; // smallest
+	auto ptB = ppts.second; // smallest
+
+	auto x0 = pt0.getX();
+	auto y0 = pt0.getY();
+
+	auto xA = ptA.getX();
+	auto yA = ptA.getY();
+
+	auto xB = ptB.getX();
+	auto yB = ptB.getY();
+
+	if( xA > x0 && xB > x0 )
+		return 3;
+	if( xA < x0 && xB < x0 )
+		return 2;
+
+	if( yA < y0 && yB < y0 )
+		return 1;
+	if( yA > y0 && yB > y0 )
+		return 0;
+
+	return 4;
+}
+
 struct Param_SideTest : Data
 {
 	explicit Param_SideTest( int demidx, std::string title ): Data( demidx, title )
@@ -1620,6 +1650,7 @@ struct Param_SideTest : Data
 		clearImage();
 		uint8_t g = 200;
 
+		auto gray1 = img::DrawParams().setColor(g,g,g);
 		auto ptli1 = vpt[2];
 		auto ptli2 = vpt[3];
 		auto ptA   = vpt[0];
@@ -1630,8 +1661,8 @@ struct Param_SideTest : Data
 		Line2d li1( ptli1, pt0 );
 		Line2d li2( ptli2, pt0 );
 
-		li1.draw( img, img::DrawParams().setColor(g,g,g) );
-		li2.draw( img, img::DrawParams().setColor(g,g,g) );
+		li1.draw( img, gray1 );
+		li2.draw( img, gray1 );
 
 		cv::putText( img.getReal(), "A", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
 		cv::putText( img.getReal(), "B", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
@@ -1642,59 +1673,94 @@ struct Param_SideTest : Data
 		auto style1 = img::DrawParams().setThickness(2);
 		seg1.draw( img, style1.setColor(255,0,0) );
 		seg2.draw( img, style1.setColor(255,0,0) );
-//		vseg[2].draw( img, style1.setColor(0,255,0) );
-//		vseg[3].draw( img, style1.setColor(0,255,0) );
 
 		auto style2 = img::DrawParams(); //.setPointStyle( img::PtStyle::Dot );
 		ptA.draw( img, style2.setColor(255,0,0) );
 		ptB.draw( img, style2.setColor(255,0,0) );
 
-/*		int segDistCase;
-		auto dist = seg0.distTo( vpt[0], &segDistCase );
-		auto pts_seg0 = seg0.getPts();
-std::cout << "segDistCase=" << segDistCase << "\n";
-		auto colA = img::DrawParams().setColor(200,200,0);
-		auto colB = img::DrawParams().setColor(0,200,200);
-		switch( segDistCase )
-		{
-			case -1:
-				Segment( vpt[0], pts_seg0.first ).draw( img, colA );
-			break;
-			case +1:
-				Segment( vpt[0], pts_seg0.second ).draw( img, colA );
-			break;
-			default:
-				try
-				{
-					auto s = li0.getOrthogSegment( vpt[0] );
-					s.draw( img, colB );
-				}
-				catch( std::exception& err ){}
-		}*/
-
 		ptli1.draw( img, style2.setColor(0,255,0) );
 		ptli2.draw( img, style2.setColor(0,255,0) );
 
+		std::cout << '\n';
 
-/*		Circle c(pt0,50);
-		c.draw( img );
-		std::vector<Point2d> vci(4);
-		for( int i=0; i<4; i++ )
+		auto liA_p1 = li1.getParallelLine( ptA );
+		auto liA_p2 = li2.getParallelLine( ptA );
+		auto liB_p1 = li1.getParallelLine( ptB );
+		auto liB_p2 = li2.getParallelLine( ptB );
+
+		liA_p1.draw( img, gray1 );
+		liA_p2.draw( img, gray1 );
+		liB_p1.draw( img, gray1 );
+		liB_p2.draw( img, gray1 );
+		auto pti_A1 = seg1.intersects( liA_p2 );
+		auto pti_A2 = seg2.intersects( liA_p1 );
+		auto pti_B1 = seg1.intersects( liB_p2 );
+		auto pti_B2 = seg2.intersects( liB_p1 );
+		if( pti_A1() )
 		{
-			auto ci = c.intersects( vseg[i] );
-			assert( ci() );
-			vci[i]= ci.get()[0];
-			vci[i].draw( img );
-		}*/
+			std::cout << "intersection A1: " << pti_A1.get() << '\n';
+			pti_A1.get().draw( img );
+		}
+
+#if 0
+		try
+		{
+			auto orthog_A1 = seg1.getLine().getOrthogSegment(ptA);
+			auto orthog_A2 = seg2.getLine().getOrthogSegment(ptA);
+			auto orthog_B1 = seg1.getLine().getOrthogSegment(ptB);
+			auto orthog_B2 = seg2.getLine().getOrthogSegment(ptB);
+
+			draw( img, orthog_A1 );
+			draw( img, orthog_A2 );
+			draw( img, orthog_B1 );
+			draw( img, orthog_B2 );
+			auto ppts_A1 = orthog_A1.getPts();
+			auto ppts_A2 = orthog_A2.getPts();
+			auto ppts_B1 = orthog_B1.getPts();
+			auto ppts_B2 = orthog_B2.getPts();
+
+			auto ptseg_A1 = (ppts_A1.first == ptA ? ppts_A1.second : ppts_A1.first);
+			auto ptseg_A2 = (ppts_A2.first == ptA ? ppts_A2.second : ppts_A2.first);
+			auto ptseg_B1 = (ppts_B1.first == ptB ? ppts_B1.second : ppts_B1.first);
+			auto ptseg_B2 = (ppts_B2.first == ptB ? ppts_B2.second : ppts_B2.first);
+
+			auto seg_ptA1 = (seg1.distTo( ptseg_A1 )< 0.0001 ? 1 : 0 );
+			auto seg_ptA2 = (seg2.distTo( ptseg_A2 )< 0.0001 ? 1 : 0 );
+			auto seg_ptB1 = (seg1.distTo( ptseg_B1 )< 0.0001 ? 1 : 0 );
+			auto seg_ptB2 = (seg2.distTo( ptseg_B2 )< 0.0001 ? 1 : 0 );
+
+			std::cout << "\n       Point\n Seg | A | B |\n-----+---+---+\n s1  | "
+				<< seg_ptA1 << " | " << seg_ptB1 << " |\n s2  | "
+				<< seg_ptA2 << " | " << seg_ptB2
+				<< " |\n";
+		}
+		catch( std::exception& err )
+		{
+			std::cout << "unable to get Orthogonal segment: " << err.what();
+		}
+#endif
 		pt0.draw( img, style2 );
-		auto sA1 = side( ptA, li1 );
-		auto sB1 = side( ptB, li1 );
-		auto sA2 = side( ptA, li2 );
-		auto sB2 = side( ptB, li2 );
-		char* sep2 = "  ";
-		std::cout << "\n side pt1/pt2=" << side( ptli1, li2);
-		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
-			<< std::showpos
+		auto sA1 = side( ptA, li1 )==-1?0:1;
+		auto sB1 = side( ptB, li1 )==-1?0:1;
+		auto sA2 = side( ptA, li2 )==-1?0:1;
+		auto sB2 = side( ptB, li2 )==-1?0:1;
+//		char* sep2 = "  ";
+
+/*		Circle cA( pt0, dist(pt0,ptA) );
+		Circle cB( pt0, dist(pt0,ptB) );
+		cA.draw( img, gray1 );
+		cB.draw( img, gray1 );*/
+
+// side correction
+		auto side_corr_1 = ( ptli1.getY() < pt0.getY() ? 1 : 0 );
+		auto side_corr_2 = ( ptli2.getY() < pt0.getY() ? 1 : 0 );
+		auto sA1c = side_corr_1 ? sA1 : 1-sA1;
+		auto sA2c = side_corr_2 ? sA2 : 1-sA2;
+		auto sB1c = side_corr_1 ? sB1 : 1-sB1;
+		auto sB2c = side_corr_2 ? sB2 : 1-sB2;
+
+/*		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
+//			<< std::showpos
 			<< sA1 << " | "
 			<< sB1 << " | "
 			<< sA1+sB1  << sep2 << sA1*sB1 << sep2 << sA1-sB1 << "   " << (sA1==sB1?"Y":"N") << "\n  2  | "
@@ -1705,7 +1771,13 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 			<< sB1 + sB2 << " | " << sA1+sA2+sB1+sB2 << "\n  P  | "
 			<< sA1 * sA2 << " | " << sB1 * sB2 << " |     "<< sA1 * sA2 * sB1 * sB2 << "\n equ |  "
 			<< (sA1==sA2?"Y":"N") << " |  " << (sB1==sB2?"Y":"N")
+			<< " |\n"; */
+
+		std::cout << "\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
+			<< sA1c << " | " << sB1c << " |\n  2  | "
+			<< sA2c << " | " << sB2c
 			<< " |\n";
+
 		showImage();
 	}
 	Point2d pt0;
