@@ -1691,20 +1691,21 @@ std::cout << "segDistCase=" << segDistCase << "\n";
 		auto sB1 = side( ptB, li1 );
 		auto sA2 = side( ptA, li2 );
 		auto sB2 = side( ptB, li2 );
+		char* sep2 = "  ";
 		std::cout << "\n side pt1/pt2=" << side( ptli1, li2);
 		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
 			<< std::showpos
 			<< sA1 << " | "
 			<< sB1 << " | "
-			<< sA1+sB1  << "  " << sA1*sB1 << "  " << sA1-sB1 << "   " << (sA1==sB1?"Y":"N") << "\n  2  | "
+			<< sA1+sB1  << sep2 << sA1*sB1 << sep2 << sA1-sB1 << "   " << (sA1==sB1?"Y":"N") << "\n  2  | "
 			<< sA2 << " | "
 			<< sB2 << " | "
-			<< sA2+sB2 << "  " << sA2*sB2 << "  " << sA2-sB2 << "   " << (sA2==sB2?"Y":"N")
-			<< "\n-----+----+----+\n  S  | "
+			<< sA2+sB2 << sep2 << sA2*sB2 << sep2 << sA2-sB2 << "   " << (sA2==sB2?"Y":"N") << "\n-----+----+----+\n  S  | "
 			<< sA1 + sA2 << " | "
 			<< sB1 + sB2 << " | " << sA1+sA2+sB1+sB2 << "\n  P  | "
 			<< sA1 * sA2 << " | " << sB1 * sB2 << " |     "<< sA1 * sA2 * sB1 * sB2 << "\n equ |  "
-			<< (sA1==sA2?"Y":"N") << " |  " << (sB1==sB2?"Y":"N") << " |\n";
+			<< (sA1==sA2?"Y":"N") << " |  " << (sB1==sB2?"Y":"N")
+			<< " |\n";
 		showImage();
 	}
 	Point2d pt0;
