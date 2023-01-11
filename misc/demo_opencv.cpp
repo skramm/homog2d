@@ -1609,34 +1609,40 @@ void demo_PolUnion( int demidx )
 }
 
 //------------------------------------------------------------------
-int segArea( Point2d ptA_, Point2d ptB_, Point2d pt0 )
+uint8_t isCrossing(
+	uint8_t s12,
+	uint8_t s21,
+	uint8_t sA1,
+	uint8_t sB1,
+	uint8_t sA2,
+	uint8_t sB2
+)
 {
-	Segment s( ptA_, ptB_ );
-	auto ppts = s.getPts();
+	bool A = s12;
+	bool B = s21;
+	bool C = sA1;
+	bool D = sB1;
+	bool E = sA2;
+	bool F = sB2;
 
-	auto ptA = ppts.first; // smallest
-	auto ptB = ppts.second; // smallest
+// terme 1           2          3         4          5         6           7        8        9          10         11        12
+// y = AB'C'EF' + AB'CD'F + A'BC'DF' + A'C'D'EF' + ABDE'F + B'C'D'E'F + AC'DEF + BCDEF' + A'BCD'E' + A'B'CD'F' + ABCD'E + A'B'C'DE'
+	uint8_t y
+	=  A & !B & !C &       E & !F     // 1: AB'C'EF'
+	|  A & !B &  C & !D &       F     // 2: AB'CD'F
+	| !A &  B & !C &  D &      !F     // 3: A'BC'DF'
+	| !A &      !C & !D &  E & !F     // 4 : A'C'D'EF'
+	|  A &  B &       D & !E &  F     // 5 : ABDE'F
+	|      !B & !C & !D & !E &  F     // 6 : B'C'D'E'F
+	|  A &      !C &  D &  E &  F     // 7 : AC'DEF
+	|       B &  C &  D &  E & !F     // 8 : BCDEF'
+	| !A &  B &  C & !D & !E          // 9 : A'BCD'E'
+	| !A & !B &  C & !D &      !F     // 10 : A'B'CD'F'
+	|  A &  B &  C & !D &  E          // 11 : ABCD'E
+	| !A & !B & !C &  D & !E          // 12 : A'B'C'DE'
+	;
+	return y;
 
-	auto x0 = pt0.getX();
-	auto y0 = pt0.getY();
-
-	auto xA = ptA.getX();
-	auto yA = ptA.getY();
-
-	auto xB = ptB.getX();
-	auto yB = ptB.getY();
-
-	if( xA > x0 && xB > x0 )
-		return 3;
-	if( xA < x0 && xB < x0 )
-		return 2;
-
-	if( yA < y0 && yB < y0 )
-		return 1;
-	if( yA > y0 && yB > y0 )
-		return 0;
-
-	return 4;
 }
 
 struct Param_SideTest : Data
@@ -1702,54 +1708,11 @@ struct Param_SideTest : Data
 			pti_A1.get().draw( img );
 		}
 
-#if 0
-		try
-		{
-			auto orthog_A1 = seg1.getLine().getOrthogSegment(ptA);
-			auto orthog_A2 = seg2.getLine().getOrthogSegment(ptA);
-			auto orthog_B1 = seg1.getLine().getOrthogSegment(ptB);
-			auto orthog_B2 = seg2.getLine().getOrthogSegment(ptB);
-
-			draw( img, orthog_A1 );
-			draw( img, orthog_A2 );
-			draw( img, orthog_B1 );
-			draw( img, orthog_B2 );
-			auto ppts_A1 = orthog_A1.getPts();
-			auto ppts_A2 = orthog_A2.getPts();
-			auto ppts_B1 = orthog_B1.getPts();
-			auto ppts_B2 = orthog_B2.getPts();
-
-			auto ptseg_A1 = (ppts_A1.first == ptA ? ppts_A1.second : ppts_A1.first);
-			auto ptseg_A2 = (ppts_A2.first == ptA ? ppts_A2.second : ppts_A2.first);
-			auto ptseg_B1 = (ppts_B1.first == ptB ? ppts_B1.second : ppts_B1.first);
-			auto ptseg_B2 = (ppts_B2.first == ptB ? ppts_B2.second : ppts_B2.first);
-
-			auto seg_ptA1 = (seg1.distTo( ptseg_A1 )< 0.0001 ? 1 : 0 );
-			auto seg_ptA2 = (seg2.distTo( ptseg_A2 )< 0.0001 ? 1 : 0 );
-			auto seg_ptB1 = (seg1.distTo( ptseg_B1 )< 0.0001 ? 1 : 0 );
-			auto seg_ptB2 = (seg2.distTo( ptseg_B2 )< 0.0001 ? 1 : 0 );
-
-			std::cout << "\n       Point\n Seg | A | B |\n-----+---+---+\n s1  | "
-				<< seg_ptA1 << " | " << seg_ptB1 << " |\n s2  | "
-				<< seg_ptA2 << " | " << seg_ptB2
-				<< " |\n";
-		}
-		catch( std::exception& err )
-		{
-			std::cout << "unable to get Orthogonal segment: " << err.what();
-		}
-#endif
 		pt0.draw( img, style2 );
 		auto sA1 = side( ptA, li1 )==-1?0:1;
 		auto sB1 = side( ptB, li1 )==-1?0:1;
 		auto sA2 = side( ptA, li2 )==-1?0:1;
 		auto sB2 = side( ptB, li2 )==-1?0:1;
-//		char* sep2 = "  ";
-
-/*		Circle cA( pt0, dist(pt0,ptA) );
-		Circle cB( pt0, dist(pt0,ptB) );
-		cA.draw( img, gray1 );
-		cB.draw( img, gray1 );*/
 
 // side correction
 		auto side_corr_1 = ( ptli1.getY() < pt0.getY() ? 1 : 0 );
@@ -1760,23 +1723,14 @@ struct Param_SideTest : Data
 		auto sB2c = side_corr_2 ? sB2 : 1-sB2;
 
 		std::cout << "\n side pt1/li2=" << (side( ptli1, li2 )==-1 ? 0 : 1)
-			<< "\n side pt2/li1=" << (side( ptli2, li1 )==-1 ? 0 : 1) << "\n";
+			<< "\n side pt2/li1=" << (side( ptli2, li1 )==-1 ? 0 : 1)
+			<< "\n side_corr_1=" << side_corr_1
+			<< "\n side_corr_2=" << side_corr_2
+			<< "\n";
+
 		auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
 		auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
 
-/*		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
-//			<< std::showpos
-			<< sA1 << " | "
-			<< sB1 << " | "
-			<< sA1+sB1  << sep2 << sA1*sB1 << sep2 << sA1-sB1 << "   " << (sA1==sB1?"Y":"N") << "\n  2  | "
-			<< sA2 << " | "
-			<< sB2 << " | "
-			<< sA2+sB2 << sep2 << sA2*sB2 << sep2 << sA2-sB2 << "   " << (sA2==sB2?"Y":"N") << "\n-----+----+----+\n  S  | "
-			<< sA1 + sA2 << " | "
-			<< sB1 + sB2 << " | " << sA1+sA2+sB1+sB2 << "\n  P  | "
-			<< sA1 * sA2 << " | " << sB1 * sB2 << " |     "<< sA1 * sA2 * sB1 * sB2 << "\n equ |  "
-			<< (sA1==sA2?"Y":"N") << " |  " << (sB1==sB2?"Y":"N")
-			<< " |\n"; */
 
 		std::cout << "\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
 			<< sA1c << " | " << sB1c << " |\n  2  | "
@@ -1784,6 +1738,7 @@ struct Param_SideTest : Data
 			<< " |\n";
 
 		std::cout << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
+		std::cout <<"Crossing=" << (int)isCrossing( s12, s21, sA1, sA2, sB1, sB2 ) << "\n";
 
 		showImage();
 	}
