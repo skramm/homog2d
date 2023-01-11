@@ -1698,7 +1698,7 @@ struct Param_SideTest : Data
 		auto pti_B2 = seg2.intersects( liB_p1 );
 		if( pti_A1() )
 		{
-			std::cout << "intersection A1: " << pti_A1.get() << '\n';
+//			std::cout << "intersection A1: " << pti_A1.get() << '\n';
 			pti_A1.get().draw( img );
 		}
 
@@ -1759,6 +1759,11 @@ struct Param_SideTest : Data
 		auto sB1c = side_corr_1 ? sB1 : 1-sB1;
 		auto sB2c = side_corr_2 ? sB2 : 1-sB2;
 
+		std::cout << "\n side pt1/li2=" << (side( ptli1, li2 )==-1 ? 0 : 1)
+			<< "\n side pt2/li1=" << (side( ptli2, li1 )==-1 ? 0 : 1) << "\n";
+		auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
+		auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
+
 /*		std::cout << "\n        Point\nLine |  A |  B |  S   P   D  equ\n-----+----+----+\n  1  | "
 //			<< std::showpos
 			<< sA1 << " | "
@@ -1778,9 +1783,19 @@ struct Param_SideTest : Data
 			<< sA2c << " | " << sB2c
 			<< " |\n";
 
+		std::cout << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
+
 		showImage();
 	}
 	Point2d pt0;
+	void swapSegs()
+	{
+		std::swap( vpt[3], vpt[2] );
+	}
+	void swapPts()
+	{
+		std::swap( vpt[0], vpt[1] );
+	}
 };
 
 void action_SideTest( void* param )
@@ -1798,6 +1813,8 @@ void demo_SideTest( int demidx )
 
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_SideTest );
+	kbloop.addKeyAction( 'a', [&](void*){ data.swapSegs(); }, "swap segments 1/2" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.swapPts(); }, "swap points A/B" );
 	action_SideTest( &data );
 
 	kbloop.start( data );
