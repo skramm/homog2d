@@ -42,13 +42,13 @@ struct Data
 	{
 		return li1 == li2;
 	}
-	void draw( img::Image<cv::Mat>& im )
+	void drawData( img::Image<cv::Mat>& im ) const
 	{
 		Segment seg1(Point2d(), pt1);
 		Segment seg2(Point2d(), pt2);
 
 		auto seg1d = H*Segment(Point2d(), pt1);
-		auto seg2d = H*Segment(Point2d(), pt2;
+		auto seg2d = H*Segment(Point2d(), pt2);
 		auto li1d = H*li1;
 		auto li2d = H*li2;
 		auto ptAd = H*ptA;
@@ -60,6 +60,7 @@ struct Data
 		draw( im, seg2d, col2 );
 		draw( im, ptAd );
 		draw( im, ptBd );
+	}
 };
 
 std::string BuildBinaryString( const Data& data )
@@ -81,27 +82,50 @@ std::string BuildBinaryString( const Data& data )
 	auto s12 = (side( data.pt1, data.li2 )==-1 ? 0 : 1);
 	auto s21 = (side( data.pt2, data.li1 )==-1 ? 0 : 1);
 
+	char q = '"';
 	std::ostringstream oss;
-	oss << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
+	oss << q << s12 << s21<< q << ';'
+		<< q << sA1c << sA2c << sB1c << sB2c << q << ';'
+		<< q << sA1 << sA2 << sB1 << sB2 << q;
 	return oss.str();
 }
 
-void processSwap( std::ofstream& f, const Data& data, int c )
+void processSwap( std::ofstream& f, const Data& data, char key, int c1 )
 {
-	f << c++ << BuildBinaryString( data ) << std::endl;
+	char sep = ';';
+	int c2 = 0;
+	f << c1 << sep << c2++ << sep
+		<< data.pt1 << sep << data.pt2 << sep
+		<< data.ptA << sep << data.ptB << sep
+		<< BuildBinaryString( data ) << sep << key
+		<< std::endl;
 
 	auto data2 = data;
+	std::cout << "BEFORE data2 ptA=" << data2.ptA << "\n";
 	data2.swapAB();
-	f << c++ << BuildBinaryString( data2 ) << std::endl;
+	std::cout << "AFTER data2 ptA=" << data2.ptA << "\n";
+	f << c1 << sep << c2++ << sep
+		<< data2.pt1 << sep << data2.pt2 << sep
+		<< data2.ptA << sep << data2.ptB << sep
+		<< BuildBinaryString( data2 ) << sep << key
+		<< std::endl;
 
 	auto data3 = data;
 	data3.swap12();
-	f << c++ << BuildBinaryString( data3 ) << std::endl;
+	f << c1 << sep << c2++ << sep
+		<< data3.pt1 << sep << data3.pt2 << sep
+		<< data3.ptA << sep << data3.ptB << sep
+		<< BuildBinaryString( data3 ) << sep << key
+		<< std::endl;
 
 	auto data4 = data;
 	data4.swap12();
 	data4.swapAB();
-	f << c++ << BuildBinaryString( data4 ) << std::endl;
+	f << c1 << sep << c2++ << sep
+		<< data4.pt1 << sep << data4.pt2 << sep
+		<< data4.ptA << sep << data4.ptB << sep
+		<< BuildBinaryString( data4 ) << sep << key
+		<< std::endl;
 }
 
 int main( int argc, const char** argv )
@@ -123,21 +147,15 @@ int main( int argc, const char** argv )
 	};
 #else
 	std::vector<Point2d> vpt{ {+10,0}, {-10,0}, {0,+10}, {0,-10} };
-
 	std::vector<Point2d> vpt_li{ {+10,+10}, {-10,+10}, {+10,-10}, {-10,-10} };
 #endif
+
 	mult(vpt);
 	mult(vpt_li);
 	std::string winName("cornerside");
 	cv::namedWindow( winName );
 
-/*	Homogr H( 150,150);
-	uint8_t g = 200;
-	auto colg = img::DrawParams().setColor(g,g,g);
-	auto col1 = img::DrawParams().setColor(250,0,0);
-	auto col2 = img::DrawParams().setColor(0,250,0);
-*/
-	std::ofstream f( "cornerside2.csv" );
+	std::ofstream f( "cornerside3.csv" );
 
 	Data data;
 	for( size_t ipt1=0; ipt1<vpt_li.size(); ipt1++ )
@@ -158,7 +176,7 @@ int main( int argc, const char** argv )
 							{
 								data.ptB = vpt[j];
 								img::Image<cv::Mat> im( 300,300 );
-								data.draw( im );
+								data.drawData( im );
 
 								std::ostringstream id;
 								id << ipt1 << ipt2 << i << j;
@@ -168,36 +186,11 @@ int main( int argc, const char** argv )
 								std::ostringstream oss;
 								oss << "pointcross_" << std::setfill('0') << std::setw(2) << id.str() << ".png";
 
-/*								auto sA1 = side( ptA, li1 )==-1?0:1;
-								auto sB1 = side( ptB, li1 )==-1?0:1;
-								auto sA2 = side( ptA, li2 )==-1?0:1;
-								auto sB2 = side( ptB, li2 )==-1?0:1;
-
-						// side correction
-								auto side_corr_1 = ( ptli1.getY() < pt0.getY() ? 1 : 0 );
-								auto side_corr_2 = ( ptli2.getY() < pt0.getY() ? 1 : 0 );
-								auto sA1c = side_corr_1 ? sA1 : 1-sA1;
-								auto sA2c = side_corr_2 ? sA2 : 1-sA2;
-								auto sB1c = side_corr_1 ? sB1 : 1-sB1;
-								auto sB2c = side_corr_2 ? sB2 : 1-sB2;
-*/
 								im.write( oss.str() );
 								im.show( winName );
 								auto key = cv::waitKey(0);
-								std::cout << "key=" << key << '\n';
-								if( key == 'y' || key= 'Y' )
-								{
-									processSwap( f, data, c );
-								}
-
-							f << c++ << sep << id.str() << sep
-								<< s12 << s21
-								<< (side( ptA, li1 )==-1?0:1)
-								<< (side( ptB, li1 )==-1?0:1)
-								<< (side( ptA, li2 )==-1?0:1)
-								<< (side( ptB, li2 )==-1?0:1)
-								<< sep << (char)key
-								<< std::endl;
+								std::cout << "key=" << (char)key << '\n';
+								processSwap( f, data, key, c++ );
 							}
 						}
 					}

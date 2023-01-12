@@ -13,6 +13,8 @@ void mult( std::vector<Point2d>& vec )
 
 int main( int argc, const char** argv )
 {
+	return 0;
+
 	std::cout << "START: " << argv[0] << '\n';
 	Point2d pt0;
 
