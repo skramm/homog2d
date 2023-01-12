@@ -1731,8 +1731,12 @@ struct Param_SideTest : Data
 		auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
 		auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
 
+		std::cout << "\nRAW\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
+			<< sA1 << " | " << sB1 << " |\n  2  | "
+			<< sA2 << " | " << sB2
+			<< " |\n";
 
-		std::cout << "\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
+		std::cout << "CORRECTED\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
 			<< sA1c << " | " << sB1c << " |\n  2  | "
 			<< sA2c << " | " << sB2c
 			<< " |\n";
