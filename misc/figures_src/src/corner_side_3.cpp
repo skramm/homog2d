@@ -90,42 +90,62 @@ std::string BuildBinaryString( const Data& data )
 	return oss.str();
 }
 
-void processSwap( std::ofstream& f, const Data& data, char key, int c1 )
+/// Compute quadrant of the point [1-4] (trigonometric notation)
+/**
+\note In the real situation, this needs to be done relatively to reference point
+*/
+int getQuadrant( Point2d pt )
+{
+	if( pt.getX() >= 0 )
+	{
+		if( pt.getY() >= 0 )
+			return 1;
+		return 4;
+	}
+	if( pt.getY() >= 0 )
+			return 2;
+	return 3;
+}
+
+std::string getQuadrantStr(const Data& data )
+{
+	std::ostringstream oss;
+	oss
+		<< getQuadrant( data.pt1 )
+		<< getQuadrant( data.pt2 )
+		<< getQuadrant( data.ptA )
+		<< getQuadrant( data.ptB );
+	return oss.str();
+}
+
+void output( std::ofstream&f, int c1, int c2, const Data& data, char key )
 {
 	char sep = ';';
-	int c2 = 0;
-	f << c1 << sep << c2++ << sep
-		<< data.pt1 << sep << data.pt2 << sep
-		<< data.ptA << sep << data.ptB << sep
+	f << c1 << sep << c2 << sep
+//		<< data.pt1 << sep << data.pt2 << sep
+//		<< data.ptA << sep << data.ptB << sep
+		<< getQuadrantStr(data) << sep
 		<< BuildBinaryString( data ) << sep << key
 		<< std::endl;
+}
+
+void processSwap( std::ofstream& f, const Data& data, char key, int c1 )
+{
+	int c2 = 0;
+	output( f, c1, c2++, data, key );
 
 	auto data2 = data;
-	std::cout << "BEFORE data2 ptA=" << data2.ptA << "\n";
 	data2.swapAB();
-	std::cout << "AFTER data2 ptA=" << data2.ptA << "\n";
-	f << c1 << sep << c2++ << sep
-		<< data2.pt1 << sep << data2.pt2 << sep
-		<< data2.ptA << sep << data2.ptB << sep
-		<< BuildBinaryString( data2 ) << sep << key
-		<< std::endl;
+	output( f, c1, c2++, data2, key );
 
 	auto data3 = data;
 	data3.swap12();
-	f << c1 << sep << c2++ << sep
-		<< data3.pt1 << sep << data3.pt2 << sep
-		<< data3.ptA << sep << data3.ptB << sep
-		<< BuildBinaryString( data3 ) << sep << key
-		<< std::endl;
+	output( f, c1, c2++, data3, key );
 
 	auto data4 = data;
 	data4.swap12();
 	data4.swapAB();
-	f << c1 << sep << c2++ << sep
-		<< data4.pt1 << sep << data4.pt2 << sep
-		<< data4.ptA << sep << data4.ptB << sep
-		<< BuildBinaryString( data4 ) << sep << key
-		<< std::endl;
+	output( f, c1, c2++, data4, key );
 }
 
 int main( int argc, const char** argv )
@@ -156,7 +176,7 @@ int main( int argc, const char** argv )
 	cv::namedWindow( winName );
 
 	std::ofstream f( "cornerside3.csv" );
-
+	f << "# c1;c2;Q;s12-s21;idc;id;K;dec1;dec2\n"
 	Data data;
 	for( size_t ipt1=0; ipt1<vpt_li.size(); ipt1++ )
 	{
