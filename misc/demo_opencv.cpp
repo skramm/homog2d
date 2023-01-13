@@ -1609,13 +1609,72 @@ void demo_PolUnion( int demidx )
 }
 
 //------------------------------------------------------------------
+/// Compute quadrant of the point [1-4] (trigonometric notation)
+/**
+\note In the real situation, this needs to be done relatively to reference point
+*/
+int getQuadrant( const Point2d& pt, const Point2d& pt0 )
+{
+	if( pt.getX() >= pt0.getX() )
+	{
+		if( pt.getY() >= pt0.getY() )
+			return 1;
+		return 4;
+	}
+	if( pt.getY() >= pt0.getY() )
+			return 2;
+	return 3;
+}
+std::string getQuadrantStr( Point2d ptA, Point2d ptB, Point2d pt1, Point2d pt2, Point2d pt0 )
+{
+	std::ostringstream oss;
+	oss
+		<< getQuadrant( pt1, pt0 )
+		<< getQuadrant( pt2, pt0 )
+		<< getQuadrant( ptA, pt0 )
+		<< getQuadrant( ptB, pt0 );
+	return oss.str();
+}
+
+struct Param_SideTest : Data
+{
+/// data
+	Point2d pt0;
+	std::map<int,std::vector<std::string>> lut_cross;
+
+	explicit Param_SideTest( int demidx, std::string title ): Data( demidx, title )
+	{
+		pt0 = Point2d( img.cols()/2, img.rows()/2 );
+		lut_cross[1]  = std::vector<std::string>{ "1431", "2112", "3222", "4323" };
+		lut_cross[2]  = std::vector<std::string>{ "1212", "2322", "3423", "4131" };
+		lut_cross[4]  = std::vector<std::string>{ "1413", "2121", "3222", "4332" };
+		lut_cross[7]  = std::vector<std::string>{ "1412", "2122", "3223", "4331" };
+		lut_cross[8]  = std::vector<std::string>{ "1221", "2322", "3432", "4113" };
+		lut_cross[11] = std::vector<std::string>{ "1222", "2323", "3431", "4112" };
+		lut_cross[13] = std::vector<std::string>{ "1421", "2122", "3232", "4313" };
+		lut_cross[14] = std::vector<std::string>{ "1222", "2332", "3413", "4121" };
+	}
+	void swapSegs()
+	{
+		std::swap( vpt[3], vpt[2] );
+	}
+	void swapPts()
+	{
+		std::swap( vpt[0], vpt[1] );
+	}
+	void process();
+};
+
+//------------------------------------------------------------------
 uint8_t isCrossing(
 	uint8_t s12,
 	uint8_t s21,
 	uint8_t sA1,
-	uint8_t sB1,
 	uint8_t sA2,
-	uint8_t sB2
+	uint8_t sB1,
+	uint8_t sB2,
+	Param_SideTest param,
+	std::string quadrant
 )
 {
 	bool A = s12;
@@ -1624,7 +1683,8 @@ uint8_t isCrossing(
 	bool D = sB1;
 	bool E = sA2;
 	bool F = sB2;
-
+	uint8_t binVal = 8*sA1 + 4*sA2 + 2*sB1 + sB2;
+/*
 // terme 1           2          3         4          5         6           7        8        9          10         11        12
 // y = AB'C'EF' + AB'CD'F + A'BC'DF' + A'C'D'EF' + ABDE'F + B'C'D'E'F + AC'DEF + BCDEF' + A'BCD'E' + A'B'CD'F' + ABCD'E + A'B'C'DE'
 	uint8_t y
@@ -1641,121 +1701,117 @@ uint8_t isCrossing(
 	|  A &  B &  C & !D &  E          // 11 : ABCD'E
 	| !A & !B & !C &  D & !E          // 12 : A'B'C'DE'
 	;
-	return y;
+*/
+	if( binVal == 3 || binVal == 12 )
+		return 0;
 
+	if( binVal == 6 || binVal == 9 )
+		return 1;
+
+	auto vec = param.lut_cross[binVal];
+	for( const auto& str: vec )
+		if( str == quadrant )
+			return 1;
+
+	return 0;
 }
 
-struct Param_SideTest : Data
+
+void Param_SideTest::process()
 {
-	explicit Param_SideTest( int demidx, std::string title ): Data( demidx, title )
+	clearImage();
+	uint8_t g = 200;
+
+	auto gray1 = img::DrawParams().setColor(g,g,g);
+	auto ptli1 = vpt[2];
+	auto ptli2 = vpt[3];
+	auto ptA   = vpt[0];
+	auto ptB   = vpt[1];
+
+	Segment seg1( ptli1, pt0 );
+	Segment seg2( ptli2, pt0 );
+	Line2d li1( ptli1, pt0 );
+	Line2d li2( ptli2, pt0 );
+
+	li1.draw( img, gray1 );
+	li2.draw( img, gray1 );
+
+	cv::putText( img.getReal(), "A", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+	cv::putText( img.getReal(), "B", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+
+	cv::putText( img.getReal(), "pt1", getCvPti(ptli1), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+	cv::putText( img.getReal(), "pt2", getCvPti(ptli2), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
+
+	auto style1 = img::DrawParams().setThickness(2);
+	seg1.draw( img, style1.setColor(255,0,0) );
+	seg2.draw( img, style1.setColor(255,0,0) );
+
+	auto style2 = img::DrawParams(); //.setPointStyle( img::PtStyle::Dot );
+	ptA.draw( img, style2.setColor(255,0,0) );
+	ptB.draw( img, style2.setColor(255,0,0) );
+
+	ptli1.draw( img, style2.setColor(0,255,0) );
+	ptli2.draw( img, style2.setColor(0,255,0) );
+
+	std::cout << '\n';
+
+	auto liA_p1 = li1.getParallelLine( ptA );
+	auto liA_p2 = li2.getParallelLine( ptA );
+	auto liB_p1 = li1.getParallelLine( ptB );
+	auto liB_p2 = li2.getParallelLine( ptB );
+
+/*		liA_p1.draw( img, gray1 );
+	liA_p2.draw( img, gray1 );
+	liB_p1.draw( img, gray1 );
+	liB_p2.draw( img, gray1 );
+	auto pti_A1 = seg1.intersects( liA_p2 );
+	auto pti_A2 = seg2.intersects( liA_p1 );
+	auto pti_B1 = seg1.intersects( liB_p2 );
+	auto pti_B2 = seg2.intersects( liB_p1 );
+	if( pti_A1() )
 	{
-		pt0 = Point2d( img.cols()/2, img.rows()/2 );
-	}
-	void process()
-	{
-		clearImage();
-		uint8_t g = 200;
-
-		auto gray1 = img::DrawParams().setColor(g,g,g);
-		auto ptli1 = vpt[2];
-		auto ptli2 = vpt[3];
-		auto ptA   = vpt[0];
-		auto ptB   = vpt[1];
-
-		Segment seg1( ptli1, pt0 );
-		Segment seg2( ptli2, pt0 );
-		Line2d li1( ptli1, pt0 );
-		Line2d li2( ptli2, pt0 );
-
-		li1.draw( img, gray1 );
-		li2.draw( img, gray1 );
-
-		cv::putText( img.getReal(), "A", getCvPti(vpt[0]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-		cv::putText( img.getReal(), "B", getCvPti(vpt[1]), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-
-		cv::putText( img.getReal(), "pt1", getCvPti(ptli1), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-		cv::putText( img.getReal(), "pt2", getCvPti(ptli2), 0, 0.6, cv::Scalar( 20,20,20 ), 2 );
-
-		auto style1 = img::DrawParams().setThickness(2);
-		seg1.draw( img, style1.setColor(255,0,0) );
-		seg2.draw( img, style1.setColor(255,0,0) );
-
-		auto style2 = img::DrawParams(); //.setPointStyle( img::PtStyle::Dot );
-		ptA.draw( img, style2.setColor(255,0,0) );
-		ptB.draw( img, style2.setColor(255,0,0) );
-
-		ptli1.draw( img, style2.setColor(0,255,0) );
-		ptli2.draw( img, style2.setColor(0,255,0) );
-
-		std::cout << '\n';
-
-		auto liA_p1 = li1.getParallelLine( ptA );
-		auto liA_p2 = li2.getParallelLine( ptA );
-		auto liB_p1 = li1.getParallelLine( ptB );
-		auto liB_p2 = li2.getParallelLine( ptB );
-
-		liA_p1.draw( img, gray1 );
-		liA_p2.draw( img, gray1 );
-		liB_p1.draw( img, gray1 );
-		liB_p2.draw( img, gray1 );
-		auto pti_A1 = seg1.intersects( liA_p2 );
-		auto pti_A2 = seg2.intersects( liA_p1 );
-		auto pti_B1 = seg1.intersects( liB_p2 );
-		auto pti_B2 = seg2.intersects( liB_p1 );
-		if( pti_A1() )
-		{
 //			std::cout << "intersection A1: " << pti_A1.get() << '\n';
-			pti_A1.get().draw( img );
-		}
+		pti_A1.get().draw( img );
+	}*/
 
-		pt0.draw( img, style2 );
-		auto sA1 = side( ptA, li1 )==-1?0:1;
-		auto sB1 = side( ptB, li1 )==-1?0:1;
-		auto sA2 = side( ptA, li2 )==-1?0:1;
-		auto sB2 = side( ptB, li2 )==-1?0:1;
+	pt0.draw( img, style2 );
+	auto sA1 = side( ptA, li1 )==-1?0:1;
+	auto sB1 = side( ptB, li1 )==-1?0:1;
+	auto sA2 = side( ptA, li2 )==-1?0:1;
+	auto sB2 = side( ptB, li2 )==-1?0:1;
 
 // side correction
-		auto side_corr_1 = ( ptli1.getY() < pt0.getY() ? 1 : 0 );
-		auto side_corr_2 = ( ptli2.getY() < pt0.getY() ? 1 : 0 );
-		auto sA1c = side_corr_1 ? sA1 : 1-sA1;
-		auto sA2c = side_corr_2 ? sA2 : 1-sA2;
-		auto sB1c = side_corr_1 ? sB1 : 1-sB1;
-		auto sB2c = side_corr_2 ? sB2 : 1-sB2;
+	auto side_corr_1 = ( ptli1.getY() < pt0.getY() ? 1 : 0 );
+	auto side_corr_2 = ( ptli2.getY() < pt0.getY() ? 1 : 0 );
+	auto sA1c = side_corr_1 ? sA1 : 1-sA1;
+	auto sA2c = side_corr_2 ? sA2 : 1-sA2;
+	auto sB1c = side_corr_1 ? sB1 : 1-sB1;
+	auto sB2c = side_corr_2 ? sB2 : 1-sB2;
 
-		std::cout << "\n side pt1/li2=" << (side( ptli1, li2 )==-1 ? 0 : 1)
-			<< "\n side pt2/li1=" << (side( ptli2, li1 )==-1 ? 0 : 1)
-			<< "\n side_corr_1=" << side_corr_1
-			<< "\n side_corr_2=" << side_corr_2
-			<< "\n";
+	std::cout << "\n side pt1/li2=" << (side( ptli1, li2 )==-1 ? 0 : 1)
+		<< "\n side pt2/li1=" << (side( ptli2, li1 )==-1 ? 0 : 1)
+		<< "\n side_corr_1=" << side_corr_1
+		<< "\n side_corr_2=" << side_corr_2
+		<< "\n";
 
-		auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
-		auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
+	auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
+	auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
 
-		std::cout << "\nRAW\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
-			<< sA1 << " | " << sB1 << " |\n  2  | "
-			<< sA2 << " | " << sB2
-			<< " |\n";
+	std::cout << "\nRAW\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
+		<< sA1 << " | " << sB1 << " |\n  2  | "
+		<< sA2 << " | " << sB2
+		<< " |\n";
 
-		std::cout << "CORRECTED\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
-			<< sA1c << " | " << sB1c << " |\n  2  | "
-			<< sA2c << " | " << sB2c
-			<< " |\n";
+	std::cout << "CORRECTED\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
+		<< sA1c << " | " << sB1c << " |\n  2  | "
+		<< sA2c << " | " << sB2c
+		<< " |\n";
 
-		std::cout << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
-		std::cout <<"Crossing=" << (int)isCrossing( s12, s21, sA1, sA2, sB1, sB2 ) << "\n";
+	std::cout << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
+	std::cout <<"Crossing=" << (int)isCrossing( s12, s21, sA1c, sA2c, sB1c, sB2c, *this, getQuadrantStr( ptA, ptB, ptli1, ptli2, pt0 ) ) << "\n";
 
-		showImage();
-	}
-	Point2d pt0;
-	void swapSegs()
-	{
-		std::swap( vpt[3], vpt[2] );
-	}
-	void swapPts()
-	{
-		std::swap( vpt[0], vpt[1] );
-	}
-};
+	showImage();
+}
 
 void action_SideTest( void* param )
 {

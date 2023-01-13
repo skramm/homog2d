@@ -166,17 +166,19 @@ int main( int argc, const char** argv )
 		{-10,+5}, {-5,+10}, {-10,-5}, {-5,-10}
 	};
 #else
-	std::vector<Point2d> vpt{ {+10,0}, {-10,0}, {0,+10}, {0,-10} };
+//                   quadrant     1         2
+	std::vector<Point2d> vpt{ {+10,+1}, {-10,+1}, {-1,-10}, {-1,+10} };
 	std::vector<Point2d> vpt_li{ {+10,+10}, {-10,+10}, {+10,-10}, {-10,-10} };
 #endif
 
+	for_each( vpt.begin(), vpt.end(), [](Point2d pt){ std::cout << "quadrant " << pt << "=" << getQuadrant(pt) << '\n';} );
 	mult(vpt);
 	mult(vpt_li);
 	std::string winName("cornerside");
 	cv::namedWindow( winName );
 
 	std::ofstream f( "cornerside3.csv" );
-	f << "# c1;c2;Q;s12-s21;idc;id;K;dec1;dec2\n"
+	f << "# c1;c2;Q;s12-s21;idc;id;K;dec1;dec2\n";
 	Data data;
 	for( size_t ipt1=0; ipt1<vpt_li.size(); ipt1++ )
 	{
