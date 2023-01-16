@@ -86,7 +86,8 @@ std::string BuildBinaryString( const Data& data )
 	std::ostringstream oss;
 	oss << q << s12 << s21<< q << ';'
 		<< q << sA1c << sA2c << sB1c << sB2c << q << ';'
-		<< q << sA1 << sA2 << sB1 << sB2 << q;
+		<< sA1c*8 + sA2c*4 + sB1c*2 + sB2c;
+//		<< q << sA1 << sA2 << sB1 << sB2 << q;
 	return oss.str();
 }
 
@@ -106,6 +107,18 @@ int getQuadrant( Point2d pt )
 			return 2;
 	return 3;
 }
+int getDecValue( std::string binValue )
+{
+	auto coeff = 1 << binValue.size()-1;
+	int val = 0;
+	for ( size_t i=0; i<binValue.size(); i++ )
+	{
+		val += (binValue[i] == '1' ? coeff : 0);
+		coeff /= 2;
+	}
+	return val;
+
+}
 
 std::string getQuadrantStr(const Data& data )
 {
@@ -120,12 +133,18 @@ std::string getQuadrantStr(const Data& data )
 
 void output( std::ofstream&f, int c1, int c2, const Data& data, char key )
 {
+	Point2d pt0;
+	std::ostringstream oss_or;
+	oss_or << (priv::chull::orientation( data.pt1, pt0, data.pt2 ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( data.ptA, pt0, data.ptB ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( data.pt1, pt0, data.ptA ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( data.pt1, pt0, data.ptB ) == -1 ? '0' : '1');
+
 	char sep = ';';
 	f << c1 << sep << c2 << sep
-//		<< data.pt1 << sep << data.pt2 << sep
-//		<< data.ptA << sep << data.ptB << sep
 		<< getQuadrantStr(data) << sep
-		<< BuildBinaryString( data ) << sep << key
+		<< BuildBinaryString( data ) << sep << key << sep
+		<< oss_or.str() << sep << getDecValue( oss_or.str() )
 		<< std::endl;
 }
 
@@ -178,7 +197,7 @@ int main( int argc, const char** argv )
 	cv::namedWindow( winName );
 
 	std::ofstream f( "cornerside3.csv" );
-	f << "# c1;c2;Q;s12-s21;idc;id;K;dec1;dec2\n";
+	f << "# c1;c2;Q;s12-s21;idc;idc_dec;id;K;orient;orient_dec\n";
 	Data data;
 	for( size_t ipt1=0; ipt1<vpt_li.size(); ipt1++ )
 	{

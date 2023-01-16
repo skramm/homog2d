@@ -1667,8 +1667,8 @@ struct Param_SideTest : Data
 
 //------------------------------------------------------------------
 uint8_t isCrossing(
-	uint8_t s12,
-	uint8_t s21,
+//	uint8_t s12,
+//	uint8_t s21,
 	uint8_t sA1,
 	uint8_t sA2,
 	uint8_t sB1,
@@ -1677,13 +1677,14 @@ uint8_t isCrossing(
 	std::string quadrant
 )
 {
-	bool A = s12;
+/*	bool A = s12;
 	bool B = s21;
 	bool C = sA1;
 	bool D = sB1;
 	bool E = sA2;
-	bool F = sB2;
+	bool F = sB2;*/
 	uint8_t binVal = 8*sA1 + 4*sA2 + 2*sB1 + sB2;
+	std::cout << "binVal=" << (int)binVal << '\n';
 /*
 // terme 1           2          3         4          5         6           7        8        9          10         11        12
 // y = AB'C'EF' + AB'CD'F + A'BC'DF' + A'C'D'EF' + ABDE'F + B'C'D'E'F + AC'DEF + BCDEF' + A'BCD'E' + A'B'CD'F' + ABCD'E + A'B'C'DE'
@@ -1708,7 +1709,7 @@ uint8_t isCrossing(
 	if( binVal == 6 || binVal == 9 )
 		return 1;
 
-	auto vec = param.lut_cross[binVal];
+	const auto& vec = param.lut_cross[binVal];
 	for( const auto& str: vec )
 		if( str == quadrant )
 			return 1;
@@ -1796,19 +1797,33 @@ void Param_SideTest::process()
 
 	auto s12 = (side( ptli1, li2 )==-1 ? 0 : 1);
 	auto s21 = (side( ptli2, li1 )==-1 ? 0 : 1);
-
+#if 0
 	std::cout << "\nRAW\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
 		<< sA1 << " | " << sB1 << " |\n  2  | "
 		<< sA2 << " | " << sB2
 		<< " |\n";
-
+#endif
 	std::cout << "CORRECTED\n        Point\nLine | A | B |\n-----+---+---+\n  1  | "
 		<< sA1c << " | " << sB1c << " |\n  2  | "
 		<< sA2c << " | " << sB2c
 		<< " |\n";
 
+	std::cout << "Quadrant str=" << getQuadrantStr( ptA, ptB, ptli1, ptli2, pt0 ) << " |\n";
+
 	std::cout << s12 << s21 << sA1c << sA2c << sB1c << sB2c << "\n";
-	std::cout <<"Crossing=" << (int)isCrossing( s12, s21, sA1c, sA2c, sB1c, sB2c, *this, getQuadrantStr( ptA, ptB, ptli1, ptli2, pt0 ) ) << "\n";
+	auto cross = (int)isCrossing( sA1c, sA2c, sB1c, sB2c, *this, getQuadrantStr( ptA, ptB, ptli1, ptli2, pt0 ) );
+	std::cout << "Crossing=" << cross << "\n";
+
+	std::ostringstream oss_or;
+	oss_or << (priv::chull::orientation( ptli1, pt0, ptli2 ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( ptA, pt0, ptB ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( ptli1, pt0, ptA ) == -1 ? '0' : '1')
+		<< (priv::chull::orientation( ptli1, pt0, ptB ) == -1 ? '0' : '1');
+	auto orstr = oss_or.str();
+	std::cout << "orientation str=" << orstr
+		<< " => " << (orstr[0]=='1'?8:0) + (orstr[1]=='1'?4:0) + (orstr[2]=='1'?2:0) + (orstr[3]=='1'?1:0) << '\n';
+
+
 
 	showImage();
 }

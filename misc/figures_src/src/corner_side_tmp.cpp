@@ -13,6 +13,7 @@ void mult( std::vector<Point2d>& vec )
 
 int main()
 {
+	return 0;
 	Point2d pt0;
 
 	char sep= ';';
