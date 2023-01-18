@@ -7799,6 +7799,8 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHel
 /**
 Returns 0, 1, or 2 intersections
 (1 when the line touches the edge of rectangle)
+
+\todo 20230118: check if there is a need to fix the order of points in returned object (this was done previously)
 */
 template<typename LP, typename FPT>
 template<typename FPT2>
@@ -7815,11 +7817,9 @@ LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::Ba
 			bool storePoint(true);
 			auto pt = inters.get();
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if intersection point is one of the segment pts
-				if( pti.size() == 1 ) {                            // AND if there is already one
+				if( pti.size() == 1 ) {                          // AND if there is already one
 					if( pti[0] == pt )                           // AND that one is already stored
-//					HOMOG2D_LOG( "dist=" << pt.distTo(pti[0]) )                           // AND that one is already stored
-//					if( pt.distTo(pti[0]) < thr::nullDistance() )                           // AND that one is already stored
-						storePoint = false;
+						storePoint = false;                      // THEN don't store it
 				}
 			if( storePoint )
 				pti.push_back( pt );
