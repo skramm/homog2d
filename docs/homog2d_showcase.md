@@ -107,7 +107,7 @@ that slowly rotates in the image.
 
 * [Showcase 11](../misc/showcase/showcase11.cpp):
 <a name="sc11"></a>
-a moving segment, its supporting line, and its two parallel segments.
+a moving segment, its supporting line, its two parallel segments, and its bisector line (blue).
 
 ![showcase11](showcase/showcase11.gif)
 

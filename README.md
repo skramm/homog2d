@@ -39,13 +39,12 @@ int main()
 
 ### News ###
 
-- 2022-12-17: currently moving CI tests from Travis to GH actions
+- 2022-12-17: moved CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
 - 2022-08-02: 2.8 release
-- 2022-05-18: 2.7 release
 
 (see [history](docs/homog2d_history.md) for more)
 
@@ -60,7 +59,7 @@ This will copy that file in `/usr/local/include`.
 
 - Reference: once downloaded, enter `$ make doc` (requires Doxygen).
 
-- A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
+- A test file is provided, needs [Catch2](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
 - **Contributing**: at present, the best you can do is testing and bug/issue reporting.
