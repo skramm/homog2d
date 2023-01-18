@@ -8166,7 +8166,10 @@ int
 side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
 {
 	const auto& arr = li.get();
-	return (std::signbit( arr[0] * pt.getX() + arr[1] * pt.getY() + arr[2] ) ? -1 : +1);
+	HOMOG2D_INUMTYPE a = arr[0];
+	HOMOG2D_INUMTYPE b = arr[1];
+	HOMOG2D_INUMTYPE c = arr[2];
+	return (std::signbit( a * pt.getX() + b * pt.getY() + c ) ? -1 : +1);
 }
 
 /// Free function, distance between points
