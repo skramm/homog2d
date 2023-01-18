@@ -18,6 +18,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
   - added `getClosestPoints()` between two Polyline oblects ([see demo](homog2d_showcase.md#sc14)).
+  - added `img::putText()`, to write text on backend image
+  - added `side( Point2d, Line2d )`
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

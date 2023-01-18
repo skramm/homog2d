@@ -272,7 +272,15 @@ auto li1 = pt1 * pt2;
 auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
 ```
 
-### 2.5 - Homogeneous coordinates and infinity
+### 2.5 - Side of a point related to a line
+
+The function `side( Point2d, Line2d );` will return an `int` value, either -1, 1 or 0 if point lies on the line.
+
+The tipping point is the horizontal line.
+![side_pl1](img/side_point_line_1.svg)
+![side_pl2](img/side_point_line_2.svg)
+
+### 2.6 - Homogeneous coordinates and infinity
 
 As points and lines are stored with homogeneous coordinates, one can also build theses using 3 values:
 ```C++

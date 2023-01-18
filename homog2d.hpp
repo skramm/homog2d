@@ -288,6 +288,9 @@ using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 /// Holds drawing related code, independent of back-end library
 namespace img {
 
+// forward declaration
+class DrawParams;
+
 /// Color type , see DrawParams
 struct Color
 {
@@ -341,6 +344,10 @@ public:
 	{
 		return _realImg;
 	}
+	bool isInit() const
+	{
+		return _isInitialized;
+	}
 
 	std::pair<size_t,size_t> getSize() const
 	{
@@ -363,10 +370,6 @@ public:
 		_width = width;
 		_height = height;
 	}*/
-	bool isInit() const
-	{
-		return _isInitialized;
-	}
 	void write( std::string ) const
 	{
 		assert(0);
@@ -384,9 +387,9 @@ public:
 	{
 		assert(0);
 	}
+	void drawText( std::string, Point2d_<float>, img::DrawParams dp );
 
 #ifdef HOMOG2D_USE_OPENCV
-
 /// Show image on window \c wname (not available for SVG !)
 	void show( std::string wname )
 	{
@@ -394,7 +397,6 @@ public:
 	}
 #endif
 };
-
 
 #ifdef HOMOG2D_USE_OPENCV
 template <>
@@ -8104,6 +8106,19 @@ FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 template<typename FPT>
 FPT getY( const Point2d_<FPT>& pt) { return pt.getY(); }
 
+//------------------------------------------------------------------
+/// Free function, returns -1 or +1 depending on the side of \c pt, related to \c li
+template<typename FPT1,typename FPT2>
+int
+side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
+{
+	const auto& arr = li.get();
+	HOMOG2D_INUMTYPE a = arr[0];
+	HOMOG2D_INUMTYPE b = arr[1];
+	HOMOG2D_INUMTYPE c = arr[2];
+	return (std::signbit( a * pt.getX() + b * pt.getY() + c ) ? -1 : +1);
+}
+
 /// Free function, distance between points
 /// \sa Point2d_::distTo()
 template<typename FPT1,typename FPT2>
@@ -8905,6 +8920,14 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 	prim.draw( img, dp );
 }
 
+/// Free function, draws text \c str at position \c pt
+template<typename U,typename FPT>
+void
+drawText( img::Image<U>& im, std::string str, Point2d_<FPT> pt, img::DrawParams dp=img::DrawParams() )
+{
+	im.drawText( str, pt, dp );
+}
+
 namespace priv {
 #ifdef HOMOG2D_USE_OPENCV
 template<typename FPT>
@@ -9545,6 +9568,36 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 /////////////////////////////////////////////////////////////////////////////
 // SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
+
+/// Free function, draw text on svg image
+/// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
+/// \todo 20230118: add size as parameter
+template <>
+void
+img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp )
+{
+	getReal()._svgString << "<text x=\"" << pt.getX()
+		<< "\" y=\"" << pt.getY()
+		<< "\" font-size=\"12px"
+		<< "\">" << str << "</text>\n";
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+/// Free function, draw text on Opencv image
+template <>
+void
+img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp ) //=img::DrawParams() )
+{
+	auto col = dp.color();
+	cv::putText(
+		getReal(), str, pt.getCvPtd(),
+		0,   // font id, see https://docs.opencv.org/4.7.0/
+		0.8, // scale factor
+		cv::Scalar( col.b, col.g, col.r )
+	);
+}
+#endif
+
 
 //------------------------------------------------------------------
 /// Draw \c Circle (SVG implementation)

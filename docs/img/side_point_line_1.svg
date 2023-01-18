@@ -1,0 +1,9 @@
+<svg version="1.1" width="300" height="200" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="0" y1="80" x2="299" y2="139.8" stroke="rgb(250,0,0)" stroke-width="2"/>
+<line x1="155" y1="50" x2="165" y2="50" stroke="rgb(0,0,250)" stroke-width="1"/>
+<line x1="160" y1="45" x2="160" y2="55" stroke="rgb(0,0,250)" stroke-width="1"/>
+<text x="120" y="80" font-size="12px">side=1</text>
+</svg>
