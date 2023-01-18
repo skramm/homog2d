@@ -2220,7 +2220,7 @@ public:
 
 /// FRect/Line intersection
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
+	detail::IntersectM<FPT> intersects( const Line2d_<FPT2>& line ) const
 	{
 		return line.intersects( *this );
 	}
@@ -3548,15 +3548,15 @@ public:
 		 out.set( *this * other );
 		 return out;
 	}
-/// Line/FRect intersection
+/// Line/FRect intersection (rectangle defined by \c pt1 and \c pt2)
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
+	detail::IntersectM<FPT> intersects( const Point2d_<FPT2>& pt1, const Point2d_<FPT2>& pt2 ) const
 	{
 		return intersects( FRect_<FPT2>( pt1, pt2 ) ) ;
 	}
 /// Line/FRect intersection
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT> intersects( const FRect_<FPT2>& rect ) const
+	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
 		return impl_intersectsFRect( rect, detail::BaseHelper<LP>() );
 	}
@@ -3708,11 +3708,11 @@ private:
 	void impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const;
 
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsLine>& ) const;
 
 	template<typename FPT2>
-	constexpr detail::Intersect<detail::Inters_2,FPT>
+	constexpr detail::IntersectM<FPT>
 	impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
 
 	template<typename T>
@@ -7789,53 +7789,50 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 /// Overload used when attempting to use that on a point
 template<typename LP, typename FPT>
 template<typename FPT2>
-constexpr detail::Intersect<detail::Inters_2,FPT>
+constexpr detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(FRect) on a point" );
 }
 
 /// Line/FRect intersection
+/**
+Returns 0, 1, or 2 intersections
+(1 when the line touches the edge of rectangle)
+*/
 template<typename LP, typename FPT>
 template<typename FPT2>
-detail::Intersect<detail::Inters_2,FPT>
+detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<type::IsLine>& ) const
 {
-	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
 	std::vector<Point2d_<FPT>> pti;
 	for( const auto seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
-		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
-			HOMOG2D_LOG( "intersect at " << pt );
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if intersection point is one of the segment pts
 				if( pti.size() == 1 ) {                            // AND if there is already one
-//					if( pti[0] == pt )                           // AND that one is already stored
-					HOMOG2D_LOG( "dist=" << pt.distTo(pti[0]) )                           // AND that one is already stored
-					if( pt.distTo(pti[0]) < thr::nullDistance() )                           // AND that one is already stored
+					if( pti[0] == pt )                           // AND that one is already stored
+//					HOMOG2D_LOG( "dist=" << pt.distTo(pti[0]) )                           // AND that one is already stored
+//					if( pt.distTo(pti[0]) < thr::nullDistance() )                           // AND that one is already stored
 						storePoint = false;
 				}
 			if( storePoint )
 				pti.push_back( pt );
 
-// TMP !!!
 			if( pti.size() == 2 )  // already got 2, done
 				break;
 		}
 	}
 	if( pti.empty() )
-		return detail::Intersect<detail::Inters_2,FPT>();
-HOMOG2D_LOG( "size=" << pti.size() );
-	if( pti.size() == 1 )         // if single intersections, add one,
-		pti.push_back( pti[0] );  // we return two identical points
-	else
-		priv::fix_order( pti[0], pti[1] );
-	return detail::Intersect<detail::Inters_2,FPT>( pti[0], pti[1] );
+		return detail::IntersectM<FPT>();
+	detail::IntersectM<FPT> out;
+	out.add( pti );
+	return out;
 }
 
 } // namespace base
@@ -9360,9 +9357,7 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 /// Draw Line2d on image, backend independent
 /**
 Steps:
- -# builds the 4 corner points of the image
- -# build the 4 corresponding lines (borders of the image)
- -# find the intersection points between the line and these 4 lines. Should find 2
+ -# find the intersection points between the line and the image rectangle, should find 2. (but 1 is possible)
  -# draw a line between these 2 points
 */
 template<typename LP, typename FPT>
@@ -9378,20 +9373,19 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
 	FRect_<FPT> r( pt1, pt2 );
-	auto ri = this->intersects( r );
-//	auto ri = this->intersects( pt1,  pt2 );
-	std::cout << "line=" << *this << '\n';
-//	std::cout << std::scientific << "line=" << *this << '\n';
+	auto ri = this->intersects( pt1,  pt2 );
 	if( ri() )
 	{
-		auto ppts = ri.get();
-		std::cout << "impl_draw_LP: pt1=" << pt1 << " pt2=" << pt2 << '\n';
-		std::cout << "impl_draw_LP: first=" << ppts.first << "-" << ppts.second << '\n';
-		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
-		seg.draw( im, dp );
+		if( ri.size() == 2 ) // if only one intersection point, do nothing
+		{
+			auto ppts = ri.get();
+			h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts[0], ppts[1] );
+			seg.draw( im, dp );
+		}
 	}
 }
 
+//------------------------------------------------------------------
 /// Draw points on image implementation, backend independent.
 /// Returns false if point not in image
 template<typename LP, typename FPT>

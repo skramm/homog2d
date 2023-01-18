@@ -280,6 +280,8 @@ The tipping point is the horizontal line.
 ![side_pl1](img/side_point_line_1.svg)
 ![side_pl2](img/side_point_line_2.svg)
 
+See [showcase16](homog2d_showcase.md#sc16) for an example.
+
 ### 2.6 - Homogeneous coordinates and infinity
 
 As points and lines are stored with homogeneous coordinates, one can also build theses using 3 values:

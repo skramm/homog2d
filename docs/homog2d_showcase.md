@@ -132,3 +132,9 @@ A rotating circle, a bunch of random points, and the segment between the point a
 
 ![showcase15](showcase/showcase15.gif)
 
+
+* [Showcase 16](../misc/showcase/showcase16.cpp):
+<a name="sc16"></a>
+Showing the side of a point related to a rotating line. Tipping point appears for a horizontal line.
+
+![showcase16](showcase/showcase16.gif)

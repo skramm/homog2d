@@ -20,6 +20,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getClosestPoints()` between two Polyline oblects ([see demo](homog2d_showcase.md#sc14)).
   - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
   - added `side( Point2d, Line2d )`
+  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point
+  - added showcase16
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
