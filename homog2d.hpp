@@ -74,7 +74,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) \
-		std::cout << '-' << HOMOG2D_PRETTY_FUNCTION << "(), line " << __LINE__ << ": " \
+		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
 		<< std::scientific << std::setprecision(10) \
 		<< a << std::endl;
 #else
@@ -525,10 +525,10 @@ class DrawParams
 		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
 		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
 		PtStyle     _ptStyle       = PtStyle::Plus;
-		bool        _enhancePoint  = false;       ///< to draw selected points
-		bool        _showPoints    = false;       ///< show the points (useful only for Segment_ and Polyline_)
+		bool        _enhancePoint  = false;     ///< to draw selected points
+		bool        _showPoints    = false;     ///< show the points (useful only for Segment_ and Polyline_)
 		bool        _showIndex     = false;     ///< show the index as number
-
+		int         _fontSize      = 20;        ///< font size for drawText()
 /// Returns the point style following the current one
 		PtStyle nextPointStyle() const
 		{
@@ -601,7 +601,13 @@ public:
 		_dpValues._showPoints = b;
 		return *this;
 	}
-
+/// Set font size for drawText()
+	DrawParams& setFontSize( int value /* pixels */ )
+	{
+		assert( value > 1 );
+		_dpValues._fontSize = value;
+		return *this;
+	}
 /// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
 	DrawParams& showIndex( bool b=true )
 	{
@@ -2216,7 +2222,6 @@ public:
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT> intersects( const Line2d_<FPT2>& line ) const
 	{
-//		HOMOG2D_START;
 		return line.intersects( *this );
 	}
 
@@ -2224,7 +2229,6 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
 	{
-//		HOMOG2D_START;
 		detail::IntersectM<FPT> out;
 		for( const auto& rseg: getSegs() )
 		{
@@ -2584,7 +2588,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	detail::Intersect<detail::Inters_2,FPT>
 	intersects( const Line2d_<FPT2>& li ) const
 	{
-//		HOMOG2D_START;
 		return li.intersects( *this );
 	}
 
@@ -2593,7 +2596,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	detail::IntersectM<FPT>
 	intersects( const Segment_<FPT2>& seg ) const
 	{
-//		HOMOG2D_START;
 		return seg.intersects( *this );
 	}
 
@@ -4570,8 +4572,6 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
-//	HOMOG2D_START;
-
 	if( *this == other )
 		return detail::Intersect<detail::Inters_2,FPT>();
 
@@ -7801,31 +7801,36 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_2,FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<type::IsLine>& ) const
 {
-//	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
+	HOMOG2D_LOG( "line=" << *this << " rect=" << rect );
 	std::vector<Point2d_<FPT>> pti;
 	for( const auto seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
-//		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
+		HOMOG2D_LOG( " -ppts seg=" << ppts_seg.first << "-" << ppts_seg.second );
 		auto inters = seg.intersects( *this );
 		if( inters() )
 		{
 			bool storePoint(true);
 			auto pt = inters.get();
+			HOMOG2D_LOG( "intersect at " << pt );
 			if( pt == ppts_seg.first || pt == ppts_seg.second )  // if intersection point is one of the segment pts
-				if( pti.size() == 1 )                            // AND if there is already one
-					if( pti[0] == pt )                           // AND that one is already stored
+				if( pti.size() == 1 ) {                            // AND if there is already one
+//					if( pti[0] == pt )                           // AND that one is already stored
+					HOMOG2D_LOG( "dist=" << pt.distTo(pti[0]) )                           // AND that one is already stored
+					if( pt.distTo(pti[0]) < thr::nullDistance() )                           // AND that one is already stored
 						storePoint = false;
+				}
 			if( storePoint )
 				pti.push_back( pt );
 
+// TMP !!!
 			if( pti.size() == 2 )  // already got 2, done
 				break;
 		}
 	}
 	if( pti.empty() )
 		return detail::Intersect<detail::Inters_2,FPT>();
-
+HOMOG2D_LOG( "size=" << pti.size() );
 	if( pti.size() == 1 )         // if single intersections, add one,
 		pti.push_back( pti[0] );  // we return two identical points
 	else
@@ -8116,7 +8121,11 @@ side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
 	HOMOG2D_INUMTYPE a = arr[0];
 	HOMOG2D_INUMTYPE b = arr[1];
 	HOMOG2D_INUMTYPE c = arr[2];
-	return (std::signbit( a * pt.getX() + b * pt.getY() + c ) ? -1 : +1);
+
+	auto dist = a * pt.getX() + b * pt.getY() + c;
+	if( std::abs(dist) < thr::nullDistance() )
+		return 0;
+	return (std::signbit( dist ) ? -1 : +1);
 }
 
 /// Free function, distance between points
@@ -9350,8 +9359,6 @@ Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 //------------------------------------------------------------------
 /// Draw Line2d on image, backend independent
 /**
-Returns false if line is not in image.
-
 Steps:
  -# builds the 4 corner points of the image
  -# build the 4 corresponding lines (borders of the image)
@@ -9366,14 +9373,20 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 	assert( im.rows() > 2 );
 	assert( im.cols() > 2 );
 
-	HOMOG2D_SVG_CHECK_INIT( im ); // useless if opencv, but harmless
+	HOMOG2D_SVG_CHECK_INIT( im ); // useless if opencv, but harmless (and needed for Svg)
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
-	auto ri = this->intersects( pt1,  pt2 );
+	FRect_<FPT> r( pt1, pt2 );
+	auto ri = this->intersects( r );
+//	auto ri = this->intersects( pt1,  pt2 );
+	std::cout << "line=" << *this << '\n';
+//	std::cout << std::scientific << "line=" << *this << '\n';
 	if( ri() )
 	{
 		auto ppts = ri.get();
+		std::cout << "impl_draw_LP: pt1=" << pt1 << " pt2=" << pt2 << '\n';
+		std::cout << "impl_draw_LP: first=" << ppts.first << "-" << ppts.second << '\n';
 		h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts );
 		seg.draw( im, dp );
 	}
@@ -9569,16 +9582,15 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 // SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
 
-/// Free function, draw text on svg image
+/// Free function, draw text on Svg image
 /// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
-/// \todo 20230118: add size as parameter
 template <>
 void
 img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp )
 {
 	getReal()._svgString << "<text x=\"" << pt.getX()
 		<< "\" y=\"" << pt.getY()
-		<< "\" font-size=\"12px"
+		<< "\" font-size=\"" << dp._dpValues._fontSize << "px"
 		<< "\">" << str << "</text>\n";
 }
 
@@ -9591,8 +9603,8 @@ img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawPar
 	auto col = dp.color();
 	cv::putText(
 		getReal(), str, pt.getCvPtd(),
-		0,   // font id, see https://docs.opencv.org/4.7.0/
-		0.8, // scale factor
+		cv::FONT_HERSHEY_SIMPLEX,   // font id, see https://docs.opencv.org/4.7.0/
+		0.03 * dp._dpValues._fontSize, // scale factor (approximate...)
 		cv::Scalar( col.b, col.g, col.r )
 	);
 }

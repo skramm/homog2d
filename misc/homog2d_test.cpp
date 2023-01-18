@@ -538,6 +538,23 @@ TEST_CASE( "line/point distance", "[lp-dist]" )
 	CHECK( c2 == 0 );
 }
 
+TEST_CASE( "side-pt-line", "[side-pt-line]" )
+{
+	Line2d_<NUMTYPE> li; // vertical line at x=0
+	{
+		Point2d_<NUMTYPE> pt;
+		CHECK( side(pt,li) == 0 );
+	}
+	{
+		Point2d_<NUMTYPE> pt(1,0);
+		CHECK( side(pt,li) == 1 );
+	}
+	{
+		Point2d_<NUMTYPE> pt(-1,0);
+		CHECK( side(pt,li) == -1 );
+	}
+}
+
 TEST_CASE( "test1", "[test1]" )
 {
 	Point2d_<NUMTYPE> ptA1; // 0,0

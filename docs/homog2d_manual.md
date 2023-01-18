@@ -1625,6 +1625,9 @@ cv::Mat& ocv = img.getReal()
 
 All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
 that holds various parameters for drawing.
+It holds several member functions that allow to tweak the drawing parameters.
+All of these functions support the "chained-call" syntax.
+
 So you can for example set the color and line width with:
 ```C++
 li.draw( img, img::DrawParams().setThickness(2 /* pixels */).setColor(r,g,b) );
@@ -1667,7 +1670,8 @@ The available functions are given in the table below:
 `setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Dot` |  |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
-`showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline |
+`showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
+`setFontSize()`   | int (size in pixels)     |    |
 
 ### 8.4 - Drawing containers
 
