@@ -1581,7 +1581,7 @@ To have an idea, here are two renderings of the same objects done with the two b
 (done with [this program](../misc/figures_src/src/comparison_svg_opencv.cpp).)
 
 |  SVG rendering | OpenCv rendering |
-|----------------+------------------|
+| -------------- | ---------------- |
 | ![SVG drawing](img/comparison_1.svg) | ![Opencv drawing](img/comparison_2.png) |
 
 
