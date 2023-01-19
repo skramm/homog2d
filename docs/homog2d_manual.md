@@ -1553,12 +1553,12 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-## 8 - Drawing
+## 8 - Drawing things
 <a name="drawing"></a>
 
 This library provides a way to render data graphically, using two backends.
 However please note that this is not a "high-end" drawing tool, the rendering has no
-extended fine-tuning on how things are rendered, it is there only to quickly see what is going on.
+extended fine-tuning on how things are rendered, the goal is only to quickly see what is going on.
 
 ### 8.1 - Available backends
 
@@ -1580,13 +1580,9 @@ In case you have some trouble building this program, please [read this](opencv_n
 To have an idea, here are two renderings of the same objects done with the two backends
 (done with [this program](../misc/figures_src/src/comparison_svg_opencv.cpp).)
 
- * with SVG:
-
-  ![SVG drawing](img/comparison_1.svg)
-
- * with OpenCv:
-
- ![Opencv drawing](img/comparison_2.png)
+|  SVG rendering | OpenCv rendering |
+|----------------+------------------|
+| ![SVG drawing](img/comparison_1.svg) | ![Opencv drawing](img/comparison_2.png) |
 
 
 ### 8.2 - Drawing objects
@@ -1622,7 +1618,18 @@ img::Image<cv::Mat> img( 300, 400 );
 cv::Mat& ocv = img.getReal()
 ```
 
-### 8.3 - Drawing parameters
+
+### 8.3 - Drawing Text
+
+You can draw text with the `drawText()` free or member function, with either Opencv or Svg backend:
+```C++
+img::Image<cv::Mat> im( 300, 400 );
+Point2d loc( x, y );
+drawText( im, "Some Text", loc );  // or: im.drawText( "Some Text", loc );
+```
+
+
+### 8.4 - Drawing parameters
 <a name="drawing_params"></a>
 
 All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
@@ -1673,7 +1680,8 @@ The available functions are given in the table below:
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
-`setFontSize()`   | int (size in pixels)     |    |
+`setFontSize()`   | int (size in pixels)     |  Only for `putText()`  |
+
 
 ### 8.4 - Drawing containers
 

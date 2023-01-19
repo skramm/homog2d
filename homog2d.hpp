@@ -9372,7 +9372,7 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
-	FRect_<FPT> r( pt1, pt2 );
+//	FRect_<FPT> r( pt1, pt2 );
 	auto ri = this->intersects( pt1,  pt2 );
 	if( ri() )
 	{
@@ -9380,6 +9380,7 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 		{
 			auto ppts = ri.get();
 			h2d::Segment_<HOMOG2D_INUMTYPE> seg( ppts[0], ppts[1] );
+			dp.showPoints(false);
 			seg.draw( im, dp );
 		}
 	}
@@ -9585,7 +9586,11 @@ img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::D
 	getReal()._svgString << "<text x=\"" << pt.getX()
 		<< "\" y=\"" << pt.getY()
 		<< "\" font-size=\"" << dp._dpValues._fontSize << "px"
-		<< "\">" << str << "</text>\n";
+		<< "\" fill=\"#" << std::hex << std::setfill('0')
+			<< std::setw(2) << (int)dp.color().r
+			<< std::setw(2) << (int)dp.color().g
+			<< std::setw(2) << (int)dp.color().b
+		<< std::dec << "\">" << str << "</text>\n";
 }
 
 #ifdef HOMOG2D_USE_OPENCV
