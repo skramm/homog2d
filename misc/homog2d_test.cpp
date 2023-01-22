@@ -40,7 +40,7 @@ This latter part starts around line 2880.
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -536,6 +536,23 @@ TEST_CASE( "line/point distance", "[lp-dist]" )
 	}
 	CHECK( c1 == 0 );
 	CHECK( c2 == 0 );
+}
+
+TEST_CASE( "side-pt-line", "[side-pt-line]" )
+{
+	Line2d_<NUMTYPE> li; // vertical line at x=0
+	{
+		Point2d_<NUMTYPE> pt;
+		CHECK( side(pt,li) == 0 );
+	}
+	{
+		Point2d_<NUMTYPE> pt(1,0);
+		CHECK( side(pt,li) == 1 );
+	}
+	{
+		Point2d_<NUMTYPE> pt(-1,0);
+		CHECK( side(pt,li) == -1 );
+	}
 }
 
 TEST_CASE( "test1", "[test1]" )
@@ -1970,9 +1987,10 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 		pt2.set(1,1);
 		auto ri = li.intersects( FRect(pt1, pt2) );
 		CHECK( ri() == true );
-		auto sol = ri.get();
-		CHECK( sol.first  == pt1 );
-		CHECK( sol.second == pt2 );
+		CHECK( ri.size() == 2 );
+		auto pts = ri.get();
+		CHECK( pts[0] == pt1 );
+		CHECK( pts[1] == pt2 );
 
 		pt1.set( 5,0 );
 		pt2.set( 6,1 );
@@ -1989,42 +2007,63 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 		CHECK( ri1() == true );
 		CHECK( ri2() == true );
 
-		CHECK( ri1.get().first  == pt1 );
-		CHECK( ri1.get().second == Point2d(0,1) );
-		CHECK( ri2.get().first  == pt1 );
-		CHECK( ri2.get().second == Point2d(0,1) );
+		CHECK( ri1.size() == 2 );
+		CHECK( ri2.size() == 2 );
+		auto pts1 = ri1.get();
+		auto pts2 = ri2.get();
+		CHECK( pts1[0] == pt1 );
+		CHECK( pts1[1] == Point2d(0,1) );
+
+		CHECK( pts2[0] == pt1 );
+		CHECK( pts2[1] == Point2d(0,1) );
 
 		li = Point2d_<NUMTYPE>(1,0) * Point2d_<NUMTYPE>(1,1);     // vertical line at x=1
 		ri1 = li.intersects( r1 );
 		ri2 = r1.intersects( li );
 		CHECK( ri1() == true );
 		CHECK( ri2() == true );
-		CHECK( ri1.get().first  == Point2d(1,0) );
-		CHECK( ri1.get().second == Point2d(1,1) );
+		CHECK( ri1.size() == 2 );
+		CHECK( ri2.size() == 2 );
+
+		pts1 = ri1.get();
+		CHECK( pts1[0] == Point2d(1,0) );
+		CHECK( pts1[1] == Point2d(1,1) );
 
 		li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(1,0);        // horizontal line at y=0
 		ri1 = li.intersects( r1 );
 		ri2 = r1.intersects( li );
 		CHECK( ri1() == true );
 		CHECK( ri2() == true );
-		CHECK( ri1.get().first  == pt1 );
-		CHECK( ri1.get().second == Point2d(1,0) );
+		CHECK( ri1.size() == 2 );
+		CHECK( ri2.size() == 2 );
+
+		pts1 = ri1.get();
+		CHECK( pts1[0] == pt1 );
+		CHECK( pts1[1] == Point2d(1,0) );
 
 		li = Point2d_<NUMTYPE>(-1,1) * Point2d_<NUMTYPE>(1,1);     // horizontal line at y=1
 		ri1 = li.intersects( r1 );
 		ri2 = r1.intersects( li );
 		CHECK( ri1() == true );
 		CHECK( ri2() == true );
-		CHECK( ri1.get().first  == Point2d(0,1) );
-		CHECK( ri1.get().second == Point2d(1,1) );
+		CHECK( ri1.size() == 2 );
+		CHECK( ri2.size() == 2 );
+
+		pts1 = ri1.get();
+		CHECK( pts1[0] == Point2d(0,1) );
+		CHECK( pts1[1] == Point2d(1,1) );
 
 		li = Point2d_<NUMTYPE>(-1.,.5) * Point2d_<NUMTYPE>(2.,.5);     // horizontal line at y=0.5
 		ri1 = li.intersects( r1 );
 		ri2 = r1.intersects( li );
 		CHECK( ri1() == true );
 		CHECK( ri2() == true );
-		CHECK( ri1.get().first  == Point2d(0.,.5) );
-		CHECK( ri1.get().second == Point2d(1.,.5) );
+		CHECK( ri1.size() == 2 );
+		CHECK( ri2.size() == 2 );
+
+		pts1 = ri1.get();
+		CHECK( pts1[0] == Point2d(0.,.5) );
+		CHECK( pts1[1] == Point2d(1.,.5) );
 	}
 }
 

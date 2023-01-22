@@ -39,13 +39,12 @@ int main()
 
 ### News ###
 
-- 2022-12-17: currently moving CI tests from Travis to GH actions
+- 2022-12-17: moved CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
 - 2022-08-02: 2.8 release
-- 2022-05-18: 2.7 release
 
 (see [history](docs/homog2d_history.md) for more)
 
@@ -60,7 +59,7 @@ This will copy that file in `/usr/local/include`.
 
 - Reference: once downloaded, enter `$ make doc` (requires Doxygen).
 
-- A test file is provided, needs [Catch](https://github.com/catchorg/Catch2).
+- A test file is provided, needs [Catch2](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
 - **Contributing**: at present, the best you can do is testing and bug/issue reporting.
@@ -80,12 +79,13 @@ Don't hesitate, this is still beta but stable release expected soon.
   - ...
 
 - Related libraries:
+  - [CGAL](https://www.cgal.org/) the reference computational geometry library.
   - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
 **Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there is **no rendering code** included.
 The library provides drawing function whose implementation requires external code.
-The images are drawn using a third-party library, but it is not needed to use this library.
+The images are drawn either as Svg files, or using a third-party library (Opencv), but the latter is not needed to use this library.
 
 
 (*):

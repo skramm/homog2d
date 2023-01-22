@@ -107,7 +107,7 @@ that slowly rotates in the image.
 
 * [Showcase 11](../misc/showcase/showcase11.cpp):
 <a name="sc11"></a>
-a moving segment, its supporting line, and its two parallel segments.
+a moving segment, its supporting line, its two parallel segments, and its bisector line (blue).
 
 ![showcase11](showcase/showcase11.gif)
 
@@ -132,3 +132,9 @@ A rotating circle, a bunch of random points, and the segment between the point a
 
 ![showcase15](showcase/showcase15.gif)
 
+
+* [Showcase 16](../misc/showcase/showcase16.cpp):
+<a name="sc16"></a>
+Showing the side of a point related to a rotating line. Tipping point appears for a horizontal line.
+
+![showcase16](showcase/showcase16.gif)
