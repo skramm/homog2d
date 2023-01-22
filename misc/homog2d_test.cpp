@@ -2121,15 +2121,15 @@ TEST_CASE( "Colinearity", "[colinearity]" )
 	}
 	{
 		Point2d p1(0,0), p2(1,0), p3(4,0);
-		CHECK( areColinear( p1, p2, p3 ) );
+		CHECK( areCollinear( p1, p2, p3 ) );
 	}
 	{
 		Point2d p1(1,0), p2(0,0), p3(4,0);
-		CHECK( areColinear( p1, p2, p3 ) );
+		CHECK( areCollinear( p1, p2, p3 ) );
 	}
 	{
 		Point2d p1(1,0), p2(0,0), p3(4,1E-3);
-		CHECK( !areColinear( p1, p2, p3 ) );
+		CHECK( !areCollinear( p1, p2, p3 ) );
 	}
 }
 

@@ -2701,7 +2701,7 @@ This will return the same points as given in input but ordered as:
 - the third point in [2]
 - the point closest to the third point in [1], the farthest in [0]
 
-\sa bool areColinear()
+\sa bool areCollinear()
 
 \todo 20220520: needs some optimization, once it has been extensively tested
 
@@ -2799,7 +2799,7 @@ Need to change that, and replace by computation of the angle between the two lin
 */
 template<typename FPT>
 bool
-areColinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
+areCollinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_<FPT>& pt3 )
 {
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 		return true;
@@ -4517,7 +4517,7 @@ void
 Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 )
 {
 #ifndef HOMOG2D_NOCHECKS
-	if( areColinear( pt1, pt2, pt3 ) )
+	if( areCollinear( pt1, pt2, pt3 ) )
 		HOMOG2D_THROW_ERROR_1( "Unable, points are colinear" );
 #endif
 	auto pts = priv::getLargestDistancePoints( pt1, pt2, pt3 );

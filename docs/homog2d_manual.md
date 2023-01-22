@@ -1410,7 +1410,7 @@ For an example, see previous section.
 
 You can check if three points lie on the same line with this:
 ```C++
-bool b = areColinear( pt1, pt2, pt3 );
+bool b = areCollinear( pt1, pt2, pt3 );
 ```
 
 ### 6.5 - Finding nearest/farthest point in a container
