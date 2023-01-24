@@ -2000,7 +2000,7 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 	INFO( "with H/V line" )
 	{
 		Point2d_<NUMTYPE> pt1, pt2(1,1);                //  rectangle (0,0) - (1,1)
-		FRect r1(pt1, pt2);
+		FRect_<NUMTYPE> r1(pt1, pt2);
 		Line2d_<NUMTYPE> li = Point2d_<NUMTYPE>() * Point2d_<NUMTYPE>(0,1); // vertical line at y=x
 		auto ri1 = li.intersects( r1 );
 		auto ri2 = r1.intersects( li );
@@ -2064,6 +2064,15 @@ TEST_CASE( "Line/FRect intersection", "[int_LF]" )
 		pts1 = ri1.get();
 		CHECK( pts1[0] == Point2d(0.,.5) );
 		CHECK( pts1[1] == Point2d(1.,.5) );
+	}
+	INFO( "single point intersection" )
+	{
+		FRect_<NUMTYPE> r1( 0,0,1,1 );
+		Line2d_<NUMTYPE> li( -1,+1, +1,-1 );
+		auto inter = r1.intersects( li );
+		CHECK( inter.size() == 1 );
+		auto pts = inter.get();
+		CHECK( pts[0] == Point2d(0,0) );
 	}
 }
 

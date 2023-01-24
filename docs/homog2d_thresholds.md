@@ -3,7 +3,7 @@
 [Manual main page](homog2d_manual.md)
 
 As this library does not use arbitrary precision arithmetic, it may suffer from the weaknesses of traditional floating-point computation.
-Thus several thresholds are used to manage numeric issues.
+Thus several thresholds are used to manage numerical issues.
 They are used in the situations described below.
 
 ### 1 - Situations
@@ -11,17 +11,18 @@ They are used in the situations described below.
 * Checking for parallel lines (see `isParallelTo()` )is done by computing the angle between the lines.
 If it is below a threshold, the function returns true.
 The default value is one thousand of a radian (0.001 rad).
-This is checked for when computing an intersection point between two  lines/segments, for example when attempting to build a point from 2 lines.
+This is checked for when computing an intersection point between two lines/segments, for example when attempting to build a point from 2 lines.
 
 * When attempting to compute a line out of two points, if the distance between the two points is less than `thr::nullDistance()`,
 then the library will throw an exception.
 
-* When attempting to compute the inverse of a matrix, if the determinant is less
+* When attempting to compute the inverse of a homography matrix, if the determinant is less
 than `thr::nullDeter()`, the inversion code will throw.
-
 
 All the thresholds have default values.
 These can be changed at build time, globally, but the values can also be changed at runtime.
+However, as they are stored as static variables, you may not have different values in different threads, in case of a multithreading app.
+
 
 ### 2 - Changing thresholds at build time
 

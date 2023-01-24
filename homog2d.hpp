@@ -653,9 +653,6 @@ enum class GivenCoord: uint8_t { X, Y };
 /// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
-// Used in Polyline_ constructors
-//enum class IsClosed: uint8_t { Yes, No };
-
 /// Type of Root object, see detail::Root::type()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
@@ -4615,7 +4612,8 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 
 namespace priv {
 //------------------------------------------------------------------
-/// A value that needs some computing, associated with its flag
+/// A POD value that needs some computing, associated with its flag.
+/// Used to be able to retain a value needing complex calculation.
 template<typename T>
 class ValueFlag
 {
@@ -7739,6 +7737,7 @@ LPBase<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::Ba
 
 /// Line/Circle intersection: implementation
 /// For computation details, checkout http://skramm.lautre.net/files/misc/intersect_circle_line.pdf
+/// \todo 20230124: change return type: intersection of a circle with a line can be a single point
 template<typename LP, typename FPT>
 template<typename T>
 detail::Intersect<detail::Inters_2,FPT>

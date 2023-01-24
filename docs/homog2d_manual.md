@@ -1222,16 +1222,16 @@ And whatever the primitives, you can always get the number of intersection point
 
 The table below summarizes the number of intersection points to expect:
 
-|            | `Line2d` | `Segment` | `FRect`  | `Circle` | `Polyline` |
-|------------|----------|-----------|----------|----------|------------|
-| `Line2d`   |  0 or 1  |           |          |          |            |
-| `Segment`  |  0 or 1  |   0 or 1  |          |          |            |
-| `FRect`    |  0 or 2  |   0,1,2   |    0-4   |          |            |
-| `Circle`   |  0 or 2  |   0,1,2   |   0,2,4  |  0 or 2  |            |
-| `Polyline` |  0 - n   |   0 - n   |   0 - n  |  0 - n   |   0 - n    |
+|            |  `Line2d`  | `Segment` | `FRect`  | `Circle` | `Polyline` |
+|------------|------------|-----------|----------|----------|------------|
+| `Line2d`   |   0 or 1   |           |          |          |            |
+| `Segment`  |   0 or 1   |   0 or 1  |          |          |            |
+| `FRect`    | 0, 1, or 2 | 0,1, or 2 |    0-4   |          |            |
+| `Circle`   |   0 or 2   | 0,1, or 2 |   0,2,4  |  0 or 2  |            |
+| `Polyline` |   0 - n    |   0 - n   |   0 - n  |  0 - n   |   0 - n    |
 
 - For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
-- For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
+%%%%- For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
 - For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
 
 For `Polyline`, the number of intersections is of course depending on the number of segments.
