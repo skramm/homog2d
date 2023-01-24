@@ -2582,7 +2582,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 /// Circle/Line intersection
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	intersects( const Line2d_<FPT2>& li ) const
 	{
 		return li.intersects( *this );
@@ -3576,7 +3576,7 @@ public:
 			,T
 		>::type* = nullptr
 	>
-	detail::Intersect<detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	intersects( const Point2d_<FPT>& pt0, T radius ) const
 	{
 		return impl_intersectsCircle( pt0, radius, detail::BaseHelper<LP>() );
@@ -3584,7 +3584,7 @@ public:
 
 /// Line/Circle intersection
 	template<typename T>
-	detail::Intersect<detail::Inters_2,FPT> intersects( const Circle_<T>& cir ) const
+	detail::IntersectM<FPT> intersects( const Circle_<T>& cir ) const
 	{
 		return impl_intersectsCircle( cir.center(), cir.radius(), detail::BaseHelper<LP>() );
 	}
@@ -3713,11 +3713,11 @@ private:
 	impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
 
 	template<typename T>
-	detail::Intersect<detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	impl_intersectsCircle( const Point2d_<FPT>&, T r, const detail::BaseHelper<type::IsLine>& ) const;
 
 	template<typename T>
-	constexpr detail::Intersect<detail::Inters_2,FPT>
+	constexpr detail::IntersectM<FPT>
 	impl_intersectsCircle( const Point2d_<FPT>&, T r, const detail::BaseHelper<type::IsPoint>& ) const;
 
 	template<typename FPT2>
@@ -4407,14 +4407,14 @@ Segment_<FPT>::getExtended() const
 
 	auto int1 = li.intersects( c1 );
 	auto int2 = li.intersects( c2 );
-	assert( int1() );
-	assert( int2() );
+	assert( int1.size() == 2 );
+	assert( int2.size() == 2 );
 	auto ppt1 = int1.get();
 	auto ppt2 = int2.get();
 
 	return Segment_<FPT>(
-		ppt1.first,
-		ppt2.second
+		ppt1[0],
+		ppt2[1]
 	);
 }
 
@@ -6524,17 +6524,26 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle ); // get status of segment points related to circle (inside/outside/on-edge)
 	auto tag_ptS2 = detail::getPtLabel( _ptS2, circle );
 
-	if( tag_ptS1 == PtTag::Inside )
-		if( tag_ptS2 == PtTag::Inside )
+	if( tag_ptS1 == PtTag::Inside )                // both points inside
+		if( tag_ptS2 == PtTag::Inside )            // => no intersection
 			return detail::IntersectM<FPT>();
 
-	auto int_lc = getLine().intersects( circle );
-	if( !int_lc() )
+	auto int_lc = getLine().intersects( circle );   // no intersection of line with circle
+	if( !int_lc() )                                 // => no intersection
 		return detail::IntersectM<FPT>();
 
-	auto p_pts = int_lc.get();      // get the line intersection points
-	const auto& p1 = p_pts.first;
-	const auto& p2 = p_pts.second;
+	auto ipts = int_lc.get();      // get the line intersection points with the circle
+
+	if( ipts.size() == 1 )         // only one intersection point
+	{
+		detail::IntersectM<FPT> out;
+		out.add( ipts[0] );
+		return out;
+	}
+	assert( ipts.size() == 2 );
+
+	const auto& p1 = ipts[0];
+	const auto& p2 = ipts[1];
 
 	if(                                                            // one inside, the other outside
 		( tag_ptS1 == PtTag::Inside  && tag_ptS2 == PtTag::Outside )
@@ -7729,7 +7738,7 @@ LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseH
 /// Intersection of line and circle: implementation for points
 template<typename LP, typename FPT>
 template<typename T>
-constexpr detail::Intersect<detail::Inters_2,FPT>
+constexpr detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::BaseHelper<type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersects(Circle) with a point" );
@@ -7740,14 +7749,14 @@ LPBase<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::Ba
 /// \todo 20230124: change return type: intersection of a circle with a line can be a single point
 template<typename LP, typename FPT>
 template<typename T>
-detail::Intersect<detail::Inters_2,FPT>
+detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsCircle(
 	const Point2d_<FPT>& pt,       ///< circle origin
 	T                    radius,   ///< radius
 	const detail::BaseHelper<type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
-	detail::Intersect<detail::Inters_2,FPT> out;
+	detail::IntersectM<FPT> out;
 	HOMOG2D_CHECK_IS_NUMBER(T);
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(_v[0]); // just to lighten a bit...
 	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(_v[1]);
@@ -7777,11 +7786,18 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 	auto y2 = yb + m*a;
 
 // last step: translate back
-	out._ptIntersect_1.set( x1 + pt.getX(), y1 + pt.getY() );
-	out._ptIntersect_2.set( x2 + pt.getX(), y2 + pt.getY() );
-	out._doesIntersect = true;
+	Point2d_<HOMOG2D_INUMTYPE> pt1( x1 + pt.getX(), y1 + pt.getY() );
+	Point2d_<HOMOG2D_INUMTYPE> pt2( x2 + pt.getX(), y2 + pt.getY() );
+	if( pt2 < pt1 )
+		std::swap( pt1, pt2 );
+	out.add( pt1 );
+	if( pt1 != pt2 )
+		out.add( pt2 );
+//	out._ptIntersect_1.set( x1 + pt.getX(), y1 + pt.getY() );
+//	out._ptIntersect_2.set( x2 + pt.getX(), y2 + pt.getY() );
+//	out._doesIntersect = true;
 
-	priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
+//	priv::fix_order( out._ptIntersect_1, out._ptIntersect_2 );
 	return out;
 }
 //------------------------------------------------------------------

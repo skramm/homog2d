@@ -1774,7 +1774,7 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
 {
-	Circle_<NUMTYPE> c1( Point2d(1,1), 1 ); // circle centered on 1,1, going horizontally from 0 to 2 at y=0
+	Circle_<NUMTYPE> c1( Point2d(1,1), 1 ); // circle centered on 1,1, going horizontally from 0 to 2 at y=1
 	{
 		Segment_<NUMTYPE> s1( Point2d(0,20),Point2d(2,20) ); // horizontal segment at y=20
 
@@ -1912,14 +1912,14 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 	{
 		auto rih = lih.intersects( pt, 1.0 );
 		CHECK( rih() == true );
-		CHECK( rih.get().first  == Point2d(-1,0) );
-		CHECK( rih.get().second == Point2d(+1,0) );
+		CHECK( rih.get().at(0) == Point2d(-1,0) );
+		CHECK( rih.get().at(1) == Point2d(+1,0) );
 	}
 	{
 		auto riv = liv.intersects( pt, 1.0 );
 		CHECK( riv() == true );
-		CHECK( riv.get().first  == Point2d(0,-1) );
-		CHECK( riv.get().second == Point2d(0,+1) );
+		CHECK( riv.get().at(0) == Point2d(0,-1) );
+		CHECK( riv.get().at(1) == Point2d(0,+1) );
 	}
 
 	Circle_<NUMTYPE> cir2(45);
@@ -1929,8 +1929,8 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 	{
 		auto cl1 = cir2.intersects( liv );
 		CHECK( cl1() == true );
-		CHECK( cl1.get().first  == Point2d(0,-45) );
-		CHECK( cl1.get().second == Point2d(0,+45) );
+		CHECK( cl1.get().at(0) == Point2d(0,-45) );
+		CHECK( cl1.get().at(1) == Point2d(0,+45) );
 	}
 	{
 		Circle_<NUMTYPE> c4( Point2d(1,1),1);
@@ -1938,14 +1938,14 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 		auto res1 = c4.intersects( l4 );
 		CHECK( res1() == true );
 		CHECK( res1.size() == 2 );
-		CHECK( res1.get().first  == Point2d(0,1) );
-		CHECK( res1.get().second == Point2d(2,1) );
+		CHECK( res1.get().at(0) == Point2d(0,1) );
+		CHECK( res1.get().at(1) == Point2d(2,1) );
 
 		auto res2 = l4.intersects( c4 );
 		CHECK( res2() == true );
 		CHECK( res2.size() == 2 );
-		CHECK( res2.get().first  == Point2d(0,1) );
-		CHECK( res2.get().second == Point2d(2,1) );
+		CHECK( res2.get().at(0) == Point2d(0,1) );
+		CHECK( res2.get().at(1) == Point2d(2,1) );
 	}
 }
 

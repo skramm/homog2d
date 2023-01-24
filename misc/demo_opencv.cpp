@@ -509,8 +509,9 @@ void action_C( void* param )
 		if( ri() )
 		{
 			auto inter = ri.get();
-			inter.first.draw(  data.img, img::DrawParams().setColor(250, 0, 0) );
-			inter.second.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
+			inter[0].draw(  data.img, img::DrawParams().setColor(250, 0, 0) );
+			if( inter.size() == 2 )
+				inter[1].draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 		}
 	}
 
