@@ -166,6 +166,8 @@
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="scripts/plot_tags_linecount.plt" />
+		<Unit filename="scripts/tags_linecount.sh" />
 		<Unit filename="showcase/gif_duration.data" />
 		<Unit filename="showcase/showcase1.cpp" />
 		<Unit filename="showcase/showcase10.cpp" />

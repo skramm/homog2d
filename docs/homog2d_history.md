@@ -23,6 +23,12 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point
   - added showcase16
 
+
+## Previous releases
+
+![#LOC per release](img_other/linecount.png):
+
+
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
