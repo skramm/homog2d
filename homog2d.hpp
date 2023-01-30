@@ -5688,7 +5688,7 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsOpen>& )
 {
 	assert( size() > 2 );
 	p_minimizePL( *this, 1, size()-1 );
@@ -5696,7 +5696,7 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsOpen>& )
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsClosed>& )
 {
 	p_minimizePL( *this, 0, size() );
 }
