@@ -5716,7 +5716,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 constexpr bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename type::IsOpen>& ) const
 {
 	return false;
 }
@@ -5724,7 +5724,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) c
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename type::IsClosed>& ) const
 {
 	if( _attribs._isPolygon.isBad() )
 	{
