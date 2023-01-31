@@ -6994,7 +6994,7 @@ Is the test below relevant? Clarify.
 */
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	auto sq = std::hypot( _v[0], _v[1] );
 #ifndef HOMOG2D_NOCHECKS
@@ -7020,7 +7020,7 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
 /// Point normalization. Just make sure a>0
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	if( std::signbit(_v[0]) )
 	{
