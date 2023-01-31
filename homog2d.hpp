@@ -2598,7 +2598,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 // Circle/Circle intersection
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT>
+	detail::Intersect<typename detail::Inters_2,FPT>
 	intersects( const Circle_<FPT2>& ) const;
 
 /// Circle/FRect intersection
