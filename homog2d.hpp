@@ -2599,13 +2599,12 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 // Circle/Circle intersection
 	template<typename FPT2>
 	detail::Intersect<detail::Inters_2,FPT>
-	intersects( const Circle_<FPT2>& seg ) const;
+	intersects( const Circle_<FPT2>& ) const;
 
 /// Circle/FRect intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-//		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
 
@@ -2613,7 +2612,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
 	{
-//		HOMOG2D_START;
 		return pl.intersects( * this );
 	}
 ///@}
