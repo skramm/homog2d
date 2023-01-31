@@ -4566,7 +4566,7 @@ Ref:
 */
 template<typename FPT>
 template<typename FPT2>
-detail::Intersect<detail::Inters_2,FPT>
+detail::Intersect<typename detail::Inters_2,FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
 	if( *this == other )
