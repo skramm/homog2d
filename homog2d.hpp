@@ -4562,13 +4562,13 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 Ref:
 - https://stackoverflow.com/questions/3349125/
 */
-template<typename FPT>
-template<typename FPT2>
-detail::Intersect<typename detail::Inters_2,FPT>
-Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
+template<typename FP>
+template<typename FPT3>
+detail::Intersect<typename detail::Inters_2,FP>
+Circle_<FP>::intersects( const Circle_<FPT3>& other ) const
 {
 	if( *this == other )
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::Intersect<detail::Inters_2,FP>();
 
 	HOMOG2D_INUMTYPE r1 = _radius;
 	HOMOG2D_INUMTYPE r2 = other._radius;
@@ -4582,29 +4582,29 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 
 	if( d_squared > r1*r1 + r2*r2 + 2.*r1*r2 )              // no intersection
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::Intersect<detail::Inters_2,FP>();
 
 	if( d_squared < ( r1*r1 + r2*r2 - 2.*r1*r2 ) )          // no intersection: one circle inside the other
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::Intersect<detail::Inters_2,FP>();
 
 	auto d = std::sqrt( d_squared );
 	auto a = (r1*r1 - r2*r2 + d_squared) / 2. / d;
 	auto h = std::sqrt( r1*r1 - a*a );
 
-	Point2d_<FPT> P0(
+	Point2d_<FP> P0(
 		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
 		( pt2.getY() - pt1.getY() ) * a / d + pt1.getY()
 	);
 
-	Point2d_<FPT> pt3(
+	Point2d_<FP> pt3(
 		P0.getX() + h*( pt1.getY() - pt2.getY() ) / d,
 		P0.getY() - h*( pt1.getX() - pt2.getX() ) / d
 	);
-	Point2d_<FPT> pt4(
+	Point2d_<FP> pt4(
 		P0.getX() - h*( pt1.getY() - pt2.getY() ) / d,
 		P0.getY() + h*( pt1.getX() - pt2.getX() ) / d
 	);
-	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
+	return detail::Intersect<detail::Inters_2,FP>( pt3, pt4 );
 }
 
 
