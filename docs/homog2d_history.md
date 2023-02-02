@@ -20,8 +20,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `getClosestPoints()` between two Polyline oblects ([see demo](homog2d_showcase.md#sc14)).
   - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
   - added `side( Point2d, Line2d )`
-  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point
+  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (TODO: same for Circle/Circle)
   - added showcase16
+  - fixed issues occuring with msvc in c++17 mode with flag `/permissive-` (see https://github.com/skramm/homog2d/issues/5)
 
 
 ## Previous releases
