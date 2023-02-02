@@ -3202,13 +3202,13 @@ private:
 	}
 	/// Arg is a point, object is a point => copy-constructor
 	template<typename T>
-	void impl_init_1_Point( const Point2d_<T>& pt, const detail::BaseHelper<type::IsPoint>& )
+	void impl_init_1_Point( const Point2d_<T>& pt, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		p_copyFrom( pt );
 	}
 	/// Arg is a point, object is a line: we build the line passing though (0,0) ant the given point
 	template<typename T>
-	void impl_init_1_Point( const Point2d_<T>& pt, const detail::BaseHelper<type::IsLine>& )
+	void impl_init_1_Point( const Point2d_<T>& pt, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		*this = detail::crossProduct<type::IsLine>( pt, Point2d_<FPT>() );
 		p_normalizePL();
@@ -3216,19 +3216,19 @@ private:
 
 	/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
 	template<typename T>
-	constexpr void impl_init_1_Line( const Line2d_<T>&, const detail::BaseHelper<type::IsPoint>& )
+	constexpr void impl_init_1_Line( const Line2d_<T>&, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
 	}
 	/// Arg is a line, object is a line => copy-constructor
 	template<typename T>
-	void impl_init_1_Line( const Line2d_<T>& li, const detail::BaseHelper<type::IsLine>& )
+	void impl_init_1_Line( const Line2d_<T>& li, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		p_copyFrom( li );
 	}
 
 	template<typename T>
-	constexpr void impl_init_or( LineDir, T, const detail::BaseHelper<type::IsPoint>& )
+	constexpr void impl_init_or( LineDir, T, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a horiz/vertical point" );
 	}
@@ -3240,7 +3240,7 @@ private:
 			,T
 		>::type* = nullptr
 	>
-	void impl_init_or( LineDir dir, T value, const detail::BaseHelper<type::IsLine>& )
+	void impl_init_or( LineDir dir, T value, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		_v[2] = -value;
 		if( dir == LineDir::V )
@@ -3253,7 +3253,7 @@ private:
 		}
 	}
 	template<typename T>
-	void impl_init_or( LineDir dir, const Point2d_<T>& pt, const detail::BaseHelper<type::IsLine>& )
+	void impl_init_or( LineDir dir, const Point2d_<T>& pt, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		if( dir == LineDir::V )
 		{
@@ -3269,13 +3269,13 @@ private:
 
 	template<typename T>
 	constexpr void
-	impl_init_4( T, T, T, T, const detail::BaseHelper<type::IsPoint>& )
+	impl_init_4( T, T, T, T, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from 4 values" );
 	}
 	template<typename T>
 	void
-	impl_init_4( T x1, T y1, T x2, T y2, const detail::BaseHelper<type::IsLine>& )
+	impl_init_4( T x1, T y1, T x2, T y2, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		*this = Point2d_<HOMOG2D_INUMTYPE>(x1, y1) * Point2d_<HOMOG2D_INUMTYPE>(x2, y2);
 	}
@@ -3287,11 +3287,11 @@ public:
 	}
 
 private:
-	Type impl_type( const detail::BaseHelper<type::IsPoint>& ) const
+	Type impl_type( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
 		return Type::Point2d;
 	}
-	Type impl_type( const detail::BaseHelper<type::IsLine>& ) const
+	Type impl_type( const detail::BaseHelper<typename type::IsLine>& ) const
 	{
 		return Type::Line2d;
 	}
@@ -3445,17 +3445,17 @@ Please check out warning described in impl_getAngle()
 	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
 private:
-	FPT impl_getX( const detail::BaseHelper<type::IsPoint>& ) const
+	FPT impl_getX( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
 		return _v[0]/_v[2];
 	}
-	FPT impl_getY( const detail::BaseHelper<type::IsPoint>& ) const
+	FPT impl_getY( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
 		return _v[1]/_v[2];
 	}
 
 	template<typename T1,typename T2>
-	void impl_set( T1 x, T2 y, const detail::BaseHelper<type::IsPoint>& )
+	void impl_set( T1 x, T2 y, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T1 );
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
@@ -3466,13 +3466,13 @@ private:
 	}
 	template<typename T1,typename T2>
 	constexpr void
-	impl_set( T1, T2, const detail::BaseHelper<type::IsLine>& )
+	impl_set( T1, T2, const detail::BaseHelper<typename type::IsLine>& )
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
 
 	template<typename T1,typename T2>
-	void impl_move( T1 dx, T2 dy, const detail::BaseHelper<type::IsPoint>& )
+	void impl_move( T1 dx, T2 dy, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
 		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
@@ -3487,24 +3487,23 @@ private:
 	}
 
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
+	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const;
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<type::IsLine>&  ) const;
+	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<typename type::IsLine>&  ) const;
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE           impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
+	HOMOG2D_INUMTYPE           impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const;
 	template<typename FPT2>
-	constexpr HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<type::IsLine>&  ) const;
+	constexpr HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<typename type::IsLine>&  ) const;
 
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
+	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const;
 	template<typename FPT2>
-	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<type::IsLine>&  ) const;
+	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename type::IsLine>&  ) const;
 
-	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
-	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<type::IsPoint>& ) const;
+	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename type::IsLine>&  ) const;
+	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
-
-	constexpr bool impl_isInf( const detail::BaseHelper<type::IsLine>& ) const
+	constexpr bool impl_isInf( const detail::BaseHelper<typename type::IsLine>& ) const
 	{
 		return false;
 	}
@@ -3514,24 +3513,24 @@ private:
 	}
 
 	template<typename FPT2>
-	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<type::IsLine>&  ) const;
+	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename type::IsLine>&  ) const;
 	template<typename FPT2>
-	constexpr bool impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const;
+	constexpr bool impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
-	FPT           impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsLine>& ) const;
-	constexpr FPT impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsPoint>& ) const;
+	FPT           impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsLine>& ) const;
+	constexpr FPT impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
-	Point2d_<FPT>           impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsLine>& ) const;
-	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsPoint>& ) const;
+	Point2d_<FPT>           impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsLine>& ) const;
+	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<type::IsLine>& ) const;
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<type::IsPoint>& ) const;
+	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<type::IsLine>& ) const;
+	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<type::IsPoint>& ) const;
+	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
 	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
 	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
