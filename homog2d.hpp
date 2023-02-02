@@ -1713,8 +1713,8 @@ namespace detail {
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 base::LPBase<T1,FPT1> crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
-struct Inters_1 {};
-struct Inters_2 {};
+class Inters_1 {};
+class Inters_2 {};
 
 /// Common stuff for intersection code
 struct IntersectCommon
@@ -1730,7 +1730,7 @@ public:
 
 /// Base class for intersection, gets specialized
 template<typename T,typename FPT>
-struct Intersect {};
+class Intersect {};
 
 //------------------------------------------------------------------
 /// One point intersection
