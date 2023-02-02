@@ -1718,8 +1718,8 @@ namespace detail {
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 base::LPBase<T1,FPT1> crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
-struct Inters_1 {};
-struct Inters_2 {};
+class Inters_1 {};
+class Inters_2 {};
 
 /// Common stuff for intersection code
 struct IntersectCommon
@@ -1735,7 +1735,7 @@ public:
 
 /// Base class for intersection, gets specialized
 template<typename T,typename FPT>
-struct Intersect {};
+class Intersect {};
 
 //------------------------------------------------------------------
 /// One point intersection
@@ -2603,14 +2603,13 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 // Circle/Circle intersection
 	template<typename FPT2>
-	detail::Intersect<detail::Inters_2,FPT>
-	intersects( const Circle_<FPT2>& seg ) const;
+	detail::Intersect<typename detail::Inters_2,FPT>
+	intersects( const Circle_<FPT2>& ) const;
 
 /// Circle/FRect intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-//		HOMOG2D_START;
 		return rect.intersects( * this );
 	}
 
@@ -2618,7 +2617,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& pl ) const
 	{
-//		HOMOG2D_START;
 		return pl.intersects( * this );
 	}
 ///@}
@@ -4571,7 +4569,7 @@ Ref:
 */
 template<typename FPT>
 template<typename FPT2>
-detail::Intersect<detail::Inters_2,FPT>
+detail::Intersect<typename detail::Inters_2,FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
 	if( *this == other )
@@ -5721,7 +5719,7 @@ PolylineBase<PLT,FPT>::isPolygon() const
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 constexpr bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename type::IsOpen>& ) const
 {
 	return false;
 }
@@ -5729,7 +5727,7 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsOpen>& ) c
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<type::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename type::IsClosed>& ) const
 {
 	if( _attribs._isPolygon.isBad() )
 	{
@@ -6999,7 +6997,7 @@ Is the test below relevant? Clarify.
 */
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	auto sq = std::hypot( _v[0], _v[1] );
 #ifndef HOMOG2D_NOCHECKS
@@ -7025,7 +7023,7 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsLine>& ) const
 /// Point normalization. Just make sure a>0
 template<typename LP,typename FPT>
 void
-LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	if( std::signbit(_v[0]) )
 	{
@@ -7045,14 +7043,14 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<type::IsPoint>& ) const
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
 constexpr FPT
-LPBase<LP,FPT>::impl_getCoord( GivenCoord, FPT, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getCoord( GivenCoord, FPT, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getCoord() on a point" );
 }
 
 template<typename LP,typename FPT>
 FPT
-LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	const auto a = static_cast<HOMOG2D_INUMTYPE>( _v[0] );
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
@@ -7070,14 +7068,14 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelpe
 
 template<typename LP,typename FPT>
 constexpr Point2d_<FPT>
-LPBase<LP,FPT>::impl_getPoint( GivenCoord, FPT, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getPoint( GivenCoord, FPT, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoint() on a point" );
 }
 
 template<typename LP,typename FPT>
 Point2d_<FPT>
-LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	auto coord = impl_getCoord( gc, other, detail::BaseHelper<type::IsLine>() );
 	if( gc == GivenCoord::X )
@@ -7090,14 +7088,14 @@ LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelpe
 template<typename LP,typename FPT>
 template<typename FPT2>
 constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>>
-LPBase<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
 template<typename LP,typename FPT>
 template<typename FPT2>
 constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>>
-LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
@@ -7106,7 +7104,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::Base
 template<typename LP,typename FPT>
 template<typename FPT2>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
-LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	const auto pt = impl_getPoint( gc, coord, detail::BaseHelper<type::IsLine>() );
 	return priv::getPoints_B2( pt, dist, *this );
@@ -7116,7 +7114,7 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const det
 template<typename LP,typename FPT>
 template<typename FPT2>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
-LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
@@ -7135,7 +7133,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const deta
 /// Illegal instanciation
 template<typename LP,typename FPT>
 constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
 }
@@ -7143,7 +7141,7 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::BaseHel
 /// Illegal instanciation
 template<typename LP,typename FPT>
 constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
 }
@@ -7152,7 +7150,7 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::Ba
 template<typename LP,typename FPT>
 template<typename FPT2,typename T>
 constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getRotatedLine() on a point" );
 }
@@ -7160,7 +7158,7 @@ LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::Bas
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	auto other_val = impl_getCoord( gc, val, detail::BaseHelper<type::IsLine>() );
 
@@ -7174,7 +7172,7 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
@@ -7191,7 +7189,7 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail:
 template<typename LP,typename FPT>
 template<typename FPT2,typename T>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
@@ -7209,7 +7207,7 @@ LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const de
 /// Returns the shortest segment that joins a point and a line
 template<typename LP,typename FPT>
 Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	Line2d_<HOMOG2D_INUMTYPE> src = *this;  // copy to highest precision
 	auto dist = src.distTo(pt);
@@ -7231,7 +7229,7 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::Ba
 
 template<typename LP,typename FPT>
 constexpr Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid call" );
 }
@@ -7241,7 +7239,7 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseH
 /// Illegal instanciation
 template<typename LP,typename FPT>
 constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLine() on a point" );
 }
@@ -7249,7 +7247,7 @@ LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHe
 /// Returns an parallel line, implementation of getParallelLine().
 template<typename LP,typename FPT>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	Line2d_<FPT> out = *this;
 	out._v[2] = static_cast<HOMOG2D_INUMTYPE>(-_v[0]) * pt.getX() - _v[1] * pt.getY();
@@ -7262,7 +7260,7 @@ LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::Bas
 template<typename LP,typename FPT>
 template<typename T>
 constexpr std::pair<Line2d_<FPT>,Line2d_<FPT>>
-LPBase<LP,FPT>::impl_getParallelLines( T, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getParallelLines( T, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLines() on a point" );
 }
@@ -7271,7 +7269,7 @@ LPBase<LP,FPT>::impl_getParallelLines( T, const detail::BaseHelper<type::IsPoint
 template<typename LP,typename FPT>
 template<typename T>
 std::pair<Line2d_<FPT>,Line2d_<FPT>>
-LPBase<LP,FPT>::impl_getParallelLines( T dist, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getParallelLines( T dist, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	Line2d_<FPT> l1 = *this;
 	Line2d_<FPT> l2 = *this;
@@ -7290,7 +7288,7 @@ AND
 */
 template<typename LP,typename FPT>
 bool
-LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	if( !this->isParallelTo( other ) )
 		return false;
@@ -7304,7 +7302,7 @@ LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHe
 /// Comparison operator, used for points
 template<typename LP,typename FPT>
 bool
-LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	return ( this->distTo( other ) < thr::nullDistance() );
 }
@@ -7313,7 +7311,7 @@ LPBase<LP,FPT>::impl_op_equal( const LPBase<LP,FPT>& other, const detail::BaseHe
 /// Sorting operator, for points
 template<typename LP,typename FPT>
 bool
-LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>& other, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>& other, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	if( getX() < other.getX() )
 		return true;
@@ -7327,7 +7325,7 @@ LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>& other, const detail::BaseHel
 /// Sorting operator, for lines
 template<typename LP,typename FPT>
 constexpr bool
-LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid < operator: you cannot sort lines" );
 	return false; // to avoid a warning
@@ -7372,7 +7370,7 @@ namespace base {
 template<typename LP, typename FPT>
 template<typename T1,typename T2>
 void
-LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<type::IsPoint>& )
+LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<typename type::IsPoint>& )
 {
 	_v[0] = v1;
 	_v[1] = v2;
@@ -7383,7 +7381,7 @@ LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelpe
 template<typename LP, typename FPT>
 template<typename T1,typename T2>
 void
-LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<type::IsLine>& )
+LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<typename type::IsLine>& )
 {
 	Point2d_<FPT> pt1;                // 0,0
 	Point2d_<FPT> pt2(v1,v2);
@@ -7396,7 +7394,7 @@ LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelpe
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	return std::hypot(
 		static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
@@ -7417,7 +7415,7 @@ http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	return std::fabs(
 		static_cast<HOMOG2D_INUMTYPE>( _v[0] ) * pt.getX()
@@ -7431,7 +7429,7 @@ LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHe
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>& li, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>& li, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	return li.distTo( *this );
 }
@@ -7440,7 +7438,7 @@ LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>& li, const detail::BaseHelp
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
 	return 0.;    // to avoid warning message on build
@@ -7450,7 +7448,7 @@ LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::BaseHelper<
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between a line and a segment" );
 	return 0.;    // to avoid warning message on build
@@ -7459,7 +7457,7 @@ LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>&, const detail::BaseHel
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	return seg.distTo( *this );
 }
@@ -7484,7 +7482,7 @@ namespace base {
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	if( getAngle(li) < thr::nullAngleValue() )
 		return true;
@@ -7493,7 +7491,7 @@ LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::Base
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr bool
-LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot use IsParallel() with a point" );
 	return false;    // to avoid a warning message on build
@@ -7524,7 +7522,7 @@ This is logged on \c std::cerr so that the user may take that into consideration
 */
 template<typename LP, typename FPT>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	HOMOG2D_INUMTYPE l1_a = _v[0];
 	HOMOG2D_INUMTYPE l1_b = _v[1];
@@ -7546,7 +7544,7 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 
 template<typename LP, typename FPT>
 constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
 	return 0.; // to avoid a warning
@@ -7558,7 +7556,7 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<t
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>& rect, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>& rect, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	auto pair_pts = rect.getPts();
 	const auto& p00 = pair_pts.first;
@@ -7568,7 +7566,7 @@ LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>& rect, const detail::BaseH
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	return false;
 }
@@ -7577,7 +7575,7 @@ LPBase<LP,FPT>::impl_isInsideRect( const FRect_<FPT2>&, const detail::BaseHelper
 template<typename LP, typename FPT>
 template<typename T>
 bool
-LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	if( distTo( center ) < radius )
 		return true;
@@ -7586,7 +7584,7 @@ LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>& center, T radius, cons
 template<typename LP, typename FPT>
 template<typename T>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsideCircle( const Point2d_<FPT>&, T, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	return false;
 }
@@ -7639,7 +7637,7 @@ See page \ref md_docs_homog2d_algorithms for details.
 template<typename LP, typename FPT>
 template<typename T,typename PTYPE>
 bool
-LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	if( !poly.isPolygon() )
 		return false;
@@ -7707,7 +7705,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 template<typename LP, typename FPT>
 template<typename T,typename PTYPE>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	return false;
 }
@@ -7716,7 +7714,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const det
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	return ell.pointIsInside( *this );
 }
@@ -7724,7 +7722,7 @@ LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::B
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr bool
-LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	return false;
 }
@@ -7735,7 +7733,7 @@ LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseH
 template<typename LP, typename FPT>
 template<typename T>
 constexpr detail::Intersect<detail::Inters_2,FPT>
-LPBase<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_intersectsCircle( const Point2d_<FPT>&, T, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "cannot use intersects(Circle) with a point" );
 }
@@ -7749,7 +7747,7 @@ detail::Intersect<detail::Inters_2,FPT>
 LPBase<LP,FPT>::impl_intersectsCircle(
 	const Point2d_<FPT>& pt,       ///< circle origin
 	T                    radius,   ///< radius
-	const detail::BaseHelper<type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
+	const detail::BaseHelper<typename type::IsLine>&  ///< dummy arg, needed so that this overload is only called for lines
 ) const
 {
 	detail::Intersect<detail::Inters_2,FPT> out;
@@ -7794,7 +7792,7 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 template<typename LP, typename FPT>
 template<typename FPT2>
 constexpr detail::IntersectM<FPT>
-LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<type::IsPoint>& ) const
+LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>&, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call intersects(FRect) on a point" );
 }
@@ -7809,7 +7807,7 @@ Returns 0, 1, or 2 intersections
 template<typename LP, typename FPT>
 template<typename FPT2>
 detail::IntersectM<FPT>
-LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<type::IsLine>& ) const
+LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	std::vector<Point2d_<FPT>> pti;
 	for( const auto seg: rect.getSegs() ) // get segment of rectangle
@@ -9367,7 +9365,7 @@ Steps:
 template<typename LP, typename FPT>
 template<typename T>
 void
-base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::BaseHelper<type::IsLine>& ) const
+base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	assert( im.rows() > 2 );
 	assert( im.cols() > 2 );
@@ -9396,7 +9394,11 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 template<typename LP, typename FPT>
 template<typename T>
 void
-base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const detail::BaseHelper<type::IsPoint>& ) const
+base::LPBase<LP,FPT>::impl_draw_LP(
+	img::Image<T>&  im,
+	img::DrawParams dp,
+	const detail::BaseHelper<typename type::IsPoint>& ///< dummy arg
+) const
 {
 	if( getX()<0 || getX()>=im.cols() )      // check if point is in image
 		return;
