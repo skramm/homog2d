@@ -371,11 +371,8 @@ public:
 	}
 
 	void setSize( size_t width, size_t height );
-/*	{
-		_width = width;
-		_height = height;
-	}*/
-	void write( std::string ) const
+
+	void write( std::string ) const // will be specialized
 	{
 		assert(0);
 	}
@@ -400,6 +397,14 @@ public:
 	{
 		cv::imshow( wname, _realImg );
 	}
+private:
+	void p_setSize( size_t width, size_t height )
+	{
+		_width  = width;
+		_height = height;
+		_realImg.create( (int)height, (int)width, CV_8UC3 );
+		clear();
+	}
 #endif
 };
 
@@ -407,20 +412,14 @@ public:
 template <>
 Image<cv::Mat>::Image( size_t width, size_t height )
 {
-	_width = width;
-	_height = height;
-	_realImg.create( height, width, CV_8UC3 );
-	clear();
+	p_setSize( width, height );
 }
 
 template <>
 void
 Image<cv::Mat>::setSize( size_t width, size_t height )
 {
-	_width = width;
-	_height = height;
-	_realImg.create( height, width, CV_8UC3 );
-	clear();
+	p_setSize( width, height );
 }
 #endif
 
@@ -9279,7 +9278,7 @@ base::PolylineBase<CT,FPT>::convexHull() const
 template<typename LP, typename FPT>
 template<typename OPENCVT>
 OPENCVT
-base::LPBase<LP,FPT>::impl_getCvPt( const detail::BaseHelper<type::IsPoint>&, const OPENCVT& ) const
+base::LPBase<LP,FPT>::impl_getCvPt( const detail::BaseHelper<typename type::IsPoint>&, const OPENCVT& ) const
 {
 	return OPENCVT( getX(),getY() );
 }
