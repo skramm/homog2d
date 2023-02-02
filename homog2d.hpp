@@ -26,6 +26,11 @@ See https://github.com/skramm/homog2d
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -5688,7 +5693,7 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsOpen>& )
 {
 	assert( size() > 2 );
 	p_minimizePL( *this, 1, size()-1 );
@@ -5696,7 +5701,7 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsOpen>& )
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsClosed>& )
 {
 	p_minimizePL( *this, 0, size() );
 }
