@@ -10000,7 +10000,7 @@ Holds the imported data through std::unique_ptr
 */
 class Visitor: public tinyxml2::XMLVisitor
 {
-/// This type is used to provide a type that can be used in a switch (see visitExit() ),
+/// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
 		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
@@ -10016,7 +10016,7 @@ private:
 public:
 /// Constructor, populates the table giving type from svg string
 	Visitor()
-	{
+	{ //                                          svg name   local type id
 		_svgTypesTable.push_back( std::make_pair("circle",   T_circle)   );
 		_svgTypesTable.push_back( std::make_pair("rect",     T_rect)     );
 		_svgTypesTable.push_back( std::make_pair("line",     T_line)     );
@@ -10038,7 +10038,7 @@ public:
 		);
 		if( it == _svgTypesTable.end() )
 			return T_other;
-//			HOMOG2D_THROW_ERROR_1( "Invalid svg element in file:'" + s + "'" );
+
 		return it->second;
 	}
 	const std::vector<std::unique_ptr<detail::Root>>& get() const
@@ -10046,7 +10046,7 @@ public:
 		return vec;
 	}
 
-	bool visitExit( const tinyxml2::XMLElement& );
+	bool VisitExit( const tinyxml2::XMLElement& );
 };
 
 //------------------------------------------------------------------
@@ -10078,9 +10078,10 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 /**
 \todo Handle ellipse angle
 */
-bool Visitor::visitExit( const tinyxml2::XMLElement& e )
+bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
+//	std::cout << "element name:" << n << '\n';
 	try
 	{
 		switch( getSvgType( n ) )
