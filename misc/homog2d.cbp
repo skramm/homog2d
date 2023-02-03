@@ -99,6 +99,7 @@
 		<Unit filename="figures_src/src/segment_extended.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_circle_1.cpp" />
+		<Unit filename="figures_src/src/side_point_line.cpp" />
 		<Unit filename="figures_test/frect_intersect_1.code">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -170,6 +171,8 @@
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="scripts/plot_tags_linecount.plt" />
+		<Unit filename="scripts/tags_linecount.sh" />
 		<Unit filename="showcase/gif_duration.data" />
 		<Unit filename="showcase/showcase1.cpp" />
 		<Unit filename="showcase/showcase10.cpp" />
@@ -178,6 +181,7 @@
 		<Unit filename="showcase/showcase13.cpp" />
 		<Unit filename="showcase/showcase14.cpp" />
 		<Unit filename="showcase/showcase15.cpp" />
+		<Unit filename="showcase/showcase16.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />

@@ -18,6 +18,16 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
   - added `getClosestPoints()` between two Polyline objects ([see demo](homog2d_showcase.md#sc14)).
+  - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
+  - added `side( Point2d, Line2d )`
+  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (TODO: same for Circle/Circle)
+  - added showcase16
+  - fixed issues occuring with msvc in c++17 mode with flag `/permissive-` (see https://github.com/skramm/homog2d/issues/5)
+
+
+## Previous releases
+
+![#LOC per release](img_other/linecount.png):
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
@@ -37,7 +47,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - [v2.8](https://github.com/skramm/homog2d/releases/tag/v2.8), released on 2022-08-02
   - extended circle API, with building from 2 or 3 points, see [manual](homog2d_manual.md#p_circle)
-  - added `areColinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
+  - added `areCollinear()` to check for colinearity of 3 points, see [manual](homog2d_manual.md#misc)
   - added `getBisector()` to class `Segment_`, return bisector line
   - added `area()` and `length()` to class `Circle_` and class `Ellipse_` (member and free functions)
   - improved ellipse demo (Opencv-dependent)
