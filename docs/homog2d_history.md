@@ -28,6 +28,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 ## Previous releases
 
 ![#LOC per release](img_other/linecount.png):
+=======
+>>>>>>> 1a1431e482b7cd46f8f6064ee83d6dd878616121
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

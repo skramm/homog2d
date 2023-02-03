@@ -49,7 +49,7 @@ Run with <code>$ make test USE_TINYXML2=Y</code>
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
