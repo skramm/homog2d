@@ -17,9 +17,9 @@
 
 /**
 \file demo_opencv.cpp
-\brief demo of interfacing with Opencv
+\brief demo of interfacing with Opencv.
+Try it with <code>$ make demo</code>.
 
-\todo 20221210: check out demo8, why is the figure cropped?!
 */
 
 #define HOMOG2D_USE_OPENCV

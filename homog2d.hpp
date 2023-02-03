@@ -802,6 +802,11 @@ public:
 	{
 		return priv::impl_dtype( detail::DataFpType<FPT>() );
 	}
+/// This function is a fallback for all sub-classes that do not provide such a method.
+/**
+It is necessary in a run-time polymorphism context, as we would have build failures if a given type disallows providing such a method
+(for example, when trying to check if some object is inside an open polyline).
+*/
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
@@ -2944,12 +2949,11 @@ template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
 
 /// Traits class, used to determine if we can use some "isInside()" function
-/// \todo 20221110: shouldn't this be false for OPolyline? Because we cannot compute area of such a type.
 template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T1,typename T2> struct HasArea<base::PolylineBase<T1,T2>>: std::true_type  {};
+template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
@@ -9996,7 +10000,7 @@ Holds the imported data through std::unique_ptr
 */
 class Visitor: public tinyxml2::XMLVisitor
 {
-/// This type is used to provide a type that can be used in a switch (see VisitExit() ),
+/// This type is used to provide a type that can be used in a switch (see visitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
 		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
@@ -10042,7 +10046,7 @@ public:
 		return vec;
 	}
 
-	bool VisitExit( const tinyxml2::XMLElement& );
+	bool visitExit( const tinyxml2::XMLElement& );
 };
 
 //------------------------------------------------------------------
@@ -10074,7 +10078,7 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 /**
 \todo Handle ellipse angle
 */
-bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
+bool Visitor::visitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
 	try
@@ -10083,7 +10087,6 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		{
 			case T_circle:
 			{
-	//			std::cout << "importing circle\n";
 				std::unique_ptr<detail::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
 				vec.push_back( std::move(c) );
 			}
@@ -10113,7 +10116,6 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
-		//		std::cout << "importing " << vec_pts.size() << " pts\n";
 				std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
 				vec.push_back( std::move(p) );
 			}
@@ -10123,7 +10125,6 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
-		//		std::cout << "importing " << vec_pts.size() << " pts\n";
 				std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
 				vec.push_back( std::move(p) );
 			}

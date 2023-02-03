@@ -1921,11 +1921,11 @@ For more details on the code, check [this page](homog2d_devinfo.md).
 
 ### 11.1 - Testing
 
-A unit-test program is included.
+A unit-test program is included, can be run locally and is also used by GitHub CI.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
 The Github CI loads the 2.13.6 release.
-It is build and run with `$ make test`.
-It has been tested both with gcc7.5 (Ubuntu 18) and gcc9.4 (Ubuntu 20).
+It is build and run with `$ make test`
+The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22.
 
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
