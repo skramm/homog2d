@@ -17,14 +17,23 @@
 
 /**
 \file homog2d_test.cpp
-\brief A test file for homog2d, needs Catch https://github.com/catchorg/Catch2,
-run with "make test"
+\brief A test file for homog2d, needs Catch2, v2 (single header file version),
+see https://github.com/catchorg/Catch2
+<br>
+Run with <code>$ make test</code>
 
 This file holds mostly "general" tests.
 
 It also holds some tests that are only related to the OpenCv binding
 Thus, they are run only if the symbol \c HOMOG2D_USE_OPENCV is defined.<br>
-This latter part starts around line 2880.
+This latter part starts around line 3350.
+<br>
+Run with <code>$ make test USE_OPENCV=Y</code>
+
+It also holds some tests that are only related to the SVG import feature, that requires
+the \c tinyxml2 library, and that the symbol HOMOG2D_USE_SVG_IMPORT is defined.
+<br>
+Run with <code>$ make test USE_TINYXML2=Y</code>
 */
 
 /// see test [gen_bind]
