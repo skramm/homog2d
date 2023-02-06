@@ -184,7 +184,7 @@ See https://github.com/skramm/homog2d
 namespace h2d {
 
 /// Use to count the errors
-size_t& errorCount()
+inline size_t& errorCount()
 {
 	static size_t c;
 	return c;
@@ -433,6 +433,7 @@ Image<T>::setSize( size_t width, size_t height )
 
 
 template <>
+inline
 void
 Image<SvgImage>::svgInit()
 {
@@ -451,12 +452,14 @@ Image<SvgImage>::svgInit()
 }
 
 template <>
+inline
 Image<SvgImage>::Image( size_t width, size_t height )
 {
 	setSize( width, height );
 }
 
 template <>
+inline
 void
 Image<SvgImage>::write( std::string fname ) const
 {
@@ -471,6 +474,7 @@ Image<SvgImage>::write( std::string fname ) const
 }
 
 template <>
+inline
 void
 Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
 {
@@ -481,12 +485,14 @@ Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
 
 #ifdef HOMOG2D_USE_OPENCV
 template <>
+inline
 void
 Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
 {
 	_realImg = cv::Scalar(b,g,r);
 }
 template <>
+inline
 void
 Image<cv::Mat>::clear( uint8_t col )
 {
@@ -494,6 +500,7 @@ Image<cv::Mat>::clear( uint8_t col )
 }
 
 template <>
+inline
 void
 Image<cv::Mat>::write( std::string fname ) const
 {
@@ -663,6 +670,7 @@ enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPo
 /// Type of underlying floating point, see LPBase::dtype()
 enum class Dtype: uint8_t { Float, Double, LongDouble };
 
+inline
 const char* getString( Type t )
 {
 	const char* s=0;
@@ -686,14 +694,17 @@ const char* getString( Type t )
 /// Holds private stuff
 namespace priv {
 
+	inline
 	Dtype impl_dtype( const detail::DataFpType<float>& )
 	{
 		return Dtype::Float;
 	}
+	inline
 	Dtype impl_dtype( const detail::DataFpType<double>& )
 	{
 		return Dtype::Double;
 	}
+	inline
 	Dtype impl_dtype( const detail::DataFpType<long double>& )
 	{
 		return Dtype::LongDouble;
@@ -734,6 +745,7 @@ static HOMOG2D_INUMTYPE& nullDeter()
 }
 
 /// Helper function, could be needed
+inline
 void printThresholds( std::ostream& f )
 {
 	f << "homog2d: current threshold values:"
@@ -6129,7 +6141,9 @@ const char* getString( Direction dir )
 
 enum class Turn: uint8_t { Left, Right };
 
-Direction turn( Direction dir, Turn turn )
+inline
+Direction
+turn( Direction dir, Turn turn )
 {
 	switch( dir )
 	{
@@ -6145,6 +6159,7 @@ Direction turn( Direction dir, Turn turn )
 	return Direction::N; // to avoid a warning
 }
 
+inline
 void
 moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 {
@@ -6161,6 +6176,7 @@ moveToNextCell( uint8_t& row, uint8_t& col, const Direction& dir )
 /**
 - Start from 0,0, direction East
 */
+inline
 std::vector<PCoord>
 parseTable( Table& table )
 {
@@ -6200,6 +6216,7 @@ parseTable( Table& table )
 }
 
 #ifdef HOMOG2D_DEBUGMODE
+inline
 void
 printTable( const Table& t, std::string msg )
 {
@@ -6220,6 +6237,7 @@ printTable( const Table& t, std::string msg )
 //------------------------------------------------------------------
 /// Helper function, used in FRect_<FPT>::unionArea()
 template<typename FPT>
+inline
 CPolyline_<FPT>
 convertToCoord(
 	const std::vector<PCoord>&      v_coord, ///< vector of coordinate indexes
@@ -8932,6 +8950,7 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 
 /// Free function, draws text \c str at position \c pt
 template<typename U,typename FPT>
+inline
 void
 drawText( img::Image<U>& im, std::string str, Point2d_<FPT> pt, img::DrawParams dp=img::DrawParams() )
 {
@@ -9588,6 +9607,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 /// Free function, draw text on Svg image
 /// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
 template <>
+inline
 void
 img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp )
 {
@@ -9604,6 +9624,7 @@ img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::D
 #ifdef HOMOG2D_USE_OPENCV
 /// Free function, draw text on Opencv image
 template <>
+inline
 void
 img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp ) //=img::DrawParams() )
 {
