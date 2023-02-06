@@ -1970,10 +1970,11 @@ or just add a `#define` on top of your program
 - `HOMOG2D_NOCHECKS`: will disable run-time checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
+- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr`(1). Defining this symbol will disables this.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
-With this option activated, each ellipse will store both representations, so access to values is immediate.
+With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
 Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
@@ -1985,5 +1986,8 @@ While this shoudn't happen even with random data, numerical (floating-point) iss
 [read this for details](homog2d_qa.md#assert_trigger).
 
 
-
+(1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
+and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.
+<br>
+In the future, other warnings could be issued, and silenced using this symbol.
 

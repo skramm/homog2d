@@ -7556,9 +7556,12 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 	HOMOG2D_INUMTYPE fres = std::abs(res);
 	if( fres > 1.0 )
 	{
-		std::cerr << "homog2d: angle computation overflow detected, value "
+#ifndef HOMOG2D_NOWARNINGS
+		std::cerr << "homog2d Warning: angle computation overflow detected, value "
 			<< std::scientific << std::setprecision(20)
-			<< fres << ", truncated to 1.0\n";
+			<< fres << ", truncated to 1.0\n input lines:\n  l1: "
+			<< *this << "\n  l2: " << li << '\n';
+#endif
 		fres = 1.0;
 	}
 	return std::acos( fres );
