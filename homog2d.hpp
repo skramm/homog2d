@@ -410,12 +410,14 @@ private:
 
 #ifdef HOMOG2D_USE_OPENCV
 template <>
+inline
 Image<cv::Mat>::Image( size_t width, size_t height )
 {
 	p_setSize( width, height );
 }
 
 template <>
+inline
 void
 Image<cv::Mat>::setSize( size_t width, size_t height )
 {
