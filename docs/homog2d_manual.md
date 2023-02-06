@@ -1979,7 +1979,6 @@ For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
 Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
 This will add a common base class `detail::Root` to all the geometric primitives.
-<br>
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
