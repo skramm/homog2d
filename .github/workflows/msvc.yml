@@ -1,0 +1,15 @@
+name: CI-testing-msvc
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  steps:
+    - name: Setup MSVC Developer Command Prompt
+      uses: TheMrMilchmann/setup-msvc-dev@v2.0.0
+    - name: run msvc
+      run: msvc 
+
