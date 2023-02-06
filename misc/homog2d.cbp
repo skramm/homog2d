@@ -197,6 +197,7 @@
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="test_files/single_file.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
