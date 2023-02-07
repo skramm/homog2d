@@ -4764,10 +4764,6 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 } // namespace priv
 
 // Forward declaration
-namespace base {
-template<typename PLT,typename FPT> class PolylineBase;
-}
-
 template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
 operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );

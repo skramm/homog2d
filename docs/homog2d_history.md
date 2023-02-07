@@ -12,6 +12,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add list-initialization with points to `PolylineBase` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
+  - add `Vector` type (defined by dx,dy)
 
 - current master branch
   - fixed normalization for points and lines

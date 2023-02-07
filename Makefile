@@ -148,6 +148,7 @@ test_SN: BUILD/homog2d_test_SN
 	@echo "done target $@"
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+	-rm BUILD/$(notdir $@).stderr
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
 
 # temporarly removed from target testall: speed_test_b
