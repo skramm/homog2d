@@ -162,7 +162,7 @@ BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp M
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
 
 BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile
 	$(CXX) -c $< -o $@
