@@ -1632,7 +1632,7 @@ drawText( im, "Some Text", loc );  // or: im.drawText( "Some Text", loc );
 ### 8.4 - Drawing parameters
 <a name="drawing_params"></a>
 
-All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
+All these drawing functions (member and free function) support an additional optional argument of type `img::DrawParams`, also back-end library independent.
 that holds various parameters for drawing.
 It holds several member functions that allow to tweak the drawing parameters.
 All of these functions support the "chained-call" syntax.

@@ -102,7 +102,7 @@ show:
 	@echo "SHOWCASE_PNG=$(SHOWCASE_PNG)"
 	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
 	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
-	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
+	@echo "TEST_FIG_SVG=$(TEST_FIG_SVG)"
 	@echo "NOBUILD_SRC_FILES=$(NOBUILD_SRC_FILES)"
 	@echo "NOBUILD_OBJ_FILES=$(NOBUILD_OBJ_FILES)"
 
@@ -232,16 +232,16 @@ BUILD/fig_latex/%.png: BUILD/fig_latex/%.tex
 doc_fig_tex: $(TEX_FIG_PNG)
 
 #=======================================================================
-# Generation of figures for the test samples
+# Generation of SVG figures for the test samples
 
 TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
-TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.png, $(TEST_FIG_SRC))
+TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.svg, $(TEST_FIG_SRC))
 
-test_fig: $(TEST_FIG_PNG)
+test_fig: $(TEST_FIG_SVG)
 
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
-BUILD/figures_test/%.png: BUILD/figures_test/%
+BUILD/figures_test/%.svg: BUILD/figures_test/%
 	@echo "Running $<"
 	@./$<
 #	@mogrify -flip $<.png
@@ -249,7 +249,8 @@ BUILD/figures_test/%.png: BUILD/figures_test/%
 # build the program from source
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@echo "Building $<"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) -o $@ $<
+#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file
 BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
