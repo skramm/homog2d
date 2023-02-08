@@ -1,6 +1,6 @@
 // minimal working file
 
-#include "homog2d.hpp"
+#include "../../homog2d.hpp"
 using namespace h2d;
 int main()
 {
