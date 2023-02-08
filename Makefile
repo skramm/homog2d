@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -124,12 +124,15 @@ newtests: newtests_before
 .PHONY: pretest test test2 nobuild
 
 test: pretest test2 nobuild
-	@echo "Make: run test, build using $(CXX)"
+	@echo "-done target $@"
 
-test2: test_SY test_SN
+test2: test_SY test_SN test_single test_multiple
 	@echo "Make: run test2, build using $(CXX)"
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
+	BUILD/test_single
+	BUILD/test_multiple
+	@echo "-done target $@"
 
 test-list: test_SY
 	@echo "Tests available:"
@@ -137,19 +140,36 @@ test-list: test_SY
 
 pretest:
 	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
-	@echo "done target $@"
+	@echo "-done target $@"
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
 test_SY: BUILD/homog2d_test_SY
-	@echo "done target $@"
+	@echo "-done target $@"
 
 test_SN: BUILD/homog2d_test_SN
-	@echo "done target $@"
+	@echo "-done target $@"
+
+test_single: BUILD/test_single
+	@echo "-done target $@"
+
+test_multiple: BUILD/test_multiple
+	@echo "-done target $@"
+
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
 	-rm BUILD/$(notdir $@).stderr
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+
+BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+
+BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile
+	$(CXX) -c $< -o $@
+
+BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o
+	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
+
 
 # temporarly removed from target testall: speed_test_b
 
