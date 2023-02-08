@@ -80,7 +80,7 @@ demo: BUILD/demo_opencv
 	BUILD/demo_opencv
 
 demo_import: BUILD/demo_svg_import
-	@echo "done target $@"
+	@echo "-done target $@"
 
 clean:
 	@-rm -r BUILD/*
@@ -173,9 +173,10 @@ BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o
 
 # temporarly removed from target testall: speed_test_b
 
-testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
+	@echo "-done target $@"
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
@@ -185,10 +186,6 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
-
-# to be removed
-demo_check: misc/demo_check.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 
 #=======================================================================
@@ -314,7 +311,7 @@ NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
 
 nobuild: $(NOBUILD_OBJ_FILES) #BUILD/no_build.stdout
-	@echo "done target $@"
+	@echo "-done target $@"
 
 $(NOBUILD_OBJ_FILES): rm_nb
 
