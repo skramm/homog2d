@@ -45,6 +45,7 @@ See https://github.com/skramm/homog2d
 #include <sstream>
 #include <type_traits>
 #include <functional>
+#include <limits>
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
