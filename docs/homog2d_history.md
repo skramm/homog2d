@@ -12,6 +12,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add list-initialization with points to `PolylineBase` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
+  - add `Vector` type (defined by dx,dy)
 
 - current master branch
   - fixed normalization for points and lines
@@ -23,6 +24,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (TODO: same for Circle/Circle)
   - added showcase16
   - fixed issues occuring with msvc in c++17 mode with flag `/permissive-` (see https://github.com/skramm/homog2d/issues/5)
+  - fixed issues with inlining (thanks to @Djuego for pointing out!)
+  - added build symbol `HOMOG2D_NOWARNINGS`, see [buid options](homog2d_manual.md#build_options).
 
 
 ## Previous releases

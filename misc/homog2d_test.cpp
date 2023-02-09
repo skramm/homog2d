@@ -1553,7 +1553,7 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 // figures_test/frect_intersect_*.code
 // this is done so we can, for a single defined rectangle pair,
 // have both the test code here, and a graphical representation of the situation.
-// The corresponding images are built with `$ make test_fig`
+// The corresponding svg images are built with `$ make test_fig` (no external dependency)
 TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 {
 	{                                   // identical rectangles
@@ -2761,7 +2761,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 	{
 		std::vector<Point2d> vpt{ {0,0} };
-		CHECK_THROWS( CPolyline_<NUMTYPE>( vpt ) );
+		CHECK_THROWS( CPolyline_<NUMTYPE>( vpt ) ); // can(t build a polyline with a vector of size=1
 		CHECK_THROWS( OPolyline_<NUMTYPE>( vpt ) );
 	}
 	{                           // build from Rectangle

@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -80,7 +80,7 @@ demo: BUILD/demo_opencv
 	BUILD/demo_opencv
 
 demo_import: BUILD/demo_svg_import
-	@echo "done target $@"
+	@echo "-done target $@"
 
 clean:
 	@-rm -r BUILD/*
@@ -102,7 +102,7 @@ show:
 	@echo "SHOWCASE_PNG=$(SHOWCASE_PNG)"
 	@echo "SHOWCASE_GIF=$(SHOWCASE_GIF)"
 	@echo "TEST_FIG_SRC=$(TEST_FIG_SRC)"
-	@echo "TEST_FIG_PNG=$(TEST_FIG_PNG)"
+	@echo "TEST_FIG_SVG=$(TEST_FIG_SVG)"
 	@echo "NOBUILD_SRC_FILES=$(NOBUILD_SRC_FILES)"
 	@echo "NOBUILD_OBJ_FILES=$(NOBUILD_OBJ_FILES)"
 
@@ -124,12 +124,15 @@ newtests: newtests_before
 .PHONY: pretest test test2 nobuild
 
 test: pretest test2 nobuild
-	@echo "Make: run test, build using $(CXX)"
+	@echo "-done target $@"
 
-test2: test_SY test_SN
+test2: test_SY test_SN test_single test_multiple
 	@echo "Make: run test2, build using $(CXX)"
 	BUILD/homog2d_test_SY
 	BUILD/homog2d_test_SN
+	BUILD/test_single
+	BUILD/test_multiple
+	@echo "-done target $@"
 
 test-list: test_SY
 	@echo "Tests available:"
@@ -137,25 +140,43 @@ test-list: test_SY
 
 pretest:
 	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
-	@echo "done target $@"
+	@echo "-done target $@"
 
 test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 
 test_SY: BUILD/homog2d_test_SY
-	@echo "done target $@"
+	@echo "-done target $@"
 
 test_SN: BUILD/homog2d_test_SN
-	@echo "done target $@"
+	@echo "-done target $@"
+
+test_single: BUILD/test_single
+	@echo "-done target $@"
+
+test_multiple: BUILD/test_multiple
+	@echo "-done target $@"
+
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
-	@echo "-start build">BUILD/$(notdir $@).stderr
+	-rm BUILD/$(notdir $@).stderr
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+
+BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+
+BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile
+	$(CXX) -c $< -o $@
+
+BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o
+	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
+
 
 # temporarly removed from target testall: speed_test_b
 
-testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l
+testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l speed_test_b
 	@echo "Make: run testall, build using $(CXX)"
 	misc/test_all.sh
+	@echo "-done target $@"
 
 BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
@@ -165,10 +186,6 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
-
-# to be removed
-demo_check: misc/demo_check.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -I. -o demo_check misc/demo_check.cpp
 
 
 #=======================================================================
@@ -232,16 +249,16 @@ BUILD/fig_latex/%.png: BUILD/fig_latex/%.tex
 doc_fig_tex: $(TEX_FIG_PNG)
 
 #=======================================================================
-# Generation of figures for the test samples
+# Generation of SVG figures for the test samples
 
 TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
-TEST_FIG_PNG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.png, $(TEST_FIG_SRC))
+TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.svg, $(TEST_FIG_SRC))
 
-test_fig: $(TEST_FIG_PNG)
+test_fig: $(TEST_FIG_SVG)
 
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
-BUILD/figures_test/%.png: BUILD/figures_test/%
+BUILD/figures_test/%.svg: BUILD/figures_test/%
 	@echo "Running $<"
 	@./$<
 #	@mogrify -flip $<.png
@@ -249,7 +266,8 @@ BUILD/figures_test/%.png: BUILD/figures_test/%
 # build the program from source
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@echo "Building $<"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) -o $@ $<
+#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file (for files starting with 'frect')
 BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
@@ -299,7 +317,7 @@ NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
 
 nobuild: $(NOBUILD_OBJ_FILES) #BUILD/no_build.stdout
-	@echo "done target $@"
+	@echo "-done target $@"
 
 $(NOBUILD_OBJ_FILES): rm_nb
 

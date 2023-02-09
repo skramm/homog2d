@@ -1,0 +1,17 @@
+name: CI-testing-msvc
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  job3:
+    runs-on: Windows Server 2019
+    steps:
+      - name: Setup MSVC Developer Command Prompt
+        uses: TheMrMilchmann/setup-msvc-dev@v2.0.0
+      - name: run msvc
+        run: msvc misc/test_files/single_file.cpp
+
