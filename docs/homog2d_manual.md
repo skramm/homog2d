@@ -661,16 +661,18 @@ It is available as two classes `OPolyline_` (open) and `CPolyline_` (closed).
 The closed one automatically considers a connection betwen last and first point.
 It can be used to model a polygon.
 
+#### 3.4.1 - Building
+
 ```C++
 OPolyline pl1; // empty
 CPolyline pl2;
 std::vector<Point2d> vpts;
 // fill vpts
 pl1.set( vpt );      // sets the points
-pl2.set( vpt );      // sets the points
+pl2.set( vpt );
 ```
 
-It can be initialised either with a container holding the points, or (only for the closed version) from a `FRect`:
+It can be initialised either with a container (`std::vector`, or `std::array`, or `std::list`) holding the points, or (only for the closed version) from a `FRect`:
 ```C++
 std::vector<Point2d> vpts{ {0,0},{1,1},{3,1} };
 OPolyline op(vpts);
@@ -678,6 +680,13 @@ CPolyline cp(vpts);
 FRect rect( .... );
 CPolyline cp2(rect);
 // OPolyline op2(rect); // this does not build
+```
+
+Another constructor enables building a Polyline from a Segment, wich ends up with a Polyline of 2 points:
+```C++
+Segment seg; // default constructor
+OPolyline po(seg);
+CPolyline pc(seg);
 ```
 
 **Warning**: you may not add a point identical to the previous one.
@@ -695,7 +704,7 @@ It has no orientation, meaning that the `OPolyline` build from this set of point
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
 
-#### Basic attributes
+#### 3.4.2 - Basic attributes
 
 The open/close status can be read, but will return a `constexpr` value:
 ```C++
@@ -728,7 +737,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### Bounding Box and Convex Hull
+#### 3.4.3 - Bounding Box and Convex Hull
 
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
@@ -743,7 +752,7 @@ The convex hull of a Polyline can be computed with the member function `convexHu
 [see here](#convex-hull-ff) for an example.
 
 
-#### Extremum points
+#### 3.4.4 - Extremum points
 <a name="poly_extremum_points"></a>
 
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
@@ -783,7 +792,19 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 
 **Warning**: These functions will throw if passed an empty polyline object.
 
-#### Type of Polyline
+#### 3.4.5 - Distance between two Polyline objects
+
+You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
+This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
+```C++
+auto closest = getClosestPoints( poly1, poly2 );
+auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
+auto d = closest.getMinDist()     // get the distance value
+auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
+```
+See [an example here](homog2d_showcase.md#sc14).
+
+#### 3.4.6 - Type of Polyline
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
@@ -796,8 +817,7 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 }
 ```
 
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0
-but the `centroid()` function will throw.
+Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -808,7 +828,7 @@ std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free func
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```
 
-#### Comparison of Polyline objects
+#### 3.4.7 - Comparison of Polyline objects
 
 Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
@@ -846,7 +866,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
-### Rotation/mirroring
+#### 3.4.8 - Rotation/mirroring
 
 All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
 While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
@@ -878,15 +898,6 @@ Point2d org( ..., ... );
 poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
 
-You can get the closest distance between two polyline objects with `getClosestPoints()`.
-This will return an object on with you can fetch the corresponding pair of points, as indexes or as points and the distance value:
-```C++
-auto closest = getClosestPoints( poly1, poly2 );
-auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
-auto d = closest.getMinDist()     // get the distance value
-auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
-```
-See [an example here](homog2d_showcase.md#sc14).
 
 
 ### 3.5 - Ellipse

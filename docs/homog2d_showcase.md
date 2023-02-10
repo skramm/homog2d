@@ -107,7 +107,7 @@ that slowly rotates in the image.
 
 * [Showcase 11](../misc/showcase/showcase11.cpp):
 <a name="sc11"></a>
-a moving segment, its supporting line, its two parallel segments, and its bisector line (blue).
+a moving segment (red), its supporting line (gray), its two parallel segments (green and brown), and its bisector line (blue).
 
 ![showcase11](showcase/showcase11.gif)
 
@@ -128,7 +128,7 @@ Two moving polygons, shows their intersection points and the closest points betw
 
 * [Showcase 15](../misc/showcase/showcase15.cpp):
 <a name="sc15"></a>
-A rotating circle, a bunch of random points, and the segment between the point and the nearest/farthest point of the set.
+A rotating point (red circle), a bunch of random points, and the segment between the point and the nearest/farthest point of the set.
 
 ![showcase15](showcase/showcase15.gif)
 
