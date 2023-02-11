@@ -3532,7 +3532,11 @@ private:
 	}
 	bool impl_isInf( const detail::BaseHelper<type::IsPoint>& ) const
 	{
+#ifdef HOMOG2D_USE_TTMATH
+		return ttmath::Abs( _v[2] ) < thr::nullDenom();
+#else
 		return std::abs( _v[2] ) < thr::nullDenom();
+#endif
 	}
 
 	template<typename FPT2>
@@ -6781,7 +6785,11 @@ Ellipse_<FPT>::p_computeParams() const
 	auto denom = B*B - (HOMOG2D_INUMTYPE)4. * A * C;
 
 #ifndef HOMOG2D_NOCHECKS
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(denom) < thr::nullDenom() )
+#else
 	if( std::abs(denom) < thr::nullDenom() )
+#endif
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute parameters, denom=" << std::scientific << std::setprecision(15) << denom
 		);
@@ -7128,7 +7136,11 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelpe
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(denom) < thr::nullDenom() )
+#else
 	if( std::abs(denom) < thr::nullDenom() )
+#endif
 		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
