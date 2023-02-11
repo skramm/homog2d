@@ -7052,12 +7052,18 @@ namespace base {
 /**
 \todo Checkout: in what situation will we be unable to normalize?
 Is the test below relevant? Clarify.
+\todo 20230212: replace <code>if( _v[0] == 0. )</code> by code>if( _v[0] < thr::nullvalue() )</code> in master branch
 */
 template<typename LP,typename FPT>
 void
 LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>& ) const
 {
+#ifdef HOMOG2D_USE_TTMATH
+	auto sq = ttmath::Sqrt( _v[0]*_v[0] + _v[1]*_v[1] );
+#else
 	auto sq = std::hypot( _v[0], _v[1] );
+#endif
+
 #ifndef HOMOG2D_NOCHECKS
 	if( sq <= std::numeric_limits<double>::epsilon() )
 		HOMOG2D_THROW_ERROR_1( "unable to normalize line, sq=" << sq << " values: a=" << _v[0] << " b=" << _v[1] << " c=" << _v[2] );
@@ -7065,12 +7071,20 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>&
 	for( int i=0; i<3; i++ )
 		const_cast<LPBase<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
 
+#ifdef HOMOG2D_USE_TTMATH
+	if( _v[0] < 0 ) // a always >0
+#else
 	if( std::signbit(_v[0]) ) // a always >0
+#endif
 		for( int i=0; i<3; i++ )
 			const_cast<LPBase<LP,FPT>*>(this)->_v[i] = -_v[i];
 
 	if( _v[0] == 0. ) // then, change sign so that b>0
+#ifdef HOMOG2D_USE_TTMATH
+		if( _v[1] < 0 )
+#else
 		if( std::signbit(_v[1]) )
+#endif
 		{
 			const_cast<LPBase<LP,FPT>*>(this)->_v[1] = - _v[1];
 			const_cast<LPBase<LP,FPT>*>(this)->_v[2] = - _v[2];
@@ -7615,7 +7629,11 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 #endif
 		fres = 1.0;
 	}
+#ifdef HOMOG2D_USE_TTMATH
+	return ttmath::ACos( fres );
+#else
 	return std::acos( fres );
+#endif
 }
 
 template<typename LP, typename FPT>
@@ -7837,7 +7855,11 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 
 // step 2: compute distance	between center (origin) and middle point
 	auto a2b2 = a * a + b * b;
+#ifdef HOMOG2D_USE_TTMATH
+	auto d0 = ttmath::Abs(cp) / ttmath::Sqrt( a2b2 );
+#else
 	auto d0 = std::abs(cp) / std::sqrt( a2b2 );
+#endif
 	if( radius < d0 )                            // if less than radius,
 		return out;                         // no intersection
 
@@ -8684,21 +8706,28 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 		std::swap( cA, cB );
 
 	auto h = dist( cA.center(), cB.center() );
+#ifdef HOMOG2D_USE_TTMATH
+	auto theta = ttmath::ASin( ( cA.radius() - cB.radius() ) / h ) ;
+	auto hcost = h * ttmath::Cos(theta);
+#else
 	auto theta = std::asin( ( cA.radius() - cB.radius() ) / h ) ;
-//	std::cout << "theta=" << theta << "\n";
+	auto hcost = h * cos(theta);
+#endif
+
 
 // get rotated lines at center of CB
 	auto l0 = cA.center() * cB.center();
-	auto l1 = l0.getRotatedLine( cB.center(), +theta );
+	auto l1 = l0.getRotatedLine( cB.center(),  theta );
 	auto l2 = l0.getRotatedLine( cB.center(), -theta );
 
 // build segments by getting the opposite point
-	auto ppts1 = l1.getPoints( cB.center(), h*cos(theta) );
+
+	auto ppts1 = l1.getPoints( cB.center(), hcost );
 	auto p1 = ppts1.first;
 	if( ppts1.second.distTo( cA.center()) < p1.distTo( cA.center()) )
 		p1 = ppts1.second;
 
-	auto ppts2 = l2.getPoints( cB.center(), h*cos(theta) );
+	auto ppts2 = l2.getPoints( cB.center(), hcost );
 	auto p2 = ppts2.first;
 	if( ppts2.second.distTo( cA.center()) < p2.distTo( cA.center()) )
 		p2 = ppts2.second;
@@ -8864,9 +8893,15 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 	const HOMOG2D_INUMTYPE b2 = ar2[1];
 	const HOMOG2D_INUMTYPE c2 = ar2[2];
 
+#ifdef HOMOG2D_USE_TTMATH
+	HOMOG2D_INUMTYPE a = ttmath::Sqrt( a1*a2 );
+	HOMOG2D_INUMTYPE b = ttmath::Sqrt( b1*b2 );
+	return ttmath::Abs( c1 - c2 ) / ttmath::Sqrt( a*a + b*b );
+#else
 	HOMOG2D_INUMTYPE a = std::sqrt( a1*a2 );
 	HOMOG2D_INUMTYPE b = std::sqrt( b1*b2 );
 	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
+#endif
 }
 
 /// Return angle of ellipse (free function)
@@ -9230,7 +9265,12 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 	HOMOG2D_INUMTYPE ry = r.getY();
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-    if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
+
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(val) < HOMOG2D_THR_ZERO_DETER )
+#else
+	if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
+#endif
 		return 0;  // collinear
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
 }
