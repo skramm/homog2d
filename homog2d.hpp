@@ -1684,10 +1684,10 @@ is indeed a valid ellipse
 		HOMOG2D_INUMTYPE b2   = b*b;
 
 		HOMOG2D_INUMTYPE A = a2*sin2 + b2*cos2;
-		HOMOG2D_INUMTYPE B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE B = (HOMOG2D_INUMTYPE)2.*(b2-a2) * std::sin(theta) * std::cos(theta);
 		HOMOG2D_INUMTYPE C = a2 * cos2 + b2 * sin2;
-		HOMOG2D_INUMTYPE D = -2.*A * x0 -    B * y0;
-		HOMOG2D_INUMTYPE E =   - B * x0 - 2.*C * y0;
+		HOMOG2D_INUMTYPE D = (HOMOG2D_INUMTYPE)(-2.)*A * x0 -    B * y0;
+		HOMOG2D_INUMTYPE E =   - B * x0 - (HOMOG2D_INUMTYPE)2.*C * y0;
 		HOMOG2D_INUMTYPE F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
 
 		data[0][0] = A;
@@ -2869,7 +2869,11 @@ getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
 	auto arr = li.get();
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
 	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(arr[1]);
+#ifdef HOMOG2D_USE_TTMATH
+	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / ttmath::Sqrt( a*a + b*b );
+#else
 	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
+#endif
 
 	Point2d_<FPT> pt1(
         pt.getX() -  b * coeff,
@@ -4603,15 +4607,24 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	HOMOG2D_INUMTYPE y2 = pt2.getY();
 	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 
-	if( d_squared > r1*r1 + r2*r2 + 2.*r1*r2 )              // no intersection
+	if( d_squared > r1*r1 + r2*r2 + (HOMOG2D_INUMTYPE)2.*r1*r2 )              // no intersection
 		return detail::Intersect<detail::Inters_2,FPT>();
 
-	if( d_squared < ( r1*r1 + r2*r2 - 2.*r1*r2 ) )          // no intersection: one circle inside the other
+	if( d_squared < ( r1*r1 + r2*r2 - (HOMOG2D_INUMTYPE)2.*r1*r2 ) )          // no intersection: one circle inside the other
 		return detail::Intersect<detail::Inters_2,FPT>();
 
+#ifdef HOMOG2D_USE_TTMATH
+	auto d = ttmath::Sqrt( d_squared );
+#else
 	auto d = std::sqrt( d_squared );
-	auto a = (r1*r1 - r2*r2 + d_squared) / 2. / d;
+#endif
+	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
+
+#ifdef HOMOG2D_USE_TTMATH
+	auto h = ttmath::Sqrt( r1*r1 - a*a );
+#else
 	auto h = std::sqrt( r1*r1 - a*a );
+#endif
 
 	Point2d_<FPT> P0(
 		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
@@ -6765,7 +6778,7 @@ Ellipse_<FPT>::p_computeParams() const
 
 	detail::EllParams<T> par;  // theta already set to zero
 
-	auto denom = B*B - 4. * A * C;
+	auto denom = B*B - (HOMOG2D_INUMTYPE)4. * A * C;
 
 #ifndef HOMOG2D_NOCHECKS
 	if( std::abs(denom) < thr::nullDenom() )
@@ -6774,18 +6787,29 @@ Ellipse_<FPT>::p_computeParams() const
 		);
 #endif
 
-	par.x0 = ( 2.*C*D - B*E ) / denom;
-	par.y0 = ( 2.*A*E - B*D ) / denom;
-	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	par.x0 = ( (HOMOG2D_INUMTYPE)2.*C*D - B*E ) / denom;
+	par.y0 = ( (HOMOG2D_INUMTYPE)2.*A*E - B*D ) / denom;
+	auto common_ab = (HOMOG2D_INUMTYPE)2. * ( A*E*E + C*D*D - B*D*E + denom*F );
 	auto AmC = A-C;
 	auto AmC2 = AmC*AmC;
+
+#ifdef HOMOG2D_USE_TTMATH
+	auto sqr = ttmath::Sqrt(AmC2+B*B);
+	par.a = -ttmath::Sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	par.b = -ttmath::Sqrt( common_ab * ( A+C-sqr ) )/ denom;
+#else
 	auto sqr = std::sqrt(AmC2+B*B);
 	par.a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
 	par.b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+#endif
 
 	par.a2 = par.a * par.a;
 	par.b2 = par.b * par.b;
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(B) < thr::nullDenom() )
+#else
 	if( std::abs(B) < thr::nullDenom() )
+#endif
 	{
 		if( A > C )
 			par.theta = 90.;
@@ -6793,10 +6817,20 @@ Ellipse_<FPT>::p_computeParams() const
 	else
 	{
 		auto t = (C - A - sqr) / B;
+
+#ifdef HOMOG2D_USE_TTMATH
+		par.theta = ttmath::ATan( t );
+#else
 		par.theta = std::atan( t );
+#endif
 	}
+#ifdef HOMOG2D_USE_TTMATH
+	par.sint = ttmath::Sin( par.theta );
+	par.cost = ttmath::Cos( par.theta );
+#else
 	par.sint = std::sin( par.theta );
 	par.cost = std::cos( par.theta );
+#endif
 	return par;
 }
 
@@ -6815,8 +6849,13 @@ Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 	HOMOG2D_INUMTYPE A  = m[0][0];
 	HOMOG2D_INUMTYPE C  = m[1][1];
 	HOMOG2D_INUMTYPE B2 = m[0][1];
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(A-C) < thres )
+		if( ttmath::Abs(B2)*2. < thres )
+#else
 	if( std::abs(A-C) < thres )
 		if( std::abs(B2)*2. < thres )
+#endif
 			return true;
 	return false;
 }
@@ -7415,10 +7454,16 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
+#ifndef HOMOG2D_USE_TTMATH
 	return std::hypot(
 		static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
 		static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
 	);
+#else
+	auto v1 = static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() );
+	auto v2 = static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() );
+	return ttmath::Sqrt( v1*v1 + v2*v2 );
+#endif
 }
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. overload for line to point distance.
@@ -7441,7 +7486,11 @@ LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHe
 		+ static_cast<HOMOG2D_INUMTYPE>( _v[1] ) * pt.getY()
 		+ static_cast<HOMOG2D_INUMTYPE>( _v[2] )
 	)
+#ifndef HOMOG2D_USE_TTMATH
 	/ std::hypot( _v[0], _v[1] );
+#else
+;
+#endif
 }
 
 /// overload for line to point distance
@@ -7549,8 +7598,13 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 	HOMOG2D_INUMTYPE l2_b = li._v[1];
 	HOMOG2D_INUMTYPE res = l1_a * l2_a + l1_b * l2_b;
 
+#ifdef HOMOG2D_USE_TTMATH
+	res /= ttmath::Sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
+	auto fres = ttmath::Abs(res);
+#else
 	res /= std::sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
-	HOMOG2D_INUMTYPE fres = std::abs(res);
+	auto fres = std::abs(res);
+#endif
 	if( fres > 1.0 )
 	{
 #ifndef HOMOG2D_NOWARNINGS
