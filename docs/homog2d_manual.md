@@ -1737,7 +1737,7 @@ draw( img, vseg, func );
 ## 9 - Numerical data types
 <a name="numdt"></a>
 
-### 9.1 - Underlying data type
+### 9.1 - Underlying data type: standard library floating point types
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -1810,6 +1810,23 @@ The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
+
+### 9.4 - "Big Math" numbers support
+
+From 2023/02, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
+
+To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` to enable its usage, and you need to tell what type you will use for internal computation.
+<br>
+For example, to have two words for exponent and 3 for mantissa, you can use:
+```C++
+#define HOMOG2D_INUMTYPE ttmath::Big<2,3>
+```
+
+The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
+each component of the libray needs to be declared using the templated syntax and must use the "ttmath" type.
+See  [this files](../misc/test_files/ttmath_t1.cpp) for example.
+
 
 ## 10 - SVG import
 <a name="svg_import"></a>

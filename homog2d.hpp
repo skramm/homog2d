@@ -6526,7 +6526,11 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 
 	auto d1 = pt1.distTo( pi );
 	auto d2 = pt2.distTo( pi );
+#ifdef HOMOG2D_USE_TTMATH
+	if( ttmath::Abs(d1+d2-length()) < thr::nullDistance() )
+#else
 	if( std::abs(d1+d2-length()) < thr::nullDistance() )
+#endif
  		out._doesIntersect = true;
 
 	return out;
