@@ -712,6 +712,17 @@ namespace priv {
 	{
 		return Dtype::LongDouble;
 	}
+
+/// this is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
+	template<typename T>
+	T abs( const T& value )
+	{
+#ifdef HOMOG2D_USE_TTMATH
+		return ttmath::Abs(value);
+#else
+		return std::abs(value);
+#endif
+	}
 } // namespace priv
 
 
@@ -6437,7 +6448,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 	if( pt.isInside( circle ) )
 		return PtTag::Inside;
 	if(
-		std::abs( pt.distTo( circle.center() ) - circle.radius() )
+		priv::abs( pt.distTo( circle.center() ) - circle.radius() )
 			< thr::nullDistance()
 	)
 		return PtTag::OnEdge;
@@ -6589,7 +6600,11 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
+#ifdef HOMOG2D_USE_TTMATH
+		if( ttmath::Abs( d1+d2-length() ) < thr::nullDistance() )
+#else
 		if( std::abs( d1+d2-length() ) < thr::nullDistance() )
+#endif
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
@@ -6601,7 +6616,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	{
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
-		if( std::abs( d1+d2-length() ) >= thr::nullDistance() )   // if sum of the two distances is higher than length
+		if( priv::abs( d1+d2-length() ) >= thr::nullDistance() )   // if sum of the two distances is higher than length
 			return detail::IntersectM<FPT>();
 
 		out.add( p1 );

@@ -1811,21 +1811,24 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
-### 9.4 - "Big Math" numbers support
+### 9.4 - "Big numbers" support
+<a name="bignum"></a>
 
 From 2023/02, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
 
-To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` to enable its usage, and you need to tell what type you will use for internal computation.
+This library is header-only, so its very simple to install.
+
+To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` and you need to tell what type you will use for internal computation.
 <br>
-For example, to have two words for exponent and 3 for mantissa, you can use:
+For example, to have 2 machine words for exponent and 3 for mantissa, you add this:
 ```C++
 #define HOMOG2D_INUMTYPE ttmath::Big<2,3>
 ```
 
 The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
 each component of the libray needs to be declared using the templated syntax and must use the "ttmath" type.
-See  [this files](../misc/test_files/ttmath_t1.cpp) for example.
+See [this file](../misc/test_files/ttmath_t1.cpp) for example.
 
 
 ## 10 - SVG import
@@ -2011,7 +2014,8 @@ At present, run-time polymorphism is pretty much preliminar, but required to imp
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
-
+- `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
+See [here](#bignum) for details.
 
 (1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
 and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.

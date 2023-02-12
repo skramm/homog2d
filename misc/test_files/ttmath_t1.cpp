@@ -1,4 +1,10 @@
 
+/**
+\file
+\brief This is a test file demonstrating the usage of the ttmath library.
+
+See homog2d_manual.md#bignum
+*/
 #include <ttmath/ttmath.h>
 
 #define HOMOG2D_INUMTYPE ttmath::Big<2,2>
@@ -8,7 +14,7 @@
 #include "../../homog2d.hpp"
 
 using namespace h2d;
-
+using BigM32 = ttmath::Big<3,2>;
 int main()
 {
 	Point2d_<ttmath::Big<3,2>> p1;
@@ -21,4 +27,7 @@ int main()
 	auto it = s1.intersects( li );
 	if( it() )
 		std::cout << it.get() << '\n';
+	Circle_<BigM32> cir;
+	auto it2 = cir.intersects(s1);
+	auto it3 = cir.intersects(li);
 }
