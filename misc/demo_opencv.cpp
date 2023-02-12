@@ -1516,6 +1516,52 @@ void demo_NFP( int demidx )
 
 	kbloop.start( data );
 }
+//------------------------------------------------------------------
+/// Demo of pts/segments perpendicular to a segment
+struct Param_ORS : Data
+{
+	explicit Param_ORS( int demidx, std::string title ): Data( demidx, title )
+	{}
+	bool _ptsOrSegs = false;
+};
+
+void action_ORS( void* param )
+{
+	auto& data = *reinterpret_cast<Param_ORS*>(param);
+	data.clearImage();
+	Segment seg( data.vpt[0], data.vpt[1] );
+	seg.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	if( data._ptsOrSegs )
+	{
+		auto osegs = seg.getOrthogSegs();
+		draw( data.img, osegs );
+	}
+	else
+	{
+		auto opts = seg.getOrthogPts();
+		draw( data.img, opts );
+		CPolyline pol( opts );
+		pol.draw( data.img, img::DrawParams().setColor( 125,125,0) );
+	}
+	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	data.showImage();
+}
+
+void demo_orthSeg( int demidx )
+{
+	Param_ORS data( demidx, "Orthogonal segments" );
+	std::cout << "Demo " << demidx << ": Orthogonal segments\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
+
+	kbloop.addCommonAction( action_ORS );
+	action_ORS( &data );
+	data.setMouseCB( action_ORS );
+
+	kbloop.start( data );
+
+}
 
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
@@ -1530,6 +1576,7 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection
 		demo_CIR,

@@ -26,7 +26,7 @@ Q: Why the choice of <tt>ttmath</tt> (https://www.ttmath.org/) as "big numbers" 
 </dt>
 <dd>
 A: Sure, other choices were possible. But it matched all these criterions:<br>
-- C++ (GMP and MPFR have a C API)
+- C++ (GMP and MPFR have a C API)<br>
 - header only (so really easy to install)<br>
 - compatible licence (BSD)<br>
 - used by other projects (Boost)<br>

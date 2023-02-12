@@ -446,6 +446,11 @@ The support line is gray.
 
 ![extended segment](img/segment_extended1.png)
 
+You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOrthogSegs()`.
+These two member functions return an std::array of size 4, the latter filled with the 4 orthogonal segments,
+and the first filled with the associated 4 points.
+
+
 The distance between a segment and a point can be computed.
 The code considers the different situations:
 shorted distance can be the orthogonal distance to the supporting line, or the distance to one the two points.

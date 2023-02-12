@@ -4366,7 +4366,41 @@ the one with smallest y-coordinate will be returned first */
 			Segment_( pB1, pB2 )
 		);
 	}
+private:
+	std::array<Point2d_<FPT>,4>
+	p_getOrthog()
+	{
+		std::array<Point2d_<FPT>,4> out;
+		auto x1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX());
+		auto x2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getX());
+		auto y1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getY());
+		auto y2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getY());
+		auto dx = x1 - x2;
+		auto dy = y1 - y2;
+		out[0] = Point2d_<FPT>( x1-dy, y1+dx );
+		out[1] = Point2d_<FPT>( x1+dy, y1-dx );
+		out[3] = Point2d_<FPT>( x2-dy, y2+dx );
+		out[2] = Point2d_<FPT>( x2+dy, y2-dx );
+		return out;
+	}
+public:
+	std::array<Point2d_<FPT>,4>
+	getOrthogPts()
+	{
+		return p_getOrthog();
+	}
 
+	std::array<Segment_<FPT>,4>
+	getOrthogSegs()
+	{
+		std::array<Segment_<FPT>,4> out;
+		auto pts = p_getOrthog();
+		out[0] = Segment_<FPT>( _ptS1, pts[0] );
+		out[1] = Segment_<FPT>( _ptS1, pts[1] );
+		out[2] = Segment_<FPT>( _ptS2, pts[2] );
+		out[3] = Segment_<FPT>( _ptS2, pts[3] );
+		return out;
+	}
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
 	{

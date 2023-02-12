@@ -27,7 +27,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed issues with inlining (thanks to @Djuego for pointing out!)
   - added build symbol `HOMOG2D_NOWARNINGS`, see [buid options](homog2d_manual.md#build_options).
   - added support for big math library [ttmath](https://www.ttmath.org/) (preliminar, see [Numerical data types](homog2d_manual.md#bignum).).
-
+  - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
 
 ## Previous releases
 
