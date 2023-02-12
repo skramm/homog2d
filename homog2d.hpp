@@ -116,10 +116,22 @@ See https://github.com/skramm/homog2d
 	if( c > 2 ) \
 		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
 
+#ifdef HOMOG2D_USE_TTMATH
+#	define HOMOG2D_CHECK_IS_NUMBER(T)
+#else
+#	define HOMOG2D_CHECK_IS_NUMBER(T) \
+		static_assert( (std::is_arithmetic<T>::value && !std::is_same<T, bool>::value), "Type of value must be numerical" )
+#endif
+
+/**
+\todo 20230212 ttmath support: this defintion does not work, I don't know why !!! see namespace \ref trait
+\verbatim
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( \
 	((std::is_arithmetic<T>::value && !std::is_same<T, bool>::value) || trait::IsBigNumType<T>::value), \
 	"Type of value must be numerical" )
+\endverbatim
+*/
 
 /// Internal type used for numerical computations, possible values: \c double, <code>long double</code>
 #if !defined(HOMOG2D_INUMTYPE)
@@ -7062,7 +7074,6 @@ namespace base {
 /**
 \todo Checkout: in what situation will we be unable to normalize?
 Is the test below relevant? Clarify.
-\todo 20230212: replace <code>if( _v[0] == 0. )</code> by code>if( _v[0] < thr::nullvalue() )</code> in master branch
 */
 template<typename LP,typename FPT>
 void
@@ -7081,11 +7092,11 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>&
 	for( int i=0; i<3; i++ )
 		const_cast<LPBase<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
 
-	if( _v[0] < 0 ) // a always >0
+	if( _v[0] < 0. ) // a always >0
 		for( int i=0; i<3; i++ )
 			const_cast<LPBase<LP,FPT>*>(this)->_v[i] = -_v[i];
 
-	if( _v[0] == 0. ) // then, change sign so that b>0
+	if( priv::abs(_v[0]) < thr::nullDenom() ) // then, change sign so that b>0
 		if( _v[1] < 0 )
 		{
 			const_cast<LPBase<LP,FPT>*>(this)->_v[1] = - _v[1];
