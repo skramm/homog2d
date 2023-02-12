@@ -1830,6 +1830,9 @@ The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot
 each component of the libray needs to be declared using the templated syntax and must use the "ttmath" type.
 See [this file](../misc/test_files/ttmath_t1.cpp) for example.
 
+Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the
+[threshold page](homog2d_thresholds.md).
+
 
 ## 10 - SVG import
 <a name="svg_import"></a>

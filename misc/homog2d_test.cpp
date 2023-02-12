@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2022 Sebastien Kramm
+    Author & Copyright 2019-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -242,13 +242,6 @@ TEST_CASE( "types testing 1", "[test-types-1]" )
 		Point2d_<double> pt2F2;
 		Point2d_<long double> pt2F3;
 		pt2F1.set(4.,5); // checking with 2 different types
-
-// removed on 20221113 because this is platform-dependent!
-#if 0
-		CHECK( sizeof(Point2dF) == 12 );
-		CHECK( sizeof(Point2dD) == 24 );
-		CHECK( sizeof(Point2dL) == 48 );
-#endif
 
 		CHECK( ptF.type() == Type::Point2d );
 		CHECK( liF.type() == Type::Line2d );
