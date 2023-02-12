@@ -808,7 +808,7 @@ TEST_CASE( "dist2points", "[t_d2p]" )
 
 	Point2d_<NUMTYPE> p1( 3,3);
 	Point2d_<NUMTYPE> p2( 4,4);
-	auto r = std::abs( p1.distTo( p2 ) - std::sqrt(2) );
+	auto r = std::abs( p1.distTo( p2 ) - priv::sqrt(2.) );
 	CHECK( r < thr::nullDistance() );
 }
 

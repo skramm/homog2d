@@ -8,5 +8,5 @@ int main()
 	Line2d l2( Point2d(0,10), Point2d(10,0) ); // a line passing through (0,10) and (10,0)
 	auto pt = l1 * l2;                         // intersection point (5,5)
 	Homogr H(2,3);                             // a translation matrix
-	std::cout << H * pt;                       // prints [7,8]
+	std::cout << H * pt << '\n';               // prints [7,8]
 }

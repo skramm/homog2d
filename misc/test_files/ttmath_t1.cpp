@@ -1,11 +1,11 @@
-
 /**
 \file
 \brief This is a test file demonstrating the usage of the ttmath library.
 
 See homog2d_manual.md#bignum
+
+Build and run with <code>$ make test_bn</code>
 */
-#include <ttmath/ttmath.h>
 
 #define HOMOG2D_INUMTYPE ttmath::Big<2,2>
 #define HOMOG2D_USE_TTMATH
@@ -27,7 +27,13 @@ int main()
 	auto it = s1.intersects( li );
 	if( it() )
 		std::cout << it.get() << '\n';
+
 	Circle_<BigM32> cir;
+	FRect_<BigM32> rect;
+
 	auto it2 = cir.intersects(s1);
 	auto it3 = cir.intersects(li);
+	auto it4 = cir.intersects(rect);
+	auto it5 = li.intersects(rect);
+	auto it6 = s1.intersects(rect);
 }

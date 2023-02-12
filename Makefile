@@ -188,7 +188,7 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 # "bigmath test, with ttmath
-test_bm: BUILD/ttmath_t1
+test_bn: BUILD/ttmath_t1
 	BUILD/ttmath_t1
 	@echo "-done target $@"
 
