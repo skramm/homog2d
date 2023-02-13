@@ -1521,27 +1521,38 @@ void demo_NFP( int demidx )
 struct Param_ORS : Data
 {
 	explicit Param_ORS( int demidx, std::string title ): Data( demidx, title )
-	{}
+	{
+		_vcol[0]=img::Color(0,250,125);
+		_vcol[1]=img::Color(0,125,250);
+		_vcol[2]=img::Color(125,0,250);
+		_vcol[3]=img::Color(250,0,125);
+	}
 	bool _ptsOrSegs = false;
+	bool _drawPolyg = false;
+	std::array<img::Color,4> _vcol;
 };
 
 void action_ORS( void* param )
 {
 	auto& data = *reinterpret_cast<Param_ORS*>(param);
 	data.clearImage();
+
+	auto fl = [&](int i)   // lambda
+	{
+		return img::DrawParams().setPointStyle(img::PtStyle::Dot).setColor( data._vcol[i] );
+	};
+	std::function<img::DrawParams(int)> style(fl);
+
 	Segment seg( data.vpt[0], data.vpt[1] );
 	seg.draw( data.img, img::DrawParams().setColor( 250,0,0) );
 	if( data._ptsOrSegs )
-	{
-		auto osegs = seg.getOrthogSegs();
-		draw( data.img, osegs );
-	}
+		draw( data.img, seg.getOrthogSegs(), style );
 	else
 	{
 		auto opts = seg.getOrthogPts();
-		draw( data.img, opts );
-		CPolyline pol( opts );
-		pol.draw( data.img, img::DrawParams().setColor( 125,125,0) );
+		draw( data.img, opts, style );
+		if( data._drawPolyg )
+			CPolyline( opts ).draw( data.img, img::DrawParams().setColor( 125,125,0) );
 	}
 	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
 	data.showImage();
@@ -1554,6 +1565,7 @@ void demo_orthSeg( int demidx )
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._drawPolyg=!data._drawPolyg; }, "switch mode: draw polygon in points mode" );
 
 	kbloop.addCommonAction( action_ORS );
 	action_ORS( &data );

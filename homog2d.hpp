@@ -4366,17 +4366,19 @@ the one with smallest y-coordinate will be returned first */
 			Segment_( pB1, pB2 )
 		);
 	}
+
 private:
+/// Computes the 4 points orthogonal to the segment
 	std::array<Point2d_<FPT>,4>
-	p_getOrthog()
+	p_getOrthog() const
 	{
-		std::array<Point2d_<FPT>,4> out;
 		auto x1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX());
 		auto x2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getX());
 		auto y1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getY());
 		auto y2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getY());
 		auto dx = x1 - x2;
 		auto dy = y1 - y2;
+		std::array<Point2d_<FPT>,4> out;
 		out[0] = Point2d_<FPT>( x1-dy, y1+dx );
 		out[1] = Point2d_<FPT>( x1+dy, y1-dx );
 		out[3] = Point2d_<FPT>( x2-dy, y2+dx );
@@ -4384,14 +4386,16 @@ private:
 		return out;
 	}
 public:
+/// Returns the 4 points orthogonal to the segment
 	std::array<Point2d_<FPT>,4>
-	getOrthogPts()
+	getOrthogPts() const
 	{
 		return p_getOrthog();
 	}
 
+/// Returns the 4 segments orthogonal to the segment
 	std::array<Segment_<FPT>,4>
-	getOrthogSegs()
+	getOrthogSegs() const
 	{
 		std::array<Segment_<FPT>,4> out;
 		auto pts = p_getOrthog();
@@ -4401,6 +4405,7 @@ public:
 		out[3] = Segment_<FPT>( _ptS2, pts[3] );
 		return out;
 	}
+
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
 	{
@@ -8614,6 +8619,25 @@ split( const Segment_<FPT>& seg )
 {
 	return seg.split();
 }
+
+/// Returns orthogonal segments
+/// \sa Segment_::getOrthogSegs()
+template<typename FPT>
+std::array<Segment_<FPT>,4>
+getOrthogSegs( const Segment_<FPT>& seg )
+{
+	return seg.getOrthogSegs();
+}
+
+/// Returns orthogonal points
+/// \sa Segment_::getOrthogPts()
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+getOrthogPts( const Segment_<FPT>& seg )
+{
+	return seg.getOrthogPts();
+}
+
 
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers (or ellipse)

@@ -2432,6 +2432,28 @@ TEST_CASE( "Segment extended", "[seg_extended]" )
 	CHECK( s3.getPts().second == Point2d(2,0) );
 }
 
+TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
+{
+	Segment_<HOMOG2D_INUMTYPE> seg(0,0,1,0);
+	auto pts  = seg.getOrthogPts();
+	auto pts2 = getOrthogPts(seg);
+	CHECK( pts2 == pts );
+	auto pol = CPolyline(pts);
+	CHECK( pol == CPolyline( std::vector<Point2d>{ {0,-1},{1,-1},{1,1},{0,1} } ) );
+
+	auto osegs  = seg.getOrthogSegs();
+	auto osegs2 = getOrthogSegs(seg);
+	CHECK( osegs2 == osegs );
+	std::array<Segment_<HOMOG2D_INUMTYPE>,4> gt;
+	gt[0] = Segment( 0,0,0,+1 );
+	gt[1] = Segment( 0,0,0,-1 );
+	gt[2] = Segment( 1,0,1,+1 );
+	gt[3] = Segment( 1,0,1,-1 );
+	std::sort( gt.begin(), gt.end() );
+	std::sort( osegs.begin(), osegs.end() );
+	CHECK( gt == osegs );
+}
+
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 {
 	{                              // two identical rectangles

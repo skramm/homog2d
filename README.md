@@ -38,7 +38,7 @@ int main()
 ```
 
 ### News ###
-- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library (preliminar!)
+- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](homog2d_manual.md#bignum)) (preliminar!)
 - 2022-12-17: moved CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases

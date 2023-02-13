@@ -446,9 +446,11 @@ The support line is gray.
 
 ![extended segment](img/segment_extended1.png)
 
-You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOrthogSegs()`.
-These two member functions return an std::array of size 4, the latter filled with the 4 orthogonal segments,
+You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOrthogSegs()` (member or free functions).
+These two member functions return an `std::array` of size 4, the latter filled with the 4 orthogonal segments,
 and the first filled with the associated 4 points.
+
+Due to the nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
 
 
 The distance between a segment and a point can be computed.
