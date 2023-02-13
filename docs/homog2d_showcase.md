@@ -138,3 +138,10 @@ A rotating point (red circle), a bunch of random points, and the segment between
 Showing the side of a point related to a rotating line. Tipping point appears for a horizontal line.
 
 ![showcase16](showcase/showcase16.gif)
+
+
+* [Showcase 17](../misc/showcase/showcase17.cpp):
+<a name="sc17"></a>
+Showing a rotating segment and its orthogonal segments and points.
+
+![showcase17](showcase/showcase17.gif)

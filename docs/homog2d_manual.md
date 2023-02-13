@@ -450,8 +450,9 @@ You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOr
 These two member functions return an `std::array` of size 4, the latter filled with the 4 orthogonal segments,
 and the first filled with the associated 4 points.
 
-Due to the nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
+Due to the unoriented nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
 
+![showcase17](showcase/showcase17.gif)
 
 The distance between a segment and a point can be computed.
 The code considers the different situations:
