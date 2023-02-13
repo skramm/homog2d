@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2022 Sebastien Kramm
+    Author & Copyright 2019-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -242,13 +242,6 @@ TEST_CASE( "types testing 1", "[test-types-1]" )
 		Point2d_<double> pt2F2;
 		Point2d_<long double> pt2F3;
 		pt2F1.set(4.,5); // checking with 2 different types
-
-// removed on 20221113 because this is platform-dependent!
-#if 0
-		CHECK( sizeof(Point2dF) == 12 );
-		CHECK( sizeof(Point2dD) == 24 );
-		CHECK( sizeof(Point2dL) == 48 );
-#endif
 
 		CHECK( ptF.type() == Type::Point2d );
 		CHECK( liF.type() == Type::Line2d );
@@ -808,7 +801,7 @@ TEST_CASE( "dist2points", "[t_d2p]" )
 
 	Point2d_<NUMTYPE> p1( 3,3);
 	Point2d_<NUMTYPE> p2( 4,4);
-	auto r = std::abs( p1.distTo( p2 ) - std::sqrt(2) );
+	auto r = std::abs( p1.distTo( p2 ) - priv::sqrt(2.) );
 	CHECK( r < thr::nullDistance() );
 }
 
@@ -2437,6 +2430,28 @@ TEST_CASE( "Segment extended", "[seg_extended]" )
 	CHECK( s3.length() == 3. );
 	CHECK( s3.getPts().first == Point2d(-1,0) );
 	CHECK( s3.getPts().second == Point2d(2,0) );
+}
+
+TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
+{
+	Segment_<HOMOG2D_INUMTYPE> seg(0,0,1,0);
+	auto pts  = seg.getOrthogPts();
+	auto pts2 = getOrthogPts(seg);
+	CHECK( pts2 == pts );
+	auto pol = CPolyline(pts);
+	CHECK( pol == CPolyline( std::vector<Point2d>{ {0,-1},{1,-1},{1,1},{0,1} } ) );
+
+	auto osegs  = seg.getOrthogSegs();
+	auto osegs2 = getOrthogSegs(seg);
+	CHECK( osegs2 == osegs );
+	std::array<Segment_<HOMOG2D_INUMTYPE>,4> gt;
+	gt[0] = Segment( 0,0,0,+1 );
+	gt[1] = Segment( 0,0,0,-1 );
+	gt[2] = Segment( 1,0,1,+1 );
+	gt[3] = Segment( 1,0,1,-1 );
+	std::sort( gt.begin(), gt.end() );
+	std::sort( osegs.begin(), osegs.end() );
+	CHECK( gt == osegs );
 }
 
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )

@@ -14,7 +14,7 @@ Also handles other geometric primitives, see full manual.
 
 (see [other demos here](docs/homog2d_showcase.md))
 
-- Language: C++14
+- Language: C++14 or C++17
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
@@ -38,7 +38,7 @@ int main()
 ```
 
 ### News ###
-
+- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](homog2d_manual.md#bignum)) (preliminar!)
 - 2022-12-17: moved CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases

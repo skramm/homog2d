@@ -26,13 +26,12 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed issues occuring with msvc in c++17 mode with flag `/permissive-` (see https://github.com/skramm/homog2d/issues/5)
   - fixed issues with inlining (thanks to @Djuego for pointing out!)
   - added build symbol `HOMOG2D_NOWARNINGS`, see [buid options](homog2d_manual.md#build_options).
-
+  - added support for big math library [ttmath](https://www.ttmath.org/) (preliminar, see [Numerical data types](homog2d_manual.md#bignum).).
+  - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
 
 ## Previous releases
 
 ![#LOC per release](img_other/linecount.png):
-=======
->>>>>>> 1a1431e482b7cd46f8f6064ee83d6dd878616121
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

@@ -15,8 +15,7 @@ using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 Both types can be seen as a container holding a set of points.
 Order of points will be retained, but some normalizing step may occur, in a way that will be different for the two types:
 
-- The `CPolyline_` type will get rotated so that the smallest point is placed in first position,
-**and** reversed so that the **second** smallest point is placed in second position.
+- The `CPolyline_` type will see its content rotated so that the smallest point is placed in first position, **and** reversed so that the **second** smallest point is placed in second position.
 
 - The `OPolyline_` type will get reversed so that the smallest point is placed in first position.
 
@@ -24,7 +23,7 @@ For both types, the normalisation occurs only when needed (first comparison).
 
 The rationale for that normalization is that we want to be able to detect identical objects.
 For example, the single-segment Polyline object described by the points `(0,0)-(1,1)`
-is obviously the same as the one describeb by `(1,1)-(0,0)`
+is obviously the same as the one described by `(1,1)-(0,0)`.
 
 ### Conversions:
 
@@ -75,18 +74,6 @@ OPolyline po(vec);
 CPolyline pc(vec);
 ```
 
-Another constructor enables building a Polyline from a Segment, wich ends up with a Polyline of 2 points:
-```C++
-Segment seg; // default constructor
-OPolyline po(seg);
-CPolyline pc(seg);
-
-```
-You can also build from a FRect_, but only a CPolyline (as a rectangle is by definition closed, using it to initialize an Open Polyline makes no sense).
-
-```C++
-CPolyline pc( Frect() );
-```
 
 
 

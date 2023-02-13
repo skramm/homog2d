@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2022 Sebastien Kramm
+    Author & Copyright 2019-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -50,6 +50,10 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
+#endif
+
+#ifdef HOMOG2D_USE_TTMATH
+	#include <ttmath/ttmath.h>
 #endif
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
@@ -115,8 +119,22 @@ See https://github.com/skramm/homog2d
 	if( c > 2 ) \
 		throw std::runtime_error( "Error: invalid col value: r=" + std::to_string(r) )
 
+#ifdef HOMOG2D_USE_TTMATH
+#	define HOMOG2D_CHECK_IS_NUMBER(T)
+#else
+#	define HOMOG2D_CHECK_IS_NUMBER(T) \
+		static_assert( (std::is_arithmetic<T>::value && !std::is_same<T, bool>::value), "Type of value must be numerical" )
+#endif
+
+/**
+\todo 20230212 ttmath support: this defintion does not work, I don't know why !!! see namespace \ref trait
+\verbatim
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
-	static_assert( std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, "Type of value must be numerical" )
+	static_assert( \
+	((std::is_arithmetic<T>::value && !std::is_same<T, bool>::value) || trait::IsBigNumType<T>::value), \
+	"Type of value must be numerical" )
+\endverbatim
+*/
 
 /// Internal type used for numerical computations, possible values: \c double, <code>long double</code>
 #if !defined(HOMOG2D_INUMTYPE)
@@ -715,6 +733,29 @@ namespace priv {
 	{
 		return Dtype::LongDouble;
 	}
+
+/// abs() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
+	template<typename T>
+	T abs( const T& value )
+	{
+#ifdef HOMOG2D_USE_TTMATH
+		return ttmath::Abs(value);
+#else
+		return std::abs(value);
+#endif
+	}
+
+/// sqrt() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
+	template<typename T>
+	T sqrt( const T& value )
+	{
+#ifdef HOMOG2D_USE_TTMATH
+		return ttmath::Sqrt(value);
+#else
+		return std::sqrt(value);
+#endif
+	}
+
 } // namespace priv
 
 
@@ -949,8 +990,8 @@ See https://en.wikipedia.org/wiki/Determinant
 	Matrix_& inverse()
 	{
 		auto det = determ();
-		if( std::abs(det) < thr::nullDeter() )
-			HOMOG2D_THROW_ERROR_1( "matrix is not invertible, det=" << std::scientific << std::abs(det) );
+		if( priv::abs(det) < thr::nullDeter() )
+			HOMOG2D_THROW_ERROR_1( "matrix is not invertible, det=" << std::scientific << priv::abs(det) );
 
 		auto adjugate = p_adjugate();
 		p_divideAll(adjugate, det);
@@ -1080,6 +1121,13 @@ Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
 }
 
 } // namespace detail
+
+namespace trait {
+template<typename> struct IsBigNumType : std::false_type {};
+#ifdef HOMOG2D_USE_TTMATH
+template<int T1,int T2> struct IsBigNumType<ttmath::Big<T1,T2>> : std::true_type {};
+#endif
+} // namespace trait
 
 //------------------------------------------------------------------
 /// A 2D homography, defining a planar transformation
@@ -1686,10 +1734,10 @@ is indeed a valid ellipse
 		HOMOG2D_INUMTYPE b2   = b*b;
 
 		HOMOG2D_INUMTYPE A = a2*sin2 + b2*cos2;
-		HOMOG2D_INUMTYPE B = 2.*(b2-a2) * std::sin(theta) * std::cos(theta);
+		HOMOG2D_INUMTYPE B = (HOMOG2D_INUMTYPE)2.*(b2-a2) * std::sin(theta) * std::cos(theta);
 		HOMOG2D_INUMTYPE C = a2 * cos2 + b2 * sin2;
-		HOMOG2D_INUMTYPE D = -2.*A * x0 -    B * y0;
-		HOMOG2D_INUMTYPE E =   - B * x0 - 2.*C * y0;
+		HOMOG2D_INUMTYPE D = (HOMOG2D_INUMTYPE)(-2.)*A * x0 -    B * y0;
+		HOMOG2D_INUMTYPE E =   - B * x0 - (HOMOG2D_INUMTYPE)2.*C * y0;
 		HOMOG2D_INUMTYPE F = A*x0*x0 + B*x0*y0 + C*y0*y0 - a2*b2;
 
 		data[0][0] = A;
@@ -2432,8 +2480,8 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( std::abs(rad) < thr::nullDistance() )
-			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << std::abs(rad) );
+		if( priv::abs(rad) < thr::nullDistance() )
+			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << priv::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
 #endif
@@ -2871,7 +2919,7 @@ getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
 	auto arr = li.get();
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
 	const HOMOG2D_INUMTYPE b = static_cast<HOMOG2D_INUMTYPE>(arr[1]);
-	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / std::sqrt( a*a + b*b );
+	auto coeff = static_cast<HOMOG2D_INUMTYPE>(dist) / priv::sqrt( a*a + b*b );
 
 	Point2d_<FPT> pt1(
         pt.getX() -  b * coeff,
@@ -3543,7 +3591,7 @@ private:
 	}
 	bool impl_isInf( const detail::BaseHelper<type::IsPoint>& ) const
 	{
-		return std::abs( _v[2] ) < thr::nullDenom();
+		return priv::abs( _v[2] ) < thr::nullDenom();
 	}
 
 	template<typename FPT2>
@@ -4333,6 +4381,45 @@ the one with smallest y-coordinate will be returned first */
 		);
 	}
 
+private:
+/// Computes the 4 points orthogonal to the segment
+	std::array<Point2d_<FPT>,4>
+	p_getOrthog() const
+	{
+		auto x1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX());
+		auto x2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getX());
+		auto y1 = static_cast<HOMOG2D_INUMTYPE>(_ptS1.getY());
+		auto y2 = static_cast<HOMOG2D_INUMTYPE>(_ptS2.getY());
+		auto dx = x1 - x2;
+		auto dy = y1 - y2;
+		std::array<Point2d_<FPT>,4> out;
+		out[0] = Point2d_<FPT>( x1-dy, y1+dx );
+		out[1] = Point2d_<FPT>( x1+dy, y1-dx );
+		out[3] = Point2d_<FPT>( x2-dy, y2+dx );
+		out[2] = Point2d_<FPT>( x2+dy, y2-dx );
+		return out;
+	}
+public:
+/// Returns the 4 points orthogonal to the segment
+	std::array<Point2d_<FPT>,4>
+	getOrthogPts() const
+	{
+		return p_getOrthog();
+	}
+
+/// Returns the 4 segments orthogonal to the segment
+	std::array<Segment_<FPT>,4>
+	getOrthogSegs() const
+	{
+		std::array<Segment_<FPT>,4> out;
+		auto pts = p_getOrthog();
+		out[0] = Segment_<FPT>( _ptS1, pts[0] );
+		out[1] = Segment_<FPT>( _ptS1, pts[1] );
+		out[2] = Segment_<FPT>( _ptS2, pts[2] );
+		out[3] = Segment_<FPT>( _ptS2, pts[3] );
+		return out;
+	}
+
 /// Returns supporting line
 	Line2d_<FPT> getLine() const
 	{
@@ -4508,7 +4595,7 @@ Segment_<FPT>::distTo( const Point2d_<FPT2>& pt, int* segDistCase ) const
 
 	auto dx = pt.getX() - xx;
 	auto dy = pt.getY() - yy;
-	return std::sqrt(dx * dx + dy * dy);
+	return priv::sqrt( dx * dx + dy * dy );
 }
 
 //------------------------------------------------------------------
@@ -4617,15 +4704,16 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	HOMOG2D_INUMTYPE y2 = pt2.getY();
 	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 
-	if( d_squared > r1*r1 + r2*r2 + 2.*r1*r2 )              // no intersection
+	if( d_squared > r1*r1 + r2*r2 + (HOMOG2D_INUMTYPE)2.*r1*r2 )              // no intersection
 		return detail::Intersect<detail::Inters_2,FPT>();
 
-	if( d_squared < ( r1*r1 + r2*r2 - 2.*r1*r2 ) )          // no intersection: one circle inside the other
+	if( d_squared < ( r1*r1 + r2*r2 - (HOMOG2D_INUMTYPE)2.*r1*r2 ) )          // no intersection: one circle inside the other
 		return detail::Intersect<detail::Inters_2,FPT>();
 
-	auto d = std::sqrt( d_squared );
-	auto a = (r1*r1 - r2*r2 + d_squared) / 2. / d;
-	auto h = std::sqrt( r1*r1 - a*a );
+	auto d = priv::sqrt( d_squared );
+	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
+	auto h = priv::sqrt( r1*r1 - a*a );
+
 
 	Point2d_<FPT> P0(
 		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
@@ -5731,7 +5819,7 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-		if( std::abs(a1-a2) < thr::nullAngleValue() )
+		if( priv::abs(a1-a2) < thr::nullAngleValue() )
 			ptset.push_back( i );
 	}
 
@@ -5894,7 +5982,7 @@ PolylineBase<PLT,FPT>::area() const
 		return 0.;
 
 	if( _attribs._area.isBad() )
-		_attribs._area.set( std::abs( p_ComputeSignedArea() ) );
+		_attribs._area.set( priv::abs( p_ComputeSignedArea() ) );
 	return _attribs._area.value();
 }
 
@@ -6476,7 +6564,7 @@ getPtLabel( const Point2d_<FPT>& pt, const Circle_<FPT2>& circle )
 	if( pt.isInside( circle ) )
 		return PtTag::Inside;
 	if(
-		std::abs( pt.distTo( circle.center() ) - circle.radius() )
+		priv::abs( pt.distTo( circle.center() ) - circle.radius() )
 			< thr::nullDistance()
 	)
 		return PtTag::OnEdge;
@@ -6528,11 +6616,11 @@ Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 
 	auto dA1 = ptA1.distTo( ptInter );
 	auto dA2 = ptA2.distTo( ptInter );
-	if( std::abs(dA1+dA2 - length()) < thr::nullDistance() )
+	if( priv::abs(dA1+dA2 - length()) < thr::nullDistance() )
 	{
 		auto dB1 = ptB1.distTo( ptInter );
 		auto dB2 = ptB2.distTo( ptInter );
-		if( std::abs(dB1+dB2 - s2.length()) < thr::nullDistance() )
+		if( priv::abs(dB1+dB2 - s2.length()) < thr::nullDistance() )
 			return detail::Intersect<detail::Inters_1,FPT>( ptInter );
 	}
 	return detail::Intersect<detail::Inters_1,FPT>(); // no intersection
@@ -6565,7 +6653,7 @@ Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 
 	auto d1 = pt1.distTo( pi );
 	auto d2 = pt2.distTo( pi );
-	if( std::abs(d1+d2-length()) < thr::nullDistance() )
+	if( priv::abs(d1+d2-length()) < thr::nullDistance() )
  		out._doesIntersect = true;
 
 	return out;
@@ -6624,7 +6712,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
-		if( std::abs( d1+d2-length() ) < thr::nullDistance() )
+		if( priv::abs( d1+d2-length() ) < thr::nullDistance() )
 			out.add( p1 );                          // points is inside
 		else
 			out.add( p2 );
@@ -6636,7 +6724,7 @@ Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 	{
 		auto d1 = _ptS1.distTo( p1 );
 		auto d2 = _ptS2.distTo( p1 );
-		if( std::abs( d1+d2-length() ) >= thr::nullDistance() )   // if sum of the two distances is higher than length
+		if( priv::abs( d1+d2-length() ) >= thr::nullDistance() )   // if sum of the two distances is higher than length
 			return detail::IntersectM<FPT>();
 
 		out.add( p1 );
@@ -6821,27 +6909,29 @@ Ellipse_<FPT>::p_computeParams() const
 
 	detail::EllParams<T> par;  // theta already set to zero
 
-	auto denom = B*B - 4. * A * C;
+	auto denom = B*B - (HOMOG2D_INUMTYPE)4. * A * C;
 
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < thr::nullDenom() )
+	if( priv::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute parameters, denom=" << std::scientific << std::setprecision(15) << denom
 		);
 #endif
 
-	par.x0 = ( 2.*C*D - B*E ) / denom;
-	par.y0 = ( 2.*A*E - B*D ) / denom;
-	auto common_ab = 2. * ( A*E*E + C*D*D - B*D*E + denom*F );
+	par.x0 = ( (HOMOG2D_INUMTYPE)2.*C*D - B*E ) / denom;
+	par.y0 = ( (HOMOG2D_INUMTYPE)2.*A*E - B*D ) / denom;
+	auto common_ab = (HOMOG2D_INUMTYPE)2. * ( A*E*E + C*D*D - B*D*E + denom*F );
 	auto AmC = A-C;
 	auto AmC2 = AmC*AmC;
-	auto sqr = std::sqrt(AmC2+B*B);
-	par.a = -std::sqrt( common_ab * ( A+C+sqr ) )/ denom;
-	par.b = -std::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
+	auto sqr = priv::sqrt(AmC2+B*B);
+	par.a = -priv::sqrt( common_ab * ( A+C+sqr ) )/ denom;
+	par.b = -priv::sqrt( common_ab * ( A+C-sqr ) )/ denom;
+
 
 	par.a2 = par.a * par.a;
 	par.b2 = par.b * par.b;
-	if( std::abs(B) < thr::nullDenom() )
+	if( priv::abs(B) < thr::nullDenom() )
 	{
 		if( A > C )
 			par.theta = 90.;
@@ -6849,10 +6939,20 @@ Ellipse_<FPT>::p_computeParams() const
 	else
 	{
 		auto t = (C - A - sqr) / B;
+
+#ifdef HOMOG2D_USE_TTMATH
+		par.theta = ttmath::ATan( t );
+#else
 		par.theta = std::atan( t );
+#endif
 	}
+#ifdef HOMOG2D_USE_TTMATH
+	par.sint = ttmath::Sin( par.theta );
+	par.cost = ttmath::Cos( par.theta );
+#else
 	par.sint = std::sin( par.theta );
 	par.cost = std::cos( par.theta );
+#endif
 	return par;
 }
 
@@ -6871,8 +6971,8 @@ Ellipse_<FPT>::isCircle( HOMOG2D_INUMTYPE thres ) const
 	HOMOG2D_INUMTYPE A  = m[0][0];
 	HOMOG2D_INUMTYPE C  = m[1][1];
 	HOMOG2D_INUMTYPE B2 = m[0][1];
-	if( std::abs(A-C) < thres )
-		if( std::abs(B2)*2. < thres )
+	if( priv::abs(A-C) < thres )
+		if( priv::abs(B2)*2. < thres )
 			return true;
 	return false;
 }
@@ -6921,7 +7021,7 @@ Ellipse_<FPT>::length() const
 	auto ab_sum  = par.a + par.b;
 	auto ab_diff = par.a - par.b;
 	auto h = ab_diff * ab_diff / (ab_sum * ab_sum);
-	auto denom = (HOMOG2D_INUMTYPE)10. + std::sqrt(4. - 3. * h);
+	auto denom = (HOMOG2D_INUMTYPE)10. + priv::sqrt(4. - 3. * h);
 	return (par.a + par.b) * M_PI * ( 1. + 3. * h / denom );
 }
 
@@ -6958,8 +7058,8 @@ Ellipse_<FPT>::getBB() const
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
 	auto vx = par.a2 * par.cost * par.cost	+ par.b2 * par.sint * par.sint;
 	auto vy = par.a2 * par.sint * par.sint	+ par.b2 * par.cost * par.cost;
-	auto vx_sq = std::sqrt( vx );
-	auto vy_sq = std::sqrt( vy );
+	auto vx_sq = priv::sqrt( vx );
+	auto vy_sq = priv::sqrt( vy );
 	return FRect_<FPT>(
 		Point2d_<FPT>( par.x0 - vx_sq, par.y0 - vy_sq ),
 		Point2d_<FPT>( par.x0 + vx_sq, par.y0 + vy_sq )
@@ -7074,7 +7174,12 @@ template<typename LP,typename FPT>
 void
 LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>& ) const
 {
+#ifdef HOMOG2D_USE_TTMATH
+	auto sq = ttmath::Sqrt( _v[0]*_v[0] + _v[1]*_v[1] );
+#else
 	auto sq = std::hypot( _v[0], _v[1] );
+#endif
+
 #ifndef HOMOG2D_NOCHECKS
 	if( sq <= std::numeric_limits<double>::epsilon() )
 		HOMOG2D_THROW_ERROR_1( "unable to normalize line, sq=" << sq << " values: a=" << _v[0] << " b=" << _v[1] << " c=" << _v[2] );
@@ -7082,12 +7187,12 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>&
 	for( int i=0; i<3; i++ )
 		const_cast<LPBase<LP,FPT>*>(this)->_v[i] /= sq; // needed to remove constness
 
-	if( std::signbit(_v[0]) ) // a always >0
+	if( _v[0] < 0. ) // a always >0
 		for( int i=0; i<3; i++ )
 			const_cast<LPBase<LP,FPT>*>(this)->_v[i] = -_v[i];
 
-	if( _v[0] == 0. ) // then, change sign so that b>0
-		if( std::signbit(_v[1]) )
+	if( priv::abs(_v[0]) < thr::nullDenom() ) // then, change sign so that b>0
+		if( _v[1] < 0 )
 		{
 			const_cast<LPBase<LP,FPT>*>(this)->_v[1] = - _v[1];
 			const_cast<LPBase<LP,FPT>*>(this)->_v[2] = - _v[2];
@@ -7100,7 +7205,7 @@ template<typename LP,typename FPT>
 void
 LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsPoint>& ) const
 {
-	if( std::signbit(_v[0]) )
+	if( _v[0] < 0. )
 	{
 		const_cast<LPBase<LP,FPT>*>(this)->_v[0] = -_v[0];
 		const_cast<LPBase<LP,FPT>*>(this)->_v[1] = -_v[1];
@@ -7108,9 +7213,9 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsPoint>
 	}
 #ifndef HOMOG2D_NOCHECKS
 	if(
-		std::abs(_v[2]) < thr::nullDenom()
+		priv::abs(_v[2]) < thr::nullDenom()
 		&&
-		( _v[0] < thr::nullOrthogDistance() && std::abs(_v[1]) < thr::nullOrthogDistance() )
+		( _v[0] < thr::nullOrthogDistance() && priv::abs(_v[1]) < thr::nullOrthogDistance() )
 	)
 		HOMOG2D_THROW_ERROR_1( "invalid point values" );
 #endif
@@ -7131,7 +7236,7 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelpe
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
-	if( std::abs(denom) < thr::nullDenom() )
+	if( priv::abs(denom) < thr::nullDenom() )
 		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
@@ -7471,10 +7576,16 @@ template<typename FPT2>
 HOMOG2D_INUMTYPE
 LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
+#ifndef HOMOG2D_USE_TTMATH
 	return std::hypot(
 		static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() ),
 		static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() )
 	);
+#else
+	auto v1 = static_cast<HOMOG2D_INUMTYPE>( getX() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getX() );
+	auto v2 = static_cast<HOMOG2D_INUMTYPE>( getY() ) - static_cast<HOMOG2D_INUMTYPE>( pt.getY() );
+	return ttmath::Sqrt( v1*v1 + v2*v2 );
+#endif
 }
 //------------------------------------------------------------------
 /// Returns distance between the line and point \b pt. overload for line to point distance.
@@ -7497,7 +7608,11 @@ LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHe
 		+ static_cast<HOMOG2D_INUMTYPE>( _v[1] ) * pt.getY()
 		+ static_cast<HOMOG2D_INUMTYPE>( _v[2] )
 	)
+#ifndef HOMOG2D_USE_TTMATH
 	/ std::hypot( _v[0], _v[1] );
+#else
+;
+#endif
 }
 
 /// overload for line to point distance
@@ -7605,8 +7720,9 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 	HOMOG2D_INUMTYPE l2_b = li._v[1];
 	HOMOG2D_INUMTYPE res = l1_a * l2_a + l1_b * l2_b;
 
-	res /= std::sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
-	HOMOG2D_INUMTYPE fres = std::abs(res);
+	res /= priv::sqrt( (l1_a*l1_a + l1_b*l1_b) * (l2_a*l2_a + l2_b*l2_b) );
+	auto fres = priv::abs(res);
+
 	if( fres > 1.0 )
 	{
 #ifndef HOMOG2D_NOWARNINGS
@@ -7617,7 +7733,11 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 #endif
 		fres = 1.0;
 	}
+#ifdef HOMOG2D_USE_TTMATH
+	return ttmath::ACos( fres );
+#else
 	return std::acos( fres );
+#endif
 }
 
 template<typename LP, typename FPT>
@@ -7839,7 +7959,7 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 
 // step 2: compute distance	between center (origin) and middle point
 	auto a2b2 = a * a + b * b;
-	auto d0 = std::abs(cp) / std::sqrt( a2b2 );
+	auto d0 = priv::abs(cp) / priv::sqrt( a2b2 );
 	if( radius < d0 )                            // if less than radius,
 		return out;                         // no intersection
 
@@ -7850,7 +7970,7 @@ LPBase<LP,FPT>::impl_intersectsCircle(
 	auto yb = - b * cp / a2b2;
 
 // step 4: compute coordinates of intersection points, with center at (0,0)
-	auto m  = std::sqrt( d2 / a2b2 );
+	auto m  = priv::sqrt( d2 / a2b2 );
 	auto x1 = xb + m*b;
 	auto y1 = yb - m*a;
 
@@ -8200,7 +8320,7 @@ side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
 	HOMOG2D_INUMTYPE c = arr[2];
 
 	auto dist = a * pt.getX() + b * pt.getY() + c;
-	if( std::abs(dist) < thr::nullDistance() )
+	if( priv::abs(dist) < thr::nullDistance() )
 		return 0;
 	return (std::signbit( dist ) ? -1 : +1);
 }
@@ -8556,6 +8676,25 @@ split( const Segment_<FPT>& seg )
 	return seg.split();
 }
 
+/// Returns orthogonal segments
+/// \sa Segment_::getOrthogSegs()
+template<typename FPT>
+std::array<Segment_<FPT>,4>
+getOrthogSegs( const Segment_<FPT>& seg )
+{
+	return seg.getOrthogSegs();
+}
+
+/// Returns orthogonal points
+/// \sa Segment_::getOrthogPts()
+template<typename FPT>
+std::array<Point2d_<FPT>,4>
+getOrthogPts( const Segment_<FPT>& seg )
+{
+	return seg.getOrthogPts();
+}
+
+
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers (or ellipse)
 template<typename T1,typename T2>
@@ -8673,7 +8812,7 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 #endif
 
 // if same radius, return the two segments parallel to the one joining the centers
-	if( std::abs( c1.radius() - c2.radius() ) < thr::nullDistance() )
+	if( priv::abs( c1.radius() - c2.radius() ) < thr::nullDistance() )
 	{
 		Segment_<HOMOG2D_INUMTYPE> seg_center( c1.center(), c2.center() );
 		return seg_center.getParallelSegs( c1.radius() );
@@ -8686,21 +8825,28 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 		std::swap( cA, cB );
 
 	auto h = dist( cA.center(), cB.center() );
+#ifdef HOMOG2D_USE_TTMATH
+	auto theta = ttmath::ASin( ( cA.radius() - cB.radius() ) / h ) ;
+	auto hcost = h * ttmath::Cos(theta);
+#else
 	auto theta = std::asin( ( cA.radius() - cB.radius() ) / h ) ;
-//	std::cout << "theta=" << theta << "\n";
+	auto hcost = h * cos(theta);
+#endif
+
 
 // get rotated lines at center of CB
 	auto l0 = cA.center() * cB.center();
-	auto l1 = l0.getRotatedLine( cB.center(), +theta );
+	auto l1 = l0.getRotatedLine( cB.center(),  theta );
 	auto l2 = l0.getRotatedLine( cB.center(), -theta );
 
 // build segments by getting the opposite point
-	auto ppts1 = l1.getPoints( cB.center(), h*cos(theta) );
+
+	auto ppts1 = l1.getPoints( cB.center(), hcost );
 	auto p1 = ppts1.first;
 	if( ppts1.second.distTo( cA.center()) < p1.distTo( cA.center()) )
 		p1 = ppts1.second;
 
-	auto ppts2 = l2.getPoints( cB.center(), h*cos(theta) );
+	auto ppts2 = l2.getPoints( cB.center(), hcost );
 	auto p2 = ppts2.first;
 	if( ppts2.second.distTo( cA.center()) < p2.distTo( cA.center()) )
 		p2 = ppts2.second;
@@ -8866,9 +9012,9 @@ getParallelDistance( const Line2d_<FPT>& li1, const Line2d_<FPT>& li2 )
 	const HOMOG2D_INUMTYPE b2 = ar2[1];
 	const HOMOG2D_INUMTYPE c2 = ar2[2];
 
-	HOMOG2D_INUMTYPE a = std::sqrt( a1*a2 );
-	HOMOG2D_INUMTYPE b = std::sqrt( b1*b2 );
-	return std::abs( c1 - c2 ) / std::sqrt( a*a + b*b );
+	HOMOG2D_INUMTYPE a = priv::sqrt( a1*a2 );
+	HOMOG2D_INUMTYPE b = priv::sqrt( b1*b2 );
+	return priv::abs( c1 - c2 ) / priv::sqrt( a*a + b*b );
 }
 
 /// Return angle of ellipse (free function)
@@ -9220,6 +9366,8 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 - 0 --> p, q and r are colinear
 - 1 --> Clockwise
 - 2 --> Counterclockwise
+
+\todo 20230212: replace const value HOMOG2D_THR_ZERO_DETER with related static function
 */
 template<typename T>
 int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
@@ -9232,8 +9380,9 @@ int orientation( Point2d_<T> p, Point2d_<T> q, Point2d_<T> r )
 	HOMOG2D_INUMTYPE ry = r.getY();
 
 	auto val = (qy - py) * (rx - qx) - (qx - px) * (ry - qy);
-    if( std::abs(val) < HOMOG2D_THR_ZERO_DETER )
-		return 0;  // colinear
+	if( priv::abs(val) < HOMOG2D_THR_ZERO_DETER )
+		return 0;  // collinear
+
     return (val > 0 ? 1 : -1 ); // clock or counterclock wise
 }
 //------------------------------------------------------------------

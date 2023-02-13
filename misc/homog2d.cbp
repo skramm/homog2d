@@ -180,6 +180,7 @@
 		<Unit filename="showcase/showcase14.cpp" />
 		<Unit filename="showcase/showcase15.cpp" />
 		<Unit filename="showcase/showcase16.cpp" />
+		<Unit filename="showcase/showcase17.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
@@ -203,6 +204,7 @@
 		<Unit filename="test_files/mylib.hpp" />
 		<Unit filename="test_files/single_file.cpp" />
 		<Unit filename="test_files/test_multiple.cpp" />
+		<Unit filename="test_files/ttmath_t1.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

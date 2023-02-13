@@ -446,6 +446,14 @@ The support line is gray.
 
 ![extended segment](img/segment_extended1.png)
 
+You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOrthogSegs()` (member or free functions).
+These two member functions return an `std::array` of size 4, the latter filled with the 4 orthogonal segments,
+and the first filled with the associated 4 points.
+
+Due to the unoriented nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
+
+![showcase17](showcase/showcase17.gif)
+
 The distance between a segment and a point can be computed.
 The code considers the different situations:
 shorted distance can be the orthogonal distance to the supporting line, or the distance to one the two points.
@@ -661,16 +669,18 @@ It is available as two classes `OPolyline_` (open) and `CPolyline_` (closed).
 The closed one automatically considers a connection betwen last and first point.
 It can be used to model a polygon.
 
+#### 3.4.1 - Building
+
 ```C++
 OPolyline pl1; // empty
 CPolyline pl2;
 std::vector<Point2d> vpts;
 // fill vpts
 pl1.set( vpt );      // sets the points
-pl2.set( vpt );      // sets the points
+pl2.set( vpt );
 ```
 
-It can be initialised either with a container holding the points, or (only for the closed version) from a `FRect`:
+It can be initialised either with a container (`std::vector`, or `std::array`, or `std::list`) holding the points, or (only for the closed version) from a `FRect`:
 ```C++
 std::vector<Point2d> vpts{ {0,0},{1,1},{3,1} };
 OPolyline op(vpts);
@@ -678,6 +688,13 @@ CPolyline cp(vpts);
 FRect rect( .... );
 CPolyline cp2(rect);
 // OPolyline op2(rect); // this does not build
+```
+
+Another constructor enables building a Polyline from a Segment, wich ends up with a Polyline of 2 points:
+```C++
+Segment seg; // default constructor
+OPolyline po(seg);
+CPolyline pc(seg);
 ```
 
 **Warning**: you may not add a point identical to the previous one.
@@ -695,7 +712,7 @@ It has no orientation, meaning that the `OPolyline` build from this set of point
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
 
-#### Basic attributes
+#### 3.4.2 - Basic attributes
 
 The open/close status can be read, but will return a `constexpr` value:
 ```C++
@@ -728,7 +745,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### Bounding Box and Convex Hull
+#### 3.4.3 - Bounding Box and Convex Hull
 
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
@@ -743,7 +760,7 @@ The convex hull of a Polyline can be computed with the member function `convexHu
 [see here](#convex-hull-ff) for an example.
 
 
-#### Extremum points
+#### 3.4.4 - Extremum points
 <a name="poly_extremum_points"></a>
 
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
@@ -783,7 +800,19 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 
 **Warning**: These functions will throw if passed an empty polyline object.
 
-#### Type of Polyline
+#### 3.4.5 - Distance between two Polyline objects
+
+You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
+This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
+```C++
+auto closest = getClosestPoints( poly1, poly2 );
+auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
+auto d = closest.getMinDist()     // get the distance value
+auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
+```
+See [an example here](homog2d_showcase.md#sc14).
+
+#### 3.4.6 - Type of Polyline
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
@@ -796,8 +825,7 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 }
 ```
 
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0
-but the `centroid()` function will throw.
+Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -808,7 +836,7 @@ std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free func
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```
 
-#### Comparison of Polyline objects
+#### 3.4.7 - Comparison of Polyline objects
 
 Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
@@ -846,7 +874,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
-### Rotation/mirroring
+#### 3.4.8 - Rotation/mirroring
 
 All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
 While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
@@ -878,15 +906,6 @@ Point2d org( ..., ... );
 poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
 
-You can get the closest distance between two polyline objects with `getClosestPoints()`.
-This will return an object on with you can fetch the corresponding pair of points, as indexes or as points and the distance value:
-```C++
-auto closest = getClosestPoints( poly1, poly2 );
-auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
-auto d = closest.getMinDist()     // get the distance value
-auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
-```
-See [an example here](homog2d_showcase.md#sc14).
 
 
 ### 3.5 - Ellipse
@@ -1726,7 +1745,7 @@ draw( img, vseg, func );
 ## 9 - Numerical data types
 <a name="numdt"></a>
 
-### 9.1 - Underlying data type
+### 9.1 - Underlying data type: standard library floating point types
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -1799,6 +1818,29 @@ The thresholds all have default values.
 They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
+
+### 9.4 - "Big numbers" support
+<a name="bignum"></a>
+
+From 2023/02, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
+
+This library is header-only, so its very simple to install.
+
+To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` and you need to tell what type you will use for internal computation.
+<br>
+For example, to have 2 machine words for exponent and 3 for mantissa, you add this:
+```C++
+#define HOMOG2D_INUMTYPE ttmath::Big<2,3>
+```
+
+The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
+each component of the libray needs to be declared using the templated syntax and must use the "ttmath" type.
+See [this file](../misc/test_files/ttmath_t1.cpp) for example.
+
+Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the
+[threshold page](homog2d_thresholds.md).
+
 
 ## 10 - SVG import
 <a name="svg_import"></a>
@@ -1983,7 +2025,8 @@ At present, run-time polymorphism is pretty much preliminar, but required to imp
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
-
+- `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
+See [here](#bignum) for details.
 
 (1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
 and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.
