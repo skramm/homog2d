@@ -193,7 +193,7 @@ test_bn: BUILD/ttmath_t1
 	@echo "-done target $@"
 
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_ttmath.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 #=======================================================================
 # speed test

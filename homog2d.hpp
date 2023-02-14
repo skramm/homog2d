@@ -710,6 +710,20 @@ const char* getString( Type t )
 	return s;
 }
 
+inline
+const char* getString( Dtype t )
+{
+	const char* s=0;
+	switch( t )
+	{
+		case Dtype::Float:      s="Float";      break;
+		case Dtype::Double:     s="Double";     break;
+		case Dtype::LongDouble: s="LongDouble"; break;
+		assert(0);
+	}
+	return s;
+}
+
 
 //------------------------------------------------------------------
 /// Holds private stuff

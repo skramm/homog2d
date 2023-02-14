@@ -1785,11 +1785,14 @@ For any object, you may know its type with the `dtype()` (member or free) functi
 It will return an enum value of type `Dtype`, either
 `Dtype::Float`, `Dtype::Double` or `Dtype::LongDouble`.
 
+It can be printed out for humans with `getString()`, this will print "Float":
+
 ```C++
 Circle c1;
 assert( c1.dtype() == Dtype::Double );
 CircleF c2;
 assert( dtype(c2) == Dtype::Float );
+std::cout << getString( dtype(c2) );
 ```
 
 ### 9.2 - Numerical type conversion
