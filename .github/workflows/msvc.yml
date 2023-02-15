@@ -15,5 +15,5 @@ jobs:
         with:
           arch: x64
       - name: run msvc
-        run: msvc misc/test_files/single_file.cpp
+        run: cl misc/test_files/single_file.cpp
 
