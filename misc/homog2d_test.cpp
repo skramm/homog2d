@@ -505,7 +505,10 @@ TEST_CASE( "stream operator << test", "[streamingop-test]" )
 // just to make sure that this builds !
 	std::ostringstream oss;
 	oss << li << pt << seg << cir << cpol << opol << ell;
+	std::ostringstream oss2;
 	std::cout << cpol;
+	oss2 << cpol;
+	CHECK( oss2.str() == "CPolyline: empty" );
 }
 
 TEST_CASE( "line/point distance", "[lp-dist]" )

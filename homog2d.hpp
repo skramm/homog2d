@@ -829,6 +829,11 @@ template<typename LP,typename FPT>
 auto
 operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& )
 -> std::ostream&;
+
+template<typename T1,typename T2>
+auto
+operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& )
+-> std::ostream&;
 }
 
 // forward declaration, related to https://github.com/skramm/homog2d/issues/2
@@ -4877,12 +4882,9 @@ template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
 operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 
-// forward declaration
-template<typename T1,typename T2>
-std::ostream&
-operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
-
 // Forward declaration
+///  \todo 20230215: check if this has to be moved in the 'base' namespace. Can it be called **without**
+/// `using namespace std;`. This was the case for the streaming operator...
 template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
@@ -5436,7 +5438,7 @@ public:
 
 	template<typename T1,typename T2>
 	friend std::ostream&
-	h2d::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
+	h2d::base::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
 
 public:
 #ifdef HOMOG2D_TEST_MODE
@@ -6815,6 +6817,7 @@ operator << ( std::ostream& f, const Segment_<T>& seg )
 	return f;
 }
 
+namespace base {
 template<typename PLT,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
@@ -6830,6 +6833,7 @@ operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
 	f << '\n';
 	return f;
 }
+} // namespace base
 
 template<typename T>
 std::ostream&

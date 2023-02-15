@@ -91,6 +91,10 @@ Finally achieved the integration of the Microsoft C++ compiler (`CL.exe`) to the
 <br>
 Reference: https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options
 
+Once the test app has been build (with `$ make test`), you can run a single test with:
+```
+$ BUILD/<testappname> [tagname]
+```
 
 ## Coding style
 
