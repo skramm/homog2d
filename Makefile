@@ -195,6 +195,11 @@ test_bn: BUILD/ttmath_t1
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
+test_boostimport: BUILD/bg_test_1
+
+BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+
 #=======================================================================
 # speed test
 speed_test: speed_test_b
