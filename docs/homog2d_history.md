@@ -29,6 +29,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added support for big math library [ttmath](https://www.ttmath.org/) (preliminar, see [Numerical data types](homog2d_manual.md#bignum).).
   - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
   - added MSVC compiler to the Github Action CI automated tests
+  - added support for importing Boost::geometry polygons (preliminar), see an [example here](../misc/test_files/bg_test_1.cpp).
 
 ## Previous releases
 

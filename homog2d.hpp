@@ -4920,6 +4920,7 @@ class PolylineBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using PType = PLT;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class PolylineBase;
@@ -5004,24 +5005,55 @@ template<
 		set( other._plinevec );
 	}
 
-#if 0
 #ifdef HOMOG2D_USE_BOOSTGEOM
-/// Constructor from a boost geometry polygon
-/**
-\not Only imports the "outer" enveloppe
-*/
+private:
+/// utility function to convert a boost::geometry point
 	template<typename FPT2>
+	Point2d_<FPT2> p_convert( const boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>& ptin )
+	{
+		return h2d::Point2d_<FPT2>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
+	}
+
+public:
+/// Constructor from a boost geometry polygon, see misc/test_files/bg_test_1.cpp
+/**
+\note Only imports the "outer" envelope, homog2d does not handle polygons with holes
+
+Requirements: the Boost polygon must have 2-cartesian coordinates points, but the underlying numerical type is rather free
+
+\note: at present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
+this relates to the actual points.
+*/
+	template<typename FPT2,bool CLKW,bool CLOSED>
 	PolylineBase(
 		const boost::geometry::model::polygon<
-			boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>
-		>& other
+			boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>,
+			CLKW,    ///< this one is ignored here
+			CLOSED   ///< true: closed, false: open
+		>& bgpol
 	)
 	{
+		const auto& outer = bgpol.outer();
+		bool isClosed = false;
+		auto pt_front = p_convert( outer.front() );
+		auto pt_back  = p_convert( outer.back() );
+		if( pt_front == pt_back ) // means it's closed
+			isClosed = true;
 
+		if( isClosed && std::is_same<PLT,type::IsOpen>::value ) // cannot build an open polyline from a closed one
+				HOMOG2D_THROW_ERROR_1( "unable to convert an closed boost::polygon into an OPolyline" );
 
-
+		_plinevec.reserve( outer.size() - isClosed );
+//		_plinevec.reserve( outer.size() );
+		for( auto it= outer.begin(); it!=outer.end()-isClosed; it++ )
+		{
+			const auto& bgpt = *it;
+//		for( const auto& bgpt: outer )
+			_plinevec.emplace_back(
+				h2d::Point2d_<FPT>( boost::geometry::get<0>(bgpt), boost::geometry::get<1>(bgpt) )
+			);
+		}
 	}
-#endif
 #endif
 
 ///@}

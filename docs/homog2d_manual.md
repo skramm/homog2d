@@ -659,7 +659,7 @@ auto line = getLine( c1, c2 );    // as a line
 // same result than: getSegment( c1, c2 ).getLine();
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
-![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles2.svg)
+![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles1.svg)
 
 
 ### 3.4 - Polyline
@@ -713,6 +713,13 @@ It has no orientation, meaning that the `OPolyline` build from this set of point
 `(0,0)-(1,0)-(1,1)`<br>
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
+
+It is also possible to build a polyline by importing from a boost::geometry polygon
+(at present, only possible with the `model::point` point type).
+See an [example here](../misc/test_files/bg_test_1.cpp).
+
+This requires the symbol `HOMOG2D_USE_BOOSTGEOM` to be defined.
+
 
 #### 3.4.2 - Basic attributes
 
@@ -2032,6 +2039,7 @@ While this shoudn't happen even with random data, numerical (floating-point) iss
 [read this for details](homog2d_qa.md#assert_trigger).
 - `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
 See [here](#bignum) for details.
+- `HOMOG2D_USE_BOOSTGEOM`: enables the binding with Boost::geometry (preliminar), see [example here](../misc/test_files/bg_test_1.cpp).
 
 (1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
 and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.

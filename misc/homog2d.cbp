@@ -195,6 +195,7 @@
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="test_files/bg_test_1.cpp" />
 		<Unit filename="test_files/mylib.cpp" />
 		<Unit filename="test_files/mylib.hpp" />
 		<Unit filename="test_files/single_file.cpp" />
