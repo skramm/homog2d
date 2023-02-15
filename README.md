@@ -6,7 +6,7 @@ Current test status: [![GH actions build status](https://github.com/skramm/homog
 ![](https://img.shields.io/github/stars/skramm/homog2d)
 
 A single-file header-only C++ library dedicated to
-handling 2D lines, points and homographies (2D planar transformations),
+handling 2D lines, points and homographies (2D planar transformations) in Cartesian geometry,
 using internally [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
 Also handles other geometric primitives, see full manual.
 

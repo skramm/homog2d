@@ -27,10 +27,6 @@ See https://github.com/skramm/homog2d
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -61,13 +57,15 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_ENABLE_RTP
 #endif
 
-#define HOMOG2D_VERSION "2.9.1"
-
-
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
 	#include "opencv2/highgui.hpp"
 #endif
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+	#include <boost/geometry.hpp>
+#endif
+
 
 #ifdef _MSC_VER
 	#define HOMOG2D_PRETTY_FUNCTION __FUNCSIG__
@@ -124,7 +122,7 @@ See https://github.com/skramm/homog2d
 #endif
 
 /**
-\todo 20230212 ttmath support: this defintion does not work, I don't know why !!! see namespace \ref trait
+\todo 20230212 ttmath support: this definition does not work, I don't know why !!! see namespace \ref trait
 \verbatim
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( \
@@ -199,6 +197,14 @@ See https://github.com/skramm/homog2d
 #ifndef HOMOG2D_MAXITER_PIP
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
+
+#define HOMOG2D_VERSION "2.9.1"
+
+// some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 
 namespace h2d {
 
@@ -4995,6 +5001,26 @@ template<
 	{
 		set( other._plinevec );
 	}
+
+#if 0
+#ifdef HOMOG2D_USE_BOOSTGEOM
+/// Constructor from a boost geometry polygon
+/**
+\not Only imports the "outer" enveloppe
+*/
+	template<typename FPT2>
+	PolylineBase(
+		const boost::geometry::model::polygon<
+			boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>
+		>& other
+	)
+	{
+
+
+
+	}
+#endif
+#endif
 
 ///@}
 

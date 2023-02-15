@@ -32,6 +32,8 @@ All the data types implement a comparison operator ( `==` and  `!=`).
 
 This library does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
 The types are fully templated by the underlying numerical type.
+If more precision is required, an external library providing arbitrary binary size for numerical values can be used, [see here](#bignum).
+
 To make things simple, we introduce here only the default type, based on `double` (see [Numerical data types](#numdt) for details).
 
 The API is exposed both as member functions and as free functions.
@@ -1825,7 +1827,7 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 ### 9.4 - "Big numbers" support
 <a name="bignum"></a>
 
-From 2023/02, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+From release 2.10, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
 
 This library is header-only, so its very simple to install.

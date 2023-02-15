@@ -493,6 +493,21 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 	}
 }
 
+TEST_CASE( "stream operator << test", "[streamingop-test]" )
+{
+	Line2d li;
+	Point2d pt;
+	Segment seg;
+	Circle cir;
+	Ellipse ell;
+	CPolyline cpol;
+	OPolyline opol;
+// just to make sure that this builds !
+	std::ostringstream oss;
+	oss << li << pt << seg << cir << cpol << opol << ell;
+	std::cout << cpol;
+}
+
 TEST_CASE( "line/point distance", "[lp-dist]" )
 {
 	size_t n = 1E6;  // nb of runs
