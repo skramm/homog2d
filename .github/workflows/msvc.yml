@@ -10,6 +10,7 @@ jobs:
   job3:
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v3
       - name: Setup MSVC Developer Command Prompt
         uses: TheMrMilchmann/setup-msvc-dev@v2.0.0
         with:
