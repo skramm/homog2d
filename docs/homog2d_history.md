@@ -28,6 +28,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added build symbol `HOMOG2D_NOWARNINGS`, see [buid options](homog2d_manual.md#build_options).
   - added support for big math library [ttmath](https://www.ttmath.org/) (preliminar, see [Numerical data types](homog2d_manual.md#bignum).).
   - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
+  - added MSVC compiler to the Github Action CI automated tests
 
 ## Previous releases
 

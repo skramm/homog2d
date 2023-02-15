@@ -1,3 +1,6 @@
+# basic testing with Microsoft compiler
+# uses this: https://github.com/TheMrMilchmann/setup-msvc-dev
+
 name: CI-testing-msvc
 
 on:
@@ -16,5 +19,5 @@ jobs:
         with:
           arch: x64
       - name: run msvc
-        run: cl misc/test_files/single_file.cpp
+        run: cl /EHsc misc/test_files/single_file.cpp
 
