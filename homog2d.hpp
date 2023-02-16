@@ -5008,10 +5008,10 @@ template<
 #ifdef HOMOG2D_USE_BOOSTGEOM
 private:
 /// utility function to convert a boost::geometry point
-	template<typename FPT2>
-	Point2d_<FPT2> p_convert( const boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>& ptin )
+	template<typename BPT> // Boost Point Type
+	Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type> p_convert( const BPT& ptin )
 	{
-		return h2d::Point2d_<FPT2>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
+		return h2d::Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
 	}
 
 public:
@@ -5019,7 +5019,9 @@ public:
 /**
 \note Only imports the "outer" envelope, homog2d does not handle polygons with holes
 
-Requirements: the Boost polygon must have 2-cartesian coordinates points, but the underlying numerical type is rather free
+Requirements: the Boost polygon must have 2-cartesian coordinates points,
+either `bg::model::point` or `bg::model::d2::point_xy`
+but the underlying numerical type is free.
 
 \note: at present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
 this relates to the actual points.
@@ -5044,11 +5046,9 @@ this relates to the actual points.
 				HOMOG2D_THROW_ERROR_1( "unable to convert an closed boost::polygon into an OPolyline" );
 
 		_plinevec.reserve( outer.size() - isClosed );
-//		_plinevec.reserve( outer.size() );
 		for( auto it= outer.begin(); it!=outer.end()-isClosed; it++ )
 		{
 			const auto& bgpt = *it;
-//		for( const auto& bgpt: outer )
 			_plinevec.emplace_back(
 				h2d::Point2d_<FPT>( boost::geometry::get<0>(bgpt), boost::geometry::get<1>(bgpt) )
 			);
