@@ -5008,6 +5008,17 @@ template<
 #ifdef HOMOG2D_USE_BOOSTGEOM
 private:
 /// utility function to convert a boost::geometry point
+/** \todo replace this by a dedicated constructor (needs to be written!)
+
+Problem: we need to sfinae this constructor (class LPBase) so it can only accept one of the two Boost::geometry point types:
+\verbatim
+bg::model::point<double, 2, boost::geometry::cs::cartesian> pt1;
+bg::model::d2::point_xy<double> pt2;
+\endverbatim
+
+The one for lines must do the same as the one taking a h2d::point as single argument:
+build a line going from (0,0) to the given point
+*/
 	template<typename BPT> // Boost Point Type
 	Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type> p_convert( const BPT& ptin )
 	{
@@ -5023,13 +5034,15 @@ Requirements: the Boost polygon must have 2-cartesian coordinates points,
 either `bg::model::point` or `bg::model::d2::point_xy`
 but the underlying numerical type is free.
 
-\note: at present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
+\note At present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
 this relates to the actual points.
+\todo 20230216: maybe add some checking that the type BPT needs to fit certain requirements
+(must have 2-dimensions, and use cartesian coordinates). Maybe we should add some Sfinae to check this.
 */
-	template<typename FPT2,bool CLKW,bool CLOSED>
+	template<typename BPT,bool CLKW,bool CLOSED> //
 	PolylineBase(
 		const boost::geometry::model::polygon<
-			boost::geometry::model::point<FPT2, 2, boost::geometry::cs::cartesian>,
+			BPT,     ///< Boost Point Type (either `bg::model::point` or `bg::model::d2::point_xy`)
 			CLKW,    ///< this one is ignored here
 			CLOSED   ///< true: closed, false: open
 		>& bgpol

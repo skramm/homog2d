@@ -69,9 +69,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="doxyfile_dev" />
-		<Unit filename="doxyfile_opencv">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="dtest1.cpp" />
 		<Unit filename="dtest1.plt" />
 		<Unit filename="ellipse_speed_test.cpp" />

@@ -2,6 +2,8 @@
 \file
 \brief  test of importing a polygon from Boost Geometry
 
+\note 20230216: preliminar feature, will be expanded )
+
 run with `$ make test_bgtest`
 */
 
@@ -24,7 +26,7 @@ int main()
 	h2d::OPolyline p1b( opoly1 );
 	std::cout << "p1a=" << p1a << "p1b=" << p1b << '\n';
 
-#if 0 // TODO
+
 	using point_t2 = bg::model::d2::point_xy<double>;
 	using cpolygon_t2 = bg::model::polygon<point_t2,true,true>;
 	using opolygon_t2 = bg::model::polygon<point_t2,true,false>;
@@ -35,5 +37,5 @@ int main()
 	h2d::CPolyline p2a( cpoly2 );
 	h2d::OPolyline p2b( opoly2 );
 	std::cout << "p2a=" << p2a << "p2b=" << p2b << '\n';
-#endif
+
 }
