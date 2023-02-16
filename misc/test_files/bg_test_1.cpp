@@ -38,4 +38,7 @@ int main()
 	h2d::OPolyline p2b( opoly2 );
 	std::cout << "p2a=" << p2a << "p2b=" << p2b << '\n';
 
+	point_t1 ptb1(3,4);
+	h2d::Point2d p1(ptb1);
+	std::cout << p1 << '\n';
 }

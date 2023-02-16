@@ -1263,6 +1263,7 @@ Thus some assert can get triggered elsewhere.
 		*this = mat;
 	}
 #endif
+
 ///@}
 
 /// Assignment operator
@@ -3221,6 +3222,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_4( x1, y1, x2, y2, detail::BaseHelper<LP>() );
 	}
 
+// TEMP
+#if 0
 /// Constructor of Point/Line from random type holding x,y values
 	template<
 		typename T,
@@ -3233,6 +3236,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::BaseHelper<LP>() );
 	}
+#endif
 
 /// Constructor from an array holding 3 values of same type (a direct copy can be done)
 	template<
@@ -3283,6 +3287,45 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 //		HOMOG2D_CHECK_IS_NUMBER(T);
 		impl_init_or( orient, value, detail::BaseHelper<LP>() );
 	}
+
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+//private:
+
+public:
+/// Constructor from boost::geometry point type
+/**
+According to
+https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/geometry/reference/concepts/concept_point.html,
+the boost:: geometry points have
+\verbatim
+a specialization of traits::tag, defining point_tag as type
+\endverbatim
+*/
+	template<
+		typename BPT, // Boost Point Type
+		typename std::enable_if<
+			std::is_same<
+				boost::geometry::traits::tag<BPT>,
+				boost::geometry::point_tag
+			>::value
+			,BPT
+		>::type* = nullptr
+	>
+	LPBase( const BPT& ptin )
+	{
+		impl_init_BoostGeomPoint( ptin, detail::BaseHelper<LP>() );
+	}
+
+/// Set from boost::geometry point type
+	template<typename BPT> // Boost Point Type
+	void set( const BPT& ptin )
+	{
+//		return h2d::Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
+		set( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin), 1.0 );
+	}
+
+#endif
 
 private:
 	template<typename T,typename U>
@@ -3906,6 +3949,19 @@ private:
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsPoint>& );
 	template<typename T1,typename T2>
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsLine>& );
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+	template<typename BPT>
+	void impl_init_BoostGeomPoint( const BPT& pt, const detail::BaseHelper<type::IsLine>& )
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a Line2d using a boost::geometry point" );
+	}
+	template<typename BPT>
+	void impl_init_BoostGeomPoint( const BPT& pt, const detail::BaseHelper<type::IsPoint>& )
+	{
+		set(pt);
+	}
+#endif
 
 }; // class LPBase
 
