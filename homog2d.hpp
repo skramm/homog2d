@@ -6875,7 +6875,6 @@ operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
 		for( const auto& pt: pl._plinevec )
 			f << pt << "-";
 	}
-	f << '\n';
 	return f;
 }
 } // namespace base
