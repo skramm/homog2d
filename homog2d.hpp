@@ -3780,13 +3780,14 @@ public:
 		return impl_op_sort( other, detail::BaseHelper<LP>() );
 	}
 
-/// Generic draw function
+/// SVG draw function
 	void draw( img::Image<img::SvgImage>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
+/// Opencv draw function
 	void draw( img::Image<cv::Mat>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
@@ -5365,14 +5366,12 @@ at 180° of the previous one.
 	>
 	void set( const CONT& vec )
 	{
+#ifndef HOMOG2D_NOCHECKS
 		if( vec.size() == 1 )
 			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 0, 2 or more" );
-
-#ifndef HOMOG2D_NOCHECKS
 		if( vec.size() > 1 )
 			p_checkInputData( vec );
 #endif
-
 		_attribs.setBad();
 		_plIsNormalized=false;
 		_plinevec.resize( vec.size() );
