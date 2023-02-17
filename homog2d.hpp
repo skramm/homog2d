@@ -3222,9 +3222,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_4( x1, y1, x2, y2, detail::BaseHelper<LP>() );
 	}
 
-// TEMP
-#if 0
-/// Constructor of Point/Line from random type holding x,y values
+/// Constructor of Point/Line from random type holding x,y values, see manual, section
 	template<
 		typename T,
 		typename std::enable_if<
@@ -3236,7 +3234,6 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::BaseHelper<LP>() );
 	}
-#endif
 
 /// Constructor from an array holding 3 values of same type (a direct copy can be done)
 	template<
@@ -3290,39 +3287,27 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
-//private:
 
 public:
 /// Constructor from boost::geometry point type
 /**
-According to
-https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/geometry/reference/concepts/concept_point.html,
-the boost:: geometry points have
-\verbatim
-a specialization of traits::tag, defining point_tag as type
-\endverbatim
+Allows the two types of points:
+- bg::model::point<FPT, 2, bg::cs::cartesian> pt1;
+- bg::model::d2::point_xy<FPT> pt2;
+
+(because the latter one is inherited from the first one)
 */
-	template<
-		typename BPT, // Boost Point Type
-		typename std::enable_if<
-			std::is_same<
-				boost::geometry::traits::tag<BPT>,
-				boost::geometry::point_tag
-			>::value
-			,BPT
-		>::type* = nullptr
-	>
-	LPBase( const BPT& ptin )
+	template<typename BFPT> // Boost Floating Point Type
+	LPBase( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
 	{
-		impl_init_BoostGeomPoint( ptin, detail::BaseHelper<LP>() );
+		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
 	}
 
 /// Set from boost::geometry point type
-	template<typename BPT> // Boost Point Type
-	void set( const BPT& ptin )
+	template<typename BFPT> // Boost Floating Point Type
+	void set( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
 	{
-//		return h2d::Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
-		set( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin), 1.0 );
+		set( boost::geometry::get<0>(pt), boost::geometry::get<1>(pt), 1.0 );
 	}
 
 #endif
@@ -3951,15 +3936,21 @@ private:
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsLine>& );
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
-	template<typename BPT>
-	void impl_init_BoostGeomPoint( const BPT& pt, const detail::BaseHelper<type::IsLine>& )
+	template<typename BFPT>
+	void impl_init_BoostGeomPoint(
+		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>&,
+		const detail::BaseHelper<type::IsLine>&
+	)
 	{
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a Line2d using a boost::geometry point" );
 	}
-	template<typename BPT>
-	void impl_init_BoostGeomPoint( const BPT& pt, const detail::BaseHelper<type::IsPoint>& )
+	template<typename BFPT> // Boost Floating Point Type
+	void impl_init_BoostGeomPoint(
+		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt,
+		const detail::BaseHelper<type::IsPoint>&
+	)
 	{
-		set(pt);
+		set( pt );
 	}
 #endif
 
@@ -5062,26 +5053,6 @@ template<
 	}
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
-private:
-/// utility function to convert a boost::geometry point
-/** \todo replace this by a dedicated constructor (needs to be written!)
-
-Problem: we need to sfinae this constructor (class LPBase) so it can only accept one of the two Boost::geometry point types:
-\verbatim
-bg::model::point<double, 2, boost::geometry::cs::cartesian> pt1;
-bg::model::d2::point_xy<double> pt2;
-\endverbatim
-
-The one for lines must do the same as the one taking a h2d::point as single argument:
-build a line going from (0,0) to the given point
-*/
-	template<typename BPT> // Boost Point Type
-	Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type> p_convert( const BPT& ptin )
-	{
-		return h2d::Point2d_<typename boost::geometry::traits::coordinate_type<BPT>::type>( boost::geometry::get<0>(ptin), boost::geometry::get<1>(ptin) );
-	}
-
-public:
 /// Constructor from a boost geometry polygon, see misc/test_files/bg_test_1.cpp
 /**
 \note Only imports the "outer" envelope, homog2d does not handle polygons with holes
@@ -5091,8 +5062,8 @@ either `bg::model::point` or `bg::model::d2::point_xy`
 but the underlying numerical type is free.
 
 \note At present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
-this relates to the actual points.
-\todo 20230216: maybe add some checking that the type BPT needs to fit certain requirements
+this relates to the actual fact that last point is equal to first point.
+\todo 20230216:  add some checking that the type BPT needs to fit certain requirements
 (must have 2-dimensions, and use cartesian coordinates). Maybe we should add some Sfinae to check this.
 */
 	template<typename BPT,bool CLKW,bool CLOSED> //
@@ -5106,20 +5077,27 @@ this relates to the actual points.
 	{
 		const auto& outer = bgpol.outer();
 		bool isClosed = false;
-		auto pt_front = p_convert( outer.front() );
-		auto pt_back  = p_convert( outer.back() );
+		auto ptf = outer.front();
+		auto ptb = outer.back();
+		Point2d_<HOMOG2D_INUMTYPE> pt_front( boost::geometry::get<0>(ptf), boost::geometry::get<1>(ptf) );
+		Point2d_<HOMOG2D_INUMTYPE> pt_back(  boost::geometry::get<0>(ptb), boost::geometry::get<1>(ptb) );
+/*
+this should work !!! (but doesn't...)
+		Point2d_<HOMOG2D_INUMTYPE> pt_front( outer.front() );
+		Point2d_<HOMOG2D_INUMTYPE> pt_back(  outer.back() );
+*/
 		if( pt_front == pt_back ) // means it's closed
 			isClosed = true;
 
 		if( isClosed && std::is_same<PLT,type::IsOpen>::value ) // cannot build an open polyline from a closed one
-				HOMOG2D_THROW_ERROR_1( "unable to convert an closed boost::polygon into an OPolyline" );
+			HOMOG2D_THROW_ERROR_1( "unable to convert a closed boost::polygon into an OPolyline" );
 
 		_plinevec.reserve( outer.size() - isClosed );
-		for( auto it= outer.begin(); it!=outer.end()-isClosed; it++ )
+		for( auto it=outer.begin(); it!=outer.end()-isClosed; it++ )
 		{
 			const auto& bgpt = *it;
 			_plinevec.emplace_back(
-				h2d::Point2d_<FPT>( boost::geometry::get<0>(bgpt), boost::geometry::get<1>(bgpt) )
+				Point2d_<FPT>( boost::geometry::get<0>(bgpt), boost::geometry::get<1>(bgpt) )
 			);
 		}
 	}
@@ -5344,6 +5322,10 @@ This will be replaced by: (0,0)--(2,0)
 \note We cannot use the Segment_::getAngle() function because it returns a
 value in [0,PI/2], so we would'nt be able to detect a segment going
 at 180° of the previous one.
+
+\todo 20230217: implement these:
+- https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
+- https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 */
 	void
 	minimize()
@@ -6931,7 +6913,6 @@ operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
 		for( const auto& pt: pl._plinevec )
 			f << pt << "-";
 	}
-	f << '\n';
 	return f;
 }
 } // namespace base
