@@ -3291,14 +3291,21 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 public:
 /// Constructor from boost::geometry point type
 /**
-Allows the two types of points:
-- bg::model::point<FPT, 2, bg::cs::cartesian> pt1;
-- bg::model::d2::point_xy<FPT> pt2;
-
-(because the latter one is inherited from the first one)
+\note Although this one should work also for the other point type (`bg::model::d2::point_xy`),
+as that latter one is inherited from the first one),
+it does not, because there is another truely generic single-arg constructor, and the compiler
+will select that one first, leading to a build error.
+Thus, we need the second one.
 */
 	template<typename BFPT> // Boost Floating Point Type
 	LPBase( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
+	{
+		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
+	}
+
+/// Constructor from boost::geometry second point type
+	template<typename BFPT> // Boost Floating Point Type
+	LPBase( const boost::geometry::model::d2::point_xy<BFPT>& pt )
 	{
 		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
 	}

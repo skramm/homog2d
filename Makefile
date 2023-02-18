@@ -191,6 +191,8 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
+.PHONY: test_bg_1 test_bn
+
 # "bigmath test, with ttmath
 test_bn: BUILD/ttmath_t1
 	BUILD/ttmath_t1
@@ -199,7 +201,8 @@ test_bn: BUILD/ttmath_t1
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-test_bgtest: BUILD/bg_test_1
+
+test_bg_1: BUILD/bg_test_1
 	BUILD/bg_test_1
 	@echo "-done target $@"
 

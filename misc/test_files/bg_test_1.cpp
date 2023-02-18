@@ -4,7 +4,7 @@
 
 \note 20230216: preliminar feature, will be expanded )
 
-run with `$ make test_bgtest`
+run with `$ make test_bg_1`
 */
 
 #define HOMOG2D_USE_BOOSTGEOM
@@ -43,5 +43,9 @@ int main()
 	point_t2 ptb2(8,9);
 	h2d::Point2d p1(ptb1);
 	h2d::Point2d p2(ptb2);
+	std::cout << "p1=" << p1 << " p2=" << p2 << '\n';
+
+	p1.set(ptb2);
+	p2.set(ptb1);
 	std::cout << "p1=" << p1 << " p2=" << p2 << '\n';
 }
