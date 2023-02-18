@@ -79,8 +79,9 @@ Don't hesitate, this is still beta but stable release expected soon.
   - ...
 
 - Related libraries:
-  - [CGAL](https://www.cgal.org/) the reference computational geometry library.
-  - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
+  - [CGAL](https://www.cgal.org/), the reference computational geometry library.
+  - [Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html), a highly generic library with some overlapping features (but quite harder to use!)
+  - [Opencv](https://docs.opencv.org/), the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
 **Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there is **no rendering code** included.

@@ -1493,6 +1493,8 @@ auto v_lines = getLines( vec );
 ## 7 - Bindings with other libraries
 <a name="bind"></a>
 
+### 7.1 - Generic type conversion
+
 Import from other types is pretty much straight forward.
 For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
 For example, say you have a point type:
@@ -1517,7 +1519,7 @@ For homographies, you can import directly from
 For the first case, it is mandatory that all the vectors sizes are equal to 3
 (the 3 embedded ones and the global one).
 
-### 7.1 - Data conversion from/to Opencv data types
+### 7.2 - Data conversion from/to Opencv data types
 
 Optional functions are provided to interface with [Opencv](https://opencv.org).
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -1556,7 +1558,6 @@ auto vec_cv1 = getCvPts<cv::Point2d>(vec); // convert to 'double' points'
 auto vec_cv2 = getCvPts<cv::Point2f>(vec); // convert to 'float' points'
 ```
 
-
 Reverse operation as simple as this:
 ```C++
 cv::Point2d ptcv(4,5);
@@ -1580,6 +1581,28 @@ cv::Mat m;   // needs to be 3x3, floating point type (either CV_32F or CV_64F)
 Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
+
+### 7.3 - Binding with Boost Geometry
+
+From release 2.10, a preliminar binding is provided with
+[Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html).
+
+You may build a point using either of the two point types:
+
+```C++
+namespace bg = boost::geometry;
+bg::model::point<double, 2, bg::cs::cartesian> pb1;
+bg::model::d2::point_xy<double> pt2;
+...
+Point2d p1(pb1);
+Point2d p2(pb2);
+p1.set(pb1);     // this works too
+p2.set(pb2);
+```
+
+You can also import a polygon defined as a boost geometry type into a `CPolyline` or a `OPolyline`.
+See a demo in [../misc/test_files/bg_test_1.cpp]
+
 
 ## 8 - Drawing things
 <a name="drawing"></a>
@@ -2017,10 +2040,18 @@ You can do that in the makefile by adding `-DHOMOG2D_SYMBOL` to the compiler cal
 or just add a `#define` on top of your program
 **before** the `#include "homog2d"`
 
+#### 11.2.1 - Build symbols related to bindings with other libs:
+
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
 - `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
+- `HOMOG2D_USE_BOOSTGEOM`: enables the binding with Boost::geometry (preliminar), see [example here](../misc/test_files/bg_test_1.cpp).
+- `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
+See [here](#bignum) for details.
+
+#### 11.2.2 - Other build symbols:
+
 - `HOMOG2D_NOCHECKS`: will disable run-time checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
@@ -2037,9 +2068,6 @@ At present, run-time polymorphism is pretty much preliminar, but required to imp
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
-- `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
-See [here](#bignum) for details.
-- `HOMOG2D_USE_BOOSTGEOM`: enables the binding with Boost::geometry (preliminar), see [example here](../misc/test_files/bg_test_1.cpp).
 
 (1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
 and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.

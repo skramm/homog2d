@@ -3251,7 +3251,6 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 }
 
 
-
 TEST_CASE( "general binding", "[gen_bind]" )
 {
 	struct MyType
@@ -3386,6 +3385,25 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 }
 #endif
 
+//////////////////////////////////////////////////////////////
+/////        BOOST GEOMETRY BINDING TESTS                /////
+//////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+TEST_CASE( "bg point import", "[bg-pt-import]" )
+{
+	namespace bg = boost::geometry;
+	bg::model::point<double, 2, boost::geometry::cs::cartesian> ptb1(3,4);
+	bg::model::d2::point_xy<double> ptb2(5,6);
+	Point2d_<NUMTYPE> pt1(ptb1);
+	Point2d_<NUMTYPE> pt2(ptb2);
+	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
+	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
+
+//	CHECK_THROWS( Line2d_<NUMTYPE> pt1(ptb1);)
+}
+
+#endif
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////
