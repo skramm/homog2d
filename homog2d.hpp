@@ -911,7 +911,6 @@ public:
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area()   const = 0;
 	virtual Type type()               const = 0;
-//	virtual void translate( double, double ) = 0;
 
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
@@ -1553,7 +1552,7 @@ std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
 	f << "EllParams: origin=" << par.x0 << "," << par.y0
 		<< " angle=" << par.theta *180./M_PI
 		<< " a=" << par.a << " b=" << par.b
-		<< '\n';
+		<< ' ';
 	return f;
 }
 
@@ -5635,6 +5634,50 @@ public:
 // (need to be here because the 5 below are being called by some member functions
 // of class PolylineBase, that is implemented further below
 
+namespace priv {
+
+//------------------------------------------------------------------
+/// Return iterator on Bottom-most point of container holding points
+/**
+Used by
+ - getBmPoint()
+ - priv::chull::getPivotPoint()
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
+	>::type* = nullptr
+>
+auto
+getBmPoint_helper( const T& t )
+{
+	using FPT = typename T::value_type::FType;
+#ifndef HOMOG2D_NOCHECKS
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
+
+	return std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getY() < pt2.getY() )
+				return true;
+			if( pt1.getY() > pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+}
+
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Return Bottom-most point of container holding points
 template<
@@ -5649,28 +5692,15 @@ template<
 Point2d_<typename T::value_type::FType>
 getBmPoint( const T& t )
 {
-	using FPT = typename T::value_type::FType;
-
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
-
-	return *std::min_element(
-		std::begin(t),
-		std::end(t),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() < pt2.getY() )
-				return true;
-			if( pt1.getY() > pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
+#endif
+	return *priv::getBmPoint_helper( t );
 }
 
 //------------------------------------------------------------------
-/// Return Top-most point of Polyline
+/// Return Top-most point of container
 template<
 	typename T,
 	typename std::enable_if<
@@ -5685,8 +5715,10 @@ getTmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -5704,7 +5736,7 @@ getTmPoint( const T& t )
 }
 
 //------------------------------------------------------------------
-/// Return Left-most point of Polyline
+/// Return Left-most point of container
 template<
 	typename T,
 	typename std::enable_if<
@@ -5719,8 +5751,10 @@ getLmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -5753,8 +5787,10 @@ getRmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -9421,24 +9457,11 @@ namespace chull {
 
 //------------------------------------------------------------------
 /// Used int the convex hull algorithm
-/// \todo check if this cannot be merged with \ref getLmPoint()
 template<typename FPT>
 size_t
 getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 {
-	auto pmin = std::min_element(
-		in.begin(),
-		in.end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() < pt2.getY() )
-				return true;
-			if( pt1.getY() > pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
+	auto pmin = h2d::priv::getBmPoint_helper( in );
 	return static_cast<size_t>( pmin - in.begin() );
 }
 
@@ -9452,7 +9475,7 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 
 // step 1: create new vector holding the indexes of the points, including the pivot point (will be in first position)
 	std::vector<size_t> out( in.size() );
-	std::iota( out.begin(), out.end(), 0 );
+	std::iota( out.begin(), out.end(), 0 ); // fill vector: [0,1,2,...]
 	std::swap( out[piv_idx], out[0] );
 	auto pt0 = in[piv_idx];
 
@@ -9655,14 +9678,12 @@ template<typename W,typename FPT>
 Hmatrix_<W,FPT>&
 Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 {
+	auto type = mat.type();
 #ifndef HOMOG2D_NOCHECKS
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
 		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
-#endif
-	auto type = mat.type();
-#ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
 #endif
@@ -10084,17 +10105,18 @@ std::ostream& operator << ( std::ostream& f, const Root& p )
 			f << *p2;
 		}
 		break;
-/*		case Type::Line2d:
+		case Type::Line2d:
 		{
 			const Line2d_<double>* p2 = static_cast<const Line2d_<double>*>( &p );
 			f << *p2;
 		}
+		break;
 		case Type::Point2d:
 		{
 			const Point2d_<double>* p2 = static_cast<const Point2d_<double>*>( &p );
 			f << *p2;
 		}
-*/
+		break;
 		case Type::Segment:
 		{
 			const Segment_<double>* p2 = static_cast<const Segment_<double>*>( &p );

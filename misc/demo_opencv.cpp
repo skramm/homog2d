@@ -1201,7 +1201,7 @@ struct Param_CH : Data
 {
 	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
 	{
-		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
+		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420},{150,250} };
 	}
 	std::vector<img::Color> vcol;
 };
@@ -1232,6 +1232,11 @@ void action_CH( void* param )
 	draw( data.img, vlines, f );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 
+	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
+	chull.getLmPoint().draw( data.img, dp );
+	chull.getRmPoint().draw( data.img, dp );
+	chull.getTmPoint().draw( data.img, dp );
+	chull.getBmPoint().draw( data.img, dp );
 	data.showImage();
 }
 
