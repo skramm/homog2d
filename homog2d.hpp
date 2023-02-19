@@ -2696,7 +2696,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 // Circle/Circle intersection
 	template<typename FPT2>
-	detail::Intersect<typename detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	intersects( const Circle_<FPT2>& ) const;
 
 /// Circle/FRect intersection
@@ -4776,14 +4776,19 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 /**
 Ref:
 - https://stackoverflow.com/questions/3349125/
+
+Can return 0, 1, or 2 intersection points
+
+\todo 20230219: in some situation, the difference below (x2 - x1) can be numericaly instable.
+Check if things would get improved by multiplying first (by a/d and h/d), before proceeding the difference.
 */
 template<typename FPT>
 template<typename FPT2>
-detail::Intersect<typename detail::Inters_2,FPT>
+detail::IntersectM<FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
 	if( *this == other )
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	HOMOG2D_INUMTYPE r1 = _radius;
 	HOMOG2D_INUMTYPE r2 = other._radius;
@@ -4797,30 +4802,35 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 
 	if( d_squared > r1*r1 + r2*r2 + (HOMOG2D_INUMTYPE)2.*r1*r2 )              // no intersection
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	if( d_squared < ( r1*r1 + r2*r2 - (HOMOG2D_INUMTYPE)2.*r1*r2 ) )          // no intersection: one circle inside the other
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	auto d = priv::sqrt( d_squared );
 	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
 	auto h = priv::sqrt( r1*r1 - a*a );
 
-
+//	std::cout << "a/d=" << a/d << '\n';
 	Point2d_<FPT> P0(
-		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
-		( pt2.getY() - pt1.getY() ) * a / d + pt1.getY()
+		( x2 - x1 ) * a / d + x1,
+		( y2 - y1 ) * a / d + y1
 	);
 
 	Point2d_<FPT> pt3(
-		P0.getX() + h*( pt1.getY() - pt2.getY() ) / d,
-		P0.getY() - h*( pt1.getX() - pt2.getX() ) / d
+		P0.getX() + ( y1 - y2 ) * h / d,
+		P0.getY() - ( x1 - x2 ) * h / d
 	);
 	Point2d_<FPT> pt4(
-		P0.getX() - h*( pt1.getY() - pt2.getY() ) / d,
-		P0.getY() + h*( pt1.getX() - pt2.getX() ) / d
+		P0.getX() - ( y1 - y2 ) * h / d,
+		P0.getY() + ( x1 - x2 ) * h / d
 	);
-	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
+
+	detail::IntersectM<FPT> out;
+	out.add( pt3 );
+	if( pt3 != pt4 )
+		out.add( pt4 );
+	return out;
 }
 
 

@@ -1531,8 +1531,8 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 {
 	{
 		Circle_<NUMTYPE> cA, cB;
-		CHECK( cA == cB );
-		CHECK( !cA.intersects(cB)() );
+		CHECK( cA == cB );                 // identical circles do
+		CHECK( !cA.intersects(cB)() );     // not intersect
 	}
 	{
 		Circle_<NUMTYPE> cA;
@@ -1545,6 +1545,7 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 		Circle_<NUMTYPE> cB( Point2d(3,0), 2 );
 		CHECK( cA != cB );
 		CHECK( cA.intersects(cB)() );
+		CHECK( cA.intersects(cB).size() == 2 );
 	}
 	{
 		Circle_<NUMTYPE> cA( Point2d(0,0), 1 );
@@ -1553,9 +1554,10 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 		CHECK( cA.intersects(cB)() );
 		auto inter = cA.intersects(cB);
 		CHECK( inter() == true );
-		CHECK( inter.size() == 2 );
-		CHECK( inter.get().first  == Point2d( 1,0) );
-		CHECK( inter.get().second == Point2d( 1,0) );
+		CHECK( inter.size() == 1 );
+//		CHECK( inter.get().first  == Point2d(1,0) );
+//		CHECK( inter.get().second == Point2d(1,0) );
+		CHECK( inter.get()[0] == Point2d(1,0) );
 	}
 }
 
@@ -3390,7 +3392,7 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 //////////////////////////////////////////////////////////////
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
-TEST_CASE( "bg point import", "[bg-pt-import]" )
+TEST_CASE( "boost geometry point import", "[bg-pt-import]" )
 {
 	namespace bg = boost::geometry;
 	bg::model::point<double, 2, boost::geometry::cs::cartesian> ptb1(3,4);
@@ -3404,10 +3406,21 @@ TEST_CASE( "bg point import", "[bg-pt-import]" )
 	pt2 = ptb2;
 	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
 	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
-
-//	CHECK_THROWS( Line2d_<NUMTYPE> pt1(ptb1);)
 }
 
+TEST_CASE( "boost geometry point export", "[bg-pt-export]" )
+{
+	Point2d_<NUMTYPE> ref1(3,4);
+	Point2d_<NUMTYPE> ref2(5,6);
+	namespace bg = boost::geometry;
+	using point_t1 = bg::model::point<double, 2, bg::cs::cartesian>;
+	using point_t2 = bg::model::d2::point_xy<double>;
+
+	auto pt1 = getPt<point_t1>( ref1 );
+	auto pt2 = getPt<point_t2>( ref2 );
+	CHECK( bg::get<0>(pt1) == ref1.getX() );
+	CHECK( bg::get<0>(pt2) == ref2.getX() );
+}
 #endif
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
@@ -3421,7 +3434,6 @@ TEST_CASE( "Opencv build H", "[test_opencv2]" )
 	Homogr_<NUMTYPE> H;
 	H.buildFrom4Points( v1, v2 );
 	buildFrom4Points( v1, v2 );
-
 }
 
 TEST_CASE( "Opencv binding", "[test_opencv]" )

@@ -23,6 +23,7 @@ Try it with <code>$ make demo</code>.
 */
 
 #define HOMOG2D_USE_OPENCV
+#define HOMOG2D_USE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -1130,6 +1131,7 @@ struct Param_CIR : Data
 // DATA SECTION
 
 	Circle cir;
+	Circle cir2;
 	FRect rect;
 	bool buildFrom3Pts = true;
 

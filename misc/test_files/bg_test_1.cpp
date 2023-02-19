@@ -54,9 +54,8 @@ int main()
 	p2 = ptb1;
 
 // convert to bg type
-	point_t1 bpt1 = p1.getPt<point_t1>();
-	point_t1 bpt2 = h2d::getPt<point_t1>(p2);
+	point_t1 bpt1a = p1.getPt<point_t1>();
+	point_t1 bpt1b = h2d::getPt<point_t1>(p2);
 
-//	point_t2 bpt2;
 
 }
