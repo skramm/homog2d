@@ -1492,6 +1492,11 @@ auto v_lines = getLines( vec );
 ## 7 - Bindings with other libraries
 <a name="bind"></a>
 
+Besides the type conversions described here, a more general binding is provided with the
+[ttmath](https://www.ttmath.org/) library.
+It allows increasing range and precision of numerical values.
+See [here](#bignum) for details.
+
 ### 7.1 - Generic type conversion
 
 Import from other types is pretty much straight forward.
@@ -1537,8 +1542,7 @@ auto vec1_out = getPts<cv::Point2d>(in);                       // convert to a v
 auto vec2_out = getPts<boost::geometry::model::point_xy<float>>(in); // convert to a vector of boost geometry points
 ```
 
-
-### 7.2 - Data conversion from/to Opencv data types
+### 7.3 - Data conversion from/to Opencv data types
 
 Optional functions are provided to make interface with [Opencv](https://opencv.org) easier.
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
@@ -1587,7 +1591,7 @@ Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
 
-### 7.3 - Binding with Boost Geometry
+### 7.4 - Binding with Boost Geometry
 
 From release 2.10, a preliminar binding is provided with
 [Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html).
@@ -1862,7 +1866,7 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 ### 9.4 - "Big numbers" support
 <a name="bignum"></a>
 
-From release 2.10, there is a preliminar support for the  [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
 
 This library is header-only, so its very simple to install.

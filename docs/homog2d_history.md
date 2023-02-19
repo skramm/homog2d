@@ -15,6 +15,14 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
+  -(nil)
+
+
+## Previous releases
+
+![#LOC per release](img_other/linecount.png):
+
+- [v2.10](https://github.com/skramm/homog2d/releases/tag/v2.10), released on 2023-02-19
   - fixed normalization for points and lines
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
@@ -33,11 +41,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - __breaking changes__:
     - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindindings section](homog2d_manual.md#bind).
     - same for `getCvPts()` replaced by `getPts()`
-
-## Previous releases
-
-![#LOC per release](img_other/linecount.png):
-
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

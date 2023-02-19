@@ -121,7 +121,7 @@ See https://github.com/skramm/homog2d
 		static_assert( (std::is_arithmetic<T>::value && !std::is_same<T, bool>::value), "Type of value must be numerical" )
 #endif
 
-/**
+/*
 \todo 20230212 ttmath support: this definition does not work, I don't know why !!! see namespace \ref trait
 \verbatim
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
@@ -198,7 +198,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.9.1"
+#define HOMOG2D_VERSION "2.10.0"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -4038,7 +4038,7 @@ getCvPti( const Point2d_<FPT>& pt )
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
-/// Generic free function to return an point of other type
+/// Generic free function to return a point of other type
 /**
 - RT: return type
 - FPT: Floating Point Type
@@ -4560,6 +4560,8 @@ public:
 
 	Segment_<FPT> getExtended() const;
 
+/// Returns the bisector line of the segment
+/// \sa free function h2d::getBisector()
 	Line2d_<FPT>
 	getBisector() const
 	{
@@ -5118,7 +5120,7 @@ this relates to the actual fact that last point is equal to first point.
 			BPT,     ///< Boost Point Type (either `bg::model::point` or `bg::model::d2::point_xy`)
 			CLKW,    ///< this one is ignored here
 			CLOSED   ///< true: closed, false: open
-		>& bgpol
+		>& bgpol  ///< input boost geometry polygon
 	)
 	{
 		const auto& outer = bgpol.outer();
@@ -8763,7 +8765,7 @@ public:
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Computes the closest points between two polylines
+/// Computes the closest points between two polylines (types can be different)
 template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
 priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
 getClosestPoints(
@@ -8771,11 +8773,12 @@ getClosestPoints(
 	const base::PolylineBase<PLT2,FPT2>& poly2
 )
 {
+#ifndef HOMOG2D_NOCHECKS
 	if( poly1.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "arg 1 is empty" );
 	if( poly2.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "arg 2 is empty" );
-
+#endif
 	priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2> out( poly1, poly2 );
 	for( size_t i=0; i<poly1.size(); i++ )
 	{
@@ -10273,9 +10276,9 @@ using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 
+/// Holds private stuff related to SVG import
 namespace svg {
 
-namespace priv {
 //-------------------------------------------------------------------
 /// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
 /**
@@ -10325,8 +10328,6 @@ getEllipseRotateAttr( const char* rot_str )
 	HOMOG2D_THROW_ERROR_1( "invalid 'transform' attribute for svg ellipse import" );
 }
 
-} // namespace priv
-
 //------------------------------------------------------------------
 /// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
 std::vector<Point2d>
@@ -10336,10 +10337,10 @@ parsePoints( const char* pts )
 	std::string s(pts);
 //	std::cout << "processing " << s << '\n';
 //	trimString( s );
-	auto v1 = priv::tokenize( s, ' ' );
+	auto v1 = tokenize( s, ' ' );
 	for( const auto& pt: v1 )
 	{
-		auto v2 = priv::tokenize( pt, ',' );
+		auto v2 = tokenize( pt, ',' );
 		if( v2.size() != 2 )
 			throw "h2d:img::svg: invalid point format in importing svg element: " + s;
 		auto x = std::stod( v2[0] );
@@ -10366,8 +10367,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-private:
-	std::vector<std::unique_ptr<detail::Root>> vec;
+	std::vector<std::unique_ptr<detail::Root>> _vec;
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -10399,10 +10399,10 @@ public:
 	}
 	const std::vector<std::unique_ptr<detail::Root>>& get() const
 	{
-		return vec;
+		return _vec;
 	}
 
-	bool VisitExit( const tinyxml2::XMLElement& );
+	bool VisitExit( const tinyxml2::XMLElement& ) override;
 };
 
 //------------------------------------------------------------------
@@ -10429,10 +10429,9 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 	return pts;
 }
 
-
 /// This is the place where actual SVG data is converted and stored into vector
 /**
-\todo Handle ellipse angle
+Overload of the root class `VisitExit()` member function
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
@@ -10445,7 +10444,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_circle:
 			{
 				std::unique_ptr<detail::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
-				vec.push_back( std::move(c) );
+				_vec.push_back( std::move(c) );
 			}
 			break;
 
@@ -10456,7 +10455,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto w  = getAttribValue( e, "width", n );
 				auto h  = getAttribValue( e, "height", n );
 				std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-				vec.push_back( std::move(r) );
+				_vec.push_back( std::move(r) );
 			}
 			break;
 
@@ -10465,7 +10464,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				std::unique_ptr<detail::Root> s(
 					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
 				);
-				vec.push_back( std::move(s) );
+				_vec.push_back( std::move(s) );
 			}
 			break;
 
@@ -10474,7 +10473,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
@@ -10483,24 +10482,23 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
-			case T_ellipse: // TODO: handle ellipse angle
+			case T_ellipse:
 			{
 				auto x  = getAttribValue( e, "cx", n );
 				auto y  = getAttribValue( e, "cy", n );
 				auto rx = getAttribValue( e, "rx", n );
 				auto ry = getAttribValue( e, "ry", n );
-				auto rot = priv::getEllipseRotateAttr( getAttribString( "transform", e ) );
+				auto rot = getEllipseRotateAttr( getAttribString( "transform", e ) );
 				Ellipse* ell = new Ellipse( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
 				*ell = H * *ell;
 				std::unique_ptr<detail::Root> p( ell );
-//				std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
@@ -10510,7 +10508,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	}
 	catch( std::string& msg )
 	{
-		std::cout << "ERROR: " << msg;
+		std::cerr << "h2d: Tinyxml read error: " << msg;
 		return false;
 	}
 	return true;
