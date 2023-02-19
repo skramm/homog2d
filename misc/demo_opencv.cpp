@@ -23,7 +23,7 @@ Try it with <code>$ make demo</code>.
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_USE_RTP
+#define HOMOG2D_ENABLE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -1094,10 +1094,10 @@ struct Param_CIR : Data
 			{150,120}, {220,240},            // initial rectangle
 			{100,100}, {300,100}, {300,200}  // initial circle
 		};
+		ptr_cr = &cir2;
 	}
 	void setAndDraw()
 	{
-
 		if( buildFrom3Pts )
 			try
 			{
@@ -1110,30 +1110,52 @@ struct Param_CIR : Data
 		else
 			cir.set( vpt[2], vpt[3] );
 		rect.set( vpt[0], vpt[1] );
+		cir2.set( vpt[0], vpt[1] );
 
-		auto par_c = img::DrawParams().setColor(0,0,250);
-		auto par_r = par_c;
+		ptr_cr = &cir2;
+		if( drawRect )
+			ptr_cr = &rect;
+
+		auto par_c = img::DrawParams().setColor(0,120,250);
+		auto par_r = img::DrawParams().setColor(120,0,250);
 		if( cir.isInside( rect ) )
 			par_c.setColor( 0,250,0);
 		if( rect.isInside( cir ) )
 			par_r.setColor( 0,250,0);
 
 		cir.draw( img, par_c );
-		rect.draw( img, par_r );
+//		rect.draw( img, par_r );
+		ptr_cr->draw( img, par_r );
+
 		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
 		if( buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
 				vpt[i].draw( img, par_pt );
+
+// intersection points
+// TODO: replace this by: 		auto it = cir.intersects( *ptr_cr );
+// once we have set a unique function for all intersections types
+		auto it_c = cir.intersects( cir2 );
+		auto it_r = cir.intersects( rect );
+		if( drawRect )
+		{
+			if( it_r() )
+				draw( img, it_r.get(), img::DrawParams().setColor(120,0,0) );
+		}
+		else
+			if( it_c() )
+				draw( img, it_c.get(), img::DrawParams().setColor(120,0,0) );
 	}
 
 // DATA SECTION
-
+	const detail::Root* ptr_cr;
 	Circle cir;
 	Circle cir2;
 	FRect rect;
 	bool buildFrom3Pts = true;
+	bool drawRect  = true;
 
 };
 
@@ -1142,7 +1164,6 @@ void action_CIR( void* param )
 	auto& data = *reinterpret_cast<Param_CIR*>(param);
 	data.clearImage();
 	data.setAndDraw();
-
 	data.showImage();
 }
 
@@ -1163,6 +1184,12 @@ void demo_CIR( int demidx )
 			data.buildFrom3Pts = !data.buildFrom3Pts;
 		},
 		"switch circle from 2 pts / 3 pts"
+	);
+	kbloop.addKeyAction( 'w', [&](void*)
+		{
+			data.drawRect = !data.drawRect;
+		},
+		"switch circle/rectangle"
 	);
 
 	kbloop.start( data ); // blocking function

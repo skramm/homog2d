@@ -905,6 +905,9 @@ class Root
 {
 public:
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+#ifdef HOMOG2D_USE_OPENCV
+	virtual void draw( img::Image<cv::Mat>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+#endif
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area()   const = 0;
 	virtual Type type()               const = 0;
