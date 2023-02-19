@@ -30,6 +30,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
   - added MSVC compiler to the Github Action CI automated tests
   - added support for importing Boost::geometry polygons (preliminar), see an [example here](../misc/test_files/bg_test_1.cpp).
+  - __breaking changes__:
+    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindindings section](homog2d_manual.md#bind).
+    - same for `getCvPts()` replaced by `getPts()`
 
 ## Previous releases
 

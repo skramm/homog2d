@@ -3400,6 +3400,11 @@ TEST_CASE( "bg point import", "[bg-pt-import]" )
 	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
 	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
 
+	pt1 = ptb1;         // using assignment operator
+	pt2 = ptb2;
+	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
+	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
+
 //	CHECK_THROWS( Line2d_<NUMTYPE> pt1(ptb1);)
 }
 
@@ -3503,9 +3508,9 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			cv::Point2i cvpt3 = getCvPti( pt );           // integer point
 			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
 
-			auto cvpt_1 = getCvPt<cv::Point2d>( pt );
-			auto cvpt_2 = getCvPt<cv::Point2f>( pt );
-			auto cvpt_3 = getCvPt<cv::Point2i>( pt );
+			auto cvpt_1 = getPt<cv::Point2d>( pt );
+			auto cvpt_2 = getPt<cv::Point2f>( pt );
+			auto cvpt_3 = getPt<cv::Point2i>( pt );
 		}
 		{
 			cv::Point2d cvpt1 = pt.getCvPtd() ;
@@ -3515,18 +3520,18 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			cv::Point2i cvpt3 = pt.getCvPti() ;          // integer point
 			CHECK( (cvpt3.x == 1  && cvpt3.y == 2 ) );
 
-			auto cvpt_1 = pt.getCvPt<cv::Point2d>();
-			auto cvpt_2 = pt.getCvPt<cv::Point2f>();
-			auto cvpt_3 = pt.getCvPt<cv::Point2i>();
+			auto cvpt_1 = pt.getPt<cv::Point2d>();
+			auto cvpt_2 = pt.getPt<cv::Point2f>();
+			auto cvpt_3 = pt.getPt<cv::Point2i>();
 		}
 		{ // input: vector of "double" points
 		  // converted into "float" Opencv points
 			std::vector<Point2d> v{ Point2d(1,2), Point2d(5,6), Point2d(3,4) };
-			auto vcv1 = getCvPts<cv::Point2d>( v );
+			auto vcv1 = getPts<cv::Point2d>( v );
 			CHECK( vcv1.size() == 3 );
-			auto vcv2 = getCvPts<cv::Point2f>( v );
+			auto vcv2 = getPts<cv::Point2f>( v );
 			CHECK( vcv2.size() == 3 );
-			auto vcv3 = getCvPts<cv::Point2i>( v );
+			auto vcv3 = getPts<cv::Point2i>( v );
 			CHECK( vcv3.size() == 3 );
 		}
 	}

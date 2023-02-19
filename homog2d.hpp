@@ -3509,6 +3509,28 @@ public:
 		impl_move( dx, dy, detail::BaseHelper<LP>() );
 	}
 
+private:
+	template<typename ANY>
+	ANY impl_getPt( const detail::BaseHelper<typename type::IsPoint>& ) const
+	{
+		return ANY( getX(), getY() );
+	}
+	template<typename ANY>
+	ANY impl_getPt( const detail::BaseHelper<typename type::IsLine>& ) const
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+	}
+
+public:
+/// Generic transformation into any other point type, as long as it provides a 2-args constructor
+/// (is the case for Opencv and Boost Geometry).
+/// \sa h2d::getPt()
+	template<typename ANY>
+	ANY getPt() const
+	{
+		return impl_getPt<ANY>( detail::BaseHelper<LP>() );
+	}
+
 	std::array<FPT,3> get() const
 	{
 		return std::array<FPT,3> { _v[0], _v[1], _v[2] };
@@ -3794,18 +3816,37 @@ public:
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
+private:
+	template<typename OPENCVT>
+	OPENCVT impl_getCvPt( const detail::BaseHelper<type::IsPoint>&, const OPENCVT& ) const
+	{
+		return OPENCVT( getX(),getY() );
+	}
+
+/// Build point from Opencv point
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsPoint>& )
+	{
+		impl_init_2( pt.x, pt.y, detail::BaseHelper<type::IsPoint>() );
+	}
+/// Build line from Opencv point
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsLine>& )
+	{
+		Point2d_<FPT> p(pt);
+		impl_init_1_Point<FPT>( p, detail::BaseHelper<type::IsLine>() );
+	}
+
+public:
 /// Opencv draw function
 	void draw( img::Image<cv::Mat>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
 	}
 
-	template<typename RT>
-	RT getCvPt() const { return RT( getX(), getY() ); }
-
-	cv::Point2i getCvPti() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2i() ); }
-	cv::Point2d getCvPtd() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2d() ); }
-	cv::Point2f getCvPtf() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2f() ); }
+	cv::Point2i getCvPti() const { return impl_getPt<cv::Point2i>( detail::BaseHelper<typename type::IsPoint>() ); }
+	cv::Point2i getCvPtd() const { return impl_getPt<cv::Point2d>( detail::BaseHelper<typename type::IsPoint>() ); }
+	cv::Point2i getCvPtf() const { return impl_getPt<cv::Point2f>( detail::BaseHelper<typename type::IsPoint>() ); }
 
 /// Constructor: build from a single OpenCv point.
 	template<typename T>
@@ -3899,26 +3940,6 @@ private:
 	Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::BaseHelper<type::IsPoint>& ) const;
 	Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
 
-#ifdef HOMOG2D_USE_OPENCV
-	template<typename OPENCVT>
-	OPENCVT impl_getCvPt( const detail::BaseHelper<type::IsPoint>&, const OPENCVT& ) const;
-
-/// Build point from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsPoint>& )
-	{
-		impl_init_2( pt.x, pt.y, detail::BaseHelper<type::IsPoint>() );
-	}
-/// Build line from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsLine>& )
-	{
-		Point2d_<FPT> p(pt);
-		impl_init_1_Point<FPT>( p, detail::BaseHelper<type::IsLine>() );
-	}
-
-#endif // HOMOG2D_USE_OPENCV
-
 	template<typename T>
 	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsPoint>& )  const;
 	template<typename T>
@@ -3986,25 +4007,6 @@ FRect_<FPT> getFRect( cv::Mat& mat )
 	);
 }
 
-/// Free function to return an OpenCv point
-/**
-- RT: return type
-- FPT: Floating Point Type
-
-User code needs to provide the requested type as template argument:
-\code
-auto p1 = getCvPt<cv::Point2di>( pt );
-auto p2 = getCvPt<cv::Point2df>( pt );
-auto p3 = getCvPt<cv::Point2dd>( pt );
-\endcode
-*/
-template<typename RT,typename FPT>
-RT
-getCvPt( const Point2d_<FPT>& pt )
-{
-	return pt.template getCvPt<RT>();
-}
-
 /// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
@@ -4027,29 +4029,53 @@ getCvPti( const Point2d_<FPT>& pt )
 	return pt.getCvPti();
 }
 
-/// Free function, returns a vector of OpenCv points from a vector of points
+#endif // HOMOG2D_USE_OPENCV
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/// Generic free function to return an point of other type
 /**
 - RT: return type
 - FPT: Floating Point Type
 
-User code needs to provide the requested type as template argument:
+User code needs to provide the requested type as template argument, for example:
 \code
-auto v1 = getCvPts<cv::Point2di>( myvec );
-auto v2 = getCvPts<cv::Point2df>( myvec );
-auto v3 = getCvPts<cv::Point2dd>( myvec );
+auto p1 = getPt<cv::Point2di>( pt );                             // opencv type
+auto p2 = getPt<boost::geometry::model::point_xy<double>>( pt ); // boost geometry type
 \endcode
+\sa LPBase::getPt()
 */
 template<typename RT,typename FPT>
+RT
+getPt( const Point2d_<FPT>& pt )
+{
+	return pt.template getPt<RT>();
+}
+
+/// Free function, returns a vector of points of other type from a vector of h2d points
+/**
+- RT: return type
+- FPT: Floating Point Type
+
+User code needs to provide the requested type as template argument.
+\sa h2d::getPt<>()
+
+\todo 20230219: sfinae this to accept other containers using trait::IsContainer
+*/
+
+template<typename RT,typename FPT>
 std::vector<RT>
-getCvPts( const std::vector<Point2d_<FPT>>& vpt )
+getPts( const std::vector<Point2d_<FPT>>& vpt )
 {
 	std::vector<RT> vout( vpt.size() );
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
-		*it++ = getCvPt<RT>(pt);
+		*it++ = getPt<RT>(pt);
 	return vout;
 }
-#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
@@ -4136,8 +4162,8 @@ buildFrom4Points_Opencv (
 	const std::vector<Point2d_<FPT>>& vpt2  ///< destination points
 )
 {
-	const auto& src = getCvPts<cv::Point2f>( vpt1 );
-	const auto& dst = getCvPts<cv::Point2f>( vpt2 );
+	const auto& src = getPts<cv::Point2f>( vpt1 );
+	const auto& dst = getPts<cv::Point2f>( vpt2 );
 	return cv::getPerspectiveTransform( src, dst ); // automatic type conversion to Hmatrix_
 }
 #endif
@@ -9577,16 +9603,7 @@ base::PolylineBase<CT,FPT>::convexHull() const
 // SECTION  - OPENCV BINDING - GENERAL
 /////////////////////////////////////////////////////////////////////////////
 
-//------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
-/// Return Opencv 2D point
-template<typename LP, typename FPT>
-template<typename OPENCVT>
-OPENCVT
-base::LPBase<LP,FPT>::impl_getCvPt( const detail::BaseHelper<typename type::IsPoint>&, const OPENCVT& ) const
-{
-	return OPENCVT( getX(),getY() );
-}
 
 //------------------------------------------------------------------
 /// Copy matrix to Opencv \c cv::Mat

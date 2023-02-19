@@ -8,6 +8,7 @@ run with `$ make test_bg_1`
 */
 
 #define HOMOG2D_USE_BOOSTGEOM
+#define HOMOG2D_USE_OPENCV
 #include "../../homog2d.hpp"
 
 int main()
@@ -48,4 +49,14 @@ int main()
 	p1.set(ptb2);
 	p2.set(ptb1);
 	std::cout << "p1=" << p1 << " p2=" << p2 << '\n';
+
+	p1 = ptb2;
+	p2 = ptb1;
+
+// convert to bg type
+	point_t1 bpt1 = p1.getPt<point_t1>();
+	point_t1 bpt2 = h2d::getPt<point_t1>(p2);
+
+//	point_t2 bpt2;
+
 }

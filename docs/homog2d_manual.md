@@ -1519,9 +1519,29 @@ For homographies, you can import directly from
 For the first case, it is mandatory that all the vectors sizes are equal to 3
 (the 3 embedded ones and the global one).
 
+### 7.2 - Generic conversion into other types
+
+For points, as long as the other type provides a 2-args numerical constructor, you can easily convert a `h2d::Point2d` into these, for example:
+
+```C++
+Point2d pt;
+...
+auto ptcv = pt.getPt<cv::Point2d >();                     // of free function: getPt<cv::Point2d >(pt);
+auto ptbg = pt.getPt<boost::geometry::model::point_xy<double>>();
+```
+
+This is also possible for a `std::vector`:
+```C++
+std::vector<Point2d> vec_in;
+// ... fill vec_in
+auto vec1_out = getPts<cv::Point2d>(vec);                       // convert to a vector of Opencv points
+auto vec2_out = getPts<boost::geometry::model::point_xy<float>>(vec); // convert to a vector of boost geometry points
+```
+
+
 ### 7.2 - Data conversion from/to Opencv data types
 
-Optional functions are provided to interface with [Opencv](https://opencv.org).
+Optional functions are provided to make interface with [Opencv](https://opencv.org) easier.
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
 You can then write this:
 ```C++
@@ -1530,13 +1550,6 @@ Point2d pt;
 cv::Point2d ptcv1 = pt.getCvPtd(); // double coordinates
 cv::Point2f ptcv2 = pt.getCvPtf(); // float coordinates
 cv::Point2i ptcv3 = pt.getCvPti(); // integer coordinates
-```
-
-Or use the templated version:
-```C++
-auto ptcv1 = pt.getCvPt<cv::Point2d>(); // double coordinates
-auto ptcv2 = pt.getCvPt<cv::Point2f>(); // float coordinates
-auto ptcv3 = pt.getCvPt<cv::Point2i>(); // integer coordinates
 ```
 
 This is also available as free functions:
@@ -1550,13 +1563,6 @@ cv::Point2i ptcv3 = getCvPti(pt);
 auto ptcv3 = getCvPt<cv::Point2d>(pt); // templated version
 ```
 
-You can also convert a whole vector in a single call:
-```C++
-std::vectot<Point2d> vec;
-// ... fill vector
-auto vec_cv1 = getCvPts<cv::Point2d>(vec); // convert to 'double' points'
-auto vec_cv2 = getCvPts<cv::Point2f>(vec); // convert to 'float' points'
-```
 
 Reverse operation as simple as this:
 ```C++
