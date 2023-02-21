@@ -30,6 +30,8 @@ int main()
 	if( it() )
 		std::cout << it.get() << '\n';
 
+	std::cout << "FP type of s1=" << getString(dtype( s1 )) << '\n';
+
 	Circle_<BigM32> cir;
 	FRect_<BigM32> rect;
 

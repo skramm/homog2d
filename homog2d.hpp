@@ -234,9 +234,6 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename> struct BaseHelper {};
 
-	/// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
-	template<typename> struct DataFpType {};
-
 	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
 	template<typename> struct PlHelper {};
 
@@ -691,12 +688,21 @@ enum class GivenCoord: uint8_t { X, Y };
 /// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
-/// Type of Root object, see detail::Root::type()
+/// Type of Root object, see detail::Root::type().
+/// Maybe printed out with getString()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
-/// Type of underlying floating point, see LPBase::dtype()
-enum class Dtype: uint8_t { Float, Double, LongDouble };
+/// Type of underlying floating point, see LPBase::dtype().
+/// Maybe printed out with getString()
+enum class Dtype: uint8_t {
+	Float, Double, LongDouble,
+	Other,  // ?
+#ifdef HOMOG2D_USE_TTMATH
+	Ttmath  ///< only if HOMOG2D_USE_TTMATH is defined, see manual
+#endif
+};
 
+/// Returns stringified version of \ref
 inline
 const char* getString( Type t )
 {
@@ -725,6 +731,10 @@ const char* getString( Dtype t )
 		case Dtype::Float:      s="Float";      break;
 		case Dtype::Double:     s="Double";     break;
 		case Dtype::LongDouble: s="LongDouble"; break;
+		case Dtype::Other:      s="Other";      break;
+#ifdef HOMOG2D_USE_TTMATH
+		case Dtype::Ttmath:     s="ttmath";     break;
+#endif
 		assert(0);
 	}
 	return s;
@@ -736,21 +746,34 @@ const char* getString( Dtype t )
 namespace priv {
 
 	inline
-	Dtype impl_dtype( const detail::DataFpType<float>& )
+	Dtype impl_dtype( float& )
 	{
 		return Dtype::Float;
 	}
 	inline
-	Dtype impl_dtype( const detail::DataFpType<double>& )
+	Dtype impl_dtype( double& )
 	{
 		return Dtype::Double;
 	}
 	inline
-	Dtype impl_dtype( const detail::DataFpType<long double>& )
+	Dtype impl_dtype( long double& )
 	{
 		return Dtype::LongDouble;
 	}
-
+	template<typename T>
+	inline
+	Dtype impl_dtype( const T& )
+	{
+		return Dtype::Other;
+	}
+#ifdef HOMOG2D_USE_TTMATH
+	template<long unsigned int M, long unsigned int E>
+	inline
+	Dtype impl_dtype( const ttmath::Big<M,E>& )
+	{
+		return Dtype::Ttmath;
+	}
+#endif
 /// abs() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
 	template<typename T>
 	T abs( const T& value )
@@ -881,7 +904,7 @@ class Common
 public:
 	Dtype dtype() const
 	{
-		return priv::impl_dtype( detail::DataFpType<FPT>() );
+		return priv::impl_dtype( FPT{} );
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**

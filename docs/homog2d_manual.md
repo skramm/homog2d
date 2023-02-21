@@ -1868,7 +1868,6 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 
 From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
-
 This library is header-only, so its very simple to install.
 
 To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` and you need to tell what type you will use for internal computation.
@@ -1879,7 +1878,7 @@ For example, to have 2 machine words for exponent and 3 for mantissa, you add th
 ```
 
 The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
-each component of the libray needs to be declared using the templated syntax and must use the "ttmath" type.
+each component of the library needs to be declared using the templated syntax and must use the "ttmath" type.
 See [this file](../misc/test_files/ttmath_t1.cpp) for example.
 
 Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the
