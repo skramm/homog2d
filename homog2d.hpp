@@ -234,6 +234,9 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename> struct BaseHelper {};
 
+/// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
+	template<typename> struct DataFpType {};
+
 	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
 	template<typename> struct PlHelper {};
 
@@ -746,34 +749,35 @@ const char* getString( Dtype t )
 namespace priv {
 
 	inline
-	Dtype impl_dtype( float& )
+	Dtype impl_dtype( const detail::DataFpType<float>& )
 	{
 		return Dtype::Float;
 	}
 	inline
-	Dtype impl_dtype( double& )
+	Dtype impl_dtype( const detail::DataFpType<double>& )
 	{
 		return Dtype::Double;
 	}
 	inline
-	Dtype impl_dtype( long double& )
+	Dtype impl_dtype( const detail::DataFpType<long double>& )
 	{
 		return Dtype::LongDouble;
 	}
 	template<typename T>
 	inline
-	Dtype impl_dtype( const T& )
+	Dtype impl_dtype( const detail::DataFpType<T>& )
 	{
 		return Dtype::Other;
 	}
 #ifdef HOMOG2D_USE_TTMATH
 	template<long unsigned int M, long unsigned int E>
 	inline
-	Dtype impl_dtype( const ttmath::Big<M,E>& )
+	Dtype impl_dtype( const detail::DataFpType<ttmath::Big<M,E>>& )
 	{
 		return Dtype::Ttmath;
 	}
 #endif
+
 /// abs() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
 	template<typename T>
 	T abs( const T& value )
@@ -904,7 +908,7 @@ class Common
 public:
 	Dtype dtype() const
 	{
-		return priv::impl_dtype( FPT{} );
+		return priv::impl_dtype( detail::DataFpType<FPT>() );
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
