@@ -1,8 +1,2 @@
-*.layout
-*stderr*
-*stdout*
-*.out
-*.aux
-*.log
-*.pdf
-BUILD/html/
+*
+!.gitignore

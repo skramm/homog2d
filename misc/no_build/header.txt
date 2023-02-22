@@ -1,7 +1,0 @@
-#include "../../homog2d.hpp"
-
-using namespace h2d;
-
-int main()
-{
-

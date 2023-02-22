@@ -1,8 +1,0 @@
-#ifdef HOMOG2D_DEBUGMODE
-	std::cout << "file: " << __FILE__ << '\n';
-#endif
-
-// a rectangle inside the other, with 2 intersection points
-	FRect_<NUMTYPE> r1( Point2d(1,1), Point2d(4,3) );
-	FRect_<NUMTYPE> r2( Point2d(2,2), Point2d(3,3) );
-
