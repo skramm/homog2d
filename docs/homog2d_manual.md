@@ -1822,7 +1822,7 @@ or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long doub
 
 #### Numerical type and size access
 
-For any object, you may know its type with the `dtype()` (member or free) function.
+For any object, you may know its underlying floating-point type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
 `Dtype::Float`, `Dtype::Double` or `Dtype::LongDouble`.
 

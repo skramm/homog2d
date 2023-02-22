@@ -7,7 +7,7 @@ See homog2d_manual.md#bignum
 Build and run with <code>$ make test_bn</code>
 */
 
-#define HOMOG2D_INUMTYPE ttmath::Big<2,2>
+//#define HOMOG2D_INUMTYPE ttmath::Big<2,2>
 #define HOMOG2D_USE_TTMATH
 //#define HOMOG2D_NOCHECKS
 
@@ -30,9 +30,8 @@ int main()
 	if( it() )
 		std::cout << it.get() << '\n';
 
-	std::cout << "FP type of s1=" << getString(dtype( s1 )) << '\n';
 	std::cout << "FP type of s1=" << getString(s1.dtype()) << '\n';
-	std::cout << "FP size of s1: mantissa=" << s1.dsize( ).first << " exponent=" <<  s1.dsize().second << '\n';
+	std::cout << "FP size of s1: mantissa=" << s1.dsize( ).first << " exponent=" << s1.dsize().second << '\n';
 
 	Circle_<BigM32> cir;
 	FRect_<BigM32> rect;

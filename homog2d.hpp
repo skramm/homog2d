@@ -49,6 +49,9 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_TTMATH
 	#include <ttmath/ttmath.h>
+	#ifndef HOMOG2D_INUMTYPE
+		#define HOMOG2D_INUMTYPE ttmath::Big<2,2>
+	#endif
 #endif
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
@@ -748,7 +751,7 @@ const char* getString( Dtype t )
 /// Holds private stuff
 namespace priv {
 
-/// Returns nb of bits of mantissa and exponent (default implementation)
+/// Implementation of dsize(), returns nb of bits of mantissa and exponent (default implementation)
 	template<typename T>
 	inline
 	std::pair<int,int> impl_dsize( const detail::DataFpType<T>& )
@@ -793,7 +796,7 @@ namespace priv {
 	inline
 	std::pair<int,int> impl_dsize( const detail::DataFpType<ttmath::Big<M,E>>& )
 	{
-		return std::make_pair( M*sizeof(size_t), E*sizeof(size_t) );
+		return std::make_pair( M*sizeof(size_t)*8, E*sizeof(size_t)*8 );
 	}
 
 #endif
