@@ -1621,6 +1621,15 @@ int main( int argc, const char** argv )
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
+		Point2dF pt1;
+		std::cout << "F: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
+
+		Point2dL pt2;
+		std::cout << "L: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
+
+		Point2dD pt3;
+		std::cout << "D: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
+
 	std::vector<std::function<void(int)>> v_demo{
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point

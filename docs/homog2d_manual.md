@@ -1820,7 +1820,7 @@ configure the library to use `long double` by adding this before the "include":
 or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
 <br>(don't forget the quotes!)
 
-#### Numerical type access
+#### Numerical type and size access
 
 For any object, you may know its type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
@@ -1834,6 +1834,16 @@ assert( c1.dtype() == Dtype::Double );
 CircleF c2;
 assert( dtype(c2) == Dtype::Float );
 std::cout << getString( dtype(c2) );
+```
+
+You may also check the size in bits of corresponding mantissa and exponent with the (member of free) function `dsize()`
+(assuming [IEEE754](https://en.wikipedia.org/wiki/IEEE_754) implementation).
+It will return a `std::pair` of integers, the first being the size of the mantissa, the second being the size of exponent.
+
+```C++
+Circle c1; // default is double
+assert( c1.dsize().first == 53 );
+assert( dsize(c1).second == 10 );
 ```
 
 ### 9.2 - Numerical type conversion

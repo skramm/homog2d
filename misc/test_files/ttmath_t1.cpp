@@ -23,7 +23,7 @@ int main()
 	std::cout << li << '\n';
 //	std::cout << li.dtype();
 //	Segment s0( 0,0,45,45);  // this cannot compile, you need to provide an underlying ttmath type
-	Segment_<ttmath::Big<1,1>> s1( -8,5,10,-15);  // this is ok;
+	Segment_<ttmath::Big<4,1>> s1( -8,5,10,-15);  // this is ok;
 	Segment_<BigM32>           s2( 1,2,3,4 );     // can be easier to read
 	auto it0 = s1.intersects( s2 );
 	auto it = s1.intersects( li );
@@ -31,6 +31,8 @@ int main()
 		std::cout << it.get() << '\n';
 
 	std::cout << "FP type of s1=" << getString(dtype( s1 )) << '\n';
+	std::cout << "FP type of s1=" << getString(s1.dtype()) << '\n';
+	std::cout << "FP size of s1: mantissa=" << s1.dsize( ).first << " exponent=" <<  s1.dsize().second << '\n';
 
 	Circle_<BigM32> cir;
 	FRect_<BigM32> rect;

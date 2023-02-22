@@ -158,6 +158,8 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	EllipseD eD;
 	EllipseL eL;
 
+	CHECK( ptF.dtype() == dtype(ptF) );
+
 	CHECK( ptF.dtype() == Dtype::Float );
 	CHECK( liF.dtype() == Dtype::Float );
 	CHECK( HF.dtype()  == Dtype::Float );
@@ -182,6 +184,23 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( dtype(liD) == Dtype::Double );
 	CHECK( dtype(HF)  == Dtype::Float );
 	CHECK( dtype(rF)  == Dtype::Float );
+
+	CHECK( dsize(ptF).first  == ptF.dsize().first );
+	CHECK( dsize(ptD).first  == ptD.dsize().first );
+	CHECK( dsize(ptL).first  == ptL.dsize().first );
+
+	CHECK( dsize(ptF).second  == ptF.dsize().second );
+	CHECK( dsize(ptD).second  == ptD.dsize().second );
+	CHECK( dsize(ptL).second  == ptL.dsize().second );
+
+	CHECK( dsize(ptF).first  == 24 );
+	CHECK( dsize(ptF).second == 7  );
+
+	CHECK( dsize(ptD).first  == 53 );
+	CHECK( dsize(ptD).second == 10 );
+
+	CHECK( dsize(ptL).first  == 64 );
+	CHECK( dsize(ptL).second == 63 );
 }
 
 TEST_CASE( "comparison testing", "[comparison-test]" )

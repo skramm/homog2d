@@ -748,6 +748,17 @@ const char* getString( Dtype t )
 /// Holds private stuff
 namespace priv {
 
+/// Returns nb of bits of mantissa and exponent (default implementation)
+	template<typename T>
+	inline
+	std::pair<int,int> impl_dsize( const detail::DataFpType<T>& )
+	{
+		return std::make_pair(
+			std::numeric_limits<T>::digits,
+			sizeof(T)*8-std::numeric_limits<T>::digits-1
+		);
+	}
+
 	inline
 	Dtype impl_dtype( const detail::DataFpType<float>& )
 	{
@@ -770,12 +781,21 @@ namespace priv {
 		return Dtype::Other;
 	}
 #ifdef HOMOG2D_USE_TTMATH
+/// Implementation for ttmath types
 	template<long unsigned int M, long unsigned int E>
 	inline
 	Dtype impl_dtype( const detail::DataFpType<ttmath::Big<M,E>>& )
 	{
 		return Dtype::Ttmath;
 	}
+/// Implementation for ttmath types
+	template<long unsigned int M, long unsigned int E>
+	inline
+	std::pair<int,int> impl_dsize( const detail::DataFpType<ttmath::Big<M,E>>& )
+	{
+		return std::make_pair( M*sizeof(size_t), E*sizeof(size_t) );
+	}
+
 #endif
 
 /// abs() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
@@ -906,9 +926,17 @@ template<typename FPT>
 class Common
 {
 public:
+/// Get Data type as a Dtype value, can be stringified with h2d::getString(Dtype)
+/// \sa h2d::dtype( const T& )
 	Dtype dtype() const
 	{
 		return priv::impl_dtype( detail::DataFpType<FPT>() );
+	}
+/// Get data size expressed as number of bits for, respectively, mantissa and exponent.
+/// \sa h2d::dsize(const T&)
+	std::pair<int,int> dsize() const
+	{
+		return priv::impl_dsize( detail::DataFpType<FPT>() );
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
@@ -9160,10 +9188,18 @@ length( const T& t )
 }
 
 /// Free function, return floating-point type
+/// \sa detail::Common::dtype()
 template<typename T>
 Dtype dtype( const T& t )
 {
 	return t.dtype();
+}
+/// Get data size expressed as number of bits for, respectively, mantissa and exponent
+/// \sa detail::Common::dsize()
+template<typename T>
+std::pair<int,int> dsize( const T& t )
+{
+	return t.dsize();
 }
 
 //------------------------------------------------------------------
