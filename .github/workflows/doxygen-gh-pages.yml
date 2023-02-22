@@ -16,3 +16,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           config_file: misc/doxyfile
+          branch: doxydocs
+          folder: doc_html
