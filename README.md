@@ -6,7 +6,7 @@ Current test status: [![GH actions build status](https://github.com/skramm/homog
 ![](https://img.shields.io/github/stars/skramm/homog2d)
 
 A single-file header-only C++ library dedicated to
-handling 2D lines, points and homographies (2D planar transformations),
+handling 2D lines, points and homographies (2D planar transformations) in Cartesian geometry,
 using internally [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
 Also handles other geometric primitives, see full manual.
 
@@ -38,10 +38,11 @@ int main()
 ```
 
 ### News ###
-- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](homog2d_manual.md#bignum)) (preliminar!)
+- 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
+- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
 - 2022-12-17: moved CI tests from Travis to GH actions
 - 2022-12-05: re-enabled clang compiler in test suite
-- 2022-11-23: fresh 2.9 release, lots of new features, see https://github.com/skramm/homog2d/releases
+- 2022-11-23: fresh 2.9 release
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
 - 2022-08-02: 2.8 release
@@ -69,18 +70,19 @@ Don't hesitate, this is still beta but stable release expected soon.
   - Usage simplicity, max flexibility
   - No dependency [(*)](#rm_fn)
   - Modern C++, using policy-based design, tag dispatching, sfinae, ...
-  - Direct bindings with [OpenCv](https://opencv.org/) (optional)
+  - Direct bindings with other libraries ([OpenCv](https://opencv.org/), [Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html)) (optional)
 
 - Geometric features:
   - basic primitives: points, lines, segments, circles, rectangles, polygons, ellipse,
   - planar transformation of any of these (rotation, translation, ...),
   - computing of intersection points between these,
-  - easy binding with other libs,
+  - enclosing determination
   - ...
 
 - Related libraries:
-  - [CGAL](https://www.cgal.org/) the reference computational geometry library.
-  - [Opencv](https://docs.opencv.org/) the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
+  - [CGAL](https://www.cgal.org/), the reference computational geometry library.
+  - [Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html), a highly generic library with some overlapping features (but quite harder to use)
+  - [Opencv](https://docs.opencv.org/), the reference CV library, much more algorithms, but no direct support for homogeneous geometry.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
 **Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there is **no rendering code** included.

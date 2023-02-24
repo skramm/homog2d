@@ -15,23 +15,32 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
+  - added `dsize()` member and free function
+
+
+## Previous releases
+
+![#LOC per release](img_other/linecount.png):
+
+- [v2.10](https://github.com/skramm/homog2d/releases/tag/v2.10), released on 2023-02-19
   - fixed normalization for points and lines
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
   - added `getClosestPoints()` between two Polyline objects ([see demo](homog2d_showcase.md#sc14)).
   - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
   - added `side( Point2d, Line2d )`
-  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (TODO: same for Circle/Circle)
+  - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (same for `Circle`/`Circle`)
   - added showcase16
   - fixed issues occuring with msvc in c++17 mode with flag `/permissive-` (see https://github.com/skramm/homog2d/issues/5)
   - fixed issues with inlining (thanks to @Djuego for pointing out!)
   - added build symbol `HOMOG2D_NOWARNINGS`, see [buid options](homog2d_manual.md#build_options).
   - added support for big math library [ttmath](https://www.ttmath.org/) (preliminar, see [Numerical data types](homog2d_manual.md#bignum).).
   - add `getOrthogPts()` and `getOrthogSegs()` to class `Segment`.
-
-## Previous releases
-
-![#LOC per release](img_other/linecount.png):
+  - added MSVC compiler to the Github Action CI automated tests
+  - added support for importing Boost::geometry polygons (preliminar), see an [example here](../misc/test_files/bg_test_1.cpp).
+  - __breaking changes__:
+    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindindings section](homog2d_manual.md#bind).
+    - same for `getCvPts()` replaced by `getPts()`
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing

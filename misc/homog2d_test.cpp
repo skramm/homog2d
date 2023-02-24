@@ -158,6 +158,8 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	EllipseD eD;
 	EllipseL eL;
 
+	CHECK( ptF.dtype() == dtype(ptF) );
+
 	CHECK( ptF.dtype() == Dtype::Float );
 	CHECK( liF.dtype() == Dtype::Float );
 	CHECK( HF.dtype()  == Dtype::Float );
@@ -182,6 +184,23 @@ TEST_CASE( "numerical types access", "[types-access]" )
 	CHECK( dtype(liD) == Dtype::Double );
 	CHECK( dtype(HF)  == Dtype::Float );
 	CHECK( dtype(rF)  == Dtype::Float );
+
+	CHECK( dsize(ptF).first  == ptF.dsize().first );
+	CHECK( dsize(ptD).first  == ptD.dsize().first );
+	CHECK( dsize(ptL).first  == ptL.dsize().first );
+
+	CHECK( dsize(ptF).second  == ptF.dsize().second );
+	CHECK( dsize(ptD).second  == ptD.dsize().second );
+	CHECK( dsize(ptL).second  == ptL.dsize().second );
+
+	CHECK( dsize(ptF).first  == 24 );
+	CHECK( dsize(ptF).second == 7  );
+
+	CHECK( dsize(ptD).first  == 53 );
+	CHECK( dsize(ptD).second == 10 );
+
+	CHECK( dsize(ptL).first  == 64 );
+	CHECK( dsize(ptL).second == 63 );
 }
 
 TEST_CASE( "comparison testing", "[comparison-test]" )
@@ -491,6 +510,23 @@ https://en.cppreference.com/w/cpp/language/attributes/maybe_unused
 		Line2dD li_F3 = li_L0; CHECK( li_F3.get()[2] == 0. );
 		Line2dD li_D3 = li_L0; CHECK( li_D3.get()[2] == 0. );
 	}
+}
+
+TEST_CASE( "stream operator << test", "[streamingop-test]" )
+{
+	Line2d li;
+	Point2d pt;
+	Segment seg;
+	Circle cir;
+	Ellipse ell;
+	CPolyline cpol;
+	OPolyline opol;
+// just to make sure that this builds !
+	std::ostringstream oss;
+	oss << li << pt << seg << cir << cpol << opol << ell;
+	std::ostringstream oss2;
+	oss2 << cpol;
+	CHECK( oss2.str() == "CPolyline: empty" );
 }
 
 TEST_CASE( "line/point distance", "[lp-dist]" )
@@ -1514,8 +1550,8 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 {
 	{
 		Circle_<NUMTYPE> cA, cB;
-		CHECK( cA == cB );
-		CHECK( !cA.intersects(cB)() );
+		CHECK( cA == cB );                 // identical circles do
+		CHECK( !cA.intersects(cB)() );     // not intersect
 	}
 	{
 		Circle_<NUMTYPE> cA;
@@ -1528,6 +1564,7 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 		Circle_<NUMTYPE> cB( Point2d(3,0), 2 );
 		CHECK( cA != cB );
 		CHECK( cA.intersects(cB)() );
+		CHECK( cA.intersects(cB).size() == 2 );
 	}
 	{
 		Circle_<NUMTYPE> cA( Point2d(0,0), 1 );
@@ -1536,9 +1573,10 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 		CHECK( cA.intersects(cB)() );
 		auto inter = cA.intersects(cB);
 		CHECK( inter() == true );
-		CHECK( inter.size() == 2 );
-		CHECK( inter.get().first  == Point2d( 1,0) );
-		CHECK( inter.get().second == Point2d( 1,0) );
+		CHECK( inter.size() == 1 );
+//		CHECK( inter.get().first  == Point2d(1,0) );
+//		CHECK( inter.get().second == Point2d(1,0) );
+		CHECK( inter.get()[0] == Point2d(1,0) );
 	}
 }
 
@@ -3234,7 +3272,6 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 }
 
 
-
 TEST_CASE( "general binding", "[gen_bind]" )
 {
 	struct MyType
@@ -3370,6 +3407,41 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 #endif
 
 //////////////////////////////////////////////////////////////
+/////        BOOST GEOMETRY BINDING TESTS                /////
+//////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+TEST_CASE( "boost geometry point import", "[bg-pt-import]" )
+{
+	namespace bg = boost::geometry;
+	bg::model::point<double, 2, boost::geometry::cs::cartesian> ptb1(3,4);
+	bg::model::d2::point_xy<double> ptb2(5,6);
+	Point2d_<NUMTYPE> pt1(ptb1);
+	Point2d_<NUMTYPE> pt2(ptb2);
+	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
+	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
+
+	pt1 = ptb1;         // using assignment operator
+	pt2 = ptb2;
+	CHECK( pt1 == Point2d_<NUMTYPE>(3,4) );
+	CHECK( pt2 == Point2d_<NUMTYPE>(5,6) );
+}
+
+TEST_CASE( "boost geometry point export", "[bg-pt-export]" )
+{
+	Point2d_<NUMTYPE> ref1(3,4);
+	Point2d_<NUMTYPE> ref2(5,6);
+	namespace bg = boost::geometry;
+	using point_t1 = bg::model::point<double, 2, bg::cs::cartesian>;
+	using point_t2 = bg::model::d2::point_xy<double>;
+
+	auto pt1 = getPt<point_t1>( ref1 );
+	auto pt2 = getPt<point_t2>( ref2 );
+	CHECK( bg::get<0>(pt1) == ref1.getX() );
+	CHECK( bg::get<0>(pt2) == ref2.getX() );
+}
+#endif
+//////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////
 
@@ -3381,7 +3453,6 @@ TEST_CASE( "Opencv build H", "[test_opencv2]" )
 	Homogr_<NUMTYPE> H;
 	H.buildFrom4Points( v1, v2 );
 	buildFrom4Points( v1, v2 );
-
 }
 
 TEST_CASE( "Opencv binding", "[test_opencv]" )
@@ -3468,9 +3539,9 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			cv::Point2i cvpt3 = getCvPti( pt );           // integer point
 			CHECK( (cvpt3.x == 1 && cvpt3.y == 2) );
 
-			auto cvpt_1 = getCvPt<cv::Point2d>( pt );
-			auto cvpt_2 = getCvPt<cv::Point2f>( pt );
-			auto cvpt_3 = getCvPt<cv::Point2i>( pt );
+			auto cvpt_1 = getPt<cv::Point2d>( pt );
+			auto cvpt_2 = getPt<cv::Point2f>( pt );
+			auto cvpt_3 = getPt<cv::Point2i>( pt );
 		}
 		{
 			cv::Point2d cvpt1 = pt.getCvPtd() ;
@@ -3480,18 +3551,18 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 			cv::Point2i cvpt3 = pt.getCvPti() ;          // integer point
 			CHECK( (cvpt3.x == 1  && cvpt3.y == 2 ) );
 
-			auto cvpt_1 = pt.getCvPt<cv::Point2d>();
-			auto cvpt_2 = pt.getCvPt<cv::Point2f>();
-			auto cvpt_3 = pt.getCvPt<cv::Point2i>();
+			auto cvpt_1 = pt.getPt<cv::Point2d>();
+			auto cvpt_2 = pt.getPt<cv::Point2f>();
+			auto cvpt_3 = pt.getPt<cv::Point2i>();
 		}
 		{ // input: vector of "double" points
 		  // converted into "float" Opencv points
 			std::vector<Point2d> v{ Point2d(1,2), Point2d(5,6), Point2d(3,4) };
-			auto vcv1 = getCvPts<cv::Point2d>( v );
+			auto vcv1 = getPts<cv::Point2d>( v );
 			CHECK( vcv1.size() == 3 );
-			auto vcv2 = getCvPts<cv::Point2f>( v );
+			auto vcv2 = getPts<cv::Point2f>( v );
 			CHECK( vcv2.size() == 3 );
-			auto vcv3 = getCvPts<cv::Point2i>( v );
+			auto vcv3 = getPts<cv::Point2i>( v );
 			CHECK( vcv3.size() == 3 );
 		}
 	}

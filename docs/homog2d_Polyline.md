@@ -29,8 +29,8 @@ is obviously the same as the one described by `(1,1)-(0,0)`.
 
 Say we have:
 ```C++
-OPolyline_ po;
-CPolyline_ pc;
+OPolyline po;
+CPolyline pc;
 ```
 
 This is possible: `pc = po;` :

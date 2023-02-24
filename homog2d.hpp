@@ -27,10 +27,6 @@ See https://github.com/skramm/homog2d
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -54,6 +50,9 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_USE_TTMATH
 	#include <ttmath/ttmath.h>
+	#ifndef HOMOG2D_INUMTYPE
+		#define HOMOG2D_INUMTYPE ttmath::Big<2,2>
+	#endif
 #endif
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
@@ -62,13 +61,15 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_ENABLE_RTP
 #endif
 
-#define HOMOG2D_VERSION "2.9.1"
-
-
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
 	#include "opencv2/highgui.hpp"
 #endif
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+	#include <boost/geometry.hpp>
+#endif
+
 
 #ifdef _MSC_VER
 	#define HOMOG2D_PRETTY_FUNCTION __FUNCSIG__
@@ -126,8 +127,8 @@ See https://github.com/skramm/homog2d
 		static_assert( (std::is_arithmetic<T>::value && !std::is_same<T, bool>::value), "Type of value must be numerical" )
 #endif
 
-/**
-\todo 20230212 ttmath support: this defintion does not work, I don't know why !!! see namespace \ref trait
+/*
+\todo 20230212 ttmath support: this definition does not work, I don't know why !!! see namespace \ref trait
 \verbatim
 #define HOMOG2D_CHECK_IS_NUMBER(T) \
 	static_assert( \
@@ -203,6 +204,14 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
+#define HOMOG2D_VERSION "2.10.0"
+
+// some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+
 namespace h2d {
 
 /// Use to count the errors
@@ -231,7 +240,7 @@ namespace detail {
 	/// Helper class for Root (Point/Line) type, used as a trick to allow partial specialization of member functions
 	template<typename> struct BaseHelper {};
 
-	/// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
+/// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
 	template<typename> struct DataFpType {};
 
 	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
@@ -688,12 +697,21 @@ enum class GivenCoord: uint8_t { X, Y };
 /// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
-/// Type of Root object, see detail::Root::type()
+/// Type of Root object, see detail::Root::type().
+/// Maybe printed out with getString()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
-/// Type of underlying floating point, see LPBase::dtype()
-enum class Dtype: uint8_t { Float, Double, LongDouble };
+/// Type of underlying floating point, see LPBase::dtype().
+/// Maybe printed out with getString()
+enum class Dtype: uint8_t {
+	Float, Double, LongDouble,
+	Other,  // ?
+#ifdef HOMOG2D_USE_TTMATH
+	Ttmath  ///< only if HOMOG2D_USE_TTMATH is defined, see manual
+#endif
+};
 
+/// Returns stringified version of \ref
 inline
 const char* getString( Type t )
 {
@@ -713,10 +731,39 @@ const char* getString( Type t )
 	return s;
 }
 
+inline
+const char* getString( Dtype t )
+{
+	const char* s=0;
+	switch( t )
+	{
+		case Dtype::Float:      s="Float";      break;
+		case Dtype::Double:     s="Double";     break;
+		case Dtype::LongDouble: s="LongDouble"; break;
+		case Dtype::Other:      s="Other";      break;
+#ifdef HOMOG2D_USE_TTMATH
+		case Dtype::Ttmath:     s="ttmath";     break;
+#endif
+		assert(0);
+	}
+	return s;
+}
+
 
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
+
+/// Implementation of dsize(), returns nb of bits of mantissa and exponent (default implementation)
+	template<typename T>
+	inline
+	std::pair<int,int> impl_dsize( const detail::DataFpType<T>& )
+	{
+		return std::make_pair(
+			std::numeric_limits<T>::digits,
+			sizeof(T)*8-std::numeric_limits<T>::digits-1
+		);
+	}
 
 	inline
 	Dtype impl_dtype( const detail::DataFpType<float>& )
@@ -733,6 +780,29 @@ namespace priv {
 	{
 		return Dtype::LongDouble;
 	}
+	template<typename T>
+	inline
+	Dtype impl_dtype( const detail::DataFpType<T>& )
+	{
+		return Dtype::Other;
+	}
+#ifdef HOMOG2D_USE_TTMATH
+/// Implementation for ttmath types
+	template<long unsigned int M, long unsigned int E>
+	inline
+	Dtype impl_dtype( const detail::DataFpType<ttmath::Big<M,E>>& )
+	{
+		return Dtype::Ttmath;
+	}
+/// Implementation for ttmath types
+	template<long unsigned int M, long unsigned int E>
+	inline
+	std::pair<int,int> impl_dsize( const detail::DataFpType<ttmath::Big<M,E>>& )
+	{
+		return std::make_pair( M*sizeof(size_t)*8, E*sizeof(size_t)*8 );
+	}
+
+#endif
 
 /// abs() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
 	template<typename T>
@@ -812,6 +882,11 @@ template<typename LP,typename FPT>
 auto
 operator << ( std::ostream&, const h2d::base::LPBase<LP,FPT>& )
 -> std::ostream&;
+
+template<typename T1,typename T2>
+auto
+operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& )
+-> std::ostream&;
 }
 
 // forward declaration, related to https://github.com/skramm/homog2d/issues/2
@@ -857,9 +932,17 @@ template<typename FPT>
 class Common
 {
 public:
+/// Get Data type as a Dtype value, can be stringified with h2d::getString(Dtype)
+/// \sa h2d::dtype( const T& )
 	Dtype dtype() const
 	{
 		return priv::impl_dtype( detail::DataFpType<FPT>() );
+	}
+/// Get data size expressed as number of bits for, respectively, mantissa and exponent.
+/// \sa h2d::dsize(const T&)
+	std::pair<int,int> dsize() const
+	{
+		return priv::impl_dsize( detail::DataFpType<FPT>() );
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
@@ -883,10 +966,12 @@ class Root
 {
 public:
 	virtual void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+#ifdef HOMOG2D_USE_OPENCV
+	virtual void draw( img::Image<cv::Mat>&, img::DrawParams dp=img::DrawParams() ) const = 0;
+#endif
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area()   const = 0;
 	virtual Type type()               const = 0;
-//	virtual void translate( double, double ) = 0;
 
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
@@ -1241,6 +1326,7 @@ Thus some assert can get triggered elsewhere.
 		*this = mat;
 	}
 #endif
+
 ///@}
 
 /// Assignment operator
@@ -1527,7 +1613,7 @@ std::ostream& operator << ( std::ostream& f, const EllParams<U>& par )
 	f << "EllParams: origin=" << par.x0 << "," << par.y0
 		<< " angle=" << par.theta *180./M_PI
 		<< " a=" << par.a << " b=" << par.b
-		<< '\n';
+		<< ' ';
 	return f;
 }
 
@@ -2672,7 +2758,7 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 
 // Circle/Circle intersection
 	template<typename FPT2>
-	detail::Intersect<typename detail::Inters_2,FPT>
+	detail::IntersectM<FPT>
 	intersects( const Circle_<FPT2>& ) const;
 
 /// Circle/FRect intersection
@@ -3211,7 +3297,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_4( x1, y1, x2, y2, detail::BaseHelper<LP>() );
 	}
 
-/// Constructor of Point/Line from random type holding x,y values
+/// Constructor of Point/Line from random type holding x,y values, see manual, section
 	template<
 		typename T,
 		typename std::enable_if<
@@ -3273,6 +3359,40 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 //		HOMOG2D_CHECK_IS_NUMBER(T);
 		impl_init_or( orient, value, detail::BaseHelper<LP>() );
 	}
+
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+
+public:
+/// Constructor from boost::geometry point type
+/**
+\note Although this one should work also for the other point type (`bg::model::d2::point_xy`),
+as that latter one is inherited from the first one),
+it does not, because there is another truely generic single-arg constructor, and the compiler
+will select that one first, leading to a build error.
+Thus, we need the second one.
+*/
+	template<typename BFPT> // Boost Floating Point Type
+	LPBase( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
+	{
+		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
+	}
+
+/// Constructor from boost::geometry second point type
+	template<typename BFPT> // Boost Floating Point Type
+	LPBase( const boost::geometry::model::d2::point_xy<BFPT>& pt )
+	{
+		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
+	}
+
+/// Set from boost::geometry point type
+	template<typename BFPT> // Boost Floating Point Type
+	void set( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
+	{
+		set( boost::geometry::get<0>(pt), boost::geometry::get<1>(pt), 1.0 );
+	}
+
+#endif
 
 private:
 	template<typename T,typename U>
@@ -3462,6 +3582,28 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER( T1 );
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		impl_move( dx, dy, detail::BaseHelper<LP>() );
+	}
+
+private:
+	template<typename ANY>
+	ANY impl_getPt( const detail::BaseHelper<typename type::IsPoint>& ) const
+	{
+		return ANY( getX(), getY() );
+	}
+	template<typename ANY>
+	ANY impl_getPt( const detail::BaseHelper<typename type::IsLine>& ) const
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+	}
+
+public:
+/// Generic transformation into any other point type, as long as it provides a 2-args constructor
+/// (is the case for Opencv and Boost Geometry).
+/// \sa h2d::getPt()
+	template<typename ANY>
+	ANY getPt() const
+	{
+		return impl_getPt<ANY>( detail::BaseHelper<LP>() );
 	}
 
 	std::array<FPT,3> get() const
@@ -3741,24 +3883,44 @@ public:
 		return impl_op_sort( other, detail::BaseHelper<LP>() );
 	}
 
-/// Generic draw function
+/// SVG draw function
 	void draw( img::Image<img::SvgImage>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
+private:
+	template<typename OPENCVT>
+	OPENCVT impl_getCvPt( const detail::BaseHelper<type::IsPoint>&, const OPENCVT& ) const
+	{
+		return OPENCVT( getX(),getY() );
+	}
+
+/// Build point from Opencv point
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsPoint>& )
+	{
+		impl_init_2( pt.x, pt.y, detail::BaseHelper<type::IsPoint>() );
+	}
+/// Build line from Opencv point
+	template<typename T>
+	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsLine>& )
+	{
+		Point2d_<FPT> p(pt);
+		impl_init_1_Point<FPT>( p, detail::BaseHelper<type::IsLine>() );
+	}
+
+public:
+/// Opencv draw function
 	void draw( img::Image<cv::Mat>& im, img::DrawParams dp=img::DrawParams() ) const
 	{
 		impl_draw_LP( im, dp, detail::BaseHelper<LP>() );
 	}
 
-	template<typename RT>
-	RT getCvPt() const { return RT( getX(), getY() ); }
-
-	cv::Point2i getCvPti() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2i() ); }
-	cv::Point2d getCvPtd() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2d() ); }
-	cv::Point2f getCvPtf() const { return impl_getCvPt( detail::BaseHelper<LP>(), cv::Point2f() ); }
+	cv::Point2i getCvPti() const { return impl_getPt<cv::Point2i>( detail::BaseHelper<typename type::IsPoint>() ); }
+	cv::Point2i getCvPtd() const { return impl_getPt<cv::Point2d>( detail::BaseHelper<typename type::IsPoint>() ); }
+	cv::Point2i getCvPtf() const { return impl_getPt<cv::Point2f>( detail::BaseHelper<typename type::IsPoint>() ); }
 
 /// Constructor: build from a single OpenCv point.
 	template<typename T>
@@ -3852,26 +4014,6 @@ private:
 	Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::BaseHelper<type::IsPoint>& ) const;
 	Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::BaseHelper<type::IsLine>&  ) const;
 
-#ifdef HOMOG2D_USE_OPENCV
-	template<typename OPENCVT>
-	OPENCVT impl_getCvPt( const detail::BaseHelper<type::IsPoint>&, const OPENCVT& ) const;
-
-/// Build point from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsPoint>& )
-	{
-		impl_init_2( pt.x, pt.y, detail::BaseHelper<type::IsPoint>() );
-	}
-/// Build line from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<type::IsLine>& )
-	{
-		Point2d_<FPT> p(pt);
-		impl_init_1_Point<FPT>( p, detail::BaseHelper<type::IsLine>() );
-	}
-
-#endif // HOMOG2D_USE_OPENCV
-
 	template<typename T>
 	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<type::IsPoint>& )  const;
 	template<typename T>
@@ -3895,6 +4037,25 @@ private:
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsPoint>& );
 	template<typename T1,typename T2>
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<type::IsLine>& );
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+	template<typename BFPT>
+	void impl_init_BoostGeomPoint(
+		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>&,
+		const detail::BaseHelper<type::IsLine>&
+	)
+	{
+		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a Line2d using a boost::geometry point" );
+	}
+	template<typename BFPT> // Boost Floating Point Type
+	void impl_init_BoostGeomPoint(
+		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt,
+		const detail::BaseHelper<type::IsPoint>&
+	)
+	{
+		set( pt );
+	}
+#endif
 
 }; // class LPBase
 
@@ -3920,25 +4081,6 @@ FRect_<FPT> getFRect( cv::Mat& mat )
 	);
 }
 
-/// Free function to return an OpenCv point
-/**
-- RT: return type
-- FPT: Floating Point Type
-
-User code needs to provide the requested type as template argument:
-\code
-auto p1 = getCvPt<cv::Point2di>( pt );
-auto p2 = getCvPt<cv::Point2df>( pt );
-auto p3 = getCvPt<cv::Point2dd>( pt );
-\endcode
-*/
-template<typename RT,typename FPT>
-RT
-getCvPt( const Point2d_<FPT>& pt )
-{
-	return pt.template getCvPt<RT>();
-}
-
 /// Free function to return an OpenCv point (double)
 template<typename FPT>
 cv::Point2d
@@ -3961,29 +4103,53 @@ getCvPti( const Point2d_<FPT>& pt )
 	return pt.getCvPti();
 }
 
-/// Free function, returns a vector of OpenCv points from a vector of points
+#endif // HOMOG2D_USE_OPENCV
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/// Generic free function to return a point of other type
 /**
 - RT: return type
 - FPT: Floating Point Type
 
-User code needs to provide the requested type as template argument:
+User code needs to provide the requested type as template argument, for example:
 \code
-auto v1 = getCvPts<cv::Point2di>( myvec );
-auto v2 = getCvPts<cv::Point2df>( myvec );
-auto v3 = getCvPts<cv::Point2dd>( myvec );
+auto p1 = getPt<cv::Point2di>( pt );                             // opencv type
+auto p2 = getPt<boost::geometry::model::point_xy<double>>( pt ); // boost geometry type
 \endcode
+\sa LPBase::getPt()
 */
 template<typename RT,typename FPT>
+RT
+getPt( const Point2d_<FPT>& pt )
+{
+	return pt.template getPt<RT>();
+}
+
+/// Free function, returns a vector of points of other type from a vector of h2d points
+/**
+- RT: return type
+- FPT: Floating Point Type
+
+User code needs to provide the requested type as template argument.
+\sa h2d::getPt<>()
+
+\todo 20230219: sfinae this to accept other containers using trait::IsContainer
+*/
+
+template<typename RT,typename FPT>
 std::vector<RT>
-getCvPts( const std::vector<Point2d_<FPT>>& vpt )
+getPts( const std::vector<Point2d_<FPT>>& vpt )
 {
 	std::vector<RT> vout( vpt.size() );
 	auto it = vout.begin();
 	for( const auto& pt: vpt )
-		*it++ = getCvPt<RT>(pt);
+		*it++ = getPt<RT>(pt);
 	return vout;
 }
-#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 /// This namespace holds some private stuff
@@ -4070,8 +4236,8 @@ buildFrom4Points_Opencv (
 	const std::vector<Point2d_<FPT>>& vpt2  ///< destination points
 )
 {
-	const auto& src = getCvPts<cv::Point2f>( vpt1 );
-	const auto& dst = getCvPts<cv::Point2f>( vpt2 );
+	const auto& src = getPts<cv::Point2f>( vpt1 );
+	const auto& dst = getPts<cv::Point2f>( vpt2 );
 	return cv::getPerspectiveTransform( src, dst ); // automatic type conversion to Hmatrix_
 }
 #endif
@@ -4466,6 +4632,8 @@ public:
 
 	Segment_<FPT> getExtended() const;
 
+/// Returns the bisector line of the segment
+/// \sa free function h2d::getBisector()
 	Line2d_<FPT>
 	getBisector() const
 	{
@@ -4684,14 +4852,19 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 /**
 Ref:
 - https://stackoverflow.com/questions/3349125/
+
+Can return 0, 1, or 2 intersection points
+
+\todo 20230219: in some situation, the difference below (x2 - x1) can be numericaly instable.
+Check if things would get improved by multiplying first (by a/d and h/d), before proceeding the difference.
 */
 template<typename FPT>
 template<typename FPT2>
-detail::Intersect<typename detail::Inters_2,FPT>
+detail::IntersectM<FPT>
 Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 {
 	if( *this == other )
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	HOMOG2D_INUMTYPE r1 = _radius;
 	HOMOG2D_INUMTYPE r2 = other._radius;
@@ -4705,30 +4878,35 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	HOMOG2D_INUMTYPE d_squared = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
 
 	if( d_squared > r1*r1 + r2*r2 + (HOMOG2D_INUMTYPE)2.*r1*r2 )              // no intersection
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	if( d_squared < ( r1*r1 + r2*r2 - (HOMOG2D_INUMTYPE)2.*r1*r2 ) )          // no intersection: one circle inside the other
-		return detail::Intersect<detail::Inters_2,FPT>();
+		return detail::IntersectM<FPT>();
 
 	auto d = priv::sqrt( d_squared );
 	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
 	auto h = priv::sqrt( r1*r1 - a*a );
 
-
+//	std::cout << "a/d=" << a/d << '\n';
 	Point2d_<FPT> P0(
-		( pt2.getX() - pt1.getX() ) * a / d + pt1.getX(),
-		( pt2.getY() - pt1.getY() ) * a / d + pt1.getY()
+		( x2 - x1 ) * a / d + x1,
+		( y2 - y1 ) * a / d + y1
 	);
 
 	Point2d_<FPT> pt3(
-		P0.getX() + h*( pt1.getY() - pt2.getY() ) / d,
-		P0.getY() - h*( pt1.getX() - pt2.getX() ) / d
+		P0.getX() + ( y1 - y2 ) * h / d,
+		P0.getY() - ( x1 - x2 ) * h / d
 	);
 	Point2d_<FPT> pt4(
-		P0.getX() - h*( pt1.getY() - pt2.getY() ) / d,
-		P0.getY() + h*( pt1.getX() - pt2.getX() ) / d
+		P0.getX() - ( y1 - y2 ) * h / d,
+		P0.getY() + ( x1 - x2 ) * h / d
 	);
-	return detail::Intersect<detail::Inters_2,FPT>( pt3, pt4 );
+
+	detail::IntersectM<FPT> out;
+	out.add( pt3 );
+	if( pt3 != pt4 )
+		out.add( pt4 );
+	return out;
 }
 
 
@@ -4871,12 +5049,9 @@ template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
 operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 
-// forward declaration
-template<typename T1,typename T2>
-std::ostream&
-operator << ( std::ostream&, const base::PolylineBase<T1,T2>& );
-
 // Forward declaration
+///  \todo 20230215: check if this has to be moved in the 'base' namespace. Can it be called **without**
+/// `using namespace std;`. This was the case for the streaming operator...
 template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
@@ -4912,6 +5087,7 @@ class PolylineBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using PType = PLT;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class PolylineBase;
@@ -4995,6 +5171,57 @@ template<
 	{
 		set( other._plinevec );
 	}
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+/// Constructor from a boost geometry polygon, see misc/test_files/bg_test_1.cpp
+/**
+\note Only imports the "outer" envelope, homog2d does not handle polygons with holes
+
+Requirements: the Boost polygon must have 2-cartesian coordinates points,
+either `bg::model::point` or `bg::model::d2::point_xy`
+but the underlying numerical type is free.
+
+\note At present, the 3th template parameter (bool) (Closed or Open) is ignored, because it is unclear how
+this relates to the actual fact that last point is equal to first point.
+\todo 20230216:  add some checking that the type BPT needs to fit certain requirements
+(must have 2-dimensions, and use cartesian coordinates). Maybe we should add some Sfinae to check this.
+*/
+	template<typename BPT,bool CLKW,bool CLOSED> //
+	PolylineBase(
+		const boost::geometry::model::polygon<
+			BPT,     ///< Boost Point Type (either `bg::model::point` or `bg::model::d2::point_xy`)
+			CLKW,    ///< this one is ignored here
+			CLOSED   ///< true: closed, false: open
+		>& bgpol  ///< input boost geometry polygon
+	)
+	{
+		const auto& outer = bgpol.outer();
+		bool isClosed = false;
+		auto ptf = outer.front();
+		auto ptb = outer.back();
+		Point2d_<HOMOG2D_INUMTYPE> pt_front( boost::geometry::get<0>(ptf), boost::geometry::get<1>(ptf) );
+		Point2d_<HOMOG2D_INUMTYPE> pt_back(  boost::geometry::get<0>(ptb), boost::geometry::get<1>(ptb) );
+/*
+this should work !!! (but doesn't...)
+		Point2d_<HOMOG2D_INUMTYPE> pt_front( outer.front() );
+		Point2d_<HOMOG2D_INUMTYPE> pt_back(  outer.back() );
+*/
+		if( pt_front == pt_back ) // means it's closed
+			isClosed = true;
+
+		if( isClosed && std::is_same<PLT,type::IsOpen>::value ) // cannot build an open polyline from a closed one
+			HOMOG2D_THROW_ERROR_1( "unable to convert a closed boost::polygon into an OPolyline" );
+
+		_plinevec.reserve( outer.size() - isClosed );
+		for( auto it=outer.begin(); it!=outer.end()-isClosed; it++ )
+		{
+			const auto& bgpt = *it;
+			_plinevec.emplace_back(
+				Point2d_<FPT>( boost::geometry::get<0>(bgpt), boost::geometry::get<1>(bgpt) )
+			);
+		}
+	}
+#endif
 
 ///@}
 
@@ -5215,6 +5442,10 @@ This will be replaced by: (0,0)--(2,0)
 \note We cannot use the Segment_::getAngle() function because it returns a
 value in [0,PI/2], so we would'nt be able to detect a segment going
 at 180° of the previous one.
+
+\todo 20230217: implement these:
+- https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
+- https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 */
 	void
 	minimize()
@@ -5254,14 +5485,12 @@ at 180° of the previous one.
 	>
 	void set( const CONT& vec )
 	{
+#ifndef HOMOG2D_NOCHECKS
 		if( vec.size() == 1 )
 			HOMOG2D_THROW_ERROR_1( "Invalid: number of points must be 0, 2 or more" );
-
-#ifndef HOMOG2D_NOCHECKS
 		if( vec.size() > 1 )
 			p_checkInputData( vec );
 #endif
-
 		_attribs.setBad();
 		_plIsNormalized=false;
 		_plinevec.resize( vec.size() );
@@ -5410,7 +5639,7 @@ public:
 
 	template<typename T1,typename T2>
 	friend std::ostream&
-	h2d::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
+	h2d::base::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
 
 	template<typename FPT2>
 	PolylineBase<type::IsClosed,FPT>
@@ -5483,6 +5712,50 @@ public:
 // (need to be here because the 5 below are being called by some member functions
 // of class PolylineBase, that is implemented further below
 
+namespace priv {
+
+//------------------------------------------------------------------
+/// Return iterator on Bottom-most point of container holding points
+/**
+Used by
+ - getBmPoint()
+ - priv::chull::getPivotPoint()
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		(
+			trait::IsContainer<T>::value &&
+			std::is_same<typename T::value_type,Point2d_<typename T::value_type::FType>>::value
+		), T
+	>::type* = nullptr
+>
+auto
+getBmPoint_helper( const T& t )
+{
+	using FPT = typename T::value_type::FType;
+#ifndef HOMOG2D_NOCHECKS
+	if( t.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
+
+	return std::min_element(
+		std::begin(t),
+		std::end(t),
+		[]                  // lambda
+		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
+		{
+			if( pt1.getY() < pt2.getY() )
+				return true;
+			if( pt1.getY() > pt2.getY() )
+				return false;
+			return( pt1.getX() < pt2.getX() );
+		}
+	);
+}
+
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Return Bottom-most point of container holding points
 template<
@@ -5497,28 +5770,15 @@ template<
 Point2d_<typename T::value_type::FType>
 getBmPoint( const T& t )
 {
-	using FPT = typename T::value_type::FType;
-
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
-
-	return *std::min_element(
-		std::begin(t),
-		std::end(t),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() < pt2.getY() )
-				return true;
-			if( pt1.getY() > pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
+#endif
+	return *priv::getBmPoint_helper( t );
 }
 
 //------------------------------------------------------------------
-/// Return Top-most point of Polyline
+/// Return Top-most point of container
 template<
 	typename T,
 	typename std::enable_if<
@@ -5533,8 +5793,10 @@ getTmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -5552,7 +5814,7 @@ getTmPoint( const T& t )
 }
 
 //------------------------------------------------------------------
-/// Return Left-most point of Polyline
+/// Return Left-most point of container
 template<
 	typename T,
 	typename std::enable_if<
@@ -5567,8 +5829,10 @@ getLmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -5601,8 +5865,10 @@ getRmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
 
+#ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
+#endif
 
 	return *std::min_element(
 		std::begin(t),
@@ -6831,6 +7097,7 @@ operator << ( std::ostream& f, const Segment_<T>& seg )
 	return f;
 }
 
+namespace base {
 template<typename PLT,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
@@ -6843,9 +7110,9 @@ operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
 		for( const auto& pt: pl._plinevec )
 			f << pt << "-";
 	}
-	f << '\n';
 	return f;
 }
+} // namespace base
 
 template<typename T>
 std::ostream&
@@ -8612,7 +8879,7 @@ public:
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Computes the closest points between two polylines
+/// Computes the closest points between two polylines (types can be different)
 template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
 priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
 getClosestPoints(
@@ -8620,11 +8887,12 @@ getClosestPoints(
 	const base::PolylineBase<PLT2,FPT2>& poly2
 )
 {
+#ifndef HOMOG2D_NOCHECKS
 	if( poly1.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "arg 1 is empty" );
 	if( poly2.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "arg 2 is empty" );
-
+#endif
 	priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2> out( poly1, poly2 );
 	for( size_t i=0; i<poly1.size(); i++ )
 	{
@@ -8979,10 +9247,18 @@ length( const T& t )
 }
 
 /// Free function, return floating-point type
+/// \sa detail::Common::dtype()
 template<typename T>
 Dtype dtype( const T& t )
 {
 	return t.dtype();
+}
+/// Get data size expressed as number of bits for, respectively, mantissa and exponent
+/// \sa detail::Common::dsize()
+template<typename T>
+std::pair<int,int> dsize( const T& t )
+{
+	return t.dsize();
 }
 
 //------------------------------------------------------------------
@@ -9306,24 +9582,11 @@ namespace chull {
 
 //------------------------------------------------------------------
 /// Used int the convex hull algorithm
-/// \todo check if this cannot be merged with \ref getLmPoint()
 template<typename FPT>
 size_t
 getPivotPoint( const std::vector<Point2d_<FPT>>& in )
 {
-	auto pmin = std::min_element(
-		in.begin(),
-		in.end(),
-		[]                  // lambda
-		( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 )
-		{
-			if( pt1.getY() < pt2.getY() )
-				return true;
-			if( pt1.getY() > pt2.getY() )
-				return false;
-			return( pt1.getX() < pt2.getX() );
-		}
-	);
+	auto pmin = h2d::priv::getBmPoint_helper( in );
 	return static_cast<size_t>( pmin - in.begin() );
 }
 
@@ -9337,7 +9600,7 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 
 // step 1: create new vector holding the indexes of the points, including the pivot point (will be in first position)
 	std::vector<size_t> out( in.size() );
-	std::iota( out.begin(), out.end(), 0 );
+	std::iota( out.begin(), out.end(), 0 ); // fill vector: [0,1,2,...]
 	std::swap( out[piv_idx], out[0] );
 	auto pt0 = in[piv_idx];
 
@@ -10020,16 +10283,7 @@ PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) 
 // SECTION  - OPENCV BINDING - GENERAL
 /////////////////////////////////////////////////////////////////////////////
 
-//------------------------------------------------------------------
 #ifdef HOMOG2D_USE_OPENCV
-/// Return Opencv 2D point
-template<typename LP, typename FPT>
-template<typename OPENCVT>
-OPENCVT
-base::LPBase<LP,FPT>::impl_getCvPt( const detail::BaseHelper<typename type::IsPoint>&, const OPENCVT& ) const
-{
-	return OPENCVT( getX(),getY() );
-}
 
 //------------------------------------------------------------------
 /// Copy matrix to Opencv \c cv::Mat
@@ -10068,14 +10322,12 @@ template<typename W,typename FPT>
 Hmatrix_<W,FPT>&
 Hmatrix_<W,FPT>::operator = ( const cv::Mat& mat )
 {
+	auto type = mat.type();
 #ifndef HOMOG2D_NOCHECKS
 	if( mat.rows != 3 || mat.cols != 3 )
 		throw std::runtime_error( "invalid matrix size, rows=" + std::to_string(mat.rows) + " cols=" + std::to_string(mat.cols) );
 	if( mat.channels() != 1 )
 		throw std::runtime_error( "invalid matrix nb channels: " + std::to_string(mat.channels() ) );
-#endif
-	auto type = mat.type();
-#ifndef HOMOG2D_NOCHECKS
 	if( type != CV_64F && type != CV_32F )
 		throw std::runtime_error( "invalid matrix type" );
 #endif
@@ -10497,17 +10749,18 @@ std::ostream& operator << ( std::ostream& f, const Root& p )
 			f << *p2;
 		}
 		break;
-/*		case Type::Line2d:
+		case Type::Line2d:
 		{
 			const Line2d_<double>* p2 = static_cast<const Line2d_<double>*>( &p );
 			f << *p2;
 		}
+		break;
 		case Type::Point2d:
 		{
 			const Point2d_<double>* p2 = static_cast<const Point2d_<double>*>( &p );
 			f << *p2;
 		}
-*/
+		break;
 		case Type::Segment:
 		{
 			const Segment_<double>* p2 = static_cast<const Segment_<double>*>( &p );
@@ -10664,9 +10917,9 @@ using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 
+/// Holds private stuff related to SVG import
 namespace svg {
 
-namespace priv {
 //-------------------------------------------------------------------
 /// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
 /**
@@ -10716,8 +10969,6 @@ getEllipseRotateAttr( const char* rot_str )
 	HOMOG2D_THROW_ERROR_1( "invalid 'transform' attribute for svg ellipse import" );
 }
 
-} // namespace priv
-
 //------------------------------------------------------------------
 /// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
 std::vector<Point2d>
@@ -10727,10 +10978,10 @@ parsePoints( const char* pts )
 	std::string s(pts);
 //	std::cout << "processing " << s << '\n';
 //	trimString( s );
-	auto v1 = priv::tokenize( s, ' ' );
+	auto v1 = tokenize( s, ' ' );
 	for( const auto& pt: v1 )
 	{
-		auto v2 = priv::tokenize( pt, ',' );
+		auto v2 = tokenize( pt, ',' );
 		if( v2.size() != 2 )
 			throw "h2d:img::svg: invalid point format in importing svg element: " + s;
 		auto x = std::stod( v2[0] );
@@ -10757,8 +11008,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-private:
-	std::vector<std::unique_ptr<detail::Root>> vec;
+	std::vector<std::unique_ptr<detail::Root>> _vec;
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -10790,10 +11040,10 @@ public:
 	}
 	const std::vector<std::unique_ptr<detail::Root>>& get() const
 	{
-		return vec;
+		return _vec;
 	}
 
-	bool VisitExit( const tinyxml2::XMLElement& );
+	bool VisitExit( const tinyxml2::XMLElement& ) override;
 };
 
 //------------------------------------------------------------------
@@ -10820,10 +11070,9 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 	return pts;
 }
 
-
 /// This is the place where actual SVG data is converted and stored into vector
 /**
-\todo Handle ellipse angle
+Overload of the root class `VisitExit()` member function
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
@@ -10836,7 +11085,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_circle:
 			{
 				std::unique_ptr<detail::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
-				vec.push_back( std::move(c) );
+				_vec.push_back( std::move(c) );
 			}
 			break;
 
@@ -10847,7 +11096,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto w  = getAttribValue( e, "width", n );
 				auto h  = getAttribValue( e, "height", n );
 				std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-				vec.push_back( std::move(r) );
+				_vec.push_back( std::move(r) );
 			}
 			break;
 
@@ -10856,7 +11105,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				std::unique_ptr<detail::Root> s(
 					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
 				);
-				vec.push_back( std::move(s) );
+				_vec.push_back( std::move(s) );
 			}
 			break;
 
@@ -10865,7 +11114,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
@@ -10874,24 +11123,23 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
-			case T_ellipse: // TODO: handle ellipse angle
+			case T_ellipse:
 			{
 				auto x  = getAttribValue( e, "cx", n );
 				auto y  = getAttribValue( e, "cy", n );
 				auto rx = getAttribValue( e, "rx", n );
 				auto ry = getAttribValue( e, "ry", n );
-				auto rot = priv::getEllipseRotateAttr( getAttribString( "transform", e ) );
+				auto rot = getEllipseRotateAttr( getAttribString( "transform", e ) );
 				Ellipse* ell = new Ellipse( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
 				*ell = H * *ell;
 				std::unique_ptr<detail::Root> p( ell );
-//				std::unique_ptr<detail::Root> p( new Ellipse( x, y, rx, ry ) );
-				vec.push_back( std::move(p) );
+				_vec.push_back( std::move(p) );
 			}
 			break;
 
@@ -10901,7 +11149,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	}
 	catch( std::string& msg )
 	{
-		std::cout << "ERROR: " << msg;
+		std::cerr << "h2d: Tinyxml read error: " << msg;
 		return false;
 	}
 	return true;

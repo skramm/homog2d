@@ -1,0 +1,20 @@
+# workflow to publish doxygen generated pages
+# taken from https://github.com/DenverCoder1/doxygen-github-pages-action
+
+name: Doxygen GitHub Pages Deploy Action
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: DenverCoder1/doxygen-github-pages-action@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          config_file: misc/doxyfile
+          branch: doxydocs
+          folder: doc_html

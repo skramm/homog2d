@@ -86,8 +86,15 @@ And, guess what, I incidentally discovered that my test builds were not done any
 Thus the migration of the CI test process to Github Actions (see folder .github/workflows).
 
 
+* 20230215:
+Finally achieved the integration of the Microsoft C++ compiler (`CL.exe`) to the Github Action integrated CI, see [yaml file](../.github/workflows/msvc.yml).
+<br>
+Reference: https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options
 
-
+Once the test app has been build (with `$ make test`), you can run a single test with:
+```
+$ BUILD/<testappname> [tagname]
+```
 
 ## Coding style
 
