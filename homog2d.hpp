@@ -570,6 +570,8 @@ class DrawParams
 		bool        _showPoints    = false;     ///< show the points (useful only for Segment_ and Polyline_)
 		bool        _showIndex     = false;     ///< show the index as number
 		int         _fontSize      = 20;        ///< font size for drawText()
+		std::string _attrString;                ///< added attributes (SVG only)
+
 /// Returns the point style following the current one
 		PtStyle nextPointStyle() const
 		{
@@ -665,6 +667,34 @@ public:
 			<< (int)_dpValues._color.b
 			<< ')';
 		return oss.str();
+	}
+
+/// Add some specific SVG attributes (ignored for Opencv renderings)
+	DrawParams& setAttrString( std::string attr )
+	{
+		_dpValues._attrString = attr;
+		return *this;
+	}
+
+// private:
+/// Checks if the user-given SVG attribute string (with \ref setAttrString() ) holds the fill="none" mention.
+/**
+This is because to have no filling, the object needs to have the fill="none" attribute, so the default
+behavior is to always add that attribute.<br>
+But then if the user wants some filling, then we would have both fill="none" and fill="scomecolor",
+and that would render the svg invalid.<br>
+So the drawing code checks if user has added some filling, and if so, does not add the fill="none" attribute.
+*/
+	bool holdsFill() const
+	{
+		if( !_dpValues._attrString.empty() )
+			if( _dpValues._attrString.find("fill=") != std::string::npos )
+				return true;
+		return false;
+	}
+	std::string getAttrString() const
+	{
+		return _dpValues._attrString + ' ';
 	}
 
 	Color color() const
@@ -10050,13 +10080,16 @@ Circle_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
-	im.getReal()._svgString << "<circle fill=\"none"
-		<< "\" cx=\"" << center().getX()
+	im.getReal()._svgString
+		<< "<circle cx=\"" << center().getX()
 		<< "\" cy=\"" << center().getY()
 		<< "\" r=\"" << radius()
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
+		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" ";
+	if( !dp.holdsFill() )
+		im.getReal()._svgString << "fill=\"none\" ";
+	im.getReal()._svgString << dp.getAttrString()
 		<< "/>\n";
 }
 
@@ -10068,7 +10101,7 @@ Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
-	im.getReal()._svgString << "<ellipse fill=\"none\" cx=\""
+	im.getReal()._svgString << "<ellipse cx=\""
 		<< getCenter().getX()
 		<< "\" cy=\""
 		<< getCenter().getY()
@@ -10078,8 +10111,11 @@ Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 		<< getMajMin().second
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< " transform=\"rotate(" << angle()*180./M_PI << ',' << getCenter().getX() << ',' << getCenter().getY()
+		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" ";
+	if( !dp.holdsFill() )
+		im.getReal()._svgString << "fill=\"none\" ";
+	im.getReal()._svgString << dp.getAttrString()
+		<< "transform=\"rotate(" << angle()*180./M_PI << ',' << getCenter().getX() << ',' << getCenter().getY()
 		<< ")\" />\n";
 }
 
@@ -10091,7 +10127,7 @@ FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	HOMOG2D_SVG_CHECK_INIT( im );
 
-	im.getReal()._svgString << "<rect fill=\"none\" x=\""
+	im.getReal()._svgString << "<rect x=\""
 		<< getPts().first.getX()
 		<< "\" y=\""
 		<< getPts().first.getY()
@@ -10101,8 +10137,10 @@ FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 		<< height()
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< "/>\n";
+		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" ";
+	if( !dp.holdsFill() )
+		im.getReal()._svgString << "fill=\"none\" ";
+	im.getReal()._svgString << dp.getAttrString() << "/>\n";
 }
 
 //------------------------------------------------------------------
@@ -10128,6 +10166,7 @@ Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
+		<< dp.getAttrString()
 		<< "/>\n";
 
 	if( dp._dpValues._showPoints )
@@ -10235,6 +10274,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 		<< " fill=\"none\" stroke=\""
 		<< dp.getSvgRgbColor()
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
+		<< dp.getAttrString()
 		<< " points=\"";
 	for( const auto& pt: getPts() )
 		im.getReal()._svgString << pt.getX() << ',' << pt.getY() << ' ';

@@ -1742,6 +1742,15 @@ The available functions are given in the table below:
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     |  Only for `putText()`  |
 
+For Svg back-end only, the user my add some specific Svg attributes with `setAttribString()`.
+For example:
+```C++
+FRect r( 100,100,200,200);
+r.draw( im, DrawParams().setAttrString("fill=\"rgb(100,200,150)\"") );
+```
+Make sure you add valid attributes, [check here](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/Presentation).
+
+For Opencv back-end, this is ignored.
 
 ### 8.4 - Drawing containers
 
