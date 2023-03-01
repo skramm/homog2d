@@ -5,10 +5,13 @@
 #include "fig_src.header"
 
 template<typename T>
-void process( img::Image<img::SvgImage>& im, const T& poly, std::string fn )
+void process( img::Image<img::SvgImage>& im, const T& poly, std::string fn, bool doFill=false )
 {
 	im.clear();
-	poly.draw( im, DrawParams().setColor(250,0,20) );
+	if( !doFill )
+		poly.draw( im, DrawParams().setColor(250,0,20) );
+	else
+		poly.draw( im, DrawParams().setColor(250,0,20).setAttrString("fill=\"rgb(150,200,150)\"") );
 	poly.getBB().draw( im, DrawParams().setColor(150,150,120) );
 
 	auto style1 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(2).setColor(0,250,0);
@@ -17,7 +20,6 @@ void process( img::Image<img::SvgImage>& im, const T& poly, std::string fn )
 	getRmPoint( poly ).draw( im, style2 );
 	getLmPoint( poly ).draw( im, style1 );
 	getBmPoint( poly ).draw( im, style2 );
-
 	im.write( fn );
 }
 
@@ -42,8 +44,10 @@ int main()
 	opl = H * opl;
 	CPolyline cpl(opl);
 
-	img::Image<img::SvgImage> img2( 350,250 );
+	img::Image<img::SvgImage> im( 350,250 );
 
-	process( img2, opl, "polyline1a.svg" );
-	process( img2, cpl, "polyline1b.svg" );
+	process( im, opl, "polyline1a.svg" );
+	process( im, opl, "polyline1a_f.svg", true );
+	process( im, cpl, "polyline1b.svg" );
+	process( im, cpl, "polyline1b_f.svg", true );
 }

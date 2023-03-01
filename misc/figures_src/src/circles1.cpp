@@ -12,14 +12,14 @@ int main()
 	auto pseg = getTanSegs( c1, c2 );
 
 
-	img::Image<SvgImage> im2( 450,300 );
+	img::Image<SvgImage> im( 450,300 );
 
-	c1.draw( im2,  DrawParams().setColor(0,0,100).setAttrString("fill=\"rgb(100,0,0)\"") );
-	c2.draw( im2,  DrawParams().setColor(0,0,100) );
-	seg.draw( im2, DrawParams().setColor(250,0,0) );
+	c1.draw( im,  DrawParams().setColor(0,0,100).setAttrString("fill=\"rgb(100,0,0)\"") );
+	c2.draw( im,  DrawParams().setColor(0,0,100) );
+	seg.draw( im, DrawParams().setColor(250,0,0) );
 //	auto lp1 = seg.getOrthonalLine( c1.center() );
-	pseg.first.draw( im2,  DrawParams().setColor(0,200,100) );
+	pseg.first.draw( im,  DrawParams().setColor(0,200,100) );
 
-	pseg.second.draw( im2, DrawParams().setColor(0,100,200) );
-	im2.write( "circles1.svg" );
+	pseg.second.draw( im, DrawParams().setColor(0,100,200) );
+	im.write( "circles1.svg" );
 }

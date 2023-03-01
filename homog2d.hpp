@@ -670,6 +670,7 @@ public:
 	}
 
 /// Add some specific SVG attributes (ignored for Opencv renderings)
+/** \sa getAttrString() */
 	DrawParams& setAttrString( std::string attr )
 	{
 		_dpValues._attrString = attr;
@@ -681,7 +682,7 @@ public:
 /**
 This is because to have no filling, the object needs to have the fill="none" attribute, so the default
 behavior is to always add that attribute.<br>
-But then if the user wants some filling, then we would have both fill="none" and fill="scomecolor",
+But then if the user wants some filling, then we would have both fill="none" and fill="somecolor",
 and that would render the svg invalid.<br>
 So the drawing code checks if user has added some filling, and if so, does not add the fill="none" attribute.
 */
@@ -692,8 +693,11 @@ So the drawing code checks if user has added some filling, and if so, does not a
 				return true;
 		return false;
 	}
+/// \sa setAttrString()
 	std::string getAttrString() const
 	{
+		if( _dpValues._attrString.empty() )
+			return std::string();
 		return _dpValues._attrString + ' ';
 	}
 
@@ -10165,7 +10169,7 @@ Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 		<< pts.second.getY()
 		<< "\" stroke=\""
 		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
+		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" "
 		<< dp.getAttrString()
 		<< "/>\n";
 
@@ -10271,11 +10275,13 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 		im.getReal()._svgString << "<g>\n";
 
 	im.getReal()._svgString << '<' << (isClosed() ? "polygon" : "polyline")
-		<< " fill=\"none\" stroke=\""
+		<< " stroke=\""
 		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << '"'
-		<< dp.getAttrString()
-		<< " points=\"";
+		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" ";
+	if( !dp.holdsFill() )
+		im.getReal()._svgString << "fill=\"none\" ";
+	im.getReal()._svgString << dp.getAttrString()
+		<< "points=\"";
 	for( const auto& pt: getPts() )
 		im.getReal()._svgString << pt.getX() << ',' << pt.getY() << ' ';
 	im.getReal()._svgString << "\"/>\n";
