@@ -556,6 +556,12 @@ enum class PtStyle: uint8_t
 /// Draw parameters, independent of back-end library
 class DrawParams
 {
+	template<typename T> friend class h2d::Circle_;
+	template<typename T> friend class h2d::Segment_;
+	template<typename T> friend class h2d::FRect_;
+	template<typename T> friend class h2d::Ellipse_;
+	template<typename T,typename U> friend class h2d::base::PolylineBase;
+	template<typename T,typename U> friend class h2d::base::LPBase;
 
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
 	struct Dp_values
@@ -658,17 +664,6 @@ public:
 		return *this;
 	}
 
-	std::string getSvgRgbColor() const
-	{
-		std::ostringstream oss;
-		oss << "rgb("
-			<< (int)_dpValues._color.r << ','
-			<< (int)_dpValues._color.g << ','
-			<< (int)_dpValues._color.b
-			<< ')';
-		return oss.str();
-	}
-
 /// Add some specific SVG attributes (ignored for Opencv renderings)
 /** \sa getAttrString() */
 	DrawParams& setAttrString( std::string attr )
@@ -677,7 +672,19 @@ public:
 		return *this;
 	}
 
-// private:
+	Color color() const
+	{
+		return _dpValues._color;
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	cv::Scalar cvColor() const
+	{
+		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
+	}
+#endif // HOMOG2D_USE_OPENCV
+
+private:
 /// Checks if the user-given SVG attribute string (with \ref setAttrString() ) holds the fill="none" mention.
 /**
 This is because to have no filling, the object needs to have the fill="none" attribute, so the default
@@ -701,17 +708,17 @@ So the drawing code checks if user has added some filling, and if so, does not a
 		return _dpValues._attrString + ' ';
 	}
 
-	Color color() const
+	std::string getSvgRgbColor() const
 	{
-		return _dpValues._color;
+		std::ostringstream oss;
+		oss << "rgb("
+			<< (int)_dpValues._color.r << ','
+			<< (int)_dpValues._color.g << ','
+			<< (int)_dpValues._color.b
+			<< ')';
+		return oss.str();
 	}
 
-#ifdef HOMOG2D_USE_OPENCV
-	cv::Scalar cvColor() const
-	{
-		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
-	}
-#endif // HOMOG2D_USE_OPENCV
 
 }; // class DrawParams
 
@@ -10074,7 +10081,6 @@ img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawPar
 	);
 }
 #endif
-
 
 //------------------------------------------------------------------
 /// Draw \c Circle (SVG implementation)
