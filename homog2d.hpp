@@ -708,7 +708,7 @@ enum class Dtype: uint8_t {
 #endif
 };
 
-/// Returns stringified version of \ref
+/// Returns stringified version of \ref type()
 inline
 const char* getString( Type t )
 {
