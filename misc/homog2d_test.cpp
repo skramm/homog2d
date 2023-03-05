@@ -3440,6 +3440,18 @@ TEST_CASE( "boost geometry point export", "[bg-pt-export]" )
 	CHECK( bg::get<0>(pt1) == ref1.getX() );
 	CHECK( bg::get<0>(pt2) == ref2.getX() );
 }
+
+TEST_CASE( "boost geometry vector point export", "[bg-vpt-export]" )
+{
+	namespace bg = boost::geometry;
+	std::vector<Point2d> vin;
+	vin.push_back( Point2d(0.0, 0.0) );
+	vin.push_back( Point2d(0.0, 5.0));
+	vin.push_back( Point2d(5.0, 5.0));
+	auto vout = getPts<bg::model::d2::point_xy<float>>(vin); // convert to a vector of boost geometry points
+	CHECK( vout.size() == 3 );
+}
+
 #endif
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

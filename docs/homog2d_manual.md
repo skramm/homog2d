@@ -1536,10 +1536,10 @@ auto ptbg = pt.getPt<boost::geometry::model::point_xy<double>>();
 
 This is also possible for a `std::vector`:
 ```C++
-std::vector<Point2d> in;
-// ... fill vec_in
-auto vec1_out = getPts<cv::Point2d>(in);                       // convert to a vector of Opencv points
-auto vec2_out = getPts<boost::geometry::model::point_xy<float>>(in); // convert to a vector of boost geometry points
+std::vector<Point2d> vin;
+// ... fill vin
+auto vec1_out = getPts<cv::Point2d>(vin);                       // convert to a vector of Opencv points
+auto vec2_out = getPts<boost::geometry::model::point_xy<float>>(vin); // convert to a vector of boost geometry points
 ```
 
 ### 7.3 - Data conversion from/to Opencv data types
@@ -1610,7 +1610,7 @@ p2.set(pb2);
 ```
 
 You can also import a polygon defined as a boost geometry type into a `CPolyline` or a `OPolyline`.
-See a demo in [../misc/test_files/bg_test_1.cpp]
+See (a demo in this file)[../misc/test_files/bg_test_1.cpp]
 
 
 ## 8 - Drawing things
