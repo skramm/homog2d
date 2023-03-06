@@ -538,15 +538,10 @@ And of course, its width, height, length, and enclosed area.
 This is available through member functions or free functions.
 ```C++
 FRect rect;
-auto w = rect.width();
-auto h = rect.height();
-auto a = rect.area();   // w * h
-auto l = rect.length(); // 2*w + 2*h
-// or free functions
-auto w2 = width(rect);
-auto h2 = height(rect);
-auto a2 = area(rect);
-auto l2 = length(rect);
+auto w = rect.width();  // or: width(rect);
+auto h = rect.height(); // or: height(rect);
+auto a = rect.area();   // or: area(rect);
+auto l = rect.length(); // or: length(rect);
 ```
 
 You can gets its size as a pair of values (member function or free function),
@@ -589,6 +584,8 @@ red: the original rectangle, blue: the extended one, green: the diagonal segment
 ([source file](../misc/figures_src/src/frect_extended.cpp)).
 
 ![Extended Rectangle](img/frect_extended.png)
+
+Check [this section](#frect_union) about union and intersection area of two rectangles.
 
 ### 3.3 - Circles
 <a id="p_circle"></a>
@@ -1313,6 +1310,7 @@ The table below summarizes what type (lines) can be used to check if it is insid
 
 
 ### 5.3 - Union and Intersection area of two rectangles
+<a id="frect_union"></a>
 
 You can compute the rectangle corresponding to the intersection of two (flat) rectangles:
 one can use either the `intersectArea()` member function or (same name) free function, or the `&` operator.
