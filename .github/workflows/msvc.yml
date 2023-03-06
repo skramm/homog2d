@@ -1,0 +1,23 @@
+# basic testing with Microsoft compiler
+# uses this: https://github.com/TheMrMilchmann/setup-msvc-dev
+
+name: CI-testing-msvc
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  job3:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup MSVC Developer Command Prompt
+        uses: TheMrMilchmann/setup-msvc-dev@v2.0.0
+        with:
+          arch: x64
+      - name: run msvc
+        run: cl /EHsc misc/test_files/single_file.cpp
+

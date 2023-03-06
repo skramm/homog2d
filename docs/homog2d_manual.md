@@ -32,6 +32,8 @@ All the data types implement a comparison operator ( `==` and  `!=`).
 
 This library does not provide exact arithmetic, it relies instead on basic floating-point types for storage and computations, but user can select the underlying type.
 The types are fully templated by the underlying numerical type.
+If more precision is required, an external library providing arbitrary binary size for numerical values can be used, [see here](#bignum).
+
 To make things simple, we introduce here only the default type, based on `double` (see [Numerical data types](#numdt) for details).
 
 The API is exposed both as member functions and as free functions.
@@ -446,6 +448,14 @@ The support line is gray.
 
 ![extended segment](img/segment_extended1.png)
 
+You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOrthogSegs()` (member or free functions).
+These two member functions return an `std::array` of size 4, the latter filled with the 4 orthogonal segments,
+and the first filled with the associated 4 points.
+
+Due to the unoriented nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
+
+![showcase17](showcase/showcase17.gif)
+
 The distance between a segment and a point can be computed.
 The code considers the different situations:
 shorted distance can be the orthogonal distance to the supporting line, or the distance to one the two points.
@@ -528,15 +538,10 @@ And of course, its width, height, length, and enclosed area.
 This is available through member functions or free functions.
 ```C++
 FRect rect;
-auto w = rect.width();
-auto h = rect.height();
-auto a = rect.area();   // w * h
-auto l = rect.length(); // 2*w + 2*h
-// or free functions
-auto w2 = width(rect);
-auto h2 = height(rect);
-auto a2 = area(rect);
-auto l2 = length(rect);
+auto w = rect.width();  // or: width(rect);
+auto h = rect.height(); // or: height(rect);
+auto a = rect.area();   // or: area(rect);
+auto l = rect.length(); // or: length(rect);
 ```
 
 You can gets its size as a pair of values (member function or free function),
@@ -579,6 +584,8 @@ red: the original rectangle, blue: the extended one, green: the diagonal segment
 ([source file](../misc/figures_src/src/frect_extended.cpp)).
 
 ![Extended Rectangle](img/frect_extended.png)
+
+Check [this section](#frect_union) about union and intersection area of two rectangles.
 
 ### 3.3 - Circles
 <a id="p_circle"></a>
@@ -649,7 +656,7 @@ auto line = getLine( c1, c2 );    // as a line
 // same result than: getSegment( c1, c2 ).getLine();
 auto pair_segs = getTanSegs( c1, c2 ); // std::pair of Segment
 ```
-![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles2.svg)
+![An example of two circles and the computed cented segment (red) and tangential segments (green and blue)](img/circles1.svg)
 
 
 ### 3.4 - Polyline
@@ -661,16 +668,18 @@ It is available as two classes `OPolyline_` (open) and `CPolyline_` (closed).
 The closed one automatically considers a connection betwen last and first point.
 It can be used to model a polygon.
 
+#### 3.4.1 - Building
+
 ```C++
 OPolyline pl1; // empty
 CPolyline pl2;
 std::vector<Point2d> vpts;
 // fill vpts
 pl1.set( vpt );      // sets the points
-pl2.set( vpt );      // sets the points
+pl2.set( vpt );
 ```
 
-It can be initialised either with a container holding the points, or (only for the closed version) from a `FRect`:
+It can be initialised either with a container (`std::vector`, or `std::array`, or `std::list`) holding the points, or (only for the closed version) from a `FRect`:
 ```C++
 std::vector<Point2d> vpts{ {0,0},{1,1},{3,1} };
 OPolyline op(vpts);
@@ -678,6 +687,13 @@ CPolyline cp(vpts);
 FRect rect( .... );
 CPolyline cp2(rect);
 // OPolyline op2(rect); // this does not build
+```
+
+Another constructor enables building a Polyline from a Segment, wich ends up with a Polyline of 2 points:
+```C++
+Segment seg; // default constructor
+OPolyline po(seg);
+CPolyline pc(seg);
 ```
 
 **Warning**: you may not add a point identical to the previous one.
@@ -695,7 +711,14 @@ It has no orientation, meaning that the `OPolyline` build from this set of point
 will be identical as this one:<br>
 `(1,1)-(1,0)-(0,0)`
 
-#### Basic attributes
+It is also possible to build a polyline by importing from a boost::geometry polygon
+(at present, only possible with the `model::point` point type).
+See an [example here](../misc/test_files/bg_test_1.cpp).
+
+This requires the symbol `HOMOG2D_USE_BOOSTGEOM` to be defined.
+
+
+#### 3.4.2 - Basic attributes
 
 The open/close status can be read, but will return a `constexpr` value:
 ```C++
@@ -728,7 +751,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### Bounding Box and Convex Hull
+#### 3.4.3 - Bounding Box and Convex Hull
 
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
@@ -743,7 +766,7 @@ The convex hull of a Polyline can be computed with the member function `convexHu
 [see here](#convex-hull-ff) for an example.
 
 
-#### Extremum points
+#### 3.4.4 - Extremum points
 <a name="poly_extremum_points"></a>
 
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
@@ -783,7 +806,19 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 
 **Warning**: These functions will throw if passed an empty polyline object.
 
-#### Type of Polyline
+#### 3.4.5 - Distance between two Polyline objects
+
+You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
+This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
+```C++
+auto closest = getClosestPoints( poly1, poly2 );
+auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
+auto d = closest.getMinDist()     // get the distance value
+auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
+```
+See [an example here](homog2d_showcase.md#sc14).
+
+#### 3.4.6 - Type of Polyline
 
 You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
 If it is, you can get its area and its centroid point:
@@ -796,8 +831,7 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 }
 ```
 
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0
-but the `centroid()` function will throw.
+Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -808,7 +842,7 @@ std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free func
 assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
 ```
 
-#### Comparison of Polyline objects
+#### 3.4.7 - Comparison of Polyline objects
 
 Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
@@ -846,7 +880,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
-### Rotation/mirroring
+#### 3.4.8 - Rotation/mirroring
 
 All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
 While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
@@ -878,15 +912,6 @@ Point2d org( ..., ... );
 poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
 
-You can get the closest distance between two polyline objects with `getClosestPoints()`.
-This will return an object on with you can fetch the corresponding pair of points, as indexes or as points and the distance value:
-```C++
-auto closest = getClosestPoints( poly1, poly2 );
-auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
-auto d = closest.getMinDist()     // get the distance value
-auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
-```
-See [an example here](homog2d_showcase.md#sc14).
 
 
 ### 3.5 - Ellipse
@@ -1227,11 +1252,10 @@ The table below summarizes the number of intersection points to expect:
 | `Line2d`   |   0 or 1   |           |          |          |            |
 | `Segment`  |   0 or 1   |   0 or 1  |          |          |            |
 | `FRect`    | 0, 1, or 2 | 0,1, or 2 |    0-4   |          |            |
-| `Circle`   |   0 or 2   | 0,1, or 2 |   0,2,4  |  0 or 2  |            |
+| `Circle`   |   0 or 2   | 0,1, or 2 |   0,2,4  | 0,1, or 2 |            |
 | `Polyline` |   0 - n    |   0 - n   |   0 - n  |  0 - n   |   0 - n    |
 
 - For line-line and line-segment intersections, the `get()` member function will return the unique intersection point, or throw if none.
-%%%%- For line-circle or line-FRect, intersections, the `get()` member function will return the two intersection points as a `std::pair`, or throw if none.
 - For the other situations, the `get()` member function will return a `std::vector` holding the points (empty if no intersections).
 
 For `Polyline`, the number of intersections is of course depending on the number of segments.
@@ -1286,6 +1310,7 @@ The table below summarizes what type (lines) can be used to check if it is insid
 
 
 ### 5.3 - Union and Intersection area of two rectangles
+<a id="frect_union"></a>
 
 You can compute the rectangle corresponding to the intersection of two (flat) rectangles:
 one can use either the `intersectArea()` member function or (same name) free function, or the `&` operator.
@@ -1465,6 +1490,13 @@ auto v_lines = getLines( vec );
 ## 7 - Bindings with other libraries
 <a name="bind"></a>
 
+Besides the type conversions described here, a more general binding is provided with the
+[ttmath](https://www.ttmath.org/) library.
+It allows increasing range and precision of numerical values.
+See [here](#bignum) for details.
+
+### 7.1 - Generic type conversion
+
 Import from other types is pretty much straight forward.
 For points, a templated constructor is provided that can be used with any type having an 'x' and 'y' member.
 For example, say you have a point type:
@@ -1489,9 +1521,28 @@ For homographies, you can import directly from
 For the first case, it is mandatory that all the vectors sizes are equal to 3
 (the 3 embedded ones and the global one).
 
-### 7.1 - Data conversion from/to Opencv data types
+### 7.2 - Generic conversion into other types
 
-Optional functions are provided to interface with [Opencv](https://opencv.org).
+For points, as long as the other type provides a 2-args numerical constructor, you can easily convert a `h2d::Point2d` into these, for example:
+
+```C++
+Point2d pt;
+...
+auto ptcv = pt.getPt<cv::Point2d >();                     // of free function: getPt<cv::Point2d >(pt);
+auto ptbg = pt.getPt<boost::geometry::model::point_xy<double>>();
+```
+
+This is also possible for a `std::vector`:
+```C++
+std::vector<Point2d> vin;
+// ... fill vin
+auto vec1_out = getPts<cv::Point2d>(vin);                       // convert to a vector of Opencv points
+auto vec2_out = getPts<boost::geometry::model::point_xy<float>>(vin); // convert to a vector of boost geometry points
+```
+
+### 7.3 - Data conversion from/to Opencv data types
+
+Optional functions are provided to make interface with [Opencv](https://opencv.org) easier.
 These features are enabled by defining the symbol `HOMOG2D_USE_OPENCV` at build time, before "#include"'ing the file.
 You can then write this:
 ```C++
@@ -1500,13 +1551,6 @@ Point2d pt;
 cv::Point2d ptcv1 = pt.getCvPtd(); // double coordinates
 cv::Point2f ptcv2 = pt.getCvPtf(); // float coordinates
 cv::Point2i ptcv3 = pt.getCvPti(); // integer coordinates
-```
-
-Or use the templated version:
-```C++
-auto ptcv1 = pt.getCvPt<cv::Point2d>(); // double coordinates
-auto ptcv2 = pt.getCvPt<cv::Point2f>(); // float coordinates
-auto ptcv3 = pt.getCvPt<cv::Point2i>(); // integer coordinates
 ```
 
 This is also available as free functions:
@@ -1518,14 +1562,6 @@ cv::Point2f ptcv2 = getCvPtf(pt);
 cv::Point2i ptcv3 = getCvPti(pt);
 ...
 auto ptcv3 = getCvPt<cv::Point2d>(pt); // templated version
-```
-
-You can also convert a whole vector in a single call:
-```C++
-std::vectot<Point2d> vec;
-// ... fill vector
-auto vec_cv1 = getCvPts<cv::Point2d>(vec); // convert to 'double' points'
-auto vec_cv2 = getCvPts<cv::Point2f>(vec); // convert to 'float' points'
 ```
 
 
@@ -1552,6 +1588,28 @@ cv::Mat m;   // needs to be 3x3, floating point type (either CV_32F or CV_64F)
 Homog H = m;  // call of dedicated constructor
 H = m;        // or call assignment operator
 ```
+
+### 7.4 - Binding with Boost Geometry
+
+From release 2.10, a preliminar binding is provided with
+[Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html).
+
+You may build a point using either of the two point types:
+
+```C++
+namespace bg = boost::geometry;
+bg::model::point<double, 2, bg::cs::cartesian> pb1;
+bg::model::d2::point_xy<double> pt2;
+...
+Point2d p1(pb1);
+Point2d p2(pb2);
+p1.set(pb1);     // this works too
+p2.set(pb2);
+```
+
+You can also import a polygon defined as a boost geometry type into a `CPolyline` or a `OPolyline`.
+See (a demo in this file)[../misc/test_files/bg_test_1.cpp]
+
 
 ## 8 - Drawing things
 <a name="drawing"></a>
@@ -1632,7 +1690,7 @@ drawText( im, "Some Text", loc );  // or: im.drawText( "Some Text", loc );
 ### 8.4 - Drawing parameters
 <a name="drawing_params"></a>
 
-All these drawing functions support a second (or third, for the free function) optional argument of type `img::DrawParams` (also back-end library independent)
+All these drawing functions (member and free function) support an additional optional argument of type `img::DrawParams`, also back-end library independent.
 that holds various parameters for drawing.
 It holds several member functions that allow to tweak the drawing parameters.
 All of these functions support the "chained-call" syntax.
@@ -1682,6 +1740,15 @@ The available functions are given in the table below:
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     |  Only for `putText()`  |
 
+For Svg back-end only, the user my add some specific Svg attributes with `setAttribString()`.
+For example:
+```C++
+FRect r( 100,100,200,200);
+r.draw( im, DrawParams().setAttrString("fill=\"rgb(100,200,150)\"") );
+```
+Make sure you add valid attributes, [check here](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/Presentation).
+
+For Opencv back-end, this is ignored.
 
 ### 8.4 - Drawing containers
 
@@ -1726,7 +1793,7 @@ draw( img, vseg, func );
 ## 9 - Numerical data types
 <a name="numdt"></a>
 
-### 9.1 - Underlying data type
+### 9.1 - Underlying data type: standard library floating point types
 
 The library is fully templated, the user has the ability to select for each type either
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
@@ -1760,17 +1827,30 @@ configure the library to use `long double` by adding this before the "include":
 or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long double" ...`
 <br>(don't forget the quotes!)
 
-#### Numerical type access
+#### Numerical type and size access
 
-For any object, you may know its type with the `dtype()` (member or free) function.
+For any object, you may know its underlying floating-point type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
 `Dtype::Float`, `Dtype::Double` or `Dtype::LongDouble`.
+
+It can be printed out for humans with `getString()`, this will print "Float":
 
 ```C++
 Circle c1;
 assert( c1.dtype() == Dtype::Double );
 CircleF c2;
 assert( dtype(c2) == Dtype::Float );
+std::cout << getString( dtype(c2) );
+```
+
+You may also check the size in bits of corresponding mantissa and exponent with the (member of free) function `dsize()`
+(assuming [IEEE754](https://en.wikipedia.org/wiki/IEEE_754) implementation).
+It will return a `std::pair` of integers, the first being the size of the mantissa, the second being the size of exponent.
+
+```C++
+Circle c1; // default is double
+assert( c1.dsize().first == 53 );
+assert( dsize(c1).second == 10 );
 ```
 
 ### 9.2 - Numerical type conversion
@@ -1800,6 +1880,28 @@ They are implemented as static values, that user code can change any time.
 
 More details and complete list on [threshold page](homog2d_thresholds.md).
 
+### 9.4 - "Big numbers" support
+<a name="bignum"></a>
+
+From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
+This library is header-only, so its very simple to install.
+
+To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` and you need to tell what type you will use for internal computation.
+<br>
+For example, to have 2 machine words for exponent and 3 for mantissa, you add this:
+```C++
+#define HOMOG2D_INUMTYPE ttmath::Big<2,3>
+```
+
+The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
+each component of the library needs to be declared using the templated syntax and must use the "ttmath" type.
+See [this file](../misc/test_files/ttmath_t1.cpp) for example.
+
+Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the
+[threshold page](homog2d_thresholds.md).
+
+
 ## 10 - SVG import
 <a name="svg_import"></a>
 
@@ -1822,6 +1924,7 @@ $(pkg-config --libs tinyxml2)
 (double the `$` if in a makefile)
 
 ### 10.2 - Example
+<a name="svg_import_example"></a>
 
 Importing is pretty simple:
 Instanciate a Tinyxml `XMLDocument` object, and use it to read the file.
@@ -1920,11 +2023,11 @@ For more details on the code, check [this page](homog2d_devinfo.md).
 
 ### 11.1 - Testing
 
-A unit-test program is included.
+A unit-test program is included, can be run locally and is also used by GitHub CI.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
-The travis-based CI loads the 2.13.6 release.
-It is build and run with `$ make test`.
-It has been tested both with gcc7.5 (Ubuntu 18) and gcc9.4 (Ubuntu 20).
+The Github CI loads the 2.13.6 release.
+It is build and run with `$ make test`
+The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22.
 
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
@@ -1945,7 +2048,7 @@ These demonstrate some code that should NOT build, thus Make will fail if any of
 This is just to make sure that some invalid code does, indeed, not build.
 
 **Timing**
-Using the Catch library has a small drawback: build time is pretty long (but will succeed!).
+Using the Catch v2 library has a small drawback: build time is pretty long (but will succeed!).
 For example:
 ```
 $ time make test -j2
@@ -1962,26 +2065,37 @@ You can do that in the makefile by adding `-DHOMOG2D_SYMBOL` to the compiler cal
 or just add a `#define` on top of your program
 **before** the `#include "homog2d"`
 
+#### 11.2.1 - Build symbols related to bindings with other libs:
+
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
 - `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
+- `HOMOG2D_USE_BOOSTGEOM`: enables the binding with Boost::geometry (preliminar), see [example here](../misc/test_files/bg_test_1.cpp).
+- `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
+See [here](#bignum) for details.
+
+#### 11.2.2 - Other build symbols:
+
 - `HOMOG2D_NOCHECKS`: will disable run-time checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
+- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr`(1). Defining this symbol will disables this.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
-With this option activated, each ellipse will store both representations, so access to values is immediate.
+With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
 Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
 This will add a common base class `detail::Root` to all the geometric primitives.
-
+At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
 
-
-
+(1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
+and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.
+<br>
+In the future, other warnings could be issued, and silenced using this symbol.
 

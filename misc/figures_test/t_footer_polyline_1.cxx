@@ -33,6 +33,7 @@
 
 	auto dp = img::DrawParams().setColor(250,0,20).showPoints(true).setPointStyle(img::PtStyle::Times).showIndex(true);
 	poly2.draw( img2, dp );
-	img2.write( std::string(argv[0])+ ".png" );
+//	img2.write( std::string(argv[0])+ ".png" );
+	img2.write( std::string(argv[0])+ ".svg" );
 }
 

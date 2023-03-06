@@ -31,12 +31,13 @@
 	auto r1b = H*r1;
 	auto r2b = H*r2;
 
-	cv::putText( img2.getReal() , "r1", getBB(r1b).getPts().second.getCvPti(), 1, 2., cv::Scalar(20,0,250) );
-	cv::putText( img2.getReal() , "r2", getBB(r2b).getPts().second.getCvPti(), 1, 2., cv::Scalar(250,0,20) );
+	img2.drawText( "r1", getBB(r1b).getPts().second, img::DrawParams().setColor(250,0,0) );
+	img2.drawText( "r2", getBB(r2b).getPts().second, img::DrawParams().setColor(0,0,250) );
 
 	r1b.draw( img2, img::DrawParams().setColor(250,0,20) );
 	r2b.draw( img2, img::DrawParams().setColor(20,0,250) );
 
-	img2.write( std::string(argv[0])+ ".png" );
+//	img2.write( std::string(argv[0])+ ".png" );
+	img2.write( std::string(argv[0])+ ".svg" );
 }
 

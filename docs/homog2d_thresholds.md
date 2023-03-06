@@ -36,7 +36,7 @@ For example:
 These are the symbols to use:
 
 * `HOMOG2D_THR_ZERO_DIST`: default value for null distance, i.e. two points whose distance is less than this value will be considered identical points.
-* `HOMOG2D_THR_ZERO_ORTHO_DIST`: default value for othogonal distance.
+* `HOMOG2D_THR_ZERO_ORTHO_DIST`: default value for orthogonal distance.
 * `HOMOG2D_THR_ZERO_ANGLE`: default value for an angle value to be considered null (value must be given in rad.).
 * `HOMOG2D_THR_ZERO_DENOM`: default value for a denominator to be considered null. Used mostly when checking points for infinity and when normalizing a matrix.
 * `HOMOG2D_THR_ZERO_DETER`: default value for a matrix determinant to be considered null, thus the matrix will not be inversed.
@@ -72,7 +72,7 @@ thr::printThresholds( std::cout );
 
 Precision of computation and the associated threshold values greatly depend on the numerical range of your data.
 
-Below is a plot that shows the result of an experiment ([code provided](misc/dtest1.cpp)).
+Below is a plot that shows the result of an experiment ([code provided](../misc/dtest1.cpp)).
 It shows the distance (max and mean value) between a line and the points it was generated with.
 When you build a line using two points (line = pt1 * pt2), the distance between the computed line and both of the points should be 0.
 But (as you got it), its not. And that is the distance that is shown on the plot below.

@@ -4,8 +4,7 @@
 
 #include "fig_src.header"
 
-//img::Image<cv::Mat>       img1;
-img::Image<img::SvgImage> img2;
+
 std::vector<img::Color>   v_colors;
 
 std::vector<img::Color> genRandomColors( size_t nb )
@@ -52,7 +51,7 @@ void DrawExtremePoints( img::Image<img::SvgImage>&, const T& )
 {}
 
 template<typename T>
-void process( const T& vec, std::string fname )
+void process( img::Image<img::SvgImage>& im, const T& vec, std::string fname )
 {
 	auto lamb_func = [&v_colors](int i)   // lambda, needed to fetch color from index
 	{
@@ -60,17 +59,13 @@ void process( const T& vec, std::string fname )
 	};
 	std::function<img::DrawParams(int)> f(lamb_func);
 
-//	img1.clear();
-	img2.clear();
-//	draw( img1, vec, f );
-	draw( img2, vec, f );
+	im.clear();
+	draw( im, vec, f );
 
 	auto bb = getBB( vec );
-//	bb.draw( img1, DrawParams().setColor(250,50,20) );
-	bb.draw( img2, DrawParams().setColor(250,50,20) );
-	DrawExtremePoints( img2, vec );
-//	img1.write( fname + ".png" );
-	img2.write( fname + ".svg" );
+	bb.draw( im, DrawParams().setColor(250,50,20) );
+	DrawExtremePoints( im, vec );
+	im.write( fname + ".svg" );
 }
 
 int main()
@@ -113,9 +108,8 @@ int main()
 		}
 	}
 	auto k = 1.5;
-
-//	img1.setSize( k*xmax, k*ymax );
-	img2.setSize( k*xmax, k*ymax );
+	img::Image<img::SvgImage> im( k*xmax, k*ymax );
+//	img2.setSize( k*xmax, k*ymax );
 
 	std::vector<FRect> v_rects;
 	for( const auto& seg: v_segs )
@@ -139,11 +133,11 @@ int main()
 		v_ell.push_back( ell );
 	}
 
-	process( v_rects,   "bb_Rects" );
-	process( v_pts,     "bb_Points" );
-	process( v_segs,    "bb_Segs" );
-	process( v_circles, "bb_Circles" );
-	process( v_poly,    "bb_Poly" );
-	process( v_ell,     "bb_Ellipses" );
+	process( im, v_rects,   "bb_Rects" );
+	process( im, v_pts,     "bb_Points" );
+	process( im, v_segs,    "bb_Segs" );
+	process( im, v_circles, "bb_Circles" );
+	process( im, v_poly,    "bb_Poly" );
+	process( im, v_ell,     "bb_Ellipses" );
 }
 

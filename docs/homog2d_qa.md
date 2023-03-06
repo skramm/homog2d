@@ -7,8 +7,12 @@
 Q: Is this library usable on a Windows platform?
 </dt>
 <dd>
-A: I don't see any reason why that would not be the case, as long as you are able to handle the inclusion of a file in your build process.
+A: Sure, should be!
+I am not a Windows user myself, so I can't help on specific issues but as long as you are able to handle the inclusion of a file in your build process, it will work.
+FWIW, the GH action CI test process includes building using the Microsoft Visual C++ compiler (known as MSVC), [see here yamlfile](../.github/workflows/msvc.yml).
+<br>
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
+But the library end-user doesn't need it.
 </dd>
 
 <dt>
@@ -19,6 +23,18 @@ A: easy, add this in your app (or check for that symbol in the file).
 <pre>
    std::cout << "version: " << HOMOG2D_VERSION << '\\n';
 </pre>
+</dd>
+
+<dt>
+Q: Why the choice of <tt>ttmath</tt> (https://www.ttmath.org/) as "big numbers" library?
+</dt>
+<dd>
+A: Sure, other choices were possible. But it matched all these criterions:<br>
+- C++ (GMP and MPFR have a C API)<br>
+- header only (so really easy to install)<br>
+- compatible licence (BSD)<br>
+- used by other projects (Boost)<br>
+- reasonnably easy API
 </dd>
 
 <a name="assert_trigger"></a>

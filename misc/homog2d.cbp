@@ -29,6 +29,8 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="../.github/workflows/c-cpp.yml" />
+		<Unit filename="../.github/workflows/doxygen-gh-pages.yml" />
+		<Unit filename="../.github/workflows/msvc.yml" />
 		<Unit filename="../.travis.yml">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -62,18 +64,12 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="build_gif.sh" />
-		<Unit filename="demo_check.cpp">
-			<Option target="demo" />
-		</Unit>
 		<Unit filename="demo_opencv.cpp" />
 		<Unit filename="demo_svg_import.cpp" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="doxyfile_dev" />
-		<Unit filename="doxyfile_opencv">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="dtest1.cpp" />
 		<Unit filename="dtest1.plt" />
 		<Unit filename="ellipse_speed_test.cpp" />
@@ -166,6 +162,8 @@
 		<Unit filename="plot_gitlog.plt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="scripts/plot_tags_linecount.plt" />
+		<Unit filename="scripts/tags_linecount.sh" />
 		<Unit filename="showcase/gif_duration.data" />
 		<Unit filename="showcase/showcase1.cpp" />
 		<Unit filename="showcase/showcase10.cpp" />
@@ -175,6 +173,7 @@
 		<Unit filename="showcase/showcase14.cpp" />
 		<Unit filename="showcase/showcase15.cpp" />
 		<Unit filename="showcase/showcase16.cpp" />
+		<Unit filename="showcase/showcase17.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
@@ -194,6 +193,12 @@
 		<Unit filename="test_all.sh">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="test_files/bg_test_1.cpp" />
+		<Unit filename="test_files/mylib.cpp" />
+		<Unit filename="test_files/mylib.hpp" />
+		<Unit filename="test_files/single_file.cpp" />
+		<Unit filename="test_files/test_multiple.cpp" />
+		<Unit filename="test_files/ttmath_t1.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

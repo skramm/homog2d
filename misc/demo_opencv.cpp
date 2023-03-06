@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2022 Sebastien Kramm
+    Author & Copyright 2019-2023 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -17,12 +17,13 @@
 
 /**
 \file demo_opencv.cpp
-\brief demo of interfacing with Opencv
+\brief demo of interfacing with Opencv.
+Try it with <code>$ make demo</code>.
 
-\todo 20221210: check out demo8, why is the figure cropped?!
 */
 
 #define HOMOG2D_USE_OPENCV
+#define HOMOG2D_ENABLE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -1094,10 +1095,10 @@ struct Param_CIR : Data
 			{150,120}, {220,240},            // initial rectangle
 			{100,100}, {300,100}, {300,200}  // initial circle
 		};
+		ptr_cr = &cir2;
 	}
 	void setAndDraw()
 	{
-
 		if( buildFrom3Pts )
 			try
 			{
@@ -1110,29 +1111,52 @@ struct Param_CIR : Data
 		else
 			cir.set( vpt[2], vpt[3] );
 		rect.set( vpt[0], vpt[1] );
+		cir2.set( vpt[0], vpt[1] );
 
-		auto par_c = img::DrawParams().setColor(0,0,250);
-		auto par_r = par_c;
+		ptr_cr = &cir2;
+		if( drawRect )
+			ptr_cr = &rect;
+
+		auto par_c = img::DrawParams().setColor(0,120,250);
+		auto par_r = img::DrawParams().setColor(120,0,250);
 		if( cir.isInside( rect ) )
 			par_c.setColor( 0,250,0);
 		if( rect.isInside( cir ) )
 			par_r.setColor( 0,250,0);
 
 		cir.draw( img, par_c );
-		rect.draw( img, par_r );
+//		rect.draw( img, par_r );
+		ptr_cr->draw( img, par_r );
+
 		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
 		if( buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
 				vpt[i].draw( img, par_pt );
+
+// intersection points
+// TODO: replace this by: 		auto it = cir.intersects( *ptr_cr );
+// once we have set a unique function for all intersections types
+		auto it_c = cir.intersects( cir2 );
+		auto it_r = cir.intersects( rect );
+		if( drawRect )
+		{
+			if( it_r() )
+				draw( img, it_r.get(), img::DrawParams().setColor(120,0,0) );
+		}
+		else
+			if( it_c() )
+				draw( img, it_c.get(), img::DrawParams().setColor(120,0,0) );
 	}
 
 // DATA SECTION
-
+	const detail::Root* ptr_cr;
 	Circle cir;
+	Circle cir2;
 	FRect rect;
 	bool buildFrom3Pts = true;
+	bool drawRect  = true;
 
 };
 
@@ -1141,7 +1165,6 @@ void action_CIR( void* param )
 	auto& data = *reinterpret_cast<Param_CIR*>(param);
 	data.clearImage();
 	data.setAndDraw();
-
 	data.showImage();
 }
 
@@ -1163,6 +1186,12 @@ void demo_CIR( int demidx )
 		},
 		"switch circle from 2 pts / 3 pts"
 	);
+	kbloop.addKeyAction( 'w', [&](void*)
+		{
+			data.drawRect = !data.drawRect;
+		},
+		"switch circle/rectangle"
+	);
 
 	kbloop.start( data ); // blocking function
 }
@@ -1173,7 +1202,7 @@ struct Param_CH : Data
 {
 	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
 	{
-		vpt = std::vector<Point2d>{ {100,100}, {300,100}, {300,400}, {100,400},{150,250} };
+		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420},{150,250} };
 	}
 	std::vector<img::Color> vcol;
 };
@@ -1204,6 +1233,11 @@ void action_CH( void* param )
 	draw( data.img, vlines, f );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 
+	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
+	chull.getLmPoint().draw( data.img, dp );
+	chull.getRmPoint().draw( data.img, dp );
+	chull.getTmPoint().draw( data.img, dp );
+	chull.getBmPoint().draw( data.img, dp );
 	data.showImage();
 }
 
@@ -1517,6 +1551,64 @@ void demo_NFP( int demidx )
 
 	kbloop.start( data );
 }
+//------------------------------------------------------------------
+/// Demo of pts/segments perpendicular to a segment
+struct Param_ORS : Data
+{
+	explicit Param_ORS( int demidx, std::string title ): Data( demidx, title )
+	{
+		_vcol[0]=img::Color(0,250,125);
+		_vcol[1]=img::Color(0,125,250);
+		_vcol[2]=img::Color(125,0,250);
+		_vcol[3]=img::Color(250,0,125);
+	}
+	bool _ptsOrSegs = false;
+	bool _drawPolyg = false;
+	std::array<img::Color,4> _vcol;
+};
+
+void action_ORS( void* param )
+{
+	auto& data = *reinterpret_cast<Param_ORS*>(param);
+	data.clearImage();
+
+	auto fl = [&](int i)   // lambda
+	{
+		return img::DrawParams().setPointStyle(img::PtStyle::Dot).setColor( data._vcol[i] );
+	};
+	std::function<img::DrawParams(int)> style(fl);
+
+	Segment seg( data.vpt[0], data.vpt[1] );
+	seg.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	if( data._ptsOrSegs )
+		draw( data.img, seg.getOrthogSegs(), style );
+	else
+	{
+		auto opts = seg.getOrthogPts();
+		draw( data.img, opts, style );
+		if( data._drawPolyg )
+			CPolyline( opts ).draw( data.img, img::DrawParams().setColor( 125,125,0) );
+	}
+	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	data.showImage();
+}
+
+void demo_orthSeg( int demidx )
+{
+	Param_ORS data( demidx, "Orthogonal segments" );
+	std::cout << "Demo " << demidx << ": Orthogonal segments\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._drawPolyg=!data._drawPolyg; }, "switch mode: draw polygon in points mode" );
+
+	kbloop.addCommonAction( action_ORS );
+	action_ORS( &data );
+	data.setMouseCB( action_ORS );
+
+	kbloop.start( data );
+
+}
 
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
@@ -1530,7 +1622,17 @@ int main( int argc, const char** argv )
 		<< "\n - homog version: " << HOMOG2D_VERSION
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
+		Point2dF pt1;
+		std::cout << "F: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
+
+		Point2dL pt2;
+		std::cout << "L: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
+
+		Point2dD pt3;
+		std::cout << "D: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
+
 	std::vector<std::function<void(int)>> v_demo{
+		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection
 		demo_CIR,
