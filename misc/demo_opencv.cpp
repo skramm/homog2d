@@ -174,6 +174,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 			{
 				data.vpt[data.selected] = data.pt_mouse;
 				data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
+				std::cout << "selected= " << data.selected << "=" << data.pt_mouse << '\n';
 			}
 		break;
 
@@ -1607,9 +1608,68 @@ void demo_orthSeg( int demidx )
 	data.setMouseCB( action_ORS );
 
 	kbloop.start( data );
+}
+//------------------------------------------------------------------
+#ifdef HOMOG2D_USE_BOOSTGEOM
+struct Param_polyUnion : Data
+{
+	img::Image<cv::Mat> img2;
+	std::string win2 = "Polygon Union";
+	std::vector<Point2d> vpts2;
+	CPolyline pol1, pol2;
 
+	explicit Param_polyUnion( int demidx, std::string title ): Data( demidx, title )
+	{
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imHeight, _imWidth );
+		vpts2 = { { 77,22}, {43,125}, {288,210}, {14,162},{ 23,28} };
+		pol1.set( vpt );
+		pol2.set( vpts2 );
+		leftClicAddPoint=true;
+	}
+	void showImage()
+	{
+		img.show( win1 );
+		img2.show( win2 );
+	}
+	void clearImage()
+	{
+		img.clear();
+		img2.clear();
+	}
+};
+
+void action_polyUnion( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polyUnion*>(param);
+	data.clearImage();
+	data.pol1.set( data.vpt );
+	data.pol2.set( data.vpts2 );
+	draw( data.img, data.pol1, img::DrawParams().setColor(250,0,0) );
+	draw( data.img, data.pol2, img::DrawParams().setColor(0,0,250) );
+	std::cout << "pol1=" << data.pol1 << '\n';
+	auto pol_u = unionArea( data.pol1, data.pol2 );
+	draw( data.img, pol_u, img::DrawParams().setColor(120,120,0) );
+	data.showImage();
 }
 
+void demo_polyUnion( int demidx )
+{
+	Param_polyUnion data( demidx, "polygon union" );
+	std::cout << "Demo " << demidx << ": polygon union\n";
+
+	KeyboardLoop kbloop;
+//	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
+//	kbloop.addKeyAction( 'w', [&](void*){ data._drawPolyg=!data._drawPolyg; }, "switch mode: draw polygon in points mode" );
+
+	kbloop.addCommonAction( action_polyUnion );
+	action_polyUnion( &data );
+	data.setMouseCB( action_polyUnion );
+
+	kbloop.start( data );
+}
+#endif
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -1632,6 +1692,9 @@ int main( int argc, const char** argv )
 		std::cout << "D: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+#ifdef HOMOG2D_USE_BOOSTGEOM
+		demo_polyUnion,  // polygon union
+#endif
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection

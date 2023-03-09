@@ -8618,6 +8618,57 @@ intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 	return r1.intersectArea(r2);
 }
 
+namespace priv {
+
+/// Helper function to copy a vector of Point2d into a boost geometry vector of points
+template<typename T1,typename T2>
+void
+copyVec( const T1& in, T2& out )
+{
+	assert( in.size() == out.size() );
+	auto it = std::begin(out);
+	for( const auto& elem: in )
+	{
+		it->x( elem.getX() );
+		it->y( elem.getY() );
+		it++;
+	}
+}
+
+} // namespace priv
+
+#ifdef HOMOG2D_USE_BOOSTGEOM
+/// Free function, union of two polygons (WIP!!!!!)
+///
+template<typename FPT1,typename FPT2>
+CPolyline_<FPT1>
+unionArea( const CPolyline_<FPT1>& p1, const CPolyline_<FPT2>& p2 )
+{
+	namespace bg = boost::geometry;
+	using BgPt  = bg::model::d2::point_xy<HOMOG2D_INUMTYPE>;
+	using BgPol = bg::model::polygon<BgPt>;
+	std::vector<BgPt> bg_vec1(p1.size());
+	std::vector<BgPt> bg_vec2(p2.size());
+
+	priv::copyVec( p1.getPts(), bg_vec1 );
+	priv::copyVec( p2.getPts(), bg_vec2 );
+
+	BgPol bpol1, bpol2;
+	bg::assign_points( bpol1, bg_vec1 );
+	bg::assign_points( bpol2, bg_vec2 );
+//	bpol1.outer() = bg_vec1;
+//	bpol2.outer() = bg_vec2;
+
+	std::vector<BgPol> output;
+	boost::geometry::union_( bpol1, bpol2, output );
+
+	CPolyline_<FPT1> out; //( output );
+	return out;
+
+}
+#endif
+
+
 /// Returns circle passing through 4 points of flat rectangle (free function)
 /// \sa FRect_::getBoundingCircle()
 template<typename FPT>
