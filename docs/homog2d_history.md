@@ -18,6 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `dsize()` member and free function
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
+  - enabled `ttmath` types as default type (if used)
 
 ## Previous releases
 
