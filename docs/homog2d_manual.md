@@ -1887,15 +1887,27 @@ From release 2.10, there is a preliminar support for the [ttmath](https://www.tt
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
 This library is header-only, so its very simple to install.
 
-To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH` and you need to tell what type you will use for internal computation.
-<br>
-For example, to have 2 machine words for exponent and 3 for mantissa, you add this:
+To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH`.
+This will also define a default value for `HOMOG2D_INUMTYPE` as `ttmath::Big<2,2>`.
+This definition means that both mantissa and exponent will be stored as 2 machine words.
+On a 64-bit platform, that will end up as 128 bits for both.
+
+This can be overridden
+- either by another definition of `HOMOG2D_INUMTYPE` as default types.
+For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file:
 ```C++
 #define HOMOG2D_INUMTYPE ttmath::Big<2,3>
 ```
 
-The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types":
-each component of the library needs to be declared using the templated syntax and must use the "ttmath" type.
+- or individually for each object.
+For example:
+```C++
+	Circle_<ttmath::Big<4,1>> circle;
+```
+
+The downside is that once the symbol `HOMOG2D_USE_TTMATH` is defined, you cannot use anymore the "standard types" (`float`, `double`, `long double`).
+
+
 See [this file](../misc/test_files/ttmath_t1.cpp) for example.
 
 Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the

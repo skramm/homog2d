@@ -10329,32 +10329,33 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 /////////////////////////////////////////////////////////////////////////////
 
 /// Default line type, uses \c double as numerical type
-using Line2d = Line2d_<double>;
+using Line2d = Line2d_<HOMOG2D_INUMTYPE>;
 
 /// Default point type, uses \c double as numerical type
-using Point2d = base::LPBase<type::IsPoint,double>;
+//using Point2d = base::LPBase<type::IsPoint,HOMOG2D_INUMTYPE>;
+using Point2d = Point2d_<HOMOG2D_INUMTYPE>;
 
 /// Default homography (3x3 matrix) type, uses \c double as numerical type
-using Homogr = Homogr_<double>;
+using Homogr = Homogr_<HOMOG2D_INUMTYPE>;
 
 /// Default homogeneous matrix, uses \c double as numerical type
-using Epipmat = Hmatrix_<type::IsEpipmat,double>;
+using Epipmat = Hmatrix_<type::IsEpipmat,HOMOG2D_INUMTYPE>;
 
 /// Default segment type
-using Segment = Segment_<double>;
+using Segment = Segment_<HOMOG2D_INUMTYPE>;
 
 /// Default circle type
-using Circle = Circle_<double>;
+using Circle = Circle_<HOMOG2D_INUMTYPE>;
 
 /// Default rectangle type
-using FRect = FRect_<double>;
+using FRect = FRect_<HOMOG2D_INUMTYPE>;
 
 /// Default polyline type
-using CPolyline = base::PolylineBase<type::IsClosed,double>;
-using OPolyline = base::PolylineBase<type::IsOpen,double>;
+using CPolyline = base::PolylineBase<type::IsClosed,HOMOG2D_INUMTYPE>;
+using OPolyline = base::PolylineBase<type::IsOpen,HOMOG2D_INUMTYPE>;
 
 /// Default ellipse type
-using Ellipse = Ellipse_<double>;
+using Ellipse = Ellipse_<HOMOG2D_INUMTYPE>;
 
 // float types
 using Line2dF  = Line2d_<float>;
