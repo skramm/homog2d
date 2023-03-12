@@ -341,7 +341,7 @@ This is not available for points, lines, and segments (as a segment can be verti
 On this figure, you can see a circle, a polyline and and ellipse, along with their corresponding bounding boxes.
 For the ellipse, you can get both the axis-aligned bounding box (shown in blue here), and the ellipse-axis aligned bounding box, shown in green.
 
-![getbb1a](img/getbb1a.png)
+![getbb1a](img/getbb1a.svg)
 
 Besides these, you can also get the bounding box of two arbitrary primitives `p1`,`p2`, even of different types, with a free function:
 
@@ -351,7 +351,8 @@ auto bb = getBB( p1, p2 );
 
 On this figure, you can see three combinations of bounding boxes for some objects.
 
-![getbb1b](img/getbb1b.png)
+![getbb1b](img/getbb1b.svg)
+[source](../misc/figures_src/src/getbb1.cpp)
 
 ### 3.1 - Segments
 <a name="p_segment"></a>
@@ -458,7 +459,7 @@ Due to the unoriented nature of the `Segment` type, these two member function re
 
 The distance between a segment and a point can be computed.
 The code considers the different situations:
-shorted distance can be the orthogonal distance to the supporting line, or the distance to one the two points.
+shortest distance can be the orthogonal distance to the supporting line, or the distance to one the two points defining the segment.
 ```C++
 Point2d pt;
 Segment seg;
@@ -526,12 +527,12 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
-The two diagonal segments can be fetched with, as a pair of segments:
+The two diagonal segments can be fetched as a pair of segments:
 ```C++
 FRect rect( pt1, pt2 );
 auto psegs = rect.getDiagonals();  // or: getDiagonals(rect);
 ```
-The `first` element will hold the point with minimal coordinates.
+The `first` element will hold the segment holding the point with minimal coordinates.
 
 
 And of course, its width, height, length, and enclosed area.
@@ -620,7 +621,7 @@ c2.set( pt1, pt2 );
 ```
 For these latter functions, the 2 (or 3) points must be different, and not colinear (for 3 points).
 This is checked for and will throw if not the case
-(unless the "no checking" build option is activated, (see here)[#build_options]).
+(unless the "no checking" build option is activated, [see here](#build_options)).
 
 ![showcase6](showcase/showcase6.gif)
 

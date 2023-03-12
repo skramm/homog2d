@@ -8,7 +8,7 @@ int main()
 {
 	auto H = Homogr().setScale(30).addTranslation(10,30);
 
-	img::Image<cv::Mat> im( 450,200 );
+	img::Image<img::SvgImage> im( 450,200 );
 
 	Circle c( 1.4, 1., 1.5 );
 	auto c2 = H*c;
@@ -31,7 +31,7 @@ int main()
 	getOBB(e2).draw( im, DrawParams().setColor(10,250,0) );
 	e2.draw( im, DrawParams().setColor(250,0,20) );
 
-	im.write( "getbb1a.png" );
+	im.write( "getbb1a.svg" );
 	im.clear();
 
 	FRect r( 6.8,0.1, 7.3,2.7 );
@@ -49,5 +49,5 @@ int main()
 	e2.draw( im, DrawParams().setColor(30,0,20) );
 	p2.draw( im, DrawParams().setColor(30,0,20) );
 	c2.draw( im, DrawParams().setColor(30,0,20) );
-	im.write( "getbb1b.png" );
+	im.write( "getbb1b.svg" );
 }
