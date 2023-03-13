@@ -1,0 +1,12 @@
+<svg version="1.1" width="450" height="200" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<rect x="7" y="15" width="189" height="129" stroke="rgb(40,40,200)" stroke-width="1" fill="none" />
+<rect x="130" y="33" width="99" height="111" stroke="rgb(40,200,40)" stroke-width="1" fill="none" />
+<rect x="214" y="33" width="152.467" height="98.322" stroke="rgb(200,40,40)" stroke-width="1" fill="none" />
+<polygon stroke="rgb(30,0,20)" stroke-width="1" fill="none" points="214,33 214,111 229,111 229,33 "/>
+<ellipse cx="310" cy="90" rx="60" ry="36" stroke="rgb(30,0,20)" stroke-width="1" fill="none" transform="rotate(25,310,90)" />
+<polygon stroke="rgb(30,0,20)" stroke-width="1" fill="none" points="130,60 190,36 157,81 196,102 160,144 "/>
+<ellipse cx="52" cy="60" rx="45" ry="45" stroke="rgb(30,0,20)" stroke-width="1" fill="none" transform="rotate(0,52,60)" />
+</svg>
