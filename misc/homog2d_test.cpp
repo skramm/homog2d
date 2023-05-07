@@ -1809,7 +1809,18 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 //		auto inter=r1.intersectArea(r2);
 //		CHECK( inter.get() == r2 );
 	}
+}
 
+TEST_CASE( "IoU of 2 rectangles", "[IOU_RECT]" )
+{
+	FRect_<NUMTYPE> r1( 0,0,1,1 );
+	FRect_<NUMTYPE> r2( 2,2,3,3 );
+	CHECK( IoU(r1,r2) == 0. );
+	r1.set(0,0,2,2);
+	CHECK( IoU(r1,r2) == 0. );
+
+	r2.set(1,0,3,2);
+	CHECK( IoU(r1,r2) == Approx(1./3.) );
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )

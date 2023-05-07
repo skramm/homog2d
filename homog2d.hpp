@@ -942,6 +942,7 @@ product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
+/** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
@@ -2200,11 +2201,19 @@ private:
 	}
 
 public:
-	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
+/// Assigns points \c pa and \c pb to rectangle
+	template<typename FPT1,typename FPT2>
+	void set( const Point2d_<FPT1>& pa, const Point2d_<FPT2>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
 		_ptR1 = ppts.first;
 		_ptR2 = ppts.second;
+	}
+/// Assigns points (x1,y1) and (x2,y2) to rectangle
+	template<typename T>
+	void set( T x1, T y1, T x2, T y2 )
+	{
+		set( Point2d_<T>(x1,y1), Point2d_<T>(x2,y2) );
 	}
 
 /// \name Attributes access
@@ -4179,7 +4188,7 @@ getPts( const std::vector<Point2d_<FPT>>& vpt )
 }
 
 //------------------------------------------------------------------
-/// This namespace holds some private stuff
+/// This namespace holds some private stuff, types here are not to be used directly by end-user code.
 namespace detail {
 
 //------------------------------------------------------------------
@@ -8584,6 +8593,16 @@ HOMOG2D_INUMTYPE
 dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 {
 	return pt1.distTo( pt2 );
+}
+
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+IoU( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+{
+	auto ia = intersectArea( r1, r2 );
+	if( ia() )
+		return ia.get().area() / unionArea( r1, r2 ).area();
+	return 0.;
 }
 
 /// Free function, see FRect_::unionArea()

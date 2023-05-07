@@ -19,6 +19,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
   - enabled `ttmath` types as default type (if used)
+  - added computation of IoU ("Intersection over Union") of two rectangles, see [here](homog2d_manual#frect_union) for details.
+  - templated the `set()` function for `FRect_`
 
 ## Previous releases
 
@@ -41,7 +43,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added MSVC compiler to the Github Action CI automated tests
   - added support for importing Boost::geometry polygons (preliminar), see an [example here](../misc/test_files/bg_test_1.cpp).
   - __breaking changes__:
-    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindindings section](homog2d_manual.md#bind).
+    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindings section](homog2d_manual.md#bind).
     - same for `getCvPts()` replaced by `getPts()`
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23

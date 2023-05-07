@@ -2,8 +2,14 @@
 
 Home page: [github.com/skramm/homog2d](https://github.com/skramm/homog2d)
 
-This is the manual for the current master branch of `homog2d`.
+This is the user manual for the current master branch of `homog2d`.
 For stable releases, see https://github.com/skramm/homog2d/releases .
+
+To get the reference manual (requires Doxygen), you can either type
+`$ make doc` or `$ doxygen misc/doxyfile`.
+
+If you are interested in code, check the page [homog2d_devinfo.md](homog2d_devinfo.md).
+
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
@@ -481,7 +487,9 @@ It is modeled by its two opposite points.
 ```C++
 FRect r1; // (0,0) (1,1)
 FRect r2( Point2d(0,0), Point2d(10,10) );
+FRect r3( 1,5,3,4 ); // (1,4) - (3,4) - (3,5) - (1,5)
 r1.set( pt1, pt2 );
+r2.set( 1,2, 3,4 );
 ```
 When using the constructor or the `set()` member function, there is no constraint on the points themselves:
 the library will automatically adjust the points to store the two opposite ones,
@@ -1347,6 +1355,11 @@ or a single intersection point.<br>
 For the union, if there is no intersection, the function will return an empty `CPolyline` object.
 
 If one rectangle is inside the other one, then the union will return the largest rectangle (as a Polyline object), ant the intersection will return the smallest one.
+
+For conveniency, a function `IoU()` is provided.
+It computes the ratio of the area of the intersection of two rectangles over the area of the union of these two rectangles.
+See this [WP page](https://en.wikipedia.org/wiki/Jaccard_index) where this is described.
+
 
 ## 6 - Misc. features
 <a name="misc"></a>
