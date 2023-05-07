@@ -19,7 +19,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
   - enabled `ttmath` types as default type (if used)
-  - added computation of IoU ("Intersection over Union") of two rectangles, see [here](homog2d_manual#frect_union) for details.
+  - added computation of IoU ("Intersection over Union") of two rectangles, see [here](homog2d_manual.md#frect_union) for details.
   - templated the `set()` function for `FRect_`
 
 ## Previous releases
