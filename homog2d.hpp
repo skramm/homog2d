@@ -4832,6 +4832,9 @@ Will throw if unable (numerical issue)
 One could think that the first checking would be enough, but experience shows that some times,
 the point are not colinear, but the two bisector lines are still parallel.
 Thus the second checking.
+
+\todo Check this other technique:
+https://www.johndcook.com/blog/2023/06/18/circle-through-three-points/
 */
 template<typename FPT>
 template<typename T>
