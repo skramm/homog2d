@@ -5,7 +5,7 @@ Current test status: [![GH actions build status](https://github.com/skramm/homog
 [![License: MPLv2](https://img.shields.io/badge/licence-MPLv2-brightgreen)](https://www.mozilla.org/en-US/MPL/)
 ![](https://img.shields.io/github/stars/skramm/homog2d)
 
-[![Doxygen pages](https://codedocs.xyz/skramm/homog2d.svg)](https://codedocs.xyz/skramm/homog2d.svg)
+[![Doxygen pages](https://codedocs.xyz/skramm/homog2d.svg)](https://codedocs.xyz/skramm/homog2d)
 
 A single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D planar transformations) in Cartesian geometry,
