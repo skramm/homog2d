@@ -43,6 +43,8 @@ See https://github.com/skramm/homog2d
 #include <functional>
 #include <limits>
 #include <cstdint> // required for uint8_t
+#include <memory>  // required for std::unique_ptr
+
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
