@@ -2315,7 +2315,6 @@ public:
 /// in clockwise order
 /**
 \verbatim
-
  p1 +------+ p2
     |      |
     |      |
@@ -5098,10 +5097,14 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
-/// used in base::PolylineBase_::rotate() member function
+/// Used in base::PolylineBase_::rotate() member function
 enum class Rotate: int8_t
 {
-	CCW, CW, Full, VMirror, HMirror
+	CCW,      ///< Counter ClockWise rotation
+	CW,       ///< ClockWise rotation
+	Full,     ///< 180° rotation
+	VMirror,  ///< vertical symmetry
+	HMirror   ///< horizontal symmetry
 };
 
 enum class CardDir: int8_t { Bottom,Top, Left, Right };
@@ -6019,7 +6022,14 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 
 
 //------------------------------------------------------------------
-/// Rotate the object by either 90°, 180°, 270° (-90°)
+/// Rotates the polyline by either 90°, 180°, 270° (-90°) at point \c refpt
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto poly2 = Homogr(alpha) * poly;
+```
+\sa PolylineBase<PLT,FPT>::rotate( Rotate )
+*/
 template<typename PLT,typename FPT>
 template<typename FPT2>
 void
@@ -6031,7 +6041,14 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
 }
 
 //------------------------------------------------------------------
-/// Rotate the object by either 90°, 180°, 270° (-90°)
+/// Rotates the polyline by either 90°, 180°, 270° (-90°) at point (0,0)
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto poly2 = Homogr(alpha) * poly;
+```
+\sa PolylineBase<PLT,FPT>::rotate( Rotate, const Point2d_<FPT2>& )
+*/
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::rotate( Rotate rot )

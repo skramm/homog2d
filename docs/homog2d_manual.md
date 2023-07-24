@@ -1498,7 +1498,7 @@ cout << "nearest point is " << vpts[pidx.first]
 
 (or you could of course call the two previous function sequentially.)
 
-[see showcase](homog2d_showcase.md#sc_15)
+[see showcase](homog2d_showcase.md#sc15)
 
 ### 6.6 - Extracting data from sets/containers of primitives
 
