@@ -528,12 +528,34 @@ auto pts  = rect.get4Pts();      // return a std::array of 4 points
 auto pts2 = get4Pts(rect);       // or use the free function
 ```
 
+A call to the `get4Pts()` member or free function will return the points in the following order:
+```
+ p[1] +------+ p[2]
+      |      |
+      |      |
+      |      |
+ p[0] +------+ p[3]
+```
+
+
 You can also fetch the 4 segments of the rectangle, with a member function or a free function:
 ```C++
 FRect rect( pt1, pt2 );
 auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
+
+The returned array holds the segments in the following order:
+```
+        s[1]
+     +-------+
+     |       |
+s[0] |       | s[2]
+     |       |
+     +-------+
+        s[3]
+```
+
 
 The two diagonal segments can be fetched as a pair of segments:
 ```C++
