@@ -42,6 +42,7 @@ See https://github.com/skramm/homog2d
 #include <type_traits>
 #include <functional>
 #include <limits>
+#include <cstdint> // required for uint8_t
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
