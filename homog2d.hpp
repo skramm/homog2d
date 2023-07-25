@@ -539,7 +539,7 @@ Image<cv::Mat>::write( std::string fname ) const
 {
 	cv::imwrite( fname, _realImg );
 }
-#endif
+#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
@@ -731,6 +731,18 @@ So the drawing code checks if user has added some filling, and if so, does not a
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - PUBLIC ENUM DECLARATIONS
 /////////////////////////////////////////////////////////////////////////////
+
+/// Used in base::PolylineBase_::rotate() member function
+enum class Rotate: int8_t
+{
+	CCW,      ///< Counter ClockWise rotation
+	CW,       ///< ClockWise rotation
+	Full,     ///< 180° rotation
+	VMirror,  ///< vertical symmetry
+	HMirror   ///< horizontal symmetry
+};
+
+enum class CardDir: int8_t { Bottom,Top, Left, Right };
 
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: uint8_t { X, Y };
@@ -2221,7 +2233,6 @@ public:
 
 /// \name Attributes access
 ///@{
-
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
@@ -2257,6 +2268,8 @@ public:
 
 ///@}
 
+/// \name Modifying functions
+///@{
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -2265,6 +2278,11 @@ public:
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
 	}
+
+	template<typename FPT2>
+	void rotate( Rotate, const Point2d_<FPT2>& );
+	void rotate( Rotate );
+///@}
 
 	FRect_<FPT>
 	getExtended() const
@@ -2552,6 +2570,64 @@ public:
 
 }; // class FRect_
 
+//------------------------------------------------------------------
+/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point \c refpt
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto r2 = Homogr(alpha) * rect;
+```
+\sa FRect_<FPT>::rotate( Rotate )
+*/
+template<typename FPT>
+template<typename FPT2>
+void
+FRect_<FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
+{
+	translate( -refpt.getX(), -refpt.getY() );
+	this->rotate( rot );
+	translate( refpt.getX(), refpt.getY() );
+}
+
+//------------------------------------------------------------------
+/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point (0,0)
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto r2 = Homogr(alpha) * rect;
+```
+\sa FRect_<FPT>::rotate( Rotate, const Point2d_<FPT2>& )
+*/
+template<typename FPT>
+void
+FRect_<FPT>::rotate( Rotate rot )
+{
+	switch( rot )
+	{
+		case Rotate::CCW:
+			_ptR1.set( -_ptR1.getY(), +_ptR1.getX() );
+			_ptR2.set( -_ptR2.getY(), +_ptR2.getX() );
+		break;
+		case Rotate::CW:
+			_ptR1.set( +_ptR1.getY(), -_ptR1.getX() );
+			_ptR2.set( +_ptR2.getY(), -_ptR2.getX() );
+		break;
+		case Rotate::Full:
+			_ptR1.set( -_ptR1.getX(), -_ptR1.getY() );
+			_ptR2.set( -_ptR2.getX(), -_ptR2.getY() );
+		break;
+		case Rotate::VMirror:
+			_ptR1.set( -_ptR1.getX(), _ptR1.getY() );
+			_ptR2.set( -_ptR2.getX(), _ptR2.getY() );
+		break;
+		case Rotate::HMirror:
+			_ptR1.set( _ptR1.getX(), -_ptR1.getY() );
+			_ptR2.set( _ptR2.getX(), -_ptR2.getY() );
+		break;
+
+		default: assert(0);
+	}
+}
 
 //------------------------------------------------------------------
 /// A circle
@@ -5097,19 +5173,6 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
-/// Used in base::PolylineBase_::rotate() member function
-enum class Rotate: int8_t
-{
-	CCW,      ///< Counter ClockWise rotation
-	CW,       ///< ClockWise rotation
-	Full,     ///< 180° rotation
-	VMirror,  ///< vertical symmetry
-	HMirror   ///< horizontal symmetry
-};
-
-enum class CardDir: int8_t { Bottom,Top, Left, Right };
-
-
 namespace base {
 
 //------------------------------------------------------------------
@@ -6019,7 +6082,6 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 {
 	return h2d::getRmPoint( *this );
 }
-
 
 //------------------------------------------------------------------
 /// Rotates the polyline by either 90°, 180°, 270° (-90°) at point \c refpt

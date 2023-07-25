@@ -1424,13 +1424,20 @@ struct Param_polRot : Data
 			}
 		);
 		_poly.translate( 180,180); // so it lies in the window
+		_rect.set(0,0,160,100);
+		_rect.translate( 220,230); // so it lies in the window
+
 	}
 	void nextRefPt()
 	{
-		_refPt++;
-		if( _refPt >= _poly.size() )
-			_refPt = 0;
-		std::cout << "move to next ref pt: " << _refPt << ": " << _poly.getPoint( _refPt ) <<  '\n';
+		_refPt_r++;
+		_refPt_p++;
+		if( _refPt_p >= _poly.size() )
+			_refPt_p = 0;
+		if( _refPt_r >= 4 )
+			_refPt_p = 0;
+
+//		std::cout << "move to next ref pt: " << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
 	}
 	void doIt( bool b = true )
 	{
@@ -1438,9 +1445,12 @@ struct Param_polRot : Data
 	}
 
 	CPolyline _poly;
+	FRect     _rect;
 	Rotate    _rotateType = Rotate::CW;
-	size_t    _refPt = 0;                 ///< default index of center point
+	size_t    _refPt_p = 0;                 ///< default index of center point (Polyline)
+	size_t    _refPt_r = 0;                 ///< default index of center point (Rectangle)
 	bool      _doIt = false;
+	bool      _item = true;
 };
 
 void action_polRot( void* param )
@@ -1448,11 +1458,31 @@ void action_polRot( void* param )
 	auto& data = *reinterpret_cast<Param_polRot*>(param);
 	data.clearImage();
 
+	auto pts = data._rect.get4Pts();
 	if( data._doIt )
-		data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
+	{
+		if( data._item )
+			data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt_p ) );
+		else
+		{
+			std::cout << "rotate from: " << pts[data._refPt_r] << "\n";
+			std::cout << "BEFORE: " << data._rect << "\n";
+			data._rect.rotate( data._rotateType, pts[data._refPt_r] );
+			std::cout << "AFTER: " << data._rect << "\n";
+		}
+	}
 
-	data._poly.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
-	data._poly.getPoint( data._refPt ).draw( data.img, img::DrawParams().setColor( 0,0,250).setPointStyle(img::PtStyle::Dot) );
+	if( data._item )
+	{
+		data._poly.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
+		data._poly.getPoint( data._refPt_p ).draw( data.img, img::DrawParams().setColor(0,0,250).setPointStyle(img::PtStyle::Dot) );
+	}
+	else
+	{
+		data._rect.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
+		draw( data.img, pts[data._refPt_r], img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
+	}
+
 	data.showImage();
 }
 
@@ -1469,6 +1499,7 @@ void demo_polRot( int demidx )
 	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror;  data.doIt(); }, "VMirror" );
 	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror;  data.doIt(); }, "HMirror" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt();                  data.doIt(false); }, "move to next reference point" );
+	kbloop.addKeyAction( 'r', [&](void*){ data._item = !data._item;          data.doIt(false); }, "toggle poly/rectangle" );
 
 	kbloop.addCommonAction( action_polRot );
 	action_polRot( &data );
