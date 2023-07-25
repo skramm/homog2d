@@ -1430,14 +1430,20 @@ struct Param_polRot : Data
 	}
 	void nextRefPt()
 	{
-		_refPt_r++;
-		_refPt_p++;
-		if( _refPt_p >= _poly.size() )
-			_refPt_p = 0;
-		if( _refPt_r >= 4 )
-			_refPt_p = 0;
-
-//		std::cout << "move to next ref pt: " << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
+		if( _item )
+		{
+			_refPt_p++;
+			if( _refPt_p >= _poly.size() )
+				_refPt_p = 0;
+			std::cout << "move to next ref pt: poly" << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
+		}
+		else
+		{
+			_refPt_r++;
+			if( _refPt_r >= 4 )
+				_refPt_r = 0;
+			std::cout << "move to next ref pt: " << _refPt_r <<  '\n';
+		}
 	}
 	void doIt( bool b = true )
 	{
@@ -1465,6 +1471,7 @@ void action_polRot( void* param )
 			data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt_p ) );
 		else
 		{
+			std::cout << "data._refPt_r= " << data._refPt_r << std::endl;
 			std::cout << "rotate from: " << pts[data._refPt_r] << "\n";
 			std::cout << "BEFORE: " << data._rect << "\n";
 			data._rect.rotate( data._rotateType, pts[data._refPt_r] );
@@ -1481,6 +1488,9 @@ void action_polRot( void* param )
 	{
 		data._rect.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
 		draw( data.img, pts[data._refPt_r], img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
+
+		CPolyline_<HOMOG2D_INUMTYPE> pol( data._rect );
+		draw( data.img, pol, img::DrawParams().setColor(0,250,0) );
 	}
 
 	data.showImage();
