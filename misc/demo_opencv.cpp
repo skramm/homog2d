@@ -1292,7 +1292,7 @@ void demo_RI( int demidx )
 	Param_RI data( demidx, "Rectangle intersection demo" );
 	std::cout << "Demo " << demidx << ": RI demo\n";
 
-	data.setMouseCB( action_RI );
+//	data.setMouseCB( action_RI );
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.doUnion  = !data.doUnion; }, "Toggle union/intersection" );
 	kbloop.addCommonAction( action_RI );
@@ -1437,13 +1437,13 @@ struct Param_polRot : Data
 				_refPt_p = 0;
 			std::cout << "move to next ref pt: poly" << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
 		}
-		else
+/*		else
 		{
 			_refPt_r++;
 			if( _refPt_r >= 4 )
 				_refPt_r = 0;
 			std::cout << "move to next ref pt: " << _refPt_r <<  '\n';
-		}
+		}*/
 	}
 	void doIt( bool b = true )
 	{
@@ -1454,7 +1454,7 @@ struct Param_polRot : Data
 	FRect     _rect;
 	Rotate    _rotateType = Rotate::CW;
 	size_t    _refPt_p = 0;                 ///< default index of center point (Polyline)
-	size_t    _refPt_r = 0;                 ///< default index of center point (Rectangle)
+//	size_t    _refPt_r = 0;                 ///< default index of center point (Rectangle)
 	bool      _doIt = false;
 	bool      _item = true;
 };
@@ -1464,19 +1464,13 @@ void action_polRot( void* param )
 	auto& data = *reinterpret_cast<Param_polRot*>(param);
 	data.clearImage();
 
-	auto pts = data._rect.get4Pts();
 	if( data._doIt )
 	{
 		if( data._item )
 			data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt_p ) );
 		else
-		{
-			std::cout << "data._refPt_r= " << data._refPt_r << std::endl;
-			std::cout << "rotate from: " << pts[data._refPt_r] << "\n";
-			std::cout << "BEFORE: " << data._rect << "\n";
-			data._rect.rotate( data._rotateType, pts[data._refPt_r] );
-			std::cout << "AFTER: " << data._rect << "\n";
-		}
+			data._rect.rotate( data._rotateType, data.pt_mouse );
+		 data._doIt = false;
 	}
 
 	if( data._item )
@@ -1487,20 +1481,20 @@ void action_polRot( void* param )
 	else
 	{
 		data._rect.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
-		draw( data.img, pts[data._refPt_r], img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
-
-		CPolyline_<HOMOG2D_INUMTYPE> pol( data._rect );
-		draw( data.img, pol, img::DrawParams().setColor(0,250,0) );
+		draw( data.img, data.pt_mouse, img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
 	}
-
 	data.showImage();
 }
 
 void demo_polRot( int demidx )
 {
-	Param_polRot data( demidx, "Polyline full step rotate demo" );
-	std::cout << "Demo " << demidx << ": Polyline full step rotate demo\n"
+	Param_polRot data( demidx, "Polyline/Rectangle full step rotate demo" );
+	std::cout << "Demo " << demidx << ": Polyline/Rectangle full step rotate demo\n"
+		<< " - Polyline: center point is one of the points\n"
+		<< " - Rectangle: center point is free, use mouse\n"
 		<< "Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!\n";
+
+	data.setMouseCB( action_polRot );
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );

@@ -2570,74 +2570,6 @@ public:
 
 }; // class FRect_
 
-#if 0
-//------------------------------------------------------------------
-/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point \c refpt
-/**
-For an arbitrary angle \c alpha (rad.), you can write:
-```
-auto r2 = Homogr(alpha) * rect;
-```
-\sa FRect_<FPT>::rotate( Rotate )
-*/
-template<typename FPT>
-template<typename FPT2>
-void
-FRect_<FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
-{
-	translate( -refpt.getX(), -refpt.getY() );
-	this->rotate( rot );
-	translate( refpt.getX(), refpt.getY() );
-}
-
-//------------------------------------------------------------------
-/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point (0,0)
-/**
-For an arbitrary angle \c alpha (rad.), you can write:
-```
-auto r2 = Homogr(alpha) * rect;
-```
-\sa FRect_<FPT>::rotate( Rotate, const Point2d_<FPT2>& )
-
-\note This function converts the FRect to a CPolyline_, rtotates it, and builds the output rectangle
-by getting the bounding box.
-This is because we cannot directly rotate the points, because the two points are switched so that
-the smallest point is always in _ptR1.
-*/
-template<typename FPT>
-void
-FRect_<FPT>::rotate( Rotate rot )
-{
-	CPolyline_<HOMOG2D_INUMTYPE> pol( *this );
-	pol.rotate( rot );
-	return getBB( pol );
-/*	switch( rot )
-	{
-		case Rotate::CCW:
-			_ptR1.set( -_ptR1.getY(), +_ptR1.getX() );
-			_ptR2.set( -_ptR2.getY(), +_ptR2.getX() );
-		break;
-		case Rotate::CW:
-			_ptR1.set( +_ptR1.getY(), -_ptR1.getX() );
-			_ptR2.set( +_ptR2.getY(), -_ptR2.getX() );
-		break;
-		case Rotate::Full:
-			_ptR1.set( -_ptR1.getX(), -_ptR1.getY() );
-			_ptR2.set( -_ptR2.getX(), -_ptR2.getY() );
-		break;
-		case Rotate::VMirror:
-			_ptR1.set( -_ptR1.getX(), _ptR1.getY() );
-			_ptR2.set( -_ptR2.getX(), _ptR2.getY() );
-		break;
-		case Rotate::HMirror:
-			_ptR1.set( _ptR1.getX(), -_ptR1.getY() );
-			_ptR2.set( _ptR2.getX(), -_ptR2.getY() );
-		break;
-
-		default: assert(0);
-	}*/
-}
-#endif
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
@@ -6032,7 +5964,7 @@ getRmPoint( const base::PolylineBase<PLT,FPT>& poly )
 /// Get Top-most / Bottom-most / Left-most / Right-most point, depending on \c dir
 /// (free function)
 /**
-Type \c T can be either a Polyline (open or closed), or a container
+Type \c T can be either a Polyline (open or closed), or a container holding points, or a FRect_
 */
 template<typename T>
 Point2d_<T>

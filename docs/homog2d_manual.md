@@ -562,7 +562,7 @@ The two diagonal segments can be fetched as a pair of segments:
 FRect rect( pt1, pt2 );
 auto psegs = rect.getDiagonals();  // or: getDiagonals(rect);
 ```
-The `first` element will hold the segment holding the point with minimal coordinates.
+The `first` element will hold the segment holding the point with minimal coordinates (`p[0]` and `p[2]` on above drawing).
 
 
 And of course, its width, height, length, and enclosed area.
@@ -587,6 +587,22 @@ It is possible to translate the rectangle using some dx,dy offset:
 FRect rect;
 rect.translate( dx, dy );
 ```
+
+Full step rotation (+90°,-90°,180° or vertical/horizontal mirroring) is available with the `rotate()` member or free function:
+```C++
+FRect rect;
+rect.rotate( Rotate:CCW ); // or: rotate( rect, Rotate:CCW );
+```
+This will proceed a rotation around origin point (0,0).
+But most of the times, you want to rotate around some specific point, so you can use this:
+```C++
+FRect rect;
+Point2d pt(x,y);
+rect.rotate( Rotate:CCW, pt ); // or: rotate( rect, Rotate:CCW, pt );
+```
+See [related polyline function](#polyline_rotate) for details.
+
+
 
 you can get the circle that passes through the 4 points:
 ```C++
@@ -912,8 +928,9 @@ For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
 #### 3.4.8 - Rotation/mirroring
+<a name="polyline_rotate"></a>
 
-All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
+All the primitives can be rotated using a homography (see following section), but in some situations you may only need "quarter-circle" rotations (mutiples of 90°).
 While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
 due to numerical nature of floating point computation.
 This can be undesirable, so an alternative is provided:
