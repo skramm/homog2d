@@ -6340,6 +6340,7 @@ For an arbitrary angle \c alpha (rad.), you can write:
 auto r2 = Homogr(alpha) * rect;
 ```
 \sa FRect_<FPT>::rotate( Rotate )
+\sa h2d::rotate()
 */
 template<typename FPT>
 template<typename FPT2>
@@ -6359,10 +6360,11 @@ For an arbitrary angle \c alpha (rad.), you can write:
 auto r2 = Homogr(alpha) * rect;
 ```
 \sa FRect_<FPT>::rotate( Rotate, const Point2d_<FPT2>& )
+\sa h2d::rotate()
 
-\note This function converts the FRect to a CPolyline_, rtotates it, and builds the output rectangle
+\note This function converts the FRect to a CPolyline_, rotates it, and builds the output rectangle
 by getting the bounding box.
-This is because we cannot directly rotate the points, because the two points are switched so that
+This is because we cannot directly rotate the points, because the two points of a FRect_ are switched so that
 the smallest point is always in _ptR1.
 */
 template<typename FPT>
@@ -6372,33 +6374,7 @@ FRect_<FPT>::rotate( Rotate rot )
 	CPolyline_<HOMOG2D_INUMTYPE> pol( *this );
 	pol.rotate( rot );
 	*this = pol.getBB();
-/*	switch( rot )
-	{
-		case Rotate::CCW:
-			_ptR1.set( -_ptR1.getY(), +_ptR1.getX() );
-			_ptR2.set( -_ptR2.getY(), +_ptR2.getX() );
-		break;
-		case Rotate::CW:
-			_ptR1.set( +_ptR1.getY(), -_ptR1.getX() );
-			_ptR2.set( +_ptR2.getY(), -_ptR2.getX() );
-		break;
-		case Rotate::Full:
-			_ptR1.set( -_ptR1.getX(), -_ptR1.getY() );
-			_ptR2.set( -_ptR2.getX(), -_ptR2.getY() );
-		break;
-		case Rotate::VMirror:
-			_ptR1.set( -_ptR1.getX(), _ptR1.getY() );
-			_ptR2.set( -_ptR2.getX(), _ptR2.getY() );
-		break;
-		case Rotate::HMirror:
-			_ptR1.set( _ptR1.getX(), -_ptR1.getY() );
-			_ptR2.set( _ptR2.getX(), -_ptR2.getY() );
-		break;
-
-		default: assert(0);
-	}*/
 }
-
 
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area of two rectangles
@@ -8770,20 +8746,20 @@ size( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.size();
 }
 
-/// Rotates the primitive (only available for Polyline at present) around
+/// Rotates the primitive (only available for Polyline and FRect) around (0,0)
 template<typename T>
 void
-rotate( T& pl, Rotate rot )
+rotate( T& prim, Rotate rot )
 {
-	pl.rotate( rot );
+	prim.rotate( rot );
 }
 
-/// Rotates the primitive (only available for Polyline at present) around \c refpt
+/// Rotates the primitive (only available for Polyline and FRect) around \c refpt
 template<typename T,typename FPT>
 void
-rotate( T& pl, Rotate rot, const Point2d_<FPT>& refpt )
+rotate( T& prim, Rotate rot, const Point2d_<FPT>& refpt )
 {
-	pl.rotate( rot, refpt );
+	prim.rotate( rot, refpt );
 }
 
 /// Returns width, height of rectangle (free function)
