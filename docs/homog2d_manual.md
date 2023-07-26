@@ -591,7 +591,7 @@ rect.translate( dx, dy );
 Full step rotation (+90°,-90°,180° or vertical/horizontal mirroring) is available with the `rotate()` member or free function:
 ```C++
 FRect rect;
-rect.rotate( Rotate:CCW ); // or: rotate( rect, Rotate:CCW );
+rect.rotate( Rotate::CCW ); // or: rotate( rect, Rotate::CCW );
 ```
 This will proceed a rotation around origin point (0,0).
 But most of the times, you want to rotate around some specific point, so you can use this:
@@ -604,7 +604,7 @@ See [related polyline function](#polyline_rotate) for details.
 
 
 
-you can get the circle that passes through the 4 points:
+You can get the circle that passes through the 4 points:
 ```C++
 FRect r1(...); // whatever
 auto c1 = r1.getBoundingCircle(); // or: getBoundingCircle(r1);

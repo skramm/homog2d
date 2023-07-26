@@ -2,7 +2,7 @@
 
 [Manual main page](homog2d_manual.md)
 
-The two classes, open and closed type, are actually the same class, and are defined as:
+The two classes, open and closed type, are actually the same class and are defined as:
 ```
 template<typename T>
 using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
@@ -19,7 +19,7 @@ Order of points will be retained, but some normalizing step may occur, in a way 
 
 - The `OPolyline_` type will get reversed so that the smallest point is placed in first position.
 
-For both types, the normalisation occurs only when needed (first comparison).
+For both types, the normalisation occurs **only when needed** (on first comparison).
 
 The rationale for that normalization is that we want to be able to detect identical objects.
 For example, the single-segment Polyline object described by the points `(0,0)-(1,1)`
@@ -33,8 +33,8 @@ OPolyline po;
 CPolyline pc;
 ```
 
-This is possible: `pc = po;` :
-(the first point gets connected to the last one)
+This is possible: `pc = po;`:
+the first point gets connected to the last one.
 
 This is **not** possible: `po = pc;` (build failure),
 because we would be unable to determine which segment needs to be removed.
