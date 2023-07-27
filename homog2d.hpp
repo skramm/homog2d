@@ -2571,6 +2571,16 @@ public:
 }; // class FRect_
 
 //------------------------------------------------------------------
+namespace priv {
+/// Needed (?) because the Welzl algo requires (?) creating a circle of radius 0 and the type
+/// Circle_ does not allow this.
+struct DummyCircle {
+    HOMOG2D_INUMTYPE _cx, _cy;
+    HOMOG2D_INUMTYPE _radius;
+};
+} // namespace priv
+
+//------------------------------------------------------------------
 /// A circle
 template<typename FPT>
 class Circle_: public detail::Common<FPT>
@@ -2779,11 +2789,13 @@ Use of Sfinae so it can be selected only for arithmetic types
 	void set( const T& );
 private:
 	template<typename T>             // helper function
-	Circle_<HOMOG2D_INUMTYPE>
-	p_welzl_helper( std::vector<T>&, std::vector<T>&, size_t ) const;
+//	Circle_<HOMOG2D_INUMTYPE>
+	priv::DummyCircle
+	p_welzl_helper( std::vector<T>&, std::vector<T>, size_t ) const;
 
 	template<typename T>             // helper function
-	Circle_<HOMOG2D_INUMTYPE>
+//	Circle_<HOMOG2D_INUMTYPE>
+	priv::DummyCircle
 	p_min_circle_trivial( const std::vector<T>& P ) const;
 
 public:
@@ -4906,10 +4918,6 @@ bool is_valid_circle(
 	const std::vector<PT>& pts
 )
 {
-
-    // Iterating through all the points
-    // to check  whether the points
-    // lie inside the circle or not
 	for( const auto& pt: pts )
 		if( !pt.isInside( circ ) )
 			return false;
@@ -4925,9 +4933,32 @@ Returns the minimum enclosing circle for N <= 3
 */
 template<typename FPT>
 template<typename T>
-Circle_<HOMOG2D_INUMTYPE>
+//Circle_<HOMOG2D_INUMTYPE>
+priv::DummyCircle
 Circle_<FPT>::p_min_circle_trivial( const std::vector<T>& P ) const
 {
+	if( P.empty() )
+	{
+		return priv::DummyCircle{0.,0.,0.};
+	}
+	else
+	{
+		if( P.size() == 1 )
+		{
+			Circle_<HOMOG2D_INUMTYPE> cir( P[0], 0. );
+//			return cir;
+			return priv::DummyCircle{ P[0].getX(), P[0].getY(), 0. };
+		}
+		else
+		{
+			if( P.size() == 2 )
+			{
+				Circle_<HOMOG2D_INUMTYPE> cir( P[0], P[1] );
+				return priv::DummyCircle{ cir.center().getX(), cir.center().getY(), cir.radius() };
+			}
+		}
+	}
+/*
 	if( P.size() > 3 )
 		HOMOG2D_THROW_ERROR_1( "nb pts > 3" );
 
@@ -4936,18 +4967,19 @@ Circle_<FPT>::p_min_circle_trivial( const std::vector<T>& P ) const
 
 	if( P.size() == 2 )  // circle from 2 points
 		return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1] );
-
+*/
 // To check if MEC can be determined
 // by 2 points only
-	for (int i = 0; i < 3; i++)
-		for (int j = i + 1; j < 3; j++)
+	for( int i=0; i<3; i++ )
+		for( int j=i+1; j<3; j++ )
 		{
 
 			auto c = Circle_<HOMOG2D_INUMTYPE>( P[i], P[j] );
-			if( priv::is_valid_circle(c, P) )
-				return c;
+			if( priv::is_valid_circle( c, P ) )
+				return priv::DummyCircle{ c.center().getX(), c.center().getY(), c.radius() };
 		}
-	return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1], P[2] ); // circle from 3 points
+	Circle_<HOMOG2D_INUMTYPE> cir( P[0], P[1], P[2] ); // circle from 3 points
+	return priv::DummyCircle{ cir.center().getX(), cir.center().getY(), cir.radius() };
 }
 
 //------------------------------------------------------------------
@@ -4960,40 +4992,52 @@ Takes a set of input points P and a set R points on the circle boundary.
  */
 template<typename FPT>
 template<typename T>
-Circle_<HOMOG2D_INUMTYPE>
+//Circle_<HOMOG2D_INUMTYPE>
+priv::DummyCircle
 Circle_<FPT>::p_welzl_helper(
 	std::vector<T>& P,
-	std::vector<T>& R,
+	std::vector<T>  R,
 	size_t          n   ///< Number of points in P that are not yet processed
 ) const
 {
 	static int depth;
 	std::cout << "depth=" << ++depth << " #P=" << P.size() << " #R=" << R.size() << " n=" << n << '\n';
 	// Base case when all points processed or |R| = 3
-	if (n == 0 || R.size() == 3) {
-		return p_min_circle_trivial(R);
+	if( n == 0 || R.size() == 3 )
+	{
+		auto cir = p_min_circle_trivial( R );
+//		auto cir2 = Circle_<HOMOG2D_INUMTYPE>( cir._cx, cir._cy, cir._radius );
+		std::cout << "returning (" << cir._cx << "," << cir._cx << "," << cir._radius << ")\n";
+		return cir;
 	}
 
 	// Pick a random point randomly
 	int idx = rand() % n;
 	auto p = P[idx];
+	std::cout << "selected pt: " << idx << ": " << p << "\n";
 
 	// Put the picked point at the end of P
 	// since it's more efficient than
 	// deleting from the middle of the vector
 	std::swap( P[idx], P[n - 1] );
-	P.resize( P.size()-1 );
+//	P.resize( P.size()-1 );
 
 	// Get the MEC circle d from the
 	// set of points P - {p}
 	auto d = p_welzl_helper( P, R, n - 1 );
+//	std::cout << "d1=" << d << "\n";
+	std::cout << "after call1: d= (" << d._cx << "," << d._cx << "," << d._radius << ")\n";
 
 	// If d contains p, return d
-	if( p.isInside( d ) )
+	if( d._radius>0. )
 	{
-		std::cout << "RET: p inside d\n";
-		depth--;
-		return d;
+		auto d2 = Circle_<HOMOG2D_INUMTYPE>( d._cx, d._cy, d._radius );
+		if( p.isInside( d2 ) )
+		{
+			std::cout << "RET: p inside d\n";
+			depth--;
+			return d;
+		}
 	}
 
 	// Otherwise, must be on the boundary of the MEC
@@ -5032,7 +5076,10 @@ Circle_<FPT>::set( const T& pts )
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> P_copy( std::begin(pts), std::end(pts) );
 	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
-	*this = p_welzl_helper( P_copy, R, P_copy.size() );
+
+//	*this = p_welzl_helper( P_copy, R, P_copy.size() );
+	auto cir = p_welzl_helper( P_copy, R, P_copy.size() );
+	set( cir._cx, cir._cy, cir._radius );
 }
 
 
