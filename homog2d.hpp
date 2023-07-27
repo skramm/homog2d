@@ -3042,12 +3042,8 @@ template<typename FPT>
 Circle_<FPT>
 FRect_<FPT>::getBoundingCircle() const
 {
-	auto pts = get4Pts();
-	auto seg1 = pts[1] * pts[3];
-	auto seg2 = pts[0] * pts[2];
-
-	auto middle_pt = seg1 * seg2;
-	return Circle_<FPT>( middle_pt, middle_pt.distTo( pts[0] ) );
+	auto middle_pt = getCenter();
+	return Circle_<FPT>( middle_pt, middle_pt.distTo( _ptR1 ) );
 }
 
 /*
