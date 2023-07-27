@@ -1215,6 +1215,9 @@ void action_CH( void* param )
 	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
 	auto chull = convexHull( data.vpt );
+	Circle cir;
+	cir.set(  data.vpt );
+
 
 	auto vlines = getLines( chull.getSegs() );
 	if( old_size != vlines.size() )
@@ -1231,6 +1234,7 @@ void action_CH( void* param )
 
 	draw( data.img, vlines, f );
 	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
 	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
 	chull.getLmPoint().draw( data.img, dp );

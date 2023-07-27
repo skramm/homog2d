@@ -2730,7 +2730,16 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 
 /// Set circle radius, center point unchanged
-	template<typename T>
+/**
+Use of Sfinae so it can be selected only for arithmetic types
+*/
+	template<
+		typename T,
+		typename std::enable_if<
+			(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
+			,T
+		>::type* = nullptr
+	>
 	void set( T rad )
 	{
 		_radius = rad;
@@ -2765,6 +2774,19 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename T>
 	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
 
+// set Minimum enclosing circle from set of points
+	template<typename T>
+	void set( const T& );
+private:
+	template<typename T>             // helper function
+	Circle_<HOMOG2D_INUMTYPE>
+	p_welzl_helper( std::vector<T>&, std::vector<T>&, size_t ) const;
+
+	template<typename T>             // helper function
+	Circle_<HOMOG2D_INUMTYPE>
+	p_min_circle_trivial( const std::vector<T>& P ) const;
+
+public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -4873,6 +4895,136 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 	center() = li1 * li2;
 	radius() = center().distTo(pt1);
 }
+
+//------------------------------------------------------------------
+namespace priv {
+
+/// Free Function to check whether a circle encloses the given points
+template<typename FPT1,typename PT>
+bool is_valid_circle(
+	const Circle_<FPT1>&   circ,
+	const std::vector<PT>& pts
+)
+{
+
+    // Iterating through all the points
+    // to check  whether the points
+    // lie inside the circle or not
+	for( const auto& pt: pts )
+		if( !pt.isInside( circ ) )
+			return false;
+	return true;
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Helper function for Circle_<FPT>::set( const T& )
+/**
+Returns the minimum enclosing circle for N <= 3
+*/
+template<typename FPT>
+template<typename T>
+Circle_<HOMOG2D_INUMTYPE>
+Circle_<FPT>::p_min_circle_trivial( const std::vector<T>& P ) const
+{
+	if( P.size() > 3 )
+		HOMOG2D_THROW_ERROR_1( "nb pts > 3" );
+
+	if( P.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "nb pts < 2" );
+
+	if( P.size() == 2 )  // circle from 2 points
+		return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1] );
+
+// To check if MEC can be determined
+// by 2 points only
+	for (int i = 0; i < 3; i++)
+		for (int j = i + 1; j < 3; j++)
+		{
+
+			auto c = Circle_<HOMOG2D_INUMTYPE>( P[i], P[j] );
+			if( priv::is_valid_circle(c, P) )
+				return c;
+		}
+	return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1], P[2] ); // circle from 3 points
+}
+
+//------------------------------------------------------------------
+/// Helper function for Circle_<FPT>::set( const T& ), recursive
+/**
+Returns the MEC using Welzl's algorithm.
+Takes a set of input points P and a set R points on the circle boundary.
+
+\c T is the point type
+ */
+template<typename FPT>
+template<typename T>
+Circle_<HOMOG2D_INUMTYPE>
+Circle_<FPT>::p_welzl_helper(
+	std::vector<T>& P,
+	std::vector<T>& R,
+	size_t          n   ///< Number of points in P that are not yet processed
+) const
+{
+	// Base case when all points processed or |R| = 3
+	if (n == 0 || R.size() == 3) {
+		return p_min_circle_trivial(R);
+	}
+
+	// Pick a random point randomly
+	int idx = rand() % n;
+	auto p = P[idx];
+
+	// Put the picked point at the end of P
+	// since it's more efficient than
+	// deleting from the middle of the vector
+	std::swap( P[idx], P[n - 1] );
+
+	// Get the MEC circle d from the
+	// set of points P - {p}
+	auto d = p_welzl_helper( P, R, n - 1 );
+
+	// If d contains p, return d
+	if( p. isInside( d ) )
+		return d;
+
+	// Otherwise, must be on the boundary of the MEC
+	R.push_back( p );
+
+	// Return the MEC for P - {p} and R U {p}
+	return p_welzl_helper( P, R, n - 1 );
+}
+
+//------------------------------------------------------------------
+/// Compute circle from a set of points
+/**
+\c T may be std::vector, std::array or std::list
+
+Refs:
+- https://en.wikipedia.org/wiki/Smallest-circle_problem
+- https://www.geeksforgeeks.org/minimum-enclosing-circle-using-welzls-algorithm/
+*/
+template<typename FPT>
+template<typename T>
+void
+Circle_<FPT>::set( const T& pts )
+{
+	if( pts.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "not enough points" );
+
+	if( pts.size() == 2 )
+		this->set( pts[0], pts[1] );
+
+	if( pts.size() == 3 ) // todo: convert pts to HOMOG2D_INUMTYPE
+		this->set( pts[0], pts[1], pts[2] );
+
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> P_copy( std::begin(pts), std::end(pts) );
+	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
+	*this = p_welzl_helper( P_copy, R, P_copy.size() );
+}
+
 
 //------------------------------------------------------------------
 /// Returns true if circle is inside polyline
