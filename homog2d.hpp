@@ -4967,6 +4967,8 @@ Circle_<FPT>::p_welzl_helper(
 	size_t          n   ///< Number of points in P that are not yet processed
 ) const
 {
+	static int depth;
+	std::cout << "depth=" << ++depth << " #P=" << P.size() << " #R=" << R.size() << " n=" << n << '\n';
 	// Base case when all points processed or |R| = 3
 	if (n == 0 || R.size() == 3) {
 		return p_min_circle_trivial(R);
@@ -4980,20 +4982,28 @@ Circle_<FPT>::p_welzl_helper(
 	// since it's more efficient than
 	// deleting from the middle of the vector
 	std::swap( P[idx], P[n - 1] );
+	P.resize( P.size()-1 );
 
 	// Get the MEC circle d from the
 	// set of points P - {p}
 	auto d = p_welzl_helper( P, R, n - 1 );
 
 	// If d contains p, return d
-	if( p. isInside( d ) )
+	if( p.isInside( d ) )
+	{
+		std::cout << "RET: p inside d\n";
+		depth--;
 		return d;
+	}
 
 	// Otherwise, must be on the boundary of the MEC
 	R.push_back( p );
 
 	// Return the MEC for P - {p} and R U {p}
-	return p_welzl_helper( P, R, n - 1 );
+	std::cout << "recursive call\n";
+	auto c = p_welzl_helper( P, R, n - 1 );
+	depth--;
+	return c;
 }
 
 //------------------------------------------------------------------
