@@ -1661,13 +1661,13 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 		Point2dF pt1;
-		std::cout << "F: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
+		std::cout << "float: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
 
 		Point2dL pt2;
-		std::cout << "L: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
+		std::cout << "long: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
 
 		Point2dD pt3;
-		std::cout << "D: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
+		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
 		demo_orthSeg,   // Perpendicular segment
@@ -1684,7 +1684,7 @@ int main( int argc, const char** argv )
 		demo_C,
 		demo_SI,
 		demo_6,
-		demo_polRot
+		demo_polRot // full step rotation of Polyline and rectangle
 	};
 
 	if( argc > 1 )

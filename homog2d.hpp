@@ -914,6 +914,13 @@ static HOMOG2D_INUMTYPE& nullDeter()
 	return _zeroDeter;
 }
 
+/// This one is used for the Welzl minimum enclosing circle
+static bool& doNotCheckRadius()
+{
+	static bool _doNotCheckRadius = false;
+	return _doNotCheckRadius;
+}
+
 /// Helper function, could be needed
 inline
 void printThresholds( std::ostream& f )
@@ -2571,16 +2578,6 @@ public:
 }; // class FRect_
 
 //------------------------------------------------------------------
-namespace priv {
-/// Needed (?) because the Welzl algo requires (?) creating a circle of radius 0 and the type
-/// Circle_ does not allow this.
-struct DummyCircle {
-    HOMOG2D_INUMTYPE _cx, _cy;
-    HOMOG2D_INUMTYPE _radius;
-};
-} // namespace priv
-
-//------------------------------------------------------------------
 /// A circle
 template<typename FPT>
 class Circle_: public detail::Common<FPT>
@@ -2643,7 +2640,7 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( priv::abs(rad) < thr::nullDistance() )
+		if( priv::abs(rad) < thr::nullDistance() && !h2d::thr::doNotCheckRadius() )
 			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << priv::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
@@ -2789,13 +2786,11 @@ Use of Sfinae so it can be selected only for arithmetic types
 	void set( const T& );
 private:
 	template<typename T>             // helper function
-//	Circle_<HOMOG2D_INUMTYPE>
-	priv::DummyCircle
+	Circle_<HOMOG2D_INUMTYPE>
 	p_welzl_helper( std::vector<T>&, std::vector<T>, size_t ) const;
 
 	template<typename T>             // helper function
-//	Circle_<HOMOG2D_INUMTYPE>
-	priv::DummyCircle
+	Circle_<HOMOG2D_INUMTYPE>
 	p_min_circle_trivial( const std::vector<T>& P ) const;
 
 public:
@@ -4933,53 +4928,25 @@ Returns the minimum enclosing circle for N <= 3
 */
 template<typename FPT>
 template<typename T>
-//Circle_<HOMOG2D_INUMTYPE>
-priv::DummyCircle
+Circle_<HOMOG2D_INUMTYPE>
 Circle_<FPT>::p_min_circle_trivial( const std::vector<T>& P ) const
 {
 	if( P.empty() )
-	{
-		return priv::DummyCircle{0.,0.,0.};
-	}
-	else
-	{
-		if( P.size() == 1 )
-		{
-			Circle_<HOMOG2D_INUMTYPE> cir( P[0], 0. );
-//			return cir;
-			return priv::DummyCircle{ P[0].getX(), P[0].getY(), 0. };
-		}
-		else
-		{
-			if( P.size() == 2 )
-			{
-				Circle_<HOMOG2D_INUMTYPE> cir( P[0], P[1] );
-				return priv::DummyCircle{ cir.center().getX(), cir.center().getY(), cir.radius() };
-			}
-		}
-	}
-/*
-	if( P.size() > 3 )
-		HOMOG2D_THROW_ERROR_1( "nb pts > 3" );
-
-	if( P.size() < 2 )
-		HOMOG2D_THROW_ERROR_1( "nb pts < 2" );
-
-	if( P.size() == 2 )  // circle from 2 points
+		return Circle_<HOMOG2D_INUMTYPE>(0.,0.,0.); // dummy circle of null radius
+	if( P.size() == 1 )
+		return Circle_<HOMOG2D_INUMTYPE>( P[0], 0. );
+	if( P.size() == 2 )
 		return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1] );
-*/
-// To check if MEC can be determined
-// by 2 points only
+
+// To check if MEC can be determined by 2 points only
 	for( int i=0; i<3; i++ )
 		for( int j=i+1; j<3; j++ )
 		{
-
 			auto c = Circle_<HOMOG2D_INUMTYPE>( P[i], P[j] );
 			if( priv::is_valid_circle( c, P ) )
-				return priv::DummyCircle{ c.center().getX(), c.center().getY(), c.radius() };
+				return c;
 		}
-	Circle_<HOMOG2D_INUMTYPE> cir( P[0], P[1], P[2] ); // circle from 3 points
-	return priv::DummyCircle{ cir.center().getX(), cir.center().getY(), cir.radius() };
+	return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1], P[2] ); // circle from 3 points
 }
 
 //------------------------------------------------------------------
@@ -4992,29 +4959,25 @@ Takes a set of input points P and a set R points on the circle boundary.
  */
 template<typename FPT>
 template<typename T>
-//Circle_<HOMOG2D_INUMTYPE>
-priv::DummyCircle
+Circle_<HOMOG2D_INUMTYPE>
 Circle_<FPT>::p_welzl_helper(
 	std::vector<T>& P,
 	std::vector<T>  R,
 	size_t          n   ///< Number of points in P that are not yet processed
 ) const
 {
-	static int depth;
-	std::cout << "depth=" << ++depth << " #P=" << P.size() << " #R=" << R.size() << " n=" << n << '\n';
+//	static int depth;
+//	std::cout << "depth=" << ++depth << " #P=" << P.size() << " #R=" << R.size() << " n=" << n << '\n';
 	// Base case when all points processed or |R| = 3
 	if( n == 0 || R.size() == 3 )
 	{
-		auto cir = p_min_circle_trivial( R );
-//		auto cir2 = Circle_<HOMOG2D_INUMTYPE>( cir._cx, cir._cy, cir._radius );
-		std::cout << "returning (" << cir._cx << "," << cir._cx << "," << cir._radius << ")\n";
-		return cir;
+		return p_min_circle_trivial( R );
 	}
 
 	// Pick a random point randomly
 	int idx = rand() % n;
 	auto p = P[idx];
-	std::cout << "selected pt: " << idx << ": " << p << "\n";
+//	std::cout << "selected pt: " << idx << ": " << p << "\n";
 
 	// Put the picked point at the end of P
 	// since it's more efficient than
@@ -5026,16 +4989,16 @@ Circle_<FPT>::p_welzl_helper(
 	// set of points P - {p}
 	auto d = p_welzl_helper( P, R, n - 1 );
 //	std::cout << "d1=" << d << "\n";
-	std::cout << "after call1: d= (" << d._cx << "," << d._cx << "," << d._radius << ")\n";
+//	std::cout << "after call1: d= (" << d._cx << "," << d._cx << "," << d._radius << ")\n";
 
 	// If d contains p, return d
-	if( d._radius>0. )
+//	if( d._radius>0. )
 	{
-		auto d2 = Circle_<HOMOG2D_INUMTYPE>( d._cx, d._cy, d._radius );
-		if( p.isInside( d2 ) )
+//		auto d2 = Circle_<HOMOG2D_INUMTYPE>( d._cx, d._cy, d._radius );
+		if( p.isInside( d ) )
 		{
-			std::cout << "RET: p inside d\n";
-			depth--;
+//			std::cout << "RET: p inside d\n";
+//			depth--;
 			return d;
 		}
 	}
@@ -5044,9 +5007,8 @@ Circle_<FPT>::p_welzl_helper(
 	R.push_back( p );
 
 	// Return the MEC for P - {p} and R U {p}
-	std::cout << "recursive call\n";
 	auto c = p_welzl_helper( P, R, n - 1 );
-	depth--;
+//	depth--;
 	return c;
 }
 
@@ -5077,11 +5039,13 @@ Circle_<FPT>::set( const T& pts )
 	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
 
+	h2d::thr::doNotCheckRadius() = true;
 //	*this = p_welzl_helper( P_copy, R, P_copy.size() );
 	auto cir = p_welzl_helper( P_copy, R, P_copy.size() );
-	set( cir._cx, cir._cy, cir._radius );
+//	set( cir._cx, cir._cy, cir._radius );
+	set( cir.center(), cir.radius() );
+	h2d::thr::doNotCheckRadius() = false;
 }
-
 
 //------------------------------------------------------------------
 /// Returns true if circle is inside polyline
