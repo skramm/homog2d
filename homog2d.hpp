@@ -2708,8 +2708,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	const Point2d_<FPT>& center() const { return _center; }
 	const Point2d_<FPT>& getCenter() const { return _center; }
 
-
-
 	HOMOG2D_INUMTYPE area() const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_radius) * _radius * M_PI;
@@ -2723,8 +2721,10 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	FRect_<FPT> getBB() const
 	{
 		return FRect_<FPT>(
-			_center.getX()-_radius, _center.getY()-_radius,
-			_center.getX()+_radius, _center.getY()+_radius
+			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) - _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getY() ) - _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) + _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getY() ) + _radius
 		);
 	}
 ///@}

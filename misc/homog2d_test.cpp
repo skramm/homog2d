@@ -1370,6 +1370,12 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( !p1.isInside( Point2d(0,0), 2 ) );
 	}
 	{
+		Point2d p1( 10, 0 );          // point on the edge of circle
+		CHECK( !p1.isInside(c1) );
+		Point2d p2( 0, 10 );          // point on the edge of circle
+		CHECK( !p2.isInside(c1) );
+	}
+	{
 		Circle_<NUMTYPE> cA( Point2d(),   10.);
 		CHECK( cA.radius() == 10. );
 		cA.radius() = 12;
@@ -1383,6 +1389,7 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( seg.length() == 5 );
 	}
 }
+
 
 //////////////////////////////////////////////////////////////
 /////           INTERSECTION TESTS                       /////
