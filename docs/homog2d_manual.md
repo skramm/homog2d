@@ -671,6 +671,18 @@ This is checked for and will throw if not the case
 
 ![showcase6](showcase/showcase6.gif)
 
+**Minimum Enclosing Circle (MEC)**
+
+To compute the Minimum Enclosing Circle or a set of points, you can use either a constructor, or the equivalent `set()` function:
+```C++
+std::vector vpts( ... some points ...  );
+Circle c1( vpts);
+// or
+c1.set( vpts );
+```
+See [showcase13](homog2d_showcase.md#sc13) for an example.
+It uses the Welzl algorithm, that require O(n) time and O(n) memory (recursive technique).
+
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
 Circle c1;

@@ -1,6 +1,6 @@
 /**
 \file
-\brief Generates random points, the Convex Hull, the Bounding Box, and the extremum points
+\brief Generates random points, the Convex Hull, the Bounding Box, the Minimum Enclosing Circle (MEC), and the extremum points
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
@@ -12,9 +12,9 @@ int main( int argc, const char** argv )
 {
 	auto nbim = 20; // nb images
 
-	auto cmax = 300;
-	auto cmin = 20;
-	auto nbpts_max = 20;
+	auto cmax = 250;
+	auto cmin = 50;
+	auto nbpts_max = 50;
 	auto nbpts_min = 5;
 
 	auto extr_col = img::DrawParams().setColor(100,250,0).setPointStyle( img::PtStyle::Dot );

@@ -2298,6 +2298,43 @@ TEST_CASE( "Circle", "[cir1]" )
 	}
 }
 
+TEST_CASE( "Circle from points", "[cir2]" )
+{
+	{
+		INFO( "circle from 2 pts");
+		std::vector<Point2d_<NUMTYPE>> pts1{ {0,0}, {2,0} };
+		std::vector<Point2d_<NUMTYPE>> pts2{ {0,3}, {4,3} };
+// check using constructor
+		Circle_<NUMTYPE> c1(pts1);
+		CHECK( c1.center() == Point2d(1,0) );
+		CHECK( c1.radius() == 1. );
+		Circle_<NUMTYPE> c2(pts2);
+		CHECK( c2.center() == Point2d(2,3) );
+		CHECK( c2.radius() == 2. );
+// check using "set" function
+		c1.set(pts2);
+		CHECK( c1.center() == Point2d(2,3) );
+		CHECK( c1.radius() == 2. );
+		c2.set(pts1);
+		CHECK( c2.center() == Point2d(1,0) );
+		CHECK( c2.radius() == 1. );
+	}
+	{
+		INFO( "circle from 4 pts");
+		std::vector<Point2d_<NUMTYPE>> pts1{ {0,4}, {4,0}, {0,-4}, {0,0} };
+		Circle_<NUMTYPE> c1(pts1);
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 4. );
+		c1.set(pts1);
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 4. );
+
+		std::vector<Point2d_<NUMTYPE>> pts2{ {0,4} };
+		CHECK_THROWS( Circle_<NUMTYPE>(pts2) ); // 1 point not allowed
+		std::vector<Point2d_<NUMTYPE>> pts3;
+		CHECK_THROWS( Circle_<NUMTYPE>(pts3) ); // 0 points not allowed
+	}
+}
 
 TEST_CASE( "Ellipse", "[ell1]" )
 {

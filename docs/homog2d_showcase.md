@@ -114,7 +114,7 @@ a moving segment (red), its supporting line (gray), its two parallel segments (g
 
 * [Showcase 13](../misc/showcase/showcase13.cpp):
 <a name="sc13"></a>
-Random points, the corresponding Convex Hull and Bounding Box, and the extremum points (green).
+Random points, the corresponding Convex Hull, Bounding Box, the Minimum Enclosing Circle (MEC), and the extremum points (green).
 
 ![showcase13](showcase/showcase13.gif)
 

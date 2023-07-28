@@ -1685,6 +1685,7 @@ template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
 template<class>   struct IsPoint                : std::false_type {};
 template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
 
+/// Traits class, used to check if type has a Bounding Box
 template<class>   struct HasBB              : std::false_type {};
 template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
 template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
@@ -2678,21 +2679,27 @@ public:
 	>
 	explicit Circle_( T rad )
 		: Circle_( Point2d_<FPT>(), rad )
-	{
-//		HOMOG2D_CHECK_IS_NUMBER(T); // not needed, as the sfinae above checks this
-	}
+	{}
 
 /// 1-arg constructor 2, given center point, radius = 1.0
+	template<typename FPT2>
+	explicit Circle_( Point2d_<FPT2> center )
+		: Circle_( center, 1. )
+	{}
+
+/// 1-arg constructor 3, build circle from a set of 2, 3, or more points
+/// (Minimum Enclosing Circle, aka MEC)
 	template<
 		typename T,
 		typename std::enable_if<
-			!std::is_arithmetic<T>::value
+			trait::IsContainer<T>::value
 			,T
 		>::type* = nullptr
 	>
-	explicit Circle_( T center )
-		: Circle_( center, 1. )
-	{}
+	explicit Circle_( const T& pts )
+	{
+		set( pts );
+	}
 
 /// 2-arg constructor 1: point and radius
 	template<typename T1, typename T2>
@@ -2841,8 +2848,7 @@ Use of Sfinae so it can be selected only for arithmetic types
 	template<typename T>
 	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
 
-// set Minimum enclosing circle from set of points
-//	template<typename T>
+// set Minimum Enclosing Circle (MEC) from a set of points
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2855,7 +2861,7 @@ Use of Sfinae so it can be selected only for arithmetic types
 private:
 	template<typename T>             // helper function
 	Circle_<HOMOG2D_INUMTYPE>
-	p_welzl_helper( std::vector<T>&, std::vector<T>, size_t ) const;
+	p_WelzlHelper( std::vector<T>&, std::vector<T>, size_t ) const;
 
 	template<typename T>             // helper function
 	Circle_<HOMOG2D_INUMTYPE>
@@ -3235,68 +3241,6 @@ operator * ( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
 template<typename FPT1,typename FPT2>
 Point2d_<FPT1>
 operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
-
-#if 0
-//------------------------------------------------------------------
-/// Holds traits classes
-namespace trait {
-
-/// Traits class, used in generic draw() function
-template<typename T> struct IsDrawable              : std::false_type {};
-template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
-template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-/// Traits class, used in intersects() for Polyline
-template<typename T> struct IsShape              : std::false_type {};
-template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
-template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
-//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
-
-/// Traits class, used to determine if we can use some "isInside()" function
-template<typename T> struct HasArea              : std::false_type {};
-template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
-template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
-template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
-
-/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
-/// used to detect if container is valid
-template <typename T>               struct IsContainer                     : std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
-
-
-template <typename T> struct IsArray                  : std::false_type { };
-template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
-
-
-/// Traits class used to detect if container \c T is a \c std::array
-/** (because allocation is different, see \ref alloc() ) */
-template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
-
-/// Traits class, used for getBB() set of functions
-template<class>   struct IsSegment              : std::false_type {};
-template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
-template<class>   struct IsPoint                : std::false_type {};
-template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
-
-template<class>   struct HasBB              : std::false_type {};
-template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
-template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
-template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
-template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-} // namespace trait
-#endif
 
 namespace base {
 
@@ -5028,7 +4972,7 @@ Takes a set of input points P and a set R points on the circle boundary.
 template<typename FPT>
 template<typename T>
 Circle_<HOMOG2D_INUMTYPE>
-Circle_<FPT>::p_welzl_helper(
+Circle_<FPT>::p_WelzlHelper(
 	std::vector<T>& P,  ///< input set of points
 	std::vector<T>  R,
 	size_t          n   ///< Number of points in P that are not yet processed
@@ -5048,7 +4992,7 @@ Circle_<FPT>::p_welzl_helper(
 	std::swap( P[idx], P[n - 1] );
 
 	// Get the MEC circle d from the set of points P - {p}
-	auto d = p_welzl_helper( P, R, n - 1 );
+	auto d = p_WelzlHelper( P, R, n - 1 );
 	if( p.isInside( d ) )
 			return d;
 
@@ -5056,21 +5000,28 @@ Circle_<FPT>::p_welzl_helper(
 	R.push_back( p );
 
 	// Return the MEC for P - {p} and R U {p}
-	auto c = p_welzl_helper( P, R, n - 1 );
+	auto c = p_WelzlHelper( P, R, n - 1 );
 	return c;
 }
 
 //------------------------------------------------------------------
 /// Compute circle from a set of points (Minimum Enclosing Circle, aka MEC)
+/// using the Welzl algorithm
 /**
-\c T may be std::vector, std::array or std::list
+\c T may be std::vector, std::array or std::list holding points
 
 References:
 - https://en.wikipedia.org/wiki/Smallest-circle_problem
 - https://www.geeksforgeeks.org/minimum-enclosing-circle-using-welzls-algorithm/
 */
 template<typename FPT>
-template<typename T>
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value
+		,T
+	>::type*
+>
 void
 Circle_<FPT>::set( const T& pts )
 {
@@ -5094,7 +5045,7 @@ Circle_<FPT>::set( const T& pts )
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
 
 	h2d::thr::doNotCheckRadius() = true;
-	auto cir = p_welzl_helper( P_copy, R, P_copy.size() );
+	auto cir = p_WelzlHelper( P_copy, R, P_copy.size() );
 	set( cir.center(), cir.radius() );
 	h2d::thr::doNotCheckRadius() = false;
 }
@@ -5231,7 +5182,7 @@ struct PolylineAttribs
 };
 
 //------------------------------------------------------------------
-/// Returns the bounding box of points in vector/list/array of points \c vpts
+/// Returns the bounding box of points in vector/list/array of points \c vpts (free function)
 /**
 \todo This loops twice on the points. Maybe some improvement here.
 */
@@ -9481,7 +9432,7 @@ getDiagonals( const FRect_<FPT>& rect )
 	return rect.getDiagonals();
 }
 
-/// Free function
+/// Returns centroid of Polyline (free function)
 /// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
 base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
@@ -9489,7 +9440,7 @@ base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl 
 	return pl.centroid();
 }
 
-/// Returns reference on radius of circle (free function)
+/// Returns reference on radius of circle (free function), non-const version
 /// \sa Circle_::radius()
 template<typename FPT>
 FPT&
@@ -9507,7 +9458,7 @@ radius( const Circle_<FPT>& cir )
 	return cir.radius();
 }
 
-/// Returns reference on center of circle (free function)
+/// Returns reference on center of circle (free function), non-const version
 /// \sa Circle_::center()
 template<typename FPT>
 Point2d_<FPT>&
@@ -9958,7 +9909,7 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Compute Convex Hull (free function)
+/// Compute Convex Hull of a Polyline (free function)
 /**
 - type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
 - Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
@@ -9975,6 +9926,8 @@ namespace base {
 /// Computes and returns the convex hull of a set of points (free function)
 /**
 - Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+
+\todo 20230728: make this function accept also std::array and std::list (using Sfinae alogn with trait::IsContainer)
 */
 template<typename FPT>
 CPolyline_<FPT>
