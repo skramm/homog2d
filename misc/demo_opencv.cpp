@@ -1196,7 +1196,7 @@ void demo_CIR( int demidx )
 }
 
 //------------------------------------------------------------------
-/// Convex hull demo
+/// Convex hull + Minimum Enclosing Circle demo
 struct Param_CH : Data
 {
 	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
@@ -1246,8 +1246,8 @@ void action_CH( void* param )
 
 void demo_CH( int demidx )
 {
-	Param_CH data( demidx, "Convex Hull demo" );
-	std::cout << "Demo " << demidx << ": Convex hull. Lclick to add points, Rclick to remove\n";
+	Param_CH data( demidx, "Convex Hull + MEC demo" );
+	std::cout << "Demo " << demidx << ": Convex hull + Minimum Enclosing Circle. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
 	data.setMouseCB( action_CH );
 
@@ -1674,7 +1674,7 @@ int main( int argc, const char** argv )
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection
 		demo_CIR,
-		demo_CH,    // Convex Hull
+		demo_CH,    // Convex Hull + Minimum Enclosing Circle (MEC)
 		demo_SEG,
 		demo_B,
 		demo_ELL,

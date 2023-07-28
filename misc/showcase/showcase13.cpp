@@ -34,6 +34,10 @@ int main( int argc, const char** argv )
 		ch.draw( im, img::DrawParams().setColor(250,100,100) );
 		getBB(vec).draw( im, img::DrawParams().setColor(100,100,250) );
 
+		Circle cir;
+		cir.set( vec );
+		cir.draw( im, img::DrawParams().setColor(0,100,150) );
+
 		getTmPoint(vec).draw( im, extr_col );
 		getRmPoint(vec).draw( im, extr_col );
 		getLmPoint(vec).draw( im, extr_col );

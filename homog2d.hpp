@@ -1632,6 +1632,68 @@ private:
 
 }; // class Hmatrix_
 
+
+//------------------------------------------------------------------
+/// Holds traits classes
+namespace trait {
+
+/// Traits class, used in generic draw() function
+template<typename T> struct IsDrawable              : std::false_type {};
+template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
+template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+/// Traits class, used in intersects() for Polyline
+template<typename T> struct IsShape              : std::false_type {};
+template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
+//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
+
+/// Traits class, used to determine if we can use some "isInside()" function
+template<typename T> struct HasArea              : std::false_type {};
+template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
+template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
+template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
+template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+
+/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
+/// used to detect if container is valid
+template <typename T>               struct IsContainer                     : std::false_type { };
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
+
+
+template <typename T> struct IsArray                  : std::false_type { };
+template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
+
+
+/// Traits class used to detect if container \c T is a \c std::array
+/** (because allocation is different, see \ref alloc() ) */
+template <typename T> struct Is_std_array                             : std::false_type {};
+template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+
+/// Traits class, used for getBB() set of functions
+template<class>   struct IsSegment              : std::false_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class>   struct IsPoint                : std::false_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+
+template<class>   struct HasBB              : std::false_type {};
+template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
+template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
+template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
+template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+} // namespace trait
+
+
 //------------------------------------------------------------------
 namespace detail {
 
@@ -2117,9 +2179,7 @@ public:
 	}
 };
 
-
 } // namespace detail
-
 
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled by its two opposite points
@@ -2622,7 +2682,7 @@ public:
 //		HOMOG2D_CHECK_IS_NUMBER(T); // not needed, as the sfinae above checks this
 	}
 
-/// 1-arg constructor 1, given center point, radius = 1.0
+/// 1-arg constructor 2, given center point, radius = 1.0
 	template<
 		typename T,
 		typename std::enable_if<
@@ -2782,8 +2842,16 @@ Use of Sfinae so it can be selected only for arithmetic types
 	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
 
 // set Minimum enclosing circle from set of points
-	template<typename T>
+//	template<typename T>
+	template<
+		typename T,
+		typename std::enable_if<
+			trait::IsContainer<T>::value
+			,T
+		>::type* = nullptr
+	>
 	void set( const T& );
+
 private:
 	template<typename T>             // helper function
 	Circle_<HOMOG2D_INUMTYPE>
@@ -3168,7 +3236,7 @@ template<typename FPT1,typename FPT2>
 Point2d_<FPT1>
 operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
 
-
+#if 0
 //------------------------------------------------------------------
 /// Holds traits classes
 namespace trait {
@@ -3228,7 +3296,7 @@ template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
 template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 } // namespace trait
-
+#endif
 
 namespace base {
 
@@ -4961,63 +5029,43 @@ template<typename FPT>
 template<typename T>
 Circle_<HOMOG2D_INUMTYPE>
 Circle_<FPT>::p_welzl_helper(
-	std::vector<T>& P,
+	std::vector<T>& P,  ///< input set of points
 	std::vector<T>  R,
 	size_t          n   ///< Number of points in P that are not yet processed
 ) const
 {
-//	static int depth;
-//	std::cout << "depth=" << ++depth << " #P=" << P.size() << " #R=" << R.size() << " n=" << n << '\n';
 	// Base case when all points processed or |R| = 3
 	if( n == 0 || R.size() == 3 )
-	{
 		return p_min_circle_trivial( R );
-	}
 
 	// Pick a random point randomly
-	int idx = rand() % n;
+	int idx = std::rand() % n;
 	auto p = P[idx];
-//	std::cout << "selected pt: " << idx << ": " << p << "\n";
 
 	// Put the picked point at the end of P
 	// since it's more efficient than
 	// deleting from the middle of the vector
 	std::swap( P[idx], P[n - 1] );
-//	P.resize( P.size()-1 );
 
-	// Get the MEC circle d from the
-	// set of points P - {p}
+	// Get the MEC circle d from the set of points P - {p}
 	auto d = p_welzl_helper( P, R, n - 1 );
-//	std::cout << "d1=" << d << "\n";
-//	std::cout << "after call1: d= (" << d._cx << "," << d._cx << "," << d._radius << ")\n";
-
-	// If d contains p, return d
-//	if( d._radius>0. )
-	{
-//		auto d2 = Circle_<HOMOG2D_INUMTYPE>( d._cx, d._cy, d._radius );
-		if( p.isInside( d ) )
-		{
-//			std::cout << "RET: p inside d\n";
-//			depth--;
+	if( p.isInside( d ) )
 			return d;
-		}
-	}
 
 	// Otherwise, must be on the boundary of the MEC
 	R.push_back( p );
 
 	// Return the MEC for P - {p} and R U {p}
 	auto c = p_welzl_helper( P, R, n - 1 );
-//	depth--;
 	return c;
 }
 
 //------------------------------------------------------------------
-/// Compute circle from a set of points
+/// Compute circle from a set of points (Minimum Enclosing Circle, aka MEC)
 /**
 \c T may be std::vector, std::array or std::list
 
-Refs:
+References:
 - https://en.wikipedia.org/wiki/Smallest-circle_problem
 - https://www.geeksforgeeks.org/minimum-enclosing-circle-using-welzls-algorithm/
 */
@@ -5027,22 +5075,26 @@ void
 Circle_<FPT>::set( const T& pts )
 {
 	if( pts.size() < 2 )
-		HOMOG2D_THROW_ERROR_1( "not enough points" );
+		HOMOG2D_THROW_ERROR_1( "unable to build a circle from a single point" );
 
 	if( pts.size() == 2 )
-		this->set( pts[0], pts[1] );
+	{
+		set( pts[0], pts[1] );
+		return;
+	}
 
 	if( pts.size() == 3 ) // todo: convert pts to HOMOG2D_INUMTYPE
-		this->set( pts[0], pts[1], pts[2] );
+	{
+		set( pts[0], pts[1], pts[2] );
+		return;
+	}
 
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> P_copy( std::begin(pts), std::end(pts) );
 	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
 
 	h2d::thr::doNotCheckRadius() = true;
-//	*this = p_welzl_helper( P_copy, R, P_copy.size() );
 	auto cir = p_welzl_helper( P_copy, R, P_copy.size() );
-//	set( cir._cx, cir._cy, cir._radius );
 	set( cir.center(), cir.radius() );
 	h2d::thr::doNotCheckRadius() = false;
 }
