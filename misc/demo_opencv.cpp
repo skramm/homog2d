@@ -1204,6 +1204,7 @@ struct Param_CH : Data
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420},{150,250} };
 	}
 	std::vector<img::Color> vcol;
+	bool _mode = false;  ///< drawing mode: convex hull or hull lines
 };
 
 void action_CH( void* param )
@@ -1232,8 +1233,10 @@ void action_CH( void* param )
 		};
 	std::function<img::DrawParams(int)> f(func);
 
-	draw( data.img, vlines, f );
-	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	if( data._mode )
+		draw( data.img, vlines, f );
+	if( !data._mode )
+		chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
 	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
@@ -1254,7 +1257,11 @@ void demo_CH( int demidx )
 	data.leftClicAddPoint=true;
 
 	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._mode  = !data._mode; }, "Toggle drawing mode (Hull, or hull lines)" );
+	kbloop.addCommonAction( action_CH );
+	action_CH( &data );
 	kbloop.start( data );
+
 }
 
 //------------------------------------------------------------------
@@ -1294,9 +1301,9 @@ void action_RI( void* param )
 void demo_RI( int demidx )
 {
 	Param_RI data( demidx, "Rectangle intersection demo" );
-	std::cout << "Demo " << demidx << ": RI demo\n";
+	std::cout << "Demo " << demidx << ": RI demo\n(Move rectangle with mouse)\n";
 
-//	data.setMouseCB( action_RI );
+	data.setMouseCB( action_RI );
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.doUnion  = !data.doUnion; }, "Toggle union/intersection" );
 	kbloop.addCommonAction( action_RI );
@@ -1530,11 +1537,11 @@ struct Param_NFP : Data
 /*		std::cout << "generating " << nbSegs << " segments\n";
 		vseg.clear();
 		vcol.clear();*/
-		int nbPts = 1.0*rand() / RAND_MAX * 40 + 10;
+		int nbPts = 1.0*rand() / RAND_MAX * 100 + 10;
 		for( auto i=0; i<nbPts; i++ )
 		{
-			auto x = 1.0*rand() / RAND_MAX * (_imWidth-20) + 10;
-			auto y = 1.0*rand() / RAND_MAX * (_imHeight-20) + 10;
+			auto x = 1.0*rand() / RAND_MAX * (_imWidth-120) + 50;
+			auto y = 1.0*rand() / RAND_MAX * (_imHeight-120) + 50;
 			vpt.push_back( Point2d(x,y) );
 		}
 //		vcol = genRandomColors( nbSegs );
@@ -1634,7 +1641,7 @@ void action_ORS( void* param )
 void demo_orthSeg( int demidx )
 {
 	Param_ORS data( demidx, "Orthogonal segments" );
-	std::cout << "Demo " << demidx << ": Orthogonal segments\n";
+	std::cout << "Demo " << demidx << ": Orthogonal segments\n(Move the segment with mouse)\n";
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );

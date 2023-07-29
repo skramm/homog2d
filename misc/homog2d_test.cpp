@@ -414,14 +414,14 @@ TEST_CASE( "infinity point", "[points-inf]" )
 
 TEST_CASE( "types testing 3", "[test-types-3]" )
 {
-	Point2dD ptD0(1,1);
-	Point2dF ptF0(2,2);
-	Point2dL ptL0(3,3);
+	Point2dD ptD0(1,1); // double
+	Point2dF ptF0(2,2); // float
+	Point2dL ptL0(3,3); // long
 
-	INFO( "numerical type conversions (constructor)" )
+	INFO( "numerical type conversions (copy-constructor)" )
 	{
-		Point2dL ptL1 = ptD0;
-		Point2dL ptL2 = ptF0;
+		Point2dL ptL1 = ptD0; // double to long
+		Point2dL ptL2 = ptF0; // float to long
 		CHECK( ptL1.getX() == 1. );
 		CHECK( ptL2.getX() == 2. );
 
@@ -435,60 +435,101 @@ TEST_CASE( "types testing 3", "[test-types-3]" )
 		CHECK( ptD1.getX() == 2. );
 		CHECK( ptD2.getX() == 3. );
 
+		CircleL cl;
 		CircleF cf;
 		CircleD cd;
-		CircleL cl;
 
 		CircleL cl2 = cd;
 		CircleF cf2 = cd;
-		CircleD cd2 = cf;
-		CircleL cl3 = cf;
-		CircleF cf3 = cl;
-		CircleD cd3 = cl;
+		CircleD cd2 = cd;
 
+		CircleL cl3 = cf;
+		CircleF cf3 = cf;
+		CircleD cd3 = cf;
+
+		CircleL cl4 = cl;
+		CircleF cf4 = cl;
+		CircleD cd4 = cl;
+
+		SegmentL sl;
 		SegmentF sf;
 		SegmentD sd;
-		SegmentL sl;
 
 		SegmentL sl2 = sd;
 		SegmentF sf2 = sd;
-		SegmentD sd2 = sf;
-		SegmentL sl3 = sf;
-		SegmentF sf3 = sl;
-		SegmentD sd3 = sl;
+		SegmentD sd2 = sd;
 
+		SegmentL sl3 = sf;
+		SegmentF sf3 = sf;
+		SegmentD sd3 = sf;
+
+		SegmentL sl4 = sl;
+		SegmentF sf4 = sl;
+		SegmentD sd4 = sl;
+
+		FRectL rl;
 		FRectF rf;
 		FRectD rd;
-		FRectL rl;
 
 		FRectL rl2 = rd;
 		FRectF rf2 = rd;
-		FRectD rd2 = rf;
-		FRectL rl3 = rf;
-		FRectF rf3 = rl;
-		FRectD rd3 = rl;
+		FRectD rd2 = rd;
 
+		FRectL rl3 = rf;
+		FRectF rf3 = rf;
+		FRectD rd3 = rf;
+
+		FRectL rl4 = rl;
+		FRectF rf4 = rl;
+		FRectD rd4 = rl;
+
+		OPolylineL pol;
 		OPolylineF pof;
 		OPolylineD pod;
-		OPolylineL pol;
 
 		OPolylineL pol2 = pod;
 		OPolylineF pof2 = pod;
-		OPolylineD pod2 = pof;
-		OPolylineL pol3 = pof;
-		OPolylineF pof3 = pol;
-		OPolylineD pod3 = pol;
+		OPolylineD pod2 = pod;
 
+		OPolylineL pol3 = pof;
+		OPolylineF pof3 = pof;
+		OPolylineD pod3 = pof;
+
+		OPolylineL pol4 = pol;
+		OPolylineF pof4 = pol;
+		OPolylineD pod4 = pol;
+
+		CPolylineL pcl;
 		CPolylineF pcf;
 		CPolylineD pcd;
-		CPolylineL pcl;
 
 		CPolylineL pcl2 = pcd;
 		CPolylineF pcf2 = pcd;
-		CPolylineD pcd2 = pcf;
+		CPolylineD pcd2 = pcd;
+
 		CPolylineL pcl3 = pcf;
-		CPolylineF pcf3 = pcl;
-		CPolylineD pcd3 = pcl;
+		CPolylineF pcf3 = pcf;
+		CPolylineD pcd3 = pcf;
+
+		CPolylineL pcl4 = pcl;
+		CPolylineF pcf4 = pcl;
+		CPolylineD pcd4 = pcl;
+
+		EllipseL elll;
+		EllipseF ellf;
+		EllipseD elld;
+
+		EllipseL elll2 = elld;
+		EllipseF ellf2 = elld;
+		EllipseD elld2 = elld;
+
+		EllipseL elll3 = ellf;
+		EllipseF ellf3 = ellf;
+		EllipseD elld3 = ellf;
+
+		EllipseL elll4 = elll;
+		EllipseF ellf4 = elll;
+		EllipseD elld4 = elll;
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
@@ -694,7 +735,7 @@ TEST_CASE( "test1", "[test1]" )
 	}
 }
 
-TEST_CASE( "build point line from containe", "[build-cont]" )
+TEST_CASE( "build point line from container", "[build-cont]" )
 {
 	std::array<double,3> arr{3,2,1};
 	Point2d_<NUMTYPE> pt( arr );

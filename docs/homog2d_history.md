@@ -22,7 +22,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added computation of IoU ("Intersection over Union") of two rectangles, see [here](homog2d_manual.md#frect_union) for details.
   - templated the `set()` function for `FRect_`
   - added full step rotation for `FRect_`
-  - added Minimum Enclosing Circle from a set of points,
+  - added Minimum Enclosing Circle from a set of points, see [showcase13](homog2d_showcase.md#sc13).
 
 ## Previous releases
 
