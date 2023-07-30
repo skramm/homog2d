@@ -5686,13 +5686,6 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
-/// Set from FRect
-	template<typename FPT2>
-	void set( const FRect_<FPT2>& rec )
-	{
-		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
-	}
-
 /// Set from vector/array/list of points (discards previous points)
 /**
 - nb of elements must be 0 or 2 or more
@@ -5728,6 +5721,54 @@ at 180° of the previous one.
 		const Point2d_<FPT3>& pt3
 	)
 	{
+		impl_setParallelogram( pt1, pt2, pt3, detail::PlHelper<PLT>() );
+	}
+
+/// Set from FRect
+	template<typename FPT2>
+	void set( const FRect_<FPT2>& rec )
+	{
+		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
+	}
+
+///@}
+
+private:
+	template<typename FPT2>
+	void impl_setFromFRect( const FRect_<FPT2>&, const detail::PlHelper<type::IsOpen>& )
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline from a FRect" );
+	}
+	template<typename FPT2>
+	void impl_setFromFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
+	{
+		CPolyline_<FPT> tmp(rect);
+		std::swap( *this, tmp );
+	}
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void impl_setParallelogram(
+		const Point2d_<FPT1>&,
+		const Point2d_<FPT2>&,
+		const Point2d_<FPT3>&,
+		const detail::PlHelper<type::IsOpen>&
+	)
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline as a parallelogram" );
+	}
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void impl_setParallelogram(
+		const Point2d_<FPT1>& p1,
+		const Point2d_<FPT2>& p2,
+		const Point2d_<FPT3>& p3,
+		const detail::PlHelper<type::IsClosed>&
+	)
+	{
+		Point2d_<HOMOG2D_INUMTYPE> pt1(p1);
+		Point2d_<HOMOG2D_INUMTYPE> pt2(p2);
+		Point2d_<HOMOG2D_INUMTYPE> pt3(p3);
+
 		std::vector<Point2d_<FPT>> vpts(4);
 		vpts[0] = pt1;
 		vpts[1] = pt2;
@@ -5741,20 +5782,6 @@ at 180° of the previous one.
 		set( vpts );
 	}
 
-///@}
-
-private:
-	template<typename FPT2>
-	void impl_setFromFRect( const FRect_<FPT2>&, const detail::PlHelper<type::IsOpen>& )
-	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot build a OPolyline from a FRect" );
-	}
-	template<typename FPT2>
-	void impl_setFromFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
-	{
-		CPolyline_<FPT> tmp(rect);
-		std::swap( *this, tmp );
-	}
 
 /// Checks that no contiguous identical	points are stored
 	template<typename CONT>

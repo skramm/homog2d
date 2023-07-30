@@ -1176,7 +1176,8 @@ void demo_CIR( int demidx )
 {
 	Param_CIR data( demidx, "Circle demo" );
 	std::cout << "Demo " << demidx << ": Compute circle from 3 points/2 points\n"
-		<< "Colors: green if inside, blue if not\n";
+		<< "Colors: green if inside, blue if not\n"
+		<< "if 3 points, also computes the corresponding parallelogram\n";
 
 	action_CIR( &data );
 	data.setMouseCB( action_CIR );

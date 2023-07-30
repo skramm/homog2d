@@ -3038,6 +3038,21 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 }
 
+TEST_CASE( "Polyline setParallelogram", "[polyline-setParallelogram]" )
+{
+	{
+		Point2d_<NUMTYPE> pt1(0,0);
+		Point2d_<NUMTYPE> pt2(0,2);
+		Point2d_<NUMTYPE> pt3(4,5);
+		CPolyline_<NUMTYPE> pol;
+		pol.setParallelogram( pt1, pt2, pt3 );
+
+		std::vector<Point2d_<NUMTYPE>> vpts{ {0,0}, {0,2}, {4,5}, {4,3} };
+		CPolyline_<NUMTYPE> pol2(vpts);
+		CHECK( pol == pol2 );
+	}
+}
+
 TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 {
 	{
