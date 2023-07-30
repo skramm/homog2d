@@ -5041,7 +5041,7 @@ Circle_<FPT>::set( const T& pts )
 	}
 
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> P_copy( std::begin(pts), std::end(pts) );
-	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
+//	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
 
 	h2d::thr::doNotCheckRadius() = true;

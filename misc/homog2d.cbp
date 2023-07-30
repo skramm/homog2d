@@ -187,6 +187,7 @@
 		<Unit filename="showcase/showcase7d.cpp" />
 		<Unit filename="showcase/showcase8.cpp" />
 		<Unit filename="showcase/showcase9.cpp" />
+		<Unit filename="showcase3/problem01.cpp" />
 		<Unit filename="showcase_v/build_vid.sh" />
 		<Unit filename="showcase_v/run_parameters.txt" />
 		<Unit filename="showcase_v/showcase_v_01.cpp" />

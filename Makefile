@@ -406,6 +406,22 @@ showcase2: $(SHOWCASE2)
 	@echo "-done target $@"
 
 #------------------------------------------------------------------------------
+
+SHOWCASE3_SRC_LOC=misc/showcase3
+SHOWCASE3_SRC=$(wildcard $(SHOWCASE3_SRC_LOC)/problem*.cpp)
+SHOWCASE3=$(patsubst $(SHOWCASE3_SRC_LOC)/%.cpp,BUILD/showcase3/%, $(SHOWCASE3_SRC))
+
+BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile
+	@mkdir -p BUILD/showcase3/
+	@echo " -Building program $@"
+	@$(CXX) -o $@ $<
+	./$@
+
+showcase3: $(SHOWCASE3)
+	@echo "-done target $@"
+
+
+#------------------------------------------------------------------------------
 FNAME1:=dtest1
 
 .PHONY: $(FNAME1)
