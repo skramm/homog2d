@@ -975,6 +975,22 @@ poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, o
 ```
 
 
+#### 3.4.9 - Building a Parallelogram
+
+The member function `setParallelogram()` takes 3 points (may be of different floating-point types) and builds the corresponding parallelogram by computing the missing 4th point.
+Is only available for "closed" type.
+
+![showcase18](showcase/showcase18.gif)
+
+[(source)](../misc/showcase/showcase18.cpp)
+
+
+#### 3.4.10 - Importing from boost::geometry
+
+If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
+See [demo program](../misc/test_files/bg_test_1.cpp) that demonstrates that feature.
+
+
 
 ### 3.5 - Ellipse
 <a name="p_ellipse"></a>

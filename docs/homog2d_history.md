@@ -9,7 +9,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add polygon union and intersection
   - add non-convex polyline splitting into polygons
   - extend run-time polymorphism capabilities
-  - add list-initialization with points to `PolylineBase` class
+  - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
   - add `Vector` type (defined by dx,dy)
@@ -23,6 +23,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - templated the `set()` function for `FRect_`
   - added full step rotation for `FRect_`
   - added Minimum Enclosing Circle from a set of points, see [showcase13](homog2d_showcase.md#sc13).
+  - added `setParallelogram()` to class `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
 
 ## Previous releases
 

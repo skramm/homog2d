@@ -5720,6 +5720,27 @@ at 180° of the previous one.
 			*it++ = pt;              // allow type conversions (std::copy implies same type)
 	}
 
+/// Build a parallelogram from 3 points
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void setParallelogram(
+		const Point2d_<FPT1>& pt1,
+		const Point2d_<FPT2>& pt2,
+		const Point2d_<FPT3>& pt3
+	)
+	{
+		std::vector<Point2d_<FPT>> vpts(4);
+		vpts[0] = pt1;
+		vpts[1] = pt2;
+		vpts[2] = pt3;
+
+		auto li_21 = pt1 * pt2;
+		auto li_23 = pt3 * pt2;
+		auto li_34 = li_21.getParallelLine( pt3 );
+		auto li_14 = li_23.getParallelLine( pt1 );
+		vpts[3] = li_34 * li_14;
+		set( vpts );
+	}
+
 ///@}
 
 private:
@@ -5920,7 +5941,7 @@ public:
 	{}
 #endif
 
-}; // class Polyline_
+}; // class PolylineBase
 
 } // namespace base
 
@@ -6151,7 +6172,6 @@ getExtremePoint( CardDir dir, const T& t )
 		default: assert(0);
 	}
 }
-
 
 namespace base {
 

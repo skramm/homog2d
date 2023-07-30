@@ -1099,6 +1099,7 @@ struct Param_CIR : Data
 	void setAndDraw()
 	{
 		if( buildFrom3Pts )
+		{
 			try
 			{
 				cir.set( vpt[2], vpt[3], vpt[4] );
@@ -1107,6 +1108,10 @@ struct Param_CIR : Data
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
+			CPolyline pol;
+			pol.setParallelogram( vpt[2], vpt[3], vpt[4] );
+			pol.draw( img, img::DrawParams().setColor(120,200,0) );
+		}
 		else
 			cir.set( vpt[2], vpt[3] );
 		rect.set( vpt[0], vpt[1] );

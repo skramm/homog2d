@@ -54,6 +54,7 @@
 		</Unit>
 		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_showcase2.md" />
+		<Unit filename="../docs/homog2d_showcase3.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
 		<Unit filename="../docs/homog2d_svgimport.md" />
 		<Unit filename="../docs/homog2d_thresholds.md" />
@@ -174,6 +175,7 @@
 		<Unit filename="showcase/showcase15.cpp" />
 		<Unit filename="showcase/showcase16.cpp" />
 		<Unit filename="showcase/showcase17.cpp" />
+		<Unit filename="showcase/showcase18.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
