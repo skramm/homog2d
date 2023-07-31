@@ -23,7 +23,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - templated the `set()` function for `FRect_`
   - added full step rotation for `FRect_`
   - added Minimum Enclosing Circle (MEC) from a set of points, see [showcase13](homog2d_showcase.md#sc13).
-  - added `setParallelogram()` to class `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
+  - added `setParallelogram()` to `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
+  - added `getInscribedCircle()` to `FRect`
 
 ## Previous releases
 

@@ -604,10 +604,11 @@ See [related polyline function](#polyline_rotate) for details.
 
 
 
-You can get the circle that passes through the 4 points:
+You can get both the the bounding circle and the inscribed circle:
 ```C++
 FRect r1(...); // whatever
-auto c1 = r1.getBoundingCircle(); // or: getBoundingCircle(r1);
+auto c1 = r1.getBoundingCircle();  // or: getBoundingCircle(r1);
+auto c2 = r1.getInscribedCircle(); // or: getInscribedCircle(r1);
 ```
 
 ![showcase4b](showcase/showcase4b.gif)

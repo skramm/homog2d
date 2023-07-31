@@ -2332,7 +2332,27 @@ public:
 		);
 	}
 
-	Circle_<FPT> getBoundingCircle() const;
+/// Return circle passing through 4 points of flat rectangle
+/// \sa h2d::getBoundingCircle()
+	Circle_<FPT> getBoundingCircle() const
+	{
+		auto middle_pt = getCenter();
+		return Circle_<FPT>( middle_pt, middle_pt.distTo( _ptR1 ) );
+	}
+
+/// Return circle inscribed in rectangle
+/// \sa h2d::getInscribedCircle()
+	Circle_<FPT> getInscribedCircle() const
+	{
+		auto segs = getSegs();
+		auto center = getCenter();
+		Circle_<FPT> cir( center );
+		cir.radius() = std::min(
+			center.distTo( segs[0] ),
+			center.distTo( segs[1] )
+		);
+		return cir;
+	}
 
 ///@}
 
@@ -3136,17 +3156,6 @@ areCollinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_
 	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
 		return true;
 	return false;
-}
-
-//------------------------------------------------------------------
-/// Return circle passing through 4 points of flat rectangle
-/// \sa h2d::getBoundingCircle()
-template<typename FPT>
-Circle_<FPT>
-FRect_<FPT>::getBoundingCircle() const
-{
-	auto middle_pt = getCenter();
-	return Circle_<FPT>( middle_pt, middle_pt.distTo( _ptR1 ) );
 }
 
 /*
@@ -8917,6 +8926,15 @@ Circle_<FPT>
 getBoundingCircle( const FRect_<FPT>& rect )
 {
 	return rect.getBoundingCircle();
+}
+
+/// Return circle inscribed in rectangle
+/// \sa hFRect_::getInscribedCircle()
+template<typename FPT>
+Circle_<FPT>
+getInscribedCircle( const FRect_<FPT>& rect )
+{
+	return rect.getInscribedCircle();
 }
 
 /// Returns true if is a polygon (free function)

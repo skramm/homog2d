@@ -1289,6 +1289,10 @@ void action_RI( void* param )
 	FRect r2( data.vpt[2], data.vpt[3] );
 	r1.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	r2.draw( data.img, img::DrawParams().setColor(0,250,0) );
+	auto c1a = r1.getBoundingCircle();
+	auto c1b = r1.getInscribedCircle();
+	c1a.draw( data.img );
+	c1b.draw( data.img );
 	if( data.doUnion )
 	{
 		auto res = r1 & r2;
