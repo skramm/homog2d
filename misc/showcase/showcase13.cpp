@@ -35,7 +35,7 @@ int main( int argc, const char** argv )
 		getBB(vec).draw( im, img::DrawParams().setColor(100,100,250) );
 
 		Circle cir;
-		cir.set( vec );
+		cir.set( vec ); // Minimum Enclosing Circle (MEC)
 		cir.draw( im, img::DrawParams().setColor(0,100,150) );
 
 		getTmPoint(vec).draw( im, extr_col );

@@ -15,14 +15,14 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
-  - added `dsize()` member and free function
+  - added `dsize()` member and free function, [see here](homog2d_manual.md#numtype)
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
   - enabled `ttmath` types as default type (if used)
-  - added computation of IoU ("Intersection over Union") of two rectangles, see [here](homog2d_manual.md#frect_union) for details.
+  - added computation of IoU ("Intersection over Union") of two rectangles, [see here](homog2d_manual.md#frect_union) for details.
   - templated the `set()` function for `FRect_`
   - added full step rotation for `FRect_`
-  - added Minimum Enclosing Circle from a set of points, see [showcase13](homog2d_showcase.md#sc13).
+  - added Minimum Enclosing Circle (MEC) from a set of points, see [showcase13](homog2d_showcase.md#sc13).
   - added `setParallelogram()` to class `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
 
 ## Previous releases
@@ -33,7 +33,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed normalization for points and lines
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
-  - added `getClosestPoints()` between two Polyline oblects ([see demo](homog2d_showcase.md#sc14)).
+  - added `getClosestPoints()` between two Polyline objects ([see demo](homog2d_showcase.md#sc14)).
   - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
   - added `side( Point2d, Line2d )`
   - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (same for `Circle`/`Circle`)

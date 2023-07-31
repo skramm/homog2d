@@ -1911,6 +1911,7 @@ or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long doub
 <br>(don't forget the quotes!)
 
 #### Numerical type and size access
+<a name="numtype"></a>
 
 For any object, you may know its underlying floating-point type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
