@@ -1021,7 +1021,8 @@ It is necessary in a run-time polymorphism context, as we would have build failu
 #ifdef HOMOG2D_ENABLE_RTP
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
-Only exists if symbol HOMOG2D_ENABLE_RTP is defined
+Only exists if symbol HOMOG2D_ENABLE_RTP is defined, see
+<a href="md_docs_homog2d_manual.html#build_options">build options</a>.
 */
 class Root
 {

@@ -1931,7 +1931,8 @@ std::cout << getString( dtype(c2) );
 You may also check the size in bits of corresponding mantissa and exponent with the (member of free) function `dsize()`
 (assuming [IEEE754](https://en.wikipedia.org/wiki/IEEE_754) implementation).
 It will return a `std::pair` of integers, the first being the size of the mantissa, the second being the size of exponent.
-
+<br>
+(Also works for "big numbers", [see below](#bignum) ).
 ```C++
 Circle c1; // default is double
 assert( c1.dsize().first == 53 );
