@@ -41,8 +41,10 @@ int main( int argc, const char** argv )
 		s.draw( im, img::DrawParams().setColor(250,25,0).setThickness(2) );
 		auto osegs = s.getOrthogSegs();
 		auto opts = s.getOrthogPts();
-		draw( im, osegs, style );
-		draw( im, opts, style );
+		if( i<nbim/2 )
+			draw( im, osegs, style );
+		else
+			draw( im, opts, style );
 
 		std::ostringstream ossa;
 		ossa << "showcase17_" << std::setfill('0') << std::setw(2) <<i << ".png";
