@@ -38,6 +38,7 @@ int main()
 ```
 
 ### News ###
+- 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
 - 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
 - 2022-12-17: moved CI tests from Travis to GH actions
@@ -56,9 +57,9 @@ This will copy that file in `/usr/local/include`.
 
 - Audience: any C++ dev requiring some basic computational geometry, without the burden of large scale framework.
 
-- Usage: see [full manual](docs/homog2d_manual.md)
+- Usage: see [full manual](docs/homog2d_manual.md), or [Doxygen-generated pages online](https://codedocs.xyz/skramm/homog2d).
 
-- Reference: once downloaded, enter `$ make doc` (requires Doxygen).
+- Reference: once downloaded, enter `$ make doc` (requires Doxygen), or [read online](https://codedocs.xyz/skramm/homog2d.svg).
 
 - A test file is provided, needs [Catch2](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).

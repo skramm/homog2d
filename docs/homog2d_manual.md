@@ -2,8 +2,14 @@
 
 Home page: [github.com/skramm/homog2d](https://github.com/skramm/homog2d)
 
-This is the manual for the current master branch of `homog2d`.
+This is the user manual for the current master branch of `homog2d`.
 For stable releases, see https://github.com/skramm/homog2d/releases .
+
+To get the reference manual (requires Doxygen), you can either type
+`$ make doc` or `$ doxygen misc/doxyfile`.
+
+If you are interested in code, check the page [homog2d_devinfo.md](homog2d_devinfo.md).
+
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
@@ -481,7 +487,9 @@ It is modeled by its two opposite points.
 ```C++
 FRect r1; // (0,0) (1,1)
 FRect r2( Point2d(0,0), Point2d(10,10) );
+FRect r3( 1,5,3,4 ); // (1,4) - (3,4) - (3,5) - (1,5)
 r1.set( pt1, pt2 );
+r2.set( 1,2, 3,4 );
 ```
 When using the constructor or the `set()` member function, there is no constraint on the points themselves:
 the library will automatically adjust the points to store the two opposite ones,
@@ -520,6 +528,16 @@ auto pts  = rect.get4Pts();      // return a std::array of 4 points
 auto pts2 = get4Pts(rect);       // or use the free function
 ```
 
+A call to the `get4Pts()` member or free function will return the points in the following order:
+```
+ p[1] +------+ p[2]
+      |      |
+      |      |
+      |      |
+ p[0] +------+ p[3]
+```
+
+
 You can also fetch the 4 segments of the rectangle, with a member function or a free function:
 ```C++
 FRect rect( pt1, pt2 );
@@ -527,12 +545,24 @@ auto segs = rect.getSegs(); // returns a std::array of 4 segments.
 auto segs2 = getSegs(rect); // your choice
 ```
 
+The returned array holds the segments in the following order:
+```
+        s[1]
+     +-------+
+     |       |
+s[0] |       | s[2]
+     |       |
+     +-------+
+        s[3]
+```
+
+
 The two diagonal segments can be fetched as a pair of segments:
 ```C++
 FRect rect( pt1, pt2 );
 auto psegs = rect.getDiagonals();  // or: getDiagonals(rect);
 ```
-The `first` element will hold the segment holding the point with minimal coordinates.
+The `first` element will hold the segment holding the point with minimal coordinates (`p[0]` and `p[2]` on above drawing).
 
 
 And of course, its width, height, length, and enclosed area.
@@ -558,10 +588,27 @@ FRect rect;
 rect.translate( dx, dy );
 ```
 
-you can get the circle that passes through the 4 points:
+Full step rotation (+90°,-90°,180° or vertical/horizontal mirroring) is available with the `rotate()` member or free function:
+```C++
+FRect rect;
+rect.rotate( Rotate::CCW ); // or: rotate( rect, Rotate::CCW );
+```
+This will proceed a rotation around origin point (0,0).
+But most of the times, you want to rotate around some specific point, so you can use this:
+```C++
+FRect rect;
+Point2d pt(x,y);
+rect.rotate( Rotate:CCW, pt ); // or: rotate( rect, Rotate:CCW, pt );
+```
+See [related polyline function](#polyline_rotate) for details.
+
+
+
+You can get both the the bounding circle and the inscribed circle:
 ```C++
 FRect r1(...); // whatever
-auto c1 = r1.getBoundingCircle(); // or: getBoundingCircle(r1);
+auto c1 = r1.getBoundingCircle();  // or: getBoundingCircle(r1);
+auto c2 = r1.getInscribedCircle(); // or: getInscribedCircle(r1);
 ```
 
 ![showcase4b](showcase/showcase4b.gif)
@@ -624,6 +671,20 @@ This is checked for and will throw if not the case
 (unless the "no checking" build option is activated, [see here](#build_options)).
 
 ![showcase6](showcase/showcase6.gif)
+
+**Minimum Enclosing Circle (MEC)**
+
+To compute the Minimum Enclosing Circle of a set of points, you can use either a constructor, or the equivalent `set()` function:
+```C++
+std::vector vpts( ... some points ...  );
+Circle c1( vpts);
+// or
+c1.set( vpts );
+```
+See [showcase13](homog2d_showcase.md#sc13) for an example.
+It uses the Welzl algorithm, that require O(n) time and O(n) memory (recursive technique).
+The input container can be `std::vector`, `std::array`, or `std::list`.
+It requires a least 2 points in the container, and will throw if condition not met.
 
 Center and radius can be accessed (read/write) with provided member functions:
 ```C++
@@ -882,8 +943,9 @@ For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
 #### 3.4.8 - Rotation/mirroring
+<a name="polyline_rotate"></a>
 
-All the primitives can be rotated using a homography (see following section), but in some situations you only need "quarter-circle" rotations (mutiples of 90°).
+All the primitives can be rotated using a homography (see following section), but in some situations you may only need "quarter-circle" rotations (mutiples of 90°).
 While it is of course possible to proceed these rotations with a homography, the downside is that you may end up with 0 values stored as `1.359 E-16`,
 due to numerical nature of floating point computation.
 This can be undesirable, so an alternative is provided:
@@ -912,6 +974,22 @@ Cpolyline poly;
 Point2d org( ..., ... );
 poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, org );
 ```
+
+
+#### 3.4.9 - Building a Parallelogram
+
+The member function `setParallelogram()` takes 3 points (may be of different floating-point types) and builds the corresponding parallelogram by computing the missing 4th point.
+Is only available for "closed" type.
+
+![showcase18](showcase/showcase18.gif)
+
+[(source)](../misc/showcase/showcase18.cpp)
+
+
+#### 3.4.10 - Importing from boost::geometry
+
+If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
+See [demo program](../misc/test_files/bg_test_1.cpp) that demonstrates that feature.
 
 
 
@@ -1348,6 +1426,11 @@ For the union, if there is no intersection, the function will return an empty `C
 
 If one rectangle is inside the other one, then the union will return the largest rectangle (as a Polyline object), ant the intersection will return the smallest one.
 
+For conveniency, a function `IoU()` is provided.
+It computes the ratio of the area of the intersection of two rectangles over the area of the union of these two rectangles.
+See this [WP page](https://en.wikipedia.org/wiki/Jaccard_index) where this is described.
+
+
 ## 6 - Misc. features
 <a name="misc"></a>
 
@@ -1463,7 +1546,7 @@ cout << "nearest point is " << vpts[pidx.first]
 
 (or you could of course call the two previous function sequentially.)
 
-[see showcase](homog2d_showcase.md#sc_15)
+[see showcase](homog2d_showcase.md#sc15)
 
 ### 6.6 - Extracting data from sets/containers of primitives
 
@@ -1829,6 +1912,7 @@ or add that as a compile flag: `$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE long doub
 <br>(don't forget the quotes!)
 
 #### Numerical type and size access
+<a name="numtype"></a>
 
 For any object, you may know its underlying floating-point type with the `dtype()` (member or free) function.
 It will return an enum value of type `Dtype`, either
@@ -1847,7 +1931,8 @@ std::cout << getString( dtype(c2) );
 You may also check the size in bits of corresponding mantissa and exponent with the (member of free) function `dsize()`
 (assuming [IEEE754](https://en.wikipedia.org/wiki/IEEE_754) implementation).
 It will return a `std::pair` of integers, the first being the size of the mantissa, the second being the size of exponent.
-
+<br>
+(Also works for "big numbers", [see below](#bignum) ).
 ```C++
 Circle c1; // default is double
 assert( c1.dsize().first == 53 );

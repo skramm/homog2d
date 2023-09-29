@@ -414,14 +414,14 @@ TEST_CASE( "infinity point", "[points-inf]" )
 
 TEST_CASE( "types testing 3", "[test-types-3]" )
 {
-	Point2dD ptD0(1,1);
-	Point2dF ptF0(2,2);
-	Point2dL ptL0(3,3);
+	Point2dD ptD0(1,1); // double
+	Point2dF ptF0(2,2); // float
+	Point2dL ptL0(3,3); // long
 
-	INFO( "numerical type conversions (constructor)" )
+	INFO( "numerical type conversions (copy-constructor)" )
 	{
-		Point2dL ptL1 = ptD0;
-		Point2dL ptL2 = ptF0;
+		Point2dL ptL1 = ptD0; // double to long
+		Point2dL ptL2 = ptF0; // float to long
 		CHECK( ptL1.getX() == 1. );
 		CHECK( ptL2.getX() == 2. );
 
@@ -435,60 +435,101 @@ TEST_CASE( "types testing 3", "[test-types-3]" )
 		CHECK( ptD1.getX() == 2. );
 		CHECK( ptD2.getX() == 3. );
 
+		CircleL cl;
 		CircleF cf;
 		CircleD cd;
-		CircleL cl;
 
 		CircleL cl2 = cd;
 		CircleF cf2 = cd;
-		CircleD cd2 = cf;
-		CircleL cl3 = cf;
-		CircleF cf3 = cl;
-		CircleD cd3 = cl;
+		CircleD cd2 = cd;
 
+		CircleL cl3 = cf;
+		CircleF cf3 = cf;
+		CircleD cd3 = cf;
+
+		CircleL cl4 = cl;
+		CircleF cf4 = cl;
+		CircleD cd4 = cl;
+
+		SegmentL sl;
 		SegmentF sf;
 		SegmentD sd;
-		SegmentL sl;
 
 		SegmentL sl2 = sd;
 		SegmentF sf2 = sd;
-		SegmentD sd2 = sf;
-		SegmentL sl3 = sf;
-		SegmentF sf3 = sl;
-		SegmentD sd3 = sl;
+		SegmentD sd2 = sd;
 
+		SegmentL sl3 = sf;
+		SegmentF sf3 = sf;
+		SegmentD sd3 = sf;
+
+		SegmentL sl4 = sl;
+		SegmentF sf4 = sl;
+		SegmentD sd4 = sl;
+
+		FRectL rl;
 		FRectF rf;
 		FRectD rd;
-		FRectL rl;
 
 		FRectL rl2 = rd;
 		FRectF rf2 = rd;
-		FRectD rd2 = rf;
-		FRectL rl3 = rf;
-		FRectF rf3 = rl;
-		FRectD rd3 = rl;
+		FRectD rd2 = rd;
 
+		FRectL rl3 = rf;
+		FRectF rf3 = rf;
+		FRectD rd3 = rf;
+
+		FRectL rl4 = rl;
+		FRectF rf4 = rl;
+		FRectD rd4 = rl;
+
+		OPolylineL pol;
 		OPolylineF pof;
 		OPolylineD pod;
-		OPolylineL pol;
 
 		OPolylineL pol2 = pod;
 		OPolylineF pof2 = pod;
-		OPolylineD pod2 = pof;
-		OPolylineL pol3 = pof;
-		OPolylineF pof3 = pol;
-		OPolylineD pod3 = pol;
+		OPolylineD pod2 = pod;
 
+		OPolylineL pol3 = pof;
+		OPolylineF pof3 = pof;
+		OPolylineD pod3 = pof;
+
+		OPolylineL pol4 = pol;
+		OPolylineF pof4 = pol;
+		OPolylineD pod4 = pol;
+
+		CPolylineL pcl;
 		CPolylineF pcf;
 		CPolylineD pcd;
-		CPolylineL pcl;
 
 		CPolylineL pcl2 = pcd;
 		CPolylineF pcf2 = pcd;
-		CPolylineD pcd2 = pcf;
+		CPolylineD pcd2 = pcd;
+
 		CPolylineL pcl3 = pcf;
-		CPolylineF pcf3 = pcl;
-		CPolylineD pcd3 = pcl;
+		CPolylineF pcf3 = pcf;
+		CPolylineD pcd3 = pcf;
+
+		CPolylineL pcl4 = pcl;
+		CPolylineF pcf4 = pcl;
+		CPolylineD pcd4 = pcl;
+
+		EllipseL elll;
+		EllipseF ellf;
+		EllipseD elld;
+
+		EllipseL elll2 = elld;
+		EllipseF ellf2 = elld;
+		EllipseD elld2 = elld;
+
+		EllipseL elll3 = ellf;
+		EllipseF ellf3 = ellf;
+		EllipseD elld3 = ellf;
+
+		EllipseL elll4 = elll;
+		EllipseF ellf4 = elll;
+		EllipseD elld4 = elll;
 
 /**
 The goal of theses is to make sure that the conversion (float to double, ...)
@@ -694,7 +735,7 @@ TEST_CASE( "test1", "[test1]" )
 	}
 }
 
-TEST_CASE( "build point line from containe", "[build-cont]" )
+TEST_CASE( "build point line from container", "[build-cont]" )
 {
 	std::array<double,3> arr{3,2,1};
 	Point2d_<NUMTYPE> pt( arr );
@@ -1370,6 +1411,12 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( !p1.isInside( Point2d(0,0), 2 ) );
 	}
 	{
+		Point2d p1( 10, 0 );          // point on the edge of circle
+		CHECK( !p1.isInside(c1) );
+		Point2d p2( 0, 10 );          // point on the edge of circle
+		CHECK( !p2.isInside(c1) );
+	}
+	{
 		Circle_<NUMTYPE> cA( Point2d(),   10.);
 		CHECK( cA.radius() == 10. );
 		cA.radius() = 12;
@@ -1383,6 +1430,7 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( seg.length() == 5 );
 	}
 }
+
 
 //////////////////////////////////////////////////////////////
 /////           INTERSECTION TESTS                       /////
@@ -1809,7 +1857,18 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 //		auto inter=r1.intersectArea(r2);
 //		CHECK( inter.get() == r2 );
 	}
+}
 
+TEST_CASE( "IoU of 2 rectangles", "[IOU_RECT]" )
+{
+	FRect_<NUMTYPE> r1( 0,0,1,1 );
+	FRect_<NUMTYPE> r2( 2,2,3,3 );
+	CHECK( IoU(r1,r2) == 0. );
+	r1.set(0,0,2,2);
+	CHECK( IoU(r1,r2) == 0. );
+
+	r2.set(1,0,3,2);
+	CHECK( IoU(r1,r2) == Approx(1./3.) );
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )
@@ -2280,6 +2339,43 @@ TEST_CASE( "Circle", "[cir1]" )
 	}
 }
 
+TEST_CASE( "Circle from points", "[cir2]" )
+{
+	{
+		INFO( "circle from 2 pts");
+		std::vector<Point2d_<NUMTYPE>> pts1{ {0,0}, {2,0} };
+		std::vector<Point2d_<NUMTYPE>> pts2{ {0,3}, {4,3} };
+// check using constructor
+		Circle_<NUMTYPE> c1(pts1);
+		CHECK( c1.center() == Point2d(1,0) );
+		CHECK( c1.radius() == 1. );
+		Circle_<NUMTYPE> c2(pts2);
+		CHECK( c2.center() == Point2d(2,3) );
+		CHECK( c2.radius() == 2. );
+// check using "set" function
+		c1.set(pts2);
+		CHECK( c1.center() == Point2d(2,3) );
+		CHECK( c1.radius() == 2. );
+		c2.set(pts1);
+		CHECK( c2.center() == Point2d(1,0) );
+		CHECK( c2.radius() == 1. );
+	}
+	{
+		INFO( "circle from 4 pts");
+		std::vector<Point2d_<NUMTYPE>> pts1{ {0,4}, {4,0}, {0,-4}, {0,0} };
+		Circle_<NUMTYPE> c1(pts1);
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 4. );
+		c1.set(pts1);
+		CHECK( c1.center() == Point2d(0,0) );
+		CHECK( c1.radius() == 4. );
+
+		std::vector<Point2d_<NUMTYPE>> pts2{ {0,4} };
+		CHECK_THROWS( Circle_<NUMTYPE>(pts2) ); // 1 point not allowed
+		std::vector<Point2d_<NUMTYPE>> pts3;
+		CHECK_THROWS( Circle_<NUMTYPE>(pts3) ); // 0 points not allowed
+	}
+}
 
 TEST_CASE( "Ellipse", "[ell1]" )
 {
@@ -2939,6 +3035,21 @@ TEST_CASE( "Polyline", "[polyline]" )
 		OPolyline_<NUMTYPE> po2(pts);
 		CHECK( pc1 == pc2 );
 		CHECK( po1 == po2 );
+	}
+}
+
+TEST_CASE( "Polyline setParallelogram", "[polyline-setParallelogram]" )
+{
+	{
+		Point2d_<NUMTYPE> pt1(0,0);
+		Point2d_<NUMTYPE> pt2(0,2);
+		Point2d_<NUMTYPE> pt3(4,5);
+		CPolyline_<NUMTYPE> pol;
+		pol.setParallelogram( pt1, pt2, pt3 );
+
+		std::vector<Point2d_<NUMTYPE>> vpts{ {0,0}, {0,2}, {4,5}, {4,3} };
+		CPolyline_<NUMTYPE> pol2(vpts);
+		CHECK( pol == pol2 );
 	}
 }
 

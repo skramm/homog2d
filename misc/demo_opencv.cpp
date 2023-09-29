@@ -1099,6 +1099,7 @@ struct Param_CIR : Data
 	void setAndDraw()
 	{
 		if( buildFrom3Pts )
+		{
 			try
 			{
 				cir.set( vpt[2], vpt[3], vpt[4] );
@@ -1107,6 +1108,10 @@ struct Param_CIR : Data
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
+			CPolyline pol;
+			pol.setParallelogram( vpt[2], vpt[3], vpt[4] );
+			pol.draw( img, img::DrawParams().setColor(120,200,0) );
+		}
 		else
 			cir.set( vpt[2], vpt[3] );
 		rect.set( vpt[0], vpt[1] );
@@ -1171,7 +1176,8 @@ void demo_CIR( int demidx )
 {
 	Param_CIR data( demidx, "Circle demo" );
 	std::cout << "Demo " << demidx << ": Compute circle from 3 points/2 points\n"
-		<< "Colors: green if inside, blue if not\n";
+		<< "Colors: green if inside, blue if not\n"
+		<< "if 3 points, also computes the corresponding parallelogram\n";
 
 	action_CIR( &data );
 	data.setMouseCB( action_CIR );
@@ -1196,7 +1202,7 @@ void demo_CIR( int demidx )
 }
 
 //------------------------------------------------------------------
-/// Convex hull demo
+/// Convex hull + Minimum Enclosing Circle demo
 struct Param_CH : Data
 {
 	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
@@ -1204,6 +1210,7 @@ struct Param_CH : Data
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420},{150,250} };
 	}
 	std::vector<img::Color> vcol;
+	bool _mode = false;  ///< drawing mode: convex hull or hull lines
 };
 
 void action_CH( void* param )
@@ -1215,6 +1222,9 @@ void action_CH( void* param )
 	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
 	auto chull = convexHull( data.vpt );
+	Circle cir;
+	cir.set(  data.vpt );
+
 
 	auto vlines = getLines( chull.getSegs() );
 	if( old_size != vlines.size() )
@@ -1229,8 +1239,11 @@ void action_CH( void* param )
 		};
 	std::function<img::DrawParams(int)> f(func);
 
-	draw( data.img, vlines, f );
-	chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	if( data._mode )
+		draw( data.img, vlines, f );
+	if( !data._mode )
+		chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
 	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
 	chull.getLmPoint().draw( data.img, dp );
@@ -1242,15 +1255,19 @@ void action_CH( void* param )
 
 void demo_CH( int demidx )
 {
-	Param_CH data( demidx, "Convex Hull demo" );
-	std::cout << "Demo " << demidx << ": Convex hull. Lclick to add points, Rclick to remove\n";
+	Param_CH data( demidx, "Convex Hull + MEC demo" );
+	std::cout << "Demo " << demidx << ": Convex hull + Minimum Enclosing Circle. Lclick to add points, Rclick to remove\n";
 	action_CH( &data );
 	data.setMouseCB( action_CH );
 
 	data.leftClicAddPoint=true;
 
 	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._mode  = !data._mode; }, "Toggle drawing mode (Hull, or hull lines)" );
+	kbloop.addCommonAction( action_CH );
+	action_CH( &data );
 	kbloop.start( data );
+
 }
 
 //------------------------------------------------------------------
@@ -1272,6 +1289,10 @@ void action_RI( void* param )
 	FRect r2( data.vpt[2], data.vpt[3] );
 	r1.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	r2.draw( data.img, img::DrawParams().setColor(0,250,0) );
+	auto c1a = r1.getBoundingCircle();
+	auto c1b = r1.getInscribedCircle();
+	c1a.draw( data.img );
+	c1b.draw( data.img );
 	if( data.doUnion )
 	{
 		auto res = r1 & r2;
@@ -1290,7 +1311,7 @@ void action_RI( void* param )
 void demo_RI( int demidx )
 {
 	Param_RI data( demidx, "Rectangle intersection demo" );
-	std::cout << "Demo " << demidx << ": RI demo\n";
+	std::cout << "Demo " << demidx << ": RI demo\n(Move rectangle with mouse)\n";
 
 	data.setMouseCB( action_RI );
 	KeyboardLoop kbloop;
@@ -1424,13 +1445,26 @@ struct Param_polRot : Data
 			}
 		);
 		_poly.translate( 180,180); // so it lies in the window
+		_rect.set(0,0,160,100);
+		_rect.translate( 220,230); // so it lies in the window
+
 	}
 	void nextRefPt()
 	{
-		_refPt++;
-		if( _refPt >= _poly.size() )
-			_refPt = 0;
-		std::cout << "move to next ref pt: " << _refPt << ": " << _poly.getPoint( _refPt ) <<  '\n';
+		if( _item )
+		{
+			_refPt_p++;
+			if( _refPt_p >= _poly.size() )
+				_refPt_p = 0;
+			std::cout << "move to next ref pt: poly" << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
+		}
+/*		else
+		{
+			_refPt_r++;
+			if( _refPt_r >= 4 )
+				_refPt_r = 0;
+			std::cout << "move to next ref pt: " << _refPt_r <<  '\n';
+		}*/
 	}
 	void doIt( bool b = true )
 	{
@@ -1438,9 +1472,12 @@ struct Param_polRot : Data
 	}
 
 	CPolyline _poly;
+	FRect     _rect;
 	Rotate    _rotateType = Rotate::CW;
-	size_t    _refPt = 0;                 ///< default index of center point
+	size_t    _refPt_p = 0;                 ///< default index of center point (Polyline)
+//	size_t    _refPt_r = 0;                 ///< default index of center point (Rectangle)
 	bool      _doIt = false;
+	bool      _item = true;
 };
 
 void action_polRot( void* param )
@@ -1449,18 +1486,36 @@ void action_polRot( void* param )
 	data.clearImage();
 
 	if( data._doIt )
-		data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt ) );
+	{
+		if( data._item )
+			data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt_p ) );
+		else
+			data._rect.rotate( data._rotateType, data.pt_mouse );
+		 data._doIt = false;
+	}
 
-	data._poly.draw( data.img, img::DrawParams().setColor( 250,0,0).showPoints() );
-	data._poly.getPoint( data._refPt ).draw( data.img, img::DrawParams().setColor( 0,0,250).setPointStyle(img::PtStyle::Dot) );
+	if( data._item )
+	{
+		data._poly.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
+		data._poly.getPoint( data._refPt_p ).draw( data.img, img::DrawParams().setColor(0,0,250).setPointStyle(img::PtStyle::Dot) );
+	}
+	else
+	{
+		data._rect.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
+		draw( data.img, data.pt_mouse, img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
+	}
 	data.showImage();
 }
 
 void demo_polRot( int demidx )
 {
-	Param_polRot data( demidx, "Polyline full step rotate demo" );
-	std::cout << "Demo " << demidx << ": Polyline full step rotate demo\n"
+	Param_polRot data( demidx, "Polyline/Rectangle full step rotate demo" );
+	std::cout << "Demo " << demidx << ": Polyline/Rectangle full step rotate demo\n"
+		<< " - Polyline: center point is one of the points\n"
+		<< " - Rectangle: center point is free, use mouse\n"
 		<< "Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!\n";
+
+	data.setMouseCB( action_polRot );
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );
@@ -1469,6 +1524,7 @@ void demo_polRot( int demidx )
 	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror;  data.doIt(); }, "VMirror" );
 	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror;  data.doIt(); }, "HMirror" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt();                  data.doIt(false); }, "move to next reference point" );
+	kbloop.addKeyAction( 'r', [&](void*){ data._item = !data._item;          data.doIt(false); }, "toggle poly/rectangle" );
 
 	kbloop.addCommonAction( action_polRot );
 	action_polRot( &data );
@@ -1491,11 +1547,11 @@ struct Param_NFP : Data
 /*		std::cout << "generating " << nbSegs << " segments\n";
 		vseg.clear();
 		vcol.clear();*/
-		int nbPts = 1.0*rand() / RAND_MAX * 40 + 10;
+		int nbPts = 1.0*rand() / RAND_MAX * 100 + 10;
 		for( auto i=0; i<nbPts; i++ )
 		{
-			auto x = 1.0*rand() / RAND_MAX * (_imWidth-20) + 10;
-			auto y = 1.0*rand() / RAND_MAX * (_imHeight-20) + 10;
+			auto x = 1.0*rand() / RAND_MAX * (_imWidth-120) + 50;
+			auto y = 1.0*rand() / RAND_MAX * (_imHeight-120) + 50;
 			vpt.push_back( Point2d(x,y) );
 		}
 //		vcol = genRandomColors( nbSegs );
@@ -1595,7 +1651,7 @@ void action_ORS( void* param )
 void demo_orthSeg( int demidx )
 {
 	Param_ORS data( demidx, "Orthogonal segments" );
-	std::cout << "Demo " << demidx << ": Orthogonal segments\n";
+	std::cout << "Demo " << demidx << ": Orthogonal segments\n(Move the segment with mouse)\n";
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
@@ -1622,20 +1678,20 @@ int main( int argc, const char** argv )
 		<< "\n - build with OpenCV version: " << CV_VERSION << '\n';
 
 		Point2dF pt1;
-		std::cout << "F: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
+		std::cout << "float: size=" << pt1.dsize().first << "-" << pt1.dsize().second << '\n';
 
 		Point2dL pt2;
-		std::cout << "L: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
+		std::cout << "long: size=" << pt2.dsize().first << "-" << pt2.dsize().second << '\n';
 
 		Point2dD pt3;
-		std::cout << "D: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
+		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection
 		demo_CIR,
-		demo_CH,    // Convex Hull
+		demo_CH,    // Convex Hull + Minimum Enclosing Circle (MEC)
 		demo_SEG,
 		demo_B,
 		demo_ELL,
@@ -1645,7 +1701,7 @@ int main( int argc, const char** argv )
 		demo_C,
 		demo_SI,
 		demo_6,
-		demo_polRot
+		demo_polRot // full step rotation of Polyline and rectangle
 	};
 
 	if( argc > 1 )

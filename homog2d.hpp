@@ -42,6 +42,9 @@ See https://github.com/skramm/homog2d
 #include <type_traits>
 #include <functional>
 #include <limits>
+#include <cstdint> // required for uint8_t
+#include <memory>  // required for std::unique_ptr
+
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
@@ -536,7 +539,7 @@ Image<cv::Mat>::write( std::string fname ) const
 {
 	cv::imwrite( fname, _realImg );
 }
-#endif
+#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
@@ -729,6 +732,18 @@ So the drawing code checks if user has added some filling, and if so, does not a
 // SECTION  - PUBLIC ENUM DECLARATIONS
 /////////////////////////////////////////////////////////////////////////////
 
+/// Used in base::PolylineBase_::rotate() member function
+enum class Rotate: int8_t
+{
+	CCW,      ///< Counter ClockWise rotation
+	CW,       ///< ClockWise rotation
+	Full,     ///< 180° rotation
+	VMirror,  ///< vertical symmetry
+	HMirror   ///< horizontal symmetry
+};
+
+enum class CardDir: int8_t { Bottom,Top, Left, Right };
+
 /// Used in Line2d::getValue() and getOrthogonalLine()
 enum class GivenCoord: uint8_t { X, Y };
 
@@ -899,6 +914,13 @@ static HOMOG2D_INUMTYPE& nullDeter()
 	return _zeroDeter;
 }
 
+/// This one is used for the Welzl minimum enclosing circle
+static bool& doNotCheckRadius()
+{
+	static bool _doNotCheckRadius = false;
+	return _doNotCheckRadius;
+}
+
 /// Helper function, could be needed
 inline
 void printThresholds( std::ostream& f )
@@ -942,6 +964,7 @@ product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 //------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
+/** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
 std::pair<Point2d_<FPT>,Point2d_<FPT>>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
@@ -998,7 +1021,8 @@ It is necessary in a run-time polymorphism context, as we would have build failu
 #ifdef HOMOG2D_ENABLE_RTP
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
-Only exists if symbol HOMOG2D_ENABLE_RTP is defined
+Only exists if symbol HOMOG2D_ENABLE_RTP is defined, see
+<a href="md_docs_homog2d_manual.html#build_options">build options</a>.
 */
 class Root
 {
@@ -1609,6 +1633,69 @@ private:
 
 }; // class Hmatrix_
 
+
+//------------------------------------------------------------------
+/// Holds traits classes
+namespace trait {
+
+/// Traits class, used in generic draw() function
+template<typename T> struct IsDrawable              : std::false_type {};
+template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
+template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+/// Traits class, used in intersects() for Polyline
+template<typename T> struct IsShape              : std::false_type {};
+template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
+template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
+template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
+template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
+//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
+
+/// Traits class, used to determine if we can use some "isInside()" function
+template<typename T> struct HasArea              : std::false_type {};
+template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
+template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
+template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
+template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+
+/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
+/// used to detect if container is valid
+template <typename T>               struct IsContainer                     : std::false_type { };
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
+
+
+template <typename T> struct IsArray                  : std::false_type { };
+template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
+
+
+/// Traits class used to detect if container \c T is a \c std::array
+/** (because allocation is different, see \ref alloc() ) */
+template <typename T> struct Is_std_array                             : std::false_type {};
+template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+
+/// Traits class, used for getBB() set of functions
+template<class>   struct IsSegment              : std::false_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class>   struct IsPoint                : std::false_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+
+/// Traits class, used to check if type has a Bounding Box
+template<class>   struct HasBB              : std::false_type {};
+template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
+template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
+template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
+template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+} // namespace trait
+
+
 //------------------------------------------------------------------
 namespace detail {
 
@@ -2094,9 +2181,7 @@ public:
 	}
 };
 
-
 } // namespace detail
-
 
 //------------------------------------------------------------------
 /// A Flat Rectangle, modeled by its two opposite points
@@ -2200,16 +2285,23 @@ private:
 	}
 
 public:
-	void set( const Point2d_<FPT>& pa, const Point2d_<FPT>& pb )
+/// Assigns points \c pa and \c pb to rectangle
+	template<typename FPT1,typename FPT2>
+	void set( const Point2d_<FPT1>& pa, const Point2d_<FPT2>& pb )
 	{
 		auto ppts = detail::getCorrectPoints( pa, pb );
 		_ptR1 = ppts.first;
 		_ptR2 = ppts.second;
 	}
+/// Assigns points (x1,y1) and (x2,y2) to rectangle
+	template<typename T>
+	void set( T x1, T y1, T x2, T y2 )
+	{
+		set( Point2d_<T>(x1,y1), Point2d_<T>(x2,y2) );
+	}
 
 /// \name Attributes access
 ///@{
-
 	HOMOG2D_INUMTYPE height() const { return  _ptR2.getY() - _ptR1.getY(); }
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
@@ -2241,10 +2333,32 @@ public:
 		);
 	}
 
-	Circle_<FPT> getBoundingCircle() const;
+/// Return circle passing through 4 points of flat rectangle
+/// \sa h2d::getBoundingCircle()
+	Circle_<FPT> getBoundingCircle() const
+	{
+		auto middle_pt = getCenter();
+		return Circle_<FPT>( middle_pt, middle_pt.distTo( _ptR1 ) );
+	}
+
+/// Return circle inscribed in rectangle
+/// \sa h2d::getInscribedCircle()
+	Circle_<FPT> getInscribedCircle() const
+	{
+		auto segs = getSegs();
+		auto center = getCenter();
+		Circle_<FPT> cir( center );
+		cir.radius() = std::min(
+			center.distTo( segs[0] ),
+			center.distTo( segs[1] )
+		);
+		return cir;
+	}
 
 ///@}
 
+/// \name Modifying functions
+///@{
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -2253,6 +2367,11 @@ public:
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
 	}
+
+	template<typename FPT2>
+	void rotate( Rotate, const Point2d_<FPT2>& );
+	void rotate( Rotate );
+///@}
 
 	FRect_<FPT>
 	getExtended() const
@@ -2303,7 +2422,6 @@ public:
 /// in clockwise order
 /**
 \verbatim
-
  p1 +------+ p2
     |      |
     |      |
@@ -2541,7 +2659,6 @@ public:
 
 }; // class FRect_
 
-
 //------------------------------------------------------------------
 /// A circle
 template<typename FPT>
@@ -2583,21 +2700,27 @@ public:
 	>
 	explicit Circle_( T rad )
 		: Circle_( Point2d_<FPT>(), rad )
-	{
-//		HOMOG2D_CHECK_IS_NUMBER(T); // not needed, as the sfinae above checks this
-	}
+	{}
 
-/// 1-arg constructor 1, given center point, radius = 1.0
+/// 1-arg constructor 2, given center point, radius = 1.0
+	template<typename FPT2>
+	explicit Circle_( Point2d_<FPT2> center )
+		: Circle_( center, 1. )
+	{}
+
+/// 1-arg constructor 3, build circle from a set of 2, 3, or more points
+/// (Minimum Enclosing Circle, aka MEC)
 	template<
 		typename T,
 		typename std::enable_if<
-			!std::is_arithmetic<T>::value
+			trait::IsContainer<T>::value
 			,T
 		>::type* = nullptr
 	>
-	explicit Circle_( T center )
-		: Circle_( center, 1. )
-	{}
+	explicit Circle_( const T& pts )
+	{
+		set( pts );
+	}
 
 /// 2-arg constructor 1: point and radius
 	template<typename T1, typename T2>
@@ -2605,7 +2728,7 @@ public:
 		: _radius(rad), _center(center)
 	{
 #ifndef HOMOG2D_NOCHECKS
-		if( priv::abs(rad) < thr::nullDistance() )
+		if( priv::abs(rad) < thr::nullDistance() && !h2d::thr::doNotCheckRadius() )
 			HOMOG2D_THROW_ERROR_1( "radius value too small: " << std::scientific << priv::abs(rad) );
 		if( rad < 0. )
 			HOMOG2D_THROW_ERROR_1( "radius must not be <0" );
@@ -2670,8 +2793,6 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	const Point2d_<FPT>& center() const { return _center; }
 	const Point2d_<FPT>& getCenter() const { return _center; }
 
-
-
 	HOMOG2D_INUMTYPE area() const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_radius) * _radius * M_PI;
@@ -2685,8 +2806,10 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	FRect_<FPT> getBB() const
 	{
 		return FRect_<FPT>(
-			_center.getX()-_radius, _center.getY()-_radius,
-			_center.getX()+_radius, _center.getY()+_radius
+			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) - _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getY() ) - _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) + _radius,
+			static_cast<HOMOG2D_INUMTYPE>( _center.getY() ) + _radius
 		);
 	}
 ///@}
@@ -2702,7 +2825,16 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 
 /// Set circle radius, center point unchanged
-	template<typename T>
+/**
+Use of Sfinae so it can be selected only for arithmetic types
+*/
+	template<
+		typename T,
+		typename std::enable_if<
+			(std::is_arithmetic<T>::value && !std::is_same<T,bool>::value)
+			,T
+		>::type* = nullptr
+	>
 	void set( T rad )
 	{
 		_radius = rad;
@@ -2737,6 +2869,26 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	template<typename T>
 	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
 
+// set Minimum Enclosing Circle (MEC) from a set of points
+	template<
+		typename T,
+		typename std::enable_if<
+			trait::IsContainer<T>::value
+			,T
+		>::type* = nullptr
+	>
+	void set( const T& );
+
+private:
+	template<typename T>             // helper function
+	Circle_<HOMOG2D_INUMTYPE>
+	p_WelzlHelper( std::vector<T>&, std::vector<T>, size_t ) const;
+
+	template<typename T>             // helper function
+	Circle_<HOMOG2D_INUMTYPE>
+	p_min_circle_trivial( const std::vector<T>& P ) const;
+
+public:
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -3007,21 +3159,6 @@ areCollinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_
 	return false;
 }
 
-//------------------------------------------------------------------
-/// Return circle passing through 4 points of flat rectangle
-/// \sa h2d::getBoundingCircle()
-template<typename FPT>
-Circle_<FPT>
-FRect_<FPT>::getBoundingCircle() const
-{
-	auto pts = get4Pts();
-	auto seg1 = pts[1] * pts[3];
-	auto seg2 = pts[0] * pts[2];
-
-	auto middle_pt = seg1 * seg2;
-	return Circle_<FPT>( middle_pt, middle_pt.distTo( pts[0] ) );
-}
-
 /*
 /// Constructor: build Ellipse from Circle
 /// \todo finish this
@@ -3114,68 +3251,6 @@ operator * ( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
 template<typename FPT1,typename FPT2>
 Point2d_<FPT1>
 operator * ( const Line2d_<FPT1>&, const Line2d_<FPT2>& );
-
-
-//------------------------------------------------------------------
-/// Holds traits classes
-namespace trait {
-
-/// Traits class, used in generic draw() function
-template<typename T> struct IsDrawable              : std::false_type {};
-template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
-template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
-template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-/// Traits class, used in intersects() for Polyline
-template<typename T> struct IsShape              : std::false_type {};
-template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
-template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
-template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
-template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
-//template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
-
-/// Traits class, used to determine if we can use some "isInside()" function
-template<typename T> struct HasArea              : std::false_type {};
-template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
-template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
-template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
-
-/// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
-/// used to detect if container is valid
-template <typename T>               struct IsContainer                     : std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
-
-
-template <typename T> struct IsArray                  : std::false_type { };
-template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
-
-
-/// Traits class used to detect if container \c T is a \c std::array
-/** (because allocation is different, see \ref alloc() ) */
-template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
-
-/// Traits class, used for getBB() set of functions
-template<class>   struct IsSegment              : std::false_type {};
-template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
-template<class>   struct IsPoint                : std::false_type {};
-template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
-
-template<class>   struct HasBB              : std::false_type {};
-template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
-template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
-template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
-template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
-
-} // namespace trait
-
 
 namespace base {
 
@@ -4179,7 +4254,7 @@ getPts( const std::vector<Point2d_<FPT>>& vpt )
 }
 
 //------------------------------------------------------------------
-/// This namespace holds some private stuff
+/// This namespace holds some private stuff, types here are not to be used directly by end-user code.
 namespace detail {
 
 //------------------------------------------------------------------
@@ -4823,6 +4898,9 @@ Will throw if unable (numerical issue)
 One could think that the first checking would be enough, but experience shows that some times,
 the point are not colinear, but the two bisector lines are still parallel.
 Thus the second checking.
+
+\todo Check this other technique:
+https://www.johndcook.com/blog/2023/06/18/circle-through-three-points/
 */
 template<typename FPT>
 template<typename T>
@@ -4845,6 +4923,141 @@ Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d
 #endif
 	center() = li1 * li2;
 	radius() = center().distTo(pt1);
+}
+
+//------------------------------------------------------------------
+namespace priv {
+
+/// Free Function to check whether a circle encloses the given points
+template<typename FPT1,typename PT>
+bool is_valid_circle(
+	const Circle_<FPT1>&   circ,
+	const std::vector<PT>& pts
+)
+{
+	for( const auto& pt: pts )
+		if( !pt.isInside( circ ) )
+			return false;
+	return true;
+}
+
+} // namespace priv
+
+//------------------------------------------------------------------
+/// Helper function for Circle_<FPT>::set( const T& )
+/**
+Returns the minimum enclosing circle for N <= 3
+*/
+template<typename FPT>
+template<typename T>
+Circle_<HOMOG2D_INUMTYPE>
+Circle_<FPT>::p_min_circle_trivial( const std::vector<T>& P ) const
+{
+	if( P.empty() )
+		return Circle_<HOMOG2D_INUMTYPE>(0.,0.,0.); // dummy circle of null radius
+	if( P.size() == 1 )
+		return Circle_<HOMOG2D_INUMTYPE>( P[0], 0. );
+	if( P.size() == 2 )
+		return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1] );
+
+// To check if MEC can be determined by 2 points only
+	for( int i=0; i<3; i++ )
+		for( int j=i+1; j<3; j++ )
+		{
+			auto c = Circle_<HOMOG2D_INUMTYPE>( P[i], P[j] );
+			if( priv::is_valid_circle( c, P ) )
+				return c;
+		}
+	return Circle_<HOMOG2D_INUMTYPE>( P[0], P[1], P[2] ); // circle from 3 points
+}
+
+//------------------------------------------------------------------
+/// Helper function for Circle_<FPT>::set( const T& ), recursive
+/**
+Returns the MEC using Welzl's algorithm.
+Takes a set of input points P and a set R points on the circle boundary.
+
+\c T is the point type
+ */
+template<typename FPT>
+template<typename T>
+Circle_<HOMOG2D_INUMTYPE>
+Circle_<FPT>::p_WelzlHelper(
+	std::vector<T>& P,  ///< input set of points
+	std::vector<T>  R,
+	size_t          n   ///< Number of points in P that are not yet processed
+) const
+{
+	// Base case when all points processed or |R| = 3
+	if( n == 0 || R.size() == 3 )
+		return p_min_circle_trivial( R );
+
+	// Pick a random point randomly
+	int idx = std::rand() % n;
+	auto p = P[idx];
+
+	// Put the picked point at the end of P
+	// since it's more efficient than
+	// deleting from the middle of the vector
+	std::swap( P[idx], P[n - 1] );
+
+	// Get the MEC circle d from the set of points P - {p}
+	auto d = p_WelzlHelper( P, R, n - 1 );
+	if( p.isInside( d ) )
+			return d;
+
+	// Otherwise, must be on the boundary of the MEC
+	R.push_back( p );
+
+	// Return the MEC for P - {p} and R U {p}
+	auto c = p_WelzlHelper( P, R, n - 1 );
+	return c;
+}
+
+//------------------------------------------------------------------
+/// Compute circle from a set of points (Minimum Enclosing Circle, aka MEC)
+/// using the Welzl algorithm
+/**
+\c T may be std::vector, std::array or std::list holding points
+
+References:
+- https://en.wikipedia.org/wiki/Smallest-circle_problem
+- https://www.geeksforgeeks.org/minimum-enclosing-circle-using-welzls-algorithm/
+*/
+template<typename FPT>
+template<
+	typename T,
+	typename std::enable_if<
+		trait::IsContainer<T>::value
+		,T
+	>::type*
+>
+void
+Circle_<FPT>::set( const T& pts )
+{
+	if( pts.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "unable to build a circle from a single point" );
+
+	if( pts.size() == 2 )
+	{
+		set( pts[0], pts[1] );
+		return;
+	}
+
+	if( pts.size() == 3 ) // todo: convert pts to HOMOG2D_INUMTYPE
+	{
+		set( pts[0], pts[1], pts[2] );
+		return;
+	}
+
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> P_copy( std::begin(pts), std::end(pts) );
+//	std::random_shuffle( P_copy.begin(), P_copy.end() ); // ? check: what happens if removed?
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> R;
+
+	h2d::thr::doNotCheckRadius() = true;
+	auto cir = p_WelzlHelper( P_copy, R, P_copy.size() );
+	set( cir.center(), cir.radius() );
+	h2d::thr::doNotCheckRadius() = false;
 }
 
 //------------------------------------------------------------------
@@ -4979,7 +5192,7 @@ struct PolylineAttribs
 };
 
 //------------------------------------------------------------------
-/// Returns the bounding box of points in vector/list/array of points \c vpts
+/// Returns the bounding box of points in vector/list/array of points \c vpts (free function)
 /**
 \todo This loops twice on the points. Maybe some improvement here.
 */
@@ -5082,15 +5295,6 @@ operator * ( const Homogr_<FPT2>&, const FRect_<FPT1>& );
 template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
-
-/// used in base::PolylineBase_::rotate() member function
-enum class Rotate: int8_t
-{
-	CCW, CW, Full, VMirror, HMirror
-};
-
-enum class CardDir: int8_t { Bottom,Top, Left, Right };
-
 
 namespace base {
 
@@ -5492,13 +5696,6 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
-/// Set from FRect
-	template<typename FPT2>
-	void set( const FRect_<FPT2>& rec )
-	{
-		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
-	}
-
 /// Set from vector/array/list of points (discards previous points)
 /**
 - nb of elements must be 0 or 2 or more
@@ -5526,13 +5723,31 @@ at 180° of the previous one.
 			*it++ = pt;              // allow type conversions (std::copy implies same type)
 	}
 
+/// Build a parallelogram from 3 points
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void setParallelogram(
+		const Point2d_<FPT1>& pt1,
+		const Point2d_<FPT2>& pt2,
+		const Point2d_<FPT3>& pt3
+	)
+	{
+		impl_setParallelogram( pt1, pt2, pt3, detail::PlHelper<PLT>() );
+	}
+
+/// Set from FRect
+	template<typename FPT2>
+	void set( const FRect_<FPT2>& rec )
+	{
+		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
+	}
+
 ///@}
 
 private:
 	template<typename FPT2>
 	void impl_setFromFRect( const FRect_<FPT2>&, const detail::PlHelper<type::IsOpen>& )
 	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot build a OPolyline from a FRect" );
+		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline from a FRect" );
 	}
 	template<typename FPT2>
 	void impl_setFromFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
@@ -5540,6 +5755,43 @@ private:
 		CPolyline_<FPT> tmp(rect);
 		std::swap( *this, tmp );
 	}
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void impl_setParallelogram(
+		const Point2d_<FPT1>&,
+		const Point2d_<FPT2>&,
+		const Point2d_<FPT3>&,
+		const detail::PlHelper<type::IsOpen>&
+	)
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline as a parallelogram" );
+	}
+
+	template<typename FPT1,typename FPT2,typename FPT3>
+	void impl_setParallelogram(
+		const Point2d_<FPT1>& p1,
+		const Point2d_<FPT2>& p2,
+		const Point2d_<FPT3>& p3,
+		const detail::PlHelper<type::IsClosed>&
+	)
+	{
+		Point2d_<HOMOG2D_INUMTYPE> pt1(p1);
+		Point2d_<HOMOG2D_INUMTYPE> pt2(p2);
+		Point2d_<HOMOG2D_INUMTYPE> pt3(p3);
+
+		std::vector<Point2d_<FPT>> vpts(4);
+		vpts[0] = pt1;
+		vpts[1] = pt2;
+		vpts[2] = pt3;
+
+		auto li_21 = pt1 * pt2;
+		auto li_23 = pt3 * pt2;
+		auto li_34 = li_21.getParallelLine( pt3 );
+		auto li_14 = li_23.getParallelLine( pt1 );
+		vpts[3] = li_34 * li_14;
+		set( vpts );
+	}
+
 
 /// Checks that no contiguous identical	points are stored
 	template<typename CONT>
@@ -5726,7 +5978,7 @@ public:
 	{}
 #endif
 
-}; // class Polyline_
+}; // class PolylineBase
 
 } // namespace base
 
@@ -5942,7 +6194,7 @@ getRmPoint( const base::PolylineBase<PLT,FPT>& poly )
 /// Get Top-most / Bottom-most / Left-most / Right-most point, depending on \c dir
 /// (free function)
 /**
-Type \c T can be either a Polyline (open or closed), or a container
+Type \c T can be either a Polyline (open or closed), or a container holding points, or a FRect_
 */
 template<typename T>
 Point2d_<T>
@@ -5957,7 +6209,6 @@ getExtremePoint( CardDir dir, const T& t )
 		default: assert(0);
 	}
 }
-
 
 namespace base {
 
@@ -6002,9 +6253,15 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 	return h2d::getRmPoint( *this );
 }
 
-
 //------------------------------------------------------------------
-/// Rotate the object by either 90°, 180°, 270° (-90°)
+/// Rotates the polyline by either 90°, 180°, 270° (-90°) at point \c refpt
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto poly2 = Homogr(alpha) * poly;
+```
+\sa PolylineBase<PLT,FPT>::rotate( Rotate )
+*/
 template<typename PLT,typename FPT>
 template<typename FPT2>
 void
@@ -6016,7 +6273,14 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
 }
 
 //------------------------------------------------------------------
-/// Rotate the object by either 90°, 180°, 270° (-90°)
+/// Rotates the polyline by either 90°, 180°, 270° (-90°) at point (0,0)
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto poly2 = Homogr(alpha) * poly;
+```
+\sa PolylineBase<PLT,FPT>::rotate( Rotate, const Point2d_<FPT2>& )
+*/
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::rotate( Rotate rot )
@@ -6296,6 +6560,50 @@ base::PolylineBase<PLT,FPT>::centroid() const
 }
 
 } // namespace base
+
+//------------------------------------------------------------------
+/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point \c refpt
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto r2 = Homogr(alpha) * rect;
+```
+\sa FRect_<FPT>::rotate( Rotate )
+\sa h2d::rotate()
+*/
+template<typename FPT>
+template<typename FPT2>
+void
+FRect_<FPT>::rotate( Rotate rot, const Point2d_<FPT2>& refpt )
+{
+	translate( -refpt.getX(), -refpt.getY() );
+	this->rotate( rot );
+	translate( refpt.getX(), refpt.getY() );
+}
+
+//------------------------------------------------------------------
+/// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point (0,0)
+/**
+For an arbitrary angle \c alpha (rad.), you can write:
+```
+auto r2 = Homogr(alpha) * rect;
+```
+\sa FRect_<FPT>::rotate( Rotate, const Point2d_<FPT2>& )
+\sa h2d::rotate()
+
+\note This function converts the FRect to a CPolyline_, rotates it, and builds the output rectangle
+by getting the bounding box.
+This is because we cannot directly rotate the points, because the two points of a FRect_ are switched so that
+the smallest point is always in _ptR1.
+*/
+template<typename FPT>
+void
+FRect_<FPT>::rotate( Rotate rot )
+{
+	CPolyline_<HOMOG2D_INUMTYPE> pol( *this );
+	pol.rotate( rot );
+	*this = pol.getBB();
+}
 
 //------------------------------------------------------------------
 /// Returns Rectangle of the intersection area of two rectangles
@@ -8586,6 +8894,16 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 	return pt1.distTo( pt2 );
 }
 
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+IoU( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
+{
+	auto ia = intersectArea( r1, r2 );
+	if( ia() )
+		return ia.get().area() / unionArea( r1, r2 ).area();
+	return 0.;
+}
+
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
@@ -8609,6 +8927,15 @@ Circle_<FPT>
 getBoundingCircle( const FRect_<FPT>& rect )
 {
 	return rect.getBoundingCircle();
+}
+
+/// Return circle inscribed in rectangle
+/// \sa hFRect_::getInscribedCircle()
+template<typename FPT>
+Circle_<FPT>
+getInscribedCircle( const FRect_<FPT>& rect )
+{
+	return rect.getInscribedCircle();
 }
 
 /// Returns true if is a polygon (free function)
@@ -8657,20 +8984,20 @@ size( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.size();
 }
 
-/// Rotates the primitive (only available for Polyline at present) around
+/// Rotates the primitive (only available for Polyline and FRect) around (0,0)
 template<typename T>
 void
-rotate( T& pl, Rotate rot )
+rotate( T& prim, Rotate rot )
 {
-	pl.rotate( rot );
+	prim.rotate( rot );
 }
 
-/// Rotates the primitive (only available for Polyline at present) around \c refpt
+/// Rotates the primitive (only available for Polyline and FRect) around \c refpt
 template<typename T,typename FPT>
 void
-rotate( T& pl, Rotate rot, const Point2d_<FPT>& refpt )
+rotate( T& prim, Rotate rot, const Point2d_<FPT>& refpt )
 {
-	pl.rotate( rot, refpt );
+	prim.rotate( rot, refpt );
 }
 
 /// Returns width, height of rectangle (free function)
@@ -9171,7 +9498,7 @@ getDiagonals( const FRect_<FPT>& rect )
 	return rect.getDiagonals();
 }
 
-/// Free function
+/// Returns centroid of Polyline (free function)
 /// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
 base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
@@ -9179,7 +9506,7 @@ base::LPBase<type::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl 
 	return pl.centroid();
 }
 
-/// Returns reference on radius of circle (free function)
+/// Returns reference on radius of circle (free function), non-const version
 /// \sa Circle_::radius()
 template<typename FPT>
 FPT&
@@ -9197,7 +9524,7 @@ radius( const Circle_<FPT>& cir )
 	return cir.radius();
 }
 
-/// Returns reference on center of circle (free function)
+/// Returns reference on center of circle (free function), non-const version
 /// \sa Circle_::center()
 template<typename FPT>
 Point2d_<FPT>&
@@ -9648,7 +9975,7 @@ struct Mystack : std::stack<size_t,std::vector<size_t>>
 } // namespace priv
 
 //------------------------------------------------------------------
-/// Compute Convex Hull (free function)
+/// Compute Convex Hull of a Polyline (free function)
 /**
 - type \c T: can be either OPolyline, CPolyline, or std::vector<Point2d>
 - Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
@@ -9665,6 +9992,8 @@ namespace base {
 /// Computes and returns the convex hull of a set of points (free function)
 /**
 - Graham scan algorithm: https://en.wikipedia.org/wiki/Graham_scan
+
+\todo 20230728: make this function accept also std::array and std::list (using Sfinae alogn with trait::IsContainer)
 */
 template<typename FPT>
 CPolyline_<FPT>

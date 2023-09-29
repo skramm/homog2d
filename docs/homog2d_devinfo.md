@@ -4,6 +4,16 @@
 
 This page will gather misc. information useful for anyone wanting to contribute to code.
 
+To get the Doxygen-generated pages, you can run:
+```
+$ make doc
+```
+that will produce an ""end-user" reference pages, thus ommitting some details (class private section).
+To get the "full" reference, run:
+```
+$ make doc-dev
+```
+
 ## Introduction
 
 Git branches:

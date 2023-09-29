@@ -9,16 +9,22 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add polygon union and intersection
   - add non-convex polyline splitting into polygons
   - extend run-time polymorphism capabilities
-  - add list-initialization with points to `PolylineBase` class
+  - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
-  - added `dsize()` member and free function
+  - added `dsize()` member and free function, [see here](homog2d_manual.md#numtype)
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
   - enabled `ttmath` types as default type (if used)
+  - added computation of IoU ("Intersection over Union") of two rectangles, [see here](homog2d_manual.md#frect_union) for details.
+  - templated the `set()` function for `FRect_`
+  - added full step rotation for `FRect_`
+  - added Minimum Enclosing Circle (MEC) from a set of points, see [showcase13](homog2d_showcase.md#sc13).
+  - added `setParallelogram()` to `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
+  - added `getInscribedCircle()` to `FRect`
 
 ## Previous releases
 
@@ -28,7 +34,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - fixed normalization for points and lines
   - added points at infinity tests
   - added `findNearestPoint()`, `findFarthestPoint()`, `findNearestFarthestPoint()` and demo
-  - added `getClosestPoints()` between two Polyline oblects ([see demo](homog2d_showcase.md#sc14)).
+  - added `getClosestPoints()` between two Polyline objects ([see demo](homog2d_showcase.md#sc14)).
   - added `img::putText()`, to write text on backend image, and related `img::DrawParams::setFontSize()`
   - added `side( Point2d, Line2d )`
   - fixed intersection of `FRect` and `Line2d`: now returns a `IntersectM` type, because there can be only one intersection point (same for `Circle`/`Circle`)
@@ -41,7 +47,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added MSVC compiler to the Github Action CI automated tests
   - added support for importing Boost::geometry polygons (preliminar), see an [example here](../misc/test_files/bg_test_1.cpp).
   - __breaking changes__:
-    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindindings section](homog2d_manual.md#bind).
+    - replaced/renamed `getCvPt()` (Opencv binding) by a more generic `getPt()` that can work with multiple types, see [bindings section](homog2d_manual.md#bind).
     - same for `getCvPts()` replaced by `getPts()`
 
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23

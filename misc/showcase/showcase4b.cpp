@@ -7,7 +7,6 @@
 #include "../../homog2d.hpp"
 
 using namespace h2d;
-using namespace h2d::img;
 
 int main( int argc, const char** argv )
 {
@@ -19,7 +18,7 @@ int main( int argc, const char** argv )
 	auto x0 = 3.;
 	auto y0 = 1.;
 	auto k=1.8;
-	uint8_t g = 100;
+
 	for( int i=0; i<nbim; i++ )
 	{
 		auto angle = i*360./nbim;
@@ -28,22 +27,16 @@ int main( int argc, const char** argv )
 		auto y1 = std::sin(angle_r)*k;
 		auto r_w = r_w0 + std::sin( 2.*M_PI*i/nbim );
 
-		FRect obj1( Point2d( x1+x0, y1+x0), r_w, r_h0 );
-		Circle obj2( Point2d(-x1+x0,-y1+x0), 2.-.5*r_w );
-		auto bcir = obj1.getBoundingCircle();
-		auto center = obj1.getCenter();
-//		std::cout << "radius=" << obj2.radius() << "\n";
+		FRect rect( Point2d( x1+x0, y1+x0), r_w, r_h0 );
 
-		auto obj1_d = Hdraw * obj1;
-		auto obj2_d = Hdraw * obj2;
-		auto bcir_d = Hdraw * bcir;
-		auto center_d = Hdraw * center;
+		auto cir_b = rect.getBoundingCircle();
+		auto cir_i = rect.getInscribedCircle();
 
-		Image<cv::Mat> imb( 250, 200 );
+		img::Image<cv::Mat> imb( 250, 200 );
 
-		obj1_d.draw(   imb, DrawParams().setColor(250,0,0) );
-		bcir_d.draw(   imb, DrawParams().setColor(50,250,50)  );
-		center_d.draw( imb, DrawParams().setColor(250,100,100) );
+		(Hdraw * cir_b).draw( imb, img::DrawParams().setColor(50,250,50)  );
+		(Hdraw * cir_i).draw( imb, img::DrawParams().setColor(50,25,250)  );
+		(Hdraw * rect).draw( imb,  img::DrawParams().setColor(250,25,25)  );
 
 		std::ostringstream ossb;
 		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".png";
