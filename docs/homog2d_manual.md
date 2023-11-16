@@ -978,6 +978,7 @@ poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, o
 
 
 #### 3.4.9 - Building a Parallelogram
+<a name="build_parallelo"></a>
 
 The member function `setParallelogram()` takes 3 points (may be of different floating-point types) and builds the corresponding parallelogram by computing the missing 4th point.
 Is only available for "closed" type.

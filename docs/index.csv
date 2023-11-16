@@ -12,3 +12,6 @@ Minimum Enclosing Circle;manual;minenccir
 Polygon Extremum points;manual;poly_extremum_points
 Convex Hull;manual;convex-hull-ff
 Polygon Rotation/mirroring;manual;polyline_rotate
+Parallelogram;manual;build_parallelo
+Homographies;manual;matrix
+
