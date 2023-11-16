@@ -673,6 +673,7 @@ This is checked for and will throw if not the case
 ![showcase6](showcase/showcase6.gif)
 
 **Minimum Enclosing Circle (MEC)**
+<a id="minenccir"></a>
 
 To compute the Minimum Enclosing Circle of a set of points, you can use either a constructor, or the equivalent `set()` function:
 ```C++

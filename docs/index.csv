@@ -1,0 +1,14 @@
+# input file to build the markdown index, used a input by build_index.sh
+# link name;file name;anchor name
+Rectangle;manual;p_frect
+Circle;manual;p_circle
+Ellipse;manual;p_ellipse
+Polygon;manual;p_polyline
+SVG import;manual;svg_import
+Showcase;showcase;
+Numerical data types;manual;numdt
+Segment;manual;p_segment
+Minimum Enclosing Circle;manual;minenccir
+Polygon Extremum points;manual;poly_extremum_points
+Convex Hull;manual;convex-hull-ff
+Polygon Rotation/mirroring;manual;polyline_rotate
