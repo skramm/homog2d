@@ -3,7 +3,7 @@
 [Manual main page](homog2d_manual.md)
 
 On this page, I'll post some geometric computations of problems I may find online.
-You can run all these at once with `$ make shwocase3`.
+You can run all these at once with `$ make showcase3`.
 
 ## Problem 1
 

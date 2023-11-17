@@ -16,3 +16,6 @@ do
 		fi
 	fi
 done < /tmp/index.csv
+
+echo "<hr>">>$outfn
+echo "Page generated on $(date '+%Y-%m-%d')">>$outfn

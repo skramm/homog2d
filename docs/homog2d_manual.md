@@ -6,10 +6,11 @@ This is the user manual for the current master branch of `homog2d`.
 For stable releases, see https://github.com/skramm/homog2d/releases .
 
 To get the reference manual (requires Doxygen), you can either type
-`$ make doc` or `$ doxygen misc/doxyfile`.
+`$ make doc` or `$ doxygen misc/doxyfile` [(online here](https://codedocs.xyz/skramm/homog2d)
 
 If you are interested in code, check the page [homog2d_devinfo.md](homog2d_devinfo.md).
 
+Index is [available here](index.md).
 
 1. [Introduction](#intro)
 2. [Lines and points](#basic)
@@ -459,7 +460,7 @@ You can fetch the orthogonal segments or points with `getOrthogPts()` and `getOr
 These two member functions return an `std::array` of size 4, the latter filled with the 4 orthogonal segments,
 and the first filled with the associated 4 points.
 
-Due to the unoriented nature of the `Segment` type, these two member function return points or segments in an unpredictable order.
+Due to the unoriented nature of the `Segment` type, these two member functions return points or segments in an unpredictable order.
 
 ![showcase17](showcase/showcase17.gif)
 

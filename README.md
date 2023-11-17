@@ -41,7 +41,8 @@ int main()
 ```
 
 ### News ###
-- 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/
+- 2023-11-17: added [doc index](docs/index.md)
+- 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
 - 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
 - 2022-12-17: moved CI tests from Travis to GH actions

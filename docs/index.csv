@@ -1,4 +1,4 @@
-# input file to build the markdown index, used a input by build_index.sh
+# input file to build the markdown index, used as input by build_index.sh
 # link name;file name;anchor name
 Rectangle;manual;p_frect
 Circle;manual;p_circle
@@ -14,4 +14,8 @@ Convex Hull;manual;convex-hull-ff
 Polygon Rotation/mirroring;manual;polyline_rotate
 Parallelogram;manual;build_parallelo
 Homographies;manual;matrix
-
+Big numbers;manual;bignum
+Thresholds;thresholds;
+Drawing parameters;manual;drawing_params
+Lines and Points;manual;basic
+Build options;manual;build_options

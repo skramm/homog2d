@@ -8,7 +8,7 @@ At present, this only has an impact on the `Ellipse_` class behavior.
 
 With current commit (2022-11-10), and using the
 `$ make speed_test`
-command that builds and runs the program `ellipse_speed_test.cpp` with different options, the results are as follow:
+command that builds and runs the program [`ellipse_speed_test.cpp`](../misc/ellipse_speed_test.cpp) with different options, the results are as follow:
 
 | Build Option | Ellipse footprint (bytes) |  Duration (s)  |
 |--------------|---------------------------|----------------|
