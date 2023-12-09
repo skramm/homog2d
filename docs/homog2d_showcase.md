@@ -153,3 +153,10 @@ Building of a parallelogram from 3 points
 
 ![showcase18](showcase/showcase18.gif)
 
+
+* [Showcase 19](../misc/showcase/showcase19.cpp):
+<a name="sc19"></a>
+Random segments, drawn with random colors
+
+![showcase19](showcase/showcase19.gif)
+
