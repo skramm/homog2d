@@ -343,6 +343,29 @@ struct Color
 	}
 };
 
+/// Helper function, will generate a vector of \c nb random RGB colors
+/**
+- RGB values will be between \c minval and \c minval+coeff
+*/
+std::vector<img::Color>
+genRandomColors( size_t nb, int minval=20, int maxval=250 )
+{
+	if( maxval<=minval )
+		HOMOG2D_THROW_ERROR_1( "Illegal values for minval and maxval" );
+	std::vector<img::Color> vcol( nb );
+	std::srand( std::time(0) );
+
+	for( size_t i=0; i<nb; i++ )
+	{
+		auto colR = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		auto colG = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		auto colB = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		vcol[i] = img::Color(colR,colG,colB);
+	}
+	return vcol;
+}
+
+
 /// A svg image as a wrapper around a string, see manual, "Drawing things" section
 struct SvgImage
 {
@@ -11002,7 +11025,8 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	return true;
 }
 
-void printFileAttrib( const tinyxml2::XMLDocument& doc )
+void
+printFileAttrib( const tinyxml2::XMLDocument& doc )
 {
 	const tinyxml2::XMLElement* root = doc.RootElement();
 

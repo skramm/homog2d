@@ -4,24 +4,7 @@
 
 #include "fig_src.header"
 
-
-std::vector<img::Color>   v_colors;
-
-std::vector<img::Color> genRandomColors( size_t nb )
-{
-	std::vector<img::Color> vcol( nb );
-	int k_col  = 200;
-	int k_min  = 15;
-
-	for( size_t i=0; i<nb; i++ )
-	{
-		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-		vcol[i] = img::Color(colR,colG,colB);
-	}
-	return vcol;
-}
+std::vector<img::Color> v_colors;
 
 /// This one is enabled only for points, and will draw the extremum points
 template<
@@ -83,7 +66,7 @@ int main()
 	int xmin = 40;
 	int seg_max = 50;
 	int seg_min = 10;
-	srand( time(0) );
+	std::srand( std::time(0) );
 	int nbSegs = 40;
 
 	v_colors = genRandomColors( 2 * nbSegs );

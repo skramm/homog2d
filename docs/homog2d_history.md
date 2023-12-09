@@ -15,6 +15,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
+  - bufixes, fixed enclosing of Polyline objects (https://github.com/skramm/homog2d/issues/10)
   - added `dsize()` member and free function, [see here](homog2d_manual.md#numtype)
   - added `setAttrString()` to `img::DrawParams` (SVG only)
   - added preliminar Boost Geometry types bindings
