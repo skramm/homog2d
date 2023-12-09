@@ -1665,7 +1665,7 @@ template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
 
-/// This one is used only
+/// This one is used in base;;PolylineBase::isInside()
 template<typename T> struct PolIsClosed                                               : std::false_type {};
 template<typename T> struct PolIsClosed<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
 
@@ -3087,9 +3087,6 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 	auto d13 = sqDist( pt1, pt3 );
 	auto d23 = sqDist( pt2, pt3 );
 
-//	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
-//	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
-
 	PT* pA = 0;
 	PT* pB = 0;
 	PT* pM = 0;
@@ -3163,7 +3160,6 @@ areCollinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_
 	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
 	auto li = pt_arr[0] * pt_arr[1];
-//	std::cout << "dist=" << li.distTo( pt_arr[2] ) << "\n";
 	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
 		return true;
 	return false;
@@ -5137,7 +5133,6 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
 	auto h = priv::sqrt( r1*r1 - a*a );
 
-//	std::cout << "a/d=" << a/d << '\n';
 	Point2d_<FPT> P0(
 		( x2 - x1 ) * a / d + x1,
 		( y2 - y1 ) * a / d + y1
@@ -10788,6 +10783,7 @@ tokenize( const std::string &s, char delim )
     return velems;
 }
 //------------------------------------------------------------------
+/// Importing rotated ellipse from SVG data
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,HOMOG2D_INUMTYPE>
 getEllipseRotateAttr( const char* rot_str )
 {
@@ -10841,7 +10837,7 @@ parsePoints( const char* pts )
 }
 
 //------------------------------------------------------------------
-/// Visitor class, derived from the tinyxml2 visitor class
+/// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
 Holds the imported data through std::unique_ptr
 */
@@ -10906,7 +10902,7 @@ getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_na
 	return value;
 }
 
-/// helper function
+/// helper function for SVG import
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
 */
@@ -10921,6 +10917,8 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 
 /// This is the place where actual SVG data is converted and stored into vector
 /**
+(see manual, section "SVG import")
+
 Overload of the root class `VisitExit()` member function
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
