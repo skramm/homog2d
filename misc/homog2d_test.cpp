@@ -49,7 +49,9 @@ Run with <code>$ make test USE_TINYXML2=Y</code>
 	#define NUMTYPE double
 #endif
 
-//#define HOMOG2D_DEBUGMODE
+// define this if there is a need for bugtracking
+#define HOMOG2D_DEBUGMODE
+
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
 
@@ -1308,7 +1310,25 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 	CHECK( !opol2.isInside( opol1 ) );
 }
 
-TEST_CASE( "Point IsInside Polyline", "[tip]" )
+TEST_CASE( "Polyline IsInside Polyline", "[tpolipol]" )
+{
+	CPolyline_<HOMOG2D_INUMTYPE> p1(std::vector<Point2d>{
+		Point2d(-2, 2),
+		Point2d(-2,-2),
+		Point2d( 2,-2),
+		Point2d( 2, 2),
+	});
+	CPolyline_<HOMOG2D_INUMTYPE> p2(std::vector<Point2d>{
+		Point2d(-5, 5),
+		Point2d(-5,-5),
+		Point2d( 5,-5),
+		Point2d( 5, 5)
+	});
+	CHECK( p2.isInside( p1 ) == false );
+	CHECK( p1.isInside( p2 ) == true );
+}
+
+TEST_CASE( "Point IsInside Polyline", "[tptipol]" )
 {
 	Point2d_<HOMOG2D_INUMTYPE> pt;
 
@@ -1336,7 +1356,7 @@ TEST_CASE( "Point IsInside Polyline", "[tip]" )
 	}
 }
 
-TEST_CASE( "IsInside FRect", "[tir]" )
+TEST_CASE( "Point IsInside FRect", "[tptir]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
 	Point2d_<NUMTYPE> pt2(10,2);

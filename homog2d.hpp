@@ -243,7 +243,7 @@ namespace detail {
 /// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
 	template<typename> struct DataFpType {};
 
-	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
+/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
 	template<typename> struct PlHelper {};
 
 #ifdef HOMOG2D_FUTURE_STUFF
@@ -1013,6 +1013,7 @@ It is necessary in a run-time polymorphism context, as we would have build failu
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
+		HOMOG2D_START;
 		return false;
 	}
 };
@@ -1663,6 +1664,10 @@ template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
 
+template<typename T> struct PolIsClosed                                               : std::false_type {};
+template<typename T> struct PolIsClosed<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+
+
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
 template <typename T>               struct IsContainer                     : std::false_type { };
@@ -1687,6 +1692,9 @@ template<class>   struct IsPoint                : std::false_type {};
 template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
 
 /// Traits class, used to check if type has a Bounding Box
+/**
+Difference with \c trait::HasArea is that this one is true for OPolyline, whereas the other is not
+*/
 template<class>   struct HasBB              : std::false_type {};
 template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
 template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
@@ -5898,21 +5906,53 @@ public:
 	}
 
 /// Polyline isInside other primitive
+/**
+Sfinae should resolve for T=Circle,FRect,Ellipse but not for CPolyline
+*/
 	template<
 		typename T,
 		typename std::enable_if<
-			trait::HasArea<T>::value,T
+				(
+					trait::HasArea<T>::value
+					&&
+					!trait::PolIsClosed<T>::value
+				)
+				,T
 		>::type* = nullptr
 	>
 	bool
-	isInside( const T& cont ) const
+	isInside( const T& prim ) const
 	{
 		HOMOG2D_START;
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
-			if( !pt.isInside( cont ) )
+			if( !pt.isInside( prim ) )
 				return false;
+		return true;
+	}
+
+/// Polyline isInside other CPolyline
+/**
+Sfinae should resolve ONLY for CPolyline
+*/
+	template<
+		typename T,
+		typename std::enable_if<
+			trait::PolIsClosed<T>::value,T
+		>::type* = nullptr
+	>
+	bool
+	isInside( const T& cpol ) const
+	{
+		HOMOG2D_START;
+		if( size() == 0 )
+			return false;
+		for( const auto& pt: getPts() )
+			if( !pt.isInside( cpol ) )
+				return false;
+		if( intersects(cpol)() )
+			return false;
 		return true;
 	}
 
