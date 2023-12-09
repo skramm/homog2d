@@ -347,6 +347,7 @@ struct Color
 /**
 - RGB values will be between \c minval and \c minval+coeff
 */
+inline
 std::vector<img::Color>
 genRandomColors( size_t nb, int minval=20, int maxval=250 )
 {
