@@ -8605,7 +8605,7 @@ detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	std::vector<Point2d_<FPT>> pti;
-	for( const auto seg: rect.getSegs() ) // get segment of rectangle
+	for( const auto& seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
 		auto inters = seg.intersects( *this );
