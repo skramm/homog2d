@@ -1312,20 +1312,42 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 
 TEST_CASE( "Polyline IsInside Polyline", "[tpolipol]" )
 {
-	CPolyline_<HOMOG2D_INUMTYPE> p1(std::vector<Point2d>{
-		Point2d(-2, 2),
-		Point2d(-2,-2),
-		Point2d( 2,-2),
-		Point2d( 2, 2),
-	});
-	CPolyline_<HOMOG2D_INUMTYPE> p2(std::vector<Point2d>{
-		Point2d(-5, 5),
-		Point2d(-5,-5),
-		Point2d( 5,-5),
-		Point2d( 5, 5)
-	});
-	CHECK( p2.isInside( p1 ) == false );
-	CHECK( p1.isInside( p2 ) == true );
+	{
+		CPolyline_<HOMOG2D_INUMTYPE> p1(std::vector<Point2d>{
+			Point2d(-2, 2),
+			Point2d(-2,-2),
+			Point2d( 2,-2),
+			Point2d( 2, 2),
+		});
+		CPolyline_<HOMOG2D_INUMTYPE> p2(std::vector<Point2d>{
+			Point2d(-5, 5),
+			Point2d(-5,-5),
+			Point2d( 5,-5),
+			Point2d( 5, 5)
+		});
+		CHECK( p2.isInside( p1 ) == false );
+		CHECK( p1.isInside( p2 ) == true );
+	}
+	{ // one inside the other
+		#include "figures_test/polyline_inside_1.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == true );
+	}
+	{ // simple intersection, one point outside
+		#include "figures_test/polyline_inside_2.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+	{ // nothing common
+		#include "figures_test/polyline_inside_3.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+	{ // all points inside, but some intersections
+		#include "figures_test/polyline_inside_4.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
 }
 
 TEST_CASE( "Point IsInside Polyline", "[tptipol]" )

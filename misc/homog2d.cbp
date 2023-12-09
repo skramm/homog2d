@@ -126,6 +126,10 @@
 		<Unit filename="figures_test/frect_intersect_9.code" />
 		<Unit filename="figures_test/polyline_comp_1a.code" />
 		<Unit filename="figures_test/polyline_comp_1b.code" />
+		<Unit filename="figures_test/polyline_inside_1.code" />
+		<Unit filename="figures_test/polyline_inside_2.code" />
+		<Unit filename="figures_test/polyline_inside_3.code" />
+		<Unit filename="figures_test/polyline_inside_4.code" />
 		<Unit filename="figures_test/polyline_min_1C.code" />
 		<Unit filename="figures_test/polyline_min_1O.code" />
 		<Unit filename="figures_test/polyline_min_2C.code" />

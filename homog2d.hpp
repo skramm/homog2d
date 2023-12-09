@@ -204,7 +204,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.10.0"
+#define HOMOG2D_VERSION "2.10.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -1007,7 +1007,8 @@ public:
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
-It is necessary in a run-time polymorphism context, as we would have build failures if a given type disallows providing such a method
+It is necessary in a run-time polymorphism context, as we would have build failures if a given type
+disallows providing such a method
 (for example, when trying to check if some object is inside an open polyline).
 */
 	template<typename T>
@@ -1662,10 +1663,11 @@ template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+template<typename T> struct HasArea<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
 
+/// This one is used only
 template<typename T> struct PolIsClosed                                               : std::false_type {};
-template<typename T> struct PolIsClosed<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+template<typename T> struct PolIsClosed<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
 
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),

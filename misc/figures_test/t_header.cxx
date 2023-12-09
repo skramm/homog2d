@@ -11,7 +11,6 @@
 using namespace h2d;
 int main( int argc, const char** argv )
 {
-//	img::Image<cv::Mat> img2(350,400);
 	img::Image<img::SvgImage> img2(350,400);
 
 //#ifdef HOMOG2D_DEBUGMODE
