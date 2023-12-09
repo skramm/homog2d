@@ -50,7 +50,7 @@ Run with <code>$ make test USE_TINYXML2=Y</code>
 #endif
 
 // define this if there is a need for bugtracking
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
@@ -1312,7 +1312,7 @@ TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 
 TEST_CASE( "Polyline IsInside Polyline", "[tpolipol]" )
 {
-	{
+	{ // checking https://github.com/skramm/homog2d/issues/10
 		CPolyline_<HOMOG2D_INUMTYPE> p1(std::vector<Point2d>{
 			Point2d(-2, 2),
 			Point2d(-2,-2),
@@ -1329,22 +1329,59 @@ TEST_CASE( "Polyline IsInside Polyline", "[tpolipol]" )
 		CHECK( p1.isInside( p2 ) == true );
 	}
 	{ // one inside the other
-		#include "figures_test/polyline_inside_1.code"
+		#include "figures_test/polyline_inside_a1.code"
 		CHECK( pl2.isInside( pl ) == false );
 		CHECK( pl.isInside( pl2 ) == true );
 	}
 	{ // simple intersection, one point outside
-		#include "figures_test/polyline_inside_2.code"
+		#include "figures_test/polyline_inside_a2.code"
 		CHECK( pl2.isInside( pl ) == false );
 		CHECK( pl.isInside( pl2 ) == false );
 	}
 	{ // nothing common
-		#include "figures_test/polyline_inside_3.code"
+		#include "figures_test/polyline_inside_a3.code"
 		CHECK( pl2.isInside( pl ) == false );
 		CHECK( pl.isInside( pl2 ) == false );
 	}
 	{ // all points inside, but some intersections
-		#include "figures_test/polyline_inside_4.code"
+		#include "figures_test/polyline_inside_a4.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+
+	{ // Open polyline inside a closed polyline
+		#include "figures_test/polyline_inside_b1.code"
+		CHECK( pl2.isInside( pl ) == true );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+	{ // Open polyline inside a closed polyline, but one point outside
+		#include "figures_test/polyline_inside_b2.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+	{ // Open polyline with no common with closed polyline
+		#include "figures_test/polyline_inside_b3.code"
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+
+	{ // two Open polylines
+		OPolyline_<HOMOG2D_INUMTYPE> pl(std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+			{1,2},{1,1},{2,2}
+		});
+		OPolyline_<HOMOG2D_INUMTYPE> pl2(std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+			{3,3},{3,2},{4,2}
+		});
+		CHECK( pl2.isInside( pl ) == false );
+		CHECK( pl.isInside( pl2 ) == false );
+	}
+	{ // two Open polylines
+		OPolyline_<HOMOG2D_INUMTYPE> pl(std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+			{1,1},{5,1},{5,5},{1,5}
+		});
+		OPolyline_<HOMOG2D_INUMTYPE> pl2(std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+			{3,3},{3,2},{4,2}
+		});
 		CHECK( pl2.isInside( pl ) == false );
 		CHECK( pl.isInside( pl2 ) == false );
 	}

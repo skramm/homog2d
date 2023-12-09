@@ -1,0 +1,14 @@
+
+#define TESTFIG_HAS_POLY2
+
+// outer polyline
+CPolyline_<HOMOG2D_INUMTYPE> pl( FRect_<HOMOG2D_INUMTYPE>(1,1,2,2) );
+
+
+// separate open polyline
+OPolyline_<HOMOG2D_INUMTYPE> pl2(std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+	{3,3},{3,2},{4,2}
+});
+
+
+
