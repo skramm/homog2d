@@ -57,9 +57,9 @@
 		<Unit filename="../docs/homog2d_showcase2.md" />
 		<Unit filename="../docs/homog2d_showcase3.md" />
 		<Unit filename="../docs/homog2d_speed.md" />
-		<Unit filename="../docs/homog2d_svgimport.md" />
 		<Unit filename="../docs/homog2d_thresholds.md" />
 		<Unit filename="../docs/index.csv" />
+		<Unit filename="../docs/index.md" />
 		<Unit filename="../docs/opencv_notes.md">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
