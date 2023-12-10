@@ -41,6 +41,7 @@ int main()
 ```
 
 ### News ###
+- 2023-12-09: bufixes, fixed enclosing of Polyline objects (https://github.com/skramm/homog2d/issues/10)
 - 2023-11-17: added [doc index](docs/index.md)
 - 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
@@ -50,7 +51,6 @@ int main()
 - 2022-11-23: fresh 2.9 release
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 - 2022-08-30: added SVG import
-- 2022-08-02: 2.8 release
 
 (see [history](docs/homog2d_history.md) for more)
 

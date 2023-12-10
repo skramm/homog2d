@@ -126,6 +126,13 @@
 		<Unit filename="figures_test/frect_intersect_9.code" />
 		<Unit filename="figures_test/polyline_comp_1a.code" />
 		<Unit filename="figures_test/polyline_comp_1b.code" />
+		<Unit filename="figures_test/polyline_inside_a1.code" />
+		<Unit filename="figures_test/polyline_inside_a2.code" />
+		<Unit filename="figures_test/polyline_inside_a3.code" />
+		<Unit filename="figures_test/polyline_inside_a4.code" />
+		<Unit filename="figures_test/polyline_inside_b1.code" />
+		<Unit filename="figures_test/polyline_inside_b2.code" />
+		<Unit filename="figures_test/polyline_inside_b3.code" />
 		<Unit filename="figures_test/polyline_min_1C.code" />
 		<Unit filename="figures_test/polyline_min_1O.code" />
 		<Unit filename="figures_test/polyline_min_2C.code" />
@@ -178,6 +185,7 @@
 		<Unit filename="showcase/showcase16.cpp" />
 		<Unit filename="showcase/showcase17.cpp" />
 		<Unit filename="showcase/showcase18.cpp" />
+		<Unit filename="showcase/showcase19.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />

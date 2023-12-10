@@ -8,5 +8,8 @@ and check BUILD/figures_test
 
 This target will produce a valid cpp file, by concatenating
 a header, a footer, and the considered *.code file,
-then compile it, then run it to generate the .png file.
+then compile it, then run it to generate the .svg file.
+
+
+This target DOES NOT require Opencv, as it only builds "text" files (SVG images).
 

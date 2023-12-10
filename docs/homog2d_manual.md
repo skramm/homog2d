@@ -1463,10 +1463,11 @@ auto ch3 = pl.convexHull(); // member function
 
 
 ### 6.2 - Bounding Box of a set of objects
+<a name="bbox_set"></a>
 
 You can compute the Bounding Box of a set of objects that lie in a container, whatever that container type
 (`std::vector`, `std::list` or `std::array`).
-This function will return a `Frect` object:
+This function will return a `FRect` object:
 
 ```C++
 std::vector<Point2d> vec;
@@ -1877,6 +1878,16 @@ std::function<DrawParams(int)> func(fl);
 draw( img, vseg, func );
 ```
 
+Checkout [here](#bbox_set) to see an example.
+A helper function `img::genRandomColors()` is provided, it will return a vector of `img::Color` objects filled with random RGB colors.
+For example:
+```
+auto vcol1 = img::genRandomColors(10);        // return 10 random colors with values in the range [20-250]
+auto vcol2 = img::genRandomColors(10,100);    // return 10 random colors with values in the range [100-250]
+auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with values in the range [30-150]
+```
+
+
 ## 9 - Numerical data types
 <a name="numdt"></a>
 
@@ -2091,6 +2102,8 @@ either with the dedicated keywords
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
 At present this import subsystem only handles the `polyline` and `polygon` elements.
+* If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
+See an example of its usage in file [demo_svg_import.cpp](../misc/demo_svg_import.cpp).
 
 SVG Reference: https://www.w3.org/TR/SVG2/shapes.html
 
@@ -2100,7 +2113,8 @@ If you have cloned the whole repo and have `Tinyxml2` installed, you may build a
 <br>
 `$ make demo_import`
 
-This will build the file `BUILD/demo_svg_import` that can import any SVG file, print its content on screen
+This will build the file `BUILD/demo_svg_import` ([source here](../misc/demo_svg_import.cpp))
+that will import any SVG file, print its content on screen,
 and generate another svg file `test.svg` in current folder.
 
 For example:

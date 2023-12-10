@@ -1,4 +1,4 @@
-// file t_footer.cxx
+// file t_footer_frect_1.cxx
 // used in makefile target test_fig
 
 	Homogr H;

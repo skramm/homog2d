@@ -20,6 +20,11 @@
 \brief demo of interfacing with Opencv.
 Try it with <code>$ make demo</code>.
 
+(requires OpenCv)
+
+To run a specific demo, give its number as first argument, i.e.:
+
+<code>$ BUILD/demo_opencv 4</code>.
 */
 
 #define HOMOG2D_USE_OPENCV
@@ -312,22 +317,6 @@ public:
 		while( key != 32 ); // SPC
 	}
 };
-
-std::vector<img::Color> genRandomColors( size_t nb )
-{
-	std::vector<img::Color> vcol( nb );
-	int k_col  = 200;
-	int k_min  = 15;
-
-	for( size_t i=0; i<nb; i++ )
-	{
-		auto colR = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colG = 1.0*rand() / RAND_MAX * k_col + k_min;
-		auto colB = 1.0*rand() / RAND_MAX * k_col + k_min;
-		vcol[i] = img::Color(colR,colG,colB);
-	}
-	return vcol;
-}
 
 //------------------------------------------------------------------
 void action_1( void* param )
@@ -1229,7 +1218,7 @@ void action_CH( void* param )
 	auto vlines = getLines( chull.getSegs() );
 	if( old_size != vlines.size() )
 	{
-		data.vcol = genRandomColors( vlines.size() );
+		data.vcol = img::genRandomColors( vlines.size() );
 		old_size = vlines.size();
 	}
 
@@ -1267,11 +1256,10 @@ void demo_CH( int demidx )
 	kbloop.addCommonAction( action_CH );
 	action_CH( &data );
 	kbloop.start( data );
-
 }
 
 //------------------------------------------------------------------
-/// Segments demo
+/// Rectangle intersection demo
 struct Param_RI : Data
 {
 	explicit Param_RI( int demidx, std::string title ):Data( demidx, title )
@@ -1341,7 +1329,7 @@ struct Param_SEG : Data
 	int height2 = _imHeight-delta;
 	int k_col  = 200;
 	int k_min  = 15;
-
+	std::srand( std::time(0) );
 	void generateSegments()
 	{
 		std::cout << "generating " << nbSegs << " segments\n";
@@ -1358,7 +1346,7 @@ struct Param_SEG : Data
 			auto ppts = line.getPoints( Point2d( p1x, p1y) , len );
 			vseg.push_back( Segment( ppts ) );
 		}
-		vcol = genRandomColors( nbSegs );
+		vcol = img::genRandomColors( nbSegs );
 		regen = false;
 	}
 };
@@ -1403,10 +1391,14 @@ void action_SEG( void* param )
 	}
 	if( data.showBisector )
 	{
-		for( const auto& seg: data.vseg )
-			seg.getBisector().draw( data.img, img::DrawParams().setColor( 0,100,100) );
-//			seg.getBisector().draw( data.img, f );  ///< \todo implement this
-
+		std::vector<Line2d> v_bisect( data.vseg.size() );
+		std::transform(                               // To draw bisector lines with the same
+			data.vseg.begin(),                        //  color as the segments,
+			data.vseg.end(),                          //  we need to store them in a vector.
+			v_bisect.begin(),
+			[](const Segment& s){ return s.getBisector(); }
+		);
+		draw( data.img, v_bisect, f );
 	}
 	data.showImage();
 }

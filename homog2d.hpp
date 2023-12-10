@@ -204,7 +204,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.10.0"
+#define HOMOG2D_VERSION "2.10.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -243,7 +243,7 @@ namespace detail {
 /// Helper class for used to get the underlying floating-point type, see Dtype and Common::dtype()
 	template<typename> struct DataFpType {};
 
-	/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
+/// Helper class for PolylineBase, used as a trick to allow partial specialization of member functions
 	template<typename> struct PlHelper {};
 
 #ifdef HOMOG2D_FUTURE_STUFF
@@ -342,6 +342,30 @@ struct Color
 		return f;
 	}
 };
+
+/// Helper function, will generate a vector of \c nb random RGB colors
+/**
+- RGB values will be between \c minval and \c minval+coeff
+*/
+inline
+std::vector<img::Color>
+genRandomColors( size_t nb, int minval=20, int maxval=250 )
+{
+	if( maxval<=minval )
+		HOMOG2D_THROW_ERROR_1( "Illegal values for minval and maxval" );
+	std::vector<img::Color> vcol( nb );
+	std::srand( std::time(0) );
+
+	for( size_t i=0; i<nb; i++ )
+	{
+		auto colR = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		auto colG = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		auto colB = 1.0*std::rand() / RAND_MAX * (maxval-minval) + minval;
+		vcol[i] = img::Color(colR,colG,colB);
+	}
+	return vcol;
+}
+
 
 /// A svg image as a wrapper around a string, see manual, "Drawing things" section
 struct SvgImage
@@ -1007,12 +1031,14 @@ public:
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
-It is necessary in a run-time polymorphism context, as we would have build failures if a given type disallows providing such a method
+It is necessary in a run-time polymorphism context, as we would have build failures if a given type
+disallows providing such a method
 (for example, when trying to check if some object is inside an open polyline).
 */
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
+		HOMOG2D_START;
 		return false;
 	}
 };
@@ -1661,7 +1687,12 @@ template<typename T> struct HasArea              : std::false_type {};
 template<typename T> struct HasArea<Circle_<T>>  : std::true_type  {};
 template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
-template<typename T> struct HasArea<base::PolylineBase<T,typename type::IsClosed>>: std::true_type  {};
+template<typename T> struct HasArea<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
+
+/// This one is used in base;;PolylineBase::isInside()
+template<typename T> struct PolIsClosed                                               : std::false_type {};
+template<typename T> struct PolIsClosed<base::PolylineBase<typename type::IsClosed,T>>: std::true_type  {};
+
 
 /// Traits class used in operator * ( const Hmatrix_<type::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
@@ -1687,6 +1718,9 @@ template<class>   struct IsPoint                : std::false_type {};
 template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
 
 /// Traits class, used to check if type has a Bounding Box
+/**
+Difference with \c trait::HasArea is that this one is true for OPolyline, whereas the other is not
+*/
 template<class>   struct HasBB              : std::false_type {};
 template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
 template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
@@ -3077,9 +3111,6 @@ getLargestDistancePoints( PT pt1, PT pt2, PT pt3 )
 	auto d13 = sqDist( pt1, pt3 );
 	auto d23 = sqDist( pt2, pt3 );
 
-//	std::cout << "pt1=" << pt1 << " pt2=" << pt2 << " pt3=" << pt3 << "\n";
-//	std::cout << "d12=" << d12 << " d13=" << d13 << " d23=" << d23 << "\n";
-
 	PT* pA = 0;
 	PT* pB = 0;
 	PT* pM = 0;
@@ -3153,7 +3184,6 @@ areCollinear( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2, const Point2d_
 	auto pt_arr = priv::getLargestDistancePoints( pt1, pt2, pt3 );
 
 	auto li = pt_arr[0] * pt_arr[1];
-//	std::cout << "dist=" << li.distTo( pt_arr[2] ) << "\n";
 	if( li.distTo( pt_arr[2] ) < thr::nullDistance() )
 		return true;
 	return false;
@@ -5127,7 +5157,6 @@ Circle_<FPT>::intersects( const Circle_<FPT2>& other ) const
 	auto a = (r1*r1 - r2*r2 + d_squared) / (HOMOG2D_INUMTYPE)2. / d;
 	auto h = priv::sqrt( r1*r1 - a*a );
 
-//	std::cout << "a/d=" << a/d << '\n';
 	Point2d_<FPT> P0(
 		( x2 - x1 ) * a / d + x1,
 		( y2 - y1 ) * a / d + y1
@@ -5898,21 +5927,53 @@ public:
 	}
 
 /// Polyline isInside other primitive
+/**
+Sfinae should resolve for T=Circle,FRect,Ellipse but not for CPolyline
+*/
 	template<
 		typename T,
 		typename std::enable_if<
-			trait::HasArea<T>::value,T
+				(
+					trait::HasArea<T>::value
+					&&
+					!trait::PolIsClosed<T>::value
+				)
+				,T
 		>::type* = nullptr
 	>
 	bool
-	isInside( const T& cont ) const
+	isInside( const T& prim ) const
 	{
 		HOMOG2D_START;
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
-			if( !pt.isInside( cont ) )
+			if( !pt.isInside( prim ) )
 				return false;
+		return true;
+	}
+
+/// Polyline isInside other CPolyline
+/**
+Sfinae should resolve ONLY for CPolyline
+*/
+	template<
+		typename T,
+		typename std::enable_if<
+			trait::PolIsClosed<T>::value,T
+		>::type* = nullptr
+	>
+	bool
+	isInside( const T& cpol ) const
+	{
+		HOMOG2D_START;
+		if( size() == 0 )
+			return false;
+		for( const auto& pt: getPts() )
+			if( !pt.isInside( cpol ) )
+				return false;
+		if( intersects(cpol)() )
+			return false;
 		return true;
 	}
 
@@ -8568,7 +8629,7 @@ detail::IntersectM<FPT>
 LPBase<LP,FPT>::impl_intersectsFRect( const FRect_<FPT2>& rect, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	std::vector<Point2d_<FPT>> pti;
-	for( const auto seg: rect.getSegs() ) // get segment of rectangle
+	for( const auto& seg: rect.getSegs() ) // get segment of rectangle
 	{
 		auto ppts_seg = seg.getPts();
 		auto inters = seg.intersects( *this );
@@ -10746,6 +10807,7 @@ tokenize( const std::string &s, char delim )
     return velems;
 }
 //------------------------------------------------------------------
+/// Importing rotated ellipse from SVG data
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,HOMOG2D_INUMTYPE>
 getEllipseRotateAttr( const char* rot_str )
 {
@@ -10799,7 +10861,7 @@ parsePoints( const char* pts )
 }
 
 //------------------------------------------------------------------
-/// Visitor class, derived from the tinyxml2 visitor class
+/// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
 Holds the imported data through std::unique_ptr
 */
@@ -10864,7 +10926,7 @@ getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_na
 	return value;
 }
 
-/// helper function
+/// helper function for SVG import
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
 */
@@ -10879,6 +10941,8 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 
 /// This is the place where actual SVG data is converted and stored into vector
 /**
+(see manual, section "SVG import")
+
 Overload of the root class `VisitExit()` member function
 */
 bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
@@ -10962,7 +11026,8 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	return true;
 }
 
-void printFileAttrib( const tinyxml2::XMLDocument& doc )
+void
+printFileAttrib( const tinyxml2::XMLDocument& doc )
 {
 	const tinyxml2::XMLElement* root = doc.RootElement();
 

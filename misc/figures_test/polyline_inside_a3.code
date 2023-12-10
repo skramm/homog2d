@@ -1,0 +1,10 @@
+
+#define TESTFIG_HAS_POLY2
+
+CPolyline_<HOMOG2D_INUMTYPE> pl(
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>>{
+		{1,1},{1,2},{2,2}
+	}
+);
+CPolyline_<HOMOG2D_INUMTYPE> pl2( FRect_<HOMOG2D_INUMTYPE>(3,1,4,2) );
+

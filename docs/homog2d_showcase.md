@@ -145,3 +145,18 @@ Showing the side of a point related to a rotating line. Tipping point appears fo
 Showing a rotating segment and its orthogonal segments and points.
 
 ![showcase17](showcase/showcase17.gif)
+
+
+* [Showcase 18](../misc/showcase/showcase18.cpp):
+<a name="sc18"></a>
+Building of a parallelogram from 3 points
+
+![showcase18](showcase/showcase18.gif)
+
+
+* [Showcase 19](../misc/showcase/showcase19.cpp):
+<a name="sc19"></a>
+Random segments, drawn with random colors
+
+![showcase19](showcase/showcase19.gif)
+

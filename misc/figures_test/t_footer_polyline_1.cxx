@@ -1,4 +1,4 @@
-// file t_footer.cxx
+// file t_footer_polyline.cxx
 // used in makefile target test_fig
 
 	Homogr H;
@@ -28,12 +28,15 @@
 			li2.draw( img2, colgrid );
 	}
 
-	auto poly2 = H*pl;
-//	poly2.draw( img2, img::DrawParams().setColor(250,0,20).showPoints(true) );
-
+	auto poly1 = H*pl;
 	auto dp = img::DrawParams().setColor(250,0,20).showPoints(true).setPointStyle(img::PtStyle::Times).showIndex(true);
-	poly2.draw( img2, dp );
-//	img2.write( std::string(argv[0])+ ".png" );
+	poly1.draw( img2, dp );
+
+#ifdef TESTFIG_HAS_POLY2
+	auto poly2 = H*pl2;
+	poly2.draw( img2, img::DrawParams().setColor(20,250,20) );
+#endif
+
 	img2.write( std::string(argv[0])+ ".svg" );
 }
 
