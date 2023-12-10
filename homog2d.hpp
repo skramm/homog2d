@@ -354,7 +354,7 @@ genRandomColors( size_t nb, int minval=20, int maxval=250 )
 	if( maxval<=minval )
 		HOMOG2D_THROW_ERROR_1( "Illegal values for minval and maxval" );
 	std::vector<img::Color> vcol( nb );
-	std::srand( std::time(0) );
+	std::srand( std::time(nullptr) );
 
 	for( size_t i=0; i<nb; i++ )
 	{

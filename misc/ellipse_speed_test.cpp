@@ -19,7 +19,7 @@ int main( int argc, const char** argv )
 	if( argc > 1 )
 		nb_runs = std::atoi( argv[1] );
 
-	std::srand( std::time(0) );
+	std::srand( std::time(nullptr) );
 	Point2d dummy_pt( range_center * std::rand() / RAND_MAX, range_center * std::rand() / RAND_MAX );
 
 	std::cout << "-Running with n=" << nb_runs
