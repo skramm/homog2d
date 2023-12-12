@@ -65,7 +65,7 @@ void recurseTriangles(
 int main()
 {
 	Homogr H;
-	std::srand( std::time(0) ); // to get random colors
+	std::srand( std::time(nullptr) ); // to get random colors
 	auto x0 = 10;
 	auto y0 = 10;
 	auto l = 500;
