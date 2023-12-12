@@ -1387,7 +1387,7 @@ TEST_CASE( "Polyline IsInside Polyline", "[tpolipol]" )
 	}
 }
 
-TEST_CASE( "Point IsInside Polyline", "[tptipol]" )
+TEST_CASE( "Point2d IsInside Polyline", "[tptipol]" )
 {
 	Point2d_<HOMOG2D_INUMTYPE> pt;
 
@@ -1415,7 +1415,41 @@ TEST_CASE( "Point IsInside Polyline", "[tptipol]" )
 	}
 }
 
-TEST_CASE( "Point IsInside FRect", "[tptir]" )
+// Whatever the primitive, a line is NEVER inside anything
+TEST_CASE( "Line2d IsInside something", "[tlir]" )
+{
+	Point2d_<NUMTYPE> pt1(2,10);
+	Point2d_<NUMTYPE> pt2(10,2);
+	auto li = pt1*pt2;
+	CHECK( li.isInside( pt1, pt2 ) == false );
+
+	Circle_<NUMTYPE> c( 4, 5, 2 );
+	CHECK( li.isInside( c ) == false );
+
+	Ellipse_<NUMTYPE> ell(pt1);
+	CHECK( li.isInside( ell ) == false );
+}
+
+TEST_CASE( "Point2d IsInside Circle", "[tptic]" )
+{
+	Circle_<NUMTYPE> c1(10.);
+	Circle_<NUMTYPE> c2(2.);
+	{
+		Point2d p1( 3,3 );          // point inside circle
+		CHECK( p1.isInside(c1) );
+		CHECK( !p1.isInside(c2) );
+		CHECK( p1.isInside(  Point2d(0,0), 8 ) );
+		CHECK( !p1.isInside( Point2d(0,0), 2 ) );
+	}
+	{
+		Point2d p1( 10, 0 );          // point on the edge of circle
+		CHECK( !p1.isInside(c1) );
+		Point2d p2( 0, 10 );          // point on the edge of circle
+		CHECK( !p2.isInside(c1) );
+	}
+}
+
+TEST_CASE( "Point2d IsInside FRect", "[tptir]" )
 {
 	Point2d_<NUMTYPE> pt1(2,10);
 	Point2d_<NUMTYPE> pt2(10,2);
@@ -1440,21 +1474,29 @@ TEST_CASE( "Point IsInside FRect", "[tptir]" )
 	CHECK( Point2d_<NUMTYPE>( 2,10).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10, 2).isInside( pt1, pt2 ) == false );
 	CHECK( Point2d_<NUMTYPE>(10,10).isInside( pt1, pt2 ) == false );
+}
 
+TEST_CASE( "Segment IsInside FRect", "[tsir]" )
+{
 	FRect_<NUMTYPE> r(2,3, 10,10);
 	CHECK( r.length() == 30 );
 	CHECK( r.area()   == 56 );
 	CHECK( r.width()  == 8 );
 	CHECK( r.height() == 7 );
 
-	CHECK( Segment( 2,5, 4,5 ).isInside( r )           == false ); // on the contour
-	CHECK( Segment( 2.00001, 5., 4.,5. ).isInside( r ) == true );
-	CHECK( Segment( 3,5, 4,5 ).isInside( r )           == true );
+	CHECK( Segment_<NUMTYPE>( 0,0, 5,0 ).isInside( r )           == false ); // outside
+	CHECK( Segment_<NUMTYPE>( 2,5, 4,5 ).isInside( r )           == false ); // on the contour
+	CHECK( Segment_<NUMTYPE>( 2.00001, 5., 4.,5. ).isInside( r ) == true );
+	CHECK( Segment_<NUMTYPE>( 3,5, 4,5 ).isInside( r )           == true );
+}
 
-	CHECK( Circle( 5,5, 2 ).isInside( r ) == false );   // touches rectangle at (5,3)
-	CHECK( Circle( 5,5, 1 ).isInside( r ) == true );
-	CHECK( Circle( 6,6, 2 ).isInside( r ) == true );
-	CHECK( Circle().isInside( r )         == false );
+TEST_CASE( "Circle IsInside FRect", "[tcir]" )
+{
+	FRect_<NUMTYPE> r(2,3, 10,10);
+	CHECK( Circle_<NUMTYPE>( 5,5, 2 ).isInside( r ) == false );   // touches rectangle at (5,3)
+	CHECK( Circle_<NUMTYPE>( 5,5, 1 ).isInside( r ) == true );
+	CHECK( Circle_<NUMTYPE>( 6,6, 2 ).isInside( r ) == true );
+	CHECK( Circle_<NUMTYPE>().isInside( r )         == false );
 
 	CHECK( Circle( 6,6, 22 ).isInside( r ) == false);
 	CHECK( r.isInside( Circle( 6,6, 22 ) ) == true );
@@ -1462,14 +1504,27 @@ TEST_CASE( "Point IsInside FRect", "[tptir]" )
 	std::vector<Point2d> vecpt{ {3,3},{4,4} };
 	CPolyline pl(vecpt);
 	CHECK( pl.isInside( r ) == false );  // on contour
-
-/*	Polyline pl2( IsClosed::Yes );
-	pl2.add( 4,4 );
-	CHECK( pl2.isInside( r ) == true );
-	pl2.add( 4,5 );
-	CHECK( pl2.isInside( r ) == true );*/
 }
 
+// TODO !!!
+#if 0
+TEST_CASE( "Ellipse IsInside FRect", "[tellir]" )
+{
+	FRect_<NUMTYPE> r(2,3, 10,10);
+	{
+		Ellipse_<NUMTYPE> ell;
+		CHECK( ell.isInside( r ) == false );
+	}
+	{
+		Ellipse_<NUMTYPE> ell( Point2d(5,5), 2, 1 );
+		CHECK( ell.isInside( r ) == true );
+	}
+	{
+		Ellipse_<NUMTYPE> ell( Point2d(5,5), 6, 2 );
+		CHECK( ell.isInside( r ) == false );
+	}
+}
+#endif
 
 TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 {
@@ -1481,19 +1536,6 @@ TEST_CASE( "Circle IsInside Circle", "[tcic]" )
 		CHECK( !c1.isInside(c1) );
 		CHECK( c1 != c2 );
 		CHECK( c1 == c1 );
-	}
-	{
-		Point2d p1( 3,3 );          // point inside circle
-		CHECK( p1.isInside(c1) );
-		CHECK( !p1.isInside(c2) );
-		CHECK( p1.isInside(  Point2d(0,0), 8 ) );
-		CHECK( !p1.isInside( Point2d(0,0), 2 ) );
-	}
-	{
-		Point2d p1( 10, 0 );          // point on the edge of circle
-		CHECK( !p1.isInside(c1) );
-		Point2d p2( 0, 10 );          // point on the edge of circle
-		CHECK( !p2.isInside(c1) );
 	}
 	{
 		Circle_<NUMTYPE> cA( Point2d(),   10.);
