@@ -5415,6 +5415,14 @@ template<
 		set( vec );
 	}
 
+/// Constructor that build a regular convex polygon of \c n points
+	explicit
+	PolylineBase( size_t n )
+	{
+		impl_constr_RCP( n, detail::PlHelper<PLT>() );
+	}
+
+
 /// Copy-Constructor from Closed Polyline
 	template<typename FPT2>
 	constexpr PolylineBase( const CPolyline_<FPT2>& other )
@@ -5486,6 +5494,15 @@ this should work !!! (but doesn't...)
 ///@}
 
 private:
+	void
+	impl_constr_RCP( size_t n, const detail::PlHelper<type::IsClosed>& );
+
+	constexpr void
+	impl_constr_RCP( size_t n, const detail::PlHelper<type::IsOpen>& )
+	{
+		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
+	}
+
 	template<typename FPT2>
 	void imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
 	{
@@ -6040,6 +6057,15 @@ public:
 #endif
 
 }; // class PolylineBase
+
+
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::impl_constr_RCP( size_t n, const detail::PlHelper<type::IsClosed>& )
+{
+
+}
+
 
 } // namespace base
 
