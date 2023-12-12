@@ -1660,9 +1660,7 @@ void demo_orthSeg( int demidx )
 struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
-	{
-
-	}
+	{}
 	size_t nbPts = 5;
 };
 
@@ -1670,8 +1668,9 @@ void action_RCP( void* param )
 {
 	auto& data = *reinterpret_cast<Param_RCP*>(param);
 	data.clearImage();
-	CPolyline pol(100, data.nbPts );
-	pol.translate(150,150);
+	CPolyline pol(180, data.nbPts );
+	std::cout << " -Building Regular Convex Polygon with " << data.nbPts << " points\n";
+	pol.translate(250,200);
 	pol.draw( data.img );
 	data.showImage();
 }

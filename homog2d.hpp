@@ -6061,6 +6061,7 @@ public:
 }; // class PolylineBase
 
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
+/// \todo handle sin() and cos() to support ttmath
 template<typename PLT,typename FPT>
 template<typename FPT2>
 void
@@ -6070,12 +6071,13 @@ PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelp
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
 	if( rad <= 0  )
 		HOMOG2D_THROW_ERROR_1( "unable, radius must be >= 0" );
+
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
 	auto it = std::begin( v_pts );
+	auto angle0 = (HOMOG2D_INUMTYPE)2. * M_PI / n;
 	for( size_t i=0; i<n; i++ )
 	{
-		HOMOG2D_INUMTYPE angle = (HOMOG2D_INUMTYPE)2. * M_PI * i / n;
-		std::cout << i << ": angle=" << angle * 180 / M_PI << '\n';
+		auto angle = angle0 * i;
 		auto x = std::cos( angle );
 		auto y = std::sin( angle );
 		*it = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
