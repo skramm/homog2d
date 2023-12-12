@@ -66,7 +66,7 @@ int main()
 	int xmin = 40;
 	int seg_max = 50;
 	int seg_min = 10;
-	std::srand( std::time(0) );
+	std::srand( std::time(nullptr) );
 	int nbSegs = 40;
 
 	v_colors = genRandomColors( 2 * nbSegs );

@@ -1329,10 +1329,10 @@ struct Param_SEG : Data
 	int height2 = _imHeight-delta;
 	int k_col  = 200;
 	int k_min  = 15;
-	std::srand( std::time(0) );
 	void generateSegments()
 	{
-		std::cout << "generating " << nbSegs << " segments\n";
+//		std::cout << "generating " << nbSegs << " segments\n";
+		std::srand( time(nullptr) );
 		vseg.clear();
 		vcol.clear();
 		for( auto i=0; i<nbSegs; i++ )

@@ -1711,7 +1711,7 @@ extended fine-tuning on how things are rendered, the goal is only to quickly see
 The user can select between two backends, both can be usable at the same time.
 They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
 
-The two concrete types can be used are either `img::SvgImage`, to generate a SVG file, and Opencv `cv::Mat` type,
+The two concrete types can be used with `Image` are either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type,
 that requires that the symbol `HOMOG2D_USE_OPENCV` is defined and that the library is installed on system.
 
 The difference between these two backends is that with SVG, you may only generate a file;
@@ -1842,7 +1842,7 @@ For Opencv back-end, this is ignored.
 
 If you have a container (`std::vector`, `std::array` or `std::list`) filled with one of the primitives
 or a `std::pair` of primitives (can be different types),
-you can draw them at once with a call to the same function:
+you can draw them at once with a call to the same free function `draw()`:
 ```C++
 std::vector<Segment> vseg;
 // ... fill vseg with data
