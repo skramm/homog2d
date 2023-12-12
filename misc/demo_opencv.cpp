@@ -1654,6 +1654,42 @@ void demo_orthSeg( int demidx )
 	data.setMouseCB( action_ORS );
 
 	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
+struct Param_RCP : Data
+{
+	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
+	{
+
+	}
+	size_t nbPts = 5;
+};
+
+void action_RCP( void* param )
+{
+	auto& data = *reinterpret_cast<Param_RCP*>(param);
+	data.clearImage();
+	CPolyline pol(100, data.nbPts );
+	pol.translate(150,150);
+	pol.draw( data.img );
+	data.showImage();
+}
+
+void demo_RCP( int demidx )
+{
+	Param_RCP data( demidx, "Regular Convex Polygon" );
+	std::cout << "Demo " << demidx << ": Regular Convex Polygon\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data.nbPts++; }, "more points" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nbPts--; }, "less points" );
+
+	kbloop.addCommonAction( action_RCP );
+	action_RCP( &data );
+//	data.setMouseCB( action_ORS );
+
+	kbloop.start( data );
 
 }
 
@@ -1679,6 +1715,7 @@ int main( int argc, const char** argv )
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
 		demo_RI,    // rectangle intersection

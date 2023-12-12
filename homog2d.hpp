@@ -5415,11 +5415,11 @@ template<
 		set( vec );
 	}
 
-/// Constructor that build a regular convex polygon of \c n points
-	explicit
-	PolylineBase( size_t n )
+/// Constructor that build a regular convex polygon of \c n points at a distance \c rad, centered at (0,0).
+	template<typename FPT2>
+	PolylineBase( FPT2 rad, size_t n )
 	{
-		impl_constr_RCP( n, detail::PlHelper<PLT>() );
+		impl_constr_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
 
 
@@ -5494,11 +5494,13 @@ this should work !!! (but doesn't...)
 ///@}
 
 private:
+	template<typename FPT2>
 	void
-	impl_constr_RCP( size_t n, const detail::PlHelper<type::IsClosed>& );
+	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
 
+	template<typename FPT2>
 	constexpr void
-	impl_constr_RCP( size_t n, const detail::PlHelper<type::IsOpen>& )
+	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
 	}
@@ -6058,14 +6060,29 @@ public:
 
 }; // class PolylineBase
 
-
+/// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
 template<typename PLT,typename FPT>
+template<typename FPT2>
 void
-PolylineBase<PLT,FPT>::impl_constr_RCP( size_t n, const detail::PlHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
 {
-
+	if( n < 3 )
+		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
+	if( rad <= 0  )
+		HOMOG2D_THROW_ERROR_1( "unable, radius must be >= 0" );
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
+	auto it = std::begin( v_pts );
+	for( size_t i=0; i<n; i++ )
+	{
+		HOMOG2D_INUMTYPE angle = (HOMOG2D_INUMTYPE)2. * M_PI * i / n;
+		std::cout << i << ": angle=" << angle * 180 / M_PI << '\n';
+		auto x = std::cos( angle );
+		auto y = std::sin( angle );
+		*it = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
+		it++;
+	}
+	*this = PolylineBase<PLT,FPT>( v_pts );
 }
-
 
 } // namespace base
 
