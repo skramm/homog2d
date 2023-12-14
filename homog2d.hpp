@@ -5495,18 +5495,20 @@ this should work !!! (but doesn't...)
 
 private:
 	template<typename FPT2>
-	void
+	HOMOG2D_INUMTYPE
 	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
 
 	template<typename FPT2>
-	constexpr void
+	constexpr HOMOG2D_INUMTYPE
 	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
+		return 0.; // to avoid a compiler warning
 	}
 
 	template<typename FPT2>
-	void imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
+	void
+	imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<type::IsClosed>& )
 	{
 		for( const auto& pt: rect.get4Pts() )
 			_plinevec.push_back( pt );
@@ -5771,7 +5773,7 @@ at 180° of the previous one.
 			*it++ = pt;              // allow type conversions (std::copy implies same type)
 	}
 
-/// Build a parallelogram from 3 points
+/// Build a parallelogram (4 points) from 3 points
 	template<typename FPT1,typename FPT2,typename FPT3>
 	void setParallelogram(
 		const Point2d_<FPT1>& pt1,
@@ -5787,6 +5789,13 @@ at 180° of the previous one.
 	void set( const FRect_<FPT2>& rec )
 	{
 		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
+	}
+
+/// Build RCP (Regular Convex Polygon), and return distance between consecutive points
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE set( FPT2 rad, size_t n )
+	{
+		return impl_constr_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
 
 ///@}
@@ -6064,7 +6073,7 @@ public:
 /// \todo handle sin() and cos() to support ttmath
 template<typename PLT,typename FPT>
 template<typename FPT2>
-void
+HOMOG2D_INUMTYPE
 PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
 {
 	if( n < 3 )
@@ -6075,15 +6084,26 @@ PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelp
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
 	auto it = std::begin( v_pts );
 	auto angle0 = (HOMOG2D_INUMTYPE)2. * M_PI / n;
+//	Point2d_<HOMOG2D_INUMTYPE> pt( rad, 0. ); // initial point
+
 	for( size_t i=0; i<n; i++ )
 	{
 		auto angle = angle0 * i;
 		auto x = std::cos( angle );
 		auto y = std::sin( angle );
+#if 0
+		if( i == 1 )
+		{
+			auto pt2 = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
+			std::cout << pt.distTo( pt2 ) << "\n";
+			pt = pt2;
+		}
+#endif
 		*it = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
 		it++;
 	}
 	*this = PolylineBase<PLT,FPT>( v_pts );
+	return getPoint(0).distTo( getPoint(1) );
 }
 
 } // namespace base

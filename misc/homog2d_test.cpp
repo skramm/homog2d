@@ -3159,6 +3159,26 @@ TEST_CASE( "Polyline", "[polyline]" )
 	}
 }
 
+TEST_CASE( "Polyline RCP (Regular Convex Polygon)", "[polyline-RCP]" )
+{
+	CHECK_THROWS( CPolyline( 5, -5 ) );
+	CHECK_THROWS( CPolyline( -5, 5 ) );
+	CHECK_THROWS( CPolyline( 1, 2 ) );
+	CHECK_THROWS( CPolyline( 0, 5 ) );
+
+	CPolyline pol( 5, 5 );
+	CHECK( pol.size() == 5 );
+	CHECK( pol.nbSegs() == 5 );
+	pol.set( 8, 4 );
+	CHECK( pol.size() == 4 );
+	CHECK( pol.nbSegs() == 4 );
+
+	CHECK_THROWS( pol.set( 1, 2 ) );
+	CHECK_THROWS( pol.set( 0, 5 ) );
+	CHECK_THROWS( pol.set( -5, 5 ) );
+	CHECK_THROWS( pol.set( 5, -5 ) );
+}
+
 TEST_CASE( "Polyline setParallelogram", "[polyline-setParallelogram]" )
 {
 	{
