@@ -9755,6 +9755,18 @@ getCenter(const T& other )
 	return other.getCenter();
 }
 
+template<typename T,typename FP1,typename FP2>
+void translate( T& prim, FP1 dx, FP2 dy )
+{
+	prim.translate( dx, dy );
+}
+
+template<typename T,typename FP>
+void translate( T& prim, const Point2d_<FP>& pt )
+{
+	prim.translate( pt.getX(), pt.getY() );
+}
+
 /// Returns true if ellipse is a circle
 /// \sa Ellipse_::isCircle()
 template<typename FPT>
