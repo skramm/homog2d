@@ -246,12 +246,14 @@ DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/png/%.png, $(DOC_IM
 
 # run the program => builds the png image
 BUILD/img/png/%.png: BUILD/img/png/bin/%
-	cd BUILD/img/png; bin/$(notdir $<)
+	@echo "Running $< to generate $@"
+	@cd BUILD/img/png; bin/$(notdir $<)
 
 # build the program
-BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp buildf
+BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@mkdir -p BUILD/img/png/bin
-	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	@echo "Building $@"
+	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 doc_fig: $(DOC_IMAGES_PNG)
 
@@ -262,7 +264,7 @@ TEX_FIG_LOC=misc/figures_src/latex
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
 TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,BUILD/fig_latex/%.png, $(TEX_FIG_SRC))
 
-BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex buildf
+BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex
 	@mkdir -p BUILD/fig_latex/
 	@cp $< $@
 
@@ -293,13 +295,13 @@ BUILD/figures_test/%: BUILD/figures_test/%.cpp
 #	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file
-BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx buildf
+BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
 	@echo "generating $@"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_frect_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 # build source file
-BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx buildf
+BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx
 	@echo "generating $@"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyline_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
@@ -307,7 +309,7 @@ BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $
 #=======================================================================
 
 DOC_MD_PAGES=$(wildcard docs/*.md)
-BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES) buildf
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
 	@mkdir -p BUILD/html
 	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
@@ -344,7 +346,7 @@ rm_nb:
 
 
 # assemble file to create a cpp program holding a main()
-BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx buildf
+BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
 	@mkdir -p BUILD/no_build/
 	@cat misc/no_build/header.txt >BUILD/no_build/$(notdir $@)
 	@cat $< >>BUILD/no_build/$(notdir $@)
@@ -365,7 +367,7 @@ SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile buildf
+BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase/
 	@mkdir -p BUILD/showcase/gif
 	@echo " -Building program $@"
@@ -399,7 +401,7 @@ SHOWCASE2_SRC=$(wildcard $(SHOWCASE2_SRC_LOC)/showcase*.cpp)
 SHOWCASE2=$(patsubst $(SHOWCASE2_SRC_LOC)/%.cpp,BUILD/showcase2/%, $(SHOWCASE2_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile buildf
+BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase2/
 	@echo " -Building program $@"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
@@ -413,7 +415,7 @@ SHOWCASE3_SRC_LOC=misc/showcase3
 SHOWCASE3_SRC=$(wildcard $(SHOWCASE3_SRC_LOC)/problem*.cpp)
 SHOWCASE3=$(patsubst $(SHOWCASE3_SRC_LOC)/%.cpp,BUILD/showcase3/%, $(SHOWCASE3_SRC))
 
-BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile buildf
+BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase3/
 	@echo " -Building program $@"
 	@$(CXX) -o $@ $<

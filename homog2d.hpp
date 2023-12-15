@@ -1877,6 +1877,7 @@ public:
 	{}
 ///@}
 
+/// Translate Ellipse
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -1884,6 +1885,12 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		auto par = p_getParams<HOMOG2D_INUMTYPE>();
 		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
+	}
+/// Translate Ellipse
+	template<typename T1>
+	void translate( Point2d_<T1> pt )
+	{
+		translate( pt.getX(), pt.getY() );
 	}
 
 /// \name attributes
@@ -5489,14 +5496,12 @@ this should work !!! (but doesn't...)
 
 private:
 	template<typename FPT2>
-//	HOMOG2D_INUMTYPE
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 	impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
 
 	template<typename FPT2>
-//	constexpr HOMOG2D_INUMTYPE
 	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsOpen>& )
+	impl_set_RCP( FPT2, size_t, const detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
 		return std::make_pair(0.,0.); // to avoid a compiler warning
@@ -5741,6 +5746,13 @@ at 180° of the previous one.
 		for( auto& pt: _plinevec )
 			pt.translate( dx, dy );
 	}
+/// Translate Polyline
+	template<typename T1>
+	void translate( Point2d_<T1> pt )
+	{
+		translate( pt.getX(), pt.getY() );
+	}
+
 
 /// Set from vector/array/list of points (discards previous points)
 /**

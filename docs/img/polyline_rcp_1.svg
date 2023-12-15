@@ -1,0 +1,13 @@
+<svg version="1.1" width="450" height="200" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="95" y1="100" x2="105" y2="100" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="100" y1="95" x2="100" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="275" y1="100" x2="285" y2="100" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="280" y1="95" x2="280" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
+<circle cx="100" cy="100" r="64.7214" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
+<circle cx="280" cy="100" r="90.0969" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
+<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="180,100 124.721,176.085 35.2786,147.023 35.2786,52.9772 124.721,23.9155 "/>
+<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="380,100 342.349,178.183 257.748,197.493 189.903,143.388 189.903,56.6116 257.748,2.50721 342.349,21.8169 "/>
+</svg>

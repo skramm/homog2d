@@ -781,12 +781,13 @@ See an [example here](../misc/test_files/bg_test_1.cpp).
 
 This requires the symbol `HOMOG2D_USE_BOOSTGEOM` to be defined.
 
-
+** Regular Convex Polygon**
 <a name="build_RCP"></a>
+
 It is also possible to build directy a Regular Convex Polygon (RCP) by using a dedicated constructor.
-For example, this will build a RCP of 5 points, centered at 3,2, with the points at a distance 10:
+For example, this will build a RCP of 5 points, centered at (3,2), with the points at a distance 10:
 ```C++
-CPolyline pol( 5, 10 );
+CPolyline pol( 10, 5 );
 pol.translate( 3, 2 );
 ```
 For more on this, see [the related `set()` function](#set_RCP).
@@ -1001,12 +1002,14 @@ Is only available for "closed" type.
 #### 3.4.9 - Building a Regular Convex Polygon (RCP)
 <a name="set_RCP"></a>
 
-The member function `set( nb, dist )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
+The member function `set( dist, nb )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
 The center will always be (0,0), if some translation is needed, you may use the `translate()` member or free function,
 see [the related constructor](#build_RCP).
 
 This function returns a `std::pair` holding two numerical values:
 the distance between two consecutive points as "first", and "second" the radius of the inscribed circle.
+
+![polyline_rcp_1](img/polyline_rcp_1.svg)
 
 #### 3.4.11 - Importing from boost::geometry
 
