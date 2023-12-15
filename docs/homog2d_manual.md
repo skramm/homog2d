@@ -1983,16 +1983,16 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 ### 9.4 - "Big numbers" support
 <a name="bignum"></a>
 
-From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both matissa and exponent.
+From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both mantissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
 This library is header-only, so its very simple to install.
 
 To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH`.
-This will also define a default value for `HOMOG2D_INUMTYPE` as `ttmath::Big<2,2>`.
+This will also define a default value for `HOMOG2D_INUMTYPE` (internal numerical type)as `ttmath::Big<2,2>`.
 This definition means that both mantissa and exponent will be stored as 2 machine words.
 On a 64-bit platform, that will end up as 128 bits for both.
 
-This can be overridden
+This can be overridden,
 - either by another definition of `HOMOG2D_INUMTYPE` as default types.
 For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file:
 ```C++

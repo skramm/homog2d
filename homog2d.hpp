@@ -55,6 +55,22 @@ See https://github.com/skramm/homog2d
 	#ifndef HOMOG2D_INUMTYPE
 		#define HOMOG2D_INUMTYPE ttmath::Big<2,2>
 	#endif
+
+	#define homog2d_abs  ttmath::Abs
+	#define homog2d_sin  ttmath::Sin
+	#define homog2d_cos  ttmath::Cos
+	#define homog2d_acos ttmath::ACos
+	#define homog2d_asin ttmath::ASin
+	#define homog2d_atan ttmath::ATan
+	#define homog2d_sqrt ttmath::Sqrt
+#else
+	#define homog2d_abs  std::abs
+	#define homog2d_sin  std::sin
+	#define homog2d_cos  std::cos
+	#define homog2d_acos std::acos
+	#define homog2d_asin std::asin
+	#define homog2d_atan std::atan
+	#define homog2d_sqrt std::sqrt
 #endif
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
@@ -885,22 +901,24 @@ namespace priv {
 	template<typename T>
 	T abs( const T& value )
 	{
-#ifdef HOMOG2D_USE_TTMATH
+		return homog2d_abs(value);
+/*#ifdef HOMOG2D_USE_TTMATH
 		return ttmath::Abs(value);
 #else
 		return std::abs(value);
-#endif
+#endif*/
 	}
 
 /// sqrt() function. This is required to avoid a lot of conditional compilation statements, when integrating support for ttmath
 	template<typename T>
 	T sqrt( const T& value )
 	{
-#ifdef HOMOG2D_USE_TTMATH
+		return homog2d_sqrt(value);
+/*#ifdef HOMOG2D_USE_TTMATH
 		return ttmath::Sqrt(value);
 #else
 		return std::sqrt(value);
-#endif
+#endif*/
 	}
 
 } // namespace priv
@@ -1300,6 +1318,7 @@ template<typename> struct IsBigNumType : std::false_type {};
 #ifdef HOMOG2D_USE_TTMATH
 template<int T1,int T2> struct IsBigNumType<ttmath::Big<T1,T2>> : std::true_type {};
 #endif
+
 } // namespace trait
 
 //------------------------------------------------------------------
@@ -6089,8 +6108,8 @@ PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelp
 	for( size_t i=0; i<n; i++ )
 	{
 		auto angle = angle0 * i;
-		auto x = std::cos( angle );
-		auto y = std::sin( angle );
+		auto x = homog2d_cos( angle );
+		auto y = homog2d_sin( angle );
 #if 0
 		if( i == 1 )
 		{
@@ -7625,20 +7644,22 @@ Ellipse_<FPT>::p_computeParams() const
 	else
 	{
 		auto t = (C - A - sqr) / B;
-
-#ifdef HOMOG2D_USE_TTMATH
+		par.theta = homog2d_atan( t );
+/*#ifdef HOMOG2D_USE_TTMATH
 		par.theta = ttmath::ATan( t );
 #else
 		par.theta = std::atan( t );
-#endif
+#endif*/
 	}
-#ifdef HOMOG2D_USE_TTMATH
+	par.sint = homog2d_sin( par.theta );
+	par.cost = homog2d_cos( par.theta );
+/*#ifdef HOMOG2D_USE_TTMATH
 	par.sint = ttmath::Sin( par.theta );
 	par.cost = ttmath::Cos( par.theta );
 #else
 	par.sint = std::sin( par.theta );
 	par.cost = std::cos( par.theta );
-#endif
+#endif*/
 	return par;
 }
 
@@ -7860,11 +7881,12 @@ template<typename LP,typename FPT>
 void
 LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename type::IsLine>& ) const
 {
-#ifdef HOMOG2D_USE_TTMATH
+	auto sq = homog2d_sqrt( _v[0]*_v[0] + _v[1]*_v[1] );
+/*#ifdef HOMOG2D_USE_TTMATH
 	auto sq = ttmath::Sqrt( _v[0]*_v[0] + _v[1]*_v[1] );
 #else
 	auto sq = std::hypot( _v[0], _v[1] );
-#endif
+#endif*/
 
 #ifndef HOMOG2D_NOCHECKS
 	if( sq <= std::numeric_limits<double>::epsilon() )
@@ -8419,11 +8441,7 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 #endif
 		fres = 1.0;
 	}
-#ifdef HOMOG2D_USE_TTMATH
-	return ttmath::ACos( fres );
-#else
-	return std::acos( fres );
-#endif
+	return homog2d_acos( fres );
 }
 
 template<typename LP, typename FPT>
@@ -9531,13 +9549,17 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 		std::swap( cA, cB );
 
 	auto h = dist( cA.center(), cB.center() );
-#ifdef HOMOG2D_USE_TTMATH
+
+	auto theta = homog2d_asin( ( cA.radius() - cB.radius() ) / h ) ;
+	auto hcost = h * homog2d_cos(theta);
+
+/*#ifdef HOMOG2D_USE_TTMATH
 	auto theta = ttmath::ASin( ( cA.radius() - cB.radius() ) / h ) ;
 	auto hcost = h * ttmath::Cos(theta);
 #else
 	auto theta = std::asin( ( cA.radius() - cB.radius() ) / h ) ;
 	auto hcost = h * cos(theta);
-#endif
+#endif*/
 
 
 // get rotated lines at center of CB
