@@ -781,7 +781,8 @@ See an [example here](../misc/test_files/bg_test_1.cpp).
 
 This requires the symbol `HOMOG2D_USE_BOOSTGEOM` to be defined.
 
-** Regular Convex Polygon**
+**Regular Convex Polygon**
+
 <a name="build_RCP"></a>
 
 It is also possible to build directy a Regular Convex Polygon (RCP) by using a dedicated constructor.
@@ -1011,7 +1012,10 @@ the distance between two consecutive points as "first", and "second" the radius 
 
 ![polyline_rcp_1](img/polyline_rcp_1.svg)
 
+[source](../misc/figures_src/src/polyline_rcp_1.cpp)
+
 #### 3.4.11 - Importing from boost::geometry
+<a name="boost_geom_1"></a>
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
 See [demo program](../misc/test_files/bg_test_1.cpp) that demonstrates that feature.
@@ -1733,7 +1737,7 @@ extended fine-tuning on how things are rendered, the goal is only to quickly see
 The user can select between two backends, both can be usable at the same time.
 They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
 
-The two concrete types can be used with `Image` are either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type,
+The two concrete types can be used as a type with `Image` are either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type,
 that requires that the symbol `HOMOG2D_USE_OPENCV` is defined and that the library is installed on system.
 
 The difference between these two backends is that with SVG, you may only generate a file;

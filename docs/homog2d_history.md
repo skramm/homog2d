@@ -15,7 +15,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
-  - added building a CPolyline as a Regular Convex Polygon (RCP), either through constructor or through `set()` function
+  - added building a `CPolyline` as a Regular Convex Polygon (RCP), either through constructor or through `set()` function, [see manual](homog2d_manual.md#set_RCP).
   - added helper function `genRandomColors()`
   - bufixes, fixed enclosing of Polyline objects (https://github.com/skramm/homog2d/issues/10)
   - added `dsize()` member and free function, [see here](homog2d_manual.md#numtype)

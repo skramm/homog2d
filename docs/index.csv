@@ -19,3 +19,9 @@ Thresholds;thresholds;
 Drawing parameters;manual;drawing_params
 Lines and Points;manual;basic
 Build options;manual;build_options
+Regular Convex Polygon;manual;set_RCP
+RCP;manual;set_RCP
+ttmath library;manual;bignum
+Boost Geometry library;manual;boost_geom_1
+Opencv;manual;drawing
+SVG drawing;manual;drawing
