@@ -123,7 +123,7 @@ because the `ttmath` library provides its own maths functions.
 But the problem is that they do not have the same name as in the standard library.
 For example the `sin()` function is named `Sin()` in the `ttmath` library.
 
-One solution to handle this would have been to create a sub-namespace (say, `num`) that could have hold these math functions:
+One solution to handle this is to create a sub-namespace `num` that holds these math functions:
 ```
 namespace num {
 	template<typename FP>
