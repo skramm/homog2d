@@ -5413,7 +5413,7 @@ template<
 	template<typename FPT2>
 	PolylineBase( FPT2 rad, size_t n )
 	{
-		impl_constr_RCP( rad, n, detail::PlHelper<PLT>() );
+		impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
 
 
@@ -5489,15 +5489,17 @@ this should work !!! (but doesn't...)
 
 private:
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE
-	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
+//	HOMOG2D_INUMTYPE
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+	impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
 
 	template<typename FPT2>
-	constexpr HOMOG2D_INUMTYPE
-	impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsOpen>& )
+//	constexpr HOMOG2D_INUMTYPE
+	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+	impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
-		return 0.; // to avoid a compiler warning
+		return std::make_pair(0.,0.); // to avoid a compiler warning
 	}
 
 	template<typename FPT2>
@@ -5787,9 +5789,11 @@ at 180° of the previous one.
 
 /// Build RCP (Regular Convex Polygon), and return distance between consecutive points
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE set( FPT2 rad, size_t n )
+//	HOMOG2D_INUMTYPE
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+	set( FPT2 rad, size_t n )
 	{
-		return impl_constr_RCP( rad, n, detail::PlHelper<PLT>() );
+		return impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
 
 ///@}
@@ -6064,11 +6068,10 @@ public:
 }; // class PolylineBase
 
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
-/// \todo handle sin() and cos() to support ttmath
 template<typename PLT,typename FPT>
 template<typename FPT2>
-HOMOG2D_INUMTYPE
-PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
+std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> // segment distance, inscribed circle radius
+PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
 {
 	if( n < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
@@ -6078,26 +6081,35 @@ PolylineBase<PLT,FPT>::impl_constr_RCP( FPT2 rad, size_t n, const detail::PlHelp
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
 	auto it = std::begin( v_pts );
 	auto angle0 = (HOMOG2D_INUMTYPE)2. * M_PI / n;
-//	Point2d_<HOMOG2D_INUMTYPE> pt( rad, 0. ); // initial point
+
+	Point2d_<HOMOG2D_INUMTYPE> pt0( rad, 0. ); // initial point
+	HOMOG2D_INUMTYPE radius;
 
 	for( size_t i=0; i<n; i++ )
 	{
 		auto angle = angle0 * i;
 		auto x = homog2d_cos( angle );
 		auto y = homog2d_sin( angle );
-#if 0
-		if( i == 1 )
+
+		if( i == 1 )    // compute radius of inscribed circle
 		{
-			auto pt2 = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
-			std::cout << pt.distTo( pt2 ) << "\n";
-			pt = pt2;
+			auto pt1 = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
+			Segment_<HOMOG2D_INUMTYPE> seg( pt0, pt1 );
+			Line2d_<HOMOG2D_INUMTYPE> li( seg.getCenter() );     // line passing through (0,0) and middle point of segment
+			auto inters_pt = seg.intersects( li ) ;              // intersection point
+			assert( inters_pt() );
+			radius = Point2d_<HOMOG2D_INUMTYPE>(0,0).distTo( inters_pt.get() );
 		}
-#endif
+
 		*it = Point2d_<HOMOG2D_INUMTYPE>( x * rad, y * rad );
 		it++;
 	}
 	*this = PolylineBase<PLT,FPT>( v_pts );
-	return getPoint(0).distTo( getPoint(1) );
+
+	return std::make_pair(
+		getPoint(0).distTo( getPoint(1) ),
+		radius
+	);
 }
 
 } // namespace base

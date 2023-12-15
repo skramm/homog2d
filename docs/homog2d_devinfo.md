@@ -116,14 +116,16 @@ $ BUILD/<testappname> [tagname]
 - private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation)
 - all symbols start with `HOMOG2D_`, to avoid name collisions
 
+
 # Big Numbers support
+<a name="ttmath_devinfo"></a>
 
-To enable the usage of the ttmath library ([see here](homog2d_manual.md#bignum), some edits had the be done on the code,
-because the `ttmath` library provides its own maths functions.
-But the problem is that they do not have the same name as in the standard library.
-For example the `sin()` function is named `Sin()` in the `ttmath` library.
+To enable the usage of the `ttmath` library ([see here](homog2d_manual.md#bignum), some edits had the be done on the code,
+because this library provides its own maths functions.
+The problem is that they do not have the same name as in the standard library.
+For example the `sin()` function is named `Sin()` in the `ttmath` library (as opposed to `std::sin()`).
 
-One solution to handle this is to create a sub-namespace `num` that holds these math functions:
+One solution to handle this would have been to create a sub-namespace `num` that would hold these math functions:
 ```
 namespace num {
 	template<typename FP>

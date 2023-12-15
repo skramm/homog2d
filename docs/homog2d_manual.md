@@ -782,6 +782,15 @@ See an [example here](../misc/test_files/bg_test_1.cpp).
 This requires the symbol `HOMOG2D_USE_BOOSTGEOM` to be defined.
 
 
+<a name="build_RCP"></a>
+It is also possible to build directy a Regular Convex Polygon (RCP) by using a dedicated constructor.
+For example, this will build a RCP of 5 points, centered at 3,2, with the points at a distance 10:
+```C++
+CPolyline pol( 5, 10 );
+pol.translate( 3, 2 );
+```
+For more on this, see [the related `set()` function](#set_RCP).
+
 #### 3.4.2 - Basic attributes
 
 The open/close status can be read, but will return a `constexpr` value:
@@ -989,7 +998,17 @@ Is only available for "closed" type.
 [(source)](../misc/showcase/showcase18.cpp)
 
 
-#### 3.4.10 - Importing from boost::geometry
+#### 3.4.9 - Building a Regular Convex Polygon (RCP)
+<a name="set_RCP"></a>
+
+The member function `set( nb, dist )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
+The center will always be (0,0), if some translation is needed, you may use the `translate()` member or free function,
+see [the related constructor](#build_RCP).
+
+This function returns a `std::pair` holding two numerical values:
+the distance between two consecutive points as "first", and "second" the radius of the inscribed circle.
+
+#### 3.4.11 - Importing from boost::geometry
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
 See [demo program](../misc/test_files/bg_test_1.cpp) that demonstrates that feature.
@@ -2013,6 +2032,7 @@ See [this file](../misc/test_files/ttmath_t1.cpp) for example.
 Please note that you will probably need to adjust the relevant thresholds according to you choice of precision, see the
 [threshold page](homog2d_thresholds.md).
 
+For more on how this is handled in the code, [see here](homog2d_devinfo.md#ttmath_devinfo).
 
 ## 10 - SVG import
 <a name="svg_import"></a>

@@ -1661,17 +1661,41 @@ struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
 	{}
+	int trans_x = 250;
+	int trans_y = 200;
+	int radius = 280;
 	size_t nbPts = 5;
+	void nbPts_less()
+	{
+		nbPts--;
+		if( nbPts < 3 )
+			nbPts = 3;
+	}
 };
 
 void action_RCP( void* param )
 {
 	auto& data = *reinterpret_cast<Param_RCP*>(param);
 	data.clearImage();
-	CPolyline pol(180, data.nbPts );
+
+	Line2d lih( Point2d(data._imWidth,data.trans_y), Point2d(0,data.trans_y) );
+	Line2d liv( Point2d(data.trans_x,data._imHeight), Point2d(data.trans_x,0) );
+	lih.draw( data.img );
+	liv.draw( data.img );
+
+	Point2d(data.trans_x,data.trans_y).draw( data.img, img::DrawParams().setColor(100,0,100) );
+	CPolyline pol;
+	auto values = pol.set( data.radius, data.nbPts );
 	std::cout << " -Building Regular Convex Polygon with " << data.nbPts << " points\n";
-	pol.translate(250,200);
+	pol.translate(data.trans_x,data.trans_y);
 	pol.draw( data.img );
+	drawText( data.img, "NbPts="  +std::to_string(data.nbPts), Point2d(20,40) );
+	drawText( data.img, "segment dist="  +std::to_string(values.first), Point2d(20,60) );
+	drawText( data.img, "circle radius="+std::to_string(values.second), Point2d(20,80) );
+	Circle c1( data.trans_x,data.trans_y,data.radius);
+	Circle c2( data.trans_x,data.trans_y,values.second);
+	c1.draw( data.img, img::DrawParams().setColor(0,0,250) );
+	c2.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	data.showImage();
 }
 
@@ -1682,7 +1706,7 @@ void demo_RCP( int demidx )
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.nbPts++; }, "more points" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.nbPts--; }, "less points" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.nbPts_less(); }, "less points" );
 
 	kbloop.addCommonAction( action_RCP );
 	action_RCP( &data );
