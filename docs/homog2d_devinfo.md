@@ -117,10 +117,10 @@ $ BUILD/<testappname> [tagname]
 - all symbols start with `HOMOG2D_`, to avoid name collisions
 
 
-# Big Numbers support
+## Big Numbers support
 <a name="ttmath_devinfo"></a>
 
-To enable the usage of the `ttmath` library ([see here](homog2d_manual.md#bignum), some edits had the be done on the code,
+To enable the usage of the `ttmath` library ([see here](homog2d_manual.md#bignum)), some edits had the be done on the code,
 because this library provides its own maths functions.
 The problem is that they do not have the same name as in the standard library.
 For example the `sin()` function is named `Sin()` in the `ttmath` library (as opposed to `std::sin()`).
@@ -142,5 +142,5 @@ As it is admitted that the standard types are no longer usable when `HOMOG2D_USE
 In the library code, all the maths functions are prefixed with `homog2d_` (for example `homog2d_asin()` for the inverse sinus function).
 Depending if the symbol `HOMOG2D_USE_TTMATH` is defined or not, these symbols are replaced with the relevant string.
 
-For example `homog2d_asin` will be by replaced `ttmath::ASin` if `HOMOG2D_USE_TTMATH` is defined, and by `std::asin` if not.
+For example `homog2d_asin` will be replaced by `ttmath::ASin` if `HOMOG2D_USE_TTMATH` is defined, and by `std::asin` if not.
 
