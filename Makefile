@@ -160,18 +160,20 @@ test_single: BUILD/test_single
 test_multiple: BUILD/test_multiple
 	@echo "-done target $@"
 
+buildf:
+	mkdir -p BUILD
 
-BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile
+BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
 	-rm BUILD/$(notdir $@).stderr
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
 
-BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile
+BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile
+BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile buildf
 	$(CXX) -c $< -o $@
 
-BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o
+BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o buildf
 	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
 
 
@@ -182,13 +184,13 @@ testall: test BUILD/homog2d_test_f BUILD/homog2d_test_d BUILD/homog2d_test_l spe
 	misc/test_all.sh
 	@echo "-done target $@"
 
-BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_f: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=float -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_f.stderr
 
-BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_d.stderr
 
-BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp
+BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 .PHONY: test_bg_1 test_bn
@@ -198,15 +200,15 @@ test_bn: BUILD/ttmath_t1
 	BUILD/ttmath_t1
 	@echo "-done target $@"
 
-BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile
+BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 
-test_bg_1: BUILD/bg_test_1
+test_bg_1: BUILD/bg_test_1 buildf
 	BUILD/bg_test_1
 	@echo "-done target $@"
 
-BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile
+BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 #=======================================================================
@@ -223,13 +225,13 @@ BUILD/ellipse_speed_test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 # No Checking
 BUILD/ellipse_speed_test_SYCN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED -DHOMOG2D_NOCHECKS
 
-BUILD/ellipse_speed_test_SY: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+BUILD/ellipse_speed_test_SY: misc/ellipse_speed_test.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
 
-BUILD/ellipse_speed_test_SYCN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+BUILD/ellipse_speed_test_SYCN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_SY.stderr
 
-BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile
+BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/ellipse_speed_test_NY.stderr
 
 
@@ -247,7 +249,7 @@ BUILD/img/png/%.png: BUILD/img/png/bin/%
 	cd BUILD/img/png; bin/$(notdir $<)
 
 # build the program
-BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
+BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp buildf
 	@mkdir -p BUILD/img/png/bin
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
@@ -260,7 +262,7 @@ TEX_FIG_LOC=misc/figures_src/latex
 TEX_FIG_SRC=$(wildcard $(TEX_FIG_LOC)/*.tex)
 TEX_FIG_PNG=$(patsubst $(TEX_FIG_LOC)/%.tex,BUILD/fig_latex/%.png, $(TEX_FIG_SRC))
 
-BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex
+BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex buildf
 	@mkdir -p BUILD/fig_latex/
 	@cp $< $@
 
@@ -291,13 +293,13 @@ BUILD/figures_test/%: BUILD/figures_test/%.cpp
 #	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file
-BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
+BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx buildf
 	@echo "generating $@"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_frect_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
 
 # build source file
-BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx
+BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx buildf
 	@echo "generating $@"
 	@mkdir -p BUILD/figures_test/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyline_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
@@ -305,18 +307,18 @@ BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $
 #=======================================================================
 
 DOC_MD_PAGES=$(wildcard docs/*.md)
-BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES)
+BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md $(DOC_MD_PAGES) buildf
 	@mkdir -p BUILD/html
 	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
 
 # this target requires Opencv
-BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
+BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv` $$(pkg-config --libs tinyxml2)
 
 
 # this target requires Tinyxml2
-BUILD/demo_svg_import: misc/demo_svg_import.cpp homog2d.hpp
+BUILD/demo_svg_import: misc/demo_svg_import.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -I. -o $@ $< $$(pkg-config --libs tinyxml2)
 
 
@@ -325,13 +327,13 @@ diff:
 	xdg-open diff.html
 
 #=================================================================
-# The following is used to make sure that some constructions will not build
+# The following is used to make sure that some code constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
 NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 
 
-nobuild: $(NOBUILD_OBJ_FILES) #BUILD/no_build.stdout
+nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "-done target $@"
 
 $(NOBUILD_OBJ_FILES): rm_nb
@@ -342,7 +344,7 @@ rm_nb:
 
 
 # assemble file to create a cpp program holding a main()
-BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
+BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx buildf
 	@mkdir -p BUILD/no_build/
 	@cat misc/no_build/header.txt >BUILD/no_build/$(notdir $@)
 	@cat $< >>BUILD/no_build/$(notdir $@)
@@ -363,7 +365,7 @@ SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
+BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile buildf
 	@mkdir -p BUILD/showcase/
 	@mkdir -p BUILD/showcase/gif
 	@echo " -Building program $@"
@@ -397,7 +399,7 @@ SHOWCASE2_SRC=$(wildcard $(SHOWCASE2_SRC_LOC)/showcase*.cpp)
 SHOWCASE2=$(patsubst $(SHOWCASE2_SRC_LOC)/%.cpp,BUILD/showcase2/%, $(SHOWCASE2_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
+BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile buildf
 	@mkdir -p BUILD/showcase2/
 	@echo " -Building program $@"
 	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
@@ -411,7 +413,7 @@ SHOWCASE3_SRC_LOC=misc/showcase3
 SHOWCASE3_SRC=$(wildcard $(SHOWCASE3_SRC_LOC)/problem*.cpp)
 SHOWCASE3=$(patsubst $(SHOWCASE3_SRC_LOC)/%.cpp,BUILD/showcase3/%, $(SHOWCASE3_SRC))
 
-BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile
+BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile buildf
 	@mkdir -p BUILD/showcase3/
 	@echo " -Building program $@"
 	@$(CXX) -o $@ $<
@@ -432,10 +434,10 @@ DTEST1_BIN:=BUILD/$(FNAME1)_f BUILD/$(FNAME1)_d BUILD/$(FNAME1)_l
 
 DTEST1_DATA=$(patsubst %,%.data,$(DTEST1_BIN) )
 
-BUILD/$(FNAME1)_f.png: $(DTEST1_DATA) misc/dtest1.plt
+BUILD/$(FNAME1)_f.png: $(DTEST1_DATA) misc/dtest1.plt buildf
 	misc/dtest1.plt
 
-BUILD/$(FNAME1)_%.data:BUILD/$(FNAME1)_%
+BUILD/$(FNAME1)_%.data: BUILD/$(FNAME1)_%
 	@echo "# fields description: see misc/dtest1.spp" > $@
 	./$< .0001 >> $@
 	./$< .001 >> $@

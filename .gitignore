@@ -6,3 +6,4 @@
 *.log
 *.pdf
 BUILD/html/
+BUILD/
