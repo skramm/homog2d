@@ -1,6 +1,10 @@
 # workflow to publish doxygen generated pages
 # taken from https://github.com/DenverCoder1/doxygen-github-pages-action
 
+# DEPRECATED ON 20231216 (useless since the doxygen pages
+# are now deployed on https://codedocs.xyz
+# kept here just in case
+
 name: Doxygen GitHub Pages Deploy Action
 
 on:
