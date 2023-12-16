@@ -338,7 +338,7 @@ NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
 nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "-done target $@"
 
-$(NOBUILD_OBJ_FILES): rm_nb
+#$(NOBUILD_OBJ_FILES): rm_nb
 
 rm_nb:
 	@if [ -e BUILD/no_build.stdout ]; then rm BUILD/no_build.stdout; fi
@@ -354,9 +354,12 @@ BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
 BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
+	@echo "Checking build failure of $<"
 	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
 	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
-	@! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
+	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
+	@echo "howdy"
+	if [ -e $@ ]; then echo "exist"; fi
 
 #=================================================================
 # SHOWCASE: generates gif images of some situations

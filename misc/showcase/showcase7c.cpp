@@ -60,8 +60,8 @@ int main( int argc, const char** argv )
 		draw_intersect( seg, cir );
 		draw_intersect( seg, pol );
 
-		pt1.translate( 10, 0);
-		pt2.translate( 8, 2) ;
+		translate( pt1, 10, 0);
+		translate( pt2, 8, 2) ;
 		std::ostringstream oss;
 		oss << "showcase7c_" << std::setfill('0') << std::setw(2) <<i << ".png";
 		im.write( oss.str() );

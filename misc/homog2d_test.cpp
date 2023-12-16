@@ -2567,6 +2567,10 @@ TEST_CASE( "Segment", "[seg1]" )
 			s.translate( 2, 3 );
 			CHECK( s.getPts().first == Point2d(45,11) );
 			CHECK( s.getPts().second == Point2d(45,21) );
+
+			translate( s, -2, -3 );
+			CHECK( s.getPts().first == Point2d(43,8) );
+			CHECK( s.getPts().second == Point2d(43,18) );
 		}
 		{
 			Segment_<NUMTYPE> s( p2, p1 );   // same x value

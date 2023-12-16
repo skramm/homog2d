@@ -171,7 +171,7 @@ See https://github.com/skramm/homog2d
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << __FUNCTION__ << "(): " \
 			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
-			<< "\n -Error count=" << ++errorCount(); \
+			<< "\n -Error count=" << ++err::errorCount(); \
 		throw std::runtime_error( oss.str() ); \
 	}
 
@@ -181,7 +181,7 @@ See https://github.com/skramm/homog2d
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << func << "(): " \
 			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
-			<< "\n -Error count=" << ++errorCount(); \
+			<< "\n -Error count=" << ++err::errorCount(); \
 		throw std::runtime_error( oss.str() ); \
 	}
 
@@ -230,12 +230,19 @@ See https://github.com/skramm/homog2d
 
 namespace h2d {
 
-/// Use to count the errors
+namespace err {
+
+/// Used to count the errors
+/**
+This is used in the HOMOG2D_THROW_ERROR_1 macros. Some user code could catch the exceptions, thus
+this will enable the counting of errors
+*/
 inline size_t& errorCount()
 {
 	static size_t c;
 	return c;
 }
+} //namespace err
 
 /// Holds the types needed for policy based design
 namespace type {
@@ -1887,10 +1894,10 @@ public:
 		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
 	}
 /// Translate Ellipse
-	template<typename T1>
-	void translate( Point2d_<T1> pt )
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& ppt )
 	{
-		translate( pt.getX(), pt.getY() );
+		this->translate( ppt.first, ppt.second );
 	}
 
 /// \name attributes
@@ -2394,6 +2401,9 @@ public:
 
 /// \name Modifying functions
 ///@{
+
+
+/// Translate FRect
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -2401,6 +2411,22 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
+	}
+
+/// Translate FRect
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& pa )
+	{
+		this->translate( pa.first, pa.second );
+	}
+
+/// Move FRect to other location
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& pt )
+	{
+		auto s = size();
+		_ptR1 = pt;
+		_ptR2.set( _ptR1.getX() + s.first, _ptR1.getY() + s.second );
 	}
 
 	template<typename FPT2>
@@ -2924,6 +2950,7 @@ private:
 	p_min_circle_trivial( const std::vector<T>& P ) const;
 
 public:
+/// Translate Circle
 	template<typename T1, typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -2931,6 +2958,21 @@ public:
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
 		_center.translate( dx, dy );
 	}
+
+/// Translate Circle
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& pa )
+	{
+		this->translate( pa.first, pa.second );
+	}
+
+/// Move Circle to other location
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& pt )
+	{
+		set( pt );
+	}
+
 ///@}
 
 /// \name Enclosing functions
@@ -3708,12 +3750,28 @@ public:
 	FPT getX() const { return impl_getX( detail::BaseHelper<LP>() ); }
 	FPT getY() const { return impl_getY( detail::BaseHelper<LP>() ); }
 
+/// Translate Point2d, does nothing for Line2d ( \sa impl_translate() )
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T1 );
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
-		impl_move( dx, dy, detail::BaseHelper<LP>() );
+		impl_translate( dx, dy, detail::BaseHelper<LP>() );
+	}
+
+/// Translate Point2d, does nothing for Line2d ( \sa impl_translate() )
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& pa )
+	{
+		this->translate( pa.first, pa.second );
+	}
+
+/// Move point to other location (same as set(), but this one will be virtual).
+/// Does nothing for lines
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& pt )
+	{
+		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
 
 private:
@@ -3828,7 +3886,7 @@ private:
 	}
 
 	template<typename T1,typename T2>
-	void impl_move( T1 dx, T2 dy, const detail::BaseHelper<typename type::IsPoint>& )
+	void impl_translate( T1 dx, T2 dy, const detail::BaseHelper<typename type::IsPoint>& )
 	{
 		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
 		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
@@ -3837,9 +3895,20 @@ private:
 	}
 	template<typename T1,typename T2>
 	constexpr void
-	impl_move( T1, T2, const detail::BaseHelper<type::IsLine>& )
+	impl_translate( T1, T2, const detail::BaseHelper<type::IsLine>& )
 	{
-		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+// changed on 20231216: this does now nothing. That way, it can become a virtual function, if needed
+//		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
+	}
+
+	template<typename T1>
+	void impl_moveTo( const Point2d_<T1>& pt,  const detail::BaseHelper<typename type::IsPoint>& )
+	{
+		*this = pt;
+	}
+	template<typename T1>
+	void impl_moveTo( const Point2d_<T1>& pt,  const detail::BaseHelper<typename type::IsLine>& )
+	{
 	}
 
 	template<typename FPT2>
@@ -4530,6 +4599,7 @@ public:
 		set( Point2d_<FPT2>(x1,y1), Point2d_<FPT2>(x2,y2) );
 	}
 
+/// Translate Segment
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
@@ -4538,6 +4608,24 @@ public:
 		_ptS1.translate( dx, dy );
 		_ptS2.translate( dx, dy );
 	}
+
+/// Translate Segment, using pair of values
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& pa )
+	{
+		this->translate( pa.first, pa.second );
+	}
+
+/// Move Segment to other location
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& pt )
+	{
+		auto w = _ptS2.getX() - _ptS1.getX();
+		auto h = _ptS2.getY() - _ptS1.getY();
+		_ptS1 = pt;
+		_ptS2.set( _ptS1.getX() + w, _ptS1.getY() + h );
+	}
+
 ///@}
 
 /// \name Attributes access
@@ -5746,13 +5834,13 @@ at 180° of the previous one.
 		for( auto& pt: _plinevec )
 			pt.translate( dx, dy );
 	}
-/// Translate Polyline
-	template<typename T1>
-	void translate( Point2d_<T1> pt )
-	{
-		translate( pt.getX(), pt.getY() );
-	}
 
+/// Translate Polyline
+	template<typename T1, typename T2>
+	void translate( const std::pair<T1,T2>& ppt )
+	{
+		translate( ppt.first, ppt.second );
+	}
 
 /// Set from vector/array/list of points (discards previous points)
 /**
@@ -9755,16 +9843,24 @@ getCenter(const T& other )
 	return other.getCenter();
 }
 
+/// Translate primitive \c prim (free function)
+/**
+Actually calls the member function. Type checking is done there.
+*/
 template<typename T,typename FP1,typename FP2>
 void translate( T& prim, FP1 dx, FP2 dy )
 {
 	prim.translate( dx, dy );
 }
 
-template<typename T,typename FP>
-void translate( T& prim, const Point2d_<FP>& pt )
+/// Translate primitive \c prim with values in a \c std::pair (free function)
+/**
+Actually calls the member function. Type checking is done there.
+*/
+template<typename T,typename FP1,typename FP2>
+void translate( T& prim, const std::pair<FP1,FP2>& ppt )
 {
-	prim.translate( pt.getX(), pt.getY() );
+	prim.translate( ppt.first, ppt.second );
 }
 
 /// Returns true if ellipse is a circle
