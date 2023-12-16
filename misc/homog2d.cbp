@@ -148,6 +148,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="homog2d_test.cpp" />
+		<Unit filename="homog2d_test_rtp.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
 		<Unit filename="no_build/no_build_01.cxx" />
@@ -167,6 +168,7 @@
 		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
 		<Unit filename="no_build/no_build_18.cxx" />
+		<Unit filename="no_build/no_build_19.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="other/test_svg_import_1.svg" />
 		<Unit filename="other/test_svg_import_2.svg" />
