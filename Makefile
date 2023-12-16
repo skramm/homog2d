@@ -127,7 +127,7 @@ newtests: newtests_before
 
 .PHONY: pretest test test2 nobuild
 
-test: pretest test2 nobuild
+test: pretest test2 nobuild test_rtp
 	@echo "-done target $@"
 
 test2: test_SY test_SN test_single test_multiple
@@ -210,6 +210,14 @@ test_bg_1: BUILD/bg_test_1 buildf
 
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+
+test_rtp: BUILD/homog2d_test_rtp
+	@echo "-Running RTP test:"
+	@BUILD/homog2d_test_rtp
+
+
+BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
 
 #=======================================================================
 # speed test

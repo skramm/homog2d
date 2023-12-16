@@ -640,7 +640,7 @@ Check [this section](#frect_union) about union and intersection area of two rect
 <a id="p_circle"></a>
 
 These are modeled by their center point and radius.
-Creation is straightforward, whathever your needs:
+Creation is straightforward, whatever your needs:
 ```C++
 Circle c1;                          // at (0,0), radius = 1
 Circle c2( center_point );          // radius = 1
