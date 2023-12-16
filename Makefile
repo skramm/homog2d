@@ -354,12 +354,9 @@ BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
 BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
-	@echo "Checking build failure of $<"
 	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
 	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
-	! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
-	@echo "howdy"
-	if [ -e $@ ]; then echo "exist"; fi
+	@! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 #=================================================================
 # SHOWCASE: generates gif images of some situations

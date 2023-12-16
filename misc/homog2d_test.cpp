@@ -2671,7 +2671,7 @@ TEST_CASE( "Translate", "[trans]")
 
 	translate( pt, std::make_pair(2,3) );
 	CHECK( pt == Point2d(6,8) );
-	c.translate( std::make_pair(-2,-3) );
+	pt.translate( std::make_pair(-2,-3) );
 	CHECK( pt == Point2d(4,5) );
 }
 
@@ -2684,10 +2684,10 @@ TEST_CASE( "MoveTo", "[moveto]")
 	moveTo(c,8,9);
 	CHECK( c.center() == Point2d(8,9) );
 
-	Point2d_<NUMTYPE> pt1( 1,1);
+	Point2d_<NUMTYPE> pt1(1,1);
 	moveTo(c,pt1);
 	CHECK( c.center() == pt1 );
-	Point2d_<NUMTYPE> pt2( 1,1);
+	Point2d_<NUMTYPE> pt2(3,3);
 	c.moveTo(pt2);
 	CHECK( c.center() == pt2 );
 
