@@ -1900,6 +1900,14 @@ public:
 		this->translate( ppt.first, ppt.second );
 	}
 
+/// Move Ellipse to new location
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& new_org )
+	{
+		auto par = p_getParams<HOMOG2D_INUMTYPE>();
+		p_init( new_org.getX(), new_org.getY(), par.a, par.b, par.theta );
+	}
+
 /// \name attributes
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
@@ -5835,11 +5843,23 @@ at 180° of the previous one.
 			pt.translate( dx, dy );
 	}
 
-/// Translate Polyline
+/// Translate Polyline, using a pair of numerical values
 	template<typename T1, typename T2>
 	void translate( const std::pair<T1,T2>& ppt )
 	{
 		translate( ppt.first, ppt.second );
+	}
+
+/// Move Polyline to new origin
+	template<typename T1>
+	void moveTo( const Point2d_<T1>& new_org )
+	{
+		if( size() == 0 )
+			HOMOG2D_THROW_ERROR_1( "Invalid call, Polyline is empty" );
+		auto dx = new_org.getX() - getPoint(0).getX();
+		auto dy = new_org.getY() - getPoint(0).getY();
+		for( auto& pt: _plinevec )
+			pt.translate( dx, dy );
 	}
 
 /// Set from vector/array/list of points (discards previous points)

@@ -15,8 +15,8 @@ int main()
 	CPolyline pol1, pol2;
 	auto values1 = pol1.set(80,5);
 	auto values2 = pol2.set(100,7);
-	pol1.translate( p1 );
-	pol2.translate( p2 );
+	pol1.moveTo( p1 );
+	pol2.moveTo( p2 );
 	Circle c1( p1, values1.second );
 	Circle c2( p2, values2.second );
 
