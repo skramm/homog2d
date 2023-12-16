@@ -2648,6 +2648,54 @@ TEST_CASE( "Segment", "[seg1]" )
 	}
 }
 
+TEST_CASE( "Translate", "[trans]")
+{
+	INFO( "Translate Circle" );
+	Circle_<NUMTYPE> c(5,5,10);
+	c.translate(-1,+1);
+	CHECK( c.center() == Point2d(4,6) );
+	translate( c, +1, -1 );
+	CHECK( c.center() == Point2d(5,5) );
+
+	translate( c, std::make_pair(2,3) );
+	CHECK( c.center() == Point2d(7,8) );
+	c.translate( std::make_pair(-2,-3) );
+	CHECK( c.center() == Point2d(5,5) );
+
+	INFO( "Translate Point" );
+	Point2d_<NUMTYPE> pt(4,5);
+	pt.translate(-1,+1);
+	CHECK( pt == Point2d(3,6) );
+	translate(pt,+1,-1);
+	CHECK( pt == Point2d(4,5) );
+
+	translate( pt, std::make_pair(2,3) );
+	CHECK( pt == Point2d(6,8) );
+	c.translate( std::make_pair(-2,-3) );
+	CHECK( pt == Point2d(4,5) );
+}
+
+TEST_CASE( "MoveTo", "[moveto]")
+{
+	INFO( "MoveTo Circle" );
+	Circle_<NUMTYPE> c(5,5,10);
+	c.moveTo( 9,8 );
+	CHECK( c.center() == Point2d(9,8) );
+	moveTo(c,8,9);
+	CHECK( c.center() == Point2d(8,9) );
+
+	Point2d_<NUMTYPE> pt1( 1,1);
+	moveTo(c,pt1);
+	CHECK( c.center() == pt1 );
+	Point2d_<NUMTYPE> pt2( 1,1);
+	c.moveTo(pt2);
+	CHECK( c.center() == pt2 );
+
+//	INFO( "MoveTo Segment" );
+
+
+}
+
 TEST_CASE( "Segment-split", "[seg-split]" )
 {
 	Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,0) );

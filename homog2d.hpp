@@ -1885,11 +1885,11 @@ public:
 ///@}
 
 /// Translate Ellipse
-	template<typename T1, typename T2>
-	void translate( T1 dx, T2 dy )
+	template<typename TX, typename TY>
+	void translate( TX dx, TY dy )
 	{
-		HOMOG2D_CHECK_IS_NUMBER( T1 );
-		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		auto par = p_getParams<HOMOG2D_INUMTYPE>();
 		p_init( par.x0+dx, par.y0+dy, par.a, par.b, par.theta );
 	}
@@ -1901,11 +1901,20 @@ public:
 	}
 
 /// Move Ellipse to new location
+	template<typename TX, typename TY>
+	void moveTo( TX x, TY y )
+	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
+		auto par = p_getParams<HOMOG2D_INUMTYPE>();
+		p_init( x, y, par.a, par.b, par.theta );
+	}
+
+/// Move Ellipse to new location, given by \c new_org
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& new_org )
 	{
-		auto par = p_getParams<HOMOG2D_INUMTYPE>();
-		p_init( new_org.getX(), new_org.getY(), par.a, par.b, par.theta );
+		this->moveTo( new_org.getX(), new_org.getY() );
 	}
 
 /// \name attributes
@@ -2412,11 +2421,11 @@ public:
 
 
 /// Translate FRect
-	template<typename T1, typename T2>
-	void translate( T1 dx, T2 dy )
+	template<typename TX, typename TY>
+	void translate( TX dx, TY dy )
 	{
-		HOMOG2D_CHECK_IS_NUMBER( T1 );
-		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		_ptR1.set( _ptR1.getX() + dx, _ptR1.getY() + dy );
 		_ptR2.set( _ptR2.getX() + dx, _ptR2.getY() + dy );
 	}
@@ -2429,6 +2438,15 @@ public:
 	}
 
 /// Move FRect to other location
+	template<typename TX, typename TY>
+	void moveTo( TX x, TY y )
+	{
+		auto s = size();
+		_ptR1.set(x,y);
+		_ptR2.set( _ptR1.getX() + s.first, _ptR1.getY() + s.second );
+	}
+
+/// Move FRect to other location, given by \c pt
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& pt )
 	{
@@ -2959,11 +2977,11 @@ private:
 
 public:
 /// Translate Circle
-	template<typename T1, typename T2>
-	void translate( T1 dx, T2 dy )
+	template<typename TX, typename TY>
+	void translate( TX dx, TY dy )
 	{
-		HOMOG2D_CHECK_IS_NUMBER( T1 );
-		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		_center.translate( dx, dy );
 	}
 
@@ -2975,6 +2993,13 @@ public:
 	}
 
 /// Move Circle to other location
+	template<typename TX, typename TY>
+	void moveTo( TX x, TY y )
+	{
+		set( Point2d_<FPT>(x, y) );
+	}
+
+/// Move Circle to other location, geiven by \c pt
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& pt )
 	{
@@ -4625,6 +4650,13 @@ public:
 	}
 
 /// Move Segment to other location
+	template<typename TX, typename TY>
+	void moveTo( TX x, TY y )
+	{
+		moveTo( Point2d_<FPT>(x,y) );
+	}
+
+/// Move Segment to other location, given by \c pt
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& pt )
 	{
@@ -5834,11 +5866,11 @@ at 180° of the previous one.
 	}
 
 /// Translate Polyline using \c dx, \c dy
-	template<typename T1,typename T2>
-	void translate( T1 dx, T2 dy )
+	template<typename TX,typename TY>
+	void translate( TX dx, TY dy )
 	{
-		HOMOG2D_CHECK_IS_NUMBER( T1 );
-		HOMOG2D_CHECK_IS_NUMBER( T2 );
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		for( auto& pt: _plinevec )
 			pt.translate( dx, dy );
 	}
@@ -5851,6 +5883,13 @@ at 180° of the previous one.
 	}
 
 /// Move Polyline to new origin
+	template<typename TX,typename TY>
+	void moveTo( TX x, TY y )
+	{
+		moveTo( Point2d_<FPT>(x,y) );
+	}
+
+/// Move Polyline to new origin, given by \c new_org
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& new_org )
 	{
@@ -9865,7 +9904,7 @@ getCenter(const T& other )
 
 /// Translate primitive \c prim (free function)
 /**
-Actually calls the member function. Type checking is done there.
+Calls the member function. Type checking is done there.
 */
 template<typename T,typename FP1,typename FP2>
 void translate( T& prim, FP1 dx, FP2 dy )
@@ -9875,13 +9914,33 @@ void translate( T& prim, FP1 dx, FP2 dy )
 
 /// Translate primitive \c prim with values in a \c std::pair (free function)
 /**
-Actually calls the member function. Type checking is done there.
+Calls the member function. Type checking is done there.
 */
 template<typename T,typename FP1,typename FP2>
 void translate( T& prim, const std::pair<FP1,FP2>& ppt )
 {
 	prim.translate( ppt.first, ppt.second );
 }
+
+/// Move primitive to other location (free function)
+/**
+Calls the member function. Type checking is done there.
+*/
+	template<typename T,typename FP>
+	void moveTo( T& prim, const Point2d_<FP>& pt )
+	{
+		prim.moveTo( pt );
+	}
+
+/// Move primitive to other location (free function)
+/**
+Calls the member function. Type checking is done there.
+*/
+	template<typename T,typename FP1,typename FP2>
+	void moveTo( T& prim, FP1 x, FP2 y )
+	{
+		prim.moveTo( x, y );
+	}
 
 /// Returns true if ellipse is a circle
 /// \sa Ellipse_::isCircle()

@@ -1004,11 +1004,15 @@ Is only available for "closed" type.
 <a name="set_RCP"></a>
 
 The member function `set( dist, nb )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
-The center will always be (0,0), if some translation is needed, you may use the `translate()` member or free function,
+The center will always be (0,0), and the first point will always be at (dist,0).
+
+If some translation is needed, you can use the `translate()` member or free function,
 see [the related constructor](#build_RCP).
 
 This function returns a `std::pair` holding two numerical values:
 the distance between two consecutive points as "first", and "second" the radius of the inscribed circle.
+
+The minimum value for `dist` is 3, will throw if less.
 
 ![polyline_rcp_1](img/polyline_rcp_1.svg)
 
