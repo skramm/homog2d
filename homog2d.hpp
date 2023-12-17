@@ -1047,7 +1047,10 @@ disallows providing such a method
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_ENABLE_RTP
+
+/// Holds Real Time Polymorphism stuff
 namespace rtp {
+
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
 Only exists if symbol HOMOG2D_ENABLE_RTP is defined, see
@@ -4685,7 +4688,8 @@ public:
 		return _ptS1.distTo( _ptS2 );
 	}
 /// A segment always has a null area
-	/*constexpr*/ HOMOG2D_INUMTYPE area() const
+//	/*constexpr*/ HOMOG2D_INUMTYPE area() const
+	constexpr HOMOG2D_INUMTYPE area() const
 	{
 		return 0.;
 	}
@@ -6771,7 +6775,7 @@ PolylineBase<PLT,FPT>::isConvex() const
 }
 
 //------------------------------------------------------------------
-/// Returns length
+/// Returns length of Polyline
 template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
 PolylineBase<PLT,FPT>::length() const

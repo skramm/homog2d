@@ -23,8 +23,9 @@ Index is [available here](index.md).
 9. [Numerical data types](#numdt)
 10. [SVG import](#svg_import)
 11. [Technical details](#tech)
-12. [FAQ](homog2d_qa.md)
-13. [History](homog2d_history.md)
+12. [Runtime polymorphism](#section_rtp)
+13. [FAQ](homog2d_qa.md)
+14. [History](homog2d_history.md)
 
 ## 1 - Introduction
 <a name="intro"></a>
@@ -2250,15 +2251,20 @@ and that this requires the computation of `arccos()` of a value slightly above 1
 <br>
 In the future, other warnings could be issued, and silenced using this symbol.
 
+
 ### 12 - Runtime Polymorphism
 <a name="section_rtp"></a>
 
-(work in progress)
-
 Runtime Polymorphic behavior cans be enabled for all the primitives.
 It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined, see [build_options](#build_options).
+This will add a common base class `rtp::Root` to all the geometric primitives.
 
-Check test file [homog2d_test_rtp.cpp](../misc/test_files/homog2d_test_rtp.cpp) for an example.
+At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 
-One pitfall: there is no checking on the correct cast operation, it is up to the user code to make sure
-to cast the
+
+Check test file [homog2d_test_rtp.cpp](../misc/test_files/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
+
+Potential pitfall:
+there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
+Bad casting will very probably lead to a segfault.
+
