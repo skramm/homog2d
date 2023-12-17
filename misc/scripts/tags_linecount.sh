@@ -4,6 +4,9 @@
 
 set +x
 
+rm -rf /tmp/homog2d/*
+rm -rf /tmp/homog2d/.*
+rmdir /tmp/homog2d/
 git clone git@github.com:skramm/homog2d.git /tmp/homog2d
 pushd /tmp/homog2d
 
