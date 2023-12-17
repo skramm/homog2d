@@ -1144,7 +1144,7 @@ struct Param_CIR : Data
 	}
 
 // DATA SECTION
-	const detail::Root* ptr_cr;
+	const rtp::Root* ptr_cr;
 	Circle cir;
 	Circle cir2;
 	FRect rect;

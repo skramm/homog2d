@@ -797,7 +797,7 @@ enum class GivenCoord: uint8_t { X, Y };
 /// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
 enum class LineDir: uint8_t { H, V };
 
-/// Type of Root object, see detail::Root::type().
+/// Type of Root object, see rtp::Root::type().
 /// Maybe printed out with getString()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
@@ -1043,8 +1043,11 @@ disallows providing such a method
 	}
 };
 
+} // namespace detail
+
 //------------------------------------------------------------------
 #ifdef HOMOG2D_ENABLE_RTP
+namespace rtp {
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
 Only exists if symbol HOMOG2D_ENABLE_RTP is defined, see
@@ -1064,7 +1067,12 @@ public:
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
 };
+
+} // namespace rtp
+
 #endif
+
+namespace detail {
 //------------------------------------------------------------------
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
@@ -1823,7 +1831,7 @@ Q' = H^{-T} \cdot Q \cdot H^{-1}
 template<typename FPT>
 class Ellipse_: public detail::Matrix_<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -2247,7 +2255,7 @@ public:
 template<typename FPT>
 class FRect_: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -2751,7 +2759,7 @@ public:
 template<typename FPT>
 class Circle_: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -3370,7 +3378,7 @@ Type parameters:
 template<typename LP,typename FPT>
 class LPBase: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -4547,7 +4555,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 template<typename FPT>
 class Segment_: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -5471,7 +5479,7 @@ template args:
 template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
 #ifdef HOMOG2D_ENABLE_RTP
-, public detail::Root
+, public rtp::Root
 #endif
 {
 public:
@@ -6242,7 +6250,7 @@ PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<
 	auto angle0 = (HOMOG2D_INUMTYPE)2. * M_PI / n;
 
 	Point2d_<HOMOG2D_INUMTYPE> pt0( rad, 0. ); // initial point
-	HOMOG2D_INUMTYPE radius;
+	HOMOG2D_INUMTYPE radius = 0.;
 
 	for( size_t i=0; i<n; i++ )
 	{
@@ -10835,7 +10843,7 @@ Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 
 //------------------------------------------------------------------
 #ifdef HOMOG2D_ENABLE_RTP
-namespace detail {
+namespace rtp {
 /// Stream operator for \c Root type
 /** \todo replace this by a call to a virtual function `print()`
 (that needs to be defined in all the child classes as:
@@ -10904,7 +10912,7 @@ std::ostream& operator << ( std::ostream& f, const Root& p )
 	return f;
 }
 
-} // namespace detail
+} // namespace rtp
 #endif // HOMOG2D_ENABLE_RTP
 
 //------------------------------------------------------------------
@@ -11133,7 +11141,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<std::unique_ptr<detail::Root>> _vec;
+	std::vector<std::unique_ptr<rtp::Root>> _vec;
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11163,7 +11171,7 @@ public:
 
 		return it->second;
 	}
-	const std::vector<std::unique_ptr<detail::Root>>& get() const
+	const std::vector<std::unique_ptr<rtp::Root>>& get() const
 	{
 		return _vec;
 	}
@@ -11211,7 +11219,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		{
 			case T_circle:
 			{
-				std::unique_ptr<detail::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
+				std::unique_ptr<rtp::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
 				_vec.push_back( std::move(c) );
 			}
 			break;
@@ -11222,14 +11230,14 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y1 = getAttribValue( e, "y", n );
 				auto w  = getAttribValue( e, "width", n );
 				auto h  = getAttribValue( e, "height", n );
-				std::unique_ptr<detail::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+				std::unique_ptr<rtp::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
 				_vec.push_back( std::move(r) );
 			}
 			break;
 
 			case T_line:
 			{
-				std::unique_ptr<detail::Root> s(
+				std::unique_ptr<rtp::Root> s(
 					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
 				);
 				_vec.push_back( std::move(s) );
@@ -11240,7 +11248,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
-				std::unique_ptr<detail::Root> p( new CPolyline(vec_pts) );
+				std::unique_ptr<rtp::Root> p( new CPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
 			}
 			break;
@@ -11249,7 +11257,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
-				std::unique_ptr<detail::Root> p( new OPolyline(vec_pts) );
+				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
 			}
 			break;
@@ -11265,7 +11273,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
 				*ell = H * *ell;
-				std::unique_ptr<detail::Root> p( ell );
+				std::unique_ptr<rtp::Root> p( ell );
 				_vec.push_back( std::move(p) );
 			}
 			break;

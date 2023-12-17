@@ -29,7 +29,8 @@ Index is [available here](index.md).
 ## 1 - Introduction
 <a name="intro"></a>
 
-All the code is in the namespace `h2d`, so either add `using namespace h2d;`, either use it as a prefix on each type.
+All the code is in the namespace `h2d`, so either add `using namespace h2d;`, either use it as a prefix on each type
+(There are a lot of sub-namespaces, but unneeded for the end-user).
 
 This library provides several main data types: lines, points, segments, circles, ellipses, polyline and homography matrices.
 These can be used to transform one of the basic types (planar transformation).
@@ -47,10 +48,14 @@ The API is exposed both as member functions and as free functions.
 Say for example you have a type `AAA` on which you can apply the `foo()` operation.
 Both of these are possible:
 ```C++
-AAA myvar;
-auto v1 = myvar.foo();
-auto v2 = foo(myvar);
+AAA thing;
+auto v1 = thing.foo();
+auto v2 = foo( thing );
+BBB some_argument;
+auto z1 = thing.foo( some_argument );
+auto z2 = foo( thing, some_argument );
 ```
+
 
 ## 2 - Lines and points
 <a name="basic"></a>
@@ -2081,7 +2086,7 @@ doc.Accept( &visitor );
 auto data = visitor.get();
 ```
 
-The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `priv::Root`.
+The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `rtp::Root`.
 You can determine the actual type of the object by using the abstract `type()` function.
 It will return an enum value of type `Type` having one of these values:<br>
 `Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
@@ -2112,7 +2117,7 @@ for( const auto& p: data )
 ```
 
 
-This polymorphic behavior is kept optional.
+This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
 It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
@@ -2156,9 +2161,9 @@ For example:
 ## 11 - Technical details
 <a name="tech"></a>
 
-- The two types `Point2d` and `Line2d` are actually two typedefs of class `LPBase`,
+- The two types `Point2d` and `Line2d` are actually two typedefs of class `base::LPBase`,
 behavior differs due to some policy-based design.
-Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `PolylineBase`.
+Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `base::PolylineBase`.
 - Points are stored as non-normalized values, except for the sign: the first value will always be positive.
 So the point `[-1,1,1]` will be automatically converted to `[1,-1,-1]`.
 Besides that, any computation will keep the resulting values.
@@ -2216,7 +2221,7 @@ or just add a `#define` on top of your program
 - `HOMOG2D_USE_OPENCV`: enable the Opencv binding, see [Bindings](#bind).
 - `HOMOG2D_USE_EIGEN`: enable the Eigen binding, useful if you need to compute a homography from points and Opencv not available
 (see [here](#H_4points)).
-- `HOMOG2D_USE_SVG_IMPORT` : enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
+- `HOMOG2D_USE_SVG_IMPORT`: enables importing from svg files, requires `Tinyxml2` library, see [SVG import](#svg_import).
 - `HOMOG2D_USE_BOOSTGEOM`: enables the binding with Boost::geometry (preliminar), see [example here](../misc/test_files/bg_test_1.cpp).
 - `HOMOG2D_USE_TTMATH` (preliminar): this will enable the usage of the ttmath library, to increase numerical range and precision.
 See [here](#bignum) for details.
@@ -2234,7 +2239,7 @@ With this option activated, each ellipse will store both representations, so acc
 For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
 Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
-This will add a common base class `detail::Root` to all the geometric primitives.
+This will add a common base class `rtp::Root` to all the geometric primitives.
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
@@ -2245,3 +2250,15 @@ and that this requires the computation of `arccos()` of a value slightly above 1
 <br>
 In the future, other warnings could be issued, and silenced using this symbol.
 
+### 12 - Runtime Polymorphism
+<a name="section_rtp"></a>
+
+(work in progress)
+
+Runtime Polymorphic behavior cans be enabled for all the primitives.
+It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined, see [build_options](#build_options).
+
+Check test file [homog2d_test_rtp.cpp](../misc/test_files/homog2d_test_rtp.cpp) for an example.
+
+One pitfall: there is no checking on the correct cast operation, it is up to the user code to make sure
+to cast the
