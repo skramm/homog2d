@@ -10,7 +10,11 @@ rmdir /tmp/homog2d/
 git clone git@github.com:skramm/homog2d.git /tmp/homog2d
 pushd /tmp/homog2d
 
-rm tags_linecount.csv
+if [ -e tags_linecount1.csv ]
+then
+	rm tags_linecount1.csv
+fi
+	
 taglist=$(git tag -l)
 for t in $taglist
 do
@@ -20,8 +24,18 @@ do
 	git checkout $t
 	c1=$(cat homog2d.hpp|wc -l)
 	c2=$(cat ${p}homog2d_test.cpp|wc -l)
-	echo "$t;$c1;$c2">>tags_linecount.csv
+	echo "$t;$c1;$c2">>tags_linecount1.csv
 done
+
+# -V: enables sorting by version number (i.e. v2.10 if AFTER v2.9)
+sort -V tags_linecount1.csv > tags_linecount.csv
+
+# get dates of tags
+# preliminar: need to check how to get date as ISO
+git for-each-ref --format="%(refname:short) | %(creatordate)" "refs/tags/*" > tags_dates.csv
 
 popd
 ./plot_tags_linecount.plt
+
+
+
