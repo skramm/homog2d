@@ -1,6 +1,11 @@
 # basic testing with Microsoft compiler
 # uses this: https://github.com/TheMrMilchmann/setup-msvc-dev
 
+# options:
+# ( from https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically )
+# /EHs 	Enable C++ exception handling (no SEH exceptions).
+# (sorry, can't find what the "c" stands for in "/EHsc", but seems to be ok)
+
 name: CI-testing-msvc
 
 on:
@@ -18,6 +23,8 @@ jobs:
         uses: TheMrMilchmann/setup-msvc-dev@v2.0.0
         with:
           arch: x64
-      - name: run msvc
+      - name: run msvc single file
         run: cl /EHsc misc/test_files/single_file.cpp
+      - name: run msvc multiple files
+        run: cl /EHsc misc/test_files/test_multiple.cpp misc/test_files/mylib.cpp
 
