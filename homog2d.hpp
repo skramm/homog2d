@@ -2452,6 +2452,9 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
+
 		auto s = size();
 		_ptR1.set(x,y);
 		_ptR2.set( _ptR1.getX() + s.first, _ptR1.getY() + s.second );
@@ -3007,6 +3010,8 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		set( Point2d_<FPT>(x, y) );
 	}
 
@@ -4664,6 +4669,8 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		moveTo( Point2d_<FPT>(x,y) );
 	}
 
@@ -5898,10 +5905,15 @@ at 180° of the previous one.
 	template<typename TX,typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		moveTo( Point2d_<FPT>(x,y) );
 	}
 
 /// Move Polyline to new origin, given by \c new_org
+/**
+\warning The polygon origin is NOT its center but the point No 0!
+*/
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& new_org )
 	{
