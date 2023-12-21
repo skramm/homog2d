@@ -1688,8 +1688,7 @@ void action_RCP( void* param )
 	auto values = pol.set( data.radius, data.nbPts );
 	std::cout << " -Building Regular Convex Polygon with " << data.nbPts << " points\n";
 
-//	pol.translate(data.trans_x,data.trans_y);
-	pol.moveTo( Point2d(data.trans_x,data.trans_y) );
+	pol.moveTo( Point2d(data.trans_x+data.radius,data.trans_y) );
 
 	pol.draw( data.img );
 	drawText( data.img, "NbPts="  +std::to_string(data.nbPts), Point2d(20,40) );
@@ -1713,10 +1712,7 @@ void demo_RCP( int demidx )
 
 	kbloop.addCommonAction( action_RCP );
 	action_RCP( &data );
-//	data.setMouseCB( action_ORS );
-
 	kbloop.start( data );
-
 }
 
 //------------------------------------------------------------------
