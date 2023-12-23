@@ -161,7 +161,7 @@ test_multiple: BUILD/test_multiple
 	@echo "-done target $@"
 
 buildf:
-	mkdir -p BUILD
+	@mkdir -p BUILD
 
 BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
 	-rm BUILD/$(notdir $@).stderr
@@ -201,7 +201,7 @@ test_bn: BUILD/ttmath_t1
 	@echo "-done target $@"
 
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile buildf
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 
 test_bg_1: BUILD/bg_test_1 buildf
@@ -209,7 +209,7 @@ test_bg_1: BUILD/bg_test_1 buildf
 	@echo "-done target $@"
 
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 test_rtp: BUILD/homog2d_test_rtp
 	@echo "-Running RTP test:"
@@ -217,7 +217,7 @@ test_rtp: BUILD/homog2d_test_rtp
 
 
 BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
+	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
 
 #=======================================================================
 # speed test
