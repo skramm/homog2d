@@ -2262,7 +2262,7 @@ This will add a common base class `rtp::Root` to all the geometric primitives.
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 
 
-Check test file [homog2d_test_rtp.cpp](../misc/test_files/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
+Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
 
 Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
