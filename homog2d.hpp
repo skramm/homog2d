@@ -2452,6 +2452,9 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
+
 		auto s = size();
 		_ptR1.set(x,y);
 		_ptR2.set( _ptR1.getX() + s.first, _ptR1.getY() + s.second );
@@ -3007,6 +3010,8 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		set( Point2d_<FPT>(x, y) );
 	}
 
@@ -4664,6 +4669,8 @@ public:
 	template<typename TX, typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		moveTo( Point2d_<FPT>(x,y) );
 	}
 
@@ -5637,11 +5644,11 @@ this should work !!! (but doesn't...)
 private:
 	template<typename FPT2>
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& );
+	impl_set_RCP( FPT2 rad, size_t n, const typename detail::PlHelper<type::IsClosed>& );
 
 	template<typename FPT2>
 	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2, size_t, const detail::PlHelper<type::IsOpen>& )
+	impl_set_RCP( FPT2, size_t, const typename detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object" );
 		return std::make_pair(0.,0.); // to avoid a compiler warning
@@ -5898,10 +5905,15 @@ at 180° of the previous one.
 	template<typename TX,typename TY>
 	void moveTo( TX x, TY y )
 	{
+		HOMOG2D_CHECK_IS_NUMBER( TX );
+		HOMOG2D_CHECK_IS_NUMBER( TY );
 		moveTo( Point2d_<FPT>(x,y) );
 	}
 
 /// Move Polyline to new origin, given by \c new_org
+/**
+\warning The polygon origin is NOT its center but the point No 0!
+*/
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& new_org )
 	{
@@ -6244,7 +6256,7 @@ public:
 template<typename PLT,typename FPT>
 template<typename FPT2>
 std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const typename detail::PlHelper<type::IsClosed>& )
 {
 	if( n < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );

@@ -1018,7 +1018,7 @@ see [the related constructor](#build_RCP).
 This function returns a `std::pair` holding two numerical values:
 the distance between two consecutive points as "first", and "second" the radius of the inscribed circle.
 
-The minimum value for `dist` is 3, will throw if less.
+The minimum value for `nb` is 3, the function will throw if less.
 
 ![polyline_rcp_1](img/polyline_rcp_1.svg)
 

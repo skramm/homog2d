@@ -10,6 +10,7 @@ set style fill solid
 set style data histogram
 set grid
 set logscale y
+set yrange [0.5:30]
 set key on inside left top
 set title "KLOC per release"
 plot "/tmp/homog2d/tags_linecount.csv" using (column(2)/1000):xtic(1) with histogram ti "Library file", \
