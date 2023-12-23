@@ -5643,7 +5643,7 @@ private:
 	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 	impl_set_RCP( FPT2, size_t, const detail::PlHelper<type::IsOpen>& )
 	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
+		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object" );
 		return std::make_pair(0.,0.); // to avoid a compiler warning
 	}
 
@@ -5960,7 +5960,6 @@ at 180° of the previous one.
 
 /// Build RCP (Regular Convex Polygon), and return distance between consecutive points
 	template<typename FPT2>
-//	HOMOG2D_INUMTYPE
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 	set( FPT2 rad, size_t n )
 	{
@@ -6239,9 +6238,12 @@ public:
 }; // class PolylineBase
 
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
+/**
+\return segment distance, inscribed circle radius
+*/
 template<typename PLT,typename FPT>
 template<typename FPT2>
-std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> // segment distance, inscribed circle radius
+std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const detail::PlHelper<type::IsClosed>& )
 {
 	if( n < 3 )
