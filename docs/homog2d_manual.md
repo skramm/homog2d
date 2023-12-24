@@ -810,16 +810,18 @@ auto b2 = p2.isClosed(); // always true
 ```
 
 Both types provide access to basic attributes:
-number of points, number of segments, length, and bounding box, all available as member or free functions:
+number of points, number of segments, length and bounding box, all available as member or free functions:
 ```C++
 auto n1 = pl.size();  // nb of points
 auto n2 = size(pl);
 auto s1 = pl.nbSegs(); // nb of segments
 auto s2 = nbSegs(pl);
 
-auto length1 = pl.length(); // or  length(pl);
-auto rect1 = pl.getBB();    // or  getBB(pl);
+auto length1 = pl.length();   // or  length(pl);
+auto rect1   = pl.getBB();    // or  getBB(pl);
 ```
+
+#### 3.4.3 - Extracting data
 
 You can extract either points or segments.
 The number of segments is related to the open/close condition.
@@ -832,7 +834,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### 3.4.3 - Bounding Box and Convex Hull
+#### 3.4.4 - Bounding Box and Convex Hull
 
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
@@ -847,7 +849,7 @@ The convex hull of a Polyline can be computed with the member function `convexHu
 [see here](#convex-hull-ff) for an example.
 
 
-#### 3.4.4 - Extremum points
+#### 3.4.5 - Extremum points
 <a name="poly_extremum_points"></a>
 
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
@@ -887,7 +889,7 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 
 **Warning**: These functions will throw if passed an empty polyline object.
 
-#### 3.4.5 - Distance between two Polyline objects
+#### 3.4.6 - Distance between two Polyline objects
 
 You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
 This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
@@ -899,9 +901,13 @@ auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
 ```
 See [an example here](homog2d_showcase.md#sc14).
 
-#### 3.4.6 - Type of Polyline
+#### 3.4.7 - Type of Polyline
 
-You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
+You can check if it fullfilths the requirements to be a **simple polygon** (must be closed and no intersections).
+<br>
+See [definition here](https://en.wikipedia.org/wiki/Simple_polygon)).
+
+
 If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
@@ -911,6 +917,8 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
+
+**warning**: function name will change in next release for `isSimple()`
 
 Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
