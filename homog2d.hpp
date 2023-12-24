@@ -6239,12 +6239,12 @@ public:
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 
-	template<typename T>
-	void impl_draw_pl( img::Image<T>& ) const;
-#else
-	template<typename T>
-	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
-	{}
+//	template<typename T>
+//	void impl_draw_pl( img::Image<T>& ) const;
+//#else
+//	template<typename T>
+//	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
+//	{}
 #endif
 
 }; // class PolylineBase
@@ -10576,6 +10576,8 @@ base::LPBase<LP,FPT>::impl_draw_LP(
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef HOMOG2D_USE_OPENCV
+#if 0
+// DEPRECATED (???)
 //------------------------------------------------------------------
 /// Extension to PolylineBase<PLT,FPT>::draw(), to draw point indexes
 /**
@@ -10600,7 +10602,7 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 		);
 	}
 }
-
+#endif
 //------------------------------------------------------------------
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>

@@ -928,10 +928,10 @@ CPolyline plo;
 OPolyline plc;
 // ... set points
 std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free function: isConvex(plc)
-assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
+assert( !plo.isConvex() ); // open is not a Simple Polygon, so it can't be convex
 ```
 
-#### 3.4.7 - Comparison of Polyline objects
+#### 3.4.8 - Comparison of Polyline objects
 
 Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
@@ -969,7 +969,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
-#### 3.4.8 - Rotation/mirroring
+#### 3.4.9 - Rotation/mirroring
 <a name="polyline_rotate"></a>
 
 All the primitives can be rotated using a homography (see following section), but in some situations you may only need "quarter-circle" rotations (mutiples of 90°).
@@ -1003,7 +1003,7 @@ poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, o
 ```
 
 
-#### 3.4.9 - Building a Parallelogram
+#### 3.4.10 - Building a Parallelogram
 <a name="build_parallelo"></a>
 
 The member function `setParallelogram()` takes 3 points (may be of different floating-point types) and builds the corresponding parallelogram by computing the missing 4th point.
@@ -1014,7 +1014,7 @@ Is only available for "closed" type.
 [(source)](../misc/showcase/showcase18.cpp)
 
 
-#### 3.4.9 - Building a Regular Convex Polygon (RCP)
+#### 3.4.11 - Building a Regular Convex Polygon (RCP)
 <a name="set_RCP"></a>
 
 The member function `set( dist, nb )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
@@ -1032,7 +1032,7 @@ The minimum value for `nb` is 3, the function will throw if less.
 
 [source](../misc/figures_src/src/polyline_rcp_1.cpp)
 
-#### 3.4.11 - Importing from boost::geometry
+#### 3.4.12 - Importing from boost::geometry
 <a name="boost_geom_1"></a>
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
