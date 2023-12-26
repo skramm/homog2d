@@ -15,7 +15,13 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
-  - bufixe: fixed enclosing of Polyline objects (https://github.com/skramm/homog2d/issues/10)
+  - (nil)
+
+## Previous releases
+
+![#LOC per release](img_other/linecount.png):
+
+- [v2.11](https://github.com/skramm/homog2d/releases/tag/v2.11), released on 2023-12-26
   - extended `translate()` member and free functions, added `moveTo()` member and free functions.
   - added building a `CPolyline` as a Regular Convex Polygon (RCP), either through constructor or through `set()` function, [see manual](homog2d_manual.md#set_RCP).
   - added helper function `genRandomColors()`
@@ -30,10 +36,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - added Minimum Enclosing Circle (MEC) from a set of points, see [showcase13](homog2d_showcase.md#sc13).
   - added `setParallelogram()` to `PolylineBase_`, see [showcase18](homog2d_showcase.md#sc18).
   - added `getInscribedCircle()` to `FRect`
-
-## Previous releases
-
-![#LOC per release](img_other/linecount.png):
 
 - [v2.10](https://github.com/skramm/homog2d/releases/tag/v2.10), released on 2023-02-19
   - fixed normalization for points and lines
