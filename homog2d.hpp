@@ -34,6 +34,7 @@ See https://github.com/skramm/homog2d
 #include <array>
 #include <set>
 #include <list>
+#include <map>
 #include <vector>
 #include <stack>
 #include <iomanip>
@@ -3345,6 +3346,18 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 		std::cout << elem << "-";
 	std::cout << '\n';
 }
+template<typename T1,typename T2>
+void printMap( const std::map<T1,T2>& m, std::string msg=std::string() )
+{
+	std::cout << "---------------------------------\n";
+	std::cout << "std::map: ";
+	if( !msg.empty() )
+		std::cout << msg;
+	std::cout << " #=" << m.size() << '\n';
+	for(const auto& it: m )
+		std::cout << " [" << it.first << "]=" << it.second << '\n';
+	std::cout << '\n';
+}
 template<typename T,size_t N>
 void printArray( const std::array<T,N>& v, std::string msg=std::string() )
 {
@@ -6189,6 +6202,10 @@ Sfinae should resolve ONLY for CPolyline
 	friend std::ostream&
 	h2d::base::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
 
+	template<typename FPT2>
+	PolylineBase<type::IsClosed,FPT>
+	unionPoly( const PolylineBase<type::IsClosed,FPT2>& ) const;
+
 public:
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
@@ -6527,6 +6544,46 @@ getExtremePoint( CardDir dir, const T& t )
 	}
 }
 
+
+//------------------------------------------------------------------
+namespace priv {
+
+/// Helper function for base::PolylineBase<PLT,FPT>::unionPoly()
+/// Returns an index on \c vecPts corresponding on closest point to \c pt
+template<typename FPT>
+size_t
+findClosestPoint(
+	const Point2d_<FPT>&              pt,
+	const std::vector<size_t>&        vecIdx,
+	const std::vector<Point2d_<FPT>>& vecPts
+)
+{
+	assert( !vecIdx.empty() );
+	assert( !vecPts.empty() );
+	assert( vecIdx[0] < vecPts.size() );
+
+	auto minDist = pt.distTo( vecPts[vecIdx[0]] );
+	size_t resIdx = vecIdx[0];
+//	HOMOG2D_LOG( "min=" << minDist << " resIdx=" << resIdx );
+	for( size_t i=1; i<vecIdx.size(); i++ )
+	{
+		assert( vecIdx[i] < vecPts.size() );
+		auto currentDist = pt.distTo( vecPts[vecIdx[i]] );
+//		HOMOG2D_LOG( "i=" << i << " resIdx=" << resIdx << " currentDist=" << currentDist );
+		if( currentDist < minDist )
+		{
+			resIdx = vecIdx[i];
+			minDist = currentDist;
+//			HOMOG2D_LOG( "new min=" << minDist << " resIdx=" << resIdx );
+		}
+	}
+//	HOMOG2D_LOG( "done, returns " << resIdx );
+	return resIdx;
+}
+
+} // namespace priv
+
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -6569,6 +6626,8 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 {
 	return h2d::getRmPoint( *this );
 }
+
+
 
 //------------------------------------------------------------------
 /// Rotates the polyline by either 90°, 180°, 270° (-90°) at point \c refpt
@@ -10330,7 +10389,7 @@ convexHull( const base::PolylineBase<CT,FPT>& input )
 	return convexHull( input.getPts() );
 }
 
-namespace base {
+//namespace base {
 //------------------------------------------------------------------
 /// Computes and returns the convex hull of a set of points (free function)
 /**
@@ -10407,7 +10466,7 @@ convexHull( const std::vector<Point2d_<FPT>>& input )
 	return CPolyline_<FPT>( vout );
 }
 
-} // namespace base
+//} // namespace base
 
 /// Return convex hull (member function implementation)
 template<typename CT,typename FPT>
@@ -10416,6 +10475,531 @@ base::PolylineBase<CT,FPT>::convexHull() const
 {
 	return h2d::convexHull( *this );
 }
+
+
+
+namespace base {
+
+namespace priv {
+
+using IntPointIdx = size_t;
+using SegmentIdx  = size_t;
+
+//------------------------------------------------------------------
+/// Holds data used to compute the merging of two polygons
+struct PolyIntersectData
+{
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> alliPts; // all intersection points
+
+// these vectors hold for each segment the set of intersection points on that segment
+	std::vector<std::vector<size_t>> vseg1; //( p1.nbSegs() );  // one vector per segment of p1
+	std::vector<std::vector<size_t>> vseg2; //( p2.nbSegs() );  // one vector per segment of p1
+
+///@{
+/** This will store for each intersection point the segment index that it lies on.
+ (size= nb of intersection points detected)
+  -key: intersection point index
+  -value: segment (point, actually) index of the polygon
+ */
+	std::map<IntPointIdx,SegmentIdx> segmap_p1; // for p1
+	std::map<IntPointIdx,SegmentIdx> segmap_p2; // for p2
+///@}
+
+	explicit PolyIntersectData( size_t nbPtsP1, size_t nbPtsP2 )
+	{
+		vseg1.resize( nbPtsP1 );
+		vseg2.resize( nbPtsP2 );
+	}
+/// Add intersection point to data (if some conditions are met!)
+	void addIntersection(
+		size_t ip1,                    ///< index of segment on poly 1
+		size_t ip2,                    ///< index of segment on poly 2
+		Point2d_<HOMOG2D_INUMTYPE> pt  ///< the point that will be added (maybe...)
+	)
+	{
+		assert( ip1<vseg1.size() );
+		assert( ip2<vseg2.size() );
+
+		bool isThere = false;
+		size_t foundAt = 0;
+		HOMOG2D_LOG( "try to add pt:" << pt );
+		for( size_t i=0; i<alliPts.size(); i++ )
+		{
+			const auto& pt2 = alliPts[i];
+			if( pt == pt2 )                    // if that point is the same as one already there
+			{
+				isThere = true;
+				foundAt = i;
+				HOMOG2D_LOG( "found point at pos=" << i << " value=" << pt2 );
+				break;
+			}
+		}
+		if( !isThere )                    // if intersection point not already registered,
+		{                                 // then store it and add it to the list of intersection points
+			segmap_p1[size()] = ip1;      // for the segments ip1, ip2
+			segmap_p2[size()] = ip2;      // Also, add to the maps
+			vseg1[ip1].push_back( size() );
+			vseg2[ip2].push_back( size() );
+			alliPts.push_back( pt );
+		}
+		else                                  // if intersection point is already registered,
+		{                                     // then add to the list of intersection points per segment
+			vseg1[ip1].push_back( foundAt );  // the position where it was found
+			vseg2[ip2].push_back( foundAt );
+		}
+	}
+	size_t size() const
+	{
+		return alliPts.size();
+	}
+	void print() const
+	{
+		std::cout << "PolyIntersectData:\n";
+		h2d::priv::printVector( alliPts, "alliPts" );
+		h2d::priv::printVector( vseg1, "vseg1" );
+		h2d::priv::printVector( vseg2, "vseg2" );
+		h2d::priv::printMap( segmap_p1, "segmap_p1" );
+		h2d::priv::printMap( segmap_p2, "segmap_p2" );
+		std::cout << std::endl;
+	}
+
+	void removeDupes( std::vector<std::vector<size_t>>& vseg )
+	{
+		auto s1 = vseg.size();
+		if( !vseg.empty() )
+			for( auto& v: vseg )
+				if( v.size()>1 )
+				{
+//					h2d::priv::printVector( v, "v");
+					sort( v.begin(), v.end() );
+					v.erase(
+						unique(
+							v.begin(),
+							v.end()
+						),
+						v.end()
+					);
+				}
+		if( s1 != vseg.size() )
+		{
+			HOMOG2D_LOG( "size before=" << s1 << " after=" << vseg.size() );
+		}
+	};
+
+/// Needed to remove duplicates that will occur
+	void postProcess()
+	{
+		removeDupes(vseg1);
+		removeDupes(vseg2);
+	}
+};
+
+//------------------------------------------------------------------
+/// Returns true if point \c pti must be added to the set of intersection points
+/**
+This is called ONLY if \c pti is equal to one of the points of one of the polygons
+*/
+template<typename FPT>
+bool checkForIdenticalPts(
+	const Point2d_<FPT>& pti,   ///< intersection point
+	const PolylineBase<type::IsClosed,FPT>& pol1,
+	const PolylineBase<type::IsClosed,FPT>& pol2,
+	size_t ip1,
+	size_t ip2
+)
+{
+	HOMOG2D_START;
+	auto s1 = pol1.size();
+	auto s2 = pol2.size();
+	const auto& pt1a = pol1.getPoint( ip1 );
+	const auto& pt1b = pol1.getPoint( ip1>=s1-1 ? ip1+1-s1 : ip1+1 );
+	const auto& pt1c = pol1.getPoint( ip1>=s1-2 ? ip1+2-s1 : ip1+2 );
+
+	const auto& pt2a = pol2.getPoint( ip2 );
+	const auto& pt2b = pol2.getPoint( ip2>=s2-1 ? ip2+1-s2 : ip2+1 );
+	const auto& pt2c = pol2.getPoint( ip2>=s2-2 ? ip2+2-s2 : ip2+2 );
+
+	std::cout << "     pti=" << pti << std::endl;
+	std::cout << "     pt1a=" << pt1a << " pt1B=" << pt1b << " ptC=" << pt1c << std::endl;
+	std::cout << "     pt2a=" << pt2a << " pt2B=" << pt2b << " ptC=" << pt2c << std::endl;
+
+	if( pti == pt1b && pti == pt2b ) // both !
+	{
+		Line2d_<HOMOG2D_INUMTYPE> liA( pt2a, pt2b );
+		Line2d_<HOMOG2D_INUMTYPE> liB( pt2c, pt2b );
+		std::cout << "BOTH!\n     side( pt1a, liA )=" << side( pt1a, liA ) << " side( pt1c, liA )=" << side( pt1c, liA )  << "\n";
+		std::cout << "     side( pt1a, liB )=" << side( pt1a, liB ) << " side( pt1c, liB )=" << side( pt1c, liB ) << "\n";
+
+		if(
+			( side( pt1a, liA ) ==  side( pt1c, liA ) && side( pt1a, liB ) ==  side( pt1c, liB ) )
+			||
+			( side( pt1a, liA ) !=  side( pt1c, liA ) && side( pt1a, liB ) !=  side( pt1c, liB ) )
+		)
+			{
+				std::cout << "Add point: NO!\n";
+				return false;
+			}
+		std::cout << "Add point: YES!\n";
+		return true;
+	}
+	else     // only one !
+	{
+		if( pti == pt1a || pti == pt1c || pti == pt2a || pti == pt2c )
+			return false;
+
+		std::cout << "ONLY ONE\n";
+		bool isEquPtSeg1 = false;
+		bool isEquPtSeg2 = false;
+		if( pti == pt1b )
+			isEquPtSeg1 = true;
+		if( pti == pt2b )
+			isEquPtSeg2 = true;
+
+		std::cout << "-isEquPtSeg1=" << isEquPtSeg1 << " isEquPtSeg2=" << isEquPtSeg2 << "\n";
+
+		if( !isEquPtSeg1 && !isEquPtSeg2 )
+			return false;
+
+		auto ptA = isEquPtSeg1 ? pt1a : pt2a;
+		auto ptB = isEquPtSeg1 ? pt1b : pt2b;
+		auto ptC = isEquPtSeg1 ? pt1c : pt2c;
+
+//		if( isEquPtSeg1 )
+		{
+			auto li1 = Line2d_<HOMOG2D_INUMTYPE>( pt1a, pt1b );
+			auto li2 = Line2d_<HOMOG2D_INUMTYPE>( pt2a, pt2b );
+			auto li = (isEquPtSeg1 ? li2 : li1);
+
+			if( li == Line2d_<HOMOG2D_INUMTYPE>(ptB,ptA) )
+				return false;
+			if( li == Line2d_<HOMOG2D_INUMTYPE>(ptB,ptC) )
+				return false;
+
+			std::cout << "     li1=" << li1 << " li2=" << li2 << " li=" << li << std::endl;
+			std::cout << "     ptA=" << ptA << " ptB=" << ptB << " ptC=" << ptC << std::endl;
+			auto side1 = side( ptA, li );          // then, check side of the two points, related to the segment
+			auto side2 = side( ptC, li );
+			std::cout << "     side1=" << side1 << " side2=" << side2 << std::endl;
+			if( side1 != side2 )
+				return true;
+			else
+				std::cout << "    -side equal, point NOT added\n";
+		}
+	}
+	std::cout << "END, false\n";
+	return false;
+
+}
+
+//------------------------------------------------------------------
+/// Populate data on intersection points
+/**
+If the intersection point IP is equal to one of the four points of the two segments n and m,
+we do some more checking:
+
+* if the other points of segment n and n+1 are on the same side, then IP
+is not added.
+\verbatim
+
+    n-1+
+        \     +n+1
+         \   /
+          \ /     m+1
+  +--------+-------+
+  m        n
+\endverbatim
+
+* if the other points of segment n and n+1 are NOT on the same side, then IP
+is added to the set of intersection points.
+\verbatim
+
+       +n-1
+        \
+         \
+          \       m+1
+  +--------+-------+
+  m       /n
+         /
+        /
+       +n+1
+\endverbatim
+*/
+
+template<typename FPT>
+PolyIntersectData
+buildPolyIntersectData(
+	const PolylineBase<type::IsClosed,FPT>& pol1,
+	const PolylineBase<type::IsClosed,FPT>& pol2
+)
+{
+	HOMOG2D_START;
+
+	PolyIntersectData data( pol1.size(), pol2. size() );
+	std::cout << "#p1=" << pol1.size() << " #p2=" << pol2.size() << std::endl;
+
+	for( size_t ip1=0; ip1<pol1.nbSegs(); ip1++ )
+	{
+		const auto& seg1 = pol1.getSegment( ip1 );
+		const auto& p1a = pol1.getPoint( ip1 );
+		const auto& p1b = pol1.getPoint( ip1==pol1.size()-1 ? 0 : ip1+1 );
+
+		for( size_t ip2=0; ip2<pol2.nbSegs(); ip2++ )
+		{
+			std::cout << "\nip1=" << ip1 << " ip2=" << ip2 << ", #nbIntersPts=" << data.size() << std::endl;
+			const auto& seg2 = pol2.getSegment( ip2 );
+			const auto& p2a = pol2.getPoint( ip2 );
+			const auto& p2b = pol2.getPoint( ip2==pol2.size()-1 ? 0 : ip2+1 );
+			std::cout << "  p1a=" << p1a << " p1b=" << p1b << "\n";
+			std::cout << "  p2a=" << p2a << " p2b=" << p2b << "\n";
+/*			auto li1 = seg1.getLine();
+			auto li2 = seg2.getLine();
+			if( li1 == li2 )
+			{
+				std::cout << "Joined segments!\n"; // TODO need to process that case!
+			}
+			else*/
+			{
+				auto inters = seg1.intersects( seg2 );
+				if( !inters() )
+					std::cout << "   -No intersection\n";
+				else
+				{
+					auto pti = inters.get();
+//					std::cout << "   -seg1=" << seg1 << " seg2=" << seg2 << std::endl;
+					std::cout << "   -handling IP=" << pti << std::endl;
+
+					bool addPoint = false;
+
+					bool isEquPtSeg1 = true;
+					bool isEquPtSeg2 = true;
+					if( pti != p1a )         // intersection is NOT one of the
+						if( pti != p1b )     // points of seg1
+							isEquPtSeg1 = false;
+					if( pti != p2a )       //  intersection is NOT one of the
+						if( pti != p2b )   // points of seg2
+							isEquPtSeg2 = false;
+					std::cout << "   -isEquPtSeg1=" << isEquPtSeg1 << " -isEquPtSeg2=" << isEquPtSeg2 << std::endl;
+
+					if( !isEquPtSeg1 && !isEquPtSeg2 ) // if intersection does not lie on one of the points
+						addPoint = true;               // of the 2 segments, then we add the point
+
+					if( addPoint == false )
+						addPoint = checkForIdenticalPts( pti, pol1, pol2, ip1, ip2 );
+
+					if( addPoint )
+					{
+						std::cout << "     -add point " << pti << std::endl;
+						data.addIntersection( ip1, ip2, pti ); // add the point
+					}
+				}
+			}
+		}
+	}
+//	data.print();
+	data.postProcess();
+//	std::cout << "p1=" << p1 << '\n';
+//	std::cout << "p2=" << p2 << '\n';
+	data.print();
+	if( data.size()%2 != 0 )
+		HOMOG2D_THROW_ERROR_1( "computed odd number of intersections:" << data.size() << ", must be even" );
+	return data;
+}
+
+//------------------------------------------------------------------
+/// Returns the first point of \c p1 that is outside \c p2
+template<typename FPT>
+size_t
+firstIdxPointOutside(
+	const PolylineBase<type::IsClosed,FPT>& p1,
+	const PolylineBase<type::IsClosed,FPT>& p2
+)
+{
+	for( size_t i=0; i<p1.size(); i++ )
+		if( !p1.getPoint(i). isInside( p2 ) )
+			return i;
+// should never happen, as this function is called once we made sure that p1
+// is not entirely inside p2
+	HOMOG2D_THROW_ERROR_1("THIS SHOULD NOT HAPPEN !!!" );
+//	assert(0);
+}
+
+//------------------------------------------------------------------
+//template<typename PLT,typename FPT>
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+buildUnionPolygon(
+	const PolyIntersectData&                data,
+	const PolylineBase<type::IsClosed,FPT>& p1,
+	const PolylineBase<type::IsClosed,FPT>& p2
+)
+{
+// first, create some pointers so that its easy to switch parsing from one polygon to the other
+	const PolylineBase<type::IsClosed,FPT>* pA      = &p1;
+	const PolylineBase<type::IsClosed,FPT>* pB      = &p2;
+	const std::vector<std::vector<size_t>>* pvseg_A = &data.vseg1;
+	const std::vector<std::vector<size_t>>* pvseg_B = &data.vseg2;
+	const std::map<IntPointIdx,SegmentIdx>* pmap_A  = &data.segmap_p1;
+	const std::map<IntPointIdx,SegmentIdx>* pmap_B  = &data.segmap_p2;
+
+// the output set of points
+	std::vector<Point2d_<FPT>> vout;
+
+// get the first point of p1 that is outside of p2
+	auto startIdx = firstIdxPointOutside( p1, p2 );
+	auto idx = startIdx;
+
+	bool iterateP1 = true;
+	bool done = false;
+	int c=0;
+	do
+	{
+		const auto& currentPt = pA->getPoint( idx );
+		std::cout << "START c=" << c++ << ", iterating on " << (iterateP1?"P1":"P2") << ", Index=" << idx << " pt=" << currentPt << " #vout=" << vout.size() << std::endl;
+		std::cout << "  #pA=" << pA->size() << " #pB=" << pB->size() << std::endl;
+
+		if( !vout.empty() )
+		{                                        // adding the current point only if it is not the same
+			if( currentPt != vout.back() )       // as the last one
+				vout.push_back( currentPt );
+		}
+		else
+			vout.push_back( currentPt );
+
+		bool specialCase = false;
+		if( pvseg_A->at(idx).size() != 0 )
+		{
+			std::cout << " -has #inters=" << pvseg_A->at(idx).size() << std::endl;
+			int itPtIdx = -1;
+
+// among all the intersection points, find the one closest to the current point
+			if( pvseg_A->at(idx).size() > 1 ) // if more than 1 intersection point on this segment
+			{
+				std::cout << "FCP: search for closest point to: " << currentPt << std::endl;
+/*				h2d::priv::printVector(pvseg_A->at(idx) );
+				for( const auto& i: pvseg_A->at(idx) )
+					std::cout << " -i=" << i << " pt=" << data.alliPts.at(i) << " dist=" << currentPt.distTo(data.alliPts.at(i)) << std::endl;
+*/
+				itPtIdx = h2d::priv::findClosestPoint( currentPt, pvseg_A->at(idx), data.alliPts );
+				std::cout << "closest intersect pt idx=" << itPtIdx << " (" << data.alliPts[itPtIdx] << ")" << std::endl;
+			}
+			else // only one intersection point
+			{
+				auto cand = pvseg_A->at(idx).at(0);
+				std::cout << " -Only 1 inter, cand=" << data.alliPts[cand] << ", currentPt=" << currentPt << std::endl;
+				if( data.alliPts[cand] != currentPt )
+					itPtIdx = pvseg_A->at(idx).at(0);
+				else
+					specialCase = true;
+			}
+			if( itPtIdx != -1 )
+			{
+				auto idxB = pmap_B->at(itPtIdx);
+				std::cout << " INTERSECTION!, itPtIdx=" << itPtIdx << " idxB=" << idxB << std::endl;
+
+
+	// select which point of pb is the next one to consider
+				auto ptB1 = pB->getPoint( idxB );
+				auto ptB2 = pB->getPoint( idxB==pB->size()-1?0:idxB+1 );
+				std::cout << " -segB: " <<  ptB1 << "-" << ptB2 << std::endl;
+
+				auto ptx = currentPt;
+				auto pty = data.alliPts[itPtIdx];
+				std::cout << " ptx=" << ptx << " pty=" << pty << std::endl;
+	//				<< "ptz=" << pptsB.first << " or " << pptsB.second << '\n';
+
+				auto orient1 = h2d::priv::chull::orientation( ptx, pty, ptB1 );
+				auto orient2 = h2d::priv::chull::orientation( ptx, pty, ptB2 );
+				std::cout << " orient1=" << orient1 << " orient2=" << orient2 << std::endl;
+
+	//			assert( orient1 != 0 && orient2 != 0 );
+//				if( orient1 != orient2 ) // if point is NOT aligned with the two others, then
+				{                       // add intersection point
+					if( orient1 != 0 || orient2 !=0 )
+					{
+						if( vout.back() != data.alliPts[itPtIdx] )
+						{
+							std::cout << " -adding intersection pt:" << data.alliPts[itPtIdx] << std::endl;
+							vout.push_back( data.alliPts[itPtIdx] );
+						}
+					}
+				}
+
+				if( orient1 == -1 )
+					idx = idxB;
+				else
+					idx = idxB==pB->size()-1 ? 0 : idxB+1;
+				std::cout << " - index switch to " << idx << " of pB , pt=" << pB->getPoint(idx) << std::endl;
+
+	// reverse pointers, to iterate on the other polygon
+				std::swap( pA, pB );
+				std::swap( pmap_A, pmap_B );
+				std::swap( pvseg_A, pvseg_B );
+				iterateP1 = !iterateP1;
+			}
+			else
+			{
+				if( specialCase ) // no swapping !
+//					idx++;
+					idx = (idx==pA->size()-1 ? 0 : idx+1);
+			}
+		}
+		else
+		{
+			idx = (idx==pA->size()-1 ? 0 : idx+1);
+			std::cout << " -No intersection points on this segment, switch idx to " << idx << std::endl;
+		}
+		if( ( iterateP1 && idx == p1.size() ) || (idx == startIdx&&iterateP1) )
+			done = true;
+	}
+	while( !done && c<20 );
+
+	h2d::priv::printVector( vout, "final-vout" );
+	HOMOG2D_LOG( "c=" << c << ", final point set size=" << vout.size() );
+	return vout;
+}
+
+} // namespace priv
+
+//namespace base {
+
+//------------------------------------------------------------------
+/// WIP: attempt to compute union of two polygons
+template<typename PLT,typename FPT>
+template<typename FPT2>
+PolylineBase<type::IsClosed,FPT>
+PolylineBase<PLT,FPT>::unionPoly( const PolylineBase<type::IsClosed,FPT2>& p2 ) const
+{
+	if( !p2.isPolygon() )
+		HOMOG2D_THROW_ERROR_1( "argument is not a polygon" );
+	if( !this->isPolygon() )
+		HOMOG2D_THROW_ERROR_1( "object is not a polygon" );
+
+	const PolylineBase<type::IsClosed,FPT2>& p1(*this);
+	if( !p1.intersects(p2)() ) // if no intersection, return the convex hull
+	{
+		if( p1.isInside(p2) )
+			return p2;
+		if( p2.isInside(p1) )
+			return p1;
+
+		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vout( p1.size() + p2.size() );
+		std::copy( std::begin( p1.getPts() ), std::end( p1.getPts() ), std::begin( vout ) );
+		std::copy( std::begin( p2.getPts() ), std::end( p2.getPts() ), std::begin( vout )+p1.size() );
+		return h2d::convexHull( vout );
+	}
+
+// step 1: register all the intersection points
+	auto pid = priv::buildPolyIntersectData( p1, p2 );
+	pid.print();
+
+// step 2: parse polygon and add segment. If segment holds an intersection points, then turn left
+	auto vout = priv::buildUnionPolygon( pid, p1, p2 );
+	return PolylineBase<type::IsClosed,FPT>(vout);
+}
+
+} // namespace base
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - OPENCV BINDING - GENERAL

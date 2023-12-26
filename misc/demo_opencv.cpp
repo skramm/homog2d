@@ -29,7 +29,7 @@ To run a specific demo, give its number as first argument, i.e.:
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_RTP
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1715,6 +1715,97 @@ void demo_RCP( int demidx )
 	kbloop.start( data );
 }
 
+
+//------------------------------------------------------------------
+/// Polyline union demo parameters
+struct Param_polUnion : Data
+{
+	explicit Param_polUnion( int demidx, std::string title ): Data( demidx, title )
+	{
+//		_poly1.set( std::vector<Point2d>{ {20,20}, {100,20}, {100,100}, {20,100} } );
+
+//		vpt = std::vector<Point2d>{ {50,50}, {150,50}, {200,100}, {150,150}, {50,150} };
+//		vpt = std::vector<Point2d>{ {50,50}, {180,30}, {150,80} };
+
+// one of the points lying on segment of other polygon
+//		vpt = std::vector<Point2d>{ {100,50}, {180,30}, {150,80} };
+
+// one going through another
+
+		_poly1 = CPolyline( FRect(100,100,200,200) );
+		vpt = std::vector<Point2d>{ {50,150}, {220,180}, {250,120} };
+		vpt = std::vector<Point2d>{ {150,150}, {220,220}, {250,120} };
+		vpt = std::vector<Point2d>{ {84,96},{320,220},{200,102} };
+		vpt = std::vector<Point2d>{ {60,166},{320,220},{172,72} };
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,100} };
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,200} };
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {200,100}, {156,219} };
+		vpt = std::vector<Point2d>{ {153,316}, {427,113}, {220,33}, {64,175}, {104,200}, {156,219} };
+		vpt = std::vector<Point2d>{ {543,370}, {427,113}, {231,65}, {67,79}, {139,236}, {200,200} };
+//		vpt = std::vector<Point2d>{{543,370}, {427,113}, {231,65}, {67,79}, {200,159}, {200,200} };
+
+		_poly2.set( vpt );
+
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imHeight, _imWidth );
+
+	}
+	void showImage()
+	{
+		img.show( win1 );
+		img2.show( win2 );
+	}
+	void clearImage()
+	{
+		img.clear();
+		img2.clear();
+	}
+
+	img::Image<cv::Mat> img2;
+	std::string win2 = "Union polygon";
+	CPolyline _poly1, _poly2;
+};
+
+void action_polUnion( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polUnion*>(param);
+	data.clearImage();
+	data._poly1.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints().showIndex() );
+	data._poly2.set( data.vpt );
+	data._poly2.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints().showIndex() );
+	data.img.write( "polyunion.png");
+
+	try
+	{
+		std::cout << "p1=" << data._poly1 << "p2=" << data._poly2;
+		auto pol = data._poly1.unionPoly( data._poly2 );
+//	std::cout << "pol=" << pol << "\n";
+		pol.draw( data.img2, img::DrawParams().setColor(0,0,250).showPoints().showIndex() );
+	}
+	catch( std::exception& err )
+	{
+		std::cout << "ERROR: " << err .what();
+//		throw;
+	}
+	data.showImage();
+}
+
+void demo_PolUnion( int demidx )
+{
+	Param_polUnion data( demidx, "Polyline union demo" );
+	std::cout << "Demo " << demidx << ": Polyline union demo\n";
+
+	data.setMouseCB( action_polUnion );
+	data.leftClicAddPoint=true;
+
+	KeyboardLoop kbloop;
+	kbloop.addCommonAction( action_polUnion );
+	action_polUnion( &data );
+
+	kbloop.start( data );
+}
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -1737,6 +1828,7 @@ int main( int argc, const char** argv )
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_PolUnion, // polygon Union
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
