@@ -24,7 +24,9 @@ do
 	git checkout $t
 	c1=$(cat homog2d.hpp|wc -l)
 	c2=$(cat ${p}homog2d_test.cpp|wc -l)
-	echo "$t;$c1;$c2">>tags_linecount1.csv
+	c3=$(du --bytes homog2d.hpp | cut -f1)
+	c4=$(du --bytes ${p}homog2d_test.cpp | cut -f1)
+	echo "$t;$c1;$c2;$c3;$c4">>tags_linecount1.csv
 done
 
 # -V: enables sorting by version number (i.e. v2.10 if AFTER v2.9)
