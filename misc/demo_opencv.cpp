@@ -51,18 +51,22 @@ struct Data
 	int _imWidth = 700;
 	int _imHeight = 500;
 
-	std::string win1;   ///< Window name (appears in title)
-	int selected = -1;  ///< Mouse selected point
-	Point2d pt_mouse;   ///< Mouse coordinates
+	std::string win1;   ///< Window name (appears in window title bar)
+	int _selected = -1;  ///< Mouse selected point
 	std::vector<Point2d> vpt; ///< some points used in demo
 	bool leftClicAddPoint = false;
-	int tline = 0;          ///< used to draw some lines of text inside window
+
+	int       _lineIndex = 0;     ///< used to draw some lines of text inside window
+	int       _demo_idx = -1;     ///< index of current demo
+	Point2d   _pt_mouse;          ///< Mouse coordinates
+	CPolyline _cpoly;             ///< will be saved in SVG file
 
 private:
 	std::function<void(void*)> _mouseCB = nullptr;
 
 public:
 	explicit Data( int demidx, std::string wname )
+		: _demo_idx( demidx )
 	{
 		win1 = std::string("Demo ") + std::to_string(demidx) + ": " + wname;
 		cv::destroyAllWindows();
@@ -70,9 +74,8 @@ public:
 		img.setSize( _imWidth, _imHeight );
 		img.clear(255);
 		vpt.resize(4);
-		pt_mouse.set(10,10); // just to avoid it being 0,0
+		_pt_mouse.set(10,10); // just to avoid it being 0,0
 		reset();
-		tline = 0;
 	}
 	void reset()
 	{
@@ -84,7 +87,7 @@ public:
 
 	void setMousePos(int x, int y)
 	{
-		pt_mouse.set(x,y);
+		_pt_mouse.set(x,y);
 	}
 	void setMouseCB( std::function<void(void*)> cb )
 	{
@@ -94,7 +97,7 @@ public:
 
 	void addMousePoint()
 	{
-		vpt.push_back( pt_mouse );
+		vpt.push_back( _pt_mouse );
 	}
 
 	int nbPts() const
@@ -104,6 +107,7 @@ public:
 	void clearImage()
 	{
 		img.clear();
+		_lineIndex = 0;
 	}
 	void showImage()
 	{
@@ -113,14 +117,15 @@ public:
 	{
 		int lineSize = 22;
 		if( lineindex == 0 )
-			tline = 0;
-		cv::putText( img.getReal(), msg, cv::Point2i( 20, lineSize*++tline), 0, 0.6, cv::Scalar( 150,0,0 ), 1 );
+			_lineIndex = 0;
+		cv::putText( img.getReal(), msg, cv::Point2i( 20, lineSize * ++_lineIndex), 0, 0.6, cv::Scalar( 150,0,0 ), 1 );
 	}
+	std::string save_SVG( int idx ) const;
 	void drawLines()
 	{
 		for( int i=0; i<nbPts(); i++ )
 		{
-			if( selected == i )
+			if( _selected == i )
 				vpt[i].draw( img, img::DrawParams().setColor( 250, 0, 150).setPointStyle( (img::PtStyle)i).selectPoint() );
 			else
 				vpt[i].draw( img, img::DrawParams().setPointStyle((img::PtStyle)i) );
@@ -144,6 +149,26 @@ public:
 	}
 };
 
+/// Saves the \c CPolyline in a file
+/**
+\return file name
+*/
+std::string Data::save_SVG( int demo_idx ) const
+{
+	static int num;
+	static int previous_demo_idx;
+	if( previous_demo_idx != demo_idx )
+		num = 0;
+	previous_demo_idx = demo_idx;
+	img::Image<img::SvgImage> im( _imWidth, _imHeight );
+	_cpoly.draw( im );
+
+	std::ostringstream oss;
+	oss << "BUILD/demo_pol_" << demo_idx << "_" << num++ << ".svg";
+	im.write( oss.str() );
+	return oss.str();
+}
+
 //------------------------------------------------------------------
 /// Mouse callback functions, checks if one of the points is selected.
 /**
@@ -154,43 +179,42 @@ myMouseCB( int event, int x, int y, int, void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
 
-//	std::cout << __FUNCTION__ << '\n';
 	data.setMousePos(x,y);
 	bool doSomething = true;
 
 	switch( event )
 	{
 		case CV_EVENT_LBUTTONUP:
-			data.selected = -1;
+			data._selected = -1;
 		break;
 
 		case CV_EVENT_LBUTTONDOWN:
-			data.selected = -1;
+			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
-				if( data.pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					data.selected = i;
-			if( data.selected == -1 )
+				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
+					data._selected = i;
+			if( data._selected == -1 )
 				if( data.leftClicAddPoint )
 					data.addMousePoint();
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
-			if( data.selected != -1 )
+			if( data._selected != -1 )
 			{
-				data.vpt[data.selected] = data.pt_mouse;
-				data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
+				data.vpt[data._selected] = data._pt_mouse;
+				data.vpt[data._selected].draw( data.img, img::DrawParams().selectPoint() );
 			}
 		break;
 
 		case CV_EVENT_RBUTTONDOWN:
-			data.selected = -1;
+			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
-				if( data.pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					data.selected = i;
-			if( data.selected != -1 )
+				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
+					data._selected = i;
+			if( data._selected != -1 )
 			{
-				data.vpt.erase( std::begin(data.vpt) + data.selected );
-				data.selected = -1;
+				data.vpt.erase( std::begin(data.vpt) + data._selected );
+				data._selected = -1;
 			}
 		break;
 
@@ -201,7 +225,6 @@ myMouseCB( int event, int x, int y, int, void* param )
 		data.clearImage();
 		if( data._mouseCB )
 		{
-//			std::cout << "call mouse CB\n";
 			data._mouseCB( param );
 		}
 		data.showImage();
@@ -213,7 +236,8 @@ myMouseCB( int event, int x, int y, int, void* param )
 struct KeyboardLoop
 {
 	using FuncType = void(void*);
-	/// Holds link between key, function, and description
+
+/// Holds link between key, function, and description
 	struct KbLoopAction
 	{
 		char                    _key;     ///< what key
@@ -230,11 +254,12 @@ struct KeyboardLoop
 private:
 	std::vector<KbLoopAction> _actions;
 	std::function<FuncType>   _common = nullptr;
+	int                       _index = 0;
 
 public:
 	void addKeyAction(
 		char key,                              ///< the key
-		const std::function<FuncType>& action, ///< the CB, called on key hit
+		const std::function<FuncType>& action, ///< the callback function, called on key hit
 		std::string text=std::string()         ///< the message that will be printed
 	)
 	{
@@ -268,27 +293,36 @@ public:
 			std::cout << "No user keys defined, but 'h' (help), ESC (quit) and SPC (switch to next) available\n";
 	}
 
-	void start( Data& data )
-	{
-		showAvailableKeys();
+	void start( Data& data );
+};
 
-		char key=0;
-		do
+void KeyboardLoop::start( Data& data )
+{
+	showAvailableKeys();
+
+	char key=0;
+	do
+	{
+		switch( key = cv::waitKey(0) )
 		{
-			key = cv::waitKey(0);
-			if( key == 27 )
-			{
+			case 27:
 				std::cout << "ESC => terminate\n";
 				std::exit(0);
-			}
-			if( key == 32 )
-			{
+
+			case 32:
 				std::cout << "SPC: switch to next\n";
 				return;
-			}
-			if( key == 'H' || key == 'h' )
+			case 'H':
+			case 'h':
 				showAvailableKeys();
-			else
+				break;
+			case 's':
+			{
+				auto fn = data.save_SVG( data._demo_idx );
+				std::cout << "Saved Polyline to file '" << fn << "'\n";
+				break;
+			}
+			default:
 			{
 				auto it = std::find_if(
 					_actions.begin(),
@@ -302,7 +336,7 @@ public:
 
 				if( it != _actions.end() )
 				{
-					std::cout << "Action";
+					std::cout << "Action " << _index++;
 					if( !it->_msg.empty() )
 						std::cout << ": " << it->_msg;
 					std::cout << '\n';
@@ -314,9 +348,9 @@ public:
 				}
 			}
 		}
-		while( key != 32 ); // SPC
 	}
-};
+	while( key != 32 ); // SPC
+}
 
 //------------------------------------------------------------------
 void action_1( void* param )
@@ -324,7 +358,7 @@ void action_1( void* param )
 	auto& data = *reinterpret_cast<Data*>(param);
 	data.drawLines();
 
-	Line2d l_mouse  = data.pt_mouse * Point2d();
+	Line2d l_mouse  = data._pt_mouse * Point2d();
 	auto p_lines = l_mouse.getParallelLines( 30 );
 
 	auto ppts = l_mouse.getPoints( Point2d(), 200 );
@@ -476,7 +510,7 @@ void action_C( void* param )
 		dpc1.setColor(250,100,0);
 	c1.draw( data.img, dpc1 );
 
-	data.pt_mouse.draw( data.img, img::DrawParams().setColor(250,50,20) );
+	data._pt_mouse.draw( data.img, img::DrawParams().setColor(250,50,20) );
 
 // circle - circle intersections
 	auto cci = c1.intersects( c2 );
@@ -550,22 +584,22 @@ double action_SI_drawDist( const Segment& seg, void* param )
 	auto& data = *reinterpret_cast<Param_SI*>(param);
 
 	int segDistCase;
-	auto segDist = seg.distTo( data.pt_mouse, &segDistCase );
+	auto segDist = seg.distTo( data._pt_mouse, &segDistCase );
 
 	auto col_A = img::DrawParams().setColor( 0,200,200 );
 	auto col_B = img::DrawParams().setColor( 200,200,0 );
 	switch( segDistCase )
 	{
 		case -1:
-			draw( data.img, Segment( data.pt_mouse, seg.getPts().first ), col_B );
+			draw( data.img, Segment( data._pt_mouse, seg.getPts().first ), col_B );
 		break;
 		case +1:
-			draw( data.img, Segment( data.pt_mouse, seg.getPts().second ), col_B );
+			draw( data.img, Segment( data._pt_mouse, seg.getPts().second ), col_B );
 		break;
 		default:
-			if( data.pt_mouse.distTo( seg.getLine() ) > 3. )
+			if( data._pt_mouse.distTo( seg.getLine() ) > 3. )
 			{
-				auto orthog_seg = seg.getLine().getOrthogSegment( data.pt_mouse );
+				auto orthog_seg = seg.getLine().getOrthogSegment( data._pt_mouse );
 				orthog_seg.draw( data.img, col_A );
 			}
 	}
@@ -590,8 +624,8 @@ void action_SI( void* param )
 	draw( data.img, psegs.second, img::DrawParams().setColor( 200,0,250) );
 
 
-	if( data.selected != -1 )
-		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
+	if( data._selected != -1 )
+		data.vpt[data._selected].draw( data.img, img::DrawParams().selectPoint() );
 
 	auto inters = data.seg1.intersects( data.seg2 );
 	if( inters() )
@@ -656,8 +690,8 @@ void action_6( void* param )
 
 	data.clearImage();
 	double K = M_PI / 180.;
-	auto tx = data.pt_mouse.getX();
-	auto ty = data.pt_mouse.getY();
+	auto tx = data._pt_mouse.getX();
+	auto ty = data._pt_mouse.getY();
 
 	auto mouse_pos = std::make_pair(
 		Line2d( LineDir::H, ty ),
@@ -877,7 +911,7 @@ struct Param_PL : Data
 	}
 	OPolyline polyline_o;
 	CPolyline polyline_c;
-	std::vector<detail::Common<double>*> v_po;
+	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
 	bool showClosedPoly = false;
 };
 
@@ -959,16 +993,16 @@ void action_PL( void* param )
 			isC = "Convex: N";
 		data.putTextLine( isC );
 
-//		std::cout << "mouse=" << data.pt_mouse << '\n';
-		auto YN = data.pt_mouse.isInside(data.polyline_c)?"Y":"N";
-		data.putTextLine( std::string("IsInside=") + std::string( YN ) );
-
-/*		auto idx = base::sub::getFarthestSegment( data.pt_mouse, bb );
-		auto seg_f = bb.getSegs()[idx];
-		seg_f.draw( data.img, img::DrawParams().setColor(250,20,120) );
-*/
+		auto isInside = data._pt_mouse.isInside(data.polyline_c);
+		data.putTextLine( std::string("IsInside=") + std::string( isInside?"Y":"N" ) );
+		if( isInside )
+			drawText( data.img, "Inside", data._pt_mouse );
+		else
+			drawText( data.img, "Outside", data._pt_mouse );
 	}
+	data._pt_mouse.draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ).setColor(0,220,0) );
 	data.showImage();
+	data._cpoly = data.polyline_c;
 }
 
 void demo_PL( int demidx )
@@ -1097,15 +1131,22 @@ struct Param_CIR : Data
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
-			CPolyline pol;
-			pol.setParallelogram( vpt[2], vpt[3], vpt[4] );
-			pol.draw( img, img::DrawParams().setColor(120,200,0) );
+//			CPolyline pol;
+			_cpoly.setParallelogram( vpt[2], vpt[3], vpt[4] );
+			_cpoly.draw( img, img::DrawParams().setColor(120,200,0) );
 		}
 		else
 			cir.set( vpt[2], vpt[3] );
-		rect.set( vpt[0], vpt[1] );
-		cir2.set( vpt[0], vpt[1] );
-
+		try
+		{
+			rect.set( vpt[0], vpt[1] );
+			cir2.set( vpt[0], vpt[1] );
+		}
+		catch( std::exception& err )
+		{
+			std::cout << "unable to build rectangle, invalid points\n=> "<< err.what() << '\n';
+			return;
+		}
 		ptr_cr = &cir2;
 		if( drawRect )
 			ptr_cr = &rect;
@@ -1210,12 +1251,11 @@ void action_CH( void* param )
 	data.clearImage();
 	draw( data.img, data.vpt, img::DrawParams().showIndex() );
 
-	auto chull = convexHull( data.vpt );
+	data._cpoly = convexHull( data.vpt );
 	Circle cir;
-	cir.set(  data.vpt );
+	cir.set( data.vpt );
 
-
-	auto vlines = getLines( chull.getSegs() );
+	auto vlines = getLines( data._cpoly.getSegs() );
 	if( old_size != vlines.size() )
 	{
 		data.vcol = img::genRandomColors( vlines.size() );
@@ -1231,14 +1271,14 @@ void action_CH( void* param )
 	if( data._mode )
 		draw( data.img, vlines, f );
 	if( !data._mode )
-		chull.draw( data.img, img::DrawParams().setColor(250,0,0) );
+		data._cpoly.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
 	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
-	chull.getLmPoint().draw( data.img, dp );
-	chull.getRmPoint().draw( data.img, dp );
-	chull.getTmPoint().draw( data.img, dp );
-	chull.getBmPoint().draw( data.img, dp );
+	data._cpoly.getLmPoint().draw( data.img, dp );
+	data._cpoly.getRmPoint().draw( data.img, dp );
+	data._cpoly.getTmPoint().draw( data.img, dp );
+	data._cpoly.getBmPoint().draw( data.img, dp );
 	data.showImage();
 }
 
@@ -1273,26 +1313,32 @@ void action_RI( void* param )
 
 	data.clearImage();
 	draw( data.img, data.vpt );
-	FRect r1( data.vpt[0], data.vpt[1] );
-	FRect r2( data.vpt[2], data.vpt[3] );
-	r1.draw( data.img, img::DrawParams().setColor(250,0,0) );
-	r2.draw( data.img, img::DrawParams().setColor(0,250,0) );
-	auto c1a = r1.getBoundingCircle();
-	auto c1b = r1.getInscribedCircle();
-	c1a.draw( data.img );
-	c1b.draw( data.img );
-	if( data.doUnion )
+	try
 	{
-		auto res = r1 & r2;
-		if( res() )
-			res.get().draw( data.img, img::DrawParams().setColor(0,0,250) );
+		FRect r1( data.vpt[0], data.vpt[1] );
+		FRect r2( data.vpt[2], data.vpt[3] );
+		r1.draw( data.img, img::DrawParams().setColor(250,0,0) );
+		r2.draw( data.img, img::DrawParams().setColor(0,250,0) );
+		auto c1a = r1.getBoundingCircle();
+		auto c1b = r1.getInscribedCircle();
+		c1a.draw( data.img );
+		c1b.draw( data.img );
+		if( data.doUnion )
+		{
+			auto res = r1 & r2;
+			if( res() )
+				res.get().draw( data.img, img::DrawParams().setColor(0,0,250) );
+		}
+		else
+		{
+			auto res = r1 | r2;
+			res.draw( data.img, img::DrawParams().setColor(0,0,250) );
+		}
 	}
-	else
+	catch( std::exception& err )
 	{
-		auto res = r1 | r2;
-		res.draw( data.img, img::DrawParams().setColor(0,0,250) );
+		std::cout << "Unable, points do not define a rectangle\n";
 	}
-
 	data.showImage();
 }
 
@@ -1431,12 +1477,12 @@ struct Param_polRot : Data
 {
 	explicit Param_polRot( int demidx, std::string title ): Data( demidx, title )
 	{
-		_poly.set(
+		_cpoly.set(
 			std::vector<Point2d>{
 				{0,0}, {100,0}, {100,100}, {50,150}, {0,100}
 			}
 		);
-		_poly.translate( 180,180); // so it lies in the window
+		_cpoly.translate( 180,180); // so it lies in the window
 		_rect.set(0,0,160,100);
 		_rect.translate( 220,230); // so it lies in the window
 
@@ -1446,9 +1492,9 @@ struct Param_polRot : Data
 		if( _item )
 		{
 			_refPt_p++;
-			if( _refPt_p >= _poly.size() )
+			if( _refPt_p >= _cpoly.size() )
 				_refPt_p = 0;
-			std::cout << "move to next ref pt: poly" << _refPt_p << ": " << _poly.getPoint( _refPt_p ) <<  '\n';
+			std::cout << "move to next ref pt: poly" << _refPt_p << ": " << _cpoly.getPoint( _refPt_p ) <<  '\n';
 		}
 /*		else
 		{
@@ -1463,7 +1509,7 @@ struct Param_polRot : Data
 		_doIt = b;
 	}
 
-	CPolyline _poly;
+//	CPolyline _poly;
 	FRect     _rect;
 	Rotate    _rotateType = Rotate::CW;
 	size_t    _refPt_p = 0;                 ///< default index of center point (Polyline)
@@ -1480,21 +1526,21 @@ void action_polRot( void* param )
 	if( data._doIt )
 	{
 		if( data._item )
-			data._poly.rotate( data._rotateType, data._poly.getPoint( data._refPt_p ) );
+			data._cpoly.rotate( data._rotateType, data._cpoly.getPoint( data._refPt_p ) );
 		else
-			data._rect.rotate( data._rotateType, data.pt_mouse );
+			data._rect.rotate( data._rotateType, data._pt_mouse );
 		 data._doIt = false;
 	}
 
 	if( data._item )
 	{
-		data._poly.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
-		data._poly.getPoint( data._refPt_p ).draw( data.img, img::DrawParams().setColor(0,0,250).setPointStyle(img::PtStyle::Dot) );
+		data._cpoly.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
+		data._cpoly.getPoint( data._refPt_p ).draw( data.img, img::DrawParams().setColor(0,0,250).setPointStyle(img::PtStyle::Dot) );
 	}
 	else
 	{
 		data._rect.draw( data.img, img::DrawParams().setColor(0,0,250).showPoints() );
-		draw( data.img, data.pt_mouse, img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
+		draw( data.img, data._pt_mouse, img::DrawParams().setColor(250,0,0).setPointStyle(img::PtStyle::Dot) );
 	}
 	data.showImage();
 }
@@ -1513,8 +1559,8 @@ void demo_polRot( int demidx )
 	kbloop.addKeyAction( 'a', [&](void*){ data._rotateType=Rotate::CW;       data.doIt(); }, "rotate CW" );
 	kbloop.addKeyAction( 'z', [&](void*){ data._rotateType=Rotate::CCW;      data.doIt(); }, "rotate CCW" );
 	kbloop.addKeyAction( 'e', [&](void*){ data._rotateType=Rotate::Full;     data.doIt(); }, "rotate Full" );
-	kbloop.addKeyAction( 'q', [&](void*){ data._rotateType=Rotate::VMirror;  data.doIt(); }, "VMirror" );
-	kbloop.addKeyAction( 's', [&](void*){ data._rotateType=Rotate::HMirror;  data.doIt(); }, "HMirror" );
+	kbloop.addKeyAction( 'o', [&](void*){ data._rotateType=Rotate::VMirror;  data.doIt(); }, "VMirror" );
+	kbloop.addKeyAction( 'p', [&](void*){ data._rotateType=Rotate::HMirror;  data.doIt(); }, "HMirror" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.nextRefPt();                  data.doIt(false); }, "move to next reference point" );
 	kbloop.addKeyAction( 'r', [&](void*){ data._item = !data._item;          data.doIt(false); }, "toggle poly/rectangle" );
 
@@ -1555,26 +1601,26 @@ void action_NFP( void* param )
 	auto& data = *reinterpret_cast<Param_NFP*>(param);
 	data.clearImage();
 	draw( data.img, data.vpt );
-	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	data._pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
 	switch( data._mode )
 	{
 		case 0:
 		{
-			auto idx = findNearestPoint( data.pt_mouse, data.vpt );
-			Segment(data.vpt[idx], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
+			auto idx = findNearestPoint( data._pt_mouse, data.vpt );
+			Segment(data.vpt[idx], data._pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
 		}
 		break;
 		case 1:
 		{
-			auto idx = findFarthestPoint( data.pt_mouse, data.vpt );
-			Segment(data.vpt[idx], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
+			auto idx = findFarthestPoint( data._pt_mouse, data.vpt );
+			Segment(data.vpt[idx], data._pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
 		}
 		break;
 		case 2:
 		{
-			auto pidx = findNearestFarthestPoint( data.pt_mouse, data.vpt );
-			Segment(data.vpt[pidx.first], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
-			Segment(data.vpt[pidx.second], data.pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
+			auto pidx = findNearestFarthestPoint( data._pt_mouse, data.vpt );
+			Segment(data.vpt[pidx.first], data._pt_mouse).draw( data.img, img::DrawParams().setColor( 250,0,0) );
+			Segment(data.vpt[pidx.second], data._pt_mouse).draw( data.img, img::DrawParams().setColor( 0,250,0) );
 		}
 		break;
 		default: assert(0);
@@ -1636,7 +1682,7 @@ void action_ORS( void* param )
 		if( data._drawPolyg )
 			CPolyline( opts ).draw( data.img, img::DrawParams().setColor( 125,125,0) );
 	}
-	data.pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
+	data._pt_mouse.draw( data.img, img::DrawParams().setColor( 250,0,0) );
 	data.showImage();
 }
 
@@ -1661,15 +1707,22 @@ struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
 	{}
-	int trans_x = 250;
-	int trans_y = 200;
-	int radius = 280;
-	size_t nbPts = 5;
+	int    _trans_x = 250;
+	int    _trans_y = 200;
+	int    _radius = 280;
+	int    _radiusStep = 20;
+	size_t _nbPts = 5;
 	void nbPts_less()
 	{
-		nbPts--;
-		if( nbPts < 3 )
-			nbPts = 3;
+		_nbPts--;
+		if( _nbPts < 3 )
+			_nbPts = 3;
+	}
+	void radius_less()
+	{
+		_radius -= _radiusStep;
+		if( _radius<30 )
+			_radius = _radiusStep;
 	}
 };
 
@@ -1678,24 +1731,48 @@ void action_RCP( void* param )
 	auto& data = *reinterpret_cast<Param_RCP*>(param);
 	data.clearImage();
 
-	Line2d lih( Point2d(data._imWidth,data.trans_y), Point2d(0,data.trans_y) );
-	Line2d liv( Point2d(data.trans_x,data._imHeight), Point2d(data.trans_x,0) );
-	lih.draw( data.img );
-	liv.draw( data.img );
+	Point2d ptCenter( data._trans_x, data._trans_y );
+	Line2d lih( Point2d(data._imWidth,data._trans_y), Point2d(0,data._trans_y) );
+	Line2d liv( Point2d(data._trans_x,data._imHeight), Point2d(data._trans_x,0) );
+	lih.draw( data.img, img::DrawParams().setColor(220,220,220) );
+	liv.draw( data.img, img::DrawParams().setColor(220,220,220) );
 
-	Point2d(data.trans_x,data.trans_y).draw( data.img, img::DrawParams().setColor(100,0,100) );
-	CPolyline pol;
-	auto values = pol.set( data.radius, data.nbPts );
-	std::cout << " -Building Regular Convex Polygon with " << data.nbPts << " points\n";
+	Point2d(data._trans_x,data._trans_y).draw( data.img, img::DrawParams().setColor(100,0,100) );
+	auto values = data._cpoly.set( data._radius, data._nbPts );
+	std::cout << " -Building Regular Convex Polygon with " << data._nbPts << " points\n";
 
-	pol.moveTo( Point2d(data.trans_x+data.radius,data.trans_y) );
+	data._cpoly.moveTo( Point2d(data._trans_x+data._radius,data._trans_y) );
+	data._cpoly.draw( data.img );
+	{
+		Segment s1( ptCenter, data._cpoly.getPts().front() );
+		s1.draw( data.img ) ;
+		drawText( data.img, std::to_string(int(data._radius)), s1.getCenter() );
+	}
+	{
+		auto s1 = data._cpoly.getSegs().at(0);
+		auto spara1 = s1.getParallelSegs(20).second;
+		std::ostringstream oss1;
+		oss1 << std::fixed << std::setprecision(1) << values.first;
+		drawText( data.img, oss1.str(), spara1.getCenter() );
+	}
+	{
+		Segment s1( ptCenter, data._cpoly.getPts().back() );
+		Circle c1( ptCenter, values.second );
+		auto it1 = c1.intersects(s1);
 
-	pol.draw( data.img );
-	drawText( data.img, "NbPts="  +std::to_string(data.nbPts), Point2d(20,40) );
-	drawText( data.img, "segment dist="  +std::to_string(values.first), Point2d(20,60) );
-	drawText( data.img, "circle radius="+std::to_string(values.second), Point2d(20,80) );
-	Circle c1( data.trans_x,data.trans_y,data.radius);
-	Circle c2( data.trans_x,data.trans_y,values.second);
+		Segment ss1( ptCenter, it1.get()[0] );
+		ss1.draw( data.img ) ;
+
+		std::ostringstream oss1;
+		oss1 << std::fixed << std::setprecision(1) << values.second;
+		drawText( data.img, oss1.str(), ss1.getCenter() );
+	}
+	data.putTextLine( "NbPts="         + std::to_string(data._nbPts)    );
+	data.putTextLine( "segment dist="  + std::to_string(values.first)  );
+	data.putTextLine( "circle radius=" + std::to_string(values.second) );
+
+	Circle c1( data._trans_x,data._trans_y,data._radius);
+	Circle c2( data._trans_x,data._trans_y,values.second);
 	c1.draw( data.img, img::DrawParams().setColor(0,0,250) );
 	c2.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	data.showImage();
@@ -1707,8 +1784,10 @@ void demo_RCP( int demidx )
 	std::cout << "Demo " << demidx << ": Regular Convex Polygon\n";
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.nbPts++; }, "more points" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._nbPts++; },      "more points" );
+	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
 
 	kbloop.addCommonAction( action_RCP );
 	action_RCP( &data );

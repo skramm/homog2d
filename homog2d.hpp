@@ -221,7 +221,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.11.0"
+#define HOMOG2D_VERSION "2.11.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -433,7 +433,7 @@ public:
 		return _isInitialized;
 	}
 
-	std::pair<size_t,size_t> getSize() const
+	std::pair<size_t,size_t> size() const
 	{
 		return std::make_pair( _width, _height );
 	}
@@ -1018,7 +1018,7 @@ template<typename FPT>
 class Common
 {
 public:
-/// Get Data type as a Dtype value, can be stringified with h2d::getString(Dtype)
+/// Get numerical data type as a Dtype value, can be stringified with h2d::getString(Dtype)
 /// \sa h2d::dtype( const T& )
 	Dtype dtype() const
 	{
@@ -1054,7 +1054,7 @@ namespace rtp {
 
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
-Only exists if symbol HOMOG2D_ENABLE_RTP is defined, see
+Only exists if symbol \c HOMOG2D_ENABLE_RTP is defined, see
 <a href="md_docs_homog2d_manual.html#build_options">build options</a>.
 */
 class Root
@@ -2228,23 +2228,26 @@ public:
 //------------------------------------------------------------------
 /// Helper class, holds result of intersections of two FRect_
 /// \sa FRect_::intersectArea()
-template<typename T>
+/**
+FPT: Floating Point Type, is defined by the rectangle on which member function \c intersectArea() is called.
+*/
+template<typename FPT>
 class RectArea
 {
 private:
-	bool      _success = false;
-	FRect_<T> _area;
+	bool        _success = false;
+	FRect_<FPT> _area;
 
 public:
 	RectArea() = default;
-	RectArea( const FRect_<T>& r ) : _success(true), _area(r)
+	RectArea( const FRect_<FPT>& r ) : _success(true), _area(r)
 	{}
 	bool operator()() const
 	{
 		return _success;
 	}
 
-	FRect_<T> get() const
+	FRect_<FPT> get() const
 	{
 		if( !_success )
 			HOMOG2D_THROW_ERROR_1( "unable, no intersection between the two rectangles" );
