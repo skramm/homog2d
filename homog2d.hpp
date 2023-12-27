@@ -220,7 +220,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.11.0"
+#define HOMOG2D_VERSION "2.11.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -432,7 +432,7 @@ public:
 		return _isInitialized;
 	}
 
-	std::pair<size_t,size_t> getSize() const
+	std::pair<size_t,size_t> size() const
 	{
 		return std::make_pair( _width, _height );
 	}
@@ -1017,7 +1017,7 @@ template<typename FPT>
 class Common
 {
 public:
-/// Get Data type as a Dtype value, can be stringified with h2d::getString(Dtype)
+/// Get numerical data type as a Dtype value, can be stringified with h2d::getString(Dtype)
 /// \sa h2d::dtype( const T& )
 	Dtype dtype() const
 	{

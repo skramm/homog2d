@@ -72,6 +72,19 @@ Thus the first function returns a type that can be checked for success.
 A contrario, the second function will return a <code>Polyline</code> object, and in case of failure, it will just be empty, which is perfectly valid.
 </dd>
 
+<dt>
+Q: what is the difference between the classes \ref rtp::Root and detail::Common ?
+Don't they serve the main purpose?
+</dt>
+<dd>
+A: The class detail::Common is always enabled and serves as a common class for all the geometric types.
+It is templated by the underlying numerical type, but does not provide polymorphic functions.
+This is because a class templated cannot be virtual.
+
+Thus, the need for the class tp::Root (only enabled if \c HOMOG2D_ENABLE_RTP is defined, see build options).
+</dd>
+
+
 
 <dt>
 Q: Circle_::center() and FRect_::getCenter()? Why not the same identifier?
