@@ -3,6 +3,7 @@
 # tested with gnuplot 5
 
 set terminal pngcairo
+#set terminal svg
 set datafile separator ";"
 set boxwidth 0.5
 set style fill solid

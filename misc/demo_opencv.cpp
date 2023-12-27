@@ -52,11 +52,11 @@ struct Data
 	int _imHeight = 500;
 
 	std::string win1;   ///< Window name (appears in window title bar)
-	int selected = -1;  ///< Mouse selected point
+	int _selected = -1;  ///< Mouse selected point
 	std::vector<Point2d> vpt; ///< some points used in demo
 	bool leftClicAddPoint = false;
-	int tline = 0;          ///< used to draw some lines of text inside window
 
+	int       _lineIndex = 0;     ///< used to draw some lines of text inside window
 	int       _demo_idx = -1;     ///< index of current demo
 	Point2d   _pt_mouse;          ///< Mouse coordinates
 	CPolyline _cpoly;             ///< will be saved in SVG file
@@ -76,7 +76,6 @@ public:
 		vpt.resize(4);
 		_pt_mouse.set(10,10); // just to avoid it being 0,0
 		reset();
-		tline = 0;
 	}
 	void reset()
 	{
@@ -108,6 +107,7 @@ public:
 	void clearImage()
 	{
 		img.clear();
+		_lineIndex = 0;
 	}
 	void showImage()
 	{
@@ -117,15 +117,15 @@ public:
 	{
 		int lineSize = 22;
 		if( lineindex == 0 )
-			tline = 0;
-		cv::putText( img.getReal(), msg, cv::Point2i( 20, lineSize*++tline), 0, 0.6, cv::Scalar( 150,0,0 ), 1 );
+			_lineIndex = 0;
+		cv::putText( img.getReal(), msg, cv::Point2i( 20, lineSize * ++_lineIndex), 0, 0.6, cv::Scalar( 150,0,0 ), 1 );
 	}
 	std::string save_SVG( int idx ) const;
 	void drawLines()
 	{
 		for( int i=0; i<nbPts(); i++ )
 		{
-			if( selected == i )
+			if( _selected == i )
 				vpt[i].draw( img, img::DrawParams().setColor( 250, 0, 150).setPointStyle( (img::PtStyle)i).selectPoint() );
 			else
 				vpt[i].draw( img, img::DrawParams().setPointStyle((img::PtStyle)i) );
@@ -162,8 +162,8 @@ std::string Data::save_SVG( int demo_idx ) const
 	previous_demo_idx = demo_idx;
 	img::Image<img::SvgImage> im( _imWidth, _imHeight );
 	_cpoly.draw( im );
-	std::ostringstream oss;
 
+	std::ostringstream oss;
 	oss << "BUILD/demo_pol_" << demo_idx << "_" << num++ << ".svg";
 	im.write( oss.str() );
 	return oss.str();
@@ -185,36 +185,36 @@ myMouseCB( int event, int x, int y, int, void* param )
 	switch( event )
 	{
 		case CV_EVENT_LBUTTONUP:
-			data.selected = -1;
+			data._selected = -1;
 		break;
 
 		case CV_EVENT_LBUTTONDOWN:
-			data.selected = -1;
+			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					data.selected = i;
-			if( data.selected == -1 )
+					data._selected = i;
+			if( data._selected == -1 )
 				if( data.leftClicAddPoint )
 					data.addMousePoint();
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
-			if( data.selected != -1 )
+			if( data._selected != -1 )
 			{
-				data.vpt[data.selected] = data._pt_mouse;
-				data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
+				data.vpt[data._selected] = data._pt_mouse;
+				data.vpt[data._selected].draw( data.img, img::DrawParams().selectPoint() );
 			}
 		break;
 
 		case CV_EVENT_RBUTTONDOWN:
-			data.selected = -1;
+			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-					data.selected = i;
-			if( data.selected != -1 )
+					data._selected = i;
+			if( data._selected != -1 )
 			{
-				data.vpt.erase( std::begin(data.vpt) + data.selected );
-				data.selected = -1;
+				data.vpt.erase( std::begin(data.vpt) + data._selected );
+				data._selected = -1;
 			}
 		break;
 
@@ -254,6 +254,7 @@ struct KeyboardLoop
 private:
 	std::vector<KbLoopAction> _actions;
 	std::function<FuncType>   _common = nullptr;
+	int                       _index = 0;
 
 public:
 	void addKeyAction(
@@ -335,7 +336,7 @@ void KeyboardLoop::start( Data& data )
 
 				if( it != _actions.end() )
 				{
-					std::cout << "Action";
+					std::cout << "Action " << _index++;
 					if( !it->_msg.empty() )
 						std::cout << ": " << it->_msg;
 					std::cout << '\n';
@@ -623,8 +624,8 @@ void action_SI( void* param )
 	draw( data.img, psegs.second, img::DrawParams().setColor( 200,0,250) );
 
 
-	if( data.selected != -1 )
-		data.vpt[data.selected].draw( data.img, img::DrawParams().selectPoint() );
+	if( data._selected != -1 )
+		data.vpt[data._selected].draw( data.img, img::DrawParams().selectPoint() );
 
 	auto inters = data.seg1.intersects( data.seg2 );
 	if( inters() )
@@ -1706,15 +1707,22 @@ struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
 	{}
-	int trans_x = 250;
-	int trans_y = 200;
-	int radius = 280;
-	size_t nbPts = 5;
+	int    _trans_x = 250;
+	int    _trans_y = 200;
+	int    _radius = 280;
+	int    _radiusStep = 20;
+	size_t _nbPts = 5;
 	void nbPts_less()
 	{
-		nbPts--;
-		if( nbPts < 3 )
-			nbPts = 3;
+		_nbPts--;
+		if( _nbPts < 3 )
+			_nbPts = 3;
+	}
+	void radius_less()
+	{
+		_radius -= _radiusStep;
+		if( _radius<30 )
+			_radius = _radiusStep;
 	}
 };
 
@@ -1723,29 +1731,48 @@ void action_RCP( void* param )
 	auto& data = *reinterpret_cast<Param_RCP*>(param);
 	data.clearImage();
 
-	Line2d lih( Point2d(data._imWidth,data.trans_y), Point2d(0,data.trans_y) );
-	Line2d liv( Point2d(data.trans_x,data._imHeight), Point2d(data.trans_x,0) );
-	lih.draw( data.img );
-	liv.draw( data.img );
+	Point2d ptCenter( data._trans_x, data._trans_y );
+	Line2d lih( Point2d(data._imWidth,data._trans_y), Point2d(0,data._trans_y) );
+	Line2d liv( Point2d(data._trans_x,data._imHeight), Point2d(data._trans_x,0) );
+	lih.draw( data.img, img::DrawParams().setColor(220,220,220) );
+	liv.draw( data.img, img::DrawParams().setColor(220,220,220) );
 
-	Point2d(data.trans_x,data.trans_y).draw( data.img, img::DrawParams().setColor(100,0,100) );
-//	CPolyline pol;
-	auto values = data._cpoly.set( data.radius, data.nbPts );
-	std::cout << " -Building Regular Convex Polygon with " << data.nbPts << " points\n";
+	Point2d(data._trans_x,data._trans_y).draw( data.img, img::DrawParams().setColor(100,0,100) );
+	auto values = data._cpoly.set( data._radius, data._nbPts );
+	std::cout << " -Building Regular Convex Polygon with " << data._nbPts << " points\n";
 
-	data._cpoly.moveTo( Point2d(data.trans_x+data.radius,data.trans_y) );
-
+	data._cpoly.moveTo( Point2d(data._trans_x+data._radius,data._trans_y) );
 	data._cpoly.draw( data.img );
-	data.putTextLine( "NbPts="         + std::to_string(data.nbPts)    );
+	{
+		Segment s1( ptCenter, data._cpoly.getPts().front() );
+		s1.draw( data.img ) ;
+		drawText( data.img, std::to_string(int(data._radius)), s1.getCenter() );
+	}
+	{
+		auto s1 = data._cpoly.getSegs().at(0);
+		auto spara1 = s1.getParallelSegs(20).second;
+		std::ostringstream oss1;
+		oss1 << std::fixed << std::setprecision(1) << values.first;
+		drawText( data.img, oss1.str(), spara1.getCenter() );
+	}
+	{
+		Segment s1( ptCenter, data._cpoly.getPts().back() );
+		Circle c1( ptCenter, values.second );
+		auto it1 = c1.intersects(s1);
+
+		Segment ss1( ptCenter, it1.get()[0] );
+		ss1.draw( data.img ) ;
+
+		std::ostringstream oss1;
+		oss1 << std::fixed << std::setprecision(1) << values.second;
+		drawText( data.img, oss1.str(), ss1.getCenter() );
+	}
+	data.putTextLine( "NbPts="         + std::to_string(data._nbPts)    );
 	data.putTextLine( "segment dist="  + std::to_string(values.first)  );
 	data.putTextLine( "circle radius=" + std::to_string(values.second) );
 
-/*	drawText( data.img, "NbPts="  +std::to_string(data.nbPts), Point2d(20,40) );
-	drawText( data.img, "segment dist="  +std::to_string(values.first), Point2d(20,60) );
-	drawText( data.img, "circle radius="+std::to_string(values.second), Point2d(20,80) );
-*/
-	Circle c1( data.trans_x,data.trans_y,data.radius);
-	Circle c2( data.trans_x,data.trans_y,values.second);
+	Circle c1( data._trans_x,data._trans_y,data._radius);
+	Circle c2( data._trans_x,data._trans_y,values.second);
 	c1.draw( data.img, img::DrawParams().setColor(0,0,250) );
 	c2.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	data.showImage();
@@ -1757,8 +1784,10 @@ void demo_RCP( int demidx )
 	std::cout << "Demo " << demidx << ": Regular Convex Polygon\n";
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.nbPts++; }, "more points" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._nbPts++; },      "more points" );
+	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
 
 	kbloop.addCommonAction( action_RCP );
 	action_RCP( &data );
