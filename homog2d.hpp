@@ -5563,13 +5563,12 @@ template<
 		set( vec );
 	}
 
-/// Constructor that build a regular convex polygon of \c n points at a distance \c rad, centered at (0,0).
-	template<typename FPT2>
-	PolylineBase( FPT2 rad, size_t n )
+/// Constructor that builds a regular convex polygon of \c n points at a distance \c rad, centered at (0,0).
+	template<typename FPT2,typename T>
+	PolylineBase( FPT2 rad, T n )
 	{
 		impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
-
 
 /// Copy-Constructor from Closed Polyline
 	template<typename FPT2>
@@ -5642,13 +5641,13 @@ this should work !!! (but doesn't...)
 ///@}
 
 private:
-	template<typename FPT2>
+	template<typename FPT2,typename T>
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2 rad, size_t n, const typename detail::PlHelper<type::IsClosed>& );
+	impl_set_RCP( FPT2 rad, T n, const typename detail::PlHelper<type::IsClosed>& );
 
-	template<typename FPT2>
+	template<typename FPT2,typename T>
 	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2, size_t, const typename detail::PlHelper<type::IsOpen>& )
+	impl_set_RCP( FPT2, T, const typename detail::PlHelper<type::IsOpen>& )
 	{
 		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object");
 		return std::make_pair(0.,0.); // to avoid a compiler warning
@@ -5971,10 +5970,9 @@ at 180° of the previous one.
 	}
 
 /// Build RCP (Regular Convex Polygon), and return distance between consecutive points
-	template<typename FPT2>
-//	HOMOG2D_INUMTYPE
+	template<typename FPT2,typename T>
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	set( FPT2 rad, size_t n )
+	set( FPT2 rad, T n )
 	{
 		return impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
 	}
@@ -6255,10 +6253,17 @@ public:
 \return: segment distance, inscribed circle radius
 */
 template<typename PLT,typename FPT>
-template<typename FPT2>
+template<typename FPT2,typename T>
 std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-PolylineBase<PLT,FPT>::impl_set_RCP( FPT2 rad, size_t n, const typename detail::PlHelper<type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_set_RCP(
+	FPT2 rad,  ///< Radius
+	T    n,    ///< Nb of points
+	const typename detail::PlHelper<type::IsClosed>& )
 {
+	static_assert(
+		std::is_unsigned<T>::value && std::is_integral<T>::value,
+		"2nd argument type must be unsigned integral type"
+	);
 	if( n < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
 	if( rad <= 0  )

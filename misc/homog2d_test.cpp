@@ -3213,22 +3213,22 @@ TEST_CASE( "Polyline", "[polyline]" )
 
 TEST_CASE( "Polyline RCP (Regular Convex Polygon)", "[polyline-RCP]" )
 {
-	CHECK_THROWS( CPolyline( 5, -5 ) );
-	CHECK_THROWS( CPolyline( -5, 5 ) );
-	CHECK_THROWS( CPolyline( 1, 2 ) );
-	CHECK_THROWS( CPolyline( 0, 5 ) );
+	CHECK_THROWS( CPolyline( 5,  0u ) );
+	CHECK_THROWS( CPolyline( -5, 5u ) );
+	CHECK_THROWS( CPolyline( 1,  2u ) );
+	CHECK_THROWS( CPolyline( 0,  5u ) );
 
-	CPolyline pol( 5, 5 );
+	CPolyline pol( 5, 5u );
 	CHECK( pol.size() == 5 );
 	CHECK( pol.nbSegs() == 5 );
-	pol.set( 8, 4 );
+	pol.set( 8, 4u );
 	CHECK( pol.size() == 4 );
 	CHECK( pol.nbSegs() == 4 );
 
-	CHECK_THROWS( pol.set( 1, 2 ) );
-	CHECK_THROWS( pol.set( 0, 5 ) );
-	CHECK_THROWS( pol.set( -5, 5 ) );
-	CHECK_THROWS( pol.set( 5, -5 ) );
+	CHECK_THROWS( pol.set( 1,  2u ) );
+	CHECK_THROWS( pol.set( 0,  5u ) );
+	CHECK_THROWS( pol.set( -5, 5u ) );
+	CHECK_THROWS( pol.set( 5,  0u ) );
 }
 
 TEST_CASE( "Polyline setParallelogram", "[polyline-setParallelogram]" )
