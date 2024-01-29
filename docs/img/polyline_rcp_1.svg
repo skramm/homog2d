@@ -1,13 +1,27 @@
-<svg version="1.1" width="450" height="200" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<svg version="1.1" width="550" height="250" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
 <style>
 .txt1 { font: bold 12px sans-serif; };
 </style>
-<line x1="95" y1="100" x2="105" y2="100" stroke="rgb(80,80,80)" stroke-width="1" />
-<line x1="100" y1="95" x2="100" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
-<line x1="275" y1="100" x2="285" y2="100" stroke="rgb(80,80,80)" stroke-width="1" />
-<line x1="280" y1="95" x2="280" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
-<circle cx="100" cy="100" r="64.7214" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
-<circle cx="280" cy="100" r="90.0969" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
-<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="180,100 124.721,176.085 35.2786,147.023 35.2786,52.9772 124.721,23.9155 "/>
-<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="380,100 342.349,178.183 257.748,197.493 189.903,143.388 189.903,56.6116 257.748,2.50721 342.349,21.8169 "/>
+<line x1="105" y1="120" x2="115" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="110" y1="115" x2="110" y2="125" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="355" y1="120" x2="365" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="360" y1="115" x2="360" y2="125" stroke="rgb(80,80,80)" stroke-width="1" />
+<circle cx="110" cy="120" r="80.9017" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
+<circle cx="360" cy="120" r="90.0969" stroke="rgb(50,150,50)" stroke-width="1" fill="none" />
+<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="210,120 140.902,215.106 29.0983,178.779 29.0983,61.2215 140.902,24.8943 "/>
+<polygon stroke="rgb(250,0,0)" stroke-width="1" fill="none" points="460,120 422.349,198.183 337.748,217.493 269.903,163.388 269.903,76.6116 337.748,22.5072 422.349,41.8169 "/>
+<circle cx="210" cy="120" r="4" stroke="rgb(0,0,200)" stroke-width="1" fill="none" />
+<circle cx="460" cy="120" r="4" stroke="rgb(0,0,200)" stroke-width="1" fill="none" />
+<line x1="110" y1="120" x2="210" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="360" y1="120" x2="460" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<text x="160" y="120" font-size="20px" fill="#505050">100</text>
+<text x="410" y="120" font-size="20px" fill="#505050">100</text>
+<line x1="161.127" y1="229.8" x2="230.225" y2="134.695" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="444.873" y1="209.03" x2="482.524" y2="130.847" stroke="rgb(80,80,80)" stroke-width="1" />
+<text x="195.676" y="182.247" font-size="20px" fill="#505050">117.6</text>
+<text x="463.699" y="169.939" font-size="20px" fill="#505050">86.8</text>
+<line x1="44.5492" y1="72.4472" x2="110" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="278.826" y1="159.092" x2="360" y2="120" stroke="rgb(80,80,80)" stroke-width="1" />
+<text x="77.2746" y="96.2236" font-size="20px" fill="#505050">80.9</text>
+<text x="319.413" y="139.546" font-size="20px" fill="#505050">90.1</text>
 </svg>

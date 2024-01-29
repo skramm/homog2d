@@ -38,26 +38,20 @@ int main( int, char** )
 		{ {0,0},{3,2},{1,4} }
 	);
 
-	Segment seg;
 	CPolyline cpol( vecpts );
 	OPolyline opol( vecpts );
-	Circle cir;
-	FRect rect;
-	Point2d pt;
-	Line2d line;
-	Ellipse ell;
 
 	img::Image<img::SvgImage> im;
 	std::vector<std::shared_ptr<rtp::Root>> vec;
 
-	vec.push_back( std::make_shared<Circle>(cir) );
-	vec.push_back( std::make_shared<Segment>(seg) );
-	vec.push_back( std::make_shared<FRect>(rect) );
-	vec.push_back( std::make_shared<Line2d>(line) );
-	vec.push_back( std::make_shared<Point2d>(pt) );
-	vec.push_back( std::make_shared<Ellipse>(ell) );
-	vec.push_back( std::make_shared<CPolyline>(cpol) );
-	vec.push_back( std::make_shared<OPolyline>(opol) );
+	vec.push_back( std::make_shared<Circle>(   Circle()  ) );
+	vec.push_back( std::make_shared<Segment>(  Segment() ) );
+	vec.push_back( std::make_shared<FRect>(    FRect()   ) );
+	vec.push_back( std::make_shared<Line2d>(   Line2d()  ) );
+	vec.push_back( std::make_shared<Point2d>(  Point2d() ) );
+	vec.push_back( std::make_shared<Ellipse>(  Ellipse() ) );
+	vec.push_back( std::make_shared<CPolyline>( cpol     ) );
+	vec.push_back( std::make_shared<OPolyline>( opol     ) );
 
 	for( auto& e: vec )  // demonstration of polymorphic member functions
 	{
@@ -79,7 +73,6 @@ int main( int, char** )
 			std::cout << "pl2 area=" << pl2->area() << '\n';
 */
 		}
-
 	}
 	im.write( "BUILD/dummy.svg" );
 }

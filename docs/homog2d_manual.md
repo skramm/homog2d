@@ -810,16 +810,18 @@ auto b2 = p2.isClosed(); // always true
 ```
 
 Both types provide access to basic attributes:
-number of points, number of segments, length, and bounding box, all available as member or free functions:
+number of points, number of segments, length and bounding box, all available as member or free functions:
 ```C++
 auto n1 = pl.size();  // nb of points
 auto n2 = size(pl);
 auto s1 = pl.nbSegs(); // nb of segments
 auto s2 = nbSegs(pl);
 
-auto length1 = pl.length(); // or  length(pl);
-auto rect1 = pl.getBB();    // or  getBB(pl);
+auto length1 = pl.length();   // or  length(pl);
+auto rect1   = pl.getBB();    // or  getBB(pl);
 ```
+
+#### 3.4.3 - Extracting data
 
 You can extract either points or segments.
 The number of segments is related to the open/close condition.
@@ -832,7 +834,7 @@ auto pt = pl.getPoint( i );   // will throw if point i non-existent
 auto seg = pl.getSegment( i );   // will throw if segment i non-existent
 ```
 
-#### 3.4.3 - Bounding Box and Convex Hull
+#### 3.4.4 - Bounding Box and Convex Hull
 
 The `getBB()` member (or free) function returns the corresponding Bounding Box.
 this is demonstrated in the following figures for two `Polyline` objects, one closed, the other open.
@@ -847,7 +849,7 @@ The convex hull of a Polyline can be computed with the member function `convexHu
 [see here](#convex-hull-ff) for an example.
 
 
-#### 3.4.4 - Extremum points
+#### 3.4.5 - Extremum points
 <a name="poly_extremum_points"></a>
 
 You can get the top-most, left-most, bottom-most, or right-most point with these dedicated member functions:
@@ -887,7 +889,7 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 
 **Warning**: These functions will throw if passed an empty polyline object.
 
-#### 3.4.5 - Distance between two Polyline objects
+#### 3.4.6 - Distance between two Polyline objects
 
 You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
 This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
@@ -899,9 +901,13 @@ auto pidx = closest.getIndexes(); // get the indexes related to poly1, poly2
 ```
 See [an example here](homog2d_showcase.md#sc14).
 
-#### 3.4.6 - Type of Polyline
+#### 3.4.7 - Type of Polyline
 
-You can check if it fullfilths the requirements to be a polygon (must be closed and no intersections).
+You can check if it fullfilths the requirements to be a **simple polygon** (must be closed and no intersections).
+<br>
+See [definition here](https://en.wikipedia.org/wiki/Simple_polygon)).
+
+
 If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
@@ -912,6 +918,8 @@ if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
 }
 ```
 
+**warning**: function name will change in next release for `isSimple()`
+
 Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
@@ -920,10 +928,10 @@ CPolyline plo;
 OPolyline plc;
 // ... set points
 std::cout << pls.isConvex() ? "is convex\n" : "is NOT convex\n"; // or free function: isConvex(plc)
-assert( !plo.isConvex() ); // open is not a polygon, so it can't be convex
+assert( !plo.isConvex() ); // open is not a Simple Polygon, so it can't be convex
 ```
 
-#### 3.4.7 - Comparison of Polyline objects
+#### 3.4.8 - Comparison of Polyline objects
 
 Polyline objects can be compared, however the behavior differs whether it is closed or not.
 Consider these two sets of points:
@@ -961,7 +969,7 @@ B: `(0,0)-(0,3)-(1,3)-(0,0)-(3,0)-(3,1)`
 For more details, see [homog2d_Polyline.md](homog2d_Polyline.md).
 
 
-#### 3.4.8 - Rotation/mirroring
+#### 3.4.9 - Rotation/mirroring
 <a name="polyline_rotate"></a>
 
 All the primitives can be rotated using a homography (see following section), but in some situations you may only need "quarter-circle" rotations (mutiples of 90°).
@@ -995,7 +1003,7 @@ poly.rotate( Rotate::CW, org ); // or free function: rotate( poly, Rotate::CW, o
 ```
 
 
-#### 3.4.9 - Building a Parallelogram
+#### 3.4.10 - Building a Parallelogram
 <a name="build_parallelo"></a>
 
 The member function `setParallelogram()` takes 3 points (may be of different floating-point types) and builds the corresponding parallelogram by computing the missing 4th point.
@@ -1006,7 +1014,7 @@ Is only available for "closed" type.
 [(source)](../misc/showcase/showcase18.cpp)
 
 
-#### 3.4.9 - Building a Regular Convex Polygon (RCP)
+#### 3.4.11 - Building a Regular Convex Polygon (RCP)
 <a name="set_RCP"></a>
 
 The member function `set( dist, nb )` will build a Regular Convex Polygon of `nb` points, that will be at a distance `dist` from center.
@@ -1024,7 +1032,7 @@ The minimum value for `nb` is 3, the function will throw if less.
 
 [source](../misc/figures_src/src/polyline_rcp_1.cpp)
 
-#### 3.4.11 - Importing from boost::geometry
+#### 3.4.12 - Importing from boost::geometry
 <a name="boost_geom_1"></a>
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
@@ -2262,7 +2270,7 @@ This will add a common base class `rtp::Root` to all the geometric primitives.
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 
 
-Check test file [homog2d_test_rtp.cpp](../misc/test_files/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
+Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
 
 Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
