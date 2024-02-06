@@ -63,7 +63,7 @@ This will copy that file in `/usr/local/include`.
 
 - Usage: see [full manual](docs/homog2d_manual.md), or [Doxygen-generated pages online](https://codedocs.xyz/skramm/homog2d).
 
-- Reference: once downloaded, enter `$ make doc` (requires Doxygen), or [read online](https://codedocs.xyz/skramm/homog2d.svg).
+- Reference: once downloaded, enter `$ make doc` (requires Doxygen), or [read online](https://codedocs.xyz/skramm/homog2d).
 
 - A test file is provided, needs [Catch2](https://github.com/catchorg/Catch2).
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
