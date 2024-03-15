@@ -6259,19 +6259,22 @@ template<typename PLT,typename FPT>
 template<typename FPT2,typename T>
 std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 PolylineBase<PLT,FPT>::impl_set_RCP(
-	FPT2 rad,  ///< Radius
-	T    n,    ///< Nb of points
-	const typename detail::PlHelper<type::IsClosed>& )
+	FPT2 rad,   ///< Radius
+	T    ni,    ///< Nb of points
+	const typename detail::PlHelper<type::IsClosed>&
+)
 {
 	static_assert(
-		std::is_unsigned<T>::value && std::is_integral<T>::value,
-		"2nd argument type must be unsigned integral type"
+//		std::is_unsigned<T>::value && std::is_integral<T>::value,
+		std::is_integral<T>::value,
+		"2nd argument type must be integral type"
 	);
-	if( n < 3 )
+	if( ni < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
 	if( rad <= 0  )
 		HOMOG2D_THROW_ERROR_1( "unable, radius must be >= 0" );
 
+	size_t n(ni);
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
 	auto it = std::begin( v_pts );
 	auto angle0 = (HOMOG2D_INUMTYPE)2. * M_PI / n;
