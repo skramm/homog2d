@@ -86,6 +86,7 @@
 		<Unit filename="figures_src/src/circles1.cpp" />
 		<Unit filename="figures_src/src/comparison_svg_opencv.cpp" />
 		<Unit filename="figures_src/src/convex_hull.cpp" />
+		<Unit filename="figures_src/src/demo_pip.cpp" />
 		<Unit filename="figures_src/src/fig_src.header" />
 		<Unit filename="figures_src/src/frect1.cpp" />
 		<Unit filename="figures_src/src/frect2.cpp" />
