@@ -37,8 +37,8 @@ void drawFig( const P& poly, const BB& bb, const Point2d& pt, const Point2d* pt2
 	}
 	if( source_seg )
 		source_seg->draw( im, DrawParams().setThickness(2).setColor( 0,255,0) );
+	im.drawText( std::to_string(n), Point2d(10,20), DrawParams() );
 
-	im.drawText( std::to_string(n), Point2d(10,20) );
 	std::ostringstream oss;
 	oss << "demo_pip_" << n << ".svg";
 	im.write( oss.str() );
@@ -72,7 +72,7 @@ int main()
 // considered point is exactly in the center of the polygon
 	Point2d pt(5,5);
 
-	auto H = Homogr().addTranslation(20,20).addScale(8);
+	auto H = Homogr().addTranslation(15,15).addScale(8);
 	auto poly = H*pol;
 	auto pt0 = H * pt;
 	auto bbe = getBB( poly ).getExtended();
