@@ -671,6 +671,7 @@ public:
 	}
 	DrawParams& setPointSize( uint8_t ps )
 	{
+		_dpValues._pointSize = ps;
 		_dpValues._ptDelta = ps;
 		return *this;
 	}

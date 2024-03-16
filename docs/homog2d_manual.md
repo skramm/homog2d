@@ -1870,7 +1870,7 @@ The available functions are given in the table below:
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
-`setFontSize()`   | int (size in pixels)     |  Only for `putText()`  |
+`setFontSize()`   | int (size in pixels)     | Only used for `drawText()`  |
 
 For Svg back-end only, the user my add some specific Svg attributes with `setAttribString()`.
 For example:
