@@ -602,6 +602,22 @@ enum class PtStyle: uint8_t
 	Dot     ///< dot (circle)
 };
 
+inline
+const char* getString( PtStyle t )
+{
+	const char* s=0;
+	switch( t )
+	{
+		case PtStyle::Plus:  s="Plus";  break;
+		case PtStyle::Times: s="Times"; break;
+		case PtStyle::Star:  s="Star";  break;
+		case PtStyle::Diam:  s="Diam";  break;
+		case PtStyle::Dot:   s="Dot";   break;
+		default: assert(0);
+	}
+	return s;
+}
+
 //------------------------------------------------------------------
 /// Draw parameters, independent of back-end library
 class DrawParams
@@ -671,6 +687,7 @@ public:
 	}
 	DrawParams& setPointSize( uint8_t ps )
 	{
+		_dpValues._pointSize = ps;
 		_dpValues._ptDelta = ps;
 		return *this;
 	}
