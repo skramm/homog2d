@@ -19,10 +19,10 @@ void drawFig( const P& poly, const BB& bb, const Point2d& pt, const Point2d* pt2
 	if( pt2 )
 	{
 		auto seg = Segment( pt, *pt2 );
-		std::cout << seg << "\n";
+//		std::cout << seg << "\n";
 		seg.draw( im, DrawParams().setColor(0,0,250)  );
 		auto inter = seg.intersects( poly );
-		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(3).setPointSize(15);
+		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(2).setPointSize(10);
 		pt2->draw( im, color );
 		if( inter() )
 		{
