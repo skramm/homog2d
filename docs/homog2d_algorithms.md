@@ -94,6 +94,10 @@ starting with the extended bounding box (see FRect_::getExtended() ), we take ea
 If not, we check the following.
 If none of the segments fit, we double the number of segments by splitting each of them, and reiterate, until we find a suitable point on the extended BB edge to build our reference segment.
 
+This is illustrated on this figure:
+
+[![demo_pip](img/demo_pip.gif)](../misc/figures_src/src/demo_pip.cpp)
+
 Of course, their must be a stopping criterion for this iterative method.
 The number of iterations is determined by the symbol `HOMOG2D_MAXITER_PIP` (default value = 5), that you can define.
 If the function is unable to find a "good" reference segment after that threshold, it will throw an error.

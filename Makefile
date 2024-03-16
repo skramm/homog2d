@@ -264,6 +264,8 @@ BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 doc_fig: $(DOC_IMAGES_PNG)
+	convert -delay 80 BUILD/img/png/demo_pip_* BUILD/img/png/demo_pip.gif
+
 
 #=======================================================================
 # Generation of the doc figures from LaTeX sources

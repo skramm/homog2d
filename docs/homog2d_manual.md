@@ -1872,6 +1872,15 @@ The available functions are given in the table below:
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     | Only used for `drawText()`  |
 
+
+| width | png (OpenCv) |   svg  |
+|-------|--------------|--------|
+|   1   | ![demo_pt](img/drawparams_1.png) | ![demo_pt](img/drawparams_1.svg) |
+|   2   | ![demo_pt](img/drawparams_2.png) | ![demo_pt](img/drawparams_2.svg) |
+
+
+[source](../misc/figures_src/src/drawparams_checking.cpp)
+
 For Svg back-end only, the user my add some specific Svg attributes with `setAttribString()`.
 For example:
 ```C++

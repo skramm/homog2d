@@ -58,9 +58,22 @@ void process( img::Image<T>& im, std::string fn, int width )
 		}
 		pt.set( getX(pt)+deltax, y0+deltay );
 	}
+
+	pt.set( x0+nbSize*deltax, y0+deltay );
+	auto newPointStyle = img::PtStyle::Plus;
+	for( int i=0;i<nbTypes; i++ )
+	{
+		auto npts = static_cast<int>(newPointStyle)+1;
+		drawText( im, getString(newPointStyle), pt, textColor );
+
+		newPointStyle = static_cast<img::PtStyle>(npts);
+		if( npts == static_cast<int>( img::PtStyle::Dot )+1 )
+			newPointStyle = img::PtStyle::Plus;
+		pt.translate(0,deltay);
+	}
+
 	im.write( fn );
 }
-
 
 /// Used to check the drawing parameters for points
 int main()

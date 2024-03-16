@@ -31,9 +31,6 @@
 		<Unit filename="../.github/doxygen-gh-pages.yml" />
 		<Unit filename="../.github/workflows/c-cpp.yml" />
 		<Unit filename="../.github/workflows/msvc.yml" />
-		<Unit filename="../.travis.yml">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="../Makefile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
