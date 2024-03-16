@@ -4,45 +4,73 @@
 
 #include "fig_src.header"
 
-/// Used to check the drawing parameters for points
-/// \todo issue here, the size is not used for type PtStyle::Dot
-int main()
+template<typename T>
+void process( img::Image<T>& im, std::string fn, int width )
 {
 	img::DrawParams dp;
-//	dp.setThickness(1).showPoints().showIndex();
-	dp.setThickness(1).showPoints();
+	dp.setColor(220,220,220);
 	dp.setDefault();
-
-	img::Image<SvgImage> im1( 400,300 );
-	img::Image<cv::Mat>  im2( 400,300 );
-
-
-	dp.setColor( 250,0,0);
-	img::PtStyle newPointStyle = img::PtStyle::Plus;
 
 	int x0=30;
 	int y0=40;
-	int deltax=25;
-	int deltay=30;
-	Point2d pt( x0, 30 );
+	int deltax=50;
+	int deltay=42;
+	Point2d pt( x0, y0 );
 
-	for( int j=0;j<5; j++ )
+	int nbSize = 5;
+	int nbTypes = (int)img::PtStyle::Dot + 1;
+
+// grid: vertical lines
+	Line2d lv(pt, Point2d(x0,nbSize*deltay));
+	auto textColor = DrawParams().setColor(0,0,0);
+	for( int j=0;j<nbSize; j++ )
 	{
-		pt.set( x0, y0 );
+		lv.draw( im );
+		lv=Homogr(deltax,0)*lv;
 		int s = 3 + j*2;
-		im2.drawText( std::to_string(s), pt, DrawParams() ); /// \todo check why default arg not implemented !!
-		pt.translate(deltax,0 );
-		for( int i=0;i<=(int)img::PtStyle::Dot; i++ )
+		im.drawText( std::to_string(s), Point2d( pt.getX()-5, pt.getY()), textColor );
+		pt.translate( deltax, 0 );
+	}
+
+// grid: horizontal lines
+	pt.translate(0,deltay);
+	Line2d lh(pt, Point2d(nbTypes*deltax,y0+deltay) );
+	for( int i=0;i<nbTypes; i++ )
+	{
+		lh.draw( im );
+		lh=Homogr(0,deltay)*lh;
+	}
+
+	auto color = DrawParams().setColor(0,0,250).setThickness(width);
+	pt.set( x0, y0+deltay );
+	for( int j=0;j<nbSize; j++ )
+	{
+		auto newPointStyle = img::PtStyle::Plus;
+		int s = 3 + j*2;
+		for( int i=0;i<nbTypes; i++ )
 		{
-//			std::cout << i << " color=" << dp.color() << " pt=" << pt << '\n';
-			pt.draw( im1, dp.setPointStyle( newPointStyle ).setPointSize(s) );
-			pt.draw( im2, dp.setPointStyle( newPointStyle ).setPointSize(s) );
-			newPointStyle = dp._dpValues.nextPointStyle();
+			pt.draw( im, color.setPointStyle( newPointStyle ).setPointSize(s) );
+			auto npts = static_cast<int>(newPointStyle)+1;
+			newPointStyle = static_cast<img::PtStyle>(npts);
+			if( npts == static_cast<int>( img::PtStyle::Dot )+1 )
+				newPointStyle = img::PtStyle::Plus;
 			pt.translate(0,deltay);
 		}
-		pt.translate( deltax, 0 );
-
+		pt.set( getX(pt)+deltax, y0+deltay );
 	}
-	im1.write( "drawparams_1.svg" );
-	im2.write( "drawparams_2.png" );
+	im.write( fn );
 }
+
+
+/// Used to check the drawing parameters for points
+int main()
+{
+	img::Image<SvgImage> im1( 400,300 );
+	process( im1, "drawparams_1.svg", 1 );
+	process( im1, "drawparams_2.svg", 2 );
+
+	img::Image<cv::Mat>  im2( 400,300 );
+	process( im2, "drawparams_1.png", 1 );
+	process( im2, "drawparams_2.png", 2 );
+}
+
