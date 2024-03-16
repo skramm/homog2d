@@ -8,21 +8,37 @@
 
 using namespace h2d;
 
-template<typename P,typename BB, typename PT, typename IMG>
-void drawBase( const P& poly, const BB& bb, const PT& pt, const Segment* seg, IMG& im, int n )
+template<typename P,typename BB, typename IMG>
+void drawFig( const P& poly, const BB& bb, const Point2d& pt, const Point2d* pt2, const Segment* source_seg, IMG& im, int n )
 {
 	im.clear();
 	poly.draw( im, DrawParams().setColor(250,0,20)  );
 	bb.draw( im, DrawParams().setColor(0,0,250)  );
-	pt.draw( im, DrawParams().setColor(0,250,0)  );
-	if( seg )
+	pt.draw( im, DrawParams().setColor(250,0,0)  );
+	auto polypts = poly.getPts();
+	if( pt2 )
 	{
-		std::cout << *seg << "\n";
-		seg->draw( im, DrawParams().setColor(0,0,250)  );
-		auto inter = seg->intersects( poly );
+		auto seg = Segment( pt, *pt2 );
+		std::cout << seg << "\n";
+		seg.draw( im, DrawParams().setColor(0,0,250)  );
+		auto inter = seg.intersects( poly );
+		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(3).setPointSize(15);
+		pt2->draw( im, color );
 		if( inter() )
-			inter.get()[0].draw( im, DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(3).setPointSize(15) );
+		{
+			for( const auto& ptpoly: polypts )
+				if( ptpoly == inter.get()[0] )
+				{
+					color.setColor(250,0,0);
+					break;
+				}
+			inter.get()[0].draw( im, color );
+		}
 	}
+	if( source_seg )
+		source_seg->draw( im, DrawParams().setThickness(2).setColor( 0,255,0) );
+
+	im.drawText( std::to_string(n), Point2d(10,20) );
 	std::ostringstream oss;
 	oss << "demo_pip_" << n << ".svg";
 	im.write( oss.str() );
@@ -53,7 +69,6 @@ int main()
 	};
 	CPolyline pol( vpts1 );
 
-
 // considered point is exactly in the center of the polygon
 	Point2d pt(5,5);
 
@@ -64,7 +79,7 @@ int main()
 
 	img::Image<img::SvgImage> im( 350,350 );
 
-	drawBase( poly, bbe, pt0, nullptr, im, 0 );
+	drawFig( poly, bbe, pt0, nullptr, nullptr, im, 0 );
 
 	im.write( "demo_pip_0.svg" );
 	auto bbpts = bbe.get4Pts();
@@ -73,10 +88,7 @@ int main()
 // of the extended BB does not meet the requirements
 // (the segments will intersect the polygon on one of its points)
 	for( int i=0; i<4; i++ )
-	{
-		auto seg = Segment( bbpts[i], pt0 );
-		drawBase( poly, bbe, pt0, &seg, im, i+1 );
-	}
+		drawFig( poly, bbe, pt0, &bbpts[i], nullptr, im, i+1 );
 
 // step 2: show that taking segments based on the middle point of the
 // 4 segments of the extended BB does not work either
@@ -84,19 +96,15 @@ int main()
 	for( int i=0; i<4; i++ )
 	{
 		auto ptmid = segs[i].getCenter();
-		auto seg = Segment( ptmid,  pt0 );
-		drawBase( poly, bbe, pt0, &seg, im, i+5 );
+		drawFig( poly, bbe, pt0, &ptmid, &segs[i], im, i+5 );
 	}
 
 // final step: taking the middle point of half the above segments does
 // generate a segment that does not intersect the polygon on one of its points
-	auto seg2 = segs[0];
-//	auto pt = seg2.getCenter();
-
-//	priv::printArray( bbpts );
-	draw( im, seg2.getCenter() );
-	std::cout << "PT=" << seg2.getCenter() << "\n";
-	auto seg = Segment( seg2.getCenter(), bbpts[0] );
-	drawBase( poly, bbe, pt0, &seg, im, 9 );
+	auto seg = segs[0];
+	auto seg2 = Segment( seg.getCenter(), bbpts[0] );
+	auto mid = seg2.getCenter();
+	drawFig( poly, bbe, pt0, &mid, &seg2, im, 9 );
 }
+
 
