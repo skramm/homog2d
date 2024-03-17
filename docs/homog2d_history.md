@@ -15,7 +15,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add `Vector` type (defined by dx,dy)
 
 - current master branch
-  - (nil)
+  - bugfixes:
+    - https://github.com/skramm/homog2d/issues/11
+    - https://github.com/skramm/homog2d/issues/10
 
 ## Previous releases
 

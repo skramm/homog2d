@@ -2,14 +2,12 @@
 \file
 \brief Demo of point inside polygon (PIP) algorithm
 */
-//#define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_DEBUGMODE
 #include "fig_src.header"
 
 using namespace h2d;
 
-template<typename P,typename BB, typename IMG>
-void drawFig( const P& poly, const BB& bb, const Point2d& pt, const Point2d* pt2, const Segment* source_seg, IMG& im, int n )
+template<typename IMG>
+void drawFig( const CPolyline& poly, const FRect& bb, const Point2d& pt, const Point2d* pt2, const Segment* source_seg, IMG& im, int n )
 {
 	im.clear();
 	poly.draw( im, DrawParams().setColor(250,0,20)  );
@@ -19,7 +17,6 @@ void drawFig( const P& poly, const BB& bb, const Point2d& pt, const Point2d* pt2
 	if( pt2 )
 	{
 		auto seg = Segment( pt, *pt2 );
-//		std::cout << seg << "\n";
 		seg.draw( im, DrawParams().setColor(0,0,250)  );
 		auto inter = seg.intersects( poly );
 		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(2).setPointSize(10);
@@ -101,7 +98,7 @@ int main()
 
 // final step: taking the middle point of half the above segments does
 // generate a segment that does not intersect the polygon on one of its points
-	auto seg = segs[0];
+	auto seg = segs[0]; // first segment of the extended bounding box
 	auto seg2 = Segment( seg.getCenter(), bbpts[0] );
 	auto mid = seg2.getCenter();
 	drawFig( poly, bbe, pt0, &mid, &seg2, im, 9 );

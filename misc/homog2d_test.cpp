@@ -3588,6 +3588,14 @@ TEST_CASE( "general binding", "[gen_bind]" )
 	Line2d li (mtpt); // ???
 }
 
+TEST_CASE( "SVG drawing default", "[svg_draw_default]" )
+{
+	FRect r;
+	img::Image<img::SvgImage> im;
+	r.draw( im );
+	im.write( "BUILD/dummy.svg" );
+}
+
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
 	{
@@ -3708,7 +3716,7 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 		}
 	}
 }
-#endif
+#endif // HOMOG2D_USE_SVG_IMPORT
 
 //////////////////////////////////////////////////////////////
 /////        BOOST GEOMETRY BINDING TESTS                /////
@@ -3756,7 +3764,8 @@ TEST_CASE( "boost geometry vector point export", "[bg-vpt-export]" )
 	CHECK( vout.size() == 3 );
 }
 
-#endif
+#endif // HOMOG2D_USE_BOOSTGEOM
+
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////
 //////////////////////////////////////////////////////////////
@@ -3911,5 +3920,5 @@ TEST_CASE( "Opencv binding", "[test_opencv]" )
 //		CHECK( lia == lib );
 	}
 }
-#endif
+#endif // HOMOG2D_USE_OPENCV
 

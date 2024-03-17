@@ -2272,7 +2272,7 @@ In the future, other warnings could be issued, and silenced using this symbol.
 ### 12 - Runtime Polymorphism
 <a name="section_rtp"></a>
 
-Runtime Polymorphic behavior cans be enabled for all the primitives.
+Runtime Polymorphic behavior can be enabled for all the primitives.
 It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined, see [build_options](#build_options).
 This will add a common base class `rtp::Root` to all the geometric primitives.
 
