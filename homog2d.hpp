@@ -467,7 +467,7 @@ public:
 	{
 		assert(0);
 	}
-	void drawText( std::string, Point2d_<float>, img::DrawParams dp );
+	void drawText( std::string, Point2d_<float>, img::DrawParams dp=img::DrawParams() );
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Show image on window \c wname (not available for SVG !)

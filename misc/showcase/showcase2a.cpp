@@ -38,6 +38,7 @@ int main( int argc, const char** argv )
 
 		if( a() )
 			a.get().draw( imga, color_red );
+		imga.drawText( "IoU=" + std::to_string( IoU(r1,r2) ), Point2d (20,20) );
 
 		if( (i+1)%10 == 0 )
 		{
