@@ -1725,23 +1725,34 @@ H = m;        // or call assignment operator
 
 From release 2.10, a preliminar binding is provided with
 [Boost Geometry](https://www.boost.org/doc/libs/1_81_0/libs/geometry/doc/html/index.html).
+It can be used to import Boost point types, or boost polygons.
+This is made available by defining the symbol `HOMOG2D_USE_BOOSTGEOM`.
 
 You may build a point using either of the two point types:
 
 ```C++
 namespace bg = boost::geometry;
-bg::model::point<double, 2, bg::cs::cartesian> pb1;
-bg::model::d2::point_xy<double> pt2;
+bg::model::point<double, 2, bg::cs::cartesian> pboost_1;
+bg::model::d2::point_xy<double> pboost_2;
 ...
-Point2d p1(pb1);
-Point2d p2(pb2);
-p1.set(pb1);     // this works too
-p2.set(pb2);
+Point2d p1(pboost_1);
+Point2d p2(pboost_2);
+p1.set(pboost_1);     // this works too
+p2.set(pboost_2);
 ```
 
-You can also import a polygon defined as a boost geometry type into a `CPolyline` or a `OPolyline`.
-See (a demo in this file)[../misc/test_files/bg_test_1.cpp]
+The `Cpolyline` and `OPolyline` types have a constructor that takes a Boost polygon as argument.
+See a demo in [this file](../misc/test_files/bg_test_1.cpp).
 
+Exporting of points to the Boost point types is also possible, if that latter type is Cartesian and has 2 dimensions
+(free or member function):
+
+```C++
+using boost_point = bg::model::point<double, 2, bg::cs::cartesian>;
+Point2d pt( ..., ... );
+boost_point bpta = pt.getPt<boost_point>();
+boost_point bptb = h2d::getPt<boost_point>(pt);
+```
 
 ## 8 - Drawing things
 <a name="drawing"></a>
