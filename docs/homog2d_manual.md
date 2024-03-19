@@ -1399,18 +1399,20 @@ When a segment has a point lying on another segment, such as in the figure below
 
 ![segment1](img/segment1.png)
 
-This has a consequence on rectangle intersections: when the rectangles are overlapping such as the figure below, we will have here **4** intersection points.
+This has a consequence on rectangle intersections:
+when the rectangles are overlapping such as the figure below, we will have here **4** intersection points.
 
-![frect1](img/frect1.png)
+[![frect1](img/frect1.svg)](../misc/figures_src/frect1.cpp)
 
 Similarly, in the situation as in the figure below, we will have **2** intersection points:
 
-![frect2](img/frect2.png)
+[![frect2](img/frect2.svg)](../misc/figures_src/frect2.cpp)
 
 
 ### 5.2 - Enclosing determination
 
-This library provides an answer to the question: "is this object inside this other object?", whatever their type.
+This library provides an answer to the question:
+"is this object inside this other object?", whatever their type.
 In many cases, the question doesnt really make any sense (a point cannot be inside a point, nor can a line be inside a segment),
 but to have a homogeneous interface, the code `a.isInside(b)` will always compile.
 In the nonsense situations described above, it will simply return false (as a `constexpr` value).
@@ -1476,7 +1478,8 @@ If one rectangle is inside the other one, then the union will return the largest
 For conveniency, a function `IoU()` is provided.
 It computes the ratio of the area of the intersection of two rectangles over the area of the union of these two rectangles.
 See this [WP page](https://en.wikipedia.org/wiki/Jaccard_index) where this is described.
-
+[This page](https://learnopencv.com/intersection-over-union-iou-in-object-detection-and-segmentation/)
+from OpenCV also provides all the details.
 
 ## 6 - Misc. features
 <a name="misc"></a>
@@ -1892,13 +1895,15 @@ The available functions are given in the table below:
 
 [source](../misc/figures_src/src/drawparams_checking.cpp)
 
-For Svg back-end only, the user my add some specific Svg attributes with `setAttribString()`.
+For Svg back-end only, the user can add some specific Svg attributes with `setAttribString()`.
 For example:
 ```C++
 FRect r( 100,100,200,200);
 r.draw( im, DrawParams().setAttrString("fill=\"rgb(100,200,150)\"") );
 ```
 Make sure you add valid attributes, [check here](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/Presentation).
+
+[![demo_svg_attrib](img/demo_svg_attrib.svg)](../misc/figures_src/src/demo_svg_attrib.cpp)
 
 For Opencv back-end, this is ignored.
 

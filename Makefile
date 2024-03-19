@@ -263,7 +263,10 @@ BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-doc_fig: $(DOC_IMAGES_PNG)
+doc_fig: $(DOC_IMAGES_PNG) build_gif_pip
+	@echo "done target $@"
+
+build_gif_pip:
 	convert -delay 80 BUILD/img/png/demo_pip_* BUILD/img/png/demo_pip.gif
 
 

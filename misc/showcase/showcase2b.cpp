@@ -37,6 +37,8 @@ int main( int argc, const char** argv )
 #endif
 
 		b.draw( imgb, color_red );
+		imgb.drawText( "IoU=" + std::to_string( IoU(r1,r2) ), Point2d (20,20) );
+
 		if( (i+1)%10 == 0 )
 		{
 			mul = mul*-1;
