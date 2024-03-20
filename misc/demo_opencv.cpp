@@ -25,6 +25,26 @@ Try it with <code>$ make demo</code>.
 To run a specific demo, give its number as first argument, i.e.:
 
 <code>$ BUILD/demo_opencv 4</code>.
+
+Each demo is defined by three code blocks:
+- a class definition, that inherits from class \c Data (usually named \c Params_something), and that may hold some specific data for the demo.
+- a function \c demo_something( int ), that will be run by this program, it must be added in the v_demo vector in main() function.
+- a callback function \c action_something( void* ), that may/will be called either by the mouse callback, either after each (valid) keyboard hit.
+Its argument will be
+
+To enable the mouse callback, the function \c demo_something( int ) must first instanciate the \c Params_something class
+then assign the \c action_something() function to the mouse callback:
+
+\code
+void demo_something( int demo_index)
+{
+
+	Param_something data( demo_index, "what-is-this-about" );
+	action_something( &data );                      // initial call of the "action" stuff
+	data.setMouseCB( action_something )             // assign to mouse callback
+	...
+}
+\endcode
 */
 
 #define HOMOG2D_USE_OPENCV

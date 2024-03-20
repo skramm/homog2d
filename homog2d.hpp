@@ -6669,7 +6669,7 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 }
 
 //------------------------------------------------------------------
-/// Free function, called by PolylineBase::impl_minimizePL()
+/// Private member function, called by PolylineBase::impl_minimizePL()
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
