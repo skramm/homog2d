@@ -892,7 +892,7 @@ auto right_pt = getExtremePoint( CardDir::Right, pol );
 #### 3.4.6 - Distance between two Polyline objects
 
 You can get the closest distance between two points belonging to two polyline objects with `getClosestPoints()` (free function).
-This will return an object on with you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
+This will return an object on which you can fetch the corresponding pair of points, as indexes or as points, and the distance value:
 ```C++
 auto closest = getClosestPoints( poly1, poly2 );
 auto ppts = closest.getPoints();  // get the points as a pair ("first" belongs to poly1, "second" to poly2)
@@ -905,7 +905,7 @@ See [an example here](homog2d_showcase.md#sc14).
 
 You can check if it fullfilths the requirements to be a **simple polygon** (must be closed and no intersections).
 <br>
-See [definition here](https://en.wikipedia.org/wiki/Simple_polygon)).
+See [definition here](https://en.wikipedia.org/wiki/Simple_polygon).
 
 
 If it is, you can get its area and its centroid point:
@@ -1769,11 +1769,11 @@ extended fine-tuning on how things are rendered, the goal is only to quickly see
 The user can select between two backends, both can be usable at the same time.
 They both are accessed through the templated datatype `Image`, lying in the sub-namespace `img`.
 
-The two concrete types can be used as a type with `Image` are either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type,
+The two concrete types that can be used with `Image` are either `img::SvgImage`, to generate a SVG file, or Opencv `cv::Mat` type,
 that requires that the symbol `HOMOG2D_USE_OPENCV` is defined and that the library is installed on system.
 
 The difference between these two backends is that with SVG, you may only generate a file;
-with OpenCv, you can build an interactive app, through the "HighGui" part of that library, whith mouse and keyboard callbacks.
+with OpenCv, you can build an **interactive app**, through the "HighGui" part of that library, whith mouse and keyboard callbacks.
 This is demonstrated in a [provided demo program](../misc/demo_opencv.cpp) that you can try with:
 ```
 $ make demo
