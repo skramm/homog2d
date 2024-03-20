@@ -33,14 +33,17 @@ int main( int argc, const char** argv )
 	CPolyline poly1( vpts1 );
 	CPolyline poly2( vpts2 );
 	poly2.translate(120,80);
+	poly1.translate(20,30);
 	poly2.rotate( Rotate::CCW, Point2d(150, 150) );
 
 	auto extr_col = img::DrawParams().setColor(100,250,0).setPointStyle( img::PtStyle::Dot );
 	for( int i=0; i<nbim; i++ )
 	{
-		img::Image<cv::Mat> im( 300, 220 );
-		poly1.draw( im, img::DrawParams().setColor(250,128,0) );
-		poly2.draw( im, img::DrawParams().setColor(250,0,128) );
+		img::Image<cv::Mat> im( 360, 280 );
+//		poly1.draw( im, img::DrawParams().setColor(250,128,0) );
+//		poly2.draw( im, img::DrawParams().setColor(250,0,128) );
+		im.draw( poly1, img::DrawParams().setColor(250,128,0) );
+		im.draw( poly2, img::DrawParams().setColor(250,0,128) );
 
 		auto res = poly1.intersects(poly2);  // intersection points
 		auto ptInt = res.get();
@@ -49,9 +52,12 @@ int main( int argc, const char** argv )
 
 		auto closest = getClosestPoints( poly1, poly2 );
 		auto ppts = closest.getPoints();
+		draw( im, ppts );
 		Segment( closest.getPoints() ).draw( im, img::DrawParams().setColor(0,0,250) );
+		getBB( poly1, poly2 ).draw( im, img::DrawParams().setColor(220,200,220) );
+		im.drawText( "MinDist=" + std::to_string( closest.getMinDist() ), Point2d(20,20) );
 
-		poly1.translate( 10, 6 );
+		poly1.translate( 10, 7 );
 		poly2.translate( -7, -7 );
 
 		auto c2 = poly2.centroid();

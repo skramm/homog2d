@@ -469,6 +469,9 @@ public:
 	}
 	void drawText( std::string, Point2d_<float>, img::DrawParams dp=img::DrawParams() );
 
+	template<typename U>
+	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
+
 #ifdef HOMOG2D_USE_OPENCV
 /// Show image on window \c wname (not available for SVG !)
 	void show( std::string wname )
@@ -788,6 +791,13 @@ So the drawing code checks if user has added some filling, and if so, does not a
 
 
 }; // class DrawParams
+
+template<typename IMG>
+template<typename U>
+void Image<IMG>::draw( const U& object, img::DrawParams dp )
+{
+	object.draw( *this, dp );
+}
 
 
 } // namespace img
