@@ -44,7 +44,7 @@ See https://github.com/skramm/homog2d
 #include <limits>
 #include <cstdint> // required for uint8_t
 #include <memory>  // required for std::unique_ptr
-
+#include <variant>
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
@@ -11183,6 +11183,138 @@ parsePoints( const char* pts )
 	return out;
 }
 
+/// it must point on a digit or a SVG path command, not SPC or comma
+std::string
+getNextElem( std::string str, std::string::const_iterator& it )
+{
+	std::string out;
+	auto c = *it;
+	assert( c != ' ' && c != ',' );
+	std::string commands( "MLHVCSQTAZmlhvcsqtaz" ); // allowed SVG path commands
+	bool done = false;
+	if( c >= '0' && c <= '9' )
+	{
+		do
+		{
+			c = *it;
+			out.push_back( c );
+			it++;
+			if( it==str.cend())
+				done = true;
+			if( (c < '0' || c > '9') && c != '.' )
+				done = true;
+		}
+		while( !done );
+		return out;
+	}
+	out.push_back( c );
+	it++;
+	return out;
+
+/*
+
+
+	// Iterate over matches
+	while (it != end) {
+	std::smatch match = *it;
+	char command = match[1].str()[0];
+	double x = std::stod(match[2].str());
+	double y = std::stod(match[3].str());
+	std::string value_str;*/
+}
+#if 0
+/// Helper function to import SVG path.
+/// Will return either a "svg command" ('m', 'l', ...) or a pair of coordinates
+std::pair<char,std::pair<double,double>>
+getField( std::string::const_iterator it )
+{
+	std::pair<char,std::pair<double,double>> out;
+
+//	assert( idx < str.size() );
+//	assert( str[idx] != ' ' );  // a space or comma shouldn't be
+//	assert( str[idx] != ',' );  // in first position
+	bool isDigit = false;
+	std::string value_str;
+	do
+	{
+		auto c = *it;
+		if( c >= '0' && c <= '9' )
+		{
+			isDigit = true;
+			value_str.push_back( c );
+			it++;
+		}
+		else // we have a separator
+		{
+			if( c ==  ' ' || c == ',' )
+			{
+				if( isDigit )
+				{
+					it++;
+					out = std::stod( value_str );
+				}
+				moveToNextItem();
+			}
+			else
+			{
+				out = c;
+			}
+
+	}
+	while( done );
+	return out;
+
+}
+#endif
+
+enum class PathMode { Absolute, Relative };
+
+/// Parse a "path" string, such as
+/// m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
+/// \todo find a way to handle to closing ('z') and generate either a CPolyline or a OPolyline
+std::vector<Point2d>
+parsePath( const char* s )
+{
+	std::vector<Point2d> out;
+	std::string str(s);
+	PathMode currentMode = PathMode::Absolute;
+	bool done = false;
+	auto it = str.cbegin();
+	Point2d previousPt;
+/*	do
+	{
+		auto f = getField( it );
+		auto valuePair = f.second;
+		switch( f.first )
+		{
+			case 0:
+				if( currentMode == PathMode::Absolute )
+					out.push_back( Point2d( valuePair.first, valuePair.second ) );
+				else
+					out.push_back( Point2d(
+						previousPt.getX() + valuePair.first,
+						previousPt.getY() + valuePair.second
+					);
+				previousPt = f.second;
+			break;
+
+			case 'm':
+				currentMode=PathMode::Relative;
+			break;
+			case 'M':
+				currentMode=PathMode::Absolute;
+			break;
+			case 'z':
+			case 'Z':// closing
+			break;
+		}
+	it++;
+	}
+	while( it != str.cend() );
+*/
+	return out;
+}
+
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11193,7 +11325,9 @@ class Visitor: public tinyxml2::XMLVisitor
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
-		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse
+		,T_path
+		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
 /// A map holding correspondences between type as a string and type as a SvgType.
@@ -11212,6 +11346,7 @@ public:
 		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
 		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
 		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
+		_svgTypesTable.push_back( std::make_pair("path",     T_path) );
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
@@ -11316,6 +11451,15 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = parsePoints( pts_str );
+				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
+				_vec.push_back( std::move(p) );
+			}
+			break;
+
+			case T_path:
+			{
+				auto pts_str = getAttribString( "d", e );
+				auto vec_pts = parsePath( pts_str );
 				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
 			}

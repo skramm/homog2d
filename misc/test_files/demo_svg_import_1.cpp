@@ -22,7 +22,7 @@
 
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 using namespace h2d;
 
