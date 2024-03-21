@@ -5503,6 +5503,9 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
+/// Used in PolylineBase::minimize()
+enum class PolyMinim { AngleBased, Visvalingam };
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -5906,11 +5909,11 @@ at 180° of the previous one.
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 */
 	void
-	minimize()
+	minimize( PolyMinim algo = PolyMinim::AngleBased )
 	{
 		if( size()<3 )
 			return;
-		impl_minimizePL( detail::PlHelper<PLT>() );
+		impl_minimizePL( algo, detail::PlHelper<PLT>() );
 	}
 
 /// Translate Polyline using \c dx, \c dy
@@ -6075,9 +6078,11 @@ private:
 		}
 	}
 
-	void impl_minimizePL( const detail::PlHelper<type::IsOpen>& );
-	void impl_minimizePL( const detail::PlHelper<type::IsClosed>& );
-	void p_minimizePL( PolylineBase<PLT,FPT>&, size_t istart, size_t iend );
+	void impl_minimizePL( PolyMinim, const detail::PlHelper<type::IsOpen>& );
+	void impl_minimizePL( PolyMinim, const detail::PlHelper<type::IsClosed>& );
+	void p_minimizePL( PolyMinim, size_t istart, size_t iend );
+	void p_minimizePL_angle( size_t istart, size_t iend );
+	void p_minimizePL_Visva( size_t istart, size_t iend );
 
 public:
 /// \name Operators
@@ -6672,14 +6677,90 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 /// Private member function, called by PolylineBase::impl_minimizePL()
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL( PolyMinim algo, size_t istart, size_t iend )
 {
-	auto nbpts = pl.size();
+	switch( algo )
+	{
+		case PolyMinim::AngleBased:
+			p_minimizePL_angle( istart, iend );
+		break;
+		case PolyMinim::Visvalingam:
+			p_minimizePL_Visva( istart, iend );
+		break;
+		default: assert(0);
+	}
+}
+
+//------------------------------------------------------------------
+/// Private member function, called by PolylineBase::p_minimizePL().
+/// Uses the Visvalingam algorithm
+/**
+Ref: https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
+
+Half area of triangle is given by absolute value of determinant of matrix:
+\verbatim
+| x1  y1  1 |
+| x2  y2  1 |
+| x3  y3  1 |
+\endverbatim
+
+*/
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
+{
+	auto nbpts = size();
+	HOMOG2D_LOG( "size=" << nbpts );
+	std::vector<HOMOG2D_INUMTYPE> triangleAreas( isClosed()?size():size()-2 );
+	size_t c = 0;
+
+// step 1: compute areas of	each triangle
+	for( size_t i=istart; i<iend; i++ )
+	{
+		const auto& p0 = _plinevec.at(i);
+		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
+		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+		detail::Matrix_<HOMOG2D_INUMTYPE> mat;
+		// fill mat !!
+		triangleAreas.at(c++) = homog2d_abs( mat.determ() );
+	}
+
+	priv::printVector( triangleAreas, "triangle areas" );
+
+// step 2: find minimum value
+	const auto itmin = std::min_element( triangleAreas.cbegin(), triangleAreas.cend() );
+	size_t posmin = itmin - triangleAreas.cbegin();
+
+// step 3: if minimum value above a threshold, copy all the points except the one with minimum area
+// (else, do nothing)
+	if( *itmin > 0.01 ) // TEMP
+	{
+		std::vector<Point2d_<FPT>> ptset;
+		ptset.reserve( nbpts-1 );
+		for( size_t i=0; i<nbpts; i++ )
+		{
+			if( i != posmin )
+				ptset.push_back( _plinevec.at(i++) );
+		}
+		_plinevec = std::move( ptset );
+	}
+}
+
+//------------------------------------------------------------------
+/// Private member function, called by PolylineBase::p_minimizePL().
+/// Does angle-based reduction
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::p_minimizePL_angle( size_t istart, size_t iend )
+{
+	auto nbpts = size();
+	HOMOG2D_LOG( "size=" << nbpts );
+
 // step 1: check each point to see if it is the middle point of two segments with same angle
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
 	{
-		const auto& p0 = pl._plinevec.at(i);
+		const auto& p0 = _plinevec.at(i);
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
@@ -6707,29 +6788,29 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolylineBase<PLT,FPT>& pl, size_t istart, s
 		if( vec_idx<ptset.size() ) // if there is more points to remove
 		{
 			if( ptset.at(vec_idx) != i )               // if regular point, add it
-				out.p_addPoint( pl._plinevec.at(i) );  //  to the output set
+				out.p_addPoint( _plinevec.at(i) );  //  to the output set
 			else                                       // else, we found a "middle point"
 				vec_idx++;                             // and switch to next one
 		}
 		else                                        // no more points to remove
-			out.p_addPoint( pl._plinevec.at(i) );   // so just add the point to the output set
+			out.p_addPoint( _plinevec.at(i) );   // so just add the point to the output set
 	}
-	std::swap( out, pl ); // maybe we can "move" instead?
+	std::swap( out, *this ); // maybe we can "move" instead?
 }
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinim algo, const detail::PlHelper<typename type::IsOpen>& )
 {
 	assert( size() > 2 );
-	p_minimizePL( *this, 1, size()-1 );
+	p_minimizePL( algo, 1, size()-1 );
 }
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinim algo, const detail::PlHelper<typename type::IsClosed>& )
 {
-	p_minimizePL( *this, 0, size() );
+	p_minimizePL( algo, 0, size() );
 }
 
 

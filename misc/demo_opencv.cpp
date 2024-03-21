@@ -38,10 +38,9 @@ then assign the \c action_something() function to the mouse callback:
 \code
 void demo_something( int demo_index)
 {
-
 	Param_something data( demo_index, "what-is-this-about" );
-	action_something( &data );                      // initial call of the "action" stuff
-	data.setMouseCB( action_something )             // assign to mouse callback
+	action_something( &data );                      // initial call of the "action" code
+	data.setMouseCB( action_something );            // assign to mouse callback
 	...
 }
 \endcode
@@ -49,7 +48,7 @@ void demo_something( int demo_index)
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_RTP
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1151,7 +1150,6 @@ struct Param_CIR : Data
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
-//			CPolyline pol;
 			_cpoly.setParallelogram( vpt[2], vpt[3], vpt[4] );
 			_cpoly.draw( img, img::DrawParams().setColor(120,200,0) );
 		}
@@ -1814,6 +1812,58 @@ void demo_RCP( int demidx )
 	kbloop.start( data );
 }
 
+
+//------------------------------------------------------------------
+struct Param_polyMinim : Data
+{
+	explicit Param_polyMinim( int demidx, std::string title ): Data( demidx, title )
+	{
+//		resetPolyline();
+		_cpoly.set(vpt);
+	}
+/*	void resetPolyline()
+	{
+		_cpoly.set(vpt);
+	}*/
+	PolyMinim algo = PolyMinim::AngleBased;
+	CPolyline newpol;
+};
+
+void action_polyMinim( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
+	data.clearImage();
+
+	data._cpoly.set( data.vpt );
+	draw( data.img, data.vpt );
+
+	data.newpol = data._cpoly;
+	data.newpol.minimize( data.algo );
+	data.newpol.translate( 70,30);
+
+	data._cpoly.draw( data.img, img::DrawParams().setColor(0,250,0) );
+	data.newpol.draw( data.img, img::DrawParams().setColor(250,0,0) );
+
+	drawText( data.img, "NbPts=" + std::to_string( data.newpol.size() ), Point2d(15,20) );
+	data.showImage();
+}
+
+void demo_polyMinim( int demidx )
+{
+	Param_polyMinim data( demidx, "Polygon minimization" );
+	std::cout << "Demo " << demidx << ": Polygon minimization\n";
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data.algo = PolyMinim::AngleBased; },  "algo: angle" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.algo = PolyMinim::Visvalingam; }, "algo: Visvalingam" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
+
+	kbloop.addCommonAction( action_polyMinim );
+	data.setMouseCB( action_polyMinim );
+	action_polyMinim( &data );
+	kbloop.start( data );
+}
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -1836,6 +1886,7 @@ int main( int argc, const char** argv )
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_polyMinim,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
