@@ -29,18 +29,17 @@ int main( int argc, const char** argv )
 		auto angle_r = angle * M_PI / 180.;
 		auto x1 = std::cos(angle_r)*k;
 		auto y1 = std::sin(angle_r)*k;
-//		auto r_w = r_w0 + std::sin( 2.*M_PI*i/nbim );
 
 		Point2d p0( x1+x0, y1+y0);
 		CPolyline pol1, pol2, pol3;
 		pol1.setParallelogram( p1, p2, p0 );
 		pol2.setParallelogram( p1, p0, p2 );
-//		pol3.setParallelogram( p2, p1, p0 );
+		pol3.setParallelogram( p2, p1, p0 );
 
 		Image<cv::Mat> im1( 250, 200 );
 		(Hdraw * pol1).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 250,25,20 ) );
 		(Hdraw * pol2).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 25,250,20 ) );
-//		(Hdraw * pol3).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 25,25,250 ) );
+		(Hdraw * pol3).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 25,25,250 ) );
 
 		auto drawparams = DrawParams().setPointStyle( PtStyle::Diam ).setColor( 20,0,250 );
 		(Hdraw * p0).draw(im1, drawparams );
