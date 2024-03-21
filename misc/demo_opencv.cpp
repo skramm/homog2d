@@ -1842,7 +1842,7 @@ void action_polyMinim( void* param )
 	data.newpol.translate( 70,30);
 
 	data._cpoly.draw( data.img, img::DrawParams().setColor(0,250,0) );
-	data.newpol.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	data.newpol.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
 
 	drawText( data.img, "NbPts=" + std::to_string( data.newpol.size() ), Point2d(15,20) );
 	data.showImage();

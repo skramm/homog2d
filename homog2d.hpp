@@ -3372,7 +3372,7 @@ void printVector( const std::vector<T>& v, std::string msg=std::string() )
 		std::cout << msg;
 	std::cout << " #=" << v.size() << '\n';
 	for( const auto& elem: v )
-		std::cout << elem << "-";
+		std::cout << elem << ' ';
 	std::cout << '\n';
 }
 template<typename T,size_t N>
@@ -6721,7 +6721,18 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 		detail::Matrix_<HOMOG2D_INUMTYPE> mat;
-		// fill mat !!
+
+		mat.value(0,0) = pprev.getX();
+		mat.value(0,1) = pprev.getY();
+		mat.value(0,2) = 1.;
+		mat.value(1,0) = p0.getX();
+		mat.value(1,1) = p0.getY();
+		mat.value(1,2) = 1.;
+		mat.value(2,0) = pnext.getX();
+		mat.value(2,1) = pnext.getY();
+		mat.value(2,2) = 1.;
+
+		HOMOG2D_LOG( "i=" << i << " c=" << c << " area=" << mat.determ() );
 		triangleAreas.at(c++) = homog2d_abs( mat.determ() );
 	}
 
@@ -6740,8 +6751,9 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
 		for( size_t i=0; i<nbpts; i++ )
 		{
 			if( i != posmin )
-				ptset.push_back( _plinevec.at(i++) );
+				ptset.push_back( _plinevec.at(i) );
 		}
+		HOMOG2D_LOG( "newpoly size=" << ptset.size() );
 		_plinevec = std::move( ptset );
 	}
 }
@@ -6776,14 +6788,17 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( size_t istart, size_t iend )
 	}
 
 	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
+	{
+		HOMOG2D_LOG("NoChange!" );
 		return;             // then no change
+	}
 
 // step 2: build new Polyline without those points
 	PolylineBase<PLT,FPT> out;
 	size_t vec_idx = 0;
 	for( size_t i=0; i<nbpts; i++ )
 	{
-//		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
 
 		if( vec_idx<ptset.size() ) // if there is more points to remove
 		{
