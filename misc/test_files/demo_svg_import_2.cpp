@@ -17,7 +17,8 @@
 
 /**
 \file
-\brief Demo of reading svg files. Build with `$ make demo_import`
+\brief Demo of reading svg files holding 'path' elements.
+Build with `$ make demo_import`
 */
 
 //#define HOMOG2D_DEBUGMODE
@@ -28,18 +29,12 @@ using namespace h2d;
 
 int main( int argc, const char** argv )
 {
-	std::string str("123 456 m78.9 ");
-	auto it = str.cbegin();
-	do
-	{
-		auto gne = h2d::svg::getNextElem( str, it );
-		std::cout << "gne=" << gne << '\n';
+	std::string str("123 456 m78.9 43.2 11 22 33 z");
 
-	}
-	while( it < str.cend() );
-
-
-
+std::cout << "STEP 1\n";
+	auto res = h2d::svg::parsePath( str.c_str() );
+	for( auto e: res.first )
+		std::cout << "e=" << e << '\n';
 
 	std::exit(1);
 

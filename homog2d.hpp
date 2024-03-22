@@ -35,6 +35,7 @@ See https://github.com/skramm/homog2d
 #include <set>
 #include <list>
 #include <vector>
+#include <map>
 #include <stack>
 #include <iomanip>
 #include <cassert>
@@ -11183,6 +11184,24 @@ parsePoints( const char* pts )
 	return out;
 }
 
+bool isDigit( char c )
+{
+	return ( c >= '0' && c <= '9' || c == '.' );
+}
+
+bool svgPathCommandIsAllowed(char c)
+{
+	if( c == 'M' || c == 'm' )
+		return true;
+	if( c == 'H' || c == 'h' )
+		return true;
+	if( c == 'L' || c == 'l' )
+		return true;
+	if( c == 'Z' || c == 'z' )
+		return true;
+	return false;
+
+}
 /// it must point on a digit or a SVG path command, not SPC or comma
 std::string
 getNextElem( std::string str, std::string::const_iterator& it )
@@ -11192,7 +11211,7 @@ getNextElem( std::string str, std::string::const_iterator& it )
 	assert( c != ' ' && c != ',' );
 	std::string commands( "MLHVCSQTAZmlhvcsqtaz" ); // allowed SVG path commands
 	bool done = false;
-	if( c >= '0' && c <= '9' )
+	if( isDigit(c) )
 	{
 		do
 		{
@@ -11201,7 +11220,7 @@ getNextElem( std::string str, std::string::const_iterator& it )
 			it++;
 			if( it==str.cend())
 				done = true;
-			if( (c < '0' || c > '9') && c != '.' )
+			if( !isDigit(c) )
 				done = true;
 		}
 		while( !done );
@@ -11212,8 +11231,6 @@ getNextElem( std::string str, std::string::const_iterator& it )
 	return out;
 
 /*
-
-
 	// Iterate over matches
 	while (it != end) {
 	std::smatch match = *it;
@@ -11269,50 +11286,142 @@ getField( std::string::const_iterator it )
 
 enum class PathMode { Absolute, Relative };
 
+/// Returns nb of expected values for a given SVG path command
+/// ref: https://www.w3.org/TR/SVG2/paths.html
+std::map<char,int>&
+numberValues()
+{
+	static std::map<char,int> nbval;
+	nbval['M'] = 2; // M-m
+	nbval['L'] = 2; // L-l
+	nbval['H'] = 1; // H-h
+	nbval['V'] = 1; // V-v
+	nbval['C'] = 6; // C-c !NOT HANDLED!
+	nbval['S'] = 4; // S-s !NOT HANDLED!
+	nbval['Q'] = 4; // Q-q !NOT HANDLED!
+	nbval['T'] = 2; // T t !NOT HANDLED!
+	nbval['A'] = 7; // A-a !NOT HANDLED!
+	nbval['Z'] = 0; // Z-z
+	return nbval;
+}
+
+/// Generate new point from current mode and previous point, handles absolute/relative coordinates
+Point2d_<double>
+generateNewPoint(
+	char mode,                       ///< SVG path command
+	Point2d_<double> prevPt,         ///< previous point, is needed if relative mode
+	const std::vector<double>& val   ///< numerical values that have been stored
+)
+{
+	auto nb = val.size();
+	Point2d_<double> out;
+
+// some checking to lighten up the following code, maybe can be removed afterwards
+	switch( mode )
+	{
+		case 'M':case 'm':
+		case 'L':case 'l':
+			assert( nb == 2 );
+		break;
+
+		case 'H': case 'h':
+		case 'V': case 'v':
+			assert( nb == 1 );
+		break;
+
+		default: assert(0);
+	}
+
+	switch( mode )
+	{
+		case 'M':
+		case 'L':
+			out.set( val[0], val[1] );
+		break;
+
+		case 'm':
+		case 'l':
+			out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
+		break;
+
+		case 'H':
+			out.set( val[0],                  prevPt.getY() );
+		break;
+		case 'h':
+			out.set( val[0] + prevPt.getX() , prevPt.getY() );
+		break;
+
+		case 'V':
+			out.set( prevPt.getX(), val[0]                 );
+		break;
+		case 'v':
+			out.set( prevPt.getX(), val[0] + prevPt.getY() );
+		break;
+
+		default: assert(0);
+	}
+	return out;
+}
+
 /// Parse a "path" string, such as
 /// m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
 /// \todo find a way to handle to closing ('z') and generate either a CPolyline or a OPolyline
-std::vector<Point2d>
+std::pair<std::vector<Point2d>,bool>
 parsePath( const char* s )
 {
+	char mode = 0;
 	std::vector<Point2d> out;
+	std::vector<double> values;
 	std::string str(s);
 	PathMode currentMode = PathMode::Absolute;
 	bool done = false;
 	auto it = str.cbegin();
 	Point2d previousPt;
-/*	do
+	int nbExpectedValues = -1;
+	std::string commands( "MLHVCSQTAZmlhvcsqtaz" ); // allowed SVG path commands
+	do
 	{
-		auto f = getField( it );
-		auto valuePair = f.second;
-		switch( f.first )
-		{
-			case 0:
-				if( currentMode == PathMode::Absolute )
-					out.push_back( Point2d( valuePair.first, valuePair.second ) );
-				else
-					out.push_back( Point2d(
-						previousPt.getX() + valuePair.first,
-						previousPt.getY() + valuePair.second
-					);
-				previousPt = f.second;
-			break;
+		auto e = h2d::svg::getNextElem( str, it );
+		std::cout << "read str=" << e << " length=" << e.size() << '\n';
 
-			case 'm':
-				currentMode=PathMode::Relative;
-			break;
-			case 'M':
-				currentMode=PathMode::Absolute;
-			break;
-			case 'z':
-			case 'Z':// closing
-			break;
+		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
+		{
+			std::cout << "Command " << e[0] << '\n';
+			auto pos = commands.find( e[0] );
+			if( pos == std::string::npos )
+			{
+				HOMOG2D_THROW_ERROR_1( "illegal character in SVG path element" );
+			}
+			else
+			{
+				if( pos>9) pos = pos-10; // NO !!!
+				std::cout << "pos=" <<pos << '\n';
+				mode = commands[pos];
+				nbExpectedValues = numberValues().at(mode);
+				std::cout << "nbExpectedValues=" << nbExpectedValues << '\n';
+				std::cout << "switching to mode " << mode << "\n";
+				if( !svgPathCommandIsAllowed(mode) )
+					HOMOG2D_THROW_ERROR_1( "SVT path command " << mode << " not handled" );
+			}
 		}
-	it++;
+		else // not a command, but a value
+		{
+			if( values.size() == nbExpectedValues ) // already got enough
+			{
+				auto pt = generateNewPoint( mode, previousPt, values );
+				std::cout << "new point added: " << pt << '\n';
+				out.push_back( pt );
+				previousPt = pt;
+				values.clear();
+			}
+			values.push_back( std::stod(e) );
+		}
+
 	}
-	while( it != str.cend() );
-*/
-	return out;
+	while( it < str.cend() );
+
+
+	return std::make_pair(out, true); // TMP
 }
 
 //------------------------------------------------------------------
@@ -11326,7 +11435,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// as this cannot be done with a string |-(
 	enum SvgType {
 		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse
-		,T_path
+		,T_path ///< preliminar
 		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
@@ -11459,9 +11568,17 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_path:
 			{
 				auto pts_str = getAttribString( "d", e );
-				auto vec_pts = parsePath( pts_str );
-				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
-				_vec.push_back( std::move(p) );
+				auto parse_res = parsePath( pts_str );
+				if( parse_res.second == true )
+				{
+					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
+				else
+				{
+					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
 			}
 			break;
 
