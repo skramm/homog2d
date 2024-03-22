@@ -1812,41 +1812,70 @@ void demo_RCP( int demidx )
 	kbloop.start( data );
 }
 
-
 //------------------------------------------------------------------
+/// Parameters for demo of polyline minimization
 struct Param_polyMinim : Data
 {
 	explicit Param_polyMinim( int demidx, std::string title ): Data( demidx, title )
 	{
-//		resetPolyline();
-		_cpoly.set(vpt);
+		poly_o.set(vpt);
+		poly_c.set(vpt);
+
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imWidth, _imHeight );
 	}
-/*	void resetPolyline()
+
+	void showImage()
 	{
-		_cpoly.set(vpt);
-	}*/
+		img.show( win1 );
+		img2.show( win2 );
+	}
+	void clearImage()
+	{
+		img.clear();
+		img2.clear();
+	}
+	void initPolylines()
+	{
+		poly_c.set( vpt );
+		poly_o.set( vpt );
+		newpol_c = poly_c;
+		newpol_o = poly_o;
+	}
 
+	OPolyline poly_o;
+	CPolyline poly_c;
 
+	img::Image<cv::Mat> img2;
+	std::string win2 = "Processes polyline";
+	bool pltype = true;
 	PolyMinimParams pmParams;
-	CPolyline newpol;
+	CPolyline newpol_c;
+	OPolyline newpol_o;
 };
 
 void action_polyMinim( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
 	data.clearImage();
+	data.initPolylines();
 
-	data._cpoly.set( data.vpt );
-//	draw( data.img, data.vpt );
+	data.newpol_c.minimize( data.pmParams );
+	data.newpol_o.minimize( data.pmParams );
 
-	data.newpol = data._cpoly;
-	data.newpol.minimize( data.pmParams );
-	data.newpol.translate( 70,30);
-
-	data._cpoly.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
-	data.newpol.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
-
-	drawText( data.img, "NbPts=" + std::to_string( data.newpol.size() ), Point2d(15,20) );
+	if( data.pltype )
+	{
+		data.poly_c.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
+		data.newpol_c.draw( data.img2, img::DrawParams().setColor(250,0,0).showPoints() );
+		drawText( data.img2, "NbPts=" + std::to_string( data.newpol_c.size() ), Point2d(15,20) );
+	}
+	else
+	{
+		data.poly_o.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
+		data.newpol_o.draw( data.img2, img::DrawParams().setColor(250,0,0).showPoints() );
+		drawText( data.img2, "NbPts=" + std::to_string( data.newpol_o.size() ), Point2d(15,20) );
+	}
 	data.showImage();
 }
 
@@ -1862,6 +1891,7 @@ void demo_polyMinim( int demidx )
 	kbloop.addKeyAction( 'z', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Visvalingam; }, "algo: Visvalingam" );
 	kbloop.addKeyAction( 'e', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Distance; },    "algo: Distance" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
+	kbloop.addKeyAction( 'b', [&](void*){ data.pltype = !data.pltype; }, "switch Open/Closed" );
 
 	kbloop.addCommonAction( action_polyMinim );
 	data.setMouseCB( action_polyMinim );
