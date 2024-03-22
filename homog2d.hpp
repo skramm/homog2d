@@ -5503,8 +5503,21 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
-/// Used in PolylineBase::minimize()
-enum class PolyMinim { AngleBased, Visvalingam };
+//------------------------------------------------------------------
+/// Used in base::PolylineBase::minimize(), see PolyMinimParams
+enum class PolyMinimAlgo {
+	AngleBased,   ///< removes points based on the angle between the two segments
+	Visvalingam,  ///< iterative algorithm, see https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
+	Distance
+};
+
+/// Parameters for the base::PolylineBase::minimize() function
+struct PolyMinimParams
+{
+	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased;
+	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
+	HOMOG2D_INUMTYPE _minDist    = thr::nullDistance();
+};
 
 namespace base {
 
@@ -5894,7 +5907,7 @@ public:
 	void rotate( Rotate, const Point2d_<FPT2>& );
 	void rotate( Rotate );
 
-/// Miminize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
+/// Minimize the PolylineBase: remove all points that lie in the middle of two segments with same angle.
 /**
 For example, if we have the following points ("Open" polyline):
 (0,0)-(1,0)-(2,0)<br>
@@ -5909,11 +5922,11 @@ at 180° of the previous one.
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 */
 	void
-	minimize( PolyMinim algo = PolyMinim::AngleBased )
+	minimize( PolyMinimParams params = PolyMinimParams() )
 	{
 		if( size()<3 )
 			return;
-		impl_minimizePL( algo, detail::PlHelper<PLT>() );
+		impl_minimizePL( params, detail::PlHelper<PLT>() );
 	}
 
 /// Translate Polyline using \c dx, \c dy
@@ -6078,10 +6091,11 @@ private:
 		}
 	}
 
-	void impl_minimizePL( PolyMinim, const detail::PlHelper<type::IsOpen>& );
-	void impl_minimizePL( PolyMinim, const detail::PlHelper<type::IsClosed>& );
-	void p_minimizePL( PolyMinim, size_t istart, size_t iend );
-	void p_minimizePL_angle( size_t istart, size_t iend );
+	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<type::IsOpen>& );
+	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<type::IsClosed>& );
+	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
+	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
+	void p_minimizePL_dist(  HOMOG2D_INUMTYPE, size_t istart, size_t iend );
 	void p_minimizePL_Visva( size_t istart, size_t iend );
 
 public:
@@ -6675,22 +6689,48 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::impl_minimizePL()
+/**
+- start index: 0 for closed, 1 for open
+- end index: size() for closed, size()-1 for open
+*/
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL( PolyMinim algo, size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size_t iend )
 {
-	switch( algo )
+	switch( params._algo )
 	{
-		case PolyMinim::AngleBased:
-			p_minimizePL_angle( istart, iend );
+		case PolyMinimAlgo::AngleBased:
+			p_minimizePL_angle( params._angleThres, istart, iend );
 		break;
-		case PolyMinim::Visvalingam:
+		case PolyMinimAlgo::Visvalingam:
 			p_minimizePL_Visva( istart, iend );
 		break;
+		case PolyMinimAlgo::Distance:
+			p_minimizePL_dist( params._minDist, istart, iend );
+		break;
+
 		default: assert(0);
 	}
 }
 
+//------------------------------------------------------------------
+#if 0
+namespace priv {
+
+/// free function, used in the Visvalingam algorithm
+/**
+The idea is to compute once all the areas when iterating
+(of course, when removal of a point n, areas of points n-1 and n+1 must be recomputed)
+*/
+template<typename PLT,typename FPT>
+void
+computeTrianglesArea( const PolylineBase<PLT,FPT>& poly, size_t istart, size_t iend )
+{
+
+}
+
+} // namespace priv
+#endif
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
 /// Uses the Visvalingam algorithm
@@ -6760,10 +6800,64 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
 
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
+/// Does distance-based reduction
+template<typename PLT,typename FPT>
+void
+PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart, size_t iend )
+{
+	auto nbpts = size();
+	HOMOG2D_LOG( "size=" << nbpts );
+
+// step 1: check each point to see if it is the middle point of two segments with same angle
+	std::vector<size_t> ptset;
+	for( size_t i=istart; i<iend; i++ )
+	{
+		const auto& p0 = _plinevec.at(i);
+		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
+		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+
+		auto d0 = priv::sqDist( pnext,pprev );
+		auto d1 = priv::sqDist( p0,pprev );
+		auto d2 = priv::sqDist( p0,pnext );
+
+		HOMOG2D_LOG( "pt " << i << " diff=" << homog2d_abs(d0 - d1 - d2) )
+		if( homog2d_abs( d0 - d1 - d2 ) < thres )
+			ptset.push_back( i );
+	}
+
+	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
+	{
+		HOMOG2D_LOG( "NoChange!" );
+		return;             // then no change
+	}
+
+// step 2: build new Polyline without those points
+	PolylineBase<PLT,FPT> out;
+	size_t vec_idx = 0;
+	for( size_t i=0; i<nbpts; i++ )
+	{
+		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+
+		if( vec_idx<ptset.size() ) // if there is more points to remove
+		{
+			if( ptset.at(vec_idx) != i )               // if regular point, add it
+				out.p_addPoint( _plinevec.at(i) );  //  to the output set
+			else                                       // else, we found a "middle point"
+				vec_idx++;                             // and switch to next one
+		}
+		else                                        // no more points to remove
+			out.p_addPoint( _plinevec.at(i) );   // so just add the point to the output set
+	}
+	std::swap( out, *this ); // maybe we can "move" instead?
+
+}
+
+//------------------------------------------------------------------
+/// Private member function, called by PolylineBase::p_minimizePL().
 /// Does angle-based reduction
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL_angle( size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart, size_t iend )
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
@@ -6783,13 +6877,14 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( size_t istart, size_t iend )
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-		if( homog2d_abs(a1-a2) < thr::nullAngleValue() )
+		HOMOG2D_LOG( "pt " << i << " angle=" << homog2d_abs(a1-a2)*180./M_PI << " degrees" );
+		if( homog2d_abs(a1-a2) < thres )
 			ptset.push_back( i );
 	}
 
 	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
 	{
-		HOMOG2D_LOG("NoChange!" );
+		HOMOG2D_LOG( "NoChange!" );
 		return;             // then no change
 	}
 
@@ -6815,17 +6910,17 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( size_t istart, size_t iend )
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinim algo, const detail::PlHelper<typename type::IsOpen>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename type::IsOpen>& )
 {
 	assert( size() > 2 );
-	p_minimizePL( algo, 1, size()-1 );
+	p_minimizePL( params, 1, size()-1 );
 }
 
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinim algo, const detail::PlHelper<typename type::IsClosed>& )
+PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename type::IsClosed>& )
 {
-	p_minimizePL( algo, 0, size() );
+	p_minimizePL( params, 0, size() );
 }
 
 

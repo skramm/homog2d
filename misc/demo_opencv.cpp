@@ -48,7 +48,7 @@ void demo_something( int demo_index)
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_RTP
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -1825,7 +1825,9 @@ struct Param_polyMinim : Data
 	{
 		_cpoly.set(vpt);
 	}*/
-	PolyMinim algo = PolyMinim::AngleBased;
+
+
+	PolyMinimParams pmParams;
 	CPolyline newpol;
 };
 
@@ -1835,13 +1837,13 @@ void action_polyMinim( void* param )
 	data.clearImage();
 
 	data._cpoly.set( data.vpt );
-	draw( data.img, data.vpt );
+//	draw( data.img, data.vpt );
 
 	data.newpol = data._cpoly;
-	data.newpol.minimize( data.algo );
+	data.newpol.minimize( data.pmParams );
 	data.newpol.translate( 70,30);
 
-	data._cpoly.draw( data.img, img::DrawParams().setColor(0,250,0) );
+	data._cpoly.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
 	data.newpol.draw( data.img, img::DrawParams().setColor(250,0,0).showPoints() );
 
 	drawText( data.img, "NbPts=" + std::to_string( data.newpol.size() ), Point2d(15,20) );
@@ -1852,10 +1854,11 @@ void demo_polyMinim( int demidx )
 {
 	Param_polyMinim data( demidx, "Polygon minimization" );
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
-
+	data.pmParams._minDist = 0.5;
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.algo = PolyMinim::AngleBased; },  "algo: angle" );
-	kbloop.addKeyAction( 'z', [&](void*){ data.algo = PolyMinim::Visvalingam; }, "algo: Visvalingam" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.pmParams._algo = PolyMinimAlgo::AngleBased; },  "algo: angle" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Visvalingam; }, "algo: Visvalingam" );
+	kbloop.addKeyAction( 'e', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Distance; },    "algo: Distance" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
 
 	kbloop.addCommonAction( action_polyMinim );
