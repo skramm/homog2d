@@ -6101,7 +6101,7 @@ private:
 	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
 	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
 	void p_minimizePL_dist(  HOMOG2D_INUMTYPE, size_t istart, size_t iend );
-	void p_minimizePL_Visva( size_t istart, size_t iend );
+	void p_minimizePL_Visva( PolyMinimParams, size_t istart, size_t iend );
 
 public:
 /// \name Operators
@@ -6708,7 +6708,7 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size
 			p_minimizePL_angle( params._angleThres, istart, iend );
 		break;
 		case PolyMinimAlgo::Visvalingam:
-			p_minimizePL_Visva( istart, iend );
+			p_minimizePL_Visva( params, istart, iend );
 		break;
 		case PolyMinimAlgo::Distance:
 			p_minimizePL_dist( params._minDist, istart, iend );
@@ -6719,21 +6719,59 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size
 }
 
 //------------------------------------------------------------------
+template<typename PLT,typename FPT>
+struct VisvaData
+{
+// constructor
+	VisvaData( const PolylineBase<PLT,FPT>& poly )
+	{
+		_polyp = &poly;
+	}
+	void updateAreas( size_t pos_changed )
+	{
 
-#if 0
-/// free function, used in the Visvalingam algorithm
+	}
+	void computeAreas( size_t istart, size_t iend );
+
+// data
+	std::vector<HOMOG2D_INUMTYPE> _triangleAreas;
+	const PolylineBase<PLT,FPT>*  _polyp = nullptr;
+};
+
+///used in the Visvalingam algorithm
 /**
 The idea is to compute once all the areas when iterating
 (of course, when removal of a point n, areas of points n-1 and n+1 must be recomputed)
 */
 template<typename PLT,typename FPT>
 void
-computeTrianglesArea( const PolylineBase<PLT,FPT>& poly, size_t istart, size_t iend )
+VisvaData<PLT,FPT>::computeAreas( size_t istart, size_t iend )
 {
+	_triangleAreas.resize( _polyp->isClosed()?size():size()-2 );
+	size_t c = 0;
 
+// step 1: compute areas of	each triangle
+	for( size_t i=istart; i<iend; i++ )
+	{
+		const auto& p0    = _polyp->getPoint(i);
+		const auto& pnext = _polyp->getPoint( i==nbpts-1 ? 0 : i+1 );
+		const auto& pprev = _polyp->getPoint( i==0 ? nbpts-1 : i-1 );
+		detail::Matrix_<HOMOG2D_INUMTYPE> mat;
+
+		mat.value(0,0) = pprev.getX();
+		mat.value(0,1) = pprev.getY();
+		mat.value(0,2) = 1.;
+		mat.value(1,0) = p0.getX();
+		mat.value(1,1) = p0.getY();
+		mat.value(1,2) = 1.;
+		mat.value(2,0) = pnext.getX();
+		mat.value(2,1) = pnext.getY();
+		mat.value(2,2) = 1.;
+
+		HOMOG2D_LOG( "i=" << i << " c=" << c << " area=" << mat.determ() );
+		_triangleAreas.at(c++) = homog2d_abs( mat.determ() );
+	}
 }
-
-#endif
 
 template<typename PLT,typename FPT>
 std::vector<Point2d_<FPT>>
@@ -6776,36 +6814,14 @@ Half area of triangle is given by absolute value of determinant of matrix:
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart, size_t iend )
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
-	std::vector<HOMOG2D_INUMTYPE> triangleAreas( isClosed()?size():size()-2 );
-	size_t c = 0;
+	VisvaData<PLT,FPT> data( *this );
+	data.computeAreas( istart, iend );
 
-// step 1: compute areas of	each triangle
-	for( size_t i=istart; i<iend; i++ )
-	{
-		const auto& p0 = _plinevec.at(i);
-		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
-		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
-		detail::Matrix_<HOMOG2D_INUMTYPE> mat;
-
-		mat.value(0,0) = pprev.getX();
-		mat.value(0,1) = pprev.getY();
-		mat.value(0,2) = 1.;
-		mat.value(1,0) = p0.getX();
-		mat.value(1,1) = p0.getY();
-		mat.value(1,2) = 1.;
-		mat.value(2,0) = pnext.getX();
-		mat.value(2,1) = pnext.getY();
-		mat.value(2,2) = 1.;
-
-		HOMOG2D_LOG( "i=" << i << " c=" << c << " area=" << mat.determ() );
-		triangleAreas.at(c++) = homog2d_abs( mat.determ() );
-	}
-
-	priv::printVector( triangleAreas, "triangle areas" );
+//	priv::printVector( triangleAreas, "triangle areas" );
 
 // step 2: find minimum value
 	const auto itmin = std::min_element( triangleAreas.cbegin(), triangleAreas.cend() );
