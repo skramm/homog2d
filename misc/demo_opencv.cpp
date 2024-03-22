@@ -1854,7 +1854,9 @@ void demo_polyMinim( int demidx )
 {
 	Param_polyMinim data( demidx, "Polygon minimization" );
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
+	data.leftClicAddPoint=true;
 	data.pmParams._minDist = 0.5;
+	data.pmParams._angleThres = 5 /* degrees */ * M_PI / 180.; //
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.pmParams._algo = PolyMinimAlgo::AngleBased; },  "algo: angle" );
 	kbloop.addKeyAction( 'z', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Visvalingam; }, "algo: Visvalingam" );

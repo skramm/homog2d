@@ -3169,6 +3169,11 @@ public:
 }; // class Circle_
 
 
+// forward declaration
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+dist( const Point2d_<FPT1>&, const Point2d_<FPT2>& );
+
 //------------------------------------------------------------------
 /// Holds private stuff
 namespace priv {
@@ -6714,9 +6719,8 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size
 }
 
 //------------------------------------------------------------------
-#if 0
-namespace priv {
 
+#if 0
 /// free function, used in the Visvalingam algorithm
 /**
 The idea is to compute once all the areas when iterating
@@ -6729,8 +6733,33 @@ computeTrianglesArea( const PolylineBase<PLT,FPT>& poly, size_t istart, size_t i
 
 }
 
-} // namespace priv
 #endif
+
+template<typename PLT,typename FPT>
+std::vector<Point2d_<FPT>>
+p_buildNewPolyline( const base::PolylineBase<PLT,FPT>& poly, const std::vector<size_t>& ptset )
+{
+	auto nbpts = poly.size();
+	std::vector<Point2d_<FPT>> out;
+	out.reserve( nbpts );
+	size_t vec_idx = 0;
+	for( size_t i=0; i<nbpts; i++ )
+	{
+		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
+
+		if( vec_idx<ptset.size() ) // if there is more points to remove
+		{
+			if( ptset.at(vec_idx) != i )           // if regular point, add it
+				out.push_back( poly.getPoint(i) );  //  to the output set
+			else                                   // else, we found a "middle point"
+				vec_idx++;                         // and switch to next one
+		}
+		else                                       // no more points to remove
+			out.push_back( poly.getPoint(i) );
+	}
+	return out;
+}
+
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
 /// Uses the Visvalingam algorithm
@@ -6801,6 +6830,10 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( size_t istart, size_t iend )
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
 /// Does distance-based reduction
+/**
+\todo Would we speed up if we did computation of squared distances, using priv::sqDist() and compare
+\$ d0^2 \$ to \$ d1^2 + d2^2 + 2 * d1 * d2 \$ ???
+*/
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart, size_t iend )
@@ -6808,7 +6841,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart,
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
 
-// step 1: check each point to see if it is the middle point of two segments with same angle
+// step 1: check each point
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
 	{
@@ -6816,40 +6849,21 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart,
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
-		auto d0 = priv::sqDist( pnext,pprev );
-		auto d1 = priv::sqDist( p0,pprev );
-		auto d2 = priv::sqDist( p0,pnext );
+		auto d0 = dist( pnext,pprev );
+		auto d1 = dist( p0,   pprev );
+		auto d2 = dist( p0,   pnext );
 
 		HOMOG2D_LOG( "pt " << i << " diff=" << homog2d_abs(d0 - d1 - d2) )
 		if( homog2d_abs( d0 - d1 - d2 ) < thres )
 			ptset.push_back( i );
 	}
 
-	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
-	{
-		HOMOG2D_LOG( "NoChange!" );
+	if( ptset.size() == 0 ) // nothing found
 		return;             // then no change
-	}
 
 // step 2: build new Polyline without those points
-	PolylineBase<PLT,FPT> out;
-	size_t vec_idx = 0;
-	for( size_t i=0; i<nbpts; i++ )
-	{
-		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
-
-		if( vec_idx<ptset.size() ) // if there is more points to remove
-		{
-			if( ptset.at(vec_idx) != i )               // if regular point, add it
-				out.p_addPoint( _plinevec.at(i) );  //  to the output set
-			else                                       // else, we found a "middle point"
-				vec_idx++;                             // and switch to next one
-		}
-		else                                        // no more points to remove
-			out.p_addPoint( _plinevec.at(i) );   // so just add the point to the output set
-	}
-	std::swap( out, *this ); // maybe we can "move" instead?
-
+	auto newPtSet = p_buildNewPolyline( *this, ptset );
+	_plinevec = std::move( newPtSet );
 }
 
 //------------------------------------------------------------------
@@ -6877,35 +6891,17 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart
 		auto a1 = std::atan2( vx1, vy1 );
 		auto a2 = std::atan2( vx2, vy2 );
 
-		HOMOG2D_LOG( "pt " << i << " angle=" << homog2d_abs(a1-a2)*180./M_PI << " degrees" );
+//		HOMOG2D_LOG( "pt " << i << " angle=" << homog2d_abs(a1-a2)*180./M_PI << " degrees" );
 		if( homog2d_abs(a1-a2) < thres )
 			ptset.push_back( i );
 	}
 
 	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
-	{
-		HOMOG2D_LOG( "NoChange!" );
 		return;             // then no change
-	}
 
 // step 2: build new Polyline without those points
-	PolylineBase<PLT,FPT> out;
-	size_t vec_idx = 0;
-	for( size_t i=0; i<nbpts; i++ )
-	{
-		HOMOG2D_LOG("ptset.size()=" << ptset.size() << " vec_idx=" << vec_idx );
-
-		if( vec_idx<ptset.size() ) // if there is more points to remove
-		{
-			if( ptset.at(vec_idx) != i )               // if regular point, add it
-				out.p_addPoint( _plinevec.at(i) );  //  to the output set
-			else                                       // else, we found a "middle point"
-				vec_idx++;                             // and switch to next one
-		}
-		else                                        // no more points to remove
-			out.p_addPoint( _plinevec.at(i) );   // so just add the point to the output set
-	}
-	std::swap( out, *this ); // maybe we can "move" instead?
+	auto newPtSet = p_buildNewPolyline( *this, ptset );
+	_plinevec = std::move( newPtSet );
 }
 
 template<typename PLT,typename FPT>
