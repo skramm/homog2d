@@ -3650,6 +3650,7 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
 //////////////////////////////////////////////////////////////
+// to run these, call make with USE_TINYXML2=Y
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
@@ -3714,6 +3715,29 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
 			CHECK( ell == *pell );
 		}
+	}
+}
+
+TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
+{
+	{                        // empty string
+		const char* s1 = "";
+		auto res = svg::parsePath( s1 );
+		CHECK( res.first.size() == 0 );
+	}
+	{
+		const char* s1 ="10 20 30 40";
+		auto res = svg::parsePath( s1 );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(30,40) );
+		CHECK( res.second == false );
+	}
+	{
+		const char* s1 ="10 20 30 40z";
+		auto res = svg::parsePath( s1 );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.second == true );
 	}
 }
 #endif // HOMOG2D_USE_SVG_IMPORT

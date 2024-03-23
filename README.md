@@ -41,6 +41,7 @@ int main()
 ```
 
 ### News ###
+- 2024-03-23: added SVG "path" element import
 - 2023-12-26: fresh 2.11 release, see https://github.com/skramm/homog2d/releases
 - 2023-11-17: added [doc index](docs/index.md)
 - 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
@@ -50,7 +51,6 @@ int main()
 - 2022-12-05: re-enabled clang compiler in test suite
 - 2022-11-23: 2.9 release
 - 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
-- 2022-08-30: added SVG import
 
 (see [history](docs/homog2d_history.md) for more)
 

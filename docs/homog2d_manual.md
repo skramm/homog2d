@@ -2171,7 +2171,12 @@ either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-At present this import subsystem only handles the `polyline` and `polygon` elements.
+
+%At present this import subsystem only handles the `polyline` and `polygon` elements.
+This import subsystem handles both the `polyline` , `polygon` and `path` elements.
+However, for the latter, the "curve" elements (path commands C, S, Q, T) are not handled.
+
+
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
 See an example of its usage in file [demo_svg_import.cpp](../misc/demo_svg_import.cpp).
 

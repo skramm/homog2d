@@ -11266,8 +11266,8 @@ enum class PathMode { Absolute, Relative };
 struct SvgPathCommand
 {
 	PathMode _absRel = PathMode::Absolute;
-	char     _command = -1;
-	uint8_t  _nbValues = 0;
+	char     _command = 'M';
+	uint8_t  _nbValues = 2;
 };
 
 /// Generate new point from current mode and previous point, handles absolute/relative coordinates
@@ -11279,7 +11279,8 @@ generateNewPoint(
 	const std::vector<double>& val       ///< numerical values that have been stored
 )
 {
-//	std::cout << "generateNewPoint(): command=" << mode._command << '\n';
+	std::cout << "generateNewPoint(): command=" << mode._command
+		<< std::hex << " hex=" << (int)mode._command << '\n';
 	auto nb = val.size();
 	Point2d_<double> out;
 
@@ -11356,13 +11357,19 @@ getCommand( char c )
 			pos = commands.find( str );
 			if( pos == std::string::npos )
 			{                                     // TODO: why are braces needed here!?!?!?!?
-				HOMOG2D_THROW_ERROR_1( "Illegal character in SVG path element:" << str );
+				HOMOG2D_THROW_ERROR_1(
+					"Illegal character in SVG path element:-" << str
+					<< "- ascii=" << std::hex << str[0]
+				);
 			}
 			else
 				out._absRel = PathMode::Relative;
 		}
 		else
-			HOMOG2D_THROW_ERROR_1( "Illegal character in SVG path element:" << str );
+			HOMOG2D_THROW_ERROR_1(
+				"Illegal character in SVG path element:-" << str
+				<< "- ascii=" << std::hex << str[0]
+			);
 	}
 	out._command = commands[pos];
 	out._nbValues = numberValues().at(commands[pos]);
@@ -11406,6 +11413,10 @@ parsePath( const char* s )
 	std::vector<Point2d> out;
 	std::vector<double> values;
 	std::string str(s);
+	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
+	if( str.size() == 0 )
+		return std::make_pair( std::vector<Point2d>(),true);
+
 	auto it = str.cbegin();
 	Point2d previousPt;
 	do
