@@ -29,7 +29,7 @@ using namespace h2d;
 
 int main( int argc, const char** argv )
 {
-	std::string str("M123 456 m78.9 43.2 11 22 33 z");
+	std::string str("M 123 456 m78.9 43.2 11 22 33 z");
 
 std::cout << "STEP 1\n";
 	auto res = h2d::svg::parsePath( str.c_str() );
