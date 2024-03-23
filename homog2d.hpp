@@ -11186,30 +11186,24 @@ parsePoints( const char* pts )
 
 bool isDigit( char c )
 {
-	return ( c >= '0' && c <= '9' || c == '.' );
+	return ( (c >= '0' && c <= '9') || c == '.' );
 }
 
 bool svgPathCommandIsAllowed(char c)
 {
-	if( c == 'M' || c == 'm' )
-		return true;
-	if( c == 'H' || c == 'h' )
-		return true;
-	if( c == 'L' || c == 'l' )
-		return true;
-	if( c == 'Z' || c == 'z' )
+	if( c == 'M' || c == 'H'|| c == 'V' || c == 'Z' )
 		return true;
 	return false;
-
 }
-/// it must point on a digit or a SVG path command, not SPC or comma
+
+/// Get next element in svg path string
+/// It must point on a digit or a SVG path command, not SPC or comma
 std::string
 getNextElem( std::string str, std::string::const_iterator& it )
 {
 	std::string out;
 	auto c = *it;
 	assert( c != ' ' && c != ',' );
-	std::string commands( "MLHVCSQTAZmlhvcsqtaz" ); // allowed SVG path commands
 	bool done = false;
 	if( isDigit(c) )
 	{
@@ -11229,62 +11223,7 @@ getNextElem( std::string str, std::string::const_iterator& it )
 	out.push_back( c );
 	it++;
 	return out;
-
-/*
-	// Iterate over matches
-	while (it != end) {
-	std::smatch match = *it;
-	char command = match[1].str()[0];
-	double x = std::stod(match[2].str());
-	double y = std::stod(match[3].str());
-	std::string value_str;*/
 }
-#if 0
-/// Helper function to import SVG path.
-/// Will return either a "svg command" ('m', 'l', ...) or a pair of coordinates
-std::pair<char,std::pair<double,double>>
-getField( std::string::const_iterator it )
-{
-	std::pair<char,std::pair<double,double>> out;
-
-//	assert( idx < str.size() );
-//	assert( str[idx] != ' ' );  // a space or comma shouldn't be
-//	assert( str[idx] != ',' );  // in first position
-	bool isDigit = false;
-	std::string value_str;
-	do
-	{
-		auto c = *it;
-		if( c >= '0' && c <= '9' )
-		{
-			isDigit = true;
-			value_str.push_back( c );
-			it++;
-		}
-		else // we have a separator
-		{
-			if( c ==  ' ' || c == ',' )
-			{
-				if( isDigit )
-				{
-					it++;
-					out = std::stod( value_str );
-				}
-				moveToNextItem();
-			}
-			else
-			{
-				out = c;
-			}
-
-	}
-	while( done );
-	return out;
-
-}
-#endif
-
-enum class PathMode { Absolute, Relative };
 
 /// Returns nb of expected values for a given SVG path command
 /// ref: https://www.w3.org/TR/SVG2/paths.html
@@ -11305,61 +11244,109 @@ numberValues()
 	return nbval;
 }
 
+enum class PathMode { Absolute, Relative };
+
+struct SvgCommand
+{
+	PathMode _absRel = PathMode::Absolute;
+	char     _command = -1;
+	uint8_t  _nbValues = 0;
+};
+
 /// Generate new point from current mode and previous point, handles absolute/relative coordinates
 Point2d_<double>
 generateNewPoint(
-	char mode,                       ///< SVG path command
+	SvgCommand mode,                 ///< SVG path command
 	Point2d_<double> prevPt,         ///< previous point, is needed if relative mode
 	const std::vector<double>& val   ///< numerical values that have been stored
 )
 {
+	std::cout << "generateNewPoint(): command=" << mode._command << '\n';
 	auto nb = val.size();
 	Point2d_<double> out;
 
 // some checking to lighten up the following code, maybe can be removed afterwards
-	switch( mode )
-	{
-		case 'M':case 'm':
-		case 'L':case 'l':
-			assert( nb == 2 );
-		break;
-
-		case 'H': case 'h':
-		case 'V': case 'v':
-			assert( nb == 1 );
-		break;
-
-		default: assert(0);
-	}
-
-	switch( mode )
+	switch( mode._command )
 	{
 		case 'M':
 		case 'L':
-			out.set( val[0], val[1] );
-		break;
-
-		case 'm':
-		case 'l':
-			out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
+			assert( nb == 2 );
 		break;
 
 		case 'H':
-			out.set( val[0],                  prevPt.getY() );
-		break;
-		case 'h':
-			out.set( val[0] + prevPt.getX() , prevPt.getY() );
+		case 'V':
+			assert( nb == 1 );
 		break;
 
-		case 'V':
-			out.set( prevPt.getX(), val[0]                 );
-		break;
-		case 'v':
-			out.set( prevPt.getX(), val[0] + prevPt.getY() );
+		case 'Z':
+			assert( nb == 0 );
 		break;
 
 		default: assert(0);
 	}
+
+	switch( mode._command )
+	{
+		case 'M':
+		case 'L':
+			if( mode._absRel == PathMode::Absolute )
+				out.set( val[0], val[1] );
+			else
+				out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
+		break;
+
+
+		case 'H':   // Horizontal
+			if( mode._absRel == PathMode::Absolute )
+				out.set( val[0],                  prevPt.getY() );
+			else
+				out.set( val[0] + prevPt.getX() , prevPt.getY() );
+		break;
+
+		case 'V':    // Vertical
+			if( mode._absRel == PathMode::Absolute )
+				out.set( prevPt.getX(), val[0]                 );
+			else
+				out.set( prevPt.getX(), val[0] + prevPt.getY() );
+		break;
+
+		default: assert(0);
+	}
+	return out;
+}
+
+SvgCommand
+getCommand( char c )
+{
+	HOMOG2D_LOG( "search command for " << c );
+
+	static std::string commands( "MLHVCSQTAZ" ); // allowed SVG path commands (and their counterparts relative)
+	SvgCommand out;
+	std::string str( 1, c);
+	HOMOG2D_LOG( " str=" << str << "#=" << str.size() );
+	auto pos = commands.find( str );
+	HOMOG2D_LOG( "pos=" << pos << " str=" << str );
+	if( pos == std::string::npos )
+	{
+		if( c>='a' && c < 'z' )
+		{
+			c = (char)((int)c+'A'-'a');
+			std::cout << "lowercase, new c=" << c << '\n';
+			str[0] = c;
+			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
+			pos = commands.find( str );
+			if( pos == std::string::npos )
+			{
+				HOMOG2D_THROW_ERROR_1( "illegal character in SVG path element:" << str );
+			}
+			else
+				out._absRel = PathMode::Relative;
+		}
+	}
+	out._command = commands[pos];
+	out._nbValues = numberValues().at(commands[pos]);
+
+	std::cout << "pos=" << pos << '\n';
 	return out;
 }
 
@@ -11369,16 +11356,14 @@ generateNewPoint(
 std::pair<std::vector<Point2d>,bool>
 parsePath( const char* s )
 {
-	char mode = 0;
+	SvgCommand mode;
 	std::vector<Point2d> out;
 	std::vector<double> values;
 	std::string str(s);
-	PathMode currentMode = PathMode::Absolute;
-	bool done = false;
+//	PathMode currentMode = PathMode::Absolute;
+//	bool done = false;
 	auto it = str.cbegin();
 	Point2d previousPt;
-	int nbExpectedValues = -1;
-	std::string commands( "MLHVCSQTAZmlhvcsqtaz" ); // allowed SVG path commands
 	do
 	{
 		auto e = h2d::svg::getNextElem( str, it );
@@ -11387,26 +11372,13 @@ parsePath( const char* s )
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
 			std::cout << "Command " << e[0] << '\n';
-			auto pos = commands.find( e[0] );
-			if( pos == std::string::npos )
-			{
-				HOMOG2D_THROW_ERROR_1( "illegal character in SVG path element" );
-			}
-			else
-			{
-				if( pos>9) pos = pos-10; // NO !!!
-				std::cout << "pos=" <<pos << '\n';
-				mode = commands[pos];
-				nbExpectedValues = numberValues().at(mode);
-				std::cout << "nbExpectedValues=" << nbExpectedValues << '\n';
-				std::cout << "switching to mode " << mode << "\n";
-				if( !svgPathCommandIsAllowed(mode) )
-					HOMOG2D_THROW_ERROR_1( "SVT path command " << mode << " not handled" );
-			}
+			mode = getCommand( e[0] );
+			if( !svgPathCommandIsAllowed(mode._command) )
+				HOMOG2D_THROW_ERROR_1( "SVG path command " << mode._command << " not handled" );
 		}
 		else // not a command, but a value
 		{
-			if( values.size() == nbExpectedValues ) // already got enough
+			if( values.size() == (size_t)mode._nbValues ) // already got enough
 			{
 				auto pt = generateNewPoint( mode, previousPt, values );
 				std::cout << "new point added: " << pt << '\n';
@@ -11416,10 +11388,8 @@ parsePath( const char* s )
 			}
 			values.push_back( std::stod(e) );
 		}
-
 	}
 	while( it < str.cend() );
-
 
 	return std::make_pair(out, true); // TMP
 }

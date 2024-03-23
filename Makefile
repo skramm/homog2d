@@ -54,6 +54,7 @@ endif
 
 ifeq ($(DEBUG),Y)
 	CXXFLAGS += -g
+	CXXFLAGS += -DHOMOG2D_DEBUGMODE
 endif
 
 #=======================================================================
