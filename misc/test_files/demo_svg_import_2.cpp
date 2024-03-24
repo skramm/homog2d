@@ -21,7 +21,7 @@
 Build with `$ make demo_import`
 */
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
 #include "../../homog2d.hpp"
 
@@ -29,24 +29,44 @@ using namespace h2d;
 
 int main( int argc, const char** argv )
 {
-//	std::string str("M 123 456 m78.9 43.2 11 22 33z");
+
 int i=0;
-	{
+/*	{
 		const char* c="";
 		auto res = h2d::svg::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
-	}
+	}*/
 	{
 		const char* c="10 20 30 40";
-		auto res = h2d::svg::parsePath( c );
+		auto res = svg::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
 	}
-
 	{
 		const char* c="M 123 456 m78.9 43.2 11 22 33z";
-		auto res = h2d::svg::parsePath( c );
+		auto res = svg::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
 	}
+	{
+		const char* c="10 20 m 1 1 1 1";
+		auto res = svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+	{
+		const char* c="10 20 m 1 1 1 1 z";
+		auto res = svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+
+
+
 	std::exit(1);
 
 	tinyxml2::XMLDocument doc;

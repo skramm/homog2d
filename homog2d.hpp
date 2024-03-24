@@ -11206,23 +11206,29 @@ bool svgPathCommandIsAllowed(char c)
 	return false;
 }
 
-/// Get next element in svg path string
+/// Get next element in svg path string.
 /// It must point on a digit or a SVG path command, not SPC or comma
 inline
 std::string
-getNextElem( std::string str, std::string::const_iterator& it )
+getNextElem( const std::string& str, std::string::const_iterator& it )
 {
 	std::string out;
-	std::cout << "getNextElem(): input:"<<str << " *it=" << *it << "\n";
+//	std::cout << "getNextElem(): input:"<<str << " *it=" << *it
+//		<< " it=" << it - str.cbegin()
+//		<< " cend=" << str.cend()
+//	<< "\n";
+
 	while( *it == ' ' || *it == ',' ) // skip spaces and commas
-	{
+//	{
 		it++;
-		std::cout << "getNextElem(): *it=" << *it << "\n";
-	}
+//		std::cout << "getNextElem(): *it=" << *it << "\n";
+//	}
+
 	if( it >= str.cend() )
-	{std::cout << "getNextElem(): return EMPTY\n";
+//	{
+//		std::cout << "getNextElem(): return EMPTY\n";
 		return out;         // return empty string
-	}
+//	}
 
 	auto c = *it;
 	bool done = false;
@@ -11239,11 +11245,11 @@ getNextElem( std::string str, std::string::const_iterator& it )
 				done = true;
 		}
 		while( !done );
-		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
+//		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
 		return out;
 	}
 	out.push_back( c );
-	std::cout << "getNextElem() END: out=" << out << " #=" << out.size() << '\n';
+//	std::cout << "getNextElem() END: out=" << out << " #=" << out.size() << '\n';
 	it++;
 	return out;
 }
@@ -11275,6 +11281,12 @@ struct SvgPathCommand
 	PathMode _absRel = PathMode::Absolute;
 	char     _command = 'M';
 	uint8_t  _nbValues = 2;
+
+	void setCommand( char c )
+	{
+		_command = c;
+		_nbValues = numberValues().at(c);
+	}
 };
 
 /// Generate new point from current mode and previous point, handles absolute/relative coordinates
@@ -11286,10 +11298,9 @@ generateNewPoint(
 	const std::vector<double>& val       ///< numerical values that have been stored
 )
 {
-	std::cout << "generateNewPoint(): command=" << mode._command
-		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
+//	std::cout << "generateNewPoint(): command=" << mode._command
+//		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
 	auto nb = val.size();
-	Point2d_<double> out;
 
 // some checking to lighten up the following code, maybe can be removed afterwards
 	switch( mode._command )
@@ -11311,6 +11322,7 @@ generateNewPoint(
 		default: assert(0);
 	}
 
+	Point2d_<double> out;
 	switch( mode._command )
 	{
 		case 'M':
@@ -11320,7 +11332,6 @@ generateNewPoint(
 			else
 				out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
 		break;
-
 
 		case 'H':   // Horizontal
 			if( mode._absRel == PathMode::Absolute )
@@ -11353,6 +11364,7 @@ getCommand( char c )
 	HOMOG2D_LOG( " str=" << str << " #=" << str.size() );
 	auto pos = commands.find( str );
 //	HOMOG2D_LOG( "pos=" << pos << " str=" << str );
+	bool invalid = false;
 	if( pos == std::string::npos )
 	{
 		if( c>='a' && c <= 'z' ) // check if lowercase
@@ -11362,30 +11374,28 @@ getCommand( char c )
 			str[0] = c;
 			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
 			pos = commands.find( str );
-			if( pos == std::string::npos )
-			{                                     // TODO: why are braces needed here!?!?!?!?
-				HOMOG2D_THROW_ERROR_1(
-					"Illegal character in SVG path element:-" << str
-					<< "- ascii=" << std::hex << str[0] << std::dec
-				);
-			}
-			else
+			if( pos != std::string::npos )
 				out._absRel = PathMode::Relative;
+			else
+				invalid = true;
 		}
 		else
-			HOMOG2D_THROW_ERROR_1(
+			invalid = true;
+	}
+	if( invalid )
+		HOMOG2D_THROW_ERROR_1(
 				"Illegal character in SVG path element:-" << str
 				<< "- ascii=" << std::hex << str[0] << std::dec
-			);
-	}
-	out._command = commands[pos];
-	out._nbValues = numberValues().at(commands[pos]);
+		);
 
-	std::cout << "pos=" << pos << " _command=" << out._command << " _nbValues=" << (int)out._nbValues << '\n';
+	out.setCommand( commands[pos] );
+
+//	std::cout << "pos=" << pos << " _command=" << out._command << " _nbValues=" << (int)out._nbValues << '\n';
 	return out;
 }
 
-/// Removes dupes in set of points. Needed when importing SVG files, sometimes they hold duplicates points
+/// Removes dupes in set of points. Needed when importing SVG files using a "path" command,
+/// because sometimes they hold duplicates points, and that can't be in polylines
 template<typename FPT>
 std::vector<Point2d_<FPT>>
 purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
@@ -11403,6 +11413,36 @@ purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 	return out;
 }
 
+struct SvgValuesBuffer
+{
+	std::vector<double> _values;
+	Point2d             _previousPt;
+
+	size_t size() const
+	{
+		return _values.size();
+	}
+
+	void storeValues( std::vector<Point2d>& out, SvgPathCommand mode )
+	{
+		if( _values.size() != (size_t)mode._nbValues )
+			HOMOG2D_THROW_ERROR_1(
+				"SVG path command: inconsistency with stored values, expected "
+				<< (size_t)mode._nbValues << ", got "
+				<< _values.size()
+			);
+		auto pt = generateNewPoint( mode, _previousPt, _values );
+		HOMOG2D_LOG( "new point added: " << pt );
+		out.push_back( pt );
+		_previousPt = pt;
+		_values.clear();
+	}
+	void addValue( std::string elem )
+	{
+		_values.push_back( std::stod(elem) );
+	}
+
+};
 
 /// Parse a SVG "path" string and convert it to a set of points
 /**
@@ -11418,41 +11458,40 @@ parsePath( const char* s )
 {
 	SvgPathCommand mode;
 	std::vector<Point2d> out;
-	std::vector<double> values;
+	SvgValuesBuffer values;
+//	std::vector<double> values;
 	std::string str(s);
 	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
 	if( str.size() == 0 )
-		return std::make_pair( std::vector<Point2d>(),true);
+		HOMOG2D_THROW_ERROR_1( "SVG path string is empty" );
 
 	auto it = str.cbegin();
 	Point2d previousPt;
 	do
 	{
-		auto e = h2d::svg::getNextElem( str, it );
-//		std::cout << "read str=" << e << " length=" << e.size() << '\n';
+		auto e = svg::getNextElem( str, it );
 		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
-//			std::cout << "Command " << e[0] << '\n';
+			if( values.size() != 0 )              // if we have some values stored,
+				values.storeValues( out, mode );  //  first process them an add new point
+
 			mode = getCommand( e[0] );
 			if( !svgPathCommandIsAllowed(mode._command) )
-				HOMOG2D_THROW_ERROR_1( "SVG path command " << mode._command << " not handled" );
+				HOMOG2D_THROW_ERROR_1( "SVG path command -" << mode._command << "- not handled" );
+
 		}
 		else // not a command, but a value
 		{
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values
-			{
-				auto pt = generateNewPoint( mode, previousPt, values );
-//				std::cout << "new point added: " << pt << '\n';
-				out.push_back( pt );
-				previousPt = pt;
-				values.clear();
-			}
-			values.push_back( std::stod(e) );
+				values.storeValues( out, mode );
+			values.addValue( e );
 		}
 	}
 	while( it < str.cend() );
+	if( values.size() )
+		values.storeValues( out, mode );
 
 //priv::printVector( out, "point set", true );
 

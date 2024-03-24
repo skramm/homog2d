@@ -3722,8 +3722,7 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 {
 	{                        // empty string
 		const char* s1 = "";
-		auto res = svg::parsePath( s1 );
-		CHECK( res.first.size() == 0 );
+		CHECK_THROWS( svg::parsePath( s1 ) );
 	}
 	{
 		const char* s1 ="10 20 30 40";
@@ -3739,6 +3738,7 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 		CHECK( res.first.size() == 2 );
 		CHECK( res.second == true );
 	}
+
 }
 #endif // HOMOG2D_USE_SVG_IMPORT
 
