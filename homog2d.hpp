@@ -11213,10 +11213,16 @@ std::string
 getNextElem( std::string str, std::string::const_iterator& it )
 {
 	std::string out;
+	std::cout << "getNextElem(): input:"<<str << " *it=" << *it << "\n";
 	while( *it == ' ' || *it == ',' ) // skip spaces and commas
+	{
 		it++;
+		std::cout << "getNextElem(): *it=" << *it << "\n";
+	}
 	if( it >= str.cend() )
+	{std::cout << "getNextElem(): return EMPTY\n";
 		return out;         // return empty string
+	}
 
 	auto c = *it;
 	bool done = false;
@@ -11233,6 +11239,7 @@ getNextElem( std::string str, std::string::const_iterator& it )
 				done = true;
 		}
 		while( !done );
+		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
 		return out;
 	}
 	out.push_back( c );
@@ -11280,7 +11287,7 @@ generateNewPoint(
 )
 {
 	std::cout << "generateNewPoint(): command=" << mode._command
-		<< std::hex << " hex=" << (int)mode._command << '\n';
+		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
 	auto nb = val.size();
 	Point2d_<double> out;
 
@@ -11359,7 +11366,7 @@ getCommand( char c )
 			{                                     // TODO: why are braces needed here!?!?!?!?
 				HOMOG2D_THROW_ERROR_1(
 					"Illegal character in SVG path element:-" << str
-					<< "- ascii=" << std::hex << str[0]
+					<< "- ascii=" << std::hex << str[0] << std::dec
 				);
 			}
 			else
@@ -11368,7 +11375,7 @@ getCommand( char c )
 		else
 			HOMOG2D_THROW_ERROR_1(
 				"Illegal character in SVG path element:-" << str
-				<< "- ascii=" << std::hex << str[0]
+				<< "- ascii=" << std::hex << str[0] << std::dec
 			);
 	}
 	out._command = commands[pos];
@@ -11423,6 +11430,7 @@ parsePath( const char* s )
 	{
 		auto e = h2d::svg::getNextElem( str, it );
 //		std::cout << "read str=" << e << " length=" << e.size() << '\n';
+		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{

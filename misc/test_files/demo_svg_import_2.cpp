@@ -30,20 +30,23 @@ using namespace h2d;
 int main( int argc, const char** argv )
 {
 //	std::string str("M 123 456 m78.9 43.2 11 22 33z");
+int i=0;
 	{
 		const char* c="";
-		auto res1 = h2d::svg::parsePath( c );
+		auto res = h2d::svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
 	}
 	{
 		const char* c="10 20 30 40";
-		auto res1 = h2d::svg::parsePath( c );
+		auto res = h2d::svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
 	}
 
-	std::string str("M 123 456 m78.9 43.2 11 22 33z");
-	auto res = h2d::svg::parsePath( str.c_str() );
-	for( auto e: res.first )
-		std::cout << "e=" << e << '\n';
-
+	{
+		const char* c="M 123 456 m78.9 43.2 11 22 33z";
+		auto res = h2d::svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+	}
 	std::exit(1);
 
 	tinyxml2::XMLDocument doc;
