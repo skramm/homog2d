@@ -21,7 +21,7 @@
 Build with `$ make demo_import`
 */
 
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
 #include "../../homog2d.hpp"
 
@@ -44,7 +44,7 @@ int i=0;
 		priv::printVector( res.first, "", true );
 	}
 	{
-		const char* c="M 123 456 m78.9 43.2 11 22 33z";
+		const char* c="M 123 456 m1.5 1 L 11 22z";
 		auto res = svg::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
 		std::cout << (res.second?"closed":"open") << '\n';

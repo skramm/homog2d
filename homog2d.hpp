@@ -11201,61 +11201,43 @@ bool isDigit( char c )
 inline
 bool svgPathCommandIsAllowed(char c)
 {
-	if( c == 'M' || c == 'H'|| c == 'V' || c == 'Z' )
+	if( c == 'M' || c == 'L' || c == 'H'|| c == 'V' || c == 'Z' )
 		return true;
 	return false;
 }
 
 /// Get next element in svg path string.
-/// It must point on a digit or a SVG path command, not SPC or comma
 inline
 std::string
 getNextElem( const std::string& str, std::string::const_iterator& it )
 {
 	std::string out;
-//	std::cout << "getNextElem(): input:"<<str << " *it=" << *it
-//		<< " it=" << it - str.cbegin()
-//		<< " cend=" << str.cend()
-//	<< "\n";
-
 	while( *it == ' ' || *it == ',' ) // skip spaces and commas
-//	{
 		it++;
-//		std::cout << "getNextElem(): *it=" << *it << "\n";
-//	}
 
 	if( it >= str.cend() )
-//	{
-//		std::cout << "getNextElem(): return EMPTY\n";
 		return out;         // return empty string
-//	}
 
-	auto c = *it;
-	bool done = false;
-	if( isDigit(c) )
+	if( !isDigit(*it) )        // alpha character
 	{
-		do
-		{
-			c = *it;
-			out.push_back( c );
-			it++;
-			if( it>=str.cend())
-				done = true;
-			if( !isDigit(c) )
-				done = true;
-		}
-		while( !done );
-//		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
-		return out;
+		out.push_back( *it );
+		it++;
 	}
-	out.push_back( c );
-//	std::cout << "getNextElem() END: out=" << out << " #=" << out.size() << '\n';
-	it++;
+	else
+	{
+		while( isDigit(*it) && it < str.cend() )
+		{
+			out.push_back( *it );
+			it++;
+		}
+//		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
+//		return out;
+	}
 	return out;
 }
 
-/// Returns nb of expected values for a given SVG path command
-/// ref: https://www.w3.org/TR/SVG2/paths.html
+/// Returns nb of expected values for a given SVG path command.
+/// Ref: https://www.w3.org/TR/SVG2/paths.html
 inline
 std::map<char,int>&
 numberValues()
@@ -11281,7 +11263,10 @@ struct SvgPathCommand
 	PathMode _absRel = PathMode::Absolute;
 	char     _command = 'M';
 	uint8_t  _nbValues = 2;
-
+	bool isAbsolute() const
+	{
+		return _absRel == PathMode::Absolute ? true : false;
+	}
 	void setCommand( char c )
 	{
 		_command = c;
@@ -11301,7 +11286,8 @@ generateNewPoint(
 //	std::cout << "generateNewPoint(): command=" << mode._command
 //		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
 	auto nb = val.size();
-
+//	priv::printVector( val,"generateNewPoint()" );
+	HOMOG2D_LOG( "abs/rel=" << (mode.isAbsolute()?"ABS":"REL") );
 // some checking to lighten up the following code, maybe can be removed afterwards
 	switch( mode._command )
 	{
@@ -11309,16 +11295,13 @@ generateNewPoint(
 		case 'L':
 			assert( nb == 2 );
 		break;
-
 		case 'H':
 		case 'V':
 			assert( nb == 1 );
 		break;
-
 		case 'Z':
 			assert( nb == 0 );
 		break;
-
 		default: assert(0);
 	}
 
@@ -11327,21 +11310,21 @@ generateNewPoint(
 	{
 		case 'M':
 		case 'L':
-			if( mode._absRel == PathMode::Absolute )
+			if( mode.isAbsolute() )
 				out.set( val[0], val[1] );
 			else
 				out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
 		break;
 
 		case 'H':   // Horizontal
-			if( mode._absRel == PathMode::Absolute )
+			if( mode.isAbsolute() )
 				out.set( val[0],                  prevPt.getY() );
 			else
 				out.set( val[0] + prevPt.getX() , prevPt.getY() );
 		break;
 
 		case 'V':    // Vertical
-			if( mode._absRel == PathMode::Absolute )
+			if( mode.isAbsolute() )
 				out.set( prevPt.getX(), val[0]                 );
 			else
 				out.set( prevPt.getX(), val[0] + prevPt.getY() );
@@ -11413,6 +11396,8 @@ purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 	return out;
 }
 
+/// This will hold the values read from the SVG Path parsing code, before they are
+/// converted to points
 struct SvgValuesBuffer
 {
 	std::vector<double> _values;
@@ -11425,6 +11410,7 @@ struct SvgValuesBuffer
 
 	void storeValues( std::vector<Point2d>& out, SvgPathCommand mode )
 	{
+		HOMOG2D_LOG( "" );
 		if( _values.size() != (size_t)mode._nbValues )
 			HOMOG2D_THROW_ERROR_1(
 				"SVG path command: inconsistency with stored values, expected "
@@ -11484,6 +11470,7 @@ parsePath( const char* s )
 		}
 		else // not a command, but a value
 		{
+			HOMOG2D_LOG( "process value, values size=" << values.size() );
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values
 				values.storeValues( out, mode );
 			values.addValue( e );

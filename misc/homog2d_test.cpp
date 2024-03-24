@@ -3738,7 +3738,36 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 		CHECK( res.first.size() == 2 );
 		CHECK( res.second == true );
 	}
-
+	{
+		const char* s1 ="10 20 m 1 2 3 4z";  //relative
+		auto res = svg::parsePath( s1 );
+		CHECK( res.first.size() == 3 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(11,22) );
+		CHECK( res.first[2] == Point2d(14,26) );
+		CHECK( res.second == true );
+	}
+	{
+		const char* s1 ="10 20 H 30 40";  //horizontal line
+		auto res = svg::parsePath( s1 );
+		CHECK( res.first.size() == 3 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(30,20) );
+		CHECK( res.first[2] == Point2d(40,20) );
+		CHECK( res.second == false);
+	}
+	{
+		const char* s1 ="10"; // missing second value
+		CHECK_THROWS( svg::parsePath( s1 ) );
+	}
+	{
+		const char* s1 ="10 20 30"; // missing second value
+		CHECK_THROWS( svg::parsePath( s1 ) );
+	}
+	{
+		const char* s1 ="M10 20 C 30"; // C command not handled
+		CHECK_THROWS( svg::parsePath( s1 ) );
+	}
 }
 #endif // HOMOG2D_USE_SVG_IMPORT
 
