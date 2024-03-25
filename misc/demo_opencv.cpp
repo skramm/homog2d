@@ -1723,14 +1723,20 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
+void printFailure( std::exception& e )
+{
+	std::cout << "Unable to build BB, err=" << e.what() << "\n";
+}
+
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
 	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
 	{}
 	Circle cir;
-	FRect rect;
-	Segment seg;
+	FRectF rect;
+	SegmentF seg;
+	Point2d pt_other;
 	Type _type = Type::Circle;
 };
 void action_BB( void* param )
@@ -1739,10 +1745,12 @@ void action_BB( void* param )
 	data.clearImage();
 	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
 	auto style = img::DrawParams().setColor(0,250,0);
-
+	data._cpoly.set( data.vpt );
 	data.cir.set( data.vpt[1],80 );
 	data.rect.set( data.vpt[1], data.vpt[2] );
-	data.seg.set( data.vpt[1], data.vpt[2] );
+	try { data.seg.set( data.vpt[1], data.vpt[2] ); }
+	catch( std::exception& e )
+	{ printFailure( e ); }
 
 	data._pt_mouse.draw( data.img );
 	data.vpt[0].draw( data.img, ptStyle );
@@ -1753,56 +1761,67 @@ void action_BB( void* param )
 		case Type::Circle:
 			data.cir.draw( data.img, style );
 			data.cir.center().draw( data.img, ptStyle );
-			bb = getBB( data.cir, data.vpt[0] );
+			try{ bb = getBB( data.cir, data.vpt[0] ); }
+			catch( std::exception& e )
+			{ printFailure( e ); }
 		break;
 
 		case Type::FRect:
 			data.rect.draw( data.img, style );
 			data.img.draw( data.rect.getPts(), ptStyle );
-			bb = getBB( data.rect, data.vpt[0] );
+			try{ bb = getBB( data.rect, data.vpt[0] ); }
+			catch( std::exception& e )
+			{ printFailure( e ); }
 		break;
 
 		case Type::CPolyline:
 			data._cpoly.draw( data.img, style.showPoints() );
-//			data.img.draw( data.rect.getPts(), ptStyle );
-			bb = getBB( data._cpoly, data.vpt[0] );
+			try{ bb = getBB( data._cpoly, data.vpt[0] ); }
+			catch( std::exception& e )
+			{ printFailure( e ); }
 		break;
+
 		case Type::Segment:
 			data.seg.draw( data.img, style.showPoints() );
-//			data.img.draw( data.rect.getPts(), ptStyle );
-			bb = getBB( data.seg, data.vpt[0] );
+			try{ bb = getBB( data.seg, data.vpt[0] ); }
+			catch( std::exception& e )
+			{ printFailure( e ); }
+		break;
+
+		case Type::Point2d:
+			data.pt_other.draw( data.img, style );
+			try{ bb = getBB( data.pt_other, data.vpt[0] ); }
+			catch( std::exception& e )
+			{ printFailure( e ); }
 		break;
 	}
 
 	bb.draw( data.img );
 	data.showImage();
 }
+
 void demo_BB( int demidx )
 {
-	Param_BB data( demidx, "Bounding Box demo" );
+	Param_BB data( demidx, "Point Bounding Box demo" );
 	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
-	Move the red points to see the corresponding bounding box\n";
+	Move the red points to see the common bounding box of point and other element.\n";
 	data.cir = Circle( data.vpt[1],80 );
 	data.rect.set( data.vpt[1], data.vpt[2] );
-
+//	data._cpoly.set( data.vpt );
+	data.pt_other.set ( 120, 140 );
 	data.setMouseCB( action_BB );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'p', [&](void*){ data._type = Type::Point2d; },   "Points" );
-	kbloop.addKeyAction( 'c', [&](void*){ data._type = Type::Circle; },    "Circle" );
-	kbloop.addKeyAction( 'r', [&](void*){ data._type = Type::FRect; },     "FRect" );
-	kbloop.addKeyAction( 'l', [&](void*){ data._type = Type::CPolyline; }, "CPolyline" );
-	kbloop.addKeyAction( 's', [&](void*){ data._type = Type::Segment; },   "Segment" );
-/*	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
-	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
-	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
-*/
+	kbloop.addKeyAction( 'w', [&](void*){ data._type = Type::Point2d; },   "Points" );
+	kbloop.addKeyAction( 'x', [&](void*){ data._type = Type::Circle; },    "Circle" );
+	kbloop.addKeyAction( 'c', [&](void*){ data._type = Type::FRect; },     "FRect" );
+	kbloop.addKeyAction( 'v', [&](void*){ data._type = Type::CPolyline; }, "CPolyline" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._type = Type::Segment; },   "Segment" );
 	kbloop.addCommonAction( action_BB );
+
 	action_BB( &data );
 	kbloop.start( data );
-
 }
-
 
 //------------------------------------------------------------------
 struct Param_RCP : Data
