@@ -2123,7 +2123,7 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `rtp::Root`.
 You can determine the actual type of the object by using the abstract `type()` function.
 It will return an enum value of type `Type` having one of these values:<br>
-`Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
 
 At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
 And you can get a human-readable value ot the object type with `getString(Type)`:

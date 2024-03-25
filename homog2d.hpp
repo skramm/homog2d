@@ -471,6 +471,9 @@ public:
 
 	template<typename U>
 	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
+	template<typename U,typename V>
+	void draw( const std::pair<U,V>& p_objects, img::DrawParams dp=img::DrawParams() );
+
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Show image on window \c wname (not available for SVG !)
@@ -799,6 +802,14 @@ void Image<IMG>::draw( const U& object, img::DrawParams dp )
 	object.draw( *this, dp );
 }
 
+template<typename IMG>
+template<typename U,typename V>
+void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
+{
+	pairp.first.draw( *this, dp );
+	pairp.second.draw( *this, dp );
+}
+
 
 } // namespace img
 
@@ -1060,13 +1071,20 @@ public:
 /**
 It is necessary in a run-time polymorphism context, as we would have build failures if a given type
 disallows providing such a method
-(for example, when trying to check if some object is inside an open polyline).
+(for example, when trying to check if some object is inside an open polyline, which makes no sense).
 */
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
 		HOMOG2D_START;
 		return false;
+	}
+
+	template<typename T>
+	FRect_<T> getBB() const
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute BB for object of type " << getString(this->type) );
+		return FRect_<T>(); // to avoid a compile warning
 	}
 };
 
@@ -9377,7 +9395,7 @@ namespace priv {
 /// Returns Bounding Box of two rectangles (private free function)
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
-getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
+p_getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 {
 // first, convert them to internal numerical type
 // (same type is needed to use std::min/max)
@@ -9391,19 +9409,153 @@ getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
 }
+
+/// Return bounding box of a FRect_ and a Point2d_
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+p_getPtBB( const Point2d_<FPT1>& pt, const FRect_<FPT2>& bb )
+{
+	auto ppts = bb.getPts();
+
+	auto min_x = std::min( ppts.first.getX(),  pt.getX() );
+	auto min_y = std::min( ppts.first.getY(),  pt.getY() );
+	auto max_x = std::max( ppts.second.getX(), pt.getX() );
+	auto max_y = std::max( ppts.second.getY(), pt.getY() );
+
+	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+}
+
 } // namespace priv
 
-/// Returns Bounding Box of two arbitrary objects. Can be of different types (free function)
-/**
-- available only for Circles, Ellipse, FRect, Polyline
-*/
-template<typename T1,typename T2>
+
+/// Return Bounding Box of two objects, version used when both of the args are points
+template<typename FPT1,typename FPT2>
+FRect_<FPT1>
+getBB( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
+{
+	FRect_<FPT1> bb;
+	try
+	{
+		bb = FRect_<FPT1>( pt1, pt2 );
+	}
+	catch( const std::runtime_error& err )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute Bounding Box of the two points:\n -"
+			<< pt1 << "\n -" << pt2 << "\n msg=" << err.what()
+		);
+	}
+	return bb;
+}
+
+/// Return Bounding Box of two objects, first arg is point, second is neither a line or a point
+template<
+	typename FPT,
+	typename T,
+	typename std::enable_if<
+			(!std::is_same<T,Line2d_<typename T::FType>>::value && !std::is_same<T,Point2d_<typename T::FType>>::value)
+		,T
+	>::type* = nullptr
+>
+FRect_<FPT>
+getBB( const Point2d_<FPT>& pt, const T& elem )
+{
+	return priv::p_getPtBB( pt, elem.getBB() );
+}
+/// Return Bounding Box of two objects, first arg is neither a line or a point, second is a point
+template<
+	typename FPT,
+	typename T,
+	typename std::enable_if<
+			(!std::is_same<T,Line2d_<typename T::FType>>::value && !std::is_same<T,Point2d_<typename T::FType>>::value)
+		,T
+	>::type* = nullptr
+>
+FRect_<FPT>
+getBB( const T& elem, const Point2d_<FPT>& pt )
+{
+	return priv::p_getPtBB( pt, elem.getBB() );
+}
+/*
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(
+			(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
+			&&
+			(!std::is_same<T1,Point2d_<typename T1::FType>>::value && !std::is_same<T2,Point2d_<typename T2::FType>>::value)
+		)
+		,T1
+	>::type* = nullptr
+>
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
-	auto r1 = elem1.getBB();
-	auto r2 = elem2.getBB();
-	return priv::getBB( r1, r2 );
+	return FRect_<typename T1::FType>();
+}
+*/
+
+/// Returns Bounding Box of two arbitrary objects (free function).
+/// Can be of different types, EXCEPT Line2d
+/**
+(because a line does not have a bounding box)
+
+- available only for Circles, Ellipse, FRect, Polyline, Point2d (if no identical coordinates)
+*/
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
+		,T1
+	>::type* = nullptr
+>
+FRect_<typename T1::FType>
+getBB( const T1& elem1, const T2& elem2 )
+{
+#if 0
+	auto t1 = elem1.getBB();
+	auto t2 = elem2.getBB();
+	return priv::p_getBB( t1, t2 );
+#else
+	if( elem1.type() != Type::Point2d && elem2.type() != Type::Point2d )  // none of the args are points
+		return priv::p_getBB( elem1, elem2 );
+
+/*	if( elem1.type() == Type::Point2d && elem2.type() == Type::Point2d ) // both of the args are points
+	{
+		FRect_<typename T1::FType> bb;
+		try
+		{
+			bb = FRect_<typename T1::FType>( elem1, elem2 );
+		}
+		catch( const std::runtime_error& err )
+		{
+			HOMOG2D_THROW_ERROR_1( "unable to compute Bounding Box of the two points:\n -"
+				<< elem1 << "\n -" << elem2 << "\n msg=" << err.what()
+			);
+		}
+		return bb;
+	}
+
+// one of the args is a point, the other is not
+	const detail::Common<typename T1::FType>* p_point = &elem1;
+	const detail::Common<typename T1::FType>* p_other = &elem2;
+	if( elem2.type() == Type::Point2d )
+		std::swap( p_point, p_other );
+
+//	const Point2d_<typename T1::FType>* p_point = reinterpret_cast<const Point2d_<typename T1::FType>*>( p_point1 );
+
+	auto bb_other = p_other->getBB();
+	auto ppts = bb_other.getPts();
+
+	auto min_x = std::min( ppts.first.getX(),  p_point->getX() );
+	auto min_y = std::min( ppts.first.getY(),  p_point->getY() );
+	auto max_x = std::max( ppts.second.getX(), p_point->getX() );
+	auto max_y = std::max( ppts.second.getY(), p_point->getY() );
+
+	return FRect_<typename T1::FType>( min_x, min_y, max_x, max_y );
+*/
+#endif
 }
 
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)

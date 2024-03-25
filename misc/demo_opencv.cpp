@@ -1723,6 +1723,88 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
+/// Parameters for points Bounding Box demo
+struct Param_BB : Data
+{
+	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
+	{}
+	Circle cir;
+	FRect rect;
+	Segment seg;
+	Type _type = Type::Circle;
+};
+void action_BB( void* param )
+{
+	auto& data = *reinterpret_cast<Param_BB*>(param);
+	data.clearImage();
+	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
+	auto style = img::DrawParams().setColor(0,250,0);
+
+	data.cir.set( data.vpt[1],80 );
+	data.rect.set( data.vpt[1], data.vpt[2] );
+	data.seg.set( data.vpt[1], data.vpt[2] );
+
+	data._pt_mouse.draw( data.img );
+	data.vpt[0].draw( data.img, ptStyle );
+
+	FRect bb;
+	switch( data._type )
+	{
+		case Type::Circle:
+			data.cir.draw( data.img, style );
+			data.cir.center().draw( data.img, ptStyle );
+			bb = getBB( data.cir, data.vpt[0] );
+		break;
+
+		case Type::FRect:
+			data.rect.draw( data.img, style );
+			data.img.draw( data.rect.getPts(), ptStyle );
+			bb = getBB( data.rect, data.vpt[0] );
+		break;
+
+		case Type::CPolyline:
+			data._cpoly.draw( data.img, style.showPoints() );
+//			data.img.draw( data.rect.getPts(), ptStyle );
+			bb = getBB( data._cpoly, data.vpt[0] );
+		break;
+		case Type::Segment:
+			data.seg.draw( data.img, style.showPoints() );
+//			data.img.draw( data.rect.getPts(), ptStyle );
+			bb = getBB( data.seg, data.vpt[0] );
+		break;
+	}
+
+	bb.draw( data.img );
+	data.showImage();
+}
+void demo_BB( int demidx )
+{
+	Param_BB data( demidx, "Bounding Box demo" );
+	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
+	Move the red points to see the corresponding bounding box\n";
+	data.cir = Circle( data.vpt[1],80 );
+	data.rect.set( data.vpt[1], data.vpt[2] );
+
+	data.setMouseCB( action_BB );
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'p', [&](void*){ data._type = Type::Point2d; },   "Points" );
+	kbloop.addKeyAction( 'c', [&](void*){ data._type = Type::Circle; },    "Circle" );
+	kbloop.addKeyAction( 'r', [&](void*){ data._type = Type::FRect; },     "FRect" );
+	kbloop.addKeyAction( 'l', [&](void*){ data._type = Type::CPolyline; }, "CPolyline" );
+	kbloop.addKeyAction( 's', [&](void*){ data._type = Type::Segment; },   "Segment" );
+/*	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
+*/
+	kbloop.addCommonAction( action_BB );
+	action_BB( &data );
+	kbloop.start( data );
+
+}
+
+
+//------------------------------------------------------------------
 struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
@@ -1836,6 +1918,7 @@ int main( int argc, const char** argv )
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_BB,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point
