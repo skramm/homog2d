@@ -9520,7 +9520,7 @@ getBB( const T& elem, const Point2d_<FPT>& pt )
 /**
 (because a line does not have a bounding box)
 
-- available only for Circles, Ellipse, FRect, Polyline, Point2d, Segment (if no identical coordinates)
+- available only for Circles, Ellipse, FRect, Polyline, Segment (if no identical coordinates)
 */
 template<
 	typename T1,
@@ -9533,8 +9533,7 @@ template<
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
-	if( elem1.type() != Type::Point2d && elem2.type() != Type::Point2d )  // none of the args are points
-		return priv::p_getBB( elem1, elem2 );
+	return priv::p_getBB( getBB(elem1), getBB(elem2) );
 }
 
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)

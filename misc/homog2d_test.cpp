@@ -2761,6 +2761,21 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	CHECK( gt == osegs );
 }
 
+TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
+{
+	Point2d_<NUMTYPE> pt;
+	FRect_<NUMTYPE> r1;
+	CHECK( getBB( pt, r1 ) == r1 );
+	CHECK( getBB( r1, pt ) == r1 );
+	Segment_<NUMTYPE> seg( 0,0,1,1);
+	CHECK( getBB( seg, pt ) == r1 );
+	CHECK( getBB( pt, seg ) == r1 );
+
+	Circle_<NUMTYPE> cir;
+	pt.set( 10,0);
+	CHECK( getBB( pt, cir ) == FRect_<NUMTYPE>(-1.,-1.,+10.,+1. ) );
+}
+
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 {
 	{                              // two identical rectangles
