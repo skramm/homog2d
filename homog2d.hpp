@@ -35,6 +35,7 @@ See https://github.com/skramm/homog2d
 #include <set>
 #include <list>
 #include <vector>
+#include <map>
 #include <stack>
 #include <iomanip>
 #include <cassert>
@@ -44,7 +45,7 @@ See https://github.com/skramm/homog2d
 #include <limits>
 #include <cstdint> // required for uint8_t
 #include <memory>  // required for std::unique_ptr
-
+#include <variant>
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
@@ -3386,14 +3387,19 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 #ifdef HOMOG2D_DEBUGMODE
 template<typename T>
-void printVector( const std::vector<T>& v, std::string msg=std::string() )
+void printVector( const std::vector<T>& v, std::string msg=std::string(), bool linefeed=false )
 {
 	std::cout << "vector: ";
 	if( !msg.empty() )
 		std::cout << msg;
 	std::cout << " #=" << v.size() << '\n';
+	size_t c=0;
 	for( const auto& elem: v )
-		std::cout << elem << "-";
+	{
+		if( linefeed )
+			std::cout << c++ << ": ";
+		std::cout << elem << (linefeed?'\n':'-');
+	}
 	std::cout << '\n';
 }
 template<typename T,size_t N>
@@ -5927,6 +5933,7 @@ at 180° of the previous one.
 \todo 20230217: implement these:
 - https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+Also use the areCollinear() function
 */
 	void
 	minimize()
@@ -6094,6 +6101,7 @@ private:
 				HOMOG2D_THROW_ERROR_1(
 					"cannot add two consecutive identical points:\npt:"
 					<< elem << " and pt:" << next
+					<< " in set of size " << pts.size()
 				);
 		}
 	}
@@ -10551,6 +10559,8 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 - 1 --> Clockwise
 - 2 --> Counterclockwise
 
+\todo 20240326: this is subject to numerical instability, as it is based on differences.
+
 \todo 20230212: replace const value HOMOG2D_THR_ZERO_DETER with related static function
 */
 template<typename T>
@@ -11358,6 +11368,7 @@ tokenize( const std::string &s, char delim )
 }
 //------------------------------------------------------------------
 /// Importing rotated ellipse from SVG data
+inline
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,HOMOG2D_INUMTYPE>
 getEllipseRotateAttr( const char* rot_str )
 {
@@ -11390,6 +11401,9 @@ getEllipseRotateAttr( const char* rot_str )
 
 //------------------------------------------------------------------
 /// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
+/// \todo 20240326: this is used to import SVG polygon type. Maybe this can be replaced by
+/// the "path" import code?
+inline
 std::vector<Point2d>
 parsePoints( const char* pts )
 {
@@ -11410,6 +11424,306 @@ parsePoints( const char* pts )
 	return out;
 }
 
+/// Private functions related to the SVG import code
+namespace svgp {
+
+inline
+bool isDigit( char c )
+{
+	return ( (c >= '0' && c <= '9') || c == '.' || c == '-' );
+}
+
+inline
+bool svgPathCommandIsAllowed(char c)
+{
+	if( c == 'M' || c == 'L' || c == 'H'|| c == 'V' || c == 'Z' )
+		return true;
+	return false;
+}
+
+/// Get next element in svg path string.
+inline
+std::string
+getNextElem( const std::string& str, std::string::const_iterator& it )
+{
+	std::string out;
+	while( *it == ' ' || *it == ',' ) // skip spaces and commas
+		it++;
+
+	if( it >= str.cend() )
+		return out;         // return empty string
+
+	if( !isDigit(*it) )        // alpha character
+	{
+		out.push_back( *it );
+		it++;
+	}
+	else
+	{
+		while( isDigit(*it) && it < str.cend() )
+		{
+			out.push_back( *it );
+			it++;
+		}
+//		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
+//		return out;
+	}
+	return out;
+}
+
+/// Returns nb of expected values for a given SVG path command.
+/// Ref: https://www.w3.org/TR/SVG2/paths.html
+inline
+std::map<char,int>&
+numberValues()
+{
+	static std::map<char,int> nbval;
+	nbval['M'] = 2; // M-m
+	nbval['L'] = 2; // L-l
+	nbval['H'] = 1; // H-h
+	nbval['V'] = 1; // V-v
+	nbval['C'] = 6; // C-c !NOT HANDLED!
+	nbval['S'] = 4; // S-s !NOT HANDLED!
+	nbval['Q'] = 4; // Q-q !NOT HANDLED!
+	nbval['T'] = 2; // T t !NOT HANDLED!
+	nbval['A'] = 7; // A-a !NOT HANDLED!
+	nbval['Z'] = 0; // Z-z
+	return nbval;
+}
+
+enum class PathMode { Absolute, Relative };
+
+struct SvgPathCommand
+{
+	PathMode _absRel = PathMode::Absolute;
+	char     _command = 'M';
+	uint8_t  _nbValues = 2;
+	bool isAbsolute() const
+	{
+		return _absRel == PathMode::Absolute ? true : false;
+	}
+	void setCommand( char c )
+	{
+		_command = c;
+		_nbValues = numberValues().at(c);
+	}
+};
+
+/// Generate new point from current mode and previous point, handles absolute/relative coordinates
+inline
+Point2d_<double>
+generateNewPoint(
+	SvgPathCommand             mode,     ///< SVG path command
+	Point2d_<double>           prevPt,   ///< previous point, is needed if relative mode
+	const std::vector<double>& val       ///< numerical values that have been stored
+)
+{
+//	std::cout << "generateNewPoint(): command=" << mode._command
+//		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
+	auto nb = val.size();
+//	priv::printVector( val,"generateNewPoint()" );
+	HOMOG2D_LOG( "abs/rel=" << (mode.isAbsolute()?"ABS":"REL") );
+// some checking to lighten up the following code, maybe can be removed afterwards
+	switch( mode._command )
+	{
+		case 'M':
+		case 'L':
+			assert( nb == 2 );
+		break;
+		case 'H':
+		case 'V':
+			assert( nb == 1 );
+		break;
+		case 'Z':
+			assert( nb == 0 );
+		break;
+		default: assert(0);
+	}
+
+	Point2d_<double> out;
+	switch( mode._command )
+	{
+		case 'M':
+		case 'L':
+			if( mode.isAbsolute() )
+				out.set( val[0], val[1] );
+			else
+				out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
+		break;
+
+		case 'H':   // Horizontal
+			if( mode.isAbsolute() )
+				out.set( val[0],                  prevPt.getY() );
+			else
+				out.set( val[0] + prevPt.getX() , prevPt.getY() );
+		break;
+
+		case 'V':    // Vertical
+			if( mode.isAbsolute() )
+				out.set( prevPt.getX(), val[0]                 );
+			else
+				out.set( prevPt.getX(), val[0] + prevPt.getY() );
+		break;
+
+		default: assert(0);
+	}
+	return out;
+}
+
+inline
+SvgPathCommand
+getCommand( char c )
+{
+	HOMOG2D_LOG( "search command for " << c );
+
+	static std::string commands( "MLHVCSQTAZ" ); // allowed SVG path commands (and their counterparts relative)
+	SvgPathCommand out;
+	std::string str( 1, c );
+	HOMOG2D_LOG( " str=" << str << " #=" << str.size() );
+	auto pos = commands.find( str );
+//	HOMOG2D_LOG( "pos=" << pos << " str=" << str );
+	bool invalid = false;
+	if( pos == std::string::npos )
+	{
+		if( c>='a' && c <= 'z' ) // check if lowercase
+		{
+			c = (char)((int)c+'A'-'a');
+//			std::cout << "lowercase, new c=" << c << '\n';
+			str[0] = c;
+			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
+			pos = commands.find( str );
+			if( pos != std::string::npos )
+				out._absRel = PathMode::Relative;
+			else
+				invalid = true;
+		}
+		else
+			invalid = true;
+	}
+	if( invalid )
+		HOMOG2D_THROW_ERROR_1(
+				"Illegal character in SVG path element:-" << str
+				<< "- ascii=" << std::hex << str[0] << std::dec
+		);
+
+	out.setCommand( commands[pos] );
+
+//	std::cout << "pos=" << pos << " _command=" << out._command << " _nbValues=" << (int)out._nbValues << '\n';
+	return out;
+}
+
+/// Removes dupes in set of points. Needed when importing SVG files using a "path" command,
+/// because sometimes they hold duplicates points, and that can't be in polylines
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
+{
+	std::vector<Point2d_<FPT>> out;
+	out.reserve( pts.size() );
+	for( auto it=pts.begin(); it!=std::prev(pts.end()); it++ )
+	{
+		const auto& elem = *it;
+		const auto& next = *std::next(it);
+		if( elem != next )
+			out.push_back( elem );
+	}
+	out.push_back( pts.back() ); // add last one
+	return out;
+}
+
+/// This will hold the values read from the SVG Path parsing code, before they are
+/// converted to points
+struct SvgValuesBuffer
+{
+	std::vector<double> _values;
+	Point2d             _previousPt;
+
+	size_t size() const
+	{
+		return _values.size();
+	}
+
+	void storeValues( std::vector<Point2d>& out, SvgPathCommand mode )
+	{
+		HOMOG2D_LOG( "" );
+		if( _values.size() != (size_t)mode._nbValues )
+			HOMOG2D_THROW_ERROR_1(
+				"SVG path command: inconsistency with stored values, expected "
+				<< (size_t)mode._nbValues << ", got "
+				<< _values.size()
+			);
+		auto pt = generateNewPoint( mode, _previousPt, _values );
+		HOMOG2D_LOG( "new point added: " << pt );
+		out.push_back( pt );
+		_previousPt = pt;
+		_values.clear();
+	}
+	void addValue( std::string elem )
+	{
+		_values.push_back( std::stod(elem) );
+	}
+};
+
+/// Parse a SVG "path" string and convert it to a set of points
+/**
+Input string example:
+\verbatim
+m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
+\endverbatim
+The return value holds as 'second' a bool value, will be true if closed polyline
+*/
+inline
+std::pair<std::vector<Point2d>,bool>
+parsePath( const char* s )
+{
+	SvgPathCommand mode;
+	std::vector<Point2d> out;
+	SvgValuesBuffer values;
+//	std::vector<double> values;
+	std::string str(s);
+	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
+	if( str.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "SVG path string is empty" );
+
+	auto it = str.cbegin();
+	Point2d previousPt;
+	do
+	{
+		auto e = getNextElem( str, it );
+		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
+
+		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
+		{
+			if( values.size() != 0 )              // if we have some values stored,
+				values.storeValues( out, mode );  //  first process them an add new point
+
+			mode = getCommand( e[0] );
+			if( !svgPathCommandIsAllowed(mode._command) )
+				HOMOG2D_THROW_ERROR_1( "SVG path command -" << mode._command << "- not handled" );
+
+		}
+		else // not a command, but a value
+		{
+			HOMOG2D_LOG( "process value, values size=" << values.size() );
+			if( values.size() == (size_t)mode._nbValues ) // already got enough values
+				values.storeValues( out, mode );
+			values.addValue( e );
+		}
+	}
+	while( it < str.cend() );
+	if( values.size() )
+		values.storeValues( out, mode );
+
+//priv::printVector( out, "point set", true );
+
+	return std::make_pair(
+		purgeSetDupes( out ),
+		mode._command == 'Z' ? true : false
+	);
+}
+
+} // namespace svgp
+
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11420,14 +11734,16 @@ class Visitor: public tinyxml2::XMLVisitor
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
-		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse
+		,T_path ///< preliminar
+		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
 /// A map holding correspondences between type as a string and type as a SvgType.
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<std::unique_ptr<rtp::Root>> _vec;
+	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11439,6 +11755,7 @@ public:
 		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
 		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
 		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
+		_svgTypesTable.push_back( std::make_pair("path",     T_path) );
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
@@ -11545,6 +11862,23 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
+			}
+			break;
+
+			case T_path:
+			{
+				auto pts_str = getAttribString( "d", e );
+				auto parse_res = svgp::parsePath( pts_str );
+				if( parse_res.second == true )
+				{
+					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
+				else
+				{
+					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
 			}
 			break;
 

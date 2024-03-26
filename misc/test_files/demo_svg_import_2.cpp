@@ -17,17 +17,66 @@
 
 /**
 \file
-\brief Demo of reading svg files. Build with `$ make demo_import`
+\brief Demo of reading svg files holding 'path' elements.
+Build with `$ make demo_import`
 */
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 using namespace h2d;
 
 int main( int argc, const char** argv )
 {
+
+int i=0;
+/*	{
+		const char* c="";
+		auto res = h2d::svg::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+	}*/
+	{
+		const char* c="10 20 30 40";
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+	{
+		const char* c="M 123 456 m1.5 1 L 11 22z";
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+	{
+		const char* c="10 20 m 1 1 1 1";
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+	{
+		const char* c="10 20 m 1 1 1 1 z";
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+
+	{
+		const char* c="10 20 10 20 10 20 30 40";
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+
+
+
+	std::exit(1);
+
 	tinyxml2::XMLDocument doc;
 	if( argc < 2 )
 	{
@@ -59,7 +108,7 @@ int main( int argc, const char** argv )
 		e->draw( out );
 	out.write( "test.svg" );
 
-	auto c = 0;
+/*	auto c = 0;
 	for( const auto& p: data )
 	{
 		std::cout << ++c << ": " << getString( p->type() )
@@ -75,5 +124,5 @@ int main( int argc, const char** argv )
 			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
 		}
 		std::cout << *p << '\n';
-	}
+	}*/
 }
