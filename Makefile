@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -54,7 +54,9 @@ endif
 
 ifeq ($(DEBUG),Y)
 	CXXFLAGS += -g
+	CXXFLAGS += -DHOMOG2D_DEBUGMODE
 endif
+
 
 #=======================================================================
 # general/common targets
@@ -83,7 +85,7 @@ install:
 demo: BUILD/demo_opencv
 	BUILD/demo_opencv
 
-demo_import: BUILD/demo_svg_import
+demo_import: BUILD/demo_svg_import_1 BUILD/demo_svg_import_2
 	@echo "-done target $@"
 
 clean:
@@ -333,7 +335,7 @@ BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
 
 
 # this target requires Tinyxml2
-BUILD/demo_svg_import: misc/demo_svg_import.cpp homog2d.hpp buildf
+BUILD/demo_svg_import_%: misc/test_files/demo_svg_import_%.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -I. -o $@ $< $$(pkg-config --libs tinyxml2)
 
 
