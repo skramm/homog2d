@@ -11171,6 +11171,8 @@ getEllipseRotateAttr( const char* rot_str )
 
 //------------------------------------------------------------------
 /// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
+/// \todo 20240326: this is used to import SVG polygon type. Maybe this can be replaced by
+/// the "path" import code?
 inline
 std::vector<Point2d>
 parsePoints( const char* pts )
@@ -11191,6 +11193,9 @@ parsePoints( const char* pts )
 	}
 	return out;
 }
+
+/// Private functions related to the SVG import code
+namespace svgp {
 
 inline
 bool isDigit( char c )
@@ -11427,7 +11432,6 @@ struct SvgValuesBuffer
 	{
 		_values.push_back( std::stod(elem) );
 	}
-
 };
 
 /// Parse a SVG "path" string and convert it to a set of points
@@ -11455,7 +11459,7 @@ parsePath( const char* s )
 	Point2d previousPt;
 	do
 	{
-		auto e = svg::getNextElem( str, it );
+		auto e = getNextElem( str, it );
 		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
@@ -11488,6 +11492,8 @@ parsePath( const char* s )
 	);
 }
 
+} // namespace svgp
+
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11507,7 +11513,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<std::unique_ptr<rtp::Root>> _vec;
+	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11632,7 +11638,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_path:
 			{
 				auto pts_str = getAttribString( "d", e );
-				auto parse_res = parsePath( pts_str );
+				auto parse_res = svgp::parsePath( pts_str );
 				if( parse_res.second == true )
 				{
 					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );

@@ -21,7 +21,7 @@
 Build with `$ make demo_import`
 */
 
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
 #include "../../homog2d.hpp"
 
@@ -38,28 +38,36 @@ int i=0;
 	}*/
 	{
 		const char* c="10 20 30 40";
-		auto res = svg::parsePath( c );
+		auto res = svg::svgp::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
 		std::cout << (res.second?"closed":"open") << '\n';
 		priv::printVector( res.first, "", true );
 	}
 	{
 		const char* c="M 123 456 m1.5 1 L 11 22z";
-		auto res = svg::parsePath( c );
+		auto res = svg::svgp::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
 		std::cout << (res.second?"closed":"open") << '\n';
 		priv::printVector( res.first, "", true );
 	}
 	{
 		const char* c="10 20 m 1 1 1 1";
-		auto res = svg::parsePath( c );
+		auto res = svg::svgp::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
 		std::cout << (res.second?"closed":"open") << '\n';
 		priv::printVector( res.first, "", true );
 	}
 	{
 		const char* c="10 20 m 1 1 1 1 z";
-		auto res = svg::parsePath( c );
+		auto res = svg::svgp::parsePath( c );
+		std::cout << i++ << ": #=" << res.first.size() << '\n';
+		std::cout << (res.second?"closed":"open") << '\n';
+		priv::printVector( res.first, "", true );
+	}
+
+	{
+		const char* c="10 20 10 20 10 20 30 40";
+		auto res = svg::svgp::parsePath( c );
 		std::cout << i++ << ": #=" << res.first.size() << '\n';
 		std::cout << (res.second?"closed":"open") << '\n';
 		priv::printVector( res.first, "", true );

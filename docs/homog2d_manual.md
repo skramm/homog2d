@@ -2123,7 +2123,7 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `rtp::Root`.
 You can determine the actual type of the object by using the abstract `type()` function.
 It will return an enum value of type `Type` having one of these values:<br>
-`Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
 
 At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
 And you can get a human-readable value ot the object type with `getString(Type)`:
@@ -2171,13 +2171,12 @@ either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-
+<br>
 This import subsystem handles both the `polyline` , `polygon` and `path` elements.
 However, for the latter, the "curve" elements (SVG path commands C, S, Q, T) are not handled,
 the import code will throw if such a command is encoutered while importing a SVG path object.
-
-
-
+* When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
+that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
 See an example of its usage in file [demo_svg_import.cpp](../misc/demo_svg_import.cpp).
 
@@ -2190,8 +2189,9 @@ If you have cloned the whole repo and have `Tinyxml2` installed, you may build a
 `$ make demo_import`
 
 This will build the file `BUILD/demo_svg_import` ([source here](../misc/demo_svg_import.cpp))
-that will import any SVG file, print its content on screen,
-and generate another svg file `test.svg` in current folder.
+that will import any SVG file, print its content on screen
+(SVG general attributes and number of shapes),
+and generate another svg file `demo_import.svg` in current folder.
 
 For example:
 <br>
