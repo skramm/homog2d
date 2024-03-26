@@ -212,7 +212,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="test_files/bg_test_1.cpp" />
-		<Unit filename="test_files/demo_svg_import_1.cpp" />
+		<Unit filename="test_files/demo_svg_import.cpp" />
 		<Unit filename="test_files/demo_svg_import_2.cpp" />
 		<Unit filename="test_files/mylib.cpp" />
 		<Unit filename="test_files/mylib.hpp" />
