@@ -2171,7 +2171,6 @@ either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-<br>
 This import subsystem handles both the `polyline` , `polygon` and `path` elements.
 However, for the latter, the "curve" elements (SVG path commands C, S, Q, T) are not handled,
 the import code will throw if such a command is encoutered while importing a SVG path object.

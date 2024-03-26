@@ -5910,6 +5910,7 @@ at 180° of the previous one.
 \todo 20230217: implement these:
 - https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+Also use the areCollinear() function
 */
 	void
 	minimize()
@@ -10330,6 +10331,8 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 - 0 --> p, q and r are colinear
 - 1 --> Clockwise
 - 2 --> Counterclockwise
+
+\todo 20240326: this is subject to numerical instability, as it is based on differences.
 
 \todo 20230212: replace const value HOMOG2D_THR_ZERO_DETER with related static function
 */
