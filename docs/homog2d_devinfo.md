@@ -10,7 +10,7 @@ To get the Doxygen-generated pages, you can run:
 ```
 $ make doc
 ```
-that will produce an ""end-user" reference pages, thus ommitting some details (class private section).
+that will produce an "end-user" reference pages, thus ommitting some details (class private section).
 To get the "full" reference, run:
 ```
 $ make doc-dev
@@ -73,6 +73,8 @@ The makefile then compiles it and runs it.
 
 ## 4 - Code details
 
+### 4.1 - Partial template implementation trick
+
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
 As the `LPBase` class is already templatized on the type (`type::IsPoint` or `type::IsLine`),
 it would require a partial template specialization to define the behavior of each member function (or free function),
@@ -87,6 +89,60 @@ it is there just so that the compiler can select the correct overload.
 The different implementations are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
 the implementation of that type only holds a `static_assert`, so that can be catched at build time.
+
+
+### 4.2 - Common classes and polymorphism
+
+With C++, polymorphism can be achieved in two ways:
+- classical run-time polymorphism, achieved with virtual functions.
+This is particularly useful when the need is to have a container holding objects of different types, and then calling a virtual member function on each object.
+- static Compile-time polymorphism, using function overloading.
+
+The general design here is to use compile-time polymorphism.
+However, in some situations, run-time polymorphism is required.
+For example when one wants to import an SVG file, because we can't determine the types of objects that will be read.
+
+When inheriting concrete classes from a class template, we face a problem if we need to achieve run-time polymorphism,
+Consider this inheritance:
+```
+template<typename T>
+struct BaseClass
+{
+	virtual void foo() = 0;
+};
+template<typename T>
+struct ConcreteClassA
+{
+	void foo() { ... }
+};
+template<typename T>
+struct ConcreteClassB
+{
+	void foo() { ... }
+};
+
+```
+
+But now, if we want to build a vector holding pointers on concrete objects of different types, then we face a problem:
+we cannot define a common base type !:
+```
+std::vector<BaseClass<???>*> vec;
+```
+
+So, first, why do we need a base class template in the beginning?
+Why not use a non-templated class?
+
+The answer is two-parts:
+- first, an non-templated base class holding pure (or not pure) virtual function will add an overhead, because of the vtable that gets created, and this is not always needed.
+- second, in the present situation, using a class template enables us to have some common functionnality on all concrete types.
+Here, the member function `Dtype dtype()` enables us to fetch the underlying numerical type on all inherited concrete types
+(see [build options](homog2d_manual.md#numtype)).
+
+This is why we have here a double inheritance pattern, on all concrete types (geometric primitives):
+- The class template `Common<T>`, provides common stuff for all types, and holds a default implementation for member functions not defined in the concrete types.
+- The non-templated class `Root`, provides real-time polymorphism.
+This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is defined
+(see [build options](homog2d_manual.md#build_options)).
 
 ## 5 - Testing
 

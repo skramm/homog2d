@@ -2761,6 +2761,34 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	CHECK( gt == osegs );
 }
 
+TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
+{
+	Point2d_<NUMTYPE> pt,pt2;
+	Line2d_<NUMTYPE> li,li2;
+	FRect_<NUMTYPE> re,re2;
+	Segment_<NUMTYPE> se,se2;
+	CPolyline_<NUMTYPE> pc,pc2;
+	OPolyline_<NUMTYPE> po,po2;
+	Ellipse_<NUMTYPE> el,el2;
+
+	CHECK_NOTHROW( getBB(re,re2) );
+	CHECK_NOTHROW( getBB(re,se2) );
+	CHECK_NOTHROW( getBB(se,se2) );
+	CHECK_NOTHROW( getBB(se,re2) );
+/*	CHECK_THROWS( getBB(li,re2) );
+	CHECK_THROWS( getBB(re,li2) );
+
+	CHECK_THROWS( getBB(li,pt2) );
+	CHECK_THROWS( getBB(li,re2) );
+	CHECK_THROWS( getBB(li,pc2) );
+	CHECK_THROWS( getBB(li,po2) );
+	CHECK_THROWS( getBB(li,el2) );
+*/
+
+//	CHECK_NOTHROW( getBB(li1,li2) );
+}
+
+/// TODO temporarly replaced getBB() with getBB(). Restore when fixed
 TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
 {
 	Point2d_<NUMTYPE> pt;

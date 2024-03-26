@@ -1125,6 +1125,13 @@ namespace detail {
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
 Homogeneous (thus the 'mutable' attribute).
+
+\todo 20240326: we might need to add another level of inheritance.
+This class inherits \c Common, which is designed to be inherited geometric primitives and as such holds
+member function that cannot be used on a matrix !
+(example: isInside() )
+<br>
+So either we remove the latter function and find a way to put it somewhere else, either we create another intermediate class.
 */
 template<typename FPT>
 class Matrix_: public Common<FPT>
@@ -1138,10 +1145,6 @@ class Matrix_: public Common<FPT>
 	template<typename FPT1,typename FPT2,typename FPT3>
 	friend void
 	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
-
-//private:
-//	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-//	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -9413,14 +9416,15 @@ p_getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
 }
 
 /// Return bounding box of a Point2d_ and a (FRect_ or Polyline or Circle or Ellipse)
+/// (private free function)
 template<
 	typename FPT,
 	typename T,
 	typename std::enable_if<
-		(
-			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line
-			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a Point
-			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment
+		(                                                          // second arg is
+			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
+			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
+			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
 		)
 		,T
 	>::type* = nullptr
@@ -9461,6 +9465,53 @@ p_getPtBB( const Point2d_<FPT1>& pt, const Segment_<FPT2>& seg )
 	max_y      = std::max( pt2.getY(), max_y );
 
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+}
+
+/// arg is a neither a Point2d, a Segment, or a Line2d
+template<
+	typename T,
+	typename std::enable_if<
+		(                                                          // arg is
+			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
+			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
+			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
+		)
+		,T
+	>::type* = nullptr
+>
+std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+getPointPair( const T& elem )
+{
+	auto bb = elem.getBB();
+	return bb.getPts();
+}
+
+/// arg is a Point2d
+template<
+	typename T,
+	typename std::enable_if<
+		std::is_same<T,Point2d_<typename T::FType>>::value
+		,T
+	>::type* = nullptr
+>
+std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+getPointPair( const T& elem )
+{
+	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
+}
+
+/// arg is a Segment
+template<
+	typename T,
+	typename std::enable_if<
+		std::is_same<T,Segment_<typename T::FType>>::value
+		,T
+	>::type* = nullptr
+>
+std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+getPointPair( const T& elem )
+{
+	return elem.getPts();
 }
 
 
@@ -9516,7 +9567,7 @@ getBB( const T& elem, const Point2d_<FPT>& pt )
 }
 
 /// Returns Bounding Box of two arbitrary objects (free function).
-/// Can be of different types, EXCEPT Line2d
+/// Can be of different types, EXCEPT Line2d, Segment, Point2d
 /**
 (because a line does not have a bounding box)
 
@@ -9526,7 +9577,12 @@ template<
 	typename T1,
 	typename T2,
 	typename std::enable_if<
-		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
+		(
+			!std::is_same<T1,Line2d_<typename T1::FType>>::value
+			&& !std::is_same<T2,Line2d_<typename T2::FType>>::value
+			&& !std::is_same<T1,Segment_<typename T2::FType>>::value
+			&& !std::is_same<T2,Segment_<typename T2::FType>>::value
+		)
 		,T1
 	>::type* = nullptr
 >
@@ -9534,6 +9590,47 @@ FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
 	return priv::p_getBB( getBB(elem1), getBB(elem2) );
+}
+
+
+/// This one is called if one of the args is a Segment
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(std::is_same<T1,Segment_<typename T1::FType>>::value || std::is_same<T2,Segment_<typename T2::FType>>::value)
+		,T1
+	>::type* = nullptr
+>
+FRect_<typename T1::FType>
+getBB( const T1& elem1, const T2& elem2 )
+{
+//	std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>> p1, p2;
+	auto p1 = priv::getPointPair( elem1 );
+	auto p2 = priv::getPointPair( elem2 );
+
+	auto min_x = std::min( (HOMOG2D_INUMTYPE)p1.first.getX(),  (HOMOG2D_INUMTYPE)p2.first.getX()  );
+	auto min_y = std::min( (HOMOG2D_INUMTYPE)p1.first.getY(),  (HOMOG2D_INUMTYPE)p2.first.getY()  );
+	auto max_x = std::max( (HOMOG2D_INUMTYPE)p1.second.getX(), (HOMOG2D_INUMTYPE)p2.second.getX() );
+	auto max_y = std::max( (HOMOG2D_INUMTYPE)p1.second.getY(), (HOMOG2D_INUMTYPE)p2.second.getX() );
+	return FRect_<typename T1::FType>( min_x, min_y, max_x, max_y );
+}
+
+
+
+/// This one is called if one of the args is a Line2d (no build!)
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(std::is_same<T1,Line2d_<typename T1::FType>>::value || std::is_same<T2,Line2d_<typename T2::FType>>::value)
+		,T1
+	>::type* = nullptr
+>
+FRect_<T1> getBB( const T1&, const T2& )
+{
+	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
+	return FRect_<T1>(); // to avoid a compile warning
 }
 
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)

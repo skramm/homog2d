@@ -1739,6 +1739,7 @@ struct Param_BB : Data
 	Point2d pt_other;
 	Type _type = Type::Circle;
 };
+
 void action_BB( void* param )
 {
 	auto& data = *reinterpret_cast<Param_BB*>(param);
