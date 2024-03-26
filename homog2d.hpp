@@ -9665,7 +9665,7 @@ getBB( const T& vpts )
 	return priv::getBB_Segments( vpts );
 }
 
-/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding other primitives (free function)
+/// Returns Bounding Box of arbitrary container (std::vector, array or list) holding other primitives (free function)
 template<
 	typename T,
 	typename std::enable_if<

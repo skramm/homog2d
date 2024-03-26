@@ -5,6 +5,7 @@
 ## 1 - Introduction
 
 This page will gather misc. information useful for anyone wanting to contribute to code.
+Some relevant details might be given here on how some functions are implemented.
 
 To get the Doxygen-generated pages, you can run:
 ```
@@ -94,6 +95,7 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 ### 4.2 - Common classes and polymorphism
 
 With C++, polymorphism can be achieved in two ways:
+
 - classical run-time polymorphism, achieved with virtual functions.
 This is particularly useful when the need is to have a container holding objects of different types, and then calling a virtual member function on each object.
 - static Compile-time polymorphism, using function overloading.
@@ -133,16 +135,41 @@ So, first, why do we need a base class template in the beginning?
 Why not use a non-templated class?
 
 The answer is two-parts:
+
 - first, an non-templated base class holding pure (or not pure) virtual function will add an overhead, because of the vtable that gets created, and this is not always needed.
 - second, in the present situation, using a class template enables us to have some common functionnality on all concrete types.
 Here, the member function `Dtype dtype()` enables us to fetch the underlying numerical type on all inherited concrete types
 (see [build options](homog2d_manual.md#numtype)).
 
 This is why we have here a double inheritance pattern, on all concrete types (geometric primitives):
+
 - The class template `Common<T>`, provides common stuff for all types, and holds a default implementation for member functions not defined in the concrete types.
 - The non-templated class `Root`, provides real-time polymorphism.
 This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is defined
 (see [build options](homog2d_manual.md#build_options)).
+
+### 4.3 - Bounding Box of two primitives
+
+The concept of bounding box is easy to understand for the some primitives
+(classes `FRect`, `Circle`, `Ellipse`),
+and it is validated with the trait class template `HasBB<>`.
+For the two "polylines" classes (`OPolyline` and `CPolyline`), it **may** exist (at compile time), but not always succeed.
+Indeed, these two types can have only two points, thus being equivalent to segments, that do not have a bounding box
+(consider vertical or horizontal segments).
+
+
+On other primitives, the concept of bounding box makes no sense:
+
+* For lines, as that are infinite, a bounding box can not be defined.
+* For points, as a bounding box is implemented as a `FRect` object and that this type cannot have a null area, it can not be defined either.
+* For segments, as these may not have an area, no `getBB()` member function is enabled.
+
+However, when computing the common bounding box of two arbitrary elements, things are not exactly the same.
+
+* if one of the two objects is a line, no bounding box can be computed, so a call to `getBB()` with two lines will not compile.
+* if both of the arguments have an area
+
+(!!!!!!!!!WIP,  TO BE EXTENDED !!!!!!!!!)
 
 ## 5 - Testing
 
