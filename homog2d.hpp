@@ -1081,6 +1081,9 @@ disallows providing such a method
 		return false;
 	}
 
+/// Fallback for classes not implementing this
+/// \todo 20240327: this class is inherited by HMatrix... on which the concept of bounding box makes no sense!
+/// Fix this.
 	template<typename T>
 	FRect_<T> getBB() const
 	{
@@ -5443,11 +5446,13 @@ FRect_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
 	using FPT = typename T::value_type::FType;
+
+/* Commented on 20240327: it is perfectly possible to have a bounding box of a container holding 2 objects!!
 #ifndef HOMOG2D_NOCHECKS
 	if( vpts.size()<2 )
 		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of set with size < 2" );
 #endif
-
+*/
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
 		std::end( vpts ),
@@ -9495,6 +9500,10 @@ getPointPair( const T& elem )
 }
 
 /// arg is a Point2d
+/**
+This seems useless at first glance, but it used to get the common bounding box of two objects
+when one of them (or both) is a point.
+*/
 template<
 	typename T,
 	typename std::enable_if<
@@ -9525,7 +9534,7 @@ getPointPair( const T& elem )
 
 } // namespace priv
 
-
+#if 0
 /// Return Bounding Box of two objects, version used when both of the args are points
 template<typename FPT1,typename FPT2>
 FRect_<FPT1>
@@ -9559,6 +9568,7 @@ getBB( const Point2d_<FPT>& pt, const T& elem )
 {
 	return priv::p_getPtBB( pt, elem );
 }
+
 /// Return Bounding Box of two objects, first arg is neither a line or a point, second is a point
 template<
 	typename FPT,
@@ -9599,34 +9609,34 @@ getBB( const T1& elem1, const T2& elem2 )
 {
 	return priv::p_getBB( getBB(elem1), getBB(elem2) );
 }
+#endif
 
-
-/// This one is called if one of the args is a Segment
+//------------------------------------------------------------------
+/// This one is called if NONE of the args are a Line2d
 template<
 	typename T1,
 	typename T2,
 	typename std::enable_if<
-		(std::is_same<T1,Segment_<typename T1::FType>>::value || std::is_same<T2,Segment_<typename T2::FType>>::value)
+		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
 		,T1
 	>::type* = nullptr
 >
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
-//	std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>> p1, p2;
-	auto p1 = priv::getPointPair( elem1 );
-	auto p2 = priv::getPointPair( elem2 );
-
-	auto min_x = std::min( (HOMOG2D_INUMTYPE)p1.first.getX(),  (HOMOG2D_INUMTYPE)p2.first.getX()  );
-	auto min_y = std::min( (HOMOG2D_INUMTYPE)p1.first.getY(),  (HOMOG2D_INUMTYPE)p2.first.getY()  );
-	auto max_x = std::max( (HOMOG2D_INUMTYPE)p1.second.getX(), (HOMOG2D_INUMTYPE)p2.second.getX() );
-	auto max_y = std::max( (HOMOG2D_INUMTYPE)p1.second.getY(), (HOMOG2D_INUMTYPE)p2.second.getX() );
-	return FRect_<typename T1::FType>( min_x, min_y, max_x, max_y );
+	auto pp1 = priv::getPointPair( elem1 );
+	auto pp2 = priv::getPointPair( elem2 );
+	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
+	arr[0] = pp1.first;
+	arr[1] = pp2.first;
+	arr[2] = pp1.second;
+	arr[3] = pp2.second;
+	return priv::getBB_Points( arr );
 }
 
 
-
-/// This one is called if one of the args is a Line2d (no build!)
+//------------------------------------------------------------------
+/// This one is called if one of the args is a Line2d (=> no build!)
 template<
 	typename T1,
 	typename T2,
@@ -9641,6 +9651,7 @@ FRect_<T1> getBB( const T1&, const T2& )
 	return FRect_<T1>(); // to avoid a compile warning
 }
 
+//------------------------------------------------------------------
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)
 template<
 	typename T,
@@ -9657,6 +9668,7 @@ getBB( const T& vpts )
 	return priv::getBB_Points( vpts );
 }
 
+//------------------------------------------------------------------
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding segments (free function)
 template<
 	typename T,
@@ -9673,6 +9685,7 @@ getBB( const T& vpts )
 	return priv::getBB_Segments( vpts );
 }
 
+//------------------------------------------------------------------
 /// Returns Bounding Box of arbitrary container (std::vector, array or list) holding other primitives (free function)
 template<
 	typename T,

@@ -1732,12 +1732,28 @@ void printFailure( std::exception& e )
 struct Param_BB : Data
 {
 	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
-	{}
-	Circle cir;
-	FRectF rect;
-	SegmentF seg;
-	Point2d pt_other;
-	Type _type = Type::Circle;
+	{
+		_vptr.push_back( std::unique_ptr<rtp::Root>( new CPolyline() ) );
+		_vptr.push_back( std::unique_ptr<rtp::Root>( new OPolyline() ) );
+		_vptr.push_back( std::unique_ptr<rtp::Root>( new Segment()   ) );
+		_vptr.push_back( std::unique_ptr<rtp::Root>( new Point2d()   ) );
+		_vptr.push_back( std::unique_ptr<rtp::Root>( new Circle()    ) );
+	}
+
+	const std::unique_ptr<rtp::Root>& getCurrent() const
+	{
+		return _vptr[_currentShape];
+	}
+	void switchToNext()
+	{
+		_currentShape++;
+		if( _currentShape == _vptr.size() )
+			_currentShape = 0;
+	}
+
+private:
+	int _currentShape = 0;
+	std::vector<std::unique_ptr<rtp::Root>> _vptr;
 };
 
 void action_BB( void* param )
@@ -1746,17 +1762,24 @@ void action_BB( void* param )
 	data.clearImage();
 	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
 	auto style = img::DrawParams().setColor(0,250,0);
-	data._cpoly.set( data.vpt );
+	const auto& ptr = data.getCurrent();
+
+// first intialize object
+
+// then, get common bounding box
+	auto cbb = getBB( *ptr, data.vpt[0] );
+	cbb.draw( data.img );
+/*	data._cpoly.set( data.vpt );
 	data.cir.set( data.vpt[1],80 );
 	data.rect.set( data.vpt[1], data.vpt[2] );
-	try { data.seg.set( data.vpt[1], data.vpt[2] ); }
+	try { data.seg.set( data.vpt[1], data.vpt[0] ); }
 	catch( std::exception& e )
 	{ printFailure( e ); }
-
+*/
 	data._pt_mouse.draw( data.img );
 	data.vpt[0].draw( data.img, ptStyle );
 
-	FRect bb;
+/*	FRect bb;
 	switch( data._type )
 	{
 		case Type::Circle:
@@ -1797,7 +1820,7 @@ void action_BB( void* param )
 		break;
 	}
 
-	bb.draw( data.img );
+	bb.draw( data.img );*/
 	data.showImage();
 }
 
@@ -1806,18 +1829,19 @@ void demo_BB( int demidx )
 	Param_BB data( demidx, "Point Bounding Box demo" );
 	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
 	Move the red points to see the common bounding box of point and other element.\n";
-	data.cir = Circle( data.vpt[1],80 );
-	data.rect.set( data.vpt[1], data.vpt[2] );
+//	data.cir = Circle( data.vpt[1],80 );
+//	data.rect.set( data.vpt[1], data.vpt[2] );
 //	data._cpoly.set( data.vpt );
-	data.pt_other.set ( 120, 140 );
+//	data.pt_other.set ( 120, 140 );
 	data.setMouseCB( action_BB );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ data._type = Type::Point2d; },   "Points" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.switchToNext(); },   "Switch to next" );
+/*	kbloop.addKeyAction( 'w', [&](void*){ data._type = Type::Point2d; },   "Points" );
 	kbloop.addKeyAction( 'x', [&](void*){ data._type = Type::Circle; },    "Circle" );
 	kbloop.addKeyAction( 'c', [&](void*){ data._type = Type::FRect; },     "FRect" );
 	kbloop.addKeyAction( 'v', [&](void*){ data._type = Type::CPolyline; }, "CPolyline" );
-	kbloop.addKeyAction( 'b', [&](void*){ data._type = Type::Segment; },   "Segment" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._type = Type::Segment; },   "Segment" );*/
 	kbloop.addCommonAction( action_BB );
 
 	action_BB( &data );

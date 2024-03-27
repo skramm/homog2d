@@ -167,9 +167,10 @@ On other primitives, the concept of bounding box makes no sense:
 However, when computing the common bounding box of two arbitrary elements, things are not exactly the same.
 
 * if one of the two objects is a line, no bounding box can be computed, so a call to `getBB()` with two lines will not compile.
-* if both of the arguments have an area
+* if both of the arguments have an area, then there is no problem
+* if one of the arguments is a point or a segment, then a common bounding box may exist, but the function will throw if no area can be defined
+(say, for two points having a common coordinate).
 
-(!!!!!!!!!WIP,  TO BE EXTENDED !!!!!!!!!)
 
 ## 5 - Testing
 
