@@ -1749,6 +1749,26 @@ struct varGetPointPair
 	PointPair operator()(const CPolyline& a) { return priv::getPointPair(a); }
 	PointPair operator()(const OPolyline& a) { return priv::getPointPair(a); }
 };
+struct varGetName
+{
+	std::string operator()(const Point2d& a)   { return getString( a.type() ); }
+	std::string operator()(const FRect& a)     { return getString( a.type() ); }
+	std::string operator()(const Circle& a)    { return getString( a.type() ); }
+	std::string operator()(const Segment& a)   { return getString( a.type() ); }
+	std::string operator()(const CPolyline& a) { return getString( a.type() ); }
+	std::string operator()(const OPolyline& a) { return getString( a.type() ); }
+};
+
+/*struct varDrawElem
+{
+	void operator()(const Point2d& a)   { a.draw(); }
+	void operator()(const FRect& a)     { return getString( a.type() ); }
+	void operator()(const Circle& a)    { return getString( a.type() ); }
+	void operator()(const Segment& a)   { return getString( a.type() ); }
+	void operator()(const CPolyline& a) { return getString( a.type() ); }
+	void operator()(const OPolyline& a) { return getString( a.type() ); }
+};
+*/
 
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
@@ -1763,18 +1783,20 @@ struct Param_BB : Data
 		_vecvar.push_back( VarType( FRect()     ) );
 	}
 
-	VarType
-	getCurrent() const
+	VarType getCurrent() const
 	{
 		return _vecvar[_current];
 	}
+
 	std::string switchToNext()
 	{
 		_current++;
 		if( _current == _vecvar.size() )
 			_current = 0;
-		return std::to_string(_current);
+		return std::visit( varGetName{}, _vecvar[_current] );
+
 	}
+
 	void initElems()
 	{
 		for( auto& v: _vecvar )
@@ -1783,11 +1805,14 @@ struct Param_BB : Data
 				std::get<CPolyline>(v).set( vpt );
 			if( std::holds_alternative<OPolyline>(v) )
 				std::get<OPolyline>(v).set( vpt );
-/*			if( std::holds_alternative<Segment>(v) )
+			if( std::holds_alternative<Segment>(v) )
 				std::get<Segment>(v).set( vpt[1], vpt[2] );
 			if( std::holds_alternative<FRect>(v) )
-				std::get<OPolyline>(v).set( vpt[1], vpt[2] );
-*/
+				std::get<FRect>(v).set( vpt[1], vpt[2] );
+			if( std::holds_alternative<Circle>(v) )
+				std::get<Circle>(v).set( vpt[1], 80 );
+			if( std::holds_alternative<Point2d>(v) )
+				std::get<Point2d>(v) = vpt[1];
 		}
 	}
 
@@ -1823,9 +1848,9 @@ void action_BB( void* param )
 	{ printFailure( e ); }
 */
 	data._pt_mouse.draw( data.img );
-	data.vpt[0].draw( data.img, ptStyle );
+//	data.vpt[0].draw( data.img, ptStyle );
 
-	cbb.draw( data.img );
+	cbb.draw( data.img, style );
 	data.showImage();
 }
 
