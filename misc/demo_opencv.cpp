@@ -1768,11 +1768,12 @@ struct Param_BB : Data
 	{
 		return _vecvar[_current];
 	}
-	void switchToNext()
+	std::string switchToNext()
 	{
 		_current++;
 		if( _current == _vecvar.size() )
 			_current = 0;
+		return std::to_string(_current);
 	}
 	void initElems()
 	{
@@ -1781,8 +1782,12 @@ struct Param_BB : Data
 			if( std::holds_alternative<CPolyline>(v) )
 				std::get<CPolyline>(v).set( vpt );
 			if( std::holds_alternative<OPolyline>(v) )
-				std::get<CPolyline>(v).set( vpt );
-			//std::visit([](auto arg){std::cout << arg << " ";}, v);                // 2
+				std::get<OPolyline>(v).set( vpt );
+/*			if( std::holds_alternative<Segment>(v) )
+				std::get<Segment>(v).set( vpt[1], vpt[2] );
+			if( std::holds_alternative<FRect>(v) )
+				std::get<OPolyline>(v).set( vpt[1], vpt[2] );
+*/
 		}
 	}
 
@@ -1798,6 +1803,7 @@ void action_BB( void* param )
 	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
 	auto style = img::DrawParams().setColor(0,250,0);
 
+// first intialize objects
 	data.initElems();
 
 	const auto& curr = data.getCurrent();
@@ -1805,7 +1811,6 @@ void action_BB( void* param )
 	auto pp1 = std::visit( varGetPointPair{}, curr );
 	auto pp2 = std::make_pair( data.vpt[0], data.vpt[0] );
 	auto cbb = getBBpp( pp1, pp2 );
-// first intialize object
 //	auto p = getPrimitive( ptr );
 // then, get common bounding box
 //	auto cbb = getBB( p, data.vpt[0] );
@@ -1829,19 +1834,11 @@ void demo_BB( int demidx )
 	Param_BB data( demidx, "Point Bounding Box demo" );
 	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
 	Move the red points to see the common bounding box of point and other element.\n";
-//	data.cir = Circle( data.vpt[1],80 );
-//	data.rect.set( data.vpt[1], data.vpt[2] );
-//	data._cpoly.set( data.vpt );
-//	data.pt_other.set ( 120, 140 );
+
 	data.setMouseCB( action_BB );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ data.switchToNext(); },   "Switch to next" );
-/*	kbloop.addKeyAction( 'w', [&](void*){ data._type = Type::Point2d; },   "Points" );
-	kbloop.addKeyAction( 'x', [&](void*){ data._type = Type::Circle; },    "Circle" );
-	kbloop.addKeyAction( 'c', [&](void*){ data._type = Type::FRect; },     "FRect" );
-	kbloop.addKeyAction( 'v', [&](void*){ data._type = Type::CPolyline; }, "CPolyline" );
-	kbloop.addKeyAction( 'b', [&](void*){ data._type = Type::Segment; },   "Segment" );*/
+	kbloop.addKeyAction( 'w', [&](void*){ std::cout << data.switchToNext() << '\n'; },   "Switch to next" );
 	kbloop.addCommonAction( action_BB );
 
 	action_BB( &data );
