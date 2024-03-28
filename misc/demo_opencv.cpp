@@ -1723,37 +1723,72 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
+//template<typename T>
+//using VarType = std::variant<FRect_<T>,Circle_<T>,Segment_<T>,Point2d_<T>,CPolyline_<T>>;
+
+using VarType = std::variant<FRect,Circle,Segment,Point2d,CPolyline,OPolyline>;
+
+//------------------------------------------------------------------
 void printFailure( std::exception& e )
 {
 	std::cout << "Unable to build BB, err=" << e.what() << "\n";
 }
+using PointPair = std::pair<Point2d,Point2d>;
+
+/// Variant type, use with std::visit(). Enables dynamic polymorphism with templated types
+/**
+\todo 20240328: apply same technique to the reading of an SVG file
+*/
+
+struct varGetPointPair
+{
+	PointPair operator()(const Point2d& a)   { return priv::getPointPair(a); }
+	PointPair operator()(const FRect& a)     { return priv::getPointPair(a); }
+	PointPair operator()(const Circle& a)    { return priv::getPointPair(a); }
+	PointPair operator()(const Segment& a)   { return priv::getPointPair(a); }
+	PointPair operator()(const CPolyline& a) { return priv::getPointPair(a); }
+	PointPair operator()(const OPolyline& a) { return priv::getPointPair(a); }
+};
 
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
 	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
 	{
-		_vptr.push_back( std::unique_ptr<rtp::Root>( new CPolyline() ) );
-		_vptr.push_back( std::unique_ptr<rtp::Root>( new OPolyline() ) );
-		_vptr.push_back( std::unique_ptr<rtp::Root>( new Segment()   ) );
-		_vptr.push_back( std::unique_ptr<rtp::Root>( new Point2d()   ) );
-		_vptr.push_back( std::unique_ptr<rtp::Root>( new Circle()    ) );
+		_vecvar.push_back( VarType( OPolyline() ) );
+		_vecvar.push_back( VarType( CPolyline() ) );
+		_vecvar.push_back( VarType( Segment()   ) );
+		_vecvar.push_back( VarType( Point2d()   ) );
+		_vecvar.push_back( VarType( Circle()    ) );
+		_vecvar.push_back( VarType( FRect()     ) );
 	}
 
-	const std::unique_ptr<rtp::Root>& getCurrent() const
+	VarType
+	getCurrent() const
 	{
-		return _vptr[_currentShape];
+		return _vecvar[_current];
 	}
 	void switchToNext()
 	{
-		_currentShape++;
-		if( _currentShape == _vptr.size() )
-			_currentShape = 0;
+		_current++;
+		if( _current == _vecvar.size() )
+			_current = 0;
+	}
+	void initElems()
+	{
+		for( auto& v: _vecvar )
+		{
+			if( std::holds_alternative<CPolyline>(v) )
+				std::get<CPolyline>(v).set( vpt );
+			if( std::holds_alternative<OPolyline>(v) )
+				std::get<CPolyline>(v).set( vpt );
+			//std::visit([](auto arg){std::cout << arg << " ";}, v);                // 2
+		}
 	}
 
 private:
-	int _currentShape = 0;
-	std::vector<std::unique_ptr<rtp::Root>> _vptr;
+	size_t               _current = 0;
+	std::vector<VarType> _vecvar;
 };
 
 void action_BB( void* param )
@@ -1762,13 +1797,19 @@ void action_BB( void* param )
 	data.clearImage();
 	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
 	auto style = img::DrawParams().setColor(0,250,0);
-	const auto& ptr = data.getCurrent();
 
+	data.initElems();
+
+	const auto& curr = data.getCurrent();
+
+	auto pp1 = std::visit( varGetPointPair{}, curr );
+	auto pp2 = std::make_pair( data.vpt[0], data.vpt[0] );
+	auto cbb = getBBpp( pp1, pp2 );
 // first intialize object
-
+//	auto p = getPrimitive( ptr );
 // then, get common bounding box
-	auto cbb = getBB( *ptr, data.vpt[0] );
-	cbb.draw( data.img );
+//	auto cbb = getBB( p, data.vpt[0] );
+//	cbb.draw( data.img );
 /*	data._cpoly.set( data.vpt );
 	data.cir.set( data.vpt[1],80 );
 	data.rect.set( data.vpt[1], data.vpt[2] );
@@ -1779,48 +1820,7 @@ void action_BB( void* param )
 	data._pt_mouse.draw( data.img );
 	data.vpt[0].draw( data.img, ptStyle );
 
-/*	FRect bb;
-	switch( data._type )
-	{
-		case Type::Circle:
-			data.cir.draw( data.img, style );
-			data.cir.center().draw( data.img, ptStyle );
-			try{ bb = getBB( data.cir, data.vpt[0] ); }
-			catch( std::exception& e )
-			{ printFailure( e ); }
-		break;
-
-		case Type::FRect:
-			data.rect.draw( data.img, style );
-			data.img.draw( data.rect.getPts(), ptStyle );
-			try{ bb = getBB( data.rect, data.vpt[0] ); }
-			catch( std::exception& e )
-			{ printFailure( e ); }
-		break;
-
-		case Type::CPolyline:
-			data._cpoly.draw( data.img, style.showPoints() );
-			try{ bb = getBB( data._cpoly, data.vpt[0] ); }
-			catch( std::exception& e )
-			{ printFailure( e ); }
-		break;
-
-		case Type::Segment:
-			data.seg.draw( data.img, style.showPoints() );
-			try{ bb = getBB( data.seg, data.vpt[0] ); }
-			catch( std::exception& e )
-			{ printFailure( e ); }
-		break;
-
-		case Type::Point2d:
-			data.pt_other.draw( data.img, style );
-			try{ bb = getBB( data.pt_other, data.vpt[0] ); }
-			catch( std::exception& e )
-			{ printFailure( e ); }
-		break;
-	}
-
-	bb.draw( data.img );*/
+	cbb.draw( data.img );
 	data.showImage();
 }
 

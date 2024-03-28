@@ -340,9 +340,13 @@ template<typename T>
 using Line2d_  = base::LPBase<type::IsLine,T>;
 
 template<typename T>
+using PointPair_ = std::pair<Point2d_<T>,Point2d_<T>>;
+
+template<typename T>
 using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
+
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -9626,6 +9630,20 @@ getBB( const T1& elem1, const T2& elem2 )
 {
 	auto pp1 = priv::getPointPair( elem1 );
 	auto pp2 = priv::getPointPair( elem2 );
+	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
+	arr[0] = pp1.first;
+	arr[1] = pp2.first;
+	arr[2] = pp1.second;
+	arr[3] = pp2.second;
+	return priv::getBB_Points( arr );
+}
+
+
+
+template<typename T1,typename T2>
+FRect_<T1>
+getBBpp( const PointPair_<T1>& pp1, const PointPair_<T2>& pp2 )
+{
 	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
 	arr[0] = pp1.first;
 	arr[1] = pp2.first;
