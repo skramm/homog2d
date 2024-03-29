@@ -658,6 +658,17 @@ class DrawParams
 		}
 	};
 
+	friend std::ostream& operator << ( std::ostream& f, const DrawParams& dp )
+	{
+		f << "-" << dp._dpValues._color
+			<< "\n-line width=" << dp._dpValues._lineThickness
+			<< "\n-pointSize=" << dp._dpValues._pointSize
+			<< "\n-showPoints=" << dp._dpValues._showPoints
+			<< "\n-fontSize=" << dp._dpValues._fontSize
+			<< '\n';
+		return f;
+	}
+
 
 public:
 	Dp_values _dpValues;
