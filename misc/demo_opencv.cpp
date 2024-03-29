@@ -1757,7 +1757,9 @@ struct varDrawElem
 		img::Image<cv::Mat>& img,
 		img::DrawParams&     dp
 	) : _img(img), _dparams(dp)
-	{}
+	{
+		std::cout << "dp=" << dp;
+	}
 	template<typename T>
 	void operator()(const T& a)
 	{
@@ -1766,6 +1768,7 @@ struct varDrawElem
 
 	img::Image<cv::Mat>& _img;
 	img::DrawParams      _dparams;
+
 };
 
 } // namespace var
@@ -1775,68 +1778,99 @@ struct Param_BB : Data
 {
 	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
 	{
-		_vecvar.push_back( VarType( OPolyline() ) );
-		_vecvar.push_back( VarType( CPolyline() ) );
-		_vecvar.push_back( VarType( Segment()   ) );
-		_vecvar.push_back( VarType( Point2d()   ) );
-		_vecvar.push_back( VarType( Circle()    ) );
-		_vecvar.push_back( VarType( FRect()     ) );
+		init( _vecvar1 );
+		init( _vecvar2 );
+	}
+	void init( std::vector<VarType>& vecvar )
+	{
+		vecvar.push_back( VarType( OPolyline() ) );
+		vecvar.push_back( VarType( CPolyline() ) );
+		vecvar.push_back( VarType( Segment()   ) );
+		vecvar.push_back( VarType( Point2d()   ) );
+		vecvar.push_back( VarType( Circle()    ) );
+		vecvar.push_back( VarType( FRect()     ) );
 	}
 
-	VarType getCurrent() const
+	VarType getCurrent(int i ) const
 	{
-		return _vecvar[_current];
+		return (i==1 ? _vecvar1[_current1] : _vecvar2[_current2]);
 	}
 
-	std::string switchToNext()
+	std::string switchToNext( int idx )
 	{
-		_current++;
-		if( _current == _vecvar.size() )
-			_current = 0;
-		_name = std::visit( var::varGetName{}, _vecvar[_current] );
-		return _name;
+		auto* p = &_current1;
+		if( idx == 2 )
+			p = &_current2;
+		(*p)++;
+		if( *p == _vecvar1.size() )  // they are both the same size...
+			*p = 0;
+
+		if( idx == 1 )
+			_name1 = std::visit( var::varGetName{}, _vecvar1[*p] );
+		else
+			_name2 = std::visit( var::varGetName{}, _vecvar2[*p] );
+		return (idx==1 ? _name1 : _name2 );
 	}
 
-	void initElems()
+	void initElemsAll()
 	{
-		for( auto& v: _vecvar )
+		initElems( _vecvar1, 0 );
+		initElems( _vecvar2, 1 );
+	}
+
+	void initElems( std::vector<VarType>& vec, int i )
+	{
+		std::vector<Point2d> vec2;
+		for( auto it = vpt.cbegin()+1; it != vpt.cend(); it++ )
+			vec2.push_back( *it );
+
+		for( auto& v: vec )
 		{
-			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vpt );
-			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vpt );
-			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[1], vpt[2] );
-			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[1], vpt[2] );
-			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[1], 80 );
-			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[1];
+			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vec2 );
+			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vec2 );
+			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[i+1], vpt[i+2] );
+			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[i+1], vpt[i+2] );
+			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[i+1], 80 );
+			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[i+1];
 		}
 	}
 
-	std::string          _name;        ///< name of current primitive
+	std::string          _name1;        ///< name of current primitive
+	std::string          _name2;        ///< name of current primitive
 private:
-	size_t               _current = 0; ///< index of current
-	std::vector<VarType> _vecvar;      ///< vector of variants holding all the primitives
+	size_t               _current1 = 0; ///< index of current
+	size_t               _current2 = 0; ///< index of current
+	std::vector<VarType> _vecvar1;      ///< vector of variants holding all the primitives
+	std::vector<VarType> _vecvar2;      ///< vector of variants holding all the primitives
 };
 
 void action_BB( void* param )
 {
 	auto& data = *reinterpret_cast<Param_BB*>(param);
 	data.clearImage();
-	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot ).showPoints();
-	auto style = img::DrawParams().setColor(0,250,0);
+	auto style = img::DrawParams().setPointStyle( img::PtStyle::Dot ).showPoints().setColor(0,0,250);
+	auto style1 = style.setColor(250,0,0);
+	auto style2 = style.setColor(0,250,0);
 
-	data.initElems();                              // first intialize objects
+	data.initElemsAll();                              // first intialize objects
 
-	var::varDrawElem vde( data.img, ptStyle );        // then draw the current one
-	const auto& curr = data.getCurrent();
-	std::visit( vde, curr );
+	var::varDrawElem vde1( data.img, style1 );        // then draw the current ones
+	var::varDrawElem vde2( data.img, style2 );
+	const auto& curr1 = data.getCurrent(1);
+	const auto& curr2 = data.getCurrent(2);
+	std::visit( vde1, curr1 );
+	std::visit( vde2, curr2 );
 
-	auto pp1 = std::visit( var::varGetPointPair{}, curr );      // get their "pseudo" bounding box (as pair of points)
-	auto pp2 = std::make_pair( data.vpt[0], data.vpt[0] );
+	auto pp1 = std::visit( var::varGetPointPair{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
+	auto pp2 = std::visit( var::varGetPointPair{}, curr2 );      // get their "pseudo" bounding box (as pair of points)
+//	auto pp2 = std::make_pair( data.vpt[0], data.vpt[0] );
 	auto cbb = getBBpp( pp1, pp2 );
 	data._pt_mouse.draw( data.img );
-	data.vpt[0].draw( data.img, ptStyle.setColor(0,0,250) );
+//	data.vpt[0].draw( data.img, ptStyle.setColor(0,0,250) );
 
 	cbb.draw( data.img, style );
-	data.img.drawText( data._name, Point2d( 20,30) );
+	data.img.drawText( "blue: " + data._name1, Point2d( 20,30), style1 );
+	data.img.drawText( "red: "  + data._name2, Point2d( 20,60), style2 );
 	data.showImage();
 }
 
@@ -1849,7 +1883,8 @@ void demo_BB( int demidx )
 	data.setMouseCB( action_BB );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ std::cout << data.switchToNext() << '\n'; },   "Switch to next" );
+	kbloop.addKeyAction( 'w', [&](void*){ std::cout << data.switchToNext(1) << '\n'; },   "Switch to next 1" );
+	kbloop.addKeyAction( 'x', [&](void*){ std::cout << data.switchToNext(2) << '\n'; },   "Switch to next 2" );
 	kbloop.addCommonAction( action_BB );
 
 	action_BB( &data );

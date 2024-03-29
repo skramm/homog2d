@@ -5481,7 +5481,10 @@ getBB_Points( const T& vpts )
 	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
 
 	if( p1.distTo( p2 ) < thr::nullDistance() )
-		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box of set, identical points" );
+		HOMOG2D_THROW_ERROR_1(
+			"unable to compute bounding box of set, identical points:\n -p1:"
+			<< p1 << "\n -p2:" << p2
+		);
 
 	return FRect_<typename T::value_type::FType>( p1, p2 );
 }
