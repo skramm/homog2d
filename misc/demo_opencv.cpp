@@ -2004,6 +2004,8 @@ int main( int argc, const char** argv )
 		Point2dD pt3;
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
+		img::DrawParams dp;
+		std::cout << "Default draw parameters: " << dp;
 	std::vector<std::function<void(int)>> v_demo{
 		demo_BB,
 		demo_RCP,
