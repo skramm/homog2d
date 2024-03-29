@@ -641,6 +641,7 @@ class DrawParams
 	template<typename T,typename U> friend class h2d::base::LPBase;
 
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
+/// \todo 20240329 maybe we can merge parameters _ptDelta and _pointSize into a single one?
 	struct Dp_values
 	{
 		Color       _color;
@@ -10914,16 +10915,21 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>
 void
-FRect_<FPT>::draw( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::rectangle(
-		img.getReal(),
+		im.getReal(),
 		_ptR1.getCvPti(),
 		_ptR2.getCvPti(),
 		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
+	if( dp._dpValues._showPoints )
+	{
+		_ptR1.draw( im, dp );
+		_ptR2.draw( im, dp );
+	}
 }
 
 //------------------------------------------------------------------
@@ -10961,6 +10967,9 @@ Circle_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
+	if( dp._dpValues._showPoints )
+ // WARNING: can't use the "Dot" style here, because it call this function, so infinite recursion
+		_center.draw( im, dp.setPointStyle( img::PtStyle::Plus) );
 }
 
 //------------------------------------------------------------------

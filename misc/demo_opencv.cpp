@@ -1735,40 +1735,40 @@ void printFailure( std::exception& e )
 }
 using PointPair = std::pair<Point2d,Point2d>;
 
+namespace var {
 /// Variant type, use with std::visit(). Enables dynamic polymorphism with templated types
 /**
 \todo 20240328: apply same technique to the reading of an SVG file
 */
-
 struct varGetPointPair
 {
-	PointPair operator()(const Point2d& a)   { return priv::getPointPair(a); }
-	PointPair operator()(const FRect& a)     { return priv::getPointPair(a); }
-	PointPair operator()(const Circle& a)    { return priv::getPointPair(a); }
-	PointPair operator()(const Segment& a)   { return priv::getPointPair(a); }
-	PointPair operator()(const CPolyline& a) { return priv::getPointPair(a); }
-	PointPair operator()(const OPolyline& a) { return priv::getPointPair(a); }
+	template<typename T>
+	PointPair operator()(const T& a)   { return priv::getPointPair(a); }
 };
 struct varGetName
 {
-	std::string operator()(const Point2d& a)   { return getString( a.type() ); }
-	std::string operator()(const FRect& a)     { return getString( a.type() ); }
-	std::string operator()(const Circle& a)    { return getString( a.type() ); }
-	std::string operator()(const Segment& a)   { return getString( a.type() ); }
-	std::string operator()(const CPolyline& a) { return getString( a.type() ); }
-	std::string operator()(const OPolyline& a) { return getString( a.type() ); }
+	template<typename T>
+	std::string operator()(const T& a)   { return getString( a.type() ); }
 };
 
-/*struct varDrawElem
+struct varDrawElem
 {
-	void operator()(const Point2d& a)   { a.draw(); }
-	void operator()(const FRect& a)     { return getString( a.type() ); }
-	void operator()(const Circle& a)    { return getString( a.type() ); }
-	void operator()(const Segment& a)   { return getString( a.type() ); }
-	void operator()(const CPolyline& a) { return getString( a.type() ); }
-	void operator()(const OPolyline& a) { return getString( a.type() ); }
+	varDrawElem(
+		img::Image<cv::Mat>& img,
+		img::DrawParams&     dp
+	) : _img(img), _dparams(dp)
+	{}
+	template<typename T>
+	void operator()(const T& a)
+	{
+		a.draw( _img, _dparams );
+	}
+
+	img::Image<cv::Mat>& _img;
+	img::DrawParams      _dparams;
 };
-*/
+
+} // namespace var
 
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
@@ -1793,64 +1793,50 @@ struct Param_BB : Data
 		_current++;
 		if( _current == _vecvar.size() )
 			_current = 0;
-		return std::visit( varGetName{}, _vecvar[_current] );
-
+		_name = std::visit( var::varGetName{}, _vecvar[_current] );
+		return _name;
 	}
 
 	void initElems()
 	{
 		for( auto& v: _vecvar )
 		{
-			if( std::holds_alternative<CPolyline>(v) )
-				std::get<CPolyline>(v).set( vpt );
-			if( std::holds_alternative<OPolyline>(v) )
-				std::get<OPolyline>(v).set( vpt );
-			if( std::holds_alternative<Segment>(v) )
-				std::get<Segment>(v).set( vpt[1], vpt[2] );
-			if( std::holds_alternative<FRect>(v) )
-				std::get<FRect>(v).set( vpt[1], vpt[2] );
-			if( std::holds_alternative<Circle>(v) )
-				std::get<Circle>(v).set( vpt[1], 80 );
-			if( std::holds_alternative<Point2d>(v) )
-				std::get<Point2d>(v) = vpt[1];
+			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vpt );
+			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vpt );
+			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[1], vpt[2] );
+			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[1], vpt[2] );
+			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[1], 80 );
+			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[1];
 		}
 	}
 
+	std::string          _name;        ///< name of current primitive
 private:
-	size_t               _current = 0;
-	std::vector<VarType> _vecvar;
+	size_t               _current = 0; ///< index of current
+	std::vector<VarType> _vecvar;      ///< vector of variants holding all the primitives
 };
 
 void action_BB( void* param )
 {
 	auto& data = *reinterpret_cast<Param_BB*>(param);
 	data.clearImage();
-	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot );
+	auto ptStyle = img::DrawParams().setColor(250,0,0).setPointStyle( img::PtStyle::Dot ).showPoints();
 	auto style = img::DrawParams().setColor(0,250,0);
 
-// first intialize objects
-	data.initElems();
+	data.initElems();                              // first intialize objects
 
+	var::varDrawElem vde( data.img, ptStyle );        // then draw the current one
 	const auto& curr = data.getCurrent();
+	std::visit( vde, curr );
 
-	auto pp1 = std::visit( varGetPointPair{}, curr );
+	auto pp1 = std::visit( var::varGetPointPair{}, curr );      // get their "pseudo" bounding box (as pair of points)
 	auto pp2 = std::make_pair( data.vpt[0], data.vpt[0] );
 	auto cbb = getBBpp( pp1, pp2 );
-//	auto p = getPrimitive( ptr );
-// then, get common bounding box
-//	auto cbb = getBB( p, data.vpt[0] );
-//	cbb.draw( data.img );
-/*	data._cpoly.set( data.vpt );
-	data.cir.set( data.vpt[1],80 );
-	data.rect.set( data.vpt[1], data.vpt[2] );
-	try { data.seg.set( data.vpt[1], data.vpt[0] ); }
-	catch( std::exception& e )
-	{ printFailure( e ); }
-*/
 	data._pt_mouse.draw( data.img );
-//	data.vpt[0].draw( data.img, ptStyle );
+	data.vpt[0].draw( data.img, ptStyle.setColor(0,0,250) );
 
 	cbb.draw( data.img, style );
+	data.img.drawText( data._name, Point2d( 20,30) );
 	data.showImage();
 }
 
