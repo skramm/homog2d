@@ -2760,7 +2760,10 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	std::sort( osegs.begin(), osegs.end() );
 	CHECK( gt == osegs );
 }
-
+#define TMPCHECK \
+{ \
+	std::cout << "testline=" << __LINE__ << "\n"; \
+}
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
 	Point2d_<NUMTYPE> pt,pt2(1,1);
@@ -2769,15 +2772,29 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	CPolyline_<NUMTYPE> pc,pc2;
 	OPolyline_<NUMTYPE> po,po2;
 	Ellipse_<NUMTYPE> el,el2;
+	std::cout << "line: " << __LINE__ << "\n";
 
+	TMPCHECK;
 	auto bb1 = getBB(pt,pt2);
+	std::cout << " ---------bb1=" << bb1 << "\n";
+
+	TMPCHECK;
 	auto bb2 = FRect_<NUMTYPE>() ;
 	std::cout << " ---------bb1=" << bb1 << "\n ---------bb2=" << bb2 << "\n";
+
+	TMPCHECK;
 	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() );
+
+	TMPCHECK;
 	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
+
+	TMPCHECK;
 	CHECK( getBB(re,re2) == FRect_<NUMTYPE>() );
+
+	TMPCHECK;
 	CHECK( getBB(el,el2) == getBB(el) );
 
+	TMPCHECK;
 	CHECK_NOTHROW( getBB(re,se2) );
 	CHECK_NOTHROW( getBB(se,se2) );
 	CHECK_NOTHROW( getBB(se,re2) );

@@ -97,7 +97,8 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_START std::cout << HOMOG2D_PRETTY_FUNCTION << "() line:" << __LINE__ << "\n"
+	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
+		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "()\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -5461,7 +5462,10 @@ template<
 FRect_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
+	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
+std::cout << __FUNCTION__ << "() size=" << vpts.size() << "\n";
+	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
 
 /* Commented on 20240327: it is perfectly possible to have a bounding box of a container holding 2 objects!!
 #ifndef HOMOG2D_NOCHECKS
@@ -5491,13 +5495,20 @@ getBB_Points( const T& vpts )
 	auto p1 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.first->getX(),   mm_y.first->getY()  );
 	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
 
+	std::cout << __FUNCTION__ << "() p1=" << p1 << " p2=" << p2 << "\n";
+
 	if( p1.distTo( p2 ) < thr::nullDistance() )
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute bounding box of set, identical points:\n -p1:"
 			<< p1 << "\n -p2:" << p2
 		);
-
+#if 0
 	return FRect_<typename T::value_type::FType>( p1, p2 );
+#else
+	auto r = FRect_<typename T::value_type::FType>( p1, p2 );
+	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
+	return r;
+#endif
 }
 
 //------------------------------------------------------------------
@@ -5512,8 +5523,10 @@ template<
 FRect_<typename T::value_type::FType>
 getBB_Segments( const T& vsegs )
 {
+	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
 
+	HOMOG2D_DEBUG_ASSERT( vsegs.size(), "cannot computing bounding box of empty set of segments" );
 	std::vector<Point2d_<FPT>> vpts( vsegs.size()*2 );
 	auto it = vpts.begin();
 	for( const auto& seg: vsegs )
@@ -5531,6 +5544,9 @@ template<typename FPT>
 auto
 getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 {
+	HOMOG2D_START;
+	HOMOG2D_DEBUG_ASSERT( v_rects.size(), "cannot computing bounding box of empty set of rectangles" );
+
 	std::vector<Point2d_<FPT>> vpts( v_rects.size()*2 );
 	auto it = vpts.begin();
 	for( const auto& seg: v_rects )
@@ -5767,6 +5783,9 @@ public:
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
 	{
+		HOMOG2D_START;
+		if( size() < 2 )
+			HOMOG2D_THROW_ERROR_1( "cannot compute bounding box of empty Polyline" );
 		return priv::getBB_Points( getPts() );
 	}
 
@@ -9533,6 +9552,7 @@ template<
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
 getPointPair( const T& elem )
 {
+	HOMOG2D_START;
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
 
@@ -9600,6 +9620,7 @@ template<
 FRect_<FPT>
 getBB( const T& elem, const Point2d_<FPT>& pt )
 {
+	HOMOG2D_START;
 	return priv::p_getPtBB( pt, elem );
 }
 
@@ -9626,6 +9647,7 @@ template<
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
+	HOMOG2D_START;
 	return priv::p_getBB( getBB(elem1), getBB(elem2) );
 }
 #endif
@@ -9634,12 +9656,22 @@ template<typename T1,typename T2,typename T3,typename T4>
 FRect_<T1>
 getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
 {
+	HOMOG2D_START;
+		std::cout << "pp1=" <<pp1.first << " --- " << pp1.second << "\n";
+		std::cout << "pp2=" <<pp2.first << " --- " << pp2.second << "\n";
+
 	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
 	arr[0] = pp1.first;
 	arr[1] = pp2.first;
 	arr[2] = pp1.second;
 	arr[3] = pp2.second;
+#if 0
 	return priv::getBB_Points( arr );
+#else
+	auto r = priv::getBB_Points( arr );
+	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
+	return r;
+#endif
 }
 
 //------------------------------------------------------------------
@@ -9668,9 +9700,11 @@ getBB( const T1& elem1, const T2& elem2 )
 	}
 	catch( const std::exception& err )
 	{
+		std::cout << "error: " << err.what() << "\n";
 		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n arg1="
 			<< elem1 << "\n arg2=" << elem2 );
 	}
+	return out;
 }
 
 
@@ -9687,6 +9721,7 @@ template<
 >
 FRect_<T1> getBB( const T1&, const T2& )
 {
+	HOMOG2D_START;
 	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
 	return FRect_<T1>(); // to avoid a compile warning
 }
@@ -9703,6 +9738,7 @@ template<
 auto
 getBB( const T& vpts )
 {
+	HOMOG2D_START;
 	if( vpts.size() < 2 )
 		HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
 	return priv::getBB_Points( vpts );
