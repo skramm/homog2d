@@ -2760,50 +2760,40 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	std::sort( osegs.begin(), osegs.end() );
 	CHECK( gt == osegs );
 }
-#define TMPCHECK \
-{ \
-	std::cout << "testline=" << __LINE__ << "\n"; \
-}
+
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
 	Point2d_<NUMTYPE> pt,pt2(1,1);
 	FRect_<NUMTYPE> re,re2;
-	Segment_<NUMTYPE> se,se2(1,1,0,0);
+	Segment_<NUMTYPE> se,se2(1,0,0,1);
 	CPolyline_<NUMTYPE> pc,pc2;
 	OPolyline_<NUMTYPE> po,po2;
 	Ellipse_<NUMTYPE> el,el2;
-	std::cout << "line: " << __LINE__ << "\n";
 
-	TMPCHECK;
-	auto bb1 = getBB(pt,pt2);
-	std::cout << " ---------bb1=" << bb1 << "\n";
-
-	TMPCHECK;
-	auto bb2 = FRect_<NUMTYPE>() ;
-	std::cout << " ---------bb1=" << bb1 << "\n ---------bb2=" << bb2 << "\n";
-
-	TMPCHECK;
 	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() );
-
-	TMPCHECK;
 	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
-
-	TMPCHECK;
+	CHECK( getBB(se,se)  == FRect_<NUMTYPE>() ); // identical segments, but they cover some area
 	CHECK( getBB(re,re2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(el,el2) == getBB(el) ); // identical
 
-	TMPCHECK;
-	CHECK( getBB(el,el2) == getBB(el) );
+	CHECK_THROWS( getBB(pc,pc2) ); // empty
+	CHECK_THROWS( getBB(pt,pt) ); // identical points   => no BB
 
-	TMPCHECK;
-	CHECK_NOTHROW( getBB(re,se2) );
-	CHECK_NOTHROW( getBB(se,se2) );
-	CHECK_NOTHROW( getBB(se,re2) );
+	pt2.set(0,1);
+	CHECK_THROWS( getBB(pt,pt2) ); // one of the coordinates is identical
 
+	se.set( 0,0,1,0 );
+	se2.set( 10,0,11,0 );
+	CHECK_THROWS( getBB(se,se)  ); // segments are colinear
+	CHECK_THROWS( getBB(se,se2) ); // segments are colinear
 
-//	CHECK_NOTHROW( getBB(li1,li2) );
+	pt2.set(0,0);
+	CHECK_THROWS( getBB(se,pt2) ); // no area
+
 }
 
-/// TODO temporarly replaced getBB() with getBB(). Restore when fixed
+
 TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
 {
 	Point2d_<NUMTYPE> pt;

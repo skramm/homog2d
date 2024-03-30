@@ -5464,15 +5464,8 @@ getBB_Points( const T& vpts )
 {
 	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
-std::cout << __FUNCTION__ << "() size=" << vpts.size() << "\n";
 	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
 
-/* Commented on 20240327: it is perfectly possible to have a bounding box of a container holding 2 objects!!
-#ifndef HOMOG2D_NOCHECKS
-	if( vpts.size()<2 )
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of set with size < 2" );
-#endif
-*/
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
 		std::end( vpts ),
@@ -5495,20 +5488,15 @@ std::cout << __FUNCTION__ << "() size=" << vpts.size() << "\n";
 	auto p1 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.first->getX(),   mm_y.first->getY()  );
 	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
 
-	std::cout << __FUNCTION__ << "() p1=" << p1 << " p2=" << p2 << "\n";
+//	std::cout << __FUNCTION__ << "() p1=" << p1 << " p2=" << p2 << "\n";
 
 	if( p1.distTo( p2 ) < thr::nullDistance() )
 		HOMOG2D_THROW_ERROR_1(
 			"unable to compute bounding box of set, identical points:\n -p1:"
 			<< p1 << "\n -p2:" << p2
 		);
-#if 0
+
 	return FRect_<typename T::value_type::FType>( p1, p2 );
-#else
-	auto r = FRect_<typename T::value_type::FType>( p1, p2 );
-	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
-	return r;
-#endif
 }
 
 //------------------------------------------------------------------
@@ -8056,6 +8044,8 @@ Algorithm:
  - get the two parallel lines to \c liH, at a distance \c b
  - get the two orthogonal lines at \c ptA and \c ptB
 
+\todo 20240330: unclear, the text above does not match what is done below (or does it?).
+Clarify that, and build a gif showing how this is done.
 */
 template<typename FPT>
 CPolyline_<FPT>
@@ -9570,102 +9560,21 @@ getPointPair( const T& elem )
 	return elem.getPts();
 }
 
-
 } // namespace priv
 
-#if 0
-/// Return Bounding Box of two objects, version used when both of the args are points
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-getBB( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
-{
-	FRect_<FPT1> bb;
-	try
-	{
-		bb = FRect_<FPT1>( pt1, pt2 );
-	}
-	catch( const std::runtime_error& err )
-	{
-		HOMOG2D_THROW_ERROR_1( "unable to compute Bounding Box of the two points:\n -"
-			<< pt1 << "\n -" << pt2 << "\n msg=" << err.what()
-		);
-	}
-	return bb;
-}
-
-/// Return Bounding Box of two objects, first arg is point, second is neither a line or a point
-template<
-	typename FPT,
-	typename T,
-	typename std::enable_if<
-			(!std::is_same<T,Line2d_<typename T::FType>>::value && !std::is_same<T,Point2d_<typename T::FType>>::value)
-		,T
-	>::type* = nullptr
->
-FRect_<FPT>
-getBB( const Point2d_<FPT>& pt, const T& elem )
-{
-	return priv::p_getPtBB( pt, elem );
-}
-
-/// Return Bounding Box of two objects, first arg is neither a line or a point, second is a point
-template<
-	typename FPT,
-	typename T,
-	typename std::enable_if<
-			(!std::is_same<T,Line2d_<typename T::FType>>::value && !std::is_same<T,Point2d_<typename T::FType>>::value)
-		,T
-	>::type* = nullptr
->
-FRect_<FPT>
-getBB( const T& elem, const Point2d_<FPT>& pt )
-{
-	HOMOG2D_START;
-	return priv::p_getPtBB( pt, elem );
-}
-
-/// Returns Bounding Box of two arbitrary objects (free function).
-/// Can be of different types, EXCEPT Line2d, Segment, Point2d
-/**
-(because a line does not have a bounding box)
-
-- available only for Circles, Ellipse, FRect, Polyline, Segment (if no identical coordinates)
-*/
-template<
-	typename T1,
-	typename T2,
-	typename std::enable_if<
-		(
-			!std::is_same<T1,Line2d_<typename T1::FType>>::value
-			&& !std::is_same<T2,Line2d_<typename T2::FType>>::value
-			&& !std::is_same<T1,Segment_<typename T2::FType>>::value
-			&& !std::is_same<T2,Segment_<typename T2::FType>>::value
-		)
-		,T1
-	>::type* = nullptr
->
-FRect_<typename T1::FType>
-getBB( const T1& elem1, const T2& elem2 )
-{
-	HOMOG2D_START;
-	return priv::p_getBB( getBB(elem1), getBB(elem2) );
-}
-#endif
 
 template<typename T1,typename T2,typename T3,typename T4>
 FRect_<T1>
 getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
 {
 	HOMOG2D_START;
-		std::cout << "pp1=" <<pp1.first << " --- " << pp1.second << "\n";
-		std::cout << "pp2=" <<pp2.first << " --- " << pp2.second << "\n";
 
 	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
 	arr[0] = pp1.first;
 	arr[1] = pp2.first;
 	arr[2] = pp1.second;
 	arr[3] = pp2.second;
-#if 0
+#if 1
 	return priv::getBB_Points( arr );
 #else
 	auto r = priv::getBB_Points( arr );
@@ -9700,9 +9609,8 @@ getBB( const T1& elem1, const T2& elem2 )
 	}
 	catch( const std::exception& err )
 	{
-		std::cout << "error: " << err.what() << "\n";
-		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n arg1="
-			<< elem1 << "\n arg2=" << elem2 );
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n -arg1="
+			<< elem1 << "\n -arg2=" << elem2 << "\n -err=" << err.what() );
 	}
 	return out;
 }
@@ -9756,8 +9664,10 @@ template<
 auto
 getBB( const T& vpts )
 {
-//	if( vpts.size() < 2 )
-//		HOMOG2D_THROW_ERROR_1( "unable, need at least two segments" );
+	HOMOG2D_START;
+	if( vpts.empty()  )
+		HOMOG2D_THROW_ERROR_1( "unable, need at least one segment" );
+
 	return priv::getBB_Segments( vpts );
 }
 
