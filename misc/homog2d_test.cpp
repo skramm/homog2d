@@ -2770,8 +2770,8 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	OPolyline_<NUMTYPE> po,po2;
 	Ellipse_<NUMTYPE> el,el2;
 
-	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() );
-	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() ); // (0,0) - (1,1)
+	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() ); // [(0,0) - (1,1)] - [(1,0) - (0,1)]
 	CHECK( getBB(se,se)  == FRect_<NUMTYPE>() ); // identical segments, but they cover some area
 	CHECK( getBB(re,re2) == FRect_<NUMTYPE>() );
 	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
@@ -2792,8 +2792,10 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	CHECK_THROWS( getBB(se,pt2) ); // no area
 
 	pc.set(  std::vector<Point2d_<NUMTYPE>>{ {0,0},{1,0} } );
+	CHECK_THROWS( getBB(pc) );         // no area
+	CHECK_THROWS( getBB(pc, pc2) );    // no area, and second is empty
+
 	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,0},{6,0} } );
-	CHECK_THROWS( getBB(pc) ); // no area
 	CHECK_THROWS( getBB(pc,pc2) ); // colinear
 
 	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,1},{6,1} } );

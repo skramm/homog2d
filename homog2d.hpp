@@ -340,8 +340,10 @@ using Point2d_ = base::LPBase<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = base::LPBase<type::IsLine,T>;
 
+template<typename T>
+using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
 template<typename T1,typename T2>
-using PointPair_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
+using PointPair2_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
 
 template<typename T>
 using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
@@ -1043,6 +1045,19 @@ product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 
 //------------------------------------------------------------------
+template<typename FPT1,typename FPT2>
+bool
+shareCommonCoord( const Point2d_<FPT1>& p1, const Point2d_<FPT2>& p2 )
+{
+	if(
+		   homog2d_abs( p1.getX() - p2.getX() ) < thr::nullOrthogDistance()
+		|| homog2d_abs( p1.getY() - p2.getY() ) < thr::nullOrthogDistance()
+	)
+		return true;
+	return false;
+}
+
+//------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 /** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
@@ -1050,10 +1065,7 @@ std::pair<Point2d_<FPT>,Point2d_<FPT>>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
-	if(
-		   std::fabs( p0.getX() - p1.getX() ) < thr::nullOrthogDistance()
-		|| std::fabs( p0.getY() - p1.getY() ) < thr::nullOrthogDistance()
-	)
+	if( shareCommonCoord( p0, p1 ) )
 		HOMOG2D_THROW_ERROR_1(
 			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
 		);
@@ -5459,7 +5471,7 @@ template<
 		T
 	>::type* = nullptr
 >
-FRect_<typename T::value_type::FType>
+PointPair1_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
 	HOMOG2D_START;
@@ -5488,15 +5500,20 @@ getBB_Points( const T& vpts )
 	auto p1 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.first->getX(),   mm_y.first->getY()  );
 	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
 
-//	std::cout << __FUNCTION__ << "() p1=" << p1 << " p2=" << p2 << "\n";
-
+#ifndef HOMOG2D_NOCHECKS
 	if( p1.distTo( p2 ) < thr::nullDistance() )
 		HOMOG2D_THROW_ERROR_1(
-			"unable to compute bounding box of set, identical points:\n -p1:"
+			"unable to compute bounding box of set, identical points:\n -p1:"<< p1 << "\n -p2:" << p2
+		);
+	if( shareCommonCoord( p1, p2 ) )
+		HOMOG2D_THROW_ERROR_1(
+			"unable to compute bounding box of set, points share common coordinate:\n -p1:"
 			<< p1 << "\n -p2:" << p2
 		);
+#endif // HOMOG2D_NOCHECKS
 
-	return FRect_<typename T::value_type::FType>( p1, p2 );
+//	return FRect_<typename T::value_type::FType>( p1, p2 );
+	return std::make_pair( p1, p2 );
 }
 
 //------------------------------------------------------------------
@@ -5523,7 +5540,7 @@ getBB_Segments( const T& vsegs )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-	return getBB_Points( vpts );
+	return FRect_<typename T::value_type::FType>( getBB_Points( vpts ) );
 }
 
 /// get BB for a set of FRect_ objects
@@ -5543,7 +5560,8 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-	return getBB_Points( vpts );
+//	return getBB_Points( vpts );
+	return FRect_<FPT>( getBB_Points( vpts ) );
 }
 
 } // namespace priv
@@ -5774,7 +5792,11 @@ public:
 		HOMOG2D_START;
 		if( size() < 2 )
 			HOMOG2D_THROW_ERROR_1( "cannot compute bounding box of empty Polyline" );
-		return priv::getBB_Points( getPts() );
+		auto ppts = priv::getBB_Points( getPts() );
+		if( shareCommonCoord( ppts.first, ppts.second ) )
+			HOMOG2D_THROW_ERROR_1( "unable, points share common coordinate" );
+
+		return FRect_<FPT>( ppts );
 	}
 
 	LPBase<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
@@ -9438,78 +9460,12 @@ getBB( const T& object )
 }
 
 namespace priv {
-/// Returns Bounding Box of two rectangles (private free function)
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-p_getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
-{
-// first, convert them to internal numerical type
-// (same type is needed to use std::min/max)
-	const FRect_<HOMOG2D_INUMTYPE> r1(ra);
-	const FRect_<HOMOG2D_INUMTYPE> r2(rb);
-	auto ppts1 = r1.getPts();
-	auto ppts2 = r2.getPts();
-	auto min_x = std::min( ppts1.first.getX(),  ppts2.first.getX() );
-	auto min_y = std::min( ppts1.first.getY(),  ppts2.first.getY() );
-	auto max_x = std::max( ppts1.second.getX(), ppts2.second.getX() );
-	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
-	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
-}
 
-/// Return bounding box of a Point2d_ and a (FRect_ or Polyline or Circle or Ellipse)
-/// (private free function)
-template<
-	typename FPT,
-	typename T,
-	typename std::enable_if<
-		(                                                          // second arg is
-			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
-			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
-			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
-		)
-		,T
-	>::type* = nullptr
->
-FRect_<FPT>
-p_getPtBB( const Point2d_<FPT>& pt, const T& bb )
-{
-	auto ppts = bb.getBB().getPts();
-	auto x = static_cast<HOMOG2D_INUMTYPE>( pt.getX() );
-	auto y = static_cast<HOMOG2D_INUMTYPE>( pt.getY() );
-	auto min_x = std::min( (HOMOG2D_INUMTYPE)ppts.first.getX(),  x );
-	auto min_y = std::min( (HOMOG2D_INUMTYPE)ppts.first.getY(),  y );
-	auto max_x = std::max( (HOMOG2D_INUMTYPE)ppts.second.getX(), x );
-	auto max_y = std::max( (HOMOG2D_INUMTYPE)ppts.second.getY(), y );
-
-	return FRect_<FPT>( min_x, min_y, max_x, max_y );
-}
-
-/// Return bounding box of a Point2d_ and a Segment_
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-p_getPtBB( const Point2d_<FPT1>& pt, const Segment_<FPT2>& seg )
-{
-	auto ppts = seg.getPts();
-	auto pt1 = static_cast<Point2d_<HOMOG2D_INUMTYPE>>(ppts.first);
-	auto pt2 = static_cast<Point2d_<HOMOG2D_INUMTYPE>>(ppts.second);
-
-	auto x = static_cast<HOMOG2D_INUMTYPE>( pt.getX() );
-	auto y = static_cast<HOMOG2D_INUMTYPE>( pt.getY() );
-
-	auto min_x = std::min( pt1.getX(), x );
-	min_x      = std::min( pt2.getX(), min_x );
-	auto min_y = std::min( pt1.getY(), y );
-	min_y      = std::min( pt2.getY(), min_y );
-	auto max_x = std::max( pt1.getX(), x );
-	max_x      = std::max( pt2.getX(), max_x );
-	auto max_y = std::max( pt1.getY(), y );
-	max_y      = std::max( pt2.getY(), max_y );
-
-	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
-}
-
-/// Overload 1/4
-/// arg is a neither a Point2d, a Segment, a Line2d or a polyline
+/// Return pair of points defining a BB of a primitive
+/// Overload 1/4, private free function
+/**
+Arg is a neither a Point2d, a Segment, a Line2d or a polyline
+*/
 template<
 	typename T,
 	typename std::enable_if<
@@ -9523,15 +9479,15 @@ template<
 		,T
 	>::type* = nullptr
 >
-std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+auto
 getPointPair( const T& elem )
 {
 	HOMOG2D_START;
-	auto bb = elem.getBB();
-	return bb.getPts();
+	return elem.getBB().getPts();
 }
 
-/// Overload 2/4. Arg is a Polyline
+/// Return pair of points defining a BB of a Polyline
+/// Overload 2/4, private free function
 template<
 	typename T,
 	typename std::enable_if<
@@ -9542,23 +9498,23 @@ template<
 		,T
 	>::type* = nullptr
 >
-std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
-getPointPair( const T& elem )
+auto
+getPointPair( const T& poly )
 {
 	HOMOG2D_START;
 
-	if( elem.size() == 0 )
+	if( poly.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "cannot compute point pair of empty Polyline" );
-	if( elem.size() == 2 )
+	if( poly.size() == 2 )
 	{
-		const auto& pts = elem.getPts();
+		const auto& pts = poly.getPts();
 		return std::make_pair( pts[0], pts[1] );
 	}
-	auto bb = elem.getBB();
-	return bb.getPts();
+	return getBB_Points( poly.getPts() );
 }
 
-/// Overload 3/4. Arg is a Point2d
+/// Return pair of points defining a BB of a Point2d
+/// Overload 3/4, private free function
 /**
 This seems useless at first glance, but it used to get the common bounding box of two objects
 when one of them (or both) is a point.
@@ -9570,14 +9526,14 @@ template<
 		,T
 	>::type* = nullptr
 >
-std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+auto
 getPointPair( const T& elem )
 {
 	HOMOG2D_START;
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
-
-/// Overload 4/4. Arg is a Segment
+/// Return pair of points defining a BB of Segment
+/// Overload 4/4, private free function
 template<
 	typename T,
 	typename std::enable_if<
@@ -9585,7 +9541,7 @@ template<
 		,T
 	>::type* = nullptr
 >
-std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+auto
 getPointPair( const T& elem )
 {
 	HOMOG2D_START;
@@ -9596,8 +9552,8 @@ getPointPair( const T& elem )
 
 
 template<typename T1,typename T2,typename T3,typename T4>
-FRect_<T1>
-getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
+auto
+getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
 	HOMOG2D_START;
 
@@ -9607,7 +9563,7 @@ getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
 	arr[2] = pp1.second;
 	arr[3] = pp2.second;
 #if 1
-	return priv::getBB_Points( arr );
+	return FRect_<T1>( priv::getBB_Points( arr ) );
 #else
 	auto r = priv::getBB_Points( arr );
 	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
@@ -9625,7 +9581,7 @@ template<
 		,T1
 	>::type* = nullptr
 >
-FRect_<typename T1::FType>
+auto
 getBB( const T1& elem1, const T2& elem2 )
 {
 	HOMOG2D_START;
@@ -9659,7 +9615,7 @@ template<
 		,T1
 	>::type* = nullptr
 >
-FRect_<typename T1::FType>
+auto
 getBB( const T1& p1, const T2& p2 )
 {
 	HOMOG2D_START;
@@ -9687,7 +9643,8 @@ template<
 		,T1
 	>::type* = nullptr
 >
-FRect_<T1> getBB( const T1&, const T2& )
+auto
+getBB( const T1&, const T2& )
 {
 	HOMOG2D_START;
 	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
@@ -9709,7 +9666,7 @@ getBB( const T& vpts )
 	HOMOG2D_START;
 	if( vpts.size() < 2 )
 		HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
-	return priv::getBB_Points( vpts );
+	return FRect_<typename T::value_type::FType>( priv::getBB_Points( vpts ) );
 }
 
 //------------------------------------------------------------------
@@ -9780,7 +9737,6 @@ class ClosestPoints
 	friend priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
 	h2d::getClosestPoints<>( const base::PolylineBase<PLT1,FPT1>&,const base::PolylineBase<PLT2,FPT2>& );
 
-public:
 private:
 	size_t _pt1_min = 0;
 	size_t _pt2_min = 0;

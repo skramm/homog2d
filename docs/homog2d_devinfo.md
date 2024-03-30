@@ -170,7 +170,11 @@ However, when computing the common bounding box of two arbitrary elements, thing
 * if one of the two objects is a line, no bounding box can be computed, so a call to `getBB()` with two lines will not compile.
 * if both of the arguments have an area, then there is no problem
 * if one of the arguments is a point or a segment, then a common bounding box may exist, but the function will throw if no area can be defined
-(say, for two points having a common coordinate).
+(say, for two points having a common coordinate, or two colinear segments).
+* for Polyline types (open or closed, makes no difference), it depends:
+  * if both are empty, then no common area can de defined, and the function will throw an error.
+  * if one of them is empty, we attemps go get the bounding box for the other (will throw if not exist)
+  * if both are not empty, we attemps go get the common bounding box, but this can fail if they are colinear
 
 
 ## 5 - Testing

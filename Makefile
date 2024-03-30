@@ -63,7 +63,7 @@ endif
 
 check:
 	@cppcheck --version
-	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
+	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++17 2>cppcheck.log
 	xdg-open cppcheck.log
 
 doc: DOX_FILE=doxyfile

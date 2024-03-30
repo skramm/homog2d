@@ -1889,9 +1889,9 @@ void action_BB( void* param )
 
 void demo_BB( int demidx )
 {
-	Param_BB data( demidx, "Point Bounding Box demo" );
+	Param_BB data( demidx, "Generalized Bounding Box demo" );
 	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
-	Move the red points to see the common bounding box of point and other element.\n";
+	Move the points to see the common bounding box of the two elements. hit [w] and [x] to change.\n";
 
 	action_BB( &data );
 	data.setMouseCB( action_BB );
