@@ -148,6 +148,7 @@ This is why we have here a double inheritance pattern, on all concrete types (ge
 This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is defined
 (see [build options](homog2d_manual.md#build_options)).
 
+
 ### 4.3 - Bounding Box of two primitives
 
 The concept of bounding box is easy to understand for the some primitives

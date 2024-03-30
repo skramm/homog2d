@@ -9508,7 +9508,8 @@ p_getPtBB( const Point2d_<FPT1>& pt, const Segment_<FPT2>& seg )
 	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
 }
 
-/// arg is a neither a Point2d, a Segment, or a Line2d
+/// Overload 1/4
+/// arg is a neither a Point2d, a Segment, a Line2d or a polyline
 template<
 	typename T,
 	typename std::enable_if<
@@ -9516,6 +9517,8 @@ template<
 			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
 			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
 			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
+			&& !std::is_same<T,CPolyline_<typename T::FType>>::value // not a CPolyline
+			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a COolyline
 		)
 		,T
 	>::type* = nullptr
@@ -9523,11 +9526,39 @@ template<
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
 getPointPair( const T& elem )
 {
+	HOMOG2D_START;
 	auto bb = elem.getBB();
 	return bb.getPts();
 }
 
-/// arg is a Point2d
+/// Overload 2/4. Arg is a Polyline
+template<
+	typename T,
+	typename std::enable_if<
+		(
+			std::is_same<T,CPolyline_<typename T::FType>>::value
+			|| std::is_same<T,OPolyline_<typename T::FType>>::value
+		)
+		,T
+	>::type* = nullptr
+>
+std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+getPointPair( const T& elem )
+{
+	HOMOG2D_START;
+
+	if( elem.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "cannot compute point pair of empty Polyline" );
+	if( elem.size() == 2 )
+	{
+		const auto& pts = elem.getPts();
+		return std::make_pair( pts[0], pts[1] );
+	}
+	auto bb = elem.getBB();
+	return bb.getPts();
+}
+
+/// Overload 3/4. Arg is a Point2d
 /**
 This seems useless at first glance, but it used to get the common bounding box of two objects
 when one of them (or both) is a point.
@@ -9546,7 +9577,7 @@ getPointPair( const T& elem )
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
 
-/// arg is a Segment
+/// Overload 4/4. Arg is a Segment
 template<
 	typename T,
 	typename std::enable_if<
@@ -9557,6 +9588,7 @@ template<
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
 getPointPair( const T& elem )
 {
+	HOMOG2D_START;
 	return elem.getPts();
 }
 
@@ -9584,14 +9616,12 @@ getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
 }
 
 //------------------------------------------------------------------
-/// This one is called if NONE of the args are a Line2d AND no pair
+/// Overload 1/3. This one is called if NONE of the args are a Line2d
 template<
 	typename T1,
 	typename T2,
 	typename std::enable_if<
 		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
-//		&&
-//		( !std::is_same<T1,std::pair<const Point2d_<typename T1::FType>,const Point2d_<typename T1::FType> >>::value )
 		,T1
 	>::type* = nullptr
 >
@@ -9615,10 +9645,40 @@ getBB( const T1& elem1, const T2& elem2 )
 	return out;
 }
 
+/// Overload 2/3. Called if
+template<
+	typename T1,
+	typename T2,
+	typename PLT1,
+	typename PLT2,
+	typename std::enable_if<
+		(
+			std::is_same<T1,base::PolylineBase<typename T1::FType, PLT1>>::value
+			|| std::is_same<T2,base::PolylineBase<typename T2::FType, PLT2>>::value
+		)
+		,T1
+	>::type* = nullptr
+>
+FRect_<typename T1::FType>
+getBB( const T1& p1, const T2& p2 )
+{
+	HOMOG2D_START;
 
+	if( p1.size() == 0 && p2.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
 
+	if( p1.size() != 0 &&  p2.size() == 0 )
+		return FRect_<typename T1::FType>( priv::getPointPair( p1 ) );
+	if( p1.size() == 0 &&  p2.size() != 0 )
+		return FRect_<typename T1::FType>( priv::getPointPair( p2 ) );
+
+	return getBB(
+			priv::getPointPair( p1 ),
+			priv::getPointPair( p2 )
+	);
+}
 //------------------------------------------------------------------
-/// This one is called if one of the args is a Line2d (=> no build!)
+/// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
 template<
 	typename T1,
 	typename T2,

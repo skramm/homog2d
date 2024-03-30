@@ -19,6 +19,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
+  - Opencv Demo now requires C++17 (use of `std::variant`)
   - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example).
   - bugfixes:
     - https://github.com/skramm/homog2d/issues/11

@@ -2791,6 +2791,13 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	pt2.set(0,0);
 	CHECK_THROWS( getBB(se,pt2) ); // no area
 
+	pc.set(  std::vector<Point2d_<NUMTYPE>>{ {0,0},{1,0} } );
+	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,0},{6,0} } );
+	CHECK_THROWS( getBB(pc) ); // no area
+	CHECK_THROWS( getBB(pc,pc2) ); // colinear
+
+	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,1},{6,1} } );
+	CHECK( getBB(pc,pc2) == FRect_<NUMTYPE>(0,0,6,1) );
 }
 
 
