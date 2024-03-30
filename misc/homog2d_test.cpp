@@ -2763,27 +2763,25 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
-	Point2d_<NUMTYPE> pt,pt2;
-	Line2d_<NUMTYPE> li,li2;
+	Point2d_<NUMTYPE> pt,pt2(1,1);
 	FRect_<NUMTYPE> re,re2;
-	Segment_<NUMTYPE> se,se2;
+	Segment_<NUMTYPE> se,se2(1,1,0,0);
 	CPolyline_<NUMTYPE> pc,pc2;
 	OPolyline_<NUMTYPE> po,po2;
 	Ellipse_<NUMTYPE> el,el2;
 
-	CHECK_NOTHROW( getBB(re,re2) );
+	auto bb1 = getBB(pt,pt2);
+	auto bb2 = FRect_<NUMTYPE>() ;
+	std::cout << " ---------bb1=" << bb1 << "\n ---------bb2=" << bb2 << "\n";
+	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(re,re2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(el,el2) == getBB(el) );
+
 	CHECK_NOTHROW( getBB(re,se2) );
 	CHECK_NOTHROW( getBB(se,se2) );
 	CHECK_NOTHROW( getBB(se,re2) );
-/*	CHECK_THROWS( getBB(li,re2) );
-	CHECK_THROWS( getBB(re,li2) );
 
-	CHECK_THROWS( getBB(li,pt2) );
-	CHECK_THROWS( getBB(li,re2) );
-	CHECK_THROWS( getBB(li,pc2) );
-	CHECK_THROWS( getBB(li,po2) );
-	CHECK_THROWS( getBB(li,el2) );
-*/
 
 //	CHECK_NOTHROW( getBB(li1,li2) );
 }

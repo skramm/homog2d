@@ -339,8 +339,8 @@ using Point2d_ = base::LPBase<type::IsPoint,T>;
 template<typename T>
 using Line2d_  = base::LPBase<type::IsLine,T>;
 
-template<typename T>
-using PointPair_ = std::pair<Point2d_<T>,Point2d_<T>>;
+template<typename T1,typename T2>
+using PointPair_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
 
 template<typename T>
 using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
@@ -9630,42 +9630,49 @@ getBB( const T1& elem1, const T2& elem2 )
 }
 #endif
 
+template<typename T1,typename T2,typename T3,typename T4>
+FRect_<T1>
+getBB( const PointPair_<T1,T2>& pp1, const PointPair_<T3,T4>& pp2 )
+{
+	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
+	arr[0] = pp1.first;
+	arr[1] = pp2.first;
+	arr[2] = pp1.second;
+	arr[3] = pp2.second;
+	return priv::getBB_Points( arr );
+}
+
 //------------------------------------------------------------------
-/// This one is called if NONE of the args are a Line2d
+/// This one is called if NONE of the args are a Line2d AND no pair
 template<
 	typename T1,
 	typename T2,
 	typename std::enable_if<
 		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
+//		&&
+//		( !std::is_same<T1,std::pair<const Point2d_<typename T1::FType>,const Point2d_<typename T1::FType> >>::value )
 		,T1
 	>::type* = nullptr
 >
 FRect_<typename T1::FType>
 getBB( const T1& elem1, const T2& elem2 )
 {
-	auto pp1 = priv::getPointPair( elem1 );
-	auto pp2 = priv::getPointPair( elem2 );
-	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
-	arr[0] = pp1.first;
-	arr[1] = pp2.first;
-	arr[2] = pp1.second;
-	arr[3] = pp2.second;
-	return priv::getBB_Points( arr );
+	HOMOG2D_START;
+	FRect_<typename T1::FType> out;
+	try
+	{
+		out = getBB(
+			priv::getPointPair( elem1 ),
+			priv::getPointPair( elem2 )
+		);
+	}
+	catch( const std::exception& err )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n arg1="
+			<< elem1 << "\n arg2=" << elem2 );
+	}
 }
 
-
-
-template<typename T1,typename T2>
-FRect_<T1>
-getBBpp( const PointPair_<T1>& pp1, const PointPair_<T2>& pp2 )
-{
-	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
-	arr[0] = pp1.first;
-	arr[1] = pp2.first;
-	arr[2] = pp1.second;
-	arr[3] = pp2.second;
-	return priv::getBB_Points( arr );
-}
 
 
 //------------------------------------------------------------------

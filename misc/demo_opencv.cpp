@@ -1763,9 +1763,7 @@ struct varDrawElem
 		img::Image<cv::Mat>& img,
 		img::DrawParams&     dp
 	) : _img(img), _dparams(dp)
-	{
-		std::cout << "dp=" << dp;
-	}
+	{}
 	template<typename T>
 	void operator()(const T& a)
 	{
@@ -1786,11 +1784,14 @@ struct Param_BB : Data
 		init( _vecvar[0], 0 );
 		init( _vecvar[1], 1 );
 
-		vpt.resize( 14 );
+		vpt.resize( 17 );
 		for( auto& pt: vpt )
-			setRandomPt( pt );
+			pt.set(
+				1.0*rand()*300/RAND_MAX+50,
+				1.0*rand()*250/RAND_MAX+30
+			);
 	}
-
+/// Fills vector of variants with elements
 	void init( std::vector<var::VarType>& vecvar, int idx )
 	{
 		vecvar.push_back( var::VarType( OPolyline() ) );
@@ -1817,14 +1818,6 @@ struct Param_BB : Data
 		return _name[i];
 	}
 
-	void setRandomPt( Point2d& pt )
-	{
-		pt.set(
-			1.0*rand()*300/RAND_MAX+50,
-			1.0*rand()*250/RAND_MAX+30
-		);
-	}
-
 	void initElemsAll()
 	{
 		initElems( _vecvar[0], 0 );
@@ -1833,18 +1826,21 @@ struct Param_BB : Data
 
 	void initElems( std::vector<var::VarType>& vec, int i )
 	{
-		std::vector<Point2d> vec2;
+		std::vector<Point2d> vecpl1,vecpl2;
 		for( auto j = 0; j<3; j++ )
-			vec2.push_back( vpt[j] );
+		{
+			vecpl1.push_back( vpt[j] );
+			vecpl2.push_back( vpt[j+3] );
+		}
 
 		for( auto& v: vec )
 		{
-			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vec2 );
-			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vec2 );
-			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[4+i*2], vpt[5+i*2] );
-			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[8+i*2], vpt[9+i*2] );
-			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[12+i], 60 );
-			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[13];
+			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vecpl1 );
+			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vecpl2 );
+			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[6+i*2], vpt[7+i*2] );
+			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[10+i*2], vpt[11+i*2] );
+			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[14+i], 60 );
+			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[16];
 		}
 	}
 
@@ -1875,10 +1871,9 @@ void action_BB( void* param )
 
 	auto pp1 = std::visit( var::varGetPointPair{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
 	auto pp2 = std::visit( var::varGetPointPair{}, curr2 );
+
 	try	{
-//		std::cout << "getBBpp()\n";
-		auto cbb = getBBpp( pp1, pp2 );
-		cbb.draw( data.img, style0 );
+		getBB( pp1, pp2 ).draw( data.img, style0 );
 	}
 	catch( std::runtime_error& err )
 	{
@@ -1902,8 +1897,8 @@ void demo_BB( int demidx )
 	data.setMouseCB( action_BB );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ std::cout << data.switchToNext(0) << '\n'; },   "Switch to next 1" );
-	kbloop.addKeyAction( 'x', [&](void*){ std::cout << data.switchToNext(1) << '\n'; },   "Switch to next 2" );
+	kbloop.addKeyAction( 'w', [&](void*){ std::cout << "red: " <<  data.switchToNext(0) << '\n'; },   "Switch to next 1" );
+	kbloop.addKeyAction( 'x', [&](void*){ std::cout << "blue: " << data.switchToNext(1) << '\n'; },   "Switch to next 2" );
 	kbloop.addCommonAction( action_BB );
 
 	kbloop.start( data );
