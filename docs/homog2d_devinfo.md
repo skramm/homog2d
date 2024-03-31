@@ -169,7 +169,7 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 
 |     Type    |               |
 |-------------|---------------|
-| `Point2d`   | always throws |
+| `Point2d`   | no build      |
 | `Line2d`    | no build      |
 | `Segment`   | no build      |
 | `Circle`    | never throws  |

@@ -5527,7 +5527,6 @@ getBB_Points( const T& vpts )
 		);
 #endif // HOMOG2D_NOCHECKS
 
-//	return FRect_<typename T::value_type::FType>( p1, p2 );
 	return std::make_pair( p1, p2 );
 }
 
@@ -5575,7 +5574,6 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-//	return getBB_Points( vpts );
 	return FRect_<FPT>( getBB_Points( vpts ) );
 }
 
