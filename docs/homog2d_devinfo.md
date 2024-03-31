@@ -165,13 +165,13 @@ On other primitives, the concept of bounding box makes no sense:
 * For points, as a bounding box is implemented as a `FRect` object and that this type cannot have a null area, it can not be defined either.
 * For segments, as these may not have an area, no `getBB()` member function is enabled.
 
-The table below summarizes what happens when calling `getBB()` on an object:
+The table below summarizes what happens when attempt to call `getBB()` on an object:
 
 |     Type    |               |
 |-------------|---------------|
 | `Point2d`   | always throws |
-| `Line2d`    | always throws |
-| `Segment`   | may throw     |
+| `Line2d`    | no build      |
+| `Segment`   | no build      |
 | `Circle`    | never throws  |
 | `FRect`     | never throws  |
 | `OPolyline` | may throw     |

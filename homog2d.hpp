@@ -2009,7 +2009,7 @@ public:
 		this->moveTo( new_org.getX(), new_org.getY() );
 	}
 
-/// \name attributes
+/// \name attributes of ellipse
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
 	Point2d_<FPT>                                getCenter() const;
