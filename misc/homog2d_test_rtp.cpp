@@ -19,6 +19,7 @@
 \file homog2d_test_rtp.cpp
 \brief This program will demonstrate the RunTime Polymorphism capabilities.
 Is included in test suite.
+
 */
 
 
@@ -56,9 +57,12 @@ int main( int, char** )
 	for( auto& e: vec )  // demonstration of polymorphic member functions
 	{
 		std::cout << getString(e->type()) << ": " << *e
-			<< "\n  -area = " << e->area()
-			<< "\n  -length = " << e->length()
-			<< '\n';
+			<< "\n  -area = " << e->area();
+		if( e->type() != Type::Line2d )
+			std::cout << "\n  -length = " << e->length();
+		else
+			std::cout << "\n  -length = infinite";
+		std::cout << '\n';
 		e->draw( im );
 
 		if( e->type() == Type::CPolyline )

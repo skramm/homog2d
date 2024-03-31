@@ -85,7 +85,7 @@ install:
 demo: BUILD/demo_opencv
 	BUILD/demo_opencv
 
-demo_import: BUILD/demo_svg_import_1 BUILD/demo_svg_import_2
+demo_import: BUILD/demo_svg_import
 	@echo "-done target $@"
 
 clean:
@@ -335,7 +335,7 @@ BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
 
 
 # this target requires Tinyxml2
-BUILD/demo_svg_import_%: misc/test_files/demo_svg_import_%.cpp homog2d.hpp buildf
+BUILD/demo_svg_import: misc/test_files/demo_svg_import.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -I. -o $@ $< $$(pkg-config --libs tinyxml2)
 
 

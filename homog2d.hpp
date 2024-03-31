@@ -3993,17 +3993,32 @@ Please check out warning described in impl_getAngle()
 	{
 		return impl_isInf( detail::BaseHelper<LP>() );
 	}
-	HOMOG2D_INUMTYPE length() const { return 0.; }
+
+	HOMOG2D_INUMTYPE length() const
+	{
+		return impl_length( detail::BaseHelper<LP>() );
+	}
+/// Neither lines nor points have an area
 	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
 private:
+/// A point has a null length
+	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename type::IsPoint>& ) const
+	{ return 0.; }
+
+/// A line has an infinite length
+	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename type::IsLine>& ) const
+	{
+		HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
+	}
+
 	FPT impl_getX( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
-		return _v[0]/_v[2];
+		return static_cast<HOMOG2D_INUMTYPE>(_v[0])/_v[2];
 	}
 	FPT impl_getY( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
-		return _v[1]/_v[2];
+		return static_cast<HOMOG2D_INUMTYPE>(_v[1])/_v[2];
 	}
 
 	template<typename T1,typename T2>

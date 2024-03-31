@@ -58,12 +58,16 @@ int main( int argc, const char** argv )
 
 	img::Image<img::SvgImage> out( 500, 500 );
 
-/*	for( const auto& e: data )
+/*
+	for( const auto& e: data )
 	{
 		if( e->type() != Type::Line2d )
-			auto bb = e->getBB();
-	}*/
-
+		{
+//			auto bb = e->getBB();
+			auto bb = e->getPointPair();
+		}
+	}
+*/
 	size_t c = 0;
 	for( const auto& e: data )
 	{

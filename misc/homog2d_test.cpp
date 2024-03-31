@@ -2362,6 +2362,13 @@ TEST_CASE( "Colinearity", "[colinearity]" )
 	}
 }
 
+TEST_CASE( "Line2d", "[line1]" )
+{
+	Line2d_<NUMTYPE> li;
+	CHECK( li.area() == 0. );
+	CHECK_THROWS( li.length() );
+}
+
 TEST_CASE( "Circle", "[cir1]" )
 {
 	{
