@@ -149,21 +149,38 @@ This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is define
 (see [build options](homog2d_manual.md#build_options)).
 
 
-### 4.3 - Bounding Box of two primitives
+### 4.3 - Bounding Boxes
 
 The concept of bounding box is easy to understand for the some primitives
 (classes `FRect`, `Circle`, `Ellipse`),
 and it is validated with the trait class template `HasBB<>`.
+For Segments, it may throw, if the points share some common coordinate (thus not having an area).
 For the two "polylines" classes (`OPolyline` and `CPolyline`), it **may** exist (at compile time), but not always succeed.
 Indeed, these two types can have only two points, thus being equivalent to segments, that do not have a bounding box
 (consider vertical or horizontal segments).
-
 
 On other primitives, the concept of bounding box makes no sense:
 
 * For lines, as that are infinite, a bounding box can not be defined.
 * For points, as a bounding box is implemented as a `FRect` object and that this type cannot have a null area, it can not be defined either.
 * For segments, as these may not have an area, no `getBB()` member function is enabled.
+
+The table below summarizes what happens when calling `getBB()` on an object:
+
+|     Type    |               |
+|-------------|---------------|
+| `Point2d`   | always throws |
+| `Line2d`    | always throws |
+| `Segment`   | may throw     |
+| `Circle`    | never throws  |
+| `FRect`     | never throws  |
+| `OPolyline` | may throw     |
+| `CPolyline` | may throw     |
+| `Ellipse`   | never throws  |
+
+**Bounding box of two objects**
+
+This library provides a free function `getBB( t1, t1 )` that will return the bounding boxes holding `t1` and `t2`.
 
 However, when computing the common bounding box of two arbitrary elements, things are not exactly the same.
 
