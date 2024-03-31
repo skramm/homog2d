@@ -6844,8 +6844,9 @@ template<typename PLT,typename FPT>
 void
 VisvaData<PLT,FPT>::computeAreas( size_t istart, size_t iend )
 {
-	_triangleAreas.resize( _polyp->isClosed()?size():size()-2 );
+	_triangleAreas.resize( _polyp->isClosed() ? _polyp->size() : _polyp->size()-2 );
 	size_t c = 0;
+	size_t nbpts = _polyp->size();
 
 // step 1: compute areas of	each triangle
 	for( size_t i=istart; i<iend; i++ )
@@ -6915,14 +6916,14 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
-	VisvaData<PLT,FPT> data( *this );
-	data.computeAreas( istart, iend );
+	VisvaData<PLT,FPT> vdata( *this );
+	vdata.computeAreas( istart, iend );
 
 //	priv::printVector( triangleAreas, "triangle areas" );
 
 // step 2: find minimum value
-	const auto itmin = std::min_element( triangleAreas.cbegin(), triangleAreas.cend() );
-	size_t posmin = itmin - triangleAreas.cbegin();
+	const auto itmin = std::min_element( vdata._triangleAreas.cbegin(), vdata._triangleAreas.cend() );
+	size_t posmin = itmin - vdata._triangleAreas.cbegin();
 
 // step 3: if minimum value above a threshold, copy all the points except the one with minimum area
 // (else, do nothing)
