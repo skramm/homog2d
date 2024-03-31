@@ -211,7 +211,10 @@ myMouseCB( int event, int x, int y, int, void* param )
 			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
+				{
 					data._selected = i;
+					data.vpt[i].draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+				}
 			if( data._selected == -1 )
 				if( data.leftClicAddPoint )
 					data.addMousePoint();
@@ -1721,6 +1724,185 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
+//template<typename T>
+//using VarType = std::variant<FRect_<T>,Circle_<T>,Segment_<T>,Point2d_<T>,CPolyline_<T>>;
+
+
+
+//------------------------------------------------------------------
+void printFailure( std::exception& e )
+{
+	std::cout << "Unable to build BB, err=" << e.what() << "\n";
+}
+using PointPair = std::pair<Point2d,Point2d>;
+
+namespace var {
+
+using VarType = std::variant<FRect,Circle,Segment,Point2d,CPolyline,OPolyline>;
+
+/// Variant type, use with std::visit(). Enables dynamic polymorphism with templated types
+/**
+\todo 20240328: apply same technique to the reading of an SVG file
+*/
+struct varGetPointPair
+{
+	template<typename T>
+	PointPair operator()(const T& a)   { return priv::getPointPair(a); }
+};
+struct varGetName
+{
+	template<typename T>
+	std::string operator()(const T& a)   { return getString( a.type() ); }
+};
+
+struct varDrawElem
+{
+	varDrawElem(
+		img::Image<cv::Mat>& img,
+		img::DrawParams&     dp
+	) : _img(img), _dparams(dp)
+	{}
+	template<typename T>
+	void operator()(const T& a)
+	{
+		a.draw( _img, _dparams );
+	}
+private:
+	img::Image<cv::Mat>& _img;
+	img::DrawParams      _dparams;
+};
+
+} // namespace var
+
+/// Parameters for points Bounding Box demo
+struct Param_BB : Data
+{
+	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
+	{
+		init( _vecvar[0], 0 );
+		init( _vecvar[1], 1 );
+
+		vpt.resize( 17 );
+		for( auto& pt: vpt )
+			pt.set(
+				1.0*rand()*300/RAND_MAX+50,
+				1.0*rand()*250/RAND_MAX+30
+			);
+	}
+/// Fills vector of variants with elements
+	void init( std::vector<var::VarType>& vecvar, int idx )
+	{
+		vecvar.push_back( var::VarType( OPolyline() ) );
+		vecvar.push_back( var::VarType( CPolyline() ) );
+		vecvar.push_back( var::VarType( Segment()   ) );
+		vecvar.push_back( var::VarType( Point2d()   ) );
+		vecvar.push_back( var::VarType( Circle()    ) );
+		vecvar.push_back( var::VarType( FRect()     ) );
+
+		_name[idx] = std::visit( var::varGetName{}, _vecvar[idx][_current[idx]] );
+	}
+
+	var::VarType getCurrent( int i ) const
+	{
+		return _vecvar[i][_current[i]];
+	}
+
+	std::string switchToNext( int i )
+	{
+		_current[i]++;
+		if( _current[i] == _vecvar[i].size() )
+			_current[i] = 0;
+		_name[i] = std::visit( var::varGetName{}, _vecvar[i][_current[i]] );
+		return _name[i];
+	}
+
+	void initElemsAll()
+	{
+		initElems( _vecvar[0], 0 );
+		initElems( _vecvar[1], 1 );
+	}
+
+	void initElems( std::vector<var::VarType>& vec, int i )
+	{
+		std::vector<Point2d> vecpl1,vecpl2;
+		for( auto j = 0; j<3; j++ )
+		{
+			vecpl1.push_back( vpt[j] );
+			vecpl2.push_back( vpt[j+3] );
+		}
+
+		for( auto& v: vec )
+		{
+			if( std::holds_alternative<CPolyline>(v) ) std::get<CPolyline>(v).set( vecpl1 );
+			if( std::holds_alternative<OPolyline>(v) ) std::get<OPolyline>(v).set( vecpl2 );
+			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[6+i*2], vpt[7+i*2] );
+			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[10+i*2], vpt[11+i*2] );
+			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[14+i], 60 );
+			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[16];
+		}
+	}
+
+	std::string _name[2];        ///< name of current primitive
+
+private:
+	size_t                    _current[2] = {0,2}; ///< index of current
+	std::vector<var::VarType> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
+};
+
+void action_BB( void* param )
+{
+	auto& data = *reinterpret_cast<Param_BB*>(param);
+	data.clearImage();
+	auto style = img::DrawParams().setPointStyle( img::PtStyle::Dot ).showPoints();
+	auto style0 = style.setColor(0,250,0);
+	auto style1 = style.setColor(250,0,0);
+	auto style2 = style.setColor(0,0,250);
+
+	data.initElemsAll();                              // first initialize objects
+
+	var::varDrawElem vde1( data.img, style1 );        // then draw the current ones
+	var::varDrawElem vde2( data.img, style2 );
+	const auto& curr1 = data.getCurrent(0);
+	const auto& curr2 = data.getCurrent(1);
+	std::visit( vde1, curr1 );
+	std::visit( vde2, curr2 );
+
+	auto pp1 = std::visit( var::varGetPointPair{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
+	auto pp2 = std::visit( var::varGetPointPair{}, curr2 );
+
+	try	{
+		getBB( pp1, pp2 ).draw( data.img, style0 );
+	}
+	catch( std::runtime_error& err )
+	{
+		std::cout << "Unable: " << err.what() << '\n';
+	}
+
+	data._pt_mouse.draw( data.img );
+
+	data.img.drawText( "[w]->red: "  + data._name[0], Point2d( 20,30), style1 );
+	data.img.drawText( "[x]->blue: " + data._name[1], Point2d( 20,60), style2 );
+	data.showImage();
+}
+
+void demo_BB( int demidx )
+{
+	Param_BB data( demidx, "Generalized Bounding Box demo" );
+	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
+	Move the points to see the common bounding box of the two elements. hit [w] and [x] to change.\n";
+
+	action_BB( &data );
+	data.setMouseCB( action_BB );
+
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'w', [&](void*){ std::cout << "red: " <<  data.switchToNext(0) << '\n'; },   "Switch to next 1" );
+	kbloop.addKeyAction( 'x', [&](void*){ std::cout << "blue: " << data.switchToNext(1) << '\n'; },   "Switch to next 2" );
+	kbloop.addCommonAction( action_BB );
+
+	kbloop.start( data );
+}
+
+//------------------------------------------------------------------
 struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
@@ -1920,8 +2102,11 @@ int main( int argc, const char** argv )
 		Point2dD pt3;
 		std::cout << "double: size=" << pt3.dsize().first << "-" << pt3.dsize().second << '\n';
 
+		img::DrawParams dp;
+		std::cout << "Default draw parameters: " << dp;
 	std::vector<std::function<void(int)>> v_demo{
 		demo_polyMinim,
+		demo_BB,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment
 		demo_NFP,   // Nearest/Farthest Point

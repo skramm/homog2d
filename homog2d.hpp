@@ -35,6 +35,7 @@ See https://github.com/skramm/homog2d
 #include <set>
 #include <list>
 #include <vector>
+#include <map>
 #include <stack>
 #include <iomanip>
 #include <cassert>
@@ -44,7 +45,7 @@ See https://github.com/skramm/homog2d
 #include <limits>
 #include <cstdint> // required for uint8_t
 #include <memory>  // required for std::unique_ptr
-
+#include <variant>
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
@@ -96,7 +97,8 @@ See https://github.com/skramm/homog2d
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_START std::cout << HOMOG2D_PRETTY_FUNCTION << "() line:" << __LINE__ << "\n"
+	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
+		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "()\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -339,9 +341,15 @@ template<typename T>
 using Line2d_  = base::LPBase<type::IsLine,T>;
 
 template<typename T>
+using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
+template<typename T1,typename T2>
+using PointPair2_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
+
+template<typename T>
 using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
+
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -471,6 +479,9 @@ public:
 
 	template<typename U>
 	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
+	template<typename U,typename V>
+	void draw( const std::pair<U,V>& p_objects, img::DrawParams dp=img::DrawParams() );
+
 
 #ifdef HOMOG2D_USE_OPENCV
 /// Show image on window \c wname (not available for SVG !)
@@ -633,6 +644,7 @@ class DrawParams
 	template<typename T,typename U> friend class h2d::base::LPBase;
 
 /// Inner struct, holds the values. Needed so we can assign a default value as static member
+/// \todo 20240329 maybe we can merge parameters _ptDelta and _pointSize into a single one?
 	struct Dp_values
 	{
 		Color       _color;
@@ -656,6 +668,17 @@ class DrawParams
 			return static_cast<PtStyle>(curr+1);
 		}
 	};
+
+	friend std::ostream& operator << ( std::ostream& f, const DrawParams& dp )
+	{
+		f << "-" << dp._dpValues._color
+			<< "\n-line width=" << dp._dpValues._lineThickness
+			<< "\n-pointSize=" << dp._dpValues._pointSize
+			<< "\n-showPoints=" << dp._dpValues._showPoints
+			<< "\n-fontSize=" << dp._dpValues._fontSize
+			<< '\n';
+		return f;
+	}
 
 
 public:
@@ -797,6 +820,14 @@ template<typename U>
 void Image<IMG>::draw( const U& object, img::DrawParams dp )
 {
 	object.draw( *this, dp );
+}
+
+template<typename IMG>
+template<typename U,typename V>
+void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
+{
+	pairp.first.draw( *this, dp );
+	pairp.second.draw( *this, dp );
 }
 
 
@@ -1014,6 +1045,19 @@ product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 
 //------------------------------------------------------------------
+template<typename FPT1,typename FPT2>
+bool
+shareCommonCoord( const Point2d_<FPT1>& p1, const Point2d_<FPT2>& p2 )
+{
+	if(
+		   homog2d_abs( p1.getX() - p2.getX() ) < thr::nullOrthogDistance()
+		|| homog2d_abs( p1.getY() - p2.getY() ) < thr::nullOrthogDistance()
+	)
+		return true;
+	return false;
+}
+
+//------------------------------------------------------------------
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 /** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
@@ -1021,10 +1065,7 @@ std::pair<Point2d_<FPT>,Point2d_<FPT>>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
-	if(
-		   std::fabs( p0.getX() - p1.getX() ) < thr::nullOrthogDistance()
-		|| std::fabs( p0.getY() - p1.getY() ) < thr::nullOrthogDistance()
-	)
+	if( shareCommonCoord( p0, p1 ) )
 		HOMOG2D_THROW_ERROR_1(
 			"a coordinate of the 2 points is identical, does not define a rectangle:\n p0=" << p0 << " p1=" << p1
 		);
@@ -1060,13 +1101,23 @@ public:
 /**
 It is necessary in a run-time polymorphism context, as we would have build failures if a given type
 disallows providing such a method
-(for example, when trying to check if some object is inside an open polyline).
+(for example, when trying to check if some object is inside an open polyline, which makes no sense).
 */
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
 		HOMOG2D_START;
 		return false;
+	}
+
+/// Fallback for classes not implementing this
+/// \todo 20240327: this class is inherited by HMatrix... on which the concept of bounding box makes no sense!
+/// Fix this.
+	template<typename T>
+	FRect_<T> getBB() const
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute BB for object of type " << getString(this->type) );
+		return FRect_<T>(); // to avoid a compile warning
 	}
 };
 
@@ -1107,6 +1158,13 @@ namespace detail {
 /// A simple wrapper over a 3x3 matrix, provides root functionalities
 /**
 Homogeneous (thus the 'mutable' attribute).
+
+\todo 20240326: we might need to add another level of inheritance.
+This class inherits \c Common, which is designed to be inherited geometric primitives and as such holds
+member function that cannot be used on a matrix !
+(example: isInside() )
+<br>
+So either we remove the latter function and find a way to put it somewhere else, either we create another intermediate class.
 */
 template<typename FPT>
 class Matrix_: public Common<FPT>
@@ -1120,10 +1178,6 @@ class Matrix_: public Common<FPT>
 	template<typename FPT1,typename FPT2,typename FPT3>
 	friend void
 	product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
-
-//private:
-//	static HOMOG2D_INUMTYPE _zeroDeterminantValue; /// Used in matrix inversion
-//	static HOMOG2D_INUMTYPE _zeroDenomValue;       /// The value under which e wont divide
 
 protected:
 	mutable matrix_t<FPT> _mdata;
@@ -1955,7 +2009,7 @@ public:
 		this->moveTo( new_org.getX(), new_org.getY() );
 	}
 
-/// \name attributes
+/// \name attributes of ellipse
 ///@{
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
 	Point2d_<FPT>                                getCenter() const;
@@ -3370,14 +3424,19 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 
 #ifdef HOMOG2D_DEBUGMODE
 template<typename T>
-void printVector( const std::vector<T>& v, std::string msg=std::string() )
+void printVector( const std::vector<T>& v, std::string msg=std::string(), bool linefeed=false )
 {
 	std::cout << "vector: ";
 	if( !msg.empty() )
 		std::cout << msg;
 	std::cout << " #=" << v.size() << '\n';
+	size_t c=0;
 	for( const auto& elem: v )
-		std::cout << elem << ' ';
+	{
+		if( linefeed )
+			std::cout << c++ << ": ";
+		std::cout << elem << (linefeed?'\n':'-');
+	}
 	std::cout << '\n';
 }
 template<typename T,size_t N>
@@ -3939,17 +3998,32 @@ Please check out warning described in impl_getAngle()
 	{
 		return impl_isInf( detail::BaseHelper<LP>() );
 	}
-	HOMOG2D_INUMTYPE length() const { return 0.; }
+
+	HOMOG2D_INUMTYPE length() const
+	{
+		return impl_length( detail::BaseHelper<LP>() );
+	}
+/// Neither lines nor points have an area
 	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
 private:
+/// A point has a null length
+	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename type::IsPoint>& ) const
+	{ return 0.; }
+
+/// A line has an infinite length
+	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename type::IsLine>& ) const
+	{
+		HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
+	}
+
 	FPT impl_getX( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
-		return _v[0]/_v[2];
+		return static_cast<HOMOG2D_INUMTYPE>(_v[0])/_v[2];
 	}
 	FPT impl_getY( const detail::BaseHelper<typename type::IsPoint>& ) const
 	{
-		return _v[1]/_v[2];
+		return static_cast<HOMOG2D_INUMTYPE>(_v[1])/_v[2];
 	}
 
 	template<typename T1,typename T2>
@@ -4650,7 +4724,9 @@ public:
 	template<typename FPT2>
 	Segment_( const Segment_<FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
-	{}
+	{
+//		priv::fix_order( _ptS1, _ptS2 ); no need to call this, because the source segment was already OK
+	}
 ///@}
 
 /// \name Modifying functions
@@ -5415,14 +5491,12 @@ template<
 		T
 	>::type* = nullptr
 >
-FRect_<typename T::value_type::FType>
+PointPair1_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
+	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
-#ifndef HOMOG2D_NOCHECKS
-	if( vpts.size()<2 )
-		HOMOG2D_THROW_ERROR_1( "cannot get bounding box of set with size < 2" );
-#endif
+	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
 
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
@@ -5446,10 +5520,19 @@ getBB_Points( const T& vpts )
 	auto p1 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.first->getX(),   mm_y.first->getY()  );
 	auto p2 = Point2d_<HOMOG2D_INUMTYPE>( mm_x.second->getX(),  mm_y.second->getY() );
 
+#ifndef HOMOG2D_NOCHECKS
 	if( p1.distTo( p2 ) < thr::nullDistance() )
-		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box of set, identical points" );
+		HOMOG2D_THROW_ERROR_1(
+			"unable to compute bounding box of set, identical points:\n -p1:"<< p1 << "\n -p2:" << p2
+		);
+	if( shareCommonCoord( p1, p2 ) )
+		HOMOG2D_THROW_ERROR_1(
+			"unable to compute bounding box of set, points share common coordinate:\n -p1:"
+			<< p1 << "\n -p2:" << p2
+		);
+#endif // HOMOG2D_NOCHECKS
 
-	return FRect_<typename T::value_type::FType>( p1, p2 );
+	return std::make_pair( p1, p2 );
 }
 
 //------------------------------------------------------------------
@@ -5464,8 +5547,10 @@ template<
 FRect_<typename T::value_type::FType>
 getBB_Segments( const T& vsegs )
 {
+	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
 
+	HOMOG2D_DEBUG_ASSERT( vsegs.size(), "cannot computing bounding box of empty set of segments" );
 	std::vector<Point2d_<FPT>> vpts( vsegs.size()*2 );
 	auto it = vpts.begin();
 	for( const auto& seg: vsegs )
@@ -5474,7 +5559,7 @@ getBB_Segments( const T& vsegs )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-	return getBB_Points( vpts );
+	return FRect_<typename T::value_type::FType>( getBB_Points( vpts ) );
 }
 
 /// get BB for a set of FRect_ objects
@@ -5483,6 +5568,9 @@ template<typename FPT>
 auto
 getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 {
+	HOMOG2D_START;
+	HOMOG2D_DEBUG_ASSERT( v_rects.size(), "cannot computing bounding box of empty set of rectangles" );
+
 	std::vector<Point2d_<FPT>> vpts( v_rects.size()*2 );
 	auto it = vpts.begin();
 	for( const auto& seg: v_rects )
@@ -5491,7 +5579,7 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
-	return getBB_Points( vpts );
+	return FRect_<FPT>( getBB_Points( vpts ) );
 }
 
 } // namespace priv
@@ -5735,7 +5823,14 @@ public:
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
 	{
-		return priv::getBB_Points( getPts() );
+		HOMOG2D_START;
+		if( size() < 2 )
+			HOMOG2D_THROW_ERROR_1( "cannot compute bounding box of empty Polyline" );
+		auto ppts = priv::getBB_Points( getPts() );
+		if( shareCommonCoord( ppts.first, ppts.second ) )
+			HOMOG2D_THROW_ERROR_1( "unable, points share common coordinate" );
+
+		return FRect_<FPT>( ppts );
 	}
 
 	LPBase<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
@@ -5925,6 +6020,7 @@ at 180° of the previous one.
 \todo 20230217: implement these:
 - https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+Also use the areCollinear() function
 */
 	void
 	minimize( PolyMinimParams params = PolyMinimParams() )
@@ -6092,6 +6188,7 @@ private:
 				HOMOG2D_THROW_ERROR_1(
 					"cannot add two consecutive identical points:\npt:"
 					<< elem << " and pt:" << next
+					<< " in set of size " << pts.size()
 				);
 		}
 	}
@@ -8185,6 +8282,8 @@ Algorithm:
  - get the two parallel lines to \c liH, at a distance \c b
  - get the two orthogonal lines at \c ptA and \c ptB
 
+\todo 20240330: unclear, the text above does not match what is done below (or does it?).
+Clarify that, and build a gif showing how this is done.
 */
 template<typename FPT>
 CPolyline_<FPT>
@@ -9577,38 +9676,198 @@ getBB( const T& object )
 }
 
 namespace priv {
-/// Returns Bounding Box of two rectangles (private free function)
-template<typename FPT1,typename FPT2>
-FRect_<FPT1>
-getBB( const FRect_<FPT1>& ra, const FRect_<FPT2>& rb )
+
+/// Return pair of points defining a BB of a primitive
+/// Overload 1/4, private free function
+/**
+Arg is a neither a Point2d, a Segment, a Line2d or a polyline
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		(                                                          // arg is
+			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
+			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
+			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
+			&& !std::is_same<T,CPolyline_<typename T::FType>>::value // not a CPolyline
+			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a COolyline
+		)
+		,T
+	>::type* = nullptr
+>
+auto
+getPointPair( const T& elem )
 {
-// first, convert them to internal numerical type
-// (same type is needed to use std::min/max)
-	const FRect_<HOMOG2D_INUMTYPE> r1(ra);
-	const FRect_<HOMOG2D_INUMTYPE> r2(rb);
-	auto ppts1 = r1.getPts();
-	auto ppts2 = r2.getPts();
-	auto min_x = std::min( ppts1.first.getX(),  ppts2.first.getX() );
-	auto min_y = std::min( ppts1.first.getY(),  ppts2.first.getY() );
-	auto max_x = std::max( ppts1.second.getX(), ppts2.second.getX() );
-	auto max_y = std::max( ppts1.second.getY(), ppts2.second.getY() );
-	return FRect_<FPT1>( min_x, min_y, max_x, max_y );
+	HOMOG2D_START;
+	return elem.getBB().getPts();
 }
+
+/// Return pair of points defining a BB of a Polyline
+/// Overload 2/4, private free function
+template<
+	typename T,
+	typename std::enable_if<
+		(
+			std::is_same<T,CPolyline_<typename T::FType>>::value
+			|| std::is_same<T,OPolyline_<typename T::FType>>::value
+		)
+		,T
+	>::type* = nullptr
+>
+auto
+getPointPair( const T& poly )
+{
+	HOMOG2D_START;
+
+	if( poly.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "cannot compute point pair of empty Polyline" );
+	if( poly.size() == 2 )
+	{
+		const auto& pts = poly.getPts();
+		return std::make_pair( pts[0], pts[1] );
+	}
+	return getBB_Points( poly.getPts() );
+}
+
+/// Return pair of points defining a BB of a Point2d
+/// Overload 3/4, private free function
+/**
+This seems useless at first glance, but it used to get the common bounding box of two objects
+when one of them (or both) is a point.
+*/
+template<
+	typename T,
+	typename std::enable_if<
+		std::is_same<T,Point2d_<typename T::FType>>::value
+		,T
+	>::type* = nullptr
+>
+auto
+getPointPair( const T& elem )
+{
+	HOMOG2D_START;
+	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
+}
+/// Return pair of points defining a BB of Segment
+/// Overload 4/4, private free function
+template<
+	typename T,
+	typename std::enable_if<
+		std::is_same<T,Segment_<typename T::FType>>::value
+		,T
+	>::type* = nullptr
+>
+auto
+getPointPair( const T& elem )
+{
+	HOMOG2D_START;
+	return elem.getPts();
+}
+
 } // namespace priv
 
-/// Returns Bounding Box of two arbitrary objects. Can be of different types (free function)
-/**
-- available only for Circles, Ellipse, FRect, Polyline
-*/
-template<typename T1,typename T2>
-FRect_<typename T1::FType>
-getBB( const T1& elem1, const T2& elem2 )
+
+template<typename T1,typename T2,typename T3,typename T4>
+auto
+getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
-	auto r1 = elem1.getBB();
-	auto r2 = elem2.getBB();
-	return priv::getBB( r1, r2 );
+	HOMOG2D_START;
+
+	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
+	arr[0] = pp1.first;
+	arr[1] = pp2.first;
+	arr[2] = pp1.second;
+	arr[3] = pp2.second;
+#if 1
+	return FRect_<T1>( priv::getBB_Points( arr ) );
+#else
+	auto r = priv::getBB_Points( arr );
+	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
+	return r;
+#endif
 }
 
+//------------------------------------------------------------------
+/// Overload 1/3. This one is called if NONE of the args are a Line2d
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
+		,T1
+	>::type* = nullptr
+>
+auto
+getBB( const T1& elem1, const T2& elem2 )
+{
+	HOMOG2D_START;
+	FRect_<typename T1::FType> out;
+	try
+	{
+		out = getBB(
+			priv::getPointPair( elem1 ),
+			priv::getPointPair( elem2 )
+		);
+	}
+	catch( const std::exception& err )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n -arg1="
+			<< elem1 << "\n -arg2=" << elem2 << "\n -err=" << err.what() );
+	}
+	return out;
+}
+
+/// Overload 2/3. Called if
+template<
+	typename T1,
+	typename T2,
+	typename PLT1,
+	typename PLT2,
+	typename std::enable_if<
+		(
+			std::is_same<T1,base::PolylineBase<typename T1::FType, PLT1>>::value
+			|| std::is_same<T2,base::PolylineBase<typename T2::FType, PLT2>>::value
+		)
+		,T1
+	>::type* = nullptr
+>
+auto
+getBB( const T1& p1, const T2& p2 )
+{
+	HOMOG2D_START;
+
+	if( p1.size() == 0 && p2.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
+
+	if( p1.size() != 0 &&  p2.size() == 0 )
+		return FRect_<typename T1::FType>( priv::getPointPair( p1 ) );
+	if( p1.size() == 0 &&  p2.size() != 0 )
+		return FRect_<typename T1::FType>( priv::getPointPair( p2 ) );
+
+	return getBB(
+			priv::getPointPair( p1 ),
+			priv::getPointPair( p2 )
+	);
+}
+//------------------------------------------------------------------
+/// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
+template<
+	typename T1,
+	typename T2,
+	typename std::enable_if<
+		(std::is_same<T1,Line2d_<typename T1::FType>>::value || std::is_same<T2,Line2d_<typename T2::FType>>::value)
+		,T1
+	>::type* = nullptr
+>
+auto
+getBB( const T1&, const T2& )
+{
+	HOMOG2D_START;
+	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
+	return FRect_<T1>(); // to avoid a compile warning
+}
+
+//------------------------------------------------------------------
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)
 template<
 	typename T,
@@ -9620,11 +9879,13 @@ template<
 auto
 getBB( const T& vpts )
 {
+	HOMOG2D_START;
 	if( vpts.size() < 2 )
 		HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
-	return priv::getBB_Points( vpts );
+	return FRect_<typename T::value_type::FType>( priv::getBB_Points( vpts ) );
 }
 
+//------------------------------------------------------------------
 /// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding segments (free function)
 template<
 	typename T,
@@ -9636,12 +9897,15 @@ template<
 auto
 getBB( const T& vpts )
 {
-//	if( vpts.size() < 2 )
-//		HOMOG2D_THROW_ERROR_1( "unable, need at least two segments" );
+	HOMOG2D_START;
+	if( vpts.empty()  )
+		HOMOG2D_THROW_ERROR_1( "unable, need at least one segment" );
+
 	return priv::getBB_Segments( vpts );
 }
 
-/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding other primitives (free function)
+//------------------------------------------------------------------
+/// Returns Bounding Box of arbitrary container (std::vector, array or list) holding other primitives (free function)
 template<
 	typename T,
 	typename std::enable_if<
@@ -9689,7 +9953,6 @@ class ClosestPoints
 	friend priv::ClosestPoints<PLT1,FPT1,PLT2,FPT2>
 	h2d::getClosestPoints<>( const base::PolylineBase<PLT1,FPT1>&,const base::PolylineBase<PLT2,FPT2>& );
 
-public:
 private:
 	size_t _pt1_min = 0;
 	size_t _pt2_min = 0;
@@ -10527,6 +10790,8 @@ sortPoints( const std::vector<Point2d_<FPT>>& in, size_t piv_idx )
 - 1 --> Clockwise
 - 2 --> Counterclockwise
 
+\todo 20240326: this is subject to numerical instability, as it is based on differences.
+
 \todo 20230212: replace const value HOMOG2D_THR_ZERO_DETER with related static function
 */
 template<typename T>
@@ -10849,16 +11114,21 @@ base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>
 void
-FRect_<FPT>::draw( img::Image<cv::Mat>& img, img::DrawParams dp ) const
+FRect_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 {
 	cv::rectangle(
-		img.getReal(),
+		im.getReal(),
 		_ptR1.getCvPti(),
 		_ptR2.getCvPti(),
 		dp.cvColor(),
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
+	if( dp._dpValues._showPoints )
+	{
+		_ptR1.draw( im, dp );
+		_ptR2.draw( im, dp );
+	}
 }
 
 //------------------------------------------------------------------
@@ -10896,6 +11166,9 @@ Circle_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
+	if( dp._dpValues._showPoints )
+ // WARNING: can't use the "Dot" style here, because it call this function, so infinite recursion
+		_center.draw( im, dp.setPointStyle( img::PtStyle::Plus) );
 }
 
 //------------------------------------------------------------------
@@ -11334,6 +11607,7 @@ tokenize( const std::string &s, char delim )
 }
 //------------------------------------------------------------------
 /// Importing rotated ellipse from SVG data
+inline
 std::pair<Point2d_<HOMOG2D_INUMTYPE>,HOMOG2D_INUMTYPE>
 getEllipseRotateAttr( const char* rot_str )
 {
@@ -11366,6 +11640,9 @@ getEllipseRotateAttr( const char* rot_str )
 
 //------------------------------------------------------------------
 /// Svg import: Basic parsing of points that are in the format "10,20 30,40 50,60"
+/// \todo 20240326: this is used to import SVG polygon type. Maybe this can be replaced by
+/// the "path" import code?
+inline
 std::vector<Point2d>
 parsePoints( const char* pts )
 {
@@ -11386,6 +11663,306 @@ parsePoints( const char* pts )
 	return out;
 }
 
+/// Private functions related to the SVG import code
+namespace svgp {
+
+inline
+bool isDigit( char c )
+{
+	return ( (c >= '0' && c <= '9') || c == '.' || c == '-' );
+}
+
+inline
+bool svgPathCommandIsAllowed(char c)
+{
+	if( c == 'M' || c == 'L' || c == 'H'|| c == 'V' || c == 'Z' )
+		return true;
+	return false;
+}
+
+/// Get next element in svg path string.
+inline
+std::string
+getNextElem( const std::string& str, std::string::const_iterator& it )
+{
+	std::string out;
+	while( *it == ' ' || *it == ',' ) // skip spaces and commas
+		it++;
+
+	if( it >= str.cend() )
+		return out;         // return empty string
+
+	if( !isDigit(*it) )        // alpha character
+	{
+		out.push_back( *it );
+		it++;
+	}
+	else
+	{
+		while( isDigit(*it) && it < str.cend() )
+		{
+			out.push_back( *it );
+			it++;
+		}
+//		std::cout << "getNextElem() DIGITS:-" << out << "- #=" << out.size() << '\n';
+//		return out;
+	}
+	return out;
+}
+
+/// Returns nb of expected values for a given SVG path command.
+/// Ref: https://www.w3.org/TR/SVG2/paths.html
+inline
+std::map<char,int>&
+numberValues()
+{
+	static std::map<char,int> nbval;
+	nbval['M'] = 2; // M-m
+	nbval['L'] = 2; // L-l
+	nbval['H'] = 1; // H-h
+	nbval['V'] = 1; // V-v
+	nbval['C'] = 6; // C-c !NOT HANDLED!
+	nbval['S'] = 4; // S-s !NOT HANDLED!
+	nbval['Q'] = 4; // Q-q !NOT HANDLED!
+	nbval['T'] = 2; // T t !NOT HANDLED!
+	nbval['A'] = 7; // A-a !NOT HANDLED!
+	nbval['Z'] = 0; // Z-z
+	return nbval;
+}
+
+enum class PathMode { Absolute, Relative };
+
+struct SvgPathCommand
+{
+	PathMode _absRel = PathMode::Absolute;
+	char     _command = 'M';
+	uint8_t  _nbValues = 2;
+	bool isAbsolute() const
+	{
+		return _absRel == PathMode::Absolute ? true : false;
+	}
+	void setCommand( char c )
+	{
+		_command = c;
+		_nbValues = numberValues().at(c);
+	}
+};
+
+/// Generate new point from current mode and previous point, handles absolute/relative coordinates
+inline
+Point2d_<double>
+generateNewPoint(
+	SvgPathCommand             mode,     ///< SVG path command
+	Point2d_<double>           prevPt,   ///< previous point, is needed if relative mode
+	const std::vector<double>& val       ///< numerical values that have been stored
+)
+{
+//	std::cout << "generateNewPoint(): command=" << mode._command
+//		<< std::hex << " hex=" << (int)mode._command << std::dec << '\n';
+	auto nb = val.size();
+//	priv::printVector( val,"generateNewPoint()" );
+	HOMOG2D_LOG( "abs/rel=" << (mode.isAbsolute()?"ABS":"REL") );
+// some checking to lighten up the following code, maybe can be removed afterwards
+	switch( mode._command )
+	{
+		case 'M':
+		case 'L':
+			assert( nb == 2 );
+		break;
+		case 'H':
+		case 'V':
+			assert( nb == 1 );
+		break;
+		case 'Z':
+			assert( nb == 0 );
+		break;
+		default: assert(0);
+	}
+
+	Point2d_<double> out;
+	switch( mode._command )
+	{
+		case 'M':
+		case 'L':
+			if( mode.isAbsolute() )
+				out.set( val[0], val[1] );
+			else
+				out.set( prevPt.getX() + val[0], prevPt.getY() + val[1] );
+		break;
+
+		case 'H':   // Horizontal
+			if( mode.isAbsolute() )
+				out.set( val[0],                  prevPt.getY() );
+			else
+				out.set( val[0] + prevPt.getX() , prevPt.getY() );
+		break;
+
+		case 'V':    // Vertical
+			if( mode.isAbsolute() )
+				out.set( prevPt.getX(), val[0]                 );
+			else
+				out.set( prevPt.getX(), val[0] + prevPt.getY() );
+		break;
+
+		default: assert(0);
+	}
+	return out;
+}
+
+inline
+SvgPathCommand
+getCommand( char c )
+{
+	HOMOG2D_LOG( "search command for " << c );
+
+	static std::string commands( "MLHVCSQTAZ" ); // allowed SVG path commands (and their counterparts relative)
+	SvgPathCommand out;
+	std::string str( 1, c );
+	HOMOG2D_LOG( " str=" << str << " #=" << str.size() );
+	auto pos = commands.find( str );
+//	HOMOG2D_LOG( "pos=" << pos << " str=" << str );
+	bool invalid = false;
+	if( pos == std::string::npos )
+	{
+		if( c>='a' && c <= 'z' ) // check if lowercase
+		{
+			c = (char)((int)c+'A'-'a');
+//			std::cout << "lowercase, new c=" << c << '\n';
+			str[0] = c;
+			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
+			pos = commands.find( str );
+			if( pos != std::string::npos )
+				out._absRel = PathMode::Relative;
+			else
+				invalid = true;
+		}
+		else
+			invalid = true;
+	}
+	if( invalid )
+		HOMOG2D_THROW_ERROR_1(
+				"Illegal character in SVG path element:-" << str
+				<< "- ascii=" << std::hex << str[0] << std::dec
+		);
+
+	out.setCommand( commands[pos] );
+
+//	std::cout << "pos=" << pos << " _command=" << out._command << " _nbValues=" << (int)out._nbValues << '\n';
+	return out;
+}
+
+/// Removes dupes in set of points. Needed when importing SVG files using a "path" command,
+/// because sometimes they hold duplicates points, and that can't be in polylines
+template<typename FPT>
+std::vector<Point2d_<FPT>>
+purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
+{
+	std::vector<Point2d_<FPT>> out;
+	out.reserve( pts.size() );
+	for( auto it=pts.begin(); it!=std::prev(pts.end()); it++ )
+	{
+		const auto& elem = *it;
+		const auto& next = *std::next(it);
+		if( elem != next )
+			out.push_back( elem );
+	}
+	out.push_back( pts.back() ); // add last one
+	return out;
+}
+
+/// This will hold the values read from the SVG Path parsing code, before they are
+/// converted to points
+struct SvgValuesBuffer
+{
+	std::vector<double> _values;
+	Point2d             _previousPt;
+
+	size_t size() const
+	{
+		return _values.size();
+	}
+
+	void storeValues( std::vector<Point2d>& out, SvgPathCommand mode )
+	{
+		HOMOG2D_LOG( "" );
+		if( _values.size() != (size_t)mode._nbValues )
+			HOMOG2D_THROW_ERROR_1(
+				"SVG path command: inconsistency with stored values, expected "
+				<< (size_t)mode._nbValues << ", got "
+				<< _values.size()
+			);
+		auto pt = generateNewPoint( mode, _previousPt, _values );
+		HOMOG2D_LOG( "new point added: " << pt );
+		out.push_back( pt );
+		_previousPt = pt;
+		_values.clear();
+	}
+	void addValue( std::string elem )
+	{
+		_values.push_back( std::stod(elem) );
+	}
+};
+
+/// Parse a SVG "path" string and convert it to a set of points
+/**
+Input string example:
+\verbatim
+m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
+\endverbatim
+The return value holds as 'second' a bool value, will be true if closed polyline
+*/
+inline
+std::pair<std::vector<Point2d>,bool>
+parsePath( const char* s )
+{
+	SvgPathCommand mode;
+	std::vector<Point2d> out;
+	SvgValuesBuffer values;
+//	std::vector<double> values;
+	std::string str(s);
+	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
+	if( str.size() == 0 )
+		HOMOG2D_THROW_ERROR_1( "SVG path string is empty" );
+
+	auto it = str.cbegin();
+	Point2d previousPt;
+	do
+	{
+		auto e = getNextElem( str, it );
+		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
+
+		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
+		{
+			if( values.size() != 0 )              // if we have some values stored,
+				values.storeValues( out, mode );  //  first process them an add new point
+
+			mode = getCommand( e[0] );
+			if( !svgPathCommandIsAllowed(mode._command) )
+				HOMOG2D_THROW_ERROR_1( "SVG path command -" << mode._command << "- not handled" );
+
+		}
+		else // not a command, but a value
+		{
+			HOMOG2D_LOG( "process value, values size=" << values.size() );
+			if( values.size() == (size_t)mode._nbValues ) // already got enough values
+				values.storeValues( out, mode );
+			values.addValue( e );
+		}
+	}
+	while( it < str.cend() );
+	if( values.size() )
+		values.storeValues( out, mode );
+
+//priv::printVector( out, "point set", true );
+
+	return std::make_pair(
+		purgeSetDupes( out ),
+		mode._command == 'Z' ? true : false
+	);
+}
+
+} // namespace svgp
+
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11396,14 +11973,16 @@ class Visitor: public tinyxml2::XMLVisitor
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
-		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse
+		,T_path ///< preliminar
+		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
 /// A map holding correspondences between type as a string and type as a SvgType.
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<std::unique_ptr<rtp::Root>> _vec;
+	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11415,6 +11994,7 @@ public:
 		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
 		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
 		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
+		_svgTypesTable.push_back( std::make_pair("path",     T_path) );
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
@@ -11521,6 +12101,23 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto vec_pts = parsePoints( pts_str );
 				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
+			}
+			break;
+
+			case T_path:
+			{
+				auto pts_str = getAttribString( "d", e );
+				auto parse_res = svgp::parsePath( pts_str );
+				if( parse_res.second == true )
+				{
+					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
+				else
+				{
+					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
+					_vec.push_back( std::move(p) );
+				}
 			}
 			break;
 

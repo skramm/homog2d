@@ -18,11 +18,14 @@
 /**
 \file
 \brief Demo of reading svg files. Build with `$ make demo_import`
+
+\todo 20240326: once we have a function able to get the min/max points of a container holding
+primitives (see \c getBB()), automatically adjust the size of output image.
 */
 
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_USE_SVG_IMPORT
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 using namespace h2d;
 
@@ -55,10 +58,25 @@ int main( int argc, const char** argv )
 
 	img::Image<img::SvgImage> out( 500, 500 );
 
+/*
 	for( const auto& e: data )
+	{
+		if( e->type() != Type::Line2d )
+		{
+//			auto bb = e->getBB();
+			auto bb = e->getPointPair();
+		}
+	}
+*/
+	size_t c = 0;
+	for( const auto& e: data )
+	{
 		e->draw( out );
-	out.write( "test.svg" );
+		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
+	}
+	out.write( "demo_import.svg" );
 
+#if 0
 	auto c = 0;
 	for( const auto& p: data )
 	{
@@ -76,4 +94,5 @@ int main( int argc, const char** argv )
 		}
 		std::cout << *p << '\n';
 	}
+#endif
 }

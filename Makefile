@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++14 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -57,12 +57,13 @@ ifeq ($(DEBUG),Y)
 	CXXFLAGS += -DHOMOG2D_DEBUGMODE
 endif
 
+
 #=======================================================================
 # general/common targets
 
 check:
 	@cppcheck --version
-	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++11 2>cppcheck.log
+	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++17 2>cppcheck.log
 	xdg-open cppcheck.log
 
 doc: DOX_FILE=doxyfile
@@ -334,7 +335,7 @@ BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
 
 
 # this target requires Tinyxml2
-BUILD/demo_svg_import: misc/demo_svg_import.cpp homog2d.hpp buildf
+BUILD/demo_svg_import: misc/test_files/demo_svg_import.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -I. -o $@ $< $$(pkg-config --libs tinyxml2)
 
 

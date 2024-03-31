@@ -2362,6 +2362,13 @@ TEST_CASE( "Colinearity", "[colinearity]" )
 	}
 }
 
+TEST_CASE( "Line2d", "[line1]" )
+{
+	Line2d_<NUMTYPE> li;
+	CHECK( li.area() == 0. );
+	CHECK_THROWS( li.length() );
+}
+
 TEST_CASE( "Circle", "[cir1]" )
 {
 	{
@@ -2759,6 +2766,63 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	std::sort( gt.begin(), gt.end() );
 	std::sort( osegs.begin(), osegs.end() );
 	CHECK( gt == osegs );
+}
+
+TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
+{
+	Point2d_<NUMTYPE> pt,pt2(1,1);
+	FRect_<NUMTYPE> re,re2;
+	Segment_<NUMTYPE> se,se2(1,0,0,1);
+	CPolyline_<NUMTYPE> pc,pc2;
+	OPolyline_<NUMTYPE> po,po2;
+	Ellipse_<NUMTYPE> el,el2;
+
+	CHECK( getBB(pt,pt2) == FRect_<NUMTYPE>() ); // (0,0) - (1,1)
+	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() ); // [(0,0) - (1,1)] - [(1,0) - (0,1)]
+	CHECK( getBB(se,se)  == FRect_<NUMTYPE>() ); // identical segments, but they cover some area
+	CHECK( getBB(re,re2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(se,se2) == FRect_<NUMTYPE>() );
+	CHECK( getBB(el,el2) == getBB(el) ); // identical
+
+	CHECK_THROWS( getBB(pc,pc2) ); // empty
+	CHECK_THROWS( getBB(pt,pt) ); // identical points   => no BB
+
+	pt2.set(0,1);
+	CHECK_THROWS( getBB(pt,pt2) ); // one of the coordinates is identical
+
+	se.set( 0,0,1,0 );
+	se2.set( 10,0,11,0 );
+	CHECK_THROWS( getBB(se,se)  ); // segments are colinear
+	CHECK_THROWS( getBB(se,se2) ); // segments are colinear
+
+	pt2.set(0,0);
+	CHECK_THROWS( getBB(se,pt2) ); // no area
+
+	pc.set(  std::vector<Point2d_<NUMTYPE>>{ {0,0},{1,0} } );
+	CHECK_THROWS( getBB(pc) );         // no area
+	CHECK_THROWS( getBB(pc, pc2) );    // no area, and second is empty
+
+	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,0},{6,0} } );
+	CHECK_THROWS( getBB(pc,pc2) ); // colinear
+
+	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,1},{6,1} } );
+	CHECK( getBB(pc,pc2) == FRect_<NUMTYPE>(0,0,6,1) );
+}
+
+
+TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
+{
+	Point2d_<NUMTYPE> pt;
+	FRect_<NUMTYPE> r1;
+	CHECK( getBB( pt, r1 ) == r1 );
+	CHECK( getBB( r1, pt ) == r1 );
+	Segment_<NUMTYPE> seg( 0,0,1,1);
+	CHECK( getBB( seg, pt ) == r1 );
+	CHECK( getBB( pt, seg ) == r1 );
+
+	Circle_<NUMTYPE> cir;
+	pt.set( 10,0);
+	CHECK( getBB( pt, cir ) == FRect_<NUMTYPE>(-1.,-1.,+10.,+1. ) );
 }
 
 TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
@@ -3650,6 +3714,7 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
 //////////////////////////////////////////////////////////////
+// to run these, call make with USE_TINYXML2=Y
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
@@ -3714,6 +3779,58 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
 			CHECK( ell == *pell );
 		}
+	}
+}
+
+TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
+{
+	{                        // empty string
+		const char* s1 = "";
+		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
+	}
+	{
+		const char* s1 ="10 20 30 40";
+		auto res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(30,40) );
+		CHECK( res.second == false );
+	}
+	{
+		const char* s1 ="10 20 30 40z";
+		auto res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.second == true );
+	}
+	{
+		const char* s1 ="10 20 m 1 2 3 4z";  //relative
+		auto res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 3 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(11,22) );
+		CHECK( res.first[2] == Point2d(14,26) );
+		CHECK( res.second == true );
+	}
+	{
+		const char* s1 ="10 20 H 30 40";  //horizontal line
+		auto res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 3 );
+		CHECK( res.first[0] == Point2d(10,20) );
+		CHECK( res.first[1] == Point2d(30,20) );
+		CHECK( res.first[2] == Point2d(40,20) );
+		CHECK( res.second == false);
+	}
+	{
+		const char* s1 ="10"; // missing second value
+		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
+	}
+	{
+		const char* s1 ="10 20 30"; // missing second value
+		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
+	}
+	{
+		const char* s1 ="M10 20 C 30"; // C command not handled
+		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
 	}
 }
 #endif // HOMOG2D_USE_SVG_IMPORT

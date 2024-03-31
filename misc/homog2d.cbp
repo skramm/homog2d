@@ -65,7 +65,6 @@
 		</Unit>
 		<Unit filename="build_gif.sh" />
 		<Unit filename="demo_opencv.cpp" />
-		<Unit filename="demo_svg_import.cpp" />
 		<Unit filename="doxyfile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -162,7 +161,6 @@
 		<Unit filename="no_build/no_build_10.cxx" />
 		<Unit filename="no_build/no_build_11.cxx" />
 		<Unit filename="no_build/no_build_12.cxx" />
-		<Unit filename="no_build/no_build_13.cxx" />
 		<Unit filename="no_build/no_build_14.cxx" />
 		<Unit filename="no_build/no_build_15.cxx" />
 		<Unit filename="no_build/no_build_16.cxx" />
@@ -171,6 +169,9 @@
 		<Unit filename="no_build/no_build_19.cxx" />
 		<Unit filename="no_build/no_build_21.cxx" />
 		<Unit filename="no_build/no_build_22.cxx" />
+		<Unit filename="no_build/no_build_getbb_01.cxx" />
+		<Unit filename="no_build/no_build_getbb_02.cxx" />
+		<Unit filename="no_build/no_build_getbb_03.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="other/test_svg_import_1.svg" />
 		<Unit filename="other/test_svg_import_2.svg" />
@@ -213,6 +214,7 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="test_files/bg_test_1.cpp" />
+		<Unit filename="test_files/demo_svg_import.cpp" />
 		<Unit filename="test_files/mylib.cpp" />
 		<Unit filename="test_files/mylib.hpp" />
 		<Unit filename="test_files/single_file.cpp" />
