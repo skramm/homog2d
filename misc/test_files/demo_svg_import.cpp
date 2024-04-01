@@ -42,6 +42,14 @@ struct DrawFunct
 	}
 
 };
+struct TypeFunct
+{
+	template<typename T>
+	Type operator ()(const T& a)
+	{
+		return a.type();
+	}
+};
 
 
 int main( int argc, const char** argv )
@@ -61,6 +69,17 @@ int main( int argc, const char** argv )
 
 	svg::printFileAttrib( doc );
 
+	std::pair<double,double> imSize(500.,500.);
+	try
+	{
+		imSize = svg::getFileSize( doc );
+		std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+	}
+	catch( const std::exception& error )
+	{
+		std::cout << "input file has not size, size set to 500x500\n -msg=" << error.what() << '\n';
+	}
+
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
 	const auto& data = visitor.get();
@@ -71,7 +90,7 @@ int main( int argc, const char** argv )
 		return 1;
 	}
 
-	img::Image<img::SvgImage> out( 500, 500 );
+	img::Image<img::SvgImage> out( imSize.first, imSize.second ); //.first << " x " << mSize.second 500, 500 );
 
 /*
 	for( const auto& e: data )
@@ -90,7 +109,7 @@ int main( int argc, const char** argv )
 		std::visit( dfunc, e );
 //		e->draw( out );
 //		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
-//		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
+		std::cout << "Shape " << c++ << ": " << getString( std::visit( TypeFunct{}, e ) ) << "\n";
 	}
 	out.write( "demo_import.svg" );
 

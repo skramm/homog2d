@@ -145,6 +145,14 @@ See https://github.com/skramm/homog2d
 		static_assert( (std::is_arithmetic<T>::value && !std::is_same<T, bool>::value), "Type of value must be numerical" )
 #endif
 
+#ifndef HOMOG2D_NOWARNINGS
+#define HOMOG2D_LOG_WARNING( a ) \
+	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << "\n msg=" << a << "\n";
+#else
+#define HOMOG2D_LOG_WARNING
+#endif
+
+
 /*
 \todo 20230212 ttmath support: this definition does not work, I don't know why !!! see namespace \ref trait
 \verbatim
@@ -232,6 +240,7 @@ See https://github.com/skramm/homog2d
 
 namespace h2d {
 
+/// Holds static counters, for run-time errors and warnings
 namespace err {
 
 /// Used to count the errors
@@ -244,6 +253,14 @@ inline size_t& errorCount()
 	static size_t c;
 	return c;
 }
+
+/// Used in macro HOMOG2D_LOG_WARNING
+inline size_t& warningCount()
+{
+	static size_t c;
+	return c;
+}
+
 } //namespace err
 
 /// Holds the types needed for policy based design
@@ -444,6 +461,7 @@ public:
 	{
 		return std::make_pair( _width, _height );
 	}
+/// That constructor is the default, shouln't be instanciated, see specializations
 	Image( size_t, size_t )
 	{
 		assert(0);
@@ -8735,12 +8753,12 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 
 	if( fres > 1.0 )
 	{
-#ifndef HOMOG2D_NOWARNINGS
-		std::cerr << "homog2d Warning: angle computation overflow detected, value "
+		HOMOG2D_LOG_WARNING(
+			"homog2d Warning: angle computation overflow detected, value "
 			<< std::scientific << std::setprecision(20)
 			<< fres << ", truncated to 1.0\n input lines:\n  l1: "
-			<< *this << "\n  l2: " << li << '\n';
-#endif
+			<< *this << "\n  l2: " << li
+		);
 		fres = 1.0;
 	}
 	return homog2d_acos( fres );
@@ -11761,7 +11779,7 @@ parsePath( const char* s )
 
 } // namespace svgp
 
-using ImportTypes = std::variant<Segment,Point2d,Circle,Ellipse,FRect>;
+using ImportTypes = std::variant<Segment,Point2d,Circle,Ellipse,FRect,CPolyline,OPolyline>;
 
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
@@ -11782,7 +11800,6 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-//	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
 	std::vector<ImportTypes> _vecVar; ///< all the data is stored here
 
 public:
@@ -11814,10 +11831,6 @@ public:
 
 		return it->second;
 	}
-/*	const std::vector<std::unique_ptr<rtp::Root>>& get() const
-	{
-		return _vec;
-	}*/
 	const std::vector<ImportTypes>& get() const
 	{
 		return _vecVar;
@@ -11833,11 +11846,12 @@ getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_na
 {
 	double value=0.;
 	if( tinyxml2::XML_SUCCESS != e.QueryDoubleAttribute( str, &value ) )
-		throw std::string("h2d::svg::import error, failed to read attribute '") + std::string{str} + "' while reading element '" + e_name + "'\n";
+		HOMOG2D_THROW_ERROR_1( "h2d::svg::import error, failed to read attribute '"
+			<< std::string{str} << "' while reading element '" << e_name << "'" );
 	return value;
 }
 
-/// helper function for SVG import
+/// Helper function for SVG import
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
 */
@@ -11865,13 +11879,13 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		switch( getSvgType( n ) )
 		{
 			case T_circle:
-			{
-//				std::unique_ptr<rtp::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
-//				_vec.push_back( std::move(c) );
-				auto c = Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) );
-				_vecVar.push_back( std::move(c) );
-//				_vec.push_back( std::move(c) );
-			}
+				_vecVar.emplace_back(
+					Circle(
+						getAttribValue( e, "cx", n ),
+						getAttribValue( e, "cy", n ),
+						getAttribValue( e, "r", n )
+					)
+				);
 			break;
 
 			case T_rect:
@@ -11880,33 +11894,26 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y1 = getAttribValue( e, "y", n );
 				auto w  = getAttribValue( e, "width", n );
 				auto h  = getAttribValue( e, "height", n );
-//				std::unique_ptr<rtp::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-//				_vec.push_back( std::move(r) );
-				auto r = FRect( x1, y1, x1+w, y1+h );
-				_vecVar.push_back( std::move(r) );
+				_vecVar.emplace_back( FRect( x1, y1, x1+w, y1+h ) );
 			}
 			break;
 
 			case T_line:
-			{
-/*				std::unique_ptr<rtp::Root> s(
-					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
+				_vecVar.emplace_back(
+					Segment(
+						getAttribValue( e, "x1", n ),
+						getAttribValue( e, "y1", n ),
+						getAttribValue( e, "x2", n ),
+						getAttribValue( e, "y2", n )
+					)
 				);
-				_vec.push_back( std::move(s) );
-*/
-				auto s = Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) );
-				_vecVar.push_back( std::move(s) );
-			}
 			break;
 
 			case T_polygon:
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-//				std::unique_ptr<rtp::Root> p( new CPolyline(vec_pts) );
-//				_vec.push_back( std::move(p) );
-				auto p = CPolyline(vec_pts);
-//				_vecVar.push_back( std::move(p) );
+				_vecVar.emplace_back( CPolyline(vec_pts) );
 			}
 			break;
 
@@ -11914,10 +11921,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-//				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
-//				_vec.push_back( std::move(p) );
-				auto p = OPolyline(vec_pts);
-//				_vecVar.push_back( std::move(p) );
+				_vecVar.emplace_back( OPolyline(vec_pts) );
 			}
 			break;
 
@@ -11926,19 +11930,9 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto pts_str = getAttribString( "d", e );
 				auto parse_res = svgp::parsePath( pts_str );
 				if( parse_res.second == true )
-				{
-//					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
-//					_vec.push_back( std::move(p) );
-					auto p = CPolyline(parse_res.first);
-//					_vecVar.push_back( std::move(p) );
-				}
+					_vecVar.emplace_back( CPolyline(parse_res.first) );
 				else
-				{
-//					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
-//					_vec.push_back( std::move(p) );
-					auto p = OPolyline(parse_res.first);
-//					_vecVar.push_back( std::move(p) );
-				}
+					_vecVar.emplace_back( OPolyline(parse_res.first) );
 			}
 			break;
 
@@ -11949,34 +11943,32 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto rx = getAttribValue( e, "rx", n );
 				auto ry = getAttribValue( e, "ry", n );
 				auto rot = svgp::getEllipseRotateAttr( getAttribString( "transform", e ) );
-				Ellipse* ell = new Ellipse( x, y, rx, ry );
+				auto ell = Ellipse( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
-				*ell = H * *ell;
-				std::unique_ptr<rtp::Root> p( ell );
-//				_vec.push_back( std::move(p) );
-
-				_vecVar.push_back( std::move(*ell) );
+				_vecVar.push_back( H * ell );
 			}
 			break;
 
 			default:  // for T_other elements
+				if( n != "svg" ) // because that one will be always there, so no need to show a warning
+					HOMOG2D_LOG_WARNING( "found SVG element '" << n << "' in SVG file, left unprocessed" );
 			break;
 		}
 	}
 	catch( std::string& msg )
 	{
-		std::cerr << "h2d: Tinyxml read error: " << msg;
-		return false;
+		HOMOG2D_THROW_ERROR_1( "h2d: Tinyxml read error: " << msg );
+		return false; // to avoid a compile warning
 	}
 	return true;
 }
 
+inline
 void
 printFileAttrib( const tinyxml2::XMLDocument& doc )
 {
 	const tinyxml2::XMLElement* root = doc.RootElement();
-
 	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();
 	size_t i=0;
 	while( pAttrib )
@@ -11985,6 +11977,29 @@ printFileAttrib( const tinyxml2::XMLDocument& doc )
 		pAttrib=pAttrib->Next();
 	}
 }
+
+/// Fetch size of image in SVG file
+inline
+auto
+getFileSize( const tinyxml2::XMLDocument& doc )
+{
+	const tinyxml2::XMLElement* root = doc.RootElement();
+	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();
+	double w = -1., h = -1.;
+	while( pAttrib )
+	{
+		auto attr = std::string( pAttrib->Name() );
+		if( attr == "width" )
+			w = std::stod( pAttrib->Value() );
+		if( attr == "height" )
+			h = std::stod( pAttrib->Value() );
+		pAttrib=pAttrib->Next();
+	}
+	if( w == -1. || h == -1. )
+		HOMOG2D_THROW_ERROR_1( "unable to find size in SVG file" );
+	return std::make_pair( w, h );
+}
+
 
 } // namespace svg
 
