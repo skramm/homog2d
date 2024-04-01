@@ -29,6 +29,16 @@ primitives (see \c getBB()), automatically adjust the size of output image.
 
 using namespace h2d;
 
+struct SizeFunct
+{
+	template<typename T>
+	size_t operator ()(const T& a)
+	{
+		return a.size();
+	}
+
+};
+
 int main( int argc, const char** argv )
 {
 	tinyxml2::XMLDocument doc;
@@ -49,7 +59,7 @@ int main( int argc, const char** argv )
 	std::pair<double,double> imSize(500.,500.);
 	try
 	{
-		imSize = svg::getFileSize( doc );
+		imSize = svg::getImgSize( doc );
 		std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
 	}
 	catch( const std::exception& error )
@@ -74,27 +84,15 @@ int main( int argc, const char** argv )
 	for( const auto& e: data )
 	{
 		std::visit( dfunc, e );
-		std::cout << "Shape " << c++ << ": " << getString( std::visit( TypeFunct{}, e ) ) << "\n";
+		auto type = std::visit( TypeFunct{}, e );
+		std::cout << "Shape " << c++ << ": " << getString( type );
+
+		if( std::holds_alternative<OPolyline>(e) )
+			std::cout  << " size=" << std::get<OPolyline>(e).size();
+		if( std::holds_alternative<CPolyline>(e) )
+			std::cout  << " size=" << std::get<CPolyline>(e).size();
+
+		std::cout << '\n';
 	}
 	out.write( "demo_import.svg" );
-
-#if 0
-	auto c = 0;
-	for( const auto& p: data )
-	{
-		std::cout << ++c << ": " << getString( p->type() )
-			<<", length=" << p->length() << ", area=" << p->area() << '\n';
-		if( p->type() == Type::Circle )
-		{
-			const Circle* cir = static_cast<Circle*>( p.get() );
-			std::cout << " - Circle radius=" << cir->radius() << '\n';
-		}
-		if( p->type() == Type::CPolyline )
-		{
-			const CPolyline* pl = static_cast<CPolyline*>( p.get() );
-			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
-		}
-		std::cout << *p << '\n';
-	}
-#endif
 }

@@ -1168,7 +1168,12 @@ disallows providing such a method
 		HOMOG2D_THROW_ERROR_1( "unable to compute BB for object of type " << getString(this->type) );
 		return FRect_<T>(); // to avoid a compile warning
 	}
-};
+
+	size_t size() const
+	{
+		return 0;
+	}
+}; // class Common
 
 } // namespace detail
 
@@ -5863,7 +5868,7 @@ public:
 
 	LPBase<type::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
 
-/// Returns the number of segments . If "closed",
+/// Returns the number of segments. If "closed",
 /** the last segment (going from last to first point) is counted */
 	size_t nbSegs() const
 	{
@@ -11430,7 +11435,7 @@ using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 
-/// Holds private stuff related to SVG import
+/// Holds stuff related to SVG import
 namespace svg {
 
 /// Private functions related to the SVG import code
@@ -11595,6 +11600,13 @@ struct SvgPathCommand
 		_command = c;
 		_nbValues = numberValues().at(c);
 	}
+	bool isNewPolyline() const
+	{
+		if( _command == 'm' || _command == 'M' || _command == 'z' || _command == 'Z' )
+			return true;
+		return false;
+	}
+
 };
 
 /// Generate new point from current mode and previous point, handles absolute/relative coordinates
@@ -11678,7 +11690,7 @@ getCommand( char c )
 			c = (char)((int)c+'A'-'a');
 //			std::cout << "lowercase, new c=" << c << '\n';
 			str[0] = c;
-			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
+//			HOMOG2D_LOG( " str2=" << str << "#=" << str.size() );
 			pos = commands.find( str );
 			if( pos != std::string::npos )
 				out._absRel = PathMode::Relative;
@@ -11752,30 +11764,23 @@ struct SvgValuesBuffer
 	}
 };
 
-/// Parse a SVG "path" string and convert it to a set of points
+/// Parse a SVG "path" string and convert it to a vector holding a set (vector) of points
 /**
 Input string example:
 \verbatim
 m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
 \endverbatim
 The return value holds as 'second' a bool value, will be true if closed polyline
-
-\todo 20240401 Major issue with the approach used here: one SVG "path" will be converted to one Polyline.
-But when we have a "LineTo" command (character 'L', or 'l' for relative), that implies a **new**
-Polyline.. and that can't happen here.
-<br>
-Example: consider this path string "M 0,0 10,0 10,10 0,10 L 20,20 20,30 30,30 30,20".
-<br>
-This must be imported as TWO polyline! (and is currently not).
 */
 inline
-std::pair<std::vector<Point2d>,bool>
+auto
 parsePath( const char* s )
 {
 	SvgPathCommand mode;
-	std::vector<Point2d> out;
+	std::vector<std::vector<Point2d>> vout(1);
 	SvgValuesBuffer values;
 	std::string str(s);
+	size_t idx = 0;
 	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
 	if( str.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "SVG path string is empty" );
@@ -11785,33 +11790,48 @@ parsePath( const char* s )
 	do
 	{
 		auto e = getNextElem( str, it );
-		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
+//		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
 			if( values.size() != 0 )              // if we have some values stored,
-				values.storeValues( out, mode );  //  first process them and add new point
+				values.storeValues( vout[idx], mode );  //  first process them and add new point
 
 			mode = getCommand( e[0] );
+			HOMOG2D_LOG( "command=" << e[0] );
 			if( !svgPathCommandIsAllowed(mode._command) )
 				HOMOG2D_THROW_ERROR_1( "SVG path command -" << mode._command << "- not handled" );
 
+			if( mode.isNewPolyline() && !vout[idx].empty() )
+			{
+				vout.push_back( std::vector<Point2d>() );
+				idx++;
+				HOMOG2D_LOG( "NEW vector idx=" << idx );
+			}
 		}
 		else // not a command, but a value
 		{
-			HOMOG2D_LOG( "process value, values size=" << values.size() );
+//			HOMOG2D_LOG( "process value, values size=" << values.size() );
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values
-				values.storeValues( out, mode );
+				values.storeValues( vout[idx], mode );
 			values.addValue( e );
 		}
 	}
 	while( it < str.cend() );
 
 	if( values.size() )                  // process remaining values that have been stored
-		values.storeValues( out, mode );
+		values.storeValues( vout[idx], mode );
 
+HOMOG2D_LOG( "Nb vectors=" << vout.size() );
+	for( auto& v: vout )
+		if( v.size() )
+			v = purgeSetDupes( v );
+	if( vout.back().empty() )
+		vout.pop_back();
+
+HOMOG2D_LOG( "RETURN" );
 	return std::make_pair(
-		purgeSetDupes( out ),
+		vout,
 		mode._command == 'Z' ? true : false
 	);
 }
@@ -11878,6 +11898,7 @@ public:
 	bool VisitExit( const tinyxml2::XMLElement& ) override;
 };
 
+namespace svgp {
 //------------------------------------------------------------------
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
 double
@@ -11903,6 +11924,8 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 	return pts;
 }
 
+} // namespace svgp
+
 /// This is the place where actual SVG data is converted and stored into vector
 /**
 (see manual, section "SVG import")
@@ -11920,19 +11943,19 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_circle:
 				_vecVar.emplace_back(
 					Circle(
-						getAttribValue( e, "cx", n ),
-						getAttribValue( e, "cy", n ),
-						getAttribValue( e, "r", n )
+						svgp::getAttribValue( e, "cx", n ),
+						svgp::getAttribValue( e, "cy", n ),
+						svgp::getAttribValue( e, "r", n )
 					)
 				);
 			break;
 
 			case T_rect:
 			{
-				auto x1 = getAttribValue( e, "x", n );
-				auto y1 = getAttribValue( e, "y", n );
-				auto w  = getAttribValue( e, "width", n );
-				auto h  = getAttribValue( e, "height", n );
+				auto x1 = svgp::getAttribValue( e, "x", n );
+				auto y1 = svgp::getAttribValue( e, "y", n );
+				auto w  = svgp::getAttribValue( e, "width", n );
+				auto h  = svgp::getAttribValue( e, "height", n );
 				_vecVar.emplace_back( FRect( x1, y1, x1+w, y1+h ) );
 			}
 			break;
@@ -11940,17 +11963,17 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_line:
 				_vecVar.emplace_back(
 					Segment(
-						getAttribValue( e, "x1", n ),
-						getAttribValue( e, "y1", n ),
-						getAttribValue( e, "x2", n ),
-						getAttribValue( e, "y2", n )
+						svgp::getAttribValue( e, "x1", n ),
+						svgp::getAttribValue( e, "y1", n ),
+						svgp::getAttribValue( e, "x2", n ),
+						svgp::getAttribValue( e, "y2", n )
 					)
 				);
 			break;
 
 			case T_polygon:
 			{
-				auto pts_str = getAttribString( "points", e );
+				auto pts_str = svgp::getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
 				_vecVar.emplace_back( CPolyline(vec_pts) );
 			}
@@ -11958,40 +11981,32 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 			case T_polyline:
 			{
-				auto pts_str = getAttribString( "points", e );
+				auto pts_str = svgp::getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
 				_vecVar.emplace_back( OPolyline(vec_pts) );
 			}
 			break;
 
-			case T_path:
+			case T_path: // a path can hold multiple polygons (because of the 'L' command)
 			{
-				auto pts_str   = getAttribString( "d", e );
+				auto pts_str   = svgp::getAttribString( "d", e );
 				auto parse_res = svgp::parsePath( pts_str );
-#if 1
-				if( parse_res.second == true )
-					_vecVar.emplace_back( CPolyline(parse_res.first) );
-				else
-					_vecVar.emplace_back( OPolyline(parse_res.first) );
-#else
-// new technique (WIP), so we can have multiple polygons per "path" string
 				const auto& vec_vec_pts = parse_res.first;  //
 				for( const auto& vec_pts: vec_vec_pts )
 					if( parse_res.second == true )
-						_vecVar.emplace_back( CPolyline(vec_pts.first) );
+						_vecVar.emplace_back( CPolyline(vec_pts) );
 					else
-						_vecVar.emplace_back( OPolyline(vec_pts.first) );
-#endif
+						_vecVar.emplace_back( OPolyline(vec_pts) );
 			}
 			break;
 
 			case T_ellipse:
 			{
-				auto x  = getAttribValue( e, "cx", n );
-				auto y  = getAttribValue( e, "cy", n );
-				auto rx = getAttribValue( e, "rx", n );
-				auto ry = getAttribValue( e, "ry", n );
-				auto rot = svgp::getEllipseRotateAttr( getAttribString( "transform", e ) );
+				auto x  = svgp::getAttribValue( e, "cx", n );
+				auto y  = svgp::getAttribValue( e, "cy", n );
+				auto rx = svgp::getAttribValue( e, "rx", n );
+				auto ry = svgp::getAttribValue( e, "ry", n );
+				auto rot = svgp::getEllipseRotateAttr( svgp::getAttribString( "transform", e ) );
 				auto ell = Ellipse( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
@@ -12030,7 +12045,7 @@ printFileAttrib( const tinyxml2::XMLDocument& doc )
 /// Fetch size of image in SVG file
 inline
 auto
-getFileSize( const tinyxml2::XMLDocument& doc )
+getImgSize( const tinyxml2::XMLDocument& doc )
 {
 	const tinyxml2::XMLElement* root = doc.RootElement();
 	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();

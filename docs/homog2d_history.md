@@ -18,9 +18,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
-  - generalisation of bounding box of pair of objects
-  - Opencv Demo now requires C++17 (use of `std::variant`)
-  - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example).
+  - removed requirement to run-time polymorphism to import SVG file, by using `std::variant`, now requires C++17
+  - generalization of bounding box of pair of objects
+  - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example)
   - bugfixes:
     - https://github.com/skramm/homog2d/issues/11
     - https://github.com/skramm/homog2d/issues/10
