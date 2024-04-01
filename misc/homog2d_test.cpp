@@ -3710,7 +3710,6 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	}
 }
 
-
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
 //////////////////////////////////////////////////////////////
@@ -3734,10 +3733,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
 		const auto& elem = data.at(0);
-		CHECK( elem->type() == Type::Circle );
+		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
 
-		const Circle* pc2 = static_cast<Circle*>( elem.get() );
-		CHECK( pc2->radius() == 20 );
+		auto cir = std::visit( ConvertToFunct{}, elem );
+		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
 		tinyxml2::XMLDocument doc;

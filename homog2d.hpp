@@ -938,6 +938,17 @@ struct TypeFunct
 	}
 };
 
+struct ConvertToFunct
+{
+	template<typename T>
+	T operator ()(const T& a)
+	{
+		if( std::holds_alternative<T>(a) )
+			return std::get<T>(a);
+		assert(0);
+	}
+};
+
 inline
 const char* getString( Dtype t )
 {
