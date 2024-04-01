@@ -11579,6 +11579,8 @@ numberValues()
 
 enum class PathMode { Absolute, Relative };
 
+/// Holds the current SVG "path" command, and the number of required numerical values
+/// \sa SvgValuesBuffer
 struct SvgPathCommand
 {
 	PathMode _absRel = PathMode::Absolute;
@@ -11719,6 +11721,7 @@ purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 
 /// This will hold the values read from the SVG Path parsing code, before they are
 /// converted to points
+/// \sa SvgPathCommand
 struct SvgValuesBuffer
 {
 	std::vector<double> _values;
@@ -11731,7 +11734,6 @@ struct SvgValuesBuffer
 
 	void storeValues( std::vector<Point2d>& out, SvgPathCommand mode )
 	{
-		HOMOG2D_LOG( "" );
 		if( _values.size() != (size_t)mode._nbValues )
 			HOMOG2D_THROW_ERROR_1(
 				"SVG path command: inconsistency with stored values, expected "
@@ -11757,6 +11759,14 @@ Input string example:
 m 261.68497,138.79393 2.57,3.15 -0.72,1.27 2.18,1.94 -0.7,4.93 1.88,0.9
 \endverbatim
 The return value holds as 'second' a bool value, will be true if closed polyline
+
+\todo 20240401 Major issue with the approach used here: one SVG "path" will be converted to one Polyline.
+But when we have a "LineTo" command (character 'L', or 'l' for relative), that implies a **new**
+Polyline.. and that can't happen here.
+<br>
+Example: consider this path string "M 0,0 10,0 10,10 0,10 L 20,20 20,30 30,30 30,20".
+<br>
+This must be imported as TWO polyline! (and is currently not).
 */
 inline
 std::pair<std::vector<Point2d>,bool>
@@ -11765,7 +11775,6 @@ parsePath( const char* s )
 	SvgPathCommand mode;
 	std::vector<Point2d> out;
 	SvgValuesBuffer values;
-//	std::vector<double> values;
 	std::string str(s);
 	HOMOG2D_LOG( "parsing string -" << str << "- #=" << str.size() );
 	if( str.size() == 0 )
@@ -11781,7 +11790,7 @@ parsePath( const char* s )
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
 			if( values.size() != 0 )              // if we have some values stored,
-				values.storeValues( out, mode );  //  first process them an add new point
+				values.storeValues( out, mode );  //  first process them and add new point
 
 			mode = getCommand( e[0] );
 			if( !svgPathCommandIsAllowed(mode._command) )
@@ -11797,10 +11806,9 @@ parsePath( const char* s )
 		}
 	}
 	while( it < str.cend() );
-	if( values.size() )
-		values.storeValues( out, mode );
 
-//priv::printVector( out, "point set", true );
+	if( values.size() )                  // process remaining values that have been stored
+		values.storeValues( out, mode );
 
 	return std::make_pair(
 		purgeSetDupes( out ),
@@ -11958,12 +11966,22 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 			case T_path:
 			{
-				auto pts_str = getAttribString( "d", e );
+				auto pts_str   = getAttribString( "d", e );
 				auto parse_res = svgp::parsePath( pts_str );
+#if 1
 				if( parse_res.second == true )
 					_vecVar.emplace_back( CPolyline(parse_res.first) );
 				else
 					_vecVar.emplace_back( OPolyline(parse_res.first) );
+#else
+// new technique (WIP), so we can have multiple polygons per "path" string
+				const auto& vec_vec_pts = parse_res.first;  //
+				for( const auto& vec_pts: vec_vec_pts )
+					if( parse_res.second == true )
+						_vecVar.emplace_back( CPolyline(vec_pts.first) );
+					else
+						_vecVar.emplace_back( OPolyline(vec_pts.first) );
+#endif
 			}
 			break;
 
