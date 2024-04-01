@@ -74,11 +74,13 @@ See https://github.com/skramm/homog2d
 	#define homog2d_sqrt std::sqrt
 #endif
 
+
 #ifdef HOMOG2D_USE_SVG_IMPORT
-	#include <cctype>
+//	#include <cctype> // why was that needed in the first place?
 	#include "tinyxml2.h"
-	#define HOMOG2D_ENABLE_RTP
+//	#define HOMOG2D_ENABLE_RTP
 #endif
+
 
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
@@ -349,7 +351,7 @@ template<typename FPT> class FRect_;
 template<typename FPT> class Ellipse_;
 
 namespace img {
-struct SvgImage;
+struct SvgImage; // forward declaration
 }
 
 template<typename T>
@@ -848,6 +850,25 @@ void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
 	pairp.second.draw( *this, dp );
 }
 
+//------------------------------------------------------------------
+/// A functor used to draw objects. To use with std::variant and std::visit()
+template<typename IMG>
+struct DrawFunct
+{
+	DrawFunct(
+		Image<IMG>& img,
+		DrawParams dp=img::DrawParams()
+	): _img(img), _drawParams(dp)
+	{}
+	Image<IMG>&             _img;
+	const img::DrawParams _drawParams;
+
+	template<typename T>
+	void operator ()(const T& a)
+	{
+		a.draw( _img, _drawParams );
+	}
+};
 
 } // namespace img
 
@@ -906,6 +927,16 @@ const char* getString( Type t )
 	}
 	return s;
 }
+
+/// A functor, use with std::variant, call with std::visit()
+struct TypeFunct
+{
+	template<typename T>
+	Type operator ()(const T& a)
+	{
+		return a.type();
+	}
+};
 
 inline
 const char* getString( Dtype t )

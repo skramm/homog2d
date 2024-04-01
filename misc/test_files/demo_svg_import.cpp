@@ -29,29 +29,6 @@ primitives (see \c getBB()), automatically adjust the size of output image.
 
 using namespace h2d;
 
-struct DrawFunct
-{
-	DrawFunct( img::Image<img::SvgImage>& img ): _img(img)
-	{}
-	img::Image<img::SvgImage>& _img;
-
-	template<typename T>
-	void operator ()(const T& a)
-	{
-		a.draw( _img ); //, _dparams );
-	}
-
-};
-struct TypeFunct
-{
-	template<typename T>
-	Type operator ()(const T& a)
-	{
-		return a.type();
-	}
-};
-
-
 int main( int argc, const char** argv )
 {
 	tinyxml2::XMLDocument doc;
@@ -77,7 +54,7 @@ int main( int argc, const char** argv )
 	}
 	catch( const std::exception& error )
 	{
-		std::cout << "input file has not size, size set to 500x500\n -msg=" << error.what() << '\n';
+		std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
 	}
 
 	h2d::svg::Visitor visitor;
@@ -90,25 +67,13 @@ int main( int argc, const char** argv )
 		return 1;
 	}
 
-	img::Image<img::SvgImage> out( imSize.first, imSize.second ); //.first << " x " << mSize.second 500, 500 );
+	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 
-/*
-	for( const auto& e: data )
-	{
-		if( e->type() != Type::Line2d )
-		{
-//			auto bb = e->getBB();
-			auto bb = e->getPointPair();
-		}
-	}
-*/
-	DrawFunct dfunc( out );
+	img::DrawFunct<img::SvgImage> dfunc( out );
 	size_t c = 0;
 	for( const auto& e: data )
 	{
 		std::visit( dfunc, e );
-//		e->draw( out );
-//		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
 		std::cout << "Shape " << c++ << ": " << getString( std::visit( TypeFunct{}, e ) ) << "\n";
 	}
 	out.write( "demo_import.svg" );
