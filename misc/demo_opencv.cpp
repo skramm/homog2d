@@ -1765,7 +1765,7 @@ struct varDrawElem
 	) : _img(img), _dparams(dp)
 	{}
 	template<typename T>
-	void operator()(const T& a)
+	void operator ()(const T& a)
 	{
 		a.draw( _img, _dparams );
 	}

@@ -29,6 +29,21 @@ primitives (see \c getBB()), automatically adjust the size of output image.
 
 using namespace h2d;
 
+struct DrawFunct
+{
+	DrawFunct( img::Image<img::SvgImage>& img ): _img(img)
+	{}
+	img::Image<img::SvgImage>& _img;
+
+	template<typename T>
+	void operator ()(const T& a)
+	{
+		a.draw( _img ); //, _dparams );
+	}
+
+};
+
+
 int main( int argc, const char** argv )
 {
 	tinyxml2::XMLDocument doc;
@@ -68,11 +83,14 @@ int main( int argc, const char** argv )
 		}
 	}
 */
+	DrawFunct dfunc( out );
 	size_t c = 0;
 	for( const auto& e: data )
 	{
-		e->draw( out );
-		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
+		std::visit( dfunc, e );
+//		e->draw( out );
+//		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
+//		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
 	}
 	out.write( "demo_import.svg" );
 

@@ -11761,6 +11761,8 @@ parsePath( const char* s )
 
 } // namespace svgp
 
+using ImportTypes = std::variant<Segment,Point2d,Circle,Ellipse,FRect>;
+
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11780,7 +11782,8 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
+//	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
+	std::vector<ImportTypes> _vecVar; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11811,9 +11814,13 @@ public:
 
 		return it->second;
 	}
-	const std::vector<std::unique_ptr<rtp::Root>>& get() const
+/*	const std::vector<std::unique_ptr<rtp::Root>>& get() const
 	{
 		return _vec;
+	}*/
+	const std::vector<ImportTypes>& get() const
+	{
+		return _vecVar;
 	}
 
 	bool VisitExit( const tinyxml2::XMLElement& ) override;
@@ -11859,8 +11866,11 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		{
 			case T_circle:
 			{
-				std::unique_ptr<rtp::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
-				_vec.push_back( std::move(c) );
+//				std::unique_ptr<rtp::Root> c( new Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) ) );
+//				_vec.push_back( std::move(c) );
+				auto c = Circle( getAttribValue( e, "cx", n ), getAttribValue( e, "cy", n ), getAttribValue( e, "r", n ) );
+				_vecVar.push_back( std::move(c) );
+//				_vec.push_back( std::move(c) );
 			}
 			break;
 
@@ -11870,17 +11880,22 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y1 = getAttribValue( e, "y", n );
 				auto w  = getAttribValue( e, "width", n );
 				auto h  = getAttribValue( e, "height", n );
-				std::unique_ptr<rtp::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
-				_vec.push_back( std::move(r) );
+//				std::unique_ptr<rtp::Root> r( new FRect( x1, y1, x1+w, y1+h ) );
+//				_vec.push_back( std::move(r) );
+				auto r = FRect( x1, y1, x1+w, y1+h );
+				_vecVar.push_back( std::move(r) );
 			}
 			break;
 
 			case T_line:
 			{
-				std::unique_ptr<rtp::Root> s(
+/*				std::unique_ptr<rtp::Root> s(
 					new Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) )
 				);
 				_vec.push_back( std::move(s) );
+*/
+				auto s = Segment( getAttribValue( e, "x1", n ), getAttribValue( e, "y1", n ), getAttribValue( e, "x2", n ), getAttribValue( e, "y2", n ) );
+				_vecVar.push_back( std::move(s) );
 			}
 			break;
 
@@ -11888,8 +11903,10 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-				std::unique_ptr<rtp::Root> p( new CPolyline(vec_pts) );
-				_vec.push_back( std::move(p) );
+//				std::unique_ptr<rtp::Root> p( new CPolyline(vec_pts) );
+//				_vec.push_back( std::move(p) );
+				auto p = CPolyline(vec_pts);
+//				_vecVar.push_back( std::move(p) );
 			}
 			break;
 
@@ -11897,8 +11914,10 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
-				_vec.push_back( std::move(p) );
+//				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
+//				_vec.push_back( std::move(p) );
+				auto p = OPolyline(vec_pts);
+//				_vecVar.push_back( std::move(p) );
 			}
 			break;
 
@@ -11908,13 +11927,17 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto parse_res = svgp::parsePath( pts_str );
 				if( parse_res.second == true )
 				{
-					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
-					_vec.push_back( std::move(p) );
+//					std::unique_ptr<rtp::Root> p( new CPolyline(parse_res.first) );
+//					_vec.push_back( std::move(p) );
+					auto p = CPolyline(parse_res.first);
+//					_vecVar.push_back( std::move(p) );
 				}
 				else
 				{
-					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
-					_vec.push_back( std::move(p) );
+//					std::unique_ptr<rtp::Root> p( new OPolyline(parse_res.first) );
+//					_vec.push_back( std::move(p) );
+					auto p = OPolyline(parse_res.first);
+//					_vecVar.push_back( std::move(p) );
 				}
 			}
 			break;
@@ -11931,7 +11954,9 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
 				*ell = H * *ell;
 				std::unique_ptr<rtp::Root> p( ell );
-				_vec.push_back( std::move(p) );
+//				_vec.push_back( std::move(p) );
+
+				_vecVar.push_back( std::move(*ell) );
 			}
 			break;
 
