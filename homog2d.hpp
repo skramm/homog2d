@@ -11384,6 +11384,9 @@ using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 /// Holds private stuff related to SVG import
 namespace svg {
 
+/// Private functions related to the SVG import code
+namespace svgp {
+
 //-------------------------------------------------------------------
 /// General string tokenizer, taken from http://stackoverflow.com/a/236803/193789
 /**
@@ -11460,8 +11463,6 @@ parsePoints( const char* pts )
 	return out;
 }
 
-/// Private functions related to the SVG import code
-namespace svgp {
 
 inline
 bool isDigit( char c )
@@ -11886,7 +11887,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_polygon:
 			{
 				auto pts_str = getAttribString( "points", e );
-				auto vec_pts = parsePoints( pts_str );
+				auto vec_pts = svgp::parsePoints( pts_str );
 				std::unique_ptr<rtp::Root> p( new CPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
 			}
@@ -11895,7 +11896,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_polyline:
 			{
 				auto pts_str = getAttribString( "points", e );
-				auto vec_pts = parsePoints( pts_str );
+				auto vec_pts = svgp::parsePoints( pts_str );
 				std::unique_ptr<rtp::Root> p( new OPolyline(vec_pts) );
 				_vec.push_back( std::move(p) );
 			}
@@ -11924,7 +11925,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y  = getAttribValue( e, "cy", n );
 				auto rx = getAttribValue( e, "rx", n );
 				auto ry = getAttribValue( e, "ry", n );
-				auto rot = getEllipseRotateAttr( getAttribString( "transform", e ) );
+				auto rot = svgp::getEllipseRotateAttr( getAttribString( "transform", e ) );
 				Ellipse* ell = new Ellipse( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
