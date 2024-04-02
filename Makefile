@@ -173,10 +173,10 @@ BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile buildf
-	$(CXX) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o buildf
-	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
+	$(CXX) $(CXXFLAGS) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
 
 
 # temporarly removed from target testall: speed_test_b

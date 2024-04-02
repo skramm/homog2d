@@ -4,4 +4,4 @@
 void A::foo()
 {
 	pt.set(3,4);
-};
+}

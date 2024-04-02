@@ -369,6 +369,24 @@ using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 
+/// A variant type, holding all possible types. Used to achieve run-time polymorphism
+/**
+At present, the "line" type is not included here, because it would imply having the
+\c getPointPair() function defined for that type, and we chose to keep it undefined
+(thus generating an error at build time), instead of defining it, and throwing at run-time.
+*/
+template<typename FPT>
+using CommonType = std::variant<
+	Segment_<FPT>,
+	Point2d_<FPT>,
+//	Line2d_<FPT>,
+	Circle_<FPT>,
+	Ellipse_<FPT>,
+	FRect_<FPT>,
+	CPolyline_<FPT>,
+	OPolyline_<FPT>
+>;
+
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -872,6 +890,7 @@ struct DrawFunct
 
 } // namespace img
 
+
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - PUBLIC ENUM DECLARATIONS
 /////////////////////////////////////////////////////////////////////////////
@@ -970,8 +989,10 @@ operator T ()
 */
 /// source: https://stackoverflow.com/a/72955535/193789
 template<typename... Ts>
-struct variant_unwrapper {
-    std::variant<Ts...> & var;
+struct variant_unwrapper
+{
+    std::variant<Ts...>& var;
+
     template <typename T>
     operator T() { return std::get<T>(var); }
 };
@@ -1148,7 +1169,7 @@ shareCommonCoord( const Point2d_<FPT1>& p1, const Point2d_<FPT2>& p2 )
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 /** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+PointPair1_<FPT>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
@@ -2328,7 +2349,8 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		}
 		size_t size() const { return _doesIntersect?2:0; }
 
-		std::pair<Point2d_<FPT>,Point2d_<FPT>>
+//		std::pair<Point2d_<FPT>,Point2d_<FPT>>
+		PointPair1_<FPT>
 		get() const
 		{
 			if( !_doesIntersect )
@@ -2564,7 +2586,8 @@ public:
 	}
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+//	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	PointPair1_<FPT>
 	getPts() const
 	{
 		return std::make_pair( _ptR1, _ptR2 );
@@ -3917,7 +3940,8 @@ public:
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+//	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	PointPair1_<FPT>
 	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
 	{
 		return impl_getPoints_A( gc, coord, dist, detail::BaseHelper<LP>() );
@@ -4194,13 +4218,13 @@ private:
 	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
+	PointPair1_<FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
+	constexpr PointPair1_<FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
+	PointPair1_<FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
+	constexpr PointPair1_<FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const;
 
 	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
 	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
@@ -4998,7 +5022,7 @@ Requires both points inside AND no intersections
 /// Returns the points as a std::pair
 /** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first */
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	PointPair1_<FPT>
 	getPts() const
 	{
 		return std::make_pair( _ptS1, _ptS2 );
@@ -8369,14 +8393,14 @@ LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelpe
 /// ILLEGAL INSTANCIATION
 template<typename LP,typename FPT>
 template<typename FPT2>
-constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>>
+constexpr PointPair1_<FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
 template<typename LP,typename FPT>
 template<typename FPT2>
-constexpr std::pair<Point2d_<FPT>,Point2d_<FPT>>
+constexpr PointPair1_<FPT>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename type::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
@@ -8385,7 +8409,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::Base
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+PointPair1_<FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 	const auto pt = impl_getPoint( gc, coord, detail::BaseHelper<type::IsLine>() );
@@ -8395,7 +8419,7 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const det
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+PointPair1_<FPT>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<typename type::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
@@ -9621,7 +9645,7 @@ getPointPair( const T& poly )
 /// Return pair of points defining a BB of a Point2d
 /// Overload 3/4, private free function
 /**
-This seems useless at first glance, but it used to get the common bounding box of two objects
+This seems useless at first glance, but it is used to get the common bounding box of two objects
 when one of them (or both) is a point.
 */
 template<
@@ -9637,6 +9661,7 @@ getPointPair( const T& elem )
 	HOMOG2D_START;
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
+
 /// Return pair of points defining a BB of Segment
 /// Overload 4/4, private free function
 template<
@@ -11644,7 +11669,6 @@ struct SvgPathCommand
 			return true;
 		return false;
 	}
-
 };
 
 /// Generate new point from current mode and previous point, handles absolute/relative coordinates
@@ -11876,8 +11900,6 @@ HOMOG2D_LOG( "RETURN" );
 
 } // namespace svgp
 
-using ImportTypes = std::variant<Segment,Point2d,Circle,Ellipse,FRect,CPolyline,OPolyline>;
-
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
@@ -11897,7 +11919,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<ImportTypes> _vecVar; ///< all the data is stored here
+	std::vector<CommonType<double>> _vecVar; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11928,7 +11950,7 @@ public:
 
 		return it->second;
 	}
-	const std::vector<ImportTypes>& get() const
+	const std::vector<CommonType<double>>& get() const
 	{
 		return _vecVar;
 	}
@@ -12106,6 +12128,8 @@ getImgSize( const tinyxml2::XMLDocument& doc )
 } // namespace svg
 
 #endif // HOMOG2D_USE_SVG_IMPORT
+
+//using ImportType = std::variant<Segment,Point2d,Circle,Ellipse,FRect,CPolyline,OPolyline>;
 
 
 } // namespace h2d

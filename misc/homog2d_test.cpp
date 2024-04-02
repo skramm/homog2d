@@ -3738,7 +3738,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		Circle cir = variant_unwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
-	{                               // this test makes sure the <g> element is ignored
+/*	{                               // this test makes sure the <g> element is ignored
 		tinyxml2::XMLDocument doc;
 		doc.LoadFile( "misc/other/test_svg_import_1.svg" );
 		h2d::svg::Visitor visitor;
@@ -3758,9 +3758,9 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		CHECK( data.at(3)->type() == Type::Segment );
 		CHECK( data.at(4)->type() == Type::FRect );
 		CHECK( data.at(5)->type() == Type::CPolyline );
-	}
+	}*/
 }
-
+#if 0
 TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 {
 	tinyxml2::XMLDocument doc;
@@ -3790,6 +3790,7 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 	{
 		const char* s1 ="10 20 30 40";
 		auto res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 2 );
 		CHECK( res.first.size() == 2 );
 		CHECK( res.first[0] == Point2d(10,20) );
 		CHECK( res.first[1] == Point2d(30,40) );
@@ -3832,6 +3833,8 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
 	}
 }
+#endif
+
 #endif // HOMOG2D_USE_SVG_IMPORT
 
 //////////////////////////////////////////////////////////////

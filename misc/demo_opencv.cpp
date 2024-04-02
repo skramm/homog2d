@@ -58,6 +58,8 @@ void demo_something( int demo_index)
 using namespace h2d;
 //using namespace h2d::img;
 
+using CommonTyped = CommonType<double>;
+
 // forward declaration
 void myMouseCB( int event, int x, int y, int, void* param );
 
@@ -1736,13 +1738,13 @@ void printFailure( std::exception& e )
 {
 	std::cout << "Unable to build BB, err=" << e.what() << "\n";
 }
-using PointPair = std::pair<Point2d,Point2d>;
+
+using PointPair = PointPair1_<double>;
 
 namespace var {
 
-using VarType = std::variant<FRect,Circle,Segment,Point2d,CPolyline,OPolyline>;
 
-/// Variant type, use with std::visit(). Enables dynamic polymorphism with templated types
+/// Variant Functor, use with std::visit(). Enables dynamic polymorphism with templated types
 /**
 \todo 20240328: apply same technique to the reading of an SVG file
 */
@@ -1751,28 +1753,7 @@ struct varGetPointPair
 	template<typename T>
 	PointPair operator()(const T& a)   { return priv::getPointPair(a); }
 };
-struct varGetName
-{
-	template<typename T>
-	std::string operator()(const T& a)   { return getString( a.type() ); }
-};
 
-struct varDrawElem
-{
-	varDrawElem(
-		img::Image<cv::Mat>& img,
-		img::DrawParams&     dp
-	) : _img(img), _dparams(dp)
-	{}
-	template<typename T>
-	void operator ()(const T& a)
-	{
-		a.draw( _img, _dparams );
-	}
-private:
-	img::Image<cv::Mat>& _img;
-	img::DrawParams      _dparams;
-};
 
 } // namespace var
 
@@ -1791,20 +1772,21 @@ struct Param_BB : Data
 				1.0*rand()*250/RAND_MAX+30
 			);
 	}
-/// Fills vector of variants with elements
-	void init( std::vector<var::VarType>& vecvar, int idx )
-	{
-		vecvar.push_back( var::VarType( OPolyline() ) );
-		vecvar.push_back( var::VarType( CPolyline() ) );
-		vecvar.push_back( var::VarType( Segment()   ) );
-		vecvar.push_back( var::VarType( Point2d()   ) );
-		vecvar.push_back( var::VarType( Circle()    ) );
-		vecvar.push_back( var::VarType( FRect()     ) );
 
-		_name[idx] = std::visit( var::varGetName{}, _vecvar[idx][_current[idx]] );
+/// Fills vector of variants with elements
+	void init( std::vector<CommonTyped>& vecvar, int idx )
+	{
+		vecvar.push_back( CommonTyped( OPolyline() ) );
+		vecvar.push_back( CommonTyped( CPolyline() ) );
+		vecvar.push_back( CommonTyped( Segment()   ) );
+		vecvar.push_back( CommonTyped( Point2d()   ) );
+		vecvar.push_back( CommonTyped( Circle()    ) );
+		vecvar.push_back( CommonTyped( FRect()     ) );
+
+		_name[idx] = getString( std::visit( TypeFunct{}, _vecvar[idx][_current[idx]] ) );
 	}
 
-	var::VarType getCurrent( int i ) const
+	CommonTyped getCurrent( int i ) const
 	{
 		return _vecvar[i][_current[i]];
 	}
@@ -1814,7 +1796,7 @@ struct Param_BB : Data
 		_current[i]++;
 		if( _current[i] == _vecvar[i].size() )
 			_current[i] = 0;
-		_name[i] = std::visit( var::varGetName{}, _vecvar[i][_current[i]] );
+		_name[i] = getString( std::visit( TypeFunct{}, _vecvar[i][_current[i]] ) );
 		return _name[i];
 	}
 
@@ -1824,7 +1806,7 @@ struct Param_BB : Data
 		initElems( _vecvar[1], 1 );
 	}
 
-	void initElems( std::vector<var::VarType>& vec, int i )
+	void initElems( std::vector<CommonTyped>& vec, int i )
 	{
 		std::vector<Point2d> vecpl1,vecpl2;
 		for( auto j = 0; j<3; j++ )
@@ -1847,8 +1829,8 @@ struct Param_BB : Data
 	std::string _name[2];        ///< name of current primitive
 
 private:
-	size_t                    _current[2] = {0,2}; ///< index of current
-	std::vector<var::VarType> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
+	size_t                   _current[2] = {0,2}; ///< index of current
+	std::vector<CommonTyped> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
 };
 
 void action_BB( void* param )
@@ -1862,8 +1844,8 @@ void action_BB( void* param )
 
 	data.initElemsAll();                              // first initialize objects
 
-	var::varDrawElem vde1( data.img, style1 );        // then draw the current ones
-	var::varDrawElem vde2( data.img, style2 );
+	img::DrawFunct vde1( data.img, style1 );        // then draw the current ones
+	img::DrawFunct vde2( data.img, style2 );
 	const auto& curr1 = data.getCurrent(0);
 	const auto& curr2 = data.getCurrent(1);
 	std::visit( vde1, curr1 );
