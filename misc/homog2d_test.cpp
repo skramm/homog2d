@@ -3735,7 +3735,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& elem = data.at(0);
 		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
 
-		auto cir = std::visit( ConvertToFunct{}, elem );
+		Circle cir = variant_unwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored

@@ -937,7 +937,7 @@ struct TypeFunct
 		return a.type();
 	}
 };
-
+/*
 struct ConvertToFunct
 {
 	template<typename T>
@@ -947,6 +947,33 @@ struct ConvertToFunct
 			return std::get<T>(a);
 		assert(0);
 	}
+};
+
+/// source: https://stackoverflow.com/a/67350589/193789
+template <typename T>
+operator T ()
+{
+	return std::visit(
+		[](auto const & val)
+		{
+			if constexpr ( std::is_convertible_v<decltype(val), T> )
+				return T(val);
+			else
+			{
+				throw std::bad_variant_access{};
+				return T{};
+			}
+		},
+		var
+	);
+}
+*/
+/// source: https://stackoverflow.com/a/72955535/193789
+template<typename... Ts>
+struct variant_unwrapper {
+    std::variant<Ts...> & var;
+    template <typename T>
+    operator T() { return std::get<T>(var); }
 };
 
 inline
