@@ -376,7 +376,7 @@ At present, the "line" type is not included here, because it would imply having 
 (thus generating an error at build time), instead of defining it, and throwing at run-time.
 */
 template<typename FPT>
-using CommonType = std::variant<
+using CommonType_ = std::variant<
 	Segment_<FPT>,
 	Point2d_<FPT>,
 //	Line2d_<FPT>,
@@ -11919,7 +11919,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// Populated in constructor
 	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
 
-	std::vector<CommonType<double>> _vecVar; ///< all the data is stored here
+	std::vector<CommonType_<double>> _vecVar; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
@@ -11950,7 +11950,7 @@ public:
 
 		return it->second;
 	}
-	const std::vector<CommonType<double>>& get() const
+	const std::vector<CommonType_<double>>& get() const
 	{
 		return _vecVar;
 	}

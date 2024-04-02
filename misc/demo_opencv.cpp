@@ -48,7 +48,7 @@ void demo_something( int demo_index)
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_ENABLE_RTP
+//#define HOMOG2D_ENABLE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -58,7 +58,8 @@ void demo_something( int demo_index)
 using namespace h2d;
 //using namespace h2d::img;
 
-using CommonTyped = CommonType<double>;
+/// variant type
+using CommonTyped = CommonType_<double>;
 
 // forward declaration
 void myMouseCB( int event, int x, int y, int, void* param );
@@ -282,6 +283,7 @@ private:
 	int                       _index = 0;
 
 public:
+/// Call this to add a new action to a given key
 	void addKeyAction(
 		char key,                              ///< the key
 		const std::function<FuncType>& action, ///< the callback function, called on key hit
@@ -1142,53 +1144,54 @@ struct Param_CIR : Data
 			{150,120}, {220,240},            // initial rectangle
 			{100,100}, {300,100}, {300,200}  // initial circle
 		};
-		ptr_cr = &cir2;
+		_variant = _cir2;
 	}
 	void setAndDraw()
 	{
-		if( buildFrom3Pts )
+		if( _buildFrom3Pts )
 		{
 			try
 			{
-				cir.set( vpt[2], vpt[3], vpt[4] );
+				_cir1.set( vpt[2], vpt[3], vpt[4] );
 			}
 			catch( std::exception& err )
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
-//			CPolyline pol;
 			_cpoly.setParallelogram( vpt[2], vpt[3], vpt[4] );
 			_cpoly.draw( img, img::DrawParams().setColor(120,200,0) );
 		}
 		else
-			cir.set( vpt[2], vpt[3] );
+			_cir1.set( vpt[2], vpt[3] );
 		try
 		{
-			rect.set( vpt[0], vpt[1] );
-			cir2.set( vpt[0], vpt[1] );
+			_rect.set( vpt[0], vpt[1] );
+			_cir2.set( vpt[0], vpt[1] );
 		}
 		catch( std::exception& err )
 		{
 			std::cout << "unable to build rectangle, invalid points\n=> "<< err.what() << '\n';
 			return;
 		}
-		ptr_cr = &cir2;
-		if( drawRect )
-			ptr_cr = &rect;
+		_variant = _cir2;
+		if( _drawRect )
+			_variant = _rect;
 
 		auto par_c = img::DrawParams().setColor(0,120,250);
 		auto par_r = img::DrawParams().setColor(120,0,250);
-		if( cir.isInside( rect ) )
+		if( _cir1.isInside( _rect ) )
 			par_c.setColor( 0,250,0);
-		if( rect.isInside( cir ) )
+		if( _rect.isInside( _cir1 ) )
 			par_r.setColor( 0,250,0);
 
-		cir.draw( img, par_c );
+		_cir1.draw( img, par_c );
 //		rect.draw( img, par_r );
-		ptr_cr->draw( img, par_r );
+
+		img::DrawFunct dfunc( img, par_r );
+		std::visit( dfunc, _variant );
 
 		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
-		if( buildFrom3Pts )
+		if( _buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
@@ -1197,9 +1200,9 @@ struct Param_CIR : Data
 // intersection points
 // TODO: replace this by: 		auto it = cir.intersects( *ptr_cr );
 // once we have set a unique function for all intersections types
-		auto it_c = cir.intersects( cir2 );
-		auto it_r = cir.intersects( rect );
-		if( drawRect )
+		auto it_c = _cir1.intersects( _cir2 );
+		auto it_r = _cir1.intersects( _rect );
+		if( _drawRect )
 		{
 			if( it_r() )
 				draw( img, it_r.get(), img::DrawParams().setColor(120,0,0) );
@@ -1210,12 +1213,12 @@ struct Param_CIR : Data
 	}
 
 // DATA SECTION
-	const rtp::Root* ptr_cr;
-	Circle cir;
-	Circle cir2;
-	FRect rect;
-	bool buildFrom3Pts = true;
-	bool drawRect  = true;
+	CommonTyped _variant;
+	Circle _cir1;
+	Circle _cir2;
+	FRect  _rect;
+	bool   _buildFrom3Pts = true;
+	bool   _drawRect  = true;
 
 };
 
@@ -1242,13 +1245,13 @@ void demo_CIR( int demidx )
 
 	kbloop.addKeyAction( 'a', [&](void*)
 		{
-			data.buildFrom3Pts = !data.buildFrom3Pts;
+			data._buildFrom3Pts = !data._buildFrom3Pts;
 		},
 		"switch circle from 2 pts / 3 pts"
 	);
 	kbloop.addKeyAction( 'w', [&](void*)
 		{
-			data.drawRect = !data.drawRect;
+			data._drawRect = !data._drawRect;
 		},
 		"switch circle/rectangle"
 	);
