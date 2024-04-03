@@ -2032,6 +2032,50 @@ int main( int argc, const char** argv )
 		v_demo[d-1](d);
 		return 0;
 	}
+// 1-------------------
+	CommonTyped var;
+	var=Circle();
+	Circle c = VariantUnwrapper{var};
+	std::cout << "c1=" << c << '\n';
+// 2 -----------------------
+	std::vector<CommonTyped> vecvar;
+	vecvar.push_back( Circle() );
+	Circle c2 = VariantUnwrapper{vecvar[0]};
+	std::cout << "c2=" << c2 << '\n';
+
+// 3 -----------------------
+	struct Svar
+	{
+		std::vector<CommonTyped> vecvar;
+		const std::vector<CommonTyped>& get() const {return vecvar;}
+
+	};
+	Svar svar;
+	svar.vecvar.push_back( Circle() );
+
+	Circle c3 = VariantUnwrapper{svar.vecvar[0]};
+	std::cout << "c3=" << c3 << '\n';
+
+	const auto& g = svar.get();
+	Circle c4 = VariantUnwrapper{g[0]};
+	std::cout << "c4=" << c4 << '\n';
+
+
+/*		tinyxml2::XMLDocument doc;
+		doc.LoadFile( "BUILD/test_svg_11.svg" );
+
+		svg::Visitor visitor;
+		doc.Accept( &visitor );
+		auto data = visitor.get();
+		auto elem = data.at(0);
+		std::cout << "type="<<getString( getType( elem ) );
+//		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
+
+//		Circle cir = VariantUnwrapper{elem};
+//		Circle cir = VariantUnwrapper{data.at(0)};
+//		std::cout << "rad=" << cir.radius() << '\n';
+*/
+//	exit(0);
 
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )

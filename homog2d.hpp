@@ -965,18 +965,19 @@ source: https://stackoverflow.com/a/72955535/193789
 template<typename... Ts>
 struct VariantUnwrapper
 {
-    std::variant<Ts...>& var;
+    const std::variant<Ts...>& var;
 
     template <typename T>
     operator T() { return std::get<T>(var); }
 };
 
-/// Fix for the above VariantUnwrapper (may be removed when we switch to C++20)
+/// Fix for the above VariantUnwrapper for C++17
 /**
+(may be removed when we switch to C++20)
 \sa VariantUnwrapper
 */
 template<typename... Ts>
-VariantUnwrapper(std::variant<Ts...> &) -> VariantUnwrapper<Ts...>;
+VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
 
 
 inline
@@ -9406,6 +9407,7 @@ operator * (
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+/// overload 1/2, get underlying type for a variant object
 template<
 	typename T, typename...Us,
 	typename std::enable_if<
@@ -9416,6 +9418,55 @@ template<
 Type getType( const T& elem )
 {
 	return std::visit( TypeFunct{}, elem );
+}
+
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		std::is_same<T,const std::variant<Us...>>::value
+		,T
+	>::type* = nullptr
+>
+Type getType( const T& elem )
+{
+	return std::visit( TypeFunct{}, elem );
+}
+
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		std::is_same<T,const std::variant<Us...>&>::value
+		,T
+	>::type* = nullptr
+>
+Type getType( const T& elem )
+{
+	return std::visit( TypeFunct{}, elem );
+}
+
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		std::is_same<T,std::variant<Us...>&>::value
+		,T
+	>::type* = nullptr
+>
+Type getType( const T& elem )
+{
+	return std::visit( TypeFunct{}, elem );
+}
+
+/// overload 2/2, get underlying type for regular primitives
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		!std::is_same<T,std::variant<Us...>>::value
+		,T
+	>::type* = nullptr
+>
+Type getType( const T& elem )
+{
+	return elem.type();
 }
 
 template<typename FPT>
@@ -11904,8 +11955,7 @@ class Visitor: public tinyxml2::XMLVisitor
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
-		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse
-		,T_path ///< preliminar
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse ,T_path
 		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
