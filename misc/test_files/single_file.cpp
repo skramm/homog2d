@@ -1,5 +1,10 @@
 // minimal working file
 
+/**
+\file
+\brief used to check build of single file with MS compiler, see msvc.yml
+*/
+
 #include "../../homog2d.hpp"
 using namespace h2d;
 int main()

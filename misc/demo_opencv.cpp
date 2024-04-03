@@ -2032,6 +2032,7 @@ int main( int argc, const char** argv )
 		v_demo[d-1](d);
 		return 0;
 	}
+
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
 	{

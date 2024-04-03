@@ -947,7 +947,8 @@ const char* getString( Type t )
 	return s;
 }
 
-/// A functor, use with std::variant, call with std::visit()
+/// A functor to get the type of an object in a std::variant, call with std::visit()
+/// \sa CommonType_
 struct TypeFunct
 {
 	template<typename T>
@@ -956,46 +957,27 @@ struct TypeFunct
 		return a.type();
 	}
 };
-/*
-struct ConvertToFunct
-{
-	template<typename T>
-	T operator ()(const T& a)
-	{
-		if( std::holds_alternative<T>(a) )
-			return std::get<T>(a);
-		assert(0);
-	}
-};
 
-/// source: https://stackoverflow.com/a/67350589/193789
-template <typename T>
-operator T ()
-{
-	return std::visit(
-		[](auto const & val)
-		{
-			if constexpr ( std::is_convertible_v<decltype(val), T> )
-				return T(val);
-			else
-			{
-				throw std::bad_variant_access{};
-				return T{};
-			}
-		},
-		var
-	);
-}
+/// Convert std::variant object into the underlying type
+/**
+source: https://stackoverflow.com/a/72955535/193789
 */
-/// source: https://stackoverflow.com/a/72955535/193789
 template<typename... Ts>
-struct variant_unwrapper
+struct VariantUnwrapper
 {
     std::variant<Ts...>& var;
 
     template <typename T>
     operator T() { return std::get<T>(var); }
 };
+
+/// Fix for the above VariantUnwrapper (may be removed when we switch to C++20)
+/**
+\sa VariantUnwrapper
+*/
+template<typename... Ts>
+VariantUnwrapper(std::variant<Ts...> &) -> VariantUnwrapper<Ts...>;
+
 
 inline
 const char* getString( Dtype t )
@@ -9424,6 +9406,18 @@ operator * (
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		std::is_same<T,std::variant<Us...>>::value
+		,T
+	>::type* = nullptr
+>
+Type getType( const T& elem )
+{
+	return std::visit( TypeFunct{}, elem );
+}
+
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 
@@ -12124,13 +12118,9 @@ getImgSize( const tinyxml2::XMLDocument& doc )
 	return std::make_pair( w, h );
 }
 
-
 } // namespace svg
 
 #endif // HOMOG2D_USE_SVG_IMPORT
-
-//using ImportType = std::variant<Segment,Point2d,Circle,Ellipse,FRect,CPolyline,OPolyline>;
-
 
 } // namespace h2d
 

@@ -3733,12 +3733,13 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
 		const auto& elem = data.at(0);
-		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
+		CHECK( getType( elem ) == Type::Circle );
+//		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
 
-		Circle cir = variant_unwrapper{elem};
+		Circle cir = VariantUnwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
-/*	{                               // this test makes sure the <g> element is ignored
+	{                               // this test makes sure the <g> element is ignored
 		tinyxml2::XMLDocument doc;
 		doc.LoadFile( "misc/other/test_svg_import_1.svg" );
 		h2d::svg::Visitor visitor;
@@ -3746,7 +3747,8 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 		for( const auto& elem: data )
-			CHECK( elem->type() == Type::Circle );
+//			CHECK( elem->type() == Type::Circle );
+			CHECK( getType( elem ) == Type::Circle );
 	}
 	{                            // read a file with 3 circles, one rect, one segment and a polygon
 		tinyxml2::XMLDocument doc;
@@ -3755,10 +3757,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 6 );
-		CHECK( data.at(3)->type() == Type::Segment );
-		CHECK( data.at(4)->type() == Type::FRect );
-		CHECK( data.at(5)->type() == Type::CPolyline );
-	}*/
+		CHECK( getType( data.at(3) ) == Type::Segment );
+		CHECK( getType( data.at(4) ) == Type::FRect );
+		CHECK( getType( data.at(5) ) == Type::CPolyline );
+	}
 }
 #if 0
 TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
@@ -3771,12 +3773,12 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 	CHECK( data.size() == 3 );
 	for( const auto& p: data )
 	{
-		std::cout << *p << '\n';
-		if( p->type() == Type::Ellipse )
+//		std::cout << *p << '\n';
+		if( getType( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
-			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
-			CHECK( ell == *pell );
+//			const Ellipse* pell = convertToType( p.get() ) );
+//			CHECK( ell == *pell );
 		}
 	}
 }

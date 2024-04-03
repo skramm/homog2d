@@ -4,6 +4,11 @@
 
 #include "fig_src.header"
 
+/**
+\file
+\brief Build figures showing convex hulls
+*/
+
 template<typename T>
 void process( img::Image<img::SvgImage>& im, const T& t, std::string fn )
 {
