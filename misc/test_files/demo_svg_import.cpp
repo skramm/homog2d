@@ -29,16 +29,6 @@ primitives (see \c getBB()), automatically adjust the size of output image.
 
 using namespace h2d;
 
-struct SizeFunct
-{
-	template<typename T>
-	size_t operator ()(const T& a)
-	{
-		return a.size();
-	}
-
-};
-
 int main( int argc, const char** argv )
 {
 	tinyxml2::XMLDocument doc;

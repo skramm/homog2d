@@ -3728,17 +3728,13 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		tinyxml2::XMLDocument doc;                // load the file that we just created
 		doc.LoadFile( "BUILD/test_svg_11.svg" );
 
-
 		h2d::svg::Visitor visitor;
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
-		const auto elem = data.at(0);
-//		CHECK( getType( elem ) == Type::Circle );
-//		CHECK( std::visit( TypeFunct{}, elem ) == Type::Circle );
-
+		auto elem = data.at(0);
+		CHECK( getType( elem ) == Type::Circle );
 		Circle cir = VariantUnwrapper{elem};
-//		Circle cir = VariantUnwrapper{data.at(0)};
 		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
@@ -3748,9 +3744,8 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
-//		for( const auto& elem: data )
-//			CHECK( elem->type() == Type::Circle );
-//			CHECK( getType( elem ) == Type::Circle );
+		for( const auto& elem: data )
+			CHECK( getType( elem ) == Type::Circle );
 	}
 	{                            // read a file with 3 circles, one rect, one segment and a polygon
 		tinyxml2::XMLDocument doc;
@@ -3759,14 +3754,13 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 6 );
-/*
+
 		CHECK( getType( data.at(3) ) == Type::Segment );
 		CHECK( getType( data.at(4) ) == Type::FRect );
 		CHECK( getType( data.at(5) ) == Type::CPolyline );
-*/
 	}
 }
-#if 0
+
 TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 {
 	tinyxml2::XMLDocument doc;
@@ -3794,35 +3788,40 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 	}
 	{
 		const char* s1 ="10 20 30 40";
-		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 2 );
-		CHECK( res.first.size() == 2 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(30,40) );
+		const auto& res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 1 ); // one vector
+		CHECK( res.first[0].size() == 2 );  // holding two points
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[0][1] == Point2d(30,40) );
 		CHECK( res.second == false );
 	}
+
 	{
 		const char* s1 ="10 20 30 40z";
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 2 );
+		CHECK( res.first.size() == 1 );
+		CHECK( res.first[0].size() == 2 );
 		CHECK( res.second == true );
 	}
 	{
-		const char* s1 ="10 20 m 1 2 3 4z";  //relative
+		const char* s1 ="10 20 m 1 2 3 4z";  //relative and "Move To" (=>so two vectors in output)
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 3 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(11,22) );
-		CHECK( res.first[2] == Point2d(14,26) );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.first[0].size() == 1 );
+		CHECK( res.first[1].size() == 2 );
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[1][0] == Point2d(11,22) );
+		CHECK( res.first[1][1] == Point2d(14,26) );
 		CHECK( res.second == true );
 	}
 	{
 		const char* s1 ="10 20 H 30 40";  //horizontal line
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 3 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(30,20) );
-		CHECK( res.first[2] == Point2d(40,20) );
+		CHECK( res.first.size() == 1 );
+		CHECK( res.first[0].size() == 3 );
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[0][1] == Point2d(30,20) );
+		CHECK( res.first[0][2] == Point2d(40,20) );
 		CHECK( res.second == false);
 	}
 	{
@@ -3838,7 +3837,6 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
 	}
 }
-#endif
 
 #endif // HOMOG2D_USE_SVG_IMPORT
 

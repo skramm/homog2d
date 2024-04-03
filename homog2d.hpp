@@ -1894,7 +1894,6 @@ template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std
 template <typename T> struct IsArray                  : std::false_type { };
 template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
 
-
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
 template <typename T> struct Is_std_array                             : std::false_type {};
@@ -1915,6 +1914,10 @@ template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
 template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
 template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
 template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
+
+template<typename T>       struct IsVariant                       : std::false_type {};
+template<typename ...Args> struct IsVariant<std::variant<Args...>>: std::true_type {};
+
 
 } // namespace trait
 
@@ -9407,47 +9410,12 @@ operator * (
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+#if 1
 /// overload 1/2, get underlying type for a variant object
 template<
 	typename T, typename...Us,
 	typename std::enable_if<
-		std::is_same<T,std::variant<Us...>>::value
-		,T
-	>::type* = nullptr
->
-Type getType( const T& elem )
-{
-	return std::visit( TypeFunct{}, elem );
-}
-
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		std::is_same<T,const std::variant<Us...>>::value
-		,T
-	>::type* = nullptr
->
-Type getType( const T& elem )
-{
-	return std::visit( TypeFunct{}, elem );
-}
-
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		std::is_same<T,const std::variant<Us...>&>::value
-		,T
-	>::type* = nullptr
->
-Type getType( const T& elem )
-{
-	return std::visit( TypeFunct{}, elem );
-}
-
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		std::is_same<T,std::variant<Us...>&>::value
+		trait::IsVariant<T>::value
 		,T
 	>::type* = nullptr
 >
@@ -9460,7 +9428,7 @@ Type getType( const T& elem )
 template<
 	typename T, typename...Us,
 	typename std::enable_if<
-		!std::is_same<T,std::variant<Us...>>::value
+		!trait::IsVariant<T>::value
 		,T
 	>::type* = nullptr
 >
@@ -9468,6 +9436,21 @@ Type getType( const T& elem )
 {
 	return elem.type();
 }
+#else
+/// Returns the type of object or variant
+/**
+C++17 construction, removes the need for SFINAE, should work... but doesn't!
+\todo 20240403: check this
+\sa CommonType_
+*/
+template<typename T>
+Type getType( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( TypeFunct{}, elem );
+	return elem.type();
+}
+#endif
 
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
@@ -12005,6 +11988,7 @@ public:
 namespace svgp {
 //------------------------------------------------------------------
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
+inline
 double
 getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
 {
@@ -12019,6 +12003,7 @@ getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_na
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
 */
+inline
 const char*
 getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 {
@@ -12036,7 +12021,9 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 
 Overload of the root class `VisitExit()` member function
 */
-bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
+inline
+bool
+Visitor::VisitExit( const tinyxml2::XMLElement& e )
 {
 	std::string n = e.Name();
 //	std::cout << "element name:" << n << '\n';

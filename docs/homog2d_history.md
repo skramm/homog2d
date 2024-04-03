@@ -18,6 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
+  - heavy architectural change: run-time polymorphism is now achieved in a more modern way, using `std::variant` [See here](TODO).
   - removed requirement to run-time polymorphism to import SVG file, by using `std::variant`, now requires C++17
   - generalization of bounding box of pair of objects
   - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example)
