@@ -2120,13 +2120,36 @@ doc.Accept( &visitor );
 auto data = visitor.get();
 ```
 
-The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `rtp::Root`.
-You can determine the actual type of the object by using the abstract `type()` function.
-It will return an enum value of type `Type` having one of these values:<br>
-`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+The latter function returns a vector of polymorphic objects `CommonType_<double>`.
+This is a wrapper around a `std::variant`, on which the library provides some helper functions an struct.
+
+To get the actual type of the object, you can call the free function `getType()`,
+that will return an enum value of type `Type` having one of these values:<br>
+`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
+You can get a human-readable value ot the object type with `getString(Type)`:
+
+To retrieve the "real" object, you create a object of type `VariantUnwrapper` and pass it to its constructor.
+
+The downside of this approach is that you can not use the `auto` keyword, thus the following code will not build:
+```C++
+CommonType_<double> v;
+v = Circle();
+...
+auto c = VariantUnwrapper{v};
+```
+
+You need to specify the nature of the object, a more reliable code would be:
+```C++
+CommonType_<double> v;
+v = Circle();
+...
+if( getType(v) == Type::Circle )
+	Circle c = VariantUnwrapper{v};
+```
+
+
 
 At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
-And you can get a human-readable value ot the object type with `getString(Type)`:
 
 ```C++
 for( const auto& p: data )
@@ -2297,8 +2320,6 @@ In the future, other warnings could be issued, and silenced using this symbol.
 <a name="section_rtp"></a>
 
 Runtime Polymorphic behavior can be enabled for all the primitives.
-It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined, see [build_options](#build_options).
-This will add a common base class `rtp::Root` to all the geometric primitives.
 
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 

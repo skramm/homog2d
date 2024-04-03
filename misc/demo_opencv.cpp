@@ -58,8 +58,6 @@ void demo_something( int demo_index)
 using namespace h2d;
 //using namespace h2d::img;
 
-/// variant type
-using CommonTyped = CommonType_<double>;
 
 // forward declaration
 void myMouseCB( int event, int x, int y, int, void* param );
@@ -1786,7 +1784,7 @@ struct Param_BB : Data
 		vecvar.push_back( CommonTyped( Circle()    ) );
 		vecvar.push_back( CommonTyped( FRect()     ) );
 
-		_name[idx] = getString( std::visit( TypeFunct{}, _vecvar[idx][_current[idx]] ) );
+		_name[idx] = getString( getType( _vecvar[idx][_current[idx]] ) );
 	}
 
 	CommonTyped getCurrent( int i ) const
@@ -1799,7 +1797,7 @@ struct Param_BB : Data
 		_current[i]++;
 		if( _current[i] == _vecvar[i].size() )
 			_current[i] = 0;
-		_name[i] = getString( std::visit( TypeFunct{}, _vecvar[i][_current[i]] ) );
+		_name[i] = getString( getType( _vecvar[i][_current[i]] ) );
 		return _name[i];
 	}
 
@@ -1867,8 +1865,18 @@ void action_BB( void* param )
 
 	data._pt_mouse.draw( data.img );
 
-	data.img.drawText( "[w]->red: "  + data._name[0], Point2d( 20,30), style1 );
-	data.img.drawText( "[x]->blue: " + data._name[1], Point2d( 20,60), style2 );
+	int y0=30;
+	int dy=30;
+
+	auto l1 = length(curr1);
+	auto l2 = length(curr2);
+	auto a1 = area(curr1);
+	auto a2 = area(curr2);
+	data.img.drawText( "[w]->red: "  + data._name[0], Point2d( 20,y0),    style1 );
+	data.img.drawText( " length=" + std::to_string(l1) + " area=" + std::to_string(a1), Point2d( 20,y0+dy),  style1 );
+	data.img.drawText( "[x]->blue: " + data._name[1], Point2d( 20,y0+2*dy), style2 );
+	data.img.drawText( " length=" + std::to_string(l2) + " area=" + std::to_string(a2), Point2d( 20,y0+3*dy),  style2 );
+
 	data.showImage();
 }
 

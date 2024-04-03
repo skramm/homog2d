@@ -74,7 +74,7 @@ int main( int argc, const char** argv )
 	for( const auto& e: data )
 	{
 		std::visit( dfunc, e );
-		auto type = std::visit( TypeFunct{}, e );
+		auto type = getType( e );
 		std::cout << "Shape " << c++ << ": " << getString( type );
 
 		if( std::holds_alternative<OPolyline>(e) )

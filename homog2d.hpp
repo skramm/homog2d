@@ -947,8 +947,14 @@ const char* getString( Type t )
 	return s;
 }
 
+/// Holds functors, used to  manage run-time polymorphism using \c std::variant
+namespace fct {
+
 /// A functor to get the type of an object in a std::variant, call with std::visit()
-/// \sa CommonType_
+/**
+\sa CommonType_
+\sa getType()
+*/
 struct TypeFunct
 {
 	template<typename T>
@@ -957,6 +963,36 @@ struct TypeFunct
 		return a.type();
 	}
 };
+
+/// A functor to get the length of an object in a std::variant, call with std::visit()
+/**
+\sa CommonType_
+\sa length()
+*/
+struct LengthFunct
+{
+	template<typename T>
+	HOMOG2D_INUMTYPE operator ()(const T& a)
+	{
+		return a.length();
+	}
+};
+
+/// A functor to get the area of an object in a std::variant, call with std::visit()
+/**
+\sa CommonType_
+\sa area()
+*/
+struct AreaFunct
+{
+	template<typename T>
+	HOMOG2D_INUMTYPE operator ()(const T& a)
+	{
+		return a.area();
+	}
+};
+
+} // namespace fct
 
 /// Convert std::variant object into the underlying type
 /**
@@ -9421,7 +9457,7 @@ template<
 >
 Type getType( const T& elem )
 {
-	return std::visit( TypeFunct{}, elem );
+	return std::visit( fct::TypeFunct{}, elem );
 }
 
 /// overload 2/2, get underlying type for regular primitives
@@ -9436,6 +9472,51 @@ Type getType( const T& elem )
 {
 	return elem.type();
 }
+
+//------------------------------------------------------------------
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		trait::IsVariant<T>::value,T
+	>::type* = nullptr
+>
+HOMOG2D_INUMTYPE length( const T& elem )
+{
+	return std::visit( fct::LengthFunct{}, elem );
+}
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		!trait::IsVariant<T>::value,T
+	>::type* = nullptr
+>
+HOMOG2D_INUMTYPE length( const T& elem )
+{
+	return elem.length();
+}
+
+//------------------------------------------------------------------
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		trait::IsVariant<T>::value,T
+	>::type* = nullptr
+>
+HOMOG2D_INUMTYPE area( const T& elem )
+{
+	return std::visit( fct::AreaFunct{}, elem );
+}
+template<
+	typename T, typename...Us,
+	typename std::enable_if<
+		!trait::IsVariant<T>::value,T
+	>::type* = nullptr
+>
+HOMOG2D_INUMTYPE area( const T& elem )
+{
+	return elem.area();
+}
+//------------------------------------------------------------------
 #else
 /// Returns the type of object or variant
 /**
@@ -9447,8 +9528,18 @@ template<typename T>
 Type getType( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( TypeFunct{}, elem );
+		return std::visit( fct::TypeFunct{}, elem );
 	return elem.type();
+}
+
+
+template<typename T>
+HOMOG2D_INUMTYPE length( const T& elem )
+{
+//	if constexpr( trait::IsVariant<T> )
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::LengthFunct{}, elem );
+	return elem.length();
 }
 #endif
 
@@ -10292,6 +10383,8 @@ center( const Circle_<FPT>& cir )
 	return cir.center();
 }
 
+#if 0
+// deprecated, replaced by free function handling variant types
 /// Returns area of primitive (calls the member function)
 template<typename T>
 HOMOG2D_INUMTYPE
@@ -10307,6 +10400,7 @@ length( const T& t )
 {
 	return t.length();
 }
+#endif
 
 /// Free function, return floating-point type
 /// \sa detail::Common::dtype()
@@ -11523,6 +11617,8 @@ using OPolylineF = base::PolylineBase<type::IsOpen,float>;
 using OPolylineD = base::PolylineBase<type::IsOpen,double>;
 using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
+/// variant type
+using CommonTyped = CommonType_<double>;
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 

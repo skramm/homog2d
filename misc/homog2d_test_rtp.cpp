@@ -16,7 +16,7 @@
 **************************************************************************/
 
 /**
-\file homog2d_test_rtp.cpp
+\file
 \brief This program will demonstrate the RunTime Polymorphism capabilities.
 Is included in test suite.
 
@@ -26,7 +26,7 @@ Is included in test suite.
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-#define HOMOG2D_TEST_MODE
+//#define HOMOG2D_TEST_MODE
 #define HOMOG2D_ENABLE_RTP
 #include "../homog2d.hpp"
 
@@ -78,5 +78,5 @@ int main( int, char** )
 */
 		}
 	}
-	im.write( "BUILD/dummy.svg" );
+	im.write( "BUILD/dummy1.svg" );
 }

@@ -3711,6 +3711,21 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 }
 
 //////////////////////////////////////////////////////////////
+/////               POLYMORPHISM                       /////
+//////////////////////////////////////////////////////////////
+TEST_CASE( "Polymorphism", "[polymorph_1]" )
+{
+	std::vector<CommonType_<NUMTYPE>> vvar;
+	vvar.push_back( Circle_<NUMTYPE> );
+
+	var = Circle();
+	Circle = VariantUnwrapper{var};
+
+	CHECK( )
+}
+
+
+//////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
 //////////////////////////////////////////////////////////////
 // to run these, call make with USE_TINYXML2=Y
