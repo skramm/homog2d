@@ -148,6 +148,7 @@
 		</Unit>
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="homog2d_test_rtp.cpp" />
+		<Unit filename="homog2d_test_rtp_2.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
 		<Unit filename="no_build/no_build_01.cxx" />
