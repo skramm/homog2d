@@ -1765,12 +1765,12 @@ struct Param_BB : Data
 	{
 		init( _vecvar[0], 0 );
 		init( _vecvar[1], 1 );
-
+		std::srand( time(nullptr) );
 		vpt.resize( 17 );
 		for( auto& pt: vpt )
 			pt.set(
 				1.0*rand()*300/RAND_MAX+50,
-				1.0*rand()*250/RAND_MAX+30
+				1.0*rand()*250/RAND_MAX+60
 			);
 	}
 

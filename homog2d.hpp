@@ -12177,13 +12177,22 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			case T_path: // a path can hold multiple polygons (because of the 'L' command)
 			{
 				auto pts_str   = svgp::getAttribString( "d", e );
-				auto parse_res = svgp::parsePath( pts_str );
-				const auto& vec_vec_pts = parse_res.first;  //
-				for( const auto& vec_pts: vec_vec_pts )
-					if( parse_res.second == true )
-						_vecVar.emplace_back( CPolyline(vec_pts) );
-					else
-						_vecVar.emplace_back( OPolyline(vec_pts) );
+				try
+				{
+					auto parse_res = svgp::parsePath( pts_str );
+					const auto& vec_vec_pts = parse_res.first;  //
+					for( const auto& vec_pts: vec_vec_pts )
+						if( parse_res.second == true )
+							_vecVar.emplace_back( CPolyline(vec_pts) );
+						else
+							_vecVar.emplace_back( OPolyline(vec_pts) );
+					}
+				catch( std::exception& err )      // an unhandled path command will just get the whole path command ignored
+				{
+					HOMOG2D_LOG_WARNING( "Unable to import SVG path command\n -msg="
+						<< err.what() << "\n -input string=" << pts_str
+					);
+				}
 			}
 			break;
 
