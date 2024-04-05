@@ -355,9 +355,6 @@ using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 /// Holds drawing related code, independent of back-end library
 namespace img {
 
-// forward declaration
-class DrawParams;
-
 /// Color type , see DrawParams
 struct Color
 {
@@ -396,211 +393,6 @@ genRandomColors( size_t nb, int minval=20, int maxval=250 )
 	}
 	return vcol;
 }
-
-
-/// A svg image as a wrapper around a string, see manual, "Drawing things" section
-struct SvgImage
-{
-	std::ostringstream _svgString;
-};
-
-//------------------------------------------------------------------
-/// Opaque data structure, will hold the image type, depending on back-end library.
-/// This type is the one used in all the drawing functions.
-/**
-At present the two allowed types are cv::Mat
-(external Opencv library, requires the symbol HOMOG2D_USE_OPENCV to be defined)
-or SvgImage (no dependency)
-*/
-template<typename T>
-class Image
-{
-private:
-	T      _realImg;
-	size_t _width  = 500;
-	size_t _height = 500;
-	bool   _isInitialized = false;
-
-public:
-	Image() = default;
-	Image( T& m ): _realImg(m)
-	{}
-/// Returns a reference on the underlying image
-	T& getReal()
-	{
-		return _realImg;
-	}
-/// Returns a const reference on the underlying image
-	const T& getReal() const
-	{
-		return _realImg;
-	}
-	bool isInit() const
-	{
-		return _isInitialized;
-	}
-
-	std::pair<size_t,size_t> size() const
-	{
-		return std::make_pair( _width, _height );
-	}
-	Image( size_t, size_t )
-	{
-		assert(0);
-//		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
-//		static_assert( std::false_type, "no concrete implementation available" );
-	}
-
-	void svgInit()
-	{
-		_isInitialized = true; // default implementation, for opencv
-	}
-
-	void setSize( size_t width, size_t height );
-
-	void write( std::string ) const // will be specialized
-	{
-		assert(0);
-	}
-
-	int cols() const { return _width; }
-	int rows() const { return _height; }
-	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
-
-	void clear( uint8_t, uint8_t, uint8_t )
-	{
-		assert(0);
-	}
-	void clear( uint8_t )
-	{
-		assert(0);
-	}
-	void drawText( std::string, Point2d_<float>, img::DrawParams dp=img::DrawParams() );
-
-	template<typename U>
-	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
-	template<typename U,typename V>
-	void draw( const std::pair<U,V>& p_objects, img::DrawParams dp=img::DrawParams() );
-
-
-#ifdef HOMOG2D_USE_OPENCV
-/// Show image on window \c wname (not available for SVG !)
-	void show( std::string wname )
-	{
-		cv::imshow( wname, _realImg );
-	}
-private:
-	void p_setSize( size_t width, size_t height )
-	{
-		_width  = width;
-		_height = height;
-		_realImg.create( (int)height, (int)width, CV_8UC3 );
-		clear();
-	}
-#endif
-};
-
-#ifdef HOMOG2D_USE_OPENCV
-template <>
-inline
-Image<cv::Mat>::Image( size_t width, size_t height )
-{
-	p_setSize( width, height );
-}
-
-template <>
-inline
-void
-Image<cv::Mat>::setSize( size_t width, size_t height )
-{
-	p_setSize( width, height );
-}
-#endif
-
-template <typename T>
-void
-Image<T>::setSize( size_t width, size_t height )
-{
-	_width = width;
-	_height = height;
-}
-
-
-template <>
-inline
-void
-Image<SvgImage>::svgInit()
-{
-	_realImg._svgString << "<svg version=\"1.1\" width=\"" << _width
-		<< "\" height=\"" << _height
-		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
-		<< "<style>\n"
-		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
-		<< "</style>\n";
-/*		<< "<defs>\n"
-		<< "<marker id=\"dot\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" "  // marker for polyline points drawing
-		<< "markerWidth=\"5\" markerHeight=\"5\">"
-		<< "<circle cx=\"5\" cy=\"5\" r=\"3\" fill=\"red\" />"
-		<< "</marker>\n</defs>\n";*/
-	_isInitialized = true;
-}
-
-template <>
-inline
-Image<SvgImage>::Image( size_t width, size_t height )
-{
-	setSize( width, height );
-}
-
-template <>
-inline
-void
-Image<SvgImage>::write( std::string fname ) const
-{
-	assert( isInit() );
-	std::ofstream file( fname );
-	if( !file.is_open() )
-	{
-		HOMOG2D_THROW_ERROR_1( "unable to open output file '" + fname + "'" );
-	}
-	file << _realImg._svgString.str();
-	file << "</svg>\n";
-}
-
-template <>
-inline
-void
-Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
-{
-	_realImg._svgString.str("");
-	_realImg._svgString.clear();
-	_isInitialized = false;
-}
-
-#ifdef HOMOG2D_USE_OPENCV
-template <>
-inline
-void
-Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
-{
-	_realImg = cv::Scalar(b,g,r);
-}
-template <>
-inline
-void
-Image<cv::Mat>::clear( uint8_t col )
-{
-	_realImg = cv::Scalar(col,col,col);
-}
-
-template <>
-inline
-void
-Image<cv::Mat>::write( std::string fname ) const
-{
-	cv::imwrite( fname, _realImg );
-}
-#endif // HOMOG2D_USE_OPENCV
 
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
@@ -814,6 +606,211 @@ So the drawing code checks if user has added some filling, and if so, does not a
 
 
 }; // class DrawParams
+
+
+/// A svg image as a wrapper around a string, see manual, "Drawing things" section
+struct SvgImage
+{
+	std::ostringstream _svgString;
+};
+
+//------------------------------------------------------------------
+/// Opaque data structure, will hold the image type, depending on back-end library.
+/// This type is the one used in all the drawing functions.
+/**
+At present the two allowed types are cv::Mat
+(external Opencv library, requires the symbol HOMOG2D_USE_OPENCV to be defined)
+or SvgImage (no dependency)
+*/
+template<typename T>
+class Image
+{
+private:
+	T      _realImg;
+	size_t _width  = 500;
+	size_t _height = 500;
+	bool   _isInitialized = false;
+
+public:
+	Image() = default;
+	Image( T& m ): _realImg(m)
+	{}
+/// Returns a reference on the underlying image
+	T& getReal()
+	{
+		return _realImg;
+	}
+/// Returns a const reference on the underlying image
+	const T& getReal() const
+	{
+		return _realImg;
+	}
+	bool isInit() const
+	{
+		return _isInitialized;
+	}
+
+	std::pair<size_t,size_t> size() const
+	{
+		return std::make_pair( _width, _height );
+	}
+	Image( size_t, size_t )
+	{
+		assert(0);
+//		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
+//		static_assert( std::false_type, "no concrete implementation available" );
+	}
+
+	void svgInit()
+	{
+		_isInitialized = true; // default implementation, for opencv
+	}
+
+	void setSize( size_t width, size_t height );
+
+	void write( std::string ) const // will be specialized
+	{
+		assert(0);
+	}
+
+	int cols() const { return _width; }
+	int rows() const { return _height; }
+	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
+
+	void clear( uint8_t, uint8_t, uint8_t )
+	{
+		assert(0);
+	}
+	void clear( uint8_t )
+	{
+		assert(0);
+	}
+	void drawText( std::string, Point2d_<float>, img::DrawParams dp=img::DrawParams() );
+
+	template<typename U>
+	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
+	template<typename U,typename V>
+	void draw( const std::pair<U,V>& p_objects, img::DrawParams dp=img::DrawParams() );
+
+
+#ifdef HOMOG2D_USE_OPENCV
+/// Show image on window \c wname (not available for SVG !)
+	void show( std::string wname )
+	{
+		cv::imshow( wname, _realImg );
+	}
+private:
+	void p_setSize( size_t width, size_t height )
+	{
+		_width  = width;
+		_height = height;
+		_realImg.create( (int)height, (int)width, CV_8UC3 );
+		clear();
+	}
+#endif
+};
+
+#ifdef HOMOG2D_USE_OPENCV
+template <>
+inline
+Image<cv::Mat>::Image( size_t width, size_t height )
+{
+	p_setSize( width, height );
+}
+
+template <>
+inline
+void
+Image<cv::Mat>::setSize( size_t width, size_t height )
+{
+	p_setSize( width, height );
+}
+#endif
+
+template <typename T>
+void
+Image<T>::setSize( size_t width, size_t height )
+{
+	_width = width;
+	_height = height;
+}
+
+
+template <>
+inline
+void
+Image<SvgImage>::svgInit()
+{
+	_realImg._svgString << "<svg version=\"1.1\" width=\"" << _width
+		<< "\" height=\"" << _height
+		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+		<< "<style>\n"
+		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
+		<< "</style>\n";
+/*		<< "<defs>\n"
+		<< "<marker id=\"dot\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" "  // marker for polyline points drawing
+		<< "markerWidth=\"5\" markerHeight=\"5\">"
+		<< "<circle cx=\"5\" cy=\"5\" r=\"3\" fill=\"red\" />"
+		<< "</marker>\n</defs>\n";*/
+	_isInitialized = true;
+}
+
+template <>
+inline
+Image<SvgImage>::Image( size_t width, size_t height )
+{
+	setSize( width, height );
+}
+
+template <>
+inline
+void
+Image<SvgImage>::write( std::string fname ) const
+{
+	assert( isInit() );
+	std::ofstream file( fname );
+	if( !file.is_open() )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to open output file '" + fname + "'" );
+	}
+	file << _realImg._svgString.str();
+	file << "</svg>\n";
+}
+
+template <>
+inline
+void
+Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
+{
+	_realImg._svgString.str("");
+	_realImg._svgString.clear();
+	_isInitialized = false;
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+template <>
+inline
+void
+Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
+{
+	_realImg = cv::Scalar(b,g,r);
+}
+template <>
+inline
+void
+Image<cv::Mat>::clear( uint8_t col )
+{
+	_realImg = cv::Scalar(col,col,col);
+}
+
+template <>
+inline
+void
+Image<cv::Mat>::write( std::string fname ) const
+{
+	cv::imwrite( fname, _realImg );
+}
+#endif // HOMOG2D_USE_OPENCV
 
 template<typename IMG>
 template<typename U>
