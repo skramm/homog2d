@@ -393,7 +393,7 @@ using CommonType_ = std::variant<
 namespace img {
 
 // forward declaration
-class DrawParams;
+//class DrawParams;
 
 /// Color type , see DrawParams
 struct Color
@@ -434,12 +434,207 @@ genRandomColors( size_t nb, int minval=20, int maxval=250 )
 	return vcol;
 }
 
-
 /// A svg image as a wrapper around a string, see manual, "Drawing things" section
 struct SvgImage
 {
 	std::ostringstream _svgString;
 };
+
+//------------------------------------------------------------------
+/// Point drawing style, see DrawParams
+/**
+\warning Check nextPointStyle() in case of added values here!
+*/
+enum class PtStyle: uint8_t
+{
+	Plus,   ///< "+" symbol
+	Times,  ///< "times" symbol
+	Star,   ///< "*" symbol
+	Diam,   ///< diamond
+	Dot     ///< dot (circle)
+};
+
+//------------------------------------------------------------------
+/// Draw parameters, independent of back-end library
+class DrawParams
+{
+	template<typename T> friend class h2d::Circle_;
+	template<typename T> friend class h2d::Segment_;
+	template<typename T> friend class h2d::FRect_;
+	template<typename T> friend class h2d::Ellipse_;
+	template<typename T,typename U> friend class h2d::base::PolylineBase;
+	template<typename T,typename U> friend class h2d::base::LPBase;
+
+/// Inner struct, holds the values. Needed so we can assign a default value as static member
+/// \todo 20240329 maybe we can merge parameters _ptDelta and _pointSize into a single one?
+	struct Dp_values
+	{
+		Color       _color;
+		int         _lineThickness = 1;
+		int         _pointSize     = 4;
+		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
+		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
+		PtStyle     _ptStyle       = PtStyle::Plus;
+		bool        _enhancePoint  = false;     ///< to draw selected points
+		bool        _showPoints    = false;     ///< show the points (useful only for Segment_ and Polyline_)
+		bool        _showIndex     = false;     ///< show the index as number
+		int         _fontSize      = 20;        ///< font size for drawText()
+		std::string _attrString;                ///< added attributes (SVG only)
+
+/// Returns the point style following the current one
+		PtStyle nextPointStyle() const
+		{
+			if( _ptStyle == PtStyle::Dot )
+				return PtStyle::Plus;
+			auto curr = static_cast<int>(_ptStyle);
+			return static_cast<PtStyle>(curr+1);
+		}
+	};
+
+	friend std::ostream& operator << ( std::ostream& f, const DrawParams& dp )
+	{
+		f << "-" << dp._dpValues._color
+			<< "\n-line width=" << dp._dpValues._lineThickness
+			<< "\n-pointSize=" << dp._dpValues._pointSize
+			<< "\n-showPoints=" << dp._dpValues._showPoints
+			<< "\n-fontSize=" << dp._dpValues._fontSize
+			<< '\n';
+		return f;
+	}
+
+
+public:
+	Dp_values _dpValues;
+
+private:
+	static Dp_values& p_getDefault()
+	{
+		static Dp_values s_defValue;
+		return s_defValue;
+	}
+
+public:
+	DrawParams()
+	{
+		_dpValues = p_getDefault();
+	}
+	void setDefault()
+	{
+		p_getDefault() = this->_dpValues;
+	}
+	static void resetDefault()
+	{
+		p_getDefault() = Dp_values();
+	}
+	DrawParams& setPointStyle( PtStyle ps )
+	{
+		if( (int)ps > (int)PtStyle::Dot )
+			throw std::runtime_error( "Error: invalid value for point style");
+		_dpValues._ptStyle = ps;
+		return *this;
+	}
+	DrawParams& setPointSize( uint8_t ps )
+	{
+		_dpValues._pointSize = ps;
+		_dpValues._ptDelta = ps;
+		return *this;
+	}
+	DrawParams& setThickness( uint8_t t )
+	{
+		_dpValues._lineThickness = t;
+		return *this;
+	}
+	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
+	{
+		_dpValues._color = Color{r,g,b};
+		return *this;
+	}
+	DrawParams& setColor( Color col )
+	{
+		_dpValues._color = col;
+		return *this;
+	}
+	DrawParams& selectPoint()
+	{
+		_dpValues._enhancePoint = true;
+		return *this;
+	}
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showPoints( bool b=true )
+	{
+		_dpValues._showPoints = b;
+		return *this;
+	}
+/// Set font size for drawText()
+	DrawParams& setFontSize( int value /* pixels */ )
+	{
+		assert( value > 1 );
+		_dpValues._fontSize = value;
+		return *this;
+	}
+/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
+	DrawParams& showIndex( bool b=true )
+	{
+		_dpValues._showIndex = b;
+		return *this;
+	}
+
+/// Add some specific SVG attributes (ignored for Opencv renderings)
+/** \sa getAttrString() */
+	DrawParams& setAttrString( std::string attr )
+	{
+		_dpValues._attrString = attr;
+		return *this;
+	}
+
+	Color color() const
+	{
+		return _dpValues._color;
+	}
+
+#ifdef HOMOG2D_USE_OPENCV
+	cv::Scalar cvColor() const
+	{
+		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
+	}
+#endif // HOMOG2D_USE_OPENCV
+
+private:
+/// Checks if the user-given SVG attribute string (with \ref setAttrString() ) holds the fill="none" mention.
+/**
+This is because to have no filling, the object needs to have the fill="none" attribute, so the default
+behavior is to always add that attribute.<br>
+But then if the user wants some filling, then we would have both fill="none" and fill="somecolor",
+and that would render the svg invalid.<br>
+So the drawing code checks if user has added some filling, and if so, does not add the fill="none" attribute.
+*/
+	bool holdsFill() const
+	{
+		if( !_dpValues._attrString.empty() )
+			if( _dpValues._attrString.find("fill=") != std::string::npos )
+				return true;
+		return false;
+	}
+/// \sa setAttrString()
+	std::string getAttrString() const
+	{
+		if( _dpValues._attrString.empty() )
+			return std::string();
+		return _dpValues._attrString + ' ';
+	}
+
+	std::string getSvgRgbColor() const
+	{
+		std::ostringstream oss;
+		oss << "rgb("
+			<< (int)_dpValues._color.r << ','
+			<< (int)_dpValues._color.g << ','
+			<< (int)_dpValues._color.b
+			<< ')';
+		return oss.str();
+	}
+
+}; // class DrawParams
 
 //------------------------------------------------------------------
 /// Opaque data structure, will hold the image type, depending on back-end library.
@@ -640,20 +835,6 @@ Image<cv::Mat>::write( std::string fname ) const
 }
 #endif // HOMOG2D_USE_OPENCV
 
-//------------------------------------------------------------------
-/// Point drawing style, see DrawParams
-/**
-\warning Check nextPointStyle() in case of added values here!
-*/
-enum class PtStyle: uint8_t
-{
-	Plus,   ///< "+" symbol
-	Times,  ///< "times" symbol
-	Star,   ///< "*" symbol
-	Diam,   ///< diamond
-	Dot     ///< dot (circle)
-};
-
 inline
 const char* getString( PtStyle t )
 {
@@ -669,189 +850,6 @@ const char* getString( PtStyle t )
 	}
 	return s;
 }
-
-//------------------------------------------------------------------
-/// Draw parameters, independent of back-end library
-class DrawParams
-{
-	template<typename T> friend class h2d::Circle_;
-	template<typename T> friend class h2d::Segment_;
-	template<typename T> friend class h2d::FRect_;
-	template<typename T> friend class h2d::Ellipse_;
-	template<typename T,typename U> friend class h2d::base::PolylineBase;
-	template<typename T,typename U> friend class h2d::base::LPBase;
-
-/// Inner struct, holds the values. Needed so we can assign a default value as static member
-/// \todo 20240329 maybe we can merge parameters _ptDelta and _pointSize into a single one?
-	struct Dp_values
-	{
-		Color       _color;
-		int         _lineThickness = 1;
-		int         _pointSize     = 4;
-		int         _lineType      = 1; /// if OpenCv: 1 for cv::LINE_AA, 2 for cv::LINE_8
-		uint8_t     _ptDelta       = 5;           ///< pixels, used for drawing points
-		PtStyle     _ptStyle       = PtStyle::Plus;
-		bool        _enhancePoint  = false;     ///< to draw selected points
-		bool        _showPoints    = false;     ///< show the points (useful only for Segment_ and Polyline_)
-		bool        _showIndex     = false;     ///< show the index as number
-		int         _fontSize      = 20;        ///< font size for drawText()
-		std::string _attrString;                ///< added attributes (SVG only)
-
-/// Returns the point style following the current one
-		PtStyle nextPointStyle() const
-		{
-			if( _ptStyle == PtStyle::Dot )
-				return PtStyle::Plus;
-			auto curr = static_cast<int>(_ptStyle);
-			return static_cast<PtStyle>(curr+1);
-		}
-	};
-
-	friend std::ostream& operator << ( std::ostream& f, const DrawParams& dp )
-	{
-		f << "-" << dp._dpValues._color
-			<< "\n-line width=" << dp._dpValues._lineThickness
-			<< "\n-pointSize=" << dp._dpValues._pointSize
-			<< "\n-showPoints=" << dp._dpValues._showPoints
-			<< "\n-fontSize=" << dp._dpValues._fontSize
-			<< '\n';
-		return f;
-	}
-
-
-public:
-	Dp_values _dpValues;
-
-private:
-	static Dp_values& p_getDefault()
-	{
-		static Dp_values s_defValue;
-		return s_defValue;
-	}
-
-public:
-	DrawParams()
-	{
-		_dpValues = p_getDefault();
-	}
-	void setDefault()
-	{
-		p_getDefault() = this->_dpValues;
-	}
-	static void resetDefault()
-	{
-		p_getDefault() = Dp_values();
-	}
-	DrawParams& setPointStyle( PtStyle ps )
-	{
-		if( (int)ps > (int)PtStyle::Dot )
-			throw std::runtime_error( "Error: invalid value for point style");
-		_dpValues._ptStyle = ps;
-		return *this;
-	}
-	DrawParams& setPointSize( uint8_t ps )
-	{
-		_dpValues._pointSize = ps;
-		_dpValues._ptDelta = ps;
-		return *this;
-	}
-	DrawParams& setThickness( uint8_t t )
-	{
-		_dpValues._lineThickness = t;
-		return *this;
-	}
-	DrawParams& setColor( uint8_t r, uint8_t g, uint8_t b )
-	{
-		_dpValues._color = Color{r,g,b};
-		return *this;
-	}
-	DrawParams& setColor( Color col )
-	{
-		_dpValues._color = col;
-		return *this;
-	}
-	DrawParams& selectPoint()
-	{
-		_dpValues._enhancePoint = true;
-		return *this;
-	}
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showPoints( bool b=true )
-	{
-		_dpValues._showPoints = b;
-		return *this;
-	}
-/// Set font size for drawText()
-	DrawParams& setFontSize( int value /* pixels */ )
-	{
-		assert( value > 1 );
-		_dpValues._fontSize = value;
-		return *this;
-	}
-/// Set or unset the drawing of points (useful only for Segment_ and Polyline_)
-	DrawParams& showIndex( bool b=true )
-	{
-		_dpValues._showIndex = b;
-		return *this;
-	}
-
-/// Add some specific SVG attributes (ignored for Opencv renderings)
-/** \sa getAttrString() */
-	DrawParams& setAttrString( std::string attr )
-	{
-		_dpValues._attrString = attr;
-		return *this;
-	}
-
-	Color color() const
-	{
-		return _dpValues._color;
-	}
-
-#ifdef HOMOG2D_USE_OPENCV
-	cv::Scalar cvColor() const
-	{
-		return cv::Scalar( _dpValues._color.b, _dpValues._color.g, _dpValues._color.r );
-	}
-#endif // HOMOG2D_USE_OPENCV
-
-private:
-/// Checks if the user-given SVG attribute string (with \ref setAttrString() ) holds the fill="none" mention.
-/**
-This is because to have no filling, the object needs to have the fill="none" attribute, so the default
-behavior is to always add that attribute.<br>
-But then if the user wants some filling, then we would have both fill="none" and fill="somecolor",
-and that would render the svg invalid.<br>
-So the drawing code checks if user has added some filling, and if so, does not add the fill="none" attribute.
-*/
-	bool holdsFill() const
-	{
-		if( !_dpValues._attrString.empty() )
-			if( _dpValues._attrString.find("fill=") != std::string::npos )
-				return true;
-		return false;
-	}
-/// \sa setAttrString()
-	std::string getAttrString() const
-	{
-		if( _dpValues._attrString.empty() )
-			return std::string();
-		return _dpValues._attrString + ' ';
-	}
-
-	std::string getSvgRgbColor() const
-	{
-		std::ostringstream oss;
-		oss << "rgb("
-			<< (int)_dpValues._color.r << ','
-			<< (int)_dpValues._color.g << ','
-			<< (int)_dpValues._color.b
-			<< ')';
-		return oss.str();
-	}
-
-
-}; // class DrawParams
 
 template<typename IMG>
 template<typename U>
