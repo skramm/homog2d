@@ -373,7 +373,8 @@ using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 /**
 At present, the "line" type is not included here, because it would imply having the
 \c getPointPair() function defined for that type, and we chose to keep it undefined
-(thus generating an error at build time), instead of defining it, and throwing at run-time.
+(thus generating an error at build time), instead of defining it, and throwing at run-time on a call
+to \c length() function
 */
 template<typename FPT>
 using CommonType_ = std::variant<
@@ -9534,7 +9535,6 @@ Type getType( const T& elem )
 template<typename T>
 HOMOG2D_INUMTYPE length( const T& elem )
 {
-//	if constexpr( trait::IsVariant<T> )
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::LengthFunct{}, elem );
 	return elem.length();
@@ -10380,25 +10380,6 @@ center( const Circle_<FPT>& cir )
 {
 	return cir.center();
 }
-
-#if 0
-// deprecated, replaced by free function handling variant types
-/// Returns area of primitive (calls the member function)
-template<typename T>
-HOMOG2D_INUMTYPE
-area( const T& t )
-{
-	return t.area();
-}
-
-/// Returns perimeter of primitive (calls the member function)
-template<typename T>
-HOMOG2D_INUMTYPE
-length( const T& t )
-{
-	return t.length();
-}
-#endif
 
 /// Free function, return floating-point type
 /// \sa detail::Common::dtype()
