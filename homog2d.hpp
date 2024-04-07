@@ -9445,82 +9445,9 @@ operator * (
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
-#if 1
-/// overload 1/2, get underlying type for a variant object
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		trait::IsVariant<T>::value
-		,T
-	>::type* = nullptr
->
-Type getType( const T& elem )
-{
-	return std::visit( fct::TypeFunct{}, elem );
-}
-
-/// overload 2/2, get underlying type for regular primitives
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		!trait::IsVariant<T>::value
-		,T
-	>::type* = nullptr
->
-Type getType( const T& elem )
-{
-	return elem.type();
-}
-
-//------------------------------------------------------------------
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		trait::IsVariant<T>::value,T
-	>::type* = nullptr
->
-HOMOG2D_INUMTYPE length( const T& elem )
-{
-	return std::visit( fct::LengthFunct{}, elem );
-}
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		!trait::IsVariant<T>::value,T
-	>::type* = nullptr
->
-HOMOG2D_INUMTYPE length( const T& elem )
-{
-	return elem.length();
-}
-
-//------------------------------------------------------------------
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		trait::IsVariant<T>::value,T
-	>::type* = nullptr
->
-HOMOG2D_INUMTYPE area( const T& elem )
-{
-	return std::visit( fct::AreaFunct{}, elem );
-}
-template<
-	typename T, typename...Us,
-	typename std::enable_if<
-		!trait::IsVariant<T>::value,T
-	>::type* = nullptr
->
-HOMOG2D_INUMTYPE area( const T& elem )
-{
-	return elem.area();
-}
-//------------------------------------------------------------------
-#else
 /// Returns the type of object or variant
 /**
-C++17 construction, removes the need for SFINAE, should work... but doesn't!
-\todo 20240403: check this
+C++17 construction, removes the need for SFINAE
 \sa CommonType_
 */
 template<typename T>
@@ -9528,18 +9455,28 @@ Type getType( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::TypeFunct{}, elem );
-	return elem.type();
+	else
+		return elem.type();
 }
-
 
 template<typename T>
 HOMOG2D_INUMTYPE length( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::LengthFunct{}, elem );
-	return elem.length();
+	else
+		return elem.length();
 }
-#endif
+
+template<typename T>
+HOMOG2D_INUMTYPE area( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::AreaFunct{}, elem );
+	else
+		return elem.area();
+}
+
 
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
@@ -12155,7 +12092,7 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 			case T_path: // a path can hold multiple polygons (because of the 'L' command)
 			{
-				auto pts_str   = svgp::getAttribString( "d", e );
+				auto pts_str = svgp::getAttribString( "d", e );
 				try
 				{
 					auto parse_res = svgp::parsePath( pts_str );

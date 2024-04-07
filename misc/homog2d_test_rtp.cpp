@@ -33,8 +33,10 @@ Is included in test suite.
 using namespace h2d;
 
 /// see homog2d_test_rtp.cpp
-int main( int, char** )
+int main( int, char** argv )
 {
+	std::cout << "START " << argv[0] << '\n';
+
 	auto vecpts = std::vector<Point2d>(
 		{ {0,0},{3,2},{1,4} }
 	);

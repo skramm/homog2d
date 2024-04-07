@@ -32,9 +32,33 @@ Is included in test suite.
 
 using namespace h2d;
 
-/// see homog2d_test_rtp_2.cpp
-int main( int, char** )
+
+/// Problem!
+/**
+sometimes, the result of the product is not of the same type
+(A circle on whom an homography is applied return an ellipse)
+
+*/
+class TransformFunct
 {
+public:
+	TransformFunct( const Homogr& h ): _h(h)
+	{}
+
+	template<typename T>
+	void operator ()(T& a)
+	{
+		a = _h * a;
+	}
+private:
+	const Homogr& _h;
+};
+
+/// see homog2d_test_rtp_2.cpp
+int main( int, char** argv )
+{
+	std::cout << "START " << argv[0] << '\n';
+
 	auto vecpts = std::vector<Point2d>(
 		{ {0,0},{3,2},{1,4} }
 	);
@@ -55,28 +79,18 @@ int main( int, char** )
 
 	img::Image<img::SvgImage> im(200,200);
 
+	img::DrawFunct vde( im );
+	TransformFunct transf( Homogr().addTranslation(3,3).addScale(5) );
 	for( auto& e: vec )
 	{
 		std::cout << getString(getType(e))
 			<< "\n -area=" << area(e)
 			<< "\n -length=" << length(e)
 			<< "\n";
-		img::DrawFunct vde( im );
-		std::visit( vde, e );
-/*		 << *e
-			<< "\n  -area = " << e->area();
-		if( e->type() != Type::Line2d )
-			std::cout << "\n  -length = " << e->length();
-		else
-			std::cout << "\n  -length = infinite";
-		std::cout << '\n';
-		e->draw( im );
 
-		if( e->type() == Type::CPolyline )
-		{
-			auto pl1 = std::dynamic_pointer_cast<CPolyline>( e );
-			std::cout << "pl1 is closed=" << pl1->isClosed() << '\n';
-*/
+		std::visit( transf, e );
+		std::visit( vde, e );
+
 	}
 	im.write( "BUILD/dummy2.svg" );
 }

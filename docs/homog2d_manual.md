@@ -1137,12 +1137,12 @@ This can also be used with all the other types (`Segment`, `FRect`, `OPolyline`,
 Homogr h;
  ... assign some planar transformation
 Segment s1( ..., ... );
-auto s2 = H * s1;
+auto s2 = h * s1;
 
 Polyline pl;
-pl = H * pl;
+pl = h * pl;
 
-auto a = H * rect; // a is a CPolyline
+auto a = h * rect; // a is a CPolyline
 ```
 It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `CPolyline`.
 Similarly, applying a homography to a `Circle` will generate an `Ellipse` object:
@@ -1170,9 +1170,9 @@ Homogr h;
 Point2d p1a( ..., ... );
 Point2d p2a( ..., ... );
 Line2d lA = p1a * p2a;
-auto p1b = H * p1a;
-auto p2b = H * p2a;
-lB = H * lA; // same as lB = p1b * p2b;
+auto p1b = h * p1a;
+auto p2b = h * p2a;
+lB = h * lA; // same as lB = p1b * p2b;
 ```
 
 ### 4.3 - Setting up from a given planar transformation
