@@ -11806,8 +11806,8 @@ class Visitor: public tinyxml2::XMLVisitor
 /// This type is used to provide a type that can be used in a switch (see VisitExit() ),
 /// as this cannot be done with a string |-(
 	enum SvgType {
-		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse ,T_path
-		,T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
+		T_circle, T_rect, T_line, T_polygon, T_polyline, T_ellipse, T_path,
+		T_other ///< for other elements (\c <svg>) or illegal ones, that will just be ignored
 	};
 
 /// A map holding correspondences between type as a string and type as a SvgType.
@@ -11849,6 +11849,7 @@ public:
 namespace svgp {
 //------------------------------------------------------------------
 /// Fetch attribute from XML element. Tag \c e_name is there just in case of trouble.
+inline
 double
 getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_name )
 {
@@ -11862,6 +11863,7 @@ getAttribValue( const tinyxml2::XMLElement& e, const char* str, std::string e_na
 /**
 \todo Who owns the data? Should we return a string and/or release the memory?
 */
+inline
 const char*
 getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 {
@@ -12002,6 +12004,7 @@ bool Visitor::VisitExit( const tinyxml2::XMLElement& e )
 	return true;
 }
 
+inline
 void
 printFileAttrib( const tinyxml2::XMLDocument& doc )
 {
@@ -12014,6 +12017,28 @@ printFileAttrib( const tinyxml2::XMLDocument& doc )
 		std::cout << "Attrib " << i++ << ": Name=" << pAttrib->Name() << "; Value=" << pAttrib->Value() << '\n';
 		pAttrib=pAttrib->Next();
 	}
+}
+
+/// Fetch size of image in SVG file
+inline
+auto
+getImgSize( const tinyxml2::XMLDocument& doc )
+{
+	const tinyxml2::XMLElement* root = doc.RootElement();
+	const tinyxml2::XMLAttribute* pAttrib = root->FirstAttribute();
+	double w = -1., h = -1.;
+	while( pAttrib )
+	{
+		auto attr = std::string( pAttrib->Name() );
+		if( attr == "width" )
+			w = std::stod( pAttrib->Value() );
+		if( attr == "height" )
+			h = std::stod( pAttrib->Value() );
+		pAttrib=pAttrib->Next();
+	}
+	if( w == -1. || h == -1. )
+		HOMOG2D_THROW_ERROR_1( "unable to find size in SVG file" );
+	return std::make_pair( w, h );
 }
 
 } // namespace svg
