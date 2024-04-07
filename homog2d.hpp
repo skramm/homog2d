@@ -11775,39 +11775,32 @@ class Visitor: public tinyxml2::XMLVisitor
 
 /// A map holding correspondences between type as a string and type as a SvgType.
 /// Populated in constructor
-	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
+	std::map<std::string,SvgType> _svgTypesTable;
 
 	std::vector<std::unique_ptr<rtp::Root>> _vec; ///< all the data is stored here
 
 public:
 /// Constructor, populates the table giving type from svg string
 	Visitor()
-	{ //                                          svg name   local type id
-		_svgTypesTable.push_back( std::make_pair("circle",   T_circle)   );
-		_svgTypesTable.push_back( std::make_pair("rect",     T_rect)     );
-		_svgTypesTable.push_back( std::make_pair("line",     T_line)     );
-		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
-		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
-		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
-		_svgTypesTable.push_back( std::make_pair("path",     T_path) );
+	{
+		_svgTypesTable["circle"]   = T_circle;
+		_svgTypesTable["rect"]     = T_rect;
+		_svgTypesTable["line"]     = T_line;
+		_svgTypesTable["polyline"] = T_polyline;
+		_svgTypesTable["polygon"]  = T_polygon;
+		_svgTypesTable["ellipse"]  = T_ellipse;
+		_svgTypesTable["path"]     = T_path;
+
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
 	{
-		auto it = std::find_if(
-			_svgTypesTable.begin(),
-			_svgTypesTable.end(),
-			[s]                                                 // lambda
-			(const std::pair<std::string,SvgType>& t) -> bool
-			{
-				return t.first == s;
-			}
-		);
-		if( it == _svgTypesTable.end() )
+		auto it = _svgTypesTable.find( s );
+		if( it == std::cend(_svgTypesTable) )
 			return T_other;
-
 		return it->second;
 	}
+
 	const std::vector<std::unique_ptr<rtp::Root>>& get() const
 	{
 		return _vec;
