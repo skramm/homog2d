@@ -11956,7 +11956,7 @@ class Visitor: public tinyxml2::XMLVisitor
 
 /// A map holding correspondences between type as a string and type as a SvgType.
 /// Populated in constructor
-	std::vector<std::pair<std::string,SvgType>> _svgTypesTable;
+	std::map<std::string,SvgType> _svgTypesTable;
 
 	std::vector<CommonType_<double>> _vecVar; ///< all the data is stored here
 
@@ -11975,20 +11975,12 @@ public:
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
 	{
-		auto it = std::find_if(
-			_svgTypesTable.begin(),
-			_svgTypesTable.end(),
-			[s]                                                 // lambda
-			(const std::pair<std::string,SvgType>& t) -> bool
-			{
-				return t.first == s;
-			}
-		);
-		if( it == _svgTypesTable.end() )
+		auto it = _svgTypesTable.find( s );
+		if( it == std::cend(_svgTypesTable) )
 			return T_other;
-
 		return it->second;
 	}
+
 	const std::vector<CommonType_<double>>& get() const
 	{
 		return _vecVar;
