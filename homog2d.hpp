@@ -11964,13 +11964,13 @@ public:
 /// Constructor, populates the table giving type from svg string
 	Visitor()
 	{ //                                          svg name   local type id
-		_svgTypesTable.push_back( std::make_pair("circle",   T_circle)   );
-		_svgTypesTable.push_back( std::make_pair("rect",     T_rect)     );
-		_svgTypesTable.push_back( std::make_pair("line",     T_line)     );
-		_svgTypesTable.push_back( std::make_pair("polyline", T_polyline) );
-		_svgTypesTable.push_back( std::make_pair("polygon",  T_polygon) );
-		_svgTypesTable.push_back( std::make_pair("ellipse",  T_ellipse) );
-		_svgTypesTable.push_back( std::make_pair("path",     T_path) );
+		_svgTypesTable["circle"]   = T_circle;
+		_svgTypesTable["rect"]     = T_rect;
+		_svgTypesTable["line"]     = T_line;
+		_svgTypesTable["polyline"] = T_polyline;
+		_svgTypesTable["polygon"]  = T_polygon;
+		_svgTypesTable["ellipse"]  = T_ellipse;
+		_svgTypesTable["path"]     =  T_path;
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const

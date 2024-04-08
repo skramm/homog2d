@@ -20,6 +20,7 @@
 \brief This program will demonstrate the RunTime Polymorphism capabilities using the new std::variant approach
 Is included in test suite.
 
+Build with <code>$ make test_rtp</code>
 */
 
 
@@ -46,9 +47,9 @@ public:
 	{}
 
 	template<typename T>
-	void operator ()(T& a)
+	T operator ()(const T& a)
 	{
-		a = _h * a;
+		return _h * a;
 	}
 private:
 	const Homogr& _h;
@@ -88,8 +89,8 @@ int main( int, char** argv )
 			<< "\n -length=" << length(e)
 			<< "\n";
 
-		std::visit( transf, e );
-		std::visit( vde, e );
+		auto tr = std::visit( transf, e );
+		std::visit( vde, tr );
 
 	}
 	im.write( "BUILD/dummy2.svg" );
