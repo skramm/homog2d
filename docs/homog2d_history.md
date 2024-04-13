@@ -14,6 +14,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add some feature to be able to print coordinates with desired precision at runtime
   - add `Vector` type (defined by dx,dy)
 
+**2020/04**: A move to C++17 is currently underways.
+This will greatly simplify the code, by enabling auto return types and replacing lots of SFINAE stuctures by `constexpr if`.
+It will also enable run-time polymorphism without pointers, with the help of `std::variant`.
+
 - current Work In Progress
   - polygon minimization
 
