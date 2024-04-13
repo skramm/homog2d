@@ -46,6 +46,17 @@ int main( int argc, const char** argv )
 
 	svg::printFileAttrib( doc );
 
+	std::pair<double,double> imSize(500.,500.);
+	try
+	{
+		imSize = svg::getImgSize( doc );
+		std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+	}
+	catch( const std::exception& error )
+	{
+		std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
+	}
+
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
 	const auto& data = visitor.get();
@@ -56,18 +67,8 @@ int main( int argc, const char** argv )
 		return 1;
 	}
 
-	img::Image<img::SvgImage> out( 500, 500 );
+	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 
-/*
-	for( const auto& e: data )
-	{
-		if( e->type() != Type::Line2d )
-		{
-//			auto bb = e->getBB();
-			auto bb = e->getPointPair();
-		}
-	}
-*/
 	size_t c = 0;
 	for( const auto& e: data )
 	{

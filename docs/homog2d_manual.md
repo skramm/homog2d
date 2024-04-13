@@ -2158,6 +2158,20 @@ It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
 
 ### 10.3 - Technical details on svg file import
 
+You can fetch the size of image in the SVG file (as `double`):
+```C++
+std::pair<double,double> imSize(500.,500.); // default size
+try
+{
+	imSize = svg::getImgSize( doc );
+	std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+}
+catch( const std::exception& error )
+{
+	std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
+}
+```
+
 When importing a SVG file, the following points must be considered:
 
 * All the color, style,etc. Svg attributes present in file are lost, as this library does not store them.
@@ -2171,9 +2185,9 @@ either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-This import subsystem handles both the `polyline` , `polygon` and `path` elements.
-However, for the latter, the "curve" elements (SVG path commands C, S, Q, T) are not handled,
-the import code will throw if such a command is encoutered while importing a SVG path object.
+This import subsystem handles all three of these.
+However, for the "path", the "curve" elements (SVG path commands C, S, Q, T) are not handled,
+the import code will just ignore thoses commands, if encoutered while importing a SVG path object.
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
