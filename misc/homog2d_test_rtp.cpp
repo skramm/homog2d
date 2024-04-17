@@ -27,7 +27,7 @@ Is included in test suite.
 #include "catch.hpp"
 
 //#define HOMOG2D_TEST_MODE
-#define HOMOG2D_ENABLE_RTP
+#define HOMOG2D_ENABLE_PRTP
 #include "../homog2d.hpp"
 
 using namespace h2d;

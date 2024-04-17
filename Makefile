@@ -49,7 +49,7 @@ ifeq ($(USE_BOOSTGEOM),Y)
 endif
 
 ifeq ($(USE_RTP),Y)
-	CXXFLAGS += -DHOMOG2D_ENABLE_RTP
+	CXXFLAGS += -DHOMOG2D_ENABLE_PRTP
 endif
 
 ifeq ($(DEBUG),Y)

@@ -78,7 +78,6 @@ See https://github.com/skramm/homog2d
 #ifdef HOMOG2D_USE_SVG_IMPORT
 //	#include <cctype> // why was that needed in the first place?
 	#include "tinyxml2.h"
-//	#define HOMOG2D_ENABLE_RTP
 #endif
 
 
@@ -1284,7 +1283,7 @@ disallows providing such a method
 //------------------------------------------------------------------
 #ifdef HOMOG2D_ENABLE_RTP
 
-/// Holds Real Time Polymorphism stuff
+/// Holds pointer-based run-time polymorphism stuff
 namespace rtp {
 
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
@@ -2075,7 +2074,7 @@ Q' = H^{-T} \cdot Q \cdot H^{-1}
 */
 template<typename FPT>
 class Ellipse_: public detail::Matrix_<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -2503,7 +2502,7 @@ public:
 /// A Flat Rectangle, modeled by its two opposite points
 template<typename FPT>
 class FRect_: public detail::Common<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -3011,7 +3010,7 @@ public:
 /// A circle
 template<typename FPT>
 class Circle_: public detail::Common<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -3637,7 +3636,7 @@ Type parameters:
 */
 template<typename LP,typename FPT>
 class LPBase: public detail::Common<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -4830,7 +4829,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 */
 template<typename FPT>
 class Segment_: public detail::Common<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -5771,7 +5770,7 @@ template args:
 */
 template<typename PLT,typename FPT>
 class PolylineBase: public detail::Common<FPT>
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 , public rtp::Root
 #endif
 {
@@ -11369,7 +11368,7 @@ Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 namespace rtp {
 /// Stream operator for \c Root type
 /** \todo replace this by a call to a virtual function `print()`
@@ -11440,7 +11439,7 @@ std::ostream& operator << ( std::ostream& f, const Root& p )
 }
 
 } // namespace rtp
-#endif // HOMOG2D_ENABLE_RTP
+#endif // HOMOG2D_ENABLE_PRTP
 
 //------------------------------------------------------------------
 namespace base {

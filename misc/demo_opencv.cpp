@@ -48,7 +48,6 @@ void demo_something( int demo_index)
 */
 
 #define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_ENABLE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 

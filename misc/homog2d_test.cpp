@@ -98,8 +98,8 @@ int main( int argc, char* argv[] )
 		<< "NO"
 #endif
 
-		<< "\n  - HOMOG2D_ENABLE_RTP: "
-#ifdef HOMOG2D_ENABLE_RTP
+		<< "\n  - HOMOG2D_ENABLE_PRTP: "
+#ifdef HOMOG2D_ENABLE_PRTP
 		<< "YES"
 #else
 		<< "NO"

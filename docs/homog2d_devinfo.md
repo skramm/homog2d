@@ -145,7 +145,7 @@ This is why we have here a double inheritance pattern, on all concrete types (ge
 
 - The class template `Common<T>`, provides common stuff for all types, and holds a default implementation for member functions not defined in the concrete types.
 - The non-templated class `Root`, provides real-time polymorphism.
-This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is defined
+This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_PRTP` is defined
 (see [build options](homog2d_manual.md#build_options)).
 
 
