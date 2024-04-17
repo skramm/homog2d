@@ -2333,14 +2333,72 @@ In the future, other warnings could be issued, and silenced using this symbol.
 ### 12 - Runtime Polymorphism
 <a name="section_rtp"></a>
 
+#### 12.1 - Introduction
 Runtime Polymorphic behavior can be enabled for all the primitives.
+Actually, a move is being made from a classical pointer-based architecture to a variant-based one.
+The "svg import" subsystem has already been converted.
+
+The classical pointer-based approach is base on a common untemplated class (`Root`) but this will very likely **be deprecated** shortly.
+It is advise to use nowadays the "variant-based" technique, as it is more type-safe.
+
 
 At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
 
+#### 12.2 - Pointer-based run-time polymorphism
 
 Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
 
 Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
 Bad casting will very probably lead to a segfault.
+
+#### 12.3 - Variant-based run-time polymorphism
+
+A templated common type `CommonType_` holds all the geometrical primitives, as a `std::variant` (requering a move to `C++17`).
+So you can now stack up different primitives in a container of that type:
+```C++
+std::vector<CommonType_<double>> vec;
+vec.emplace_back( Circle() );
+vec.emplace_back( FRect() );
+vec.emplace_back( Point2d() );
+...
+```
+
+A set of polymorphic functions has been made compatible with this type.
+
+A set of functors is available, to be used with `std::visit()`, lying in the `fct` sub-namespace
+[see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html).
+
+But the easyest is probably to use the associated free functions, so you don't have the hassle of functors.
+For example, with the above vector, you can print their type, length and area with:
+```C++
+for( auto& e: vec )
+{
+	std::cout << getString(getType(e))
+		<< "\n -area=" << area(e)
+		<< "\n -length=" << length(e)
+		<< "\n";
+```
+
+To apply the same homography on each element( and store them in-place), simple as this:
+
+```C++
+auto h = Homogr().addTranslation(3,3).addScale(15); // whatever...
+for( auto& e: vec )
+
+	e = transform( h, e );
+}
+```
+
+To draw these on an `img::Image`, you can do this:
+```C++
+fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pass some drawing parameters
+for( auto& e: vec )
+	std::visit( vde, e );
+```
+
+
+
+
+#### 12.4 - Pros and cons of the two techniques
 

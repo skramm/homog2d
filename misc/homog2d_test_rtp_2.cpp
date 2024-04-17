@@ -93,8 +93,8 @@ int main( int, char** argv )
 			<< "\n";
 
 //		auto tr = std::visit( transf, e ); // transform,
-		auto tr = transform( h, e );
-		std::visit( vde, tr );              // then draw
+		e = transform( h, e );
+		std::visit( vde, e );              // then draw
 
 	}
 	im.write( "BUILD/dummy2.svg" );
