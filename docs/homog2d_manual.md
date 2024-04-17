@@ -2135,7 +2135,7 @@ The downside of this approach is that you can not use the `auto` keyword, thus t
 CommonType_<double> v;
 v = Circle();
 ...
-auto c = VariantUnwrapper{v};
+auto c = fct::VariantUnwrapper{v};
 ```
 
 You need to specify the nature of the object, a more reliable code would be:
@@ -2144,12 +2144,12 @@ CommonType_<double> v;
 v = Circle();
 ...
 if( getType(v) == Type::Circle )
-	Circle c = VariantUnwrapper{v};
+	Circle c = fct::VariantUnwrapper{v};
 ```
 
 
 
-At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
+At present, the only polymorphic functions available: `draw()`, `length()`, and `area()`.
 
 ```C++
 for( const auto& p: data )

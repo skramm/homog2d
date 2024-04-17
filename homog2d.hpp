@@ -9504,6 +9504,19 @@ HOMOG2D_INUMTYPE area( const T& elem )
 		return elem.area();
 }
 
+/// Apply homography to primitive
+/**
+\warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
+*/
+template<typename T, typename FPT>
+CommonType_<FPT> transform( const Homogr_<FPT>& h, const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::TransformFunct<FPT>(h), elem );
+	else
+		return h * elem;
+}
+
 
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
