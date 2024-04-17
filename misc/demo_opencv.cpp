@@ -1210,7 +1210,7 @@ struct Param_CIR : Data
 	}
 
 // DATA SECTION
-	CommonTyped _variant;
+	CommonType _variant;
 	Circle _cir1;
 	Circle _cir2;
 	FRect  _rect;

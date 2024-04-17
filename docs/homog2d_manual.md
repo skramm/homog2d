@@ -2120,59 +2120,9 @@ doc.Accept( &visitor );
 auto data = visitor.get();
 ```
 
-The latter function returns a vector of polymorphic objects `CommonType_<double>`.
-This is a wrapper around a `std::variant`, on which the library provides some helper functions an struct.
-
-To get the actual type of the object, you can call the free function `getType()`,
-that will return an enum value of type `Type` having one of these values:<br>
-`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
-You can get a human-readable value ot the object type with `getString(Type)`:
-
-To retrieve the "real" object, you create a object of type `VariantUnwrapper` and pass it to its constructor.
-
-The downside of this approach is that you can not use the `auto` keyword, thus the following code will not build:
-```C++
-CommonType_<double> v;
-v = Circle();
-...
-auto c = fct::VariantUnwrapper{v};
-```
-
-You need to specify the nature of the object, a more reliable code would be:
-```C++
-CommonType_<double> v;
-v = Circle();
-...
-if( getType(v) == Type::Circle )
-	Circle c = fct::VariantUnwrapper{v};
-```
-
-
-
-At present, the only polymorphic functions available: `draw()`, `length()`, and `area()`.
-
-```C++
-for( const auto& p: data )
-{
-	p->draw( image );
-	std::cout << "Element is a " << getString( p->type() )
-		<<", length=" << p->length() << ", area=" << p->area() << '\n';
-}
-```
-
-You can use the type information to convert the pointer into the right type:
-
-```C++
-for( const auto& p: data )
-{
-	if( p->type() == Type::Circle )
-	{
-		const Circle* c = static_cast<Circle*>( p.get() );
-		std::cout << "circle radius=" << c->radius() << '\n';
-	}
-}
-```
-
+The latter function returns a vector of polymorphic objects `CommonType`.
+This is a wrapper around a `std::variant`, on which the library provides some helper functions.
+See [RTP section](#section_rtp) on how to use this.
 
 
 ### 10.3 - Technical details on svg file import
@@ -2303,7 +2253,7 @@ See [here](#bignum) for details.
 
 #### 11.2.2 - Other build symbols:
 
-- `HOMOG2D_NOCHECKS`: will disable run-time checking.
+- `HOMOG2D_NOCHECKS`: will disable runtime checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
 - `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below). Defining this symbol will disables this.
@@ -2312,9 +2262,9 @@ The default behavior for class `Ellipse` is to store only the homogeneous matrix
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
-- `HOMOG2D_ENABLE_PRTP`: enables pointer-based run-time polymorphism.
+- `HOMOG2D_ENABLE_PRTP`: enables pointer-based runtime polymorphism.
 This will add a common base class `rtp::Root` to all the geometric primitives.
-At present, run-time polymorphism is currently moving to a variant-based approach, see [RTP](#section_rtp) section.
+At present, runtime polymorphism is currently moving to a variant-based approach, see [RTP](#section_rtp) section.
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
@@ -2338,23 +2288,70 @@ Runtime Polymorphic behavior can be enabled for all the primitives.
 Actually, a move is being made from a classical pointer-based architecture to a variant-based one.
 The "svg import" subsystem has already been converted.
 
-The classical pointer-based approach is base on a common untemplated class (`Root`) but this will very likely **be deprecated** shortly.
+The classical pointer-based approach is based on a common untemplated class (`Root`) which is inherited by all the primitives.
+However this will very likely **be deprecated** shortly.
 It is advise to use nowadays the "variant-based" technique, as it is more type-safe.
+And there is no feature available with that approach that isn't available with the variant-based approach.
 
+#### 12.2 - Pointer-based runtime polymorphism
 
-At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
+This is the classical C++ technique: you store (smart)pointers of type `Root` in the container.
+That class (and its inheritance) will only exist if the symbol `HOMOG2D_ENABLE_PRTP` is defined:
+```C++
+std::vector<std::shared_ptr<rtp::Root>> vec;
+vec.push_back( std::make_shared<Circle>(   Circle()  ) );
+vec.push_back( std::make_shared<Segment>(  Segment() ) );
+vec.push_back( std::make_shared<FRect>(    FRect()   ) );
+```
 
-#### 12.2 - Pointer-based run-time polymorphism
+You may then call one of the polymorphic member functions on each of them:
+```C++
+for( auto& e: vec )
+{
+	std::cout << getString(e->type())
+		<< ": " << *e
+		<< "\n  -area = "
+		<< e->area()
+		<< "\n  -length = "
+	if( e->type() != Type::Line2d )
+		std::cout << e->length() << '\n';
+	else
+		std::cout << "infinite\n";
+```
 
-Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
+Remarks:
+
+* You may directly call the streaming operator (`<<`), the `Root` class takes care of redirecting to the correct class operator.
+* Notice that if the object is detected as a line, the function length is **not** called.
+This is mandatory to avoid throwing an exception, as line cannot have a finite length.
+
+To do something more elaborate, you need to convert them using a dynamic cast:
+```C++
+if( e->type() == Type::CPolyline )
+{
+	auto pl1 = std::dynamic_pointer_cast<CPolyline>( e );
+	std::cout << "Polyline has " << pl1->size() << " points\n";
+}
+```
+
+At present, the only polymorphic member functions available:
+
+* `void draw( img::Image& )` (you may pass as second argument a `img::DrawParams` object)
+* `double length()`
+* `double area()`
 
 Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
 Bad casting will very probably lead to a segfault.
 
-#### 12.3 - Variant-based run-time polymorphism
+Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example.
 
-A templated common type `CommonType_` holds all the geometrical primitives, as a `std::variant` (requering a move to `C++17`).
+#### 12.3 - Variant-based runtime polymorphism
+
+A templated common type `CommonType_` holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
+It follows the [naming conventions of primitives](#numdt), so you can use `CommonTypeF`, `CommonTypeD` or `CommonTypeL`,
+with `CommonType` defaulting to `HOMOG2D_INUMTYPE` (`double` by default).
+
 So you can now stack up different primitives in a container of that type:
 ```C++
 std::vector<CommonType_<double>> vec;
@@ -2364,12 +2361,15 @@ vec.emplace_back( Point2d() );
 ...
 ```
 
-A set of polymorphic functions has been made compatible with this type.
+To get the actual type of the object, you can call the free function `getType()`,
+that will return an enum value of type `Type` having one of these values:<br>
+`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
+You can get a human-readable value ot the object type with `getString(Type)`.
 
-A set of functors is available, to be used with `std::visit()`, lying in the `fct` sub-namespace
+A set of functors to be used with `std::visit()` is available, lying in the `fct` sub-namespace
 [see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html).
-
 But the easyest is probably to use the associated free functions, so you don't have the hassle of functors.
+
 For example, with the above vector, you can print their type, length and area with:
 ```C++
 for( auto& e: vec )
@@ -2380,7 +2380,14 @@ for( auto& e: vec )
 		<< "\n";
 ```
 
-To apply the same homography on each element( and store them in-place), simple as this:
+To draw these on an `img::Image`, you can do this:
+```C++
+fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pass some drawing parameters
+for( auto& e: vec )
+	std::visit( vde, e );
+```
+
+To apply the same homography on each element (and store them in-place), simple as this:
 
 ```C++
 auto h = Homogr().addTranslation(3,3).addScale(15); // whatever...
@@ -2390,13 +2397,21 @@ for( auto& e: vec )
 }
 ```
 
-To draw these on an `img::Image`, you can do this:
+Of course, you may also use the associated functors and `std::visit()` if you prefer:
 ```C++
-fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pass some drawing parameters
-for( auto& e: vec )
-	std::visit( vde, e );
+	fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
+	for( auto& e: vec )
+		e = std::visit( transf, e );
 ```
 
+If you need to get the object as its base type, a dedicated functor is provided:
+```C++
+	if( getType(e) == Type::Circle )
+		Circle c = fct::VariantUnwrapper{e};
+```
+
+
+Check test file [homog2d_test_rtp_2.cpp](../misc/homog2d_test_rtp_2.cpp) for an example.
 
 
 

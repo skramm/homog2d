@@ -241,7 +241,7 @@ See https://github.com/skramm/homog2d
 
 namespace h2d {
 
-/// Holds static counters, for run-time errors and warnings
+/// Holds static counters, for runtime errors and warnings
 namespace err {
 
 /// Used to count the errors
@@ -368,11 +368,11 @@ using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
 
-/// A variant type, holding all possible types. Used to achieve run-time polymorphism
+/// A variant type, holding all possible types. Used to achieve runtime polymorphism
 /**
 At present, the "line" type is not included here, because it would imply having the
 \c getPointPair() function defined for that type, and we chose to keep it undefined
-(thus generating an error at build time), instead of defining it, and throwing at run-time on a call
+(thus generating an error at build time), instead of defining it, and throwing at runtime on a call
 to \c length() function
 */
 template<typename FPT>
@@ -926,7 +926,7 @@ const char* getString( Type t )
 }
 
 //------------------------------------------------------------------
-/// Holds functors, used to  manage run-time polymorphism using \c std::variant
+/// Holds functors, used to  manage runtime polymorphism using \c std::variant
 namespace fct {
 
 //------------------------------------------------------------------
@@ -1251,7 +1251,7 @@ public:
 	}
 /// This function is a fallback for all sub-classes that do not provide such a method.
 /**
-It is necessary in a run-time polymorphism context, as we would have build failures if a given type
+It is necessary in a runtime polymorphism context, as we would have build failures if a given type
 disallows providing such a method
 (for example, when trying to check if some object is inside an open polyline, which makes no sense).
 */
@@ -1281,14 +1281,14 @@ disallows providing such a method
 } // namespace detail
 
 //------------------------------------------------------------------
-#ifdef HOMOG2D_ENABLE_RTP
+#ifdef HOMOG2D_ENABLE_PRTP
 
-/// Holds pointer-based run-time polymorphism stuff
+/// Holds pointer-based runtime polymorphism stuff
 namespace rtp {
 
 /// Non-templated root class, to achieve dynamic (runtime) polymorphism
 /**
-Only exists if symbol \c HOMOG2D_ENABLE_RTP is defined, see
+Only exists if symbol \c HOMOG2D_ENABLE_PRTP is defined, see
 <a href="md_docs_homog2d_manual.html#build_options">build options</a>.
 */
 class Root
@@ -11572,8 +11572,11 @@ using OPolylineF = base::PolylineBase<type::IsOpen,float>;
 using OPolylineD = base::PolylineBase<type::IsOpen,double>;
 using OPolylineL = base::PolylineBase<type::IsOpen,long double>;
 
-/// variant type
-using CommonTyped = CommonType_<double>;
+// variant type
+using CommonType = CommonType_<HOMOG2D_INUMTYPE>;
+using CommonTypeF = CommonType_<float>;
+using CommonTypeD = CommonType_<double>;
+using CommonTypeL = CommonType_<long double>;
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 

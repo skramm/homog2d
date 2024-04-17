@@ -8,7 +8,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - add polygon union and intersection
   - add non-convex polyline splitting into polygons
-  - extend run-time polymorphism capabilities
+  - extend runtime polymorphism capabilities
   - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
@@ -18,8 +18,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
-  - heavy architectural change: run-time polymorphism is now achieved in a more modern way, using `std::variant` [See here](TODO).
-  - removed requirement to run-time polymorphism to import SVG file, by using `std::variant`, now requires C++17
+  - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
+This was possible by moving to C++17.
+  - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
   - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example)
   - bugfixes:
@@ -70,7 +71,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - [v2.9](https://github.com/skramm/homog2d/releases/tag/v2.9), released on 2022-11-23
   - added SVG drawing
   - added SVG import, see [related manual section](homog2d_manual.md#svg_import).
-  - enable run-time polymorphism (wip), through class `detail::Common`
+  - enable runtime polymorphism (wip), through class `detail::Common`
   - added variable frame rate for showcase demos, see `misc/showcase/gif_duration.data`
   - added constructor for horizontal or vertical line using a point
   - added bounding box for a container holding any primitive (see [manual/misc. section](homog2d_manual.md#misc))

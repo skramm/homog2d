@@ -96,15 +96,15 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 
 With C++, polymorphism can be achieved in two ways:
 
-- classical run-time polymorphism, achieved with virtual functions.
+- classical runtime polymorphism, achieved with virtual functions.
 This is particularly useful when the need is to have a container holding objects of different types, and then calling a virtual member function on each object.
 - static Compile-time polymorphism, using function overloading.
 
 The general design here is to use compile-time polymorphism.
-However, in some situations, run-time polymorphism is required.
+However, in some situations, runtime polymorphism is required.
 For example when one wants to import an SVG file, because we can't determine the types of objects that will be read.
 
-When inheriting concrete classes from a class template, we face a problem if we need to achieve run-time polymorphism,
+When inheriting concrete classes from a class template, we face a problem if we need to achieve runtime polymorphism,
 Consider this inheritance:
 ```
 template<typename T>

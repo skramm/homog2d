@@ -82,7 +82,7 @@ It is templated by the underlying numerical type, but does not provide polymorph
 This is because a class templated cannot be virtual.
 
 Thus, the need for the class tp::Root
-(only enabled if \c HOMOG2D_ENABLE_RTP is defined, see
+(only enabled if \c HOMOG2D_ENABLE_PRTP is defined, see
 <a href="md_docs_homog2d_manual.html#build_options">build options</a>).
 </dd>
 
