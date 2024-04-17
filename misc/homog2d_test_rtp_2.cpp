@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -33,30 +33,6 @@ Build with <code>$ make test_rtp</code>
 
 using namespace h2d;
 
-
-/// Problem!
-/**
-sometimes, the result of the product is not of the same type
-(A circle on whom an homography is applied return an ellipse)
-
-*/
-/*class TransformFunct
-{
-public:
-	TransformFunct( const Homogr& h ): _h(h)
-	{}
-
-	template<typename T>
-	CommonTyped operator ()(const T& a)
-	{
-		return CommonTyped{_h * a};
-	}
-
-private:
-	const Homogr& _h;
-};
-*/
-
 /// see homog2d_test_rtp_2.cpp
 int main( int, char** argv )
 {
@@ -69,7 +45,7 @@ int main( int, char** argv )
 	CPolyline cpol( vecpts );
 	OPolyline opol( vecpts );
 
-	std::vector<CommonTyped> vec;
+	std::vector<CommonType> vec;
 
 	vec.push_back( Circle()  );
 	vec.push_back( Segment() );

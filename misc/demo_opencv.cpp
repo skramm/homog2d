@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -1744,10 +1744,7 @@ using PointPair = PointPair1_<double>;
 namespace var {
 
 
-/// Variant Functor, use with std::visit(). Enables dynamic polymorphism with templated types
-/**
-\todo 20240328: apply same technique to the reading of an SVG file
-*/
+/// Variant Functor, use with std::visit().
 struct varGetPointPair
 {
 	template<typename T>
@@ -1774,19 +1771,19 @@ struct Param_BB : Data
 	}
 
 /// Fills vector of variants with elements
-	void init( std::vector<CommonTyped>& vecvar, int idx )
+	void init( std::vector<CommonType>& vecvar, int idx )
 	{
-		vecvar.push_back( CommonTyped( OPolyline() ) );
-		vecvar.push_back( CommonTyped( CPolyline() ) );
-		vecvar.push_back( CommonTyped( Segment()   ) );
-		vecvar.push_back( CommonTyped( Point2d()   ) );
-		vecvar.push_back( CommonTyped( Circle()    ) );
-		vecvar.push_back( CommonTyped( FRect()     ) );
+		vecvar.push_back( CommonType( OPolyline() ) );
+		vecvar.push_back( CommonType( CPolyline() ) );
+		vecvar.push_back( CommonType( Segment()   ) );
+		vecvar.push_back( CommonType( Point2d()   ) );
+		vecvar.push_back( CommonType( Circle()    ) );
+		vecvar.push_back( CommonType( FRect()     ) );
 
 		_name[idx] = getString( getType( _vecvar[idx][_current[idx]] ) );
 	}
 
-	CommonTyped getCurrent( int i ) const
+	CommonType getCurrent( int i ) const
 	{
 		return _vecvar[i][_current[i]];
 	}
@@ -1806,7 +1803,7 @@ struct Param_BB : Data
 		initElems( _vecvar[1], 1 );
 	}
 
-	void initElems( std::vector<CommonTyped>& vec, int i )
+	void initElems( std::vector<CommonType>& vec, int i )
 	{
 		std::vector<Point2d> vecpl1,vecpl2;
 		for( auto j = 0; j<3; j++ )
@@ -1829,8 +1826,8 @@ struct Param_BB : Data
 	std::string _name[2];        ///< name of current primitive
 
 private:
-	size_t                   _current[2] = {0,2}; ///< index of current
-	std::vector<CommonTyped> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
+	size_t                  _current[2] = {0,2}; ///< index of current primitive stored in variant
+	std::vector<CommonType> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
 };
 
 void action_BB( void* param )

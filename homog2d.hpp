@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -5966,12 +5966,15 @@ public:
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_START;
+#ifndef HOMOG2D_NOCHECKS
 		if( size() < 2 )
 			HOMOG2D_THROW_ERROR_1( "cannot compute bounding box of empty Polyline" );
+#endif
 		auto ppts = priv::getBB_Points( getPts() );
+#ifndef HOMOG2D_NOCHECKS
 		if( shareCommonCoord( ppts.first, ppts.second ) )
 			HOMOG2D_THROW_ERROR_1( "unable, points share common coordinate" );
-
+#endif
 		return FRect_<FPT>( ppts );
 	}
 
@@ -9785,13 +9788,8 @@ getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 	arr[1] = pp2.first;
 	arr[2] = pp1.second;
 	arr[3] = pp2.second;
-#if 1
+
 	return FRect_<T1>( priv::getBB_Points( arr ) );
-#else
-	auto r = priv::getBB_Points( arr );
-	std::cout << __FUNCTION__ << "() << r=" << r << "\n";
-	return r;
-#endif
 }
 
 //------------------------------------------------------------------
