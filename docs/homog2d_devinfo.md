@@ -144,10 +144,13 @@ Here, the member function `Dtype dtype()` enables us to fetch the underlying num
 This is why we have here a double inheritance pattern, on all concrete types (geometric primitives):
 
 - The class template `Common<T>`, provides common stuff for all types, and holds a default implementation for member functions not defined in the concrete types.
-- The non-templated class `Root`, provides real-time polymorphism.
+- The non-templated class `Root`, provides real-time polymorphism through pointers.
 This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_PRTP` is defined
 (see [build options](homog2d_manual.md#build_options)).
 
+However, the pointer-based technique is error prone: no type safety, and bad casting will lead to segfaults.
+So we have also another way of handling runtime polymorphism, by switching to C++17 and using `std::variant`.
+[See here](homog2d_manual.md#section_rtp) for details.
 
 ### 4.3 - Bounding Boxes
 
@@ -178,11 +181,11 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `CPolyline` | may throw     |
 | `Ellipse`   | never throws  |
 
+for `OPolyline` and `CPolyline`, the function will throw either if those primitives are empty, or if the points they hold do not define an area.
+
 **Bounding box of two objects**
 
-This library provides a free function `getBB( t1, t1 )` that will return the bounding boxes holding `t1` and `t2`.
-
-However, when computing the common bounding box of two arbitrary elements, things are not exactly the same.
+This library provides a free function `getBB( t1, t2 )` that will return the bounding boxes holding `t1` and `t2`, whatever the types involved.
 
 * if one of the two objects is a line, no bounding box can be computed, so a call to `getBB()` with two lines will not compile.
 * if both of the arguments have an area, then there is no problem

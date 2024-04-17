@@ -2239,7 +2239,7 @@ sys    0m1,699s
 Below are some options that can be passed, to activate them, just define the symbol.
 You can do that in the makefile by adding `-DHOMOG2D_SYMBOL` to the compiler call options,
 or just add a `#define` on top of your program
-**before** the `#include "homog2d"`
+**before** the `#include "homog2d.hpp"`
 
 #### 11.2.1 - Build symbols related to bindings with other libs:
 
@@ -2270,11 +2270,11 @@ While this shoudn't happen even with random data, numerical (floating-point) iss
 [read this for details](homog2d_qa.md#assert_trigger).
 
 
-**Situation that will generate a warning**
+**Situations that will generate a warning**
 
-* when computing the angle between two lines/segments, and that this requires the computation of `arccos()` of a value slightly above 1.
+* When computing the angle between two lines/segments, and that this requires the computation of `arccos()` of a value slightly above 1.
 Then the value 1.0 will be used instead, but a warning will be generated.
-* when importing a SVG file and an element in the file cannot be processed.
+* When importing a SVG file and an element in the file cannot be processed.
 
 
 ### 12 - Runtime Polymorphism
@@ -2282,20 +2282,20 @@ Then the value 1.0 will be used instead, but a warning will be generated.
 
 #### 12.1 - Introduction
 
-Runtime Polymorphism is the ability to store in a container (`std::vector`, `std:: list`, ...) objects of different types.
+Runtime Polymorphism is the ability to store in a container (`std::vector`, `std::list`, ...) objects of different types and calling on those elements some free or member function.
 
-Runtime Polymorphic behavior can be enabled for all the primitives.
-Actually, a move is being made from a classical pointer-based architecture to a variant-based one.
+Actually (2024/04->), a move is being made from a classical pointer-based architecture to a variant-based one.
 The "svg import" subsystem has already been converted.
 
 The classical pointer-based approach is based on a common untemplated class (`Root`) which is inherited by all the primitives.
 However this will very likely **be deprecated** shortly.
-It is advise to use nowadays the "variant-based" technique, as it is more type-safe.
+It is advised to use nowadays the "variant-based" technique, as it is more type-safe.
 And there is no feature available with that approach that isn't available with the variant-based approach.
 
 #### 12.2 - Pointer-based runtime polymorphism
 
-This is the classical C++ technique: you store (smart)pointers of type `Root` in the container.
+This is the "classical C++" technique:
+you store (smart)pointers of type `Root` in the container.
 That class (and its inheritance) will only exist if the symbol `HOMOG2D_ENABLE_PRTP` is defined:
 ```C++
 std::vector<std::shared_ptr<rtp::Root>> vec;
@@ -2323,7 +2323,7 @@ Remarks:
 
 * You may directly call the streaming operator (`<<`), the `Root` class takes care of redirecting to the correct class operator.
 * Notice that if the object is detected as a line, the function length is **not** called.
-This is mandatory to avoid throwing an exception, as line cannot have a finite length.
+This is mandatory to avoid throwing an exception, as a line cannot have a finite length.
 
 To do something more elaborate, you need to convert them using a dynamic cast:
 ```C++
@@ -2367,7 +2367,7 @@ that will return an enum value of type `Type` having one of these values:<br>
 You can get a human-readable value ot the object type with `getString(Type)`.
 
 A set of functors to be used with `std::visit()` is available, lying in the `fct` sub-namespace
-[see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html).
+([see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html)).
 But the easyest is probably to use the associated free functions, so you don't have the hassle of functors.
 
 For example, with the above vector, you can print their type, length and area with:
@@ -2378,6 +2378,7 @@ for( auto& e: vec )
 		<< "\n -area=" << area(e)
 		<< "\n -length=" << length(e)
 		<< "\n";
+}
 ```
 
 To draw these on an `img::Image`, you can do this:
@@ -2392,22 +2393,20 @@ To apply the same homography on each element (and store them in-place), simple a
 ```C++
 auto h = Homogr().addTranslation(3,3).addScale(15); // whatever...
 for( auto& e: vec )
-
 	e = transform( h, e );
-}
 ```
 
-Of course, you may also use the associated functors and `std::visit()` if you prefer:
+But you may also use the associated functors and `std::visit()` if you prefer:
 ```C++
-	fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
-	for( auto& e: vec )
-		e = std::visit( transf, e );
+fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
+for( auto& e: vec )
+	e = std::visit( transf, e );
 ```
 
 If you need to get the object as its base type, a dedicated functor is provided:
 ```C++
-	if( getType(e) == Type::Circle )
-		Circle c = fct::VariantUnwrapper{e};
+if( getType(e) == Type::Circle )
+	Circle c = fct::VariantUnwrapper{e};
 ```
 
 
