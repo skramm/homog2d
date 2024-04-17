@@ -69,7 +69,7 @@ int main( int argc, const char** argv )
 
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 
-	img::DrawFunct<img::SvgImage> dfunc( out );
+	fct::DrawFunct<img::SvgImage> dfunc( out );
 	size_t c = 0;
 	for( const auto& e: data )
 	{

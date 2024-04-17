@@ -1185,7 +1185,7 @@ struct Param_CIR : Data
 		_cir1.draw( img, par_c );
 //		rect.draw( img, par_r );
 
-		img::DrawFunct dfunc( img, par_r );
+		fct::DrawFunct dfunc( img, par_r );
 		std::visit( dfunc, _variant );
 
 		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
@@ -1845,8 +1845,8 @@ void action_BB( void* param )
 
 	data.initElemsAll();                              // first initialize objects
 
-	img::DrawFunct vde1( data.img, style1 );        // then draw the current ones
-	img::DrawFunct vde2( data.img, style2 );
+	fct::DrawFunct vde1( data.img, style1 );        // then draw the current ones
+	fct::DrawFunct vde2( data.img, style2 );
 	const auto& curr1 = data.getCurrent(0);
 	const auto& curr2 = data.getCurrent(1);
 	std::visit( vde1, curr1 );

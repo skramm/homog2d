@@ -3713,15 +3713,24 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 //////////////////////////////////////////////////////////////
 /////               POLYMORPHISM                       /////
 //////////////////////////////////////////////////////////////
-TEST_CASE( "Polymorphism", "[polymorph_1]" )
+TEST_CASE( "v-based polymorphism", "[polymorph_1]" )
 {
 	std::vector<CommonType_<NUMTYPE>> vvar;
-	vvar.push_back( Circle_<NUMTYPE> );
+	vvar.push_back( Circle_<NUMTYPE>{} );
+	vvar.push_back( Segment_<NUMTYPE>{} );
 
-	var = Circle();
-	Circle = VariantUnwrapper{var};
+	{
+		auto var = vvar[0];
+		Circle c = fct::VariantUnwrapper{var};
+		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Circle );
+		CHECK( c == Circle() );
 
-	CHECK( )
+		auto var2 = vvar[1];
+		Segment s = fct::VariantUnwrapper{var};
+		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Segment );
+		CHECK( s == Segment() );
+	}
+
 }
 
 

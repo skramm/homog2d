@@ -867,26 +867,6 @@ void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
 	pairp.second.draw( *this, dp );
 }
 
-//------------------------------------------------------------------
-/// A functor used to draw objects. To use with std::variant and std::visit()
-template<typename IMG>
-struct DrawFunct
-{
-	DrawFunct(
-		Image<IMG>& img,
-		DrawParams dp=img::DrawParams()
-	): _img(img), _drawParams(dp)
-	{}
-	Image<IMG>&             _img;
-	const img::DrawParams _drawParams;
-
-	template<typename T>
-	void operator ()(const T& a)
-	{
-		a.draw( _img, _drawParams );
-	}
-};
-
 } // namespace img
 
 
@@ -946,9 +926,11 @@ const char* getString( Type t )
 	return s;
 }
 
+//------------------------------------------------------------------
 /// Holds functors, used to  manage run-time polymorphism using \c std::variant
 namespace fct {
 
+//------------------------------------------------------------------
 /// A functor to get the type of an object in a std::variant, call with std::visit()
 /**
 \sa CommonType_
@@ -963,6 +945,7 @@ struct TypeFunct
 	}
 };
 
+//------------------------------------------------------------------
 /// A functor to get the length of an object in a std::variant, call with std::visit()
 /**
 \sa CommonType_
@@ -977,6 +960,7 @@ struct LengthFunct
 	}
 };
 
+//------------------------------------------------------------------
 /// A functor to get the area of an object in a std::variant, call with std::visit()
 /**
 \sa CommonType_
@@ -991,8 +975,47 @@ struct AreaFunct
 	}
 };
 
-} // namespace fct
+//------------------------------------------------------------------
+/// A functor used to apply a homography matrix to an object
+template<typename FPT>
+class TransformFunct
+{
+public:
+	TransformFunct( const Homogr_<FPT>& h ): _h(h)
+	{}
 
+	template<typename T>
+	CommonType_<FPT> operator ()(const T& a)
+	{
+		return CommonType_<FPT>{_h * a};
+	}
+
+private:
+	const Homogr_<FPT>& _h;
+};
+
+//------------------------------------------------------------------
+/// A functor used to draw objects. To use with std::variant and std::visit()
+template<typename IMG>
+struct DrawFunct
+{
+	DrawFunct(
+		img::Image<IMG>& img,
+		img::DrawParams dp=img::DrawParams()
+	): _img(img), _drawParams(dp)
+	{}
+	img::Image<IMG>&      _img;
+	const img::DrawParams _drawParams;
+
+	template<typename T>
+	void operator ()(const T& a)
+	{
+		a.draw( _img, _drawParams );
+	}
+};
+
+
+//------------------------------------------------------------------
 /// Convert std::variant object into the underlying type
 /**
 source: https://stackoverflow.com/a/72955535/193789
@@ -1006,6 +1029,7 @@ struct VariantUnwrapper
     operator T() { return std::get<T>(var); }
 };
 
+#if __cplusplus < 202002L
 /// Fix for the above VariantUnwrapper for C++17
 /**
 (may be removed when we switch to C++20)
@@ -1013,6 +1037,9 @@ struct VariantUnwrapper
 */
 template<typename... Ts>
 VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
+#endif
+
+} // namespace fct
 
 
 inline

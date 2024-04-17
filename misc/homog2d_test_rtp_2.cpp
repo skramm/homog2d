@@ -40,20 +40,22 @@ sometimes, the result of the product is not of the same type
 (A circle on whom an homography is applied return an ellipse)
 
 */
-class TransformFunct
+/*class TransformFunct
 {
 public:
 	TransformFunct( const Homogr& h ): _h(h)
 	{}
 
 	template<typename T>
-	T operator ()(const T& a)
+	CommonTyped operator ()(const T& a)
 	{
-		return _h * a;
+		return CommonTyped{_h * a};
 	}
+
 private:
 	const Homogr& _h;
 };
+*/
 
 /// see homog2d_test_rtp_2.cpp
 int main( int, char** argv )
@@ -80,8 +82,8 @@ int main( int, char** argv )
 
 	img::Image<img::SvgImage> im(200,200);
 
-	img::DrawFunct vde( im );
-	TransformFunct transf( Homogr().addTranslation(3,3).addScale(5) );
+	fct::DrawFunct vde( im );
+	fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
 	for( auto& e: vec )
 	{
 		std::cout << getString(getType(e))
@@ -89,8 +91,8 @@ int main( int, char** argv )
 			<< "\n -length=" << length(e)
 			<< "\n";
 
-		auto tr = std::visit( transf, e );
-		std::visit( vde, tr );
+		auto tr = std::visit( transf, e ); // transform,
+		std::visit( vde, tr );              // then draw
 
 	}
 	im.write( "BUILD/dummy2.svg" );
