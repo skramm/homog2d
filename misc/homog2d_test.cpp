@@ -3726,8 +3726,8 @@ TEST_CASE( "v-based polymorphism", "[polymorph_1]" )
 		CHECK( c == Circle() );
 
 		auto var2 = vvar[1];
-		Segment s = fct::VariantUnwrapper{var};
-		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Segment );
+		Segment s = fct::VariantUnwrapper{var2};
+		CHECK( std::visit( fct::TypeFunct{}, var2 ) == Type::Segment );
 		CHECK( s == Segment() );
 	}
 
@@ -3758,7 +3758,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		CHECK( data.size() == 1 );
 		auto elem = data.at(0);
 		CHECK( getType( elem ) == Type::Circle );
-		Circle cir = VariantUnwrapper{elem};
+		Circle cir = fct::VariantUnwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
@@ -3798,7 +3798,7 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 		if( getType( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
-			const Ellipse ell2 = VariantUnwrapper{ p };
+			const Ellipse ell2 = fct::VariantUnwrapper{ p };
 			CHECK( ell == ell2 );
 		}
 	}
