@@ -3757,7 +3757,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
 		auto elem = data.at(0);
-		CHECK( getType( elem ) == Type::Circle );
+		CHECK( type( elem ) == Type::Circle );
 		Circle cir = fct::VariantUnwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
@@ -3769,7 +3769,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 		for( const auto& elem: data )
-			CHECK( getType( elem ) == Type::Circle );
+			CHECK( type( elem ) == Type::Circle );
 	}
 	{                            // read a file with 3 circles, one rect, one segment and a polygon
 		tinyxml2::XMLDocument doc;
@@ -3779,9 +3779,9 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 6 );
 
-		CHECK( getType( data.at(3) ) == Type::Segment );
-		CHECK( getType( data.at(4) ) == Type::FRect );
-		CHECK( getType( data.at(5) ) == Type::CPolyline );
+		CHECK( type( data.at(3) ) == Type::Segment );
+		CHECK( type( data.at(4) ) == Type::FRect );
+		CHECK( type( data.at(5) ) == Type::CPolyline );
 	}
 }
 
@@ -3795,7 +3795,7 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 	CHECK( data.size() == 3 );
 	for( const auto& p: data )
 	{
-		if( getType( p ) == Type::Ellipse )
+		if( type( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
 			const Ellipse ell2 = fct::VariantUnwrapper{ p };

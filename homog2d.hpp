@@ -933,7 +933,7 @@ namespace fct {
 /// A functor to get the type of an object in a std::variant, call with std::visit()
 /**
 \sa CommonType_
-\sa getType()
+\sa type()
 */
 struct TypeFunct
 {
@@ -9480,7 +9480,7 @@ C++17 construction, removes the need for SFINAE
 \sa CommonType_
 */
 template<typename T>
-Type getType( const T& elem )
+Type type( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::TypeFunct{}, elem );

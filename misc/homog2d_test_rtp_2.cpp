@@ -63,7 +63,7 @@ int main( int, char** argv )
 	auto h = Homogr().addTranslation(3,3).addScale(15);
 	for( auto& e: vec )
 	{
-		std::cout << getString(getType(e))
+		std::cout << getString(type(e))
 			<< "\n -area=" << area(e)
 			<< "\n -length=" << length(e)
 			<< "\n";

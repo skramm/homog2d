@@ -1780,7 +1780,7 @@ struct Param_BB : Data
 		vecvar.push_back( CommonType( Circle()    ) );
 		vecvar.push_back( CommonType( FRect()     ) );
 
-		_name[idx] = getString( getType( _vecvar[idx][_current[idx]] ) );
+		_name[idx] = getString( type( _vecvar[idx][_current[idx]] ) );
 	}
 
 	CommonType getCurrent( int i ) const
@@ -1793,7 +1793,7 @@ struct Param_BB : Data
 		_current[i]++;
 		if( _current[i] == _vecvar[i].size() )
 			_current[i] = 0;
-		_name[i] = getString( getType( _vecvar[i][_current[i]] ) );
+		_name[i] = getString( type( _vecvar[i][_current[i]] ) );
 		return _name[i];
 	}
 

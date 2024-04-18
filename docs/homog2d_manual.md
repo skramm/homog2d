@@ -2361,7 +2361,7 @@ vec.emplace_back( Point2d() );
 ...
 ```
 
-To get the actual type of the object, you can call the free function `getType()`,
+To get the actual type of the object, you can call the free function `type()`,
 that will return an enum value of type `Type` having one of these values:<br>
 `Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
 You can get a human-readable value ot the object type with `getString(Type)`.
@@ -2374,7 +2374,7 @@ For example, with the above vector, you can print their type, length and area wi
 ```C++
 for( auto& e: vec )
 {
-	std::cout << getString(getType(e))
+	std::cout << getString(type(e))
 		<< "\n -area=" << area(e)
 		<< "\n -length=" << length(e)
 		<< "\n";
@@ -2405,7 +2405,7 @@ for( auto& e: vec )
 
 If you need to get the object as its base type, a dedicated functor is provided:
 ```C++
-if( getType(e) == Type::Circle )
+if( type(e) == Type::Circle )
 	Circle c = fct::VariantUnwrapper{e};
 ```
 
