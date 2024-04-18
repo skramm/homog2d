@@ -5,9 +5,9 @@
 The two classes, open and closed type, are actually the same class and are defined as:
 ```
 template<typename T>
-using CPolyline_ = base::PolylineBase<type::IsClosed,T>;
+using CPolyline_ = base::PolylineBase<typ::IsClosed,T>;
 template<typename T>
-using OPolyline_ = base::PolylineBase<type::IsOpen,T>;
+using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
 ```
 
 ### Difference between these two types:
