@@ -17,16 +17,16 @@
 
 /**
 \file
-\brief This program will demonstrate the RunTime Polymorphism capabilities.
+\brief This program will demonstrate the pointer-based runtime polymorphism capabilities.
 Is included in test suite.
 
+Build and run with <code>$ make test_rtp</code>
 */
 
 
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-//#define HOMOG2D_TEST_MODE
 #define HOMOG2D_ENABLE_PRTP
 #include "../homog2d.hpp"
 
@@ -61,9 +61,9 @@ int main( int, char** argv )
 		std::cout << getString(e->type()) << ": " << *e
 			<< "\n  -area = " << e->area();
 		if( e->type() != Type::Line2d )
-			std::cout << "\n  -length = " << e->length();
+			std::cout << "\n -length = " << e->length();
 		else
-			std::cout << "\n  -length = infinite";
+			std::cout << "\n -length = infinite";
 		std::cout << '\n';
 		e->draw( im );
 

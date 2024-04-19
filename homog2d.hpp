@@ -370,16 +370,13 @@ using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
 
 /// A variant type, holding all possible types. Used to achieve runtime polymorphism
 /**
-At present, the "line" type is not included here, because it would imply having the
-\c getPointPair() function defined for that type, and we chose to keep it undefined
-(thus generating an error at build time), instead of defining it, and throwing at runtime on a call
-to \c length() function
+See https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
 */
 template<typename FPT>
 using CommonType_ = std::variant<
 	Segment_<FPT>,
 	Point2d_<FPT>,
-//	Line2d_<FPT>,
+	Line2d_<FPT>,
 	Circle_<FPT>,
 	Ellipse_<FPT>,
 	FRect_<FPT>,
@@ -6530,13 +6527,6 @@ public:
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
-
-//	template<typename T>
-//	void impl_draw_pl( img::Image<T>& ) const;
-//#else
-//	template<typename T>
-//	void impl_draw_pl( img::Image<T>& ) const    // this one does nothing
-//	{}
 #endif
 
 }; // class PolylineBase
@@ -6555,7 +6545,6 @@ PolylineBase<PLT,FPT>::impl_set_RCP(
 )
 {
 	static_assert(
-//		std::is_unsigned<T>::value && std::is_integral<T>::value,
 		std::is_integral<T>::value,
 		"2nd argument type must be integral type"
 	);
@@ -9773,6 +9762,15 @@ getPointPair( const T& elem )
 	HOMOG2D_START;
 	return elem.getPts();
 }
+
+template<typename FPT>
+std::pair<Point2d_<FPT>,Point2d_<FPT>>
+getPointPair( const Line2d_<FPT>& )
+{
+	HOMOG2D_START;
+	HOMOG2D_THROW_ERROR_1( "Unable to get pair of points for a Line2d" );
+}
+
 
 } // namespace priv
 

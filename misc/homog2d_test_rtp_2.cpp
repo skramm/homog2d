@@ -17,17 +17,15 @@
 
 /**
 \file
-\brief This program will demonstrate the RunTime Polymorphism capabilities using the new std::variant approach
+\brief This program will demonstrate the variant-based runtime polymorphism capabilities
 Is included in test suite.
 
-Build with <code>$ make test_rtp</code>
+Build and run with <code>$ make test_rtp</code>
 */
 
 
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
-
-//#define HOMOG2D_TEST_MODE
 
 #include "../homog2d.hpp"
 
@@ -50,7 +48,7 @@ int main( int, char** argv )
 	vec.push_back( Circle()  );
 	vec.push_back( Segment() );
 	vec.push_back( FRect()   );
-//	vec.push_back( Line2d()  );
+	vec.push_back( Line2d()  );
 	vec.push_back( Point2d() );
 	vec.push_back( Ellipse() );
 	vec.push_back( cpol      );
@@ -64,9 +62,12 @@ int main( int, char** argv )
 	for( auto& e: vec )
 	{
 		std::cout << getString(type(e))
-			<< "\n -area=" << area(e)
-			<< "\n -length=" << length(e)
-			<< "\n";
+			<< "\n -area=" << area(e);
+		if( type(e) != Type::Line2d )
+			std::cout <<  "\n -length=" << length(e);
+		else
+			std::cout << "\n -length=N/A";
+		std::cout << "\n";
 
 //		auto tr = std::visit( transf, e ); // transform,
 		e = transform( h, e );
