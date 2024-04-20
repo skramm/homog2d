@@ -49,7 +49,7 @@ ifeq ($(USE_BOOSTGEOM),Y)
 endif
 
 ifeq ($(USE_RTP),Y)
-	CXXFLAGS += -DHOMOG2D_ENABLE_RTP
+	CXXFLAGS += -DHOMOG2D_ENABLE_PRTP
 endif
 
 ifeq ($(DEBUG),Y)
@@ -173,10 +173,10 @@ BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile buildf
-	$(CXX) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o buildf
-	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
+	$(CXX) $(CXXFLAGS) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o $(LDFLAGS)
 
 
 # temporarly removed from target testall: speed_test_b
@@ -213,13 +213,17 @@ test_bg_1: BUILD/bg_test_1 buildf
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-test_rtp: BUILD/homog2d_test_rtp
-	@echo "-Running RTP test:"
+test_rtp: BUILD/homog2d_test_rtp BUILD/homog2d_test_rtp_2
+	@echo "-Running RTP test 1:"
 	@BUILD/homog2d_test_rtp
+	@echo "-Running RTP test 2:"
+	@BUILD/homog2d_test_rtp_2
 
 
 BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
-	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
+BUILD/homog2d_test_rtp_2: misc/homog2d_test_rtp_2.cpp homog2d.hpp buildf
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp_2.stderr
 
 #=======================================================================
 # speed test

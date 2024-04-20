@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -98,13 +98,12 @@ int main( int argc, char* argv[] )
 		<< "NO"
 #endif
 
-		<< "\n  - HOMOG2D_ENABLE_RTP: "
-#ifdef HOMOG2D_ENABLE_RTP
+		<< "\n  - HOMOG2D_ENABLE_PRTP: "
+#ifdef HOMOG2D_ENABLE_PRTP
 		<< "YES"
 #else
 		<< "NO"
 #endif
-
 		<< '\n';
 
 	Catch::StringMaker<float>::precision = 25;
@@ -3710,6 +3709,28 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	}
 }
 
+//////////////////////////////////////////////////////////////
+/////               POLYMORPHISM                       /////
+//////////////////////////////////////////////////////////////
+TEST_CASE( "v-based polymorphism", "[polymorph_1]" )
+{
+	std::vector<CommonType_<NUMTYPE>> vvar;
+	vvar.push_back( Circle_<NUMTYPE>{} );
+	vvar.push_back( Segment_<NUMTYPE>{} );
+
+	{
+		auto var = vvar[0];
+		Circle_<NUMTYPE> c = fct::VariantUnwrapper{var};
+		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Circle );
+		CHECK( c == Circle() );
+
+		auto var2 = vvar[1];
+		Segment_<NUMTYPE> s = fct::VariantUnwrapper{var2};
+		CHECK( std::visit( fct::TypeFunct{}, var2 ) == Type::Segment );
+		CHECK( s == Segment() );
+	}
+}
+
 
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
@@ -3733,11 +3754,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
-		const auto& elem = data.at(0);
-		CHECK( elem->type() == Type::Circle );
-
-		const Circle* pc2 = static_cast<Circle*>( elem.get() );
-		CHECK( pc2->radius() == 20 );
+		auto elem = data.at(0);
+		CHECK( type( elem ) == Type::Circle );
+		Circle cir = fct::VariantUnwrapper{elem};
+		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
 		tinyxml2::XMLDocument doc;
@@ -3747,7 +3767,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 		for( const auto& elem: data )
-			CHECK( elem->type() == Type::Circle );
+			CHECK( type( elem ) == Type::Circle );
 	}
 	{                            // read a file with 3 circles, one rect, one segment and a polygon
 		tinyxml2::XMLDocument doc;
@@ -3756,9 +3776,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 6 );
-		CHECK( data.at(3)->type() == Type::Segment );
-		CHECK( data.at(4)->type() == Type::FRect );
-		CHECK( data.at(5)->type() == Type::CPolyline );
+
+		CHECK( type( data.at(3) ) == Type::Segment );
+		CHECK( type( data.at(4) ) == Type::FRect );
+		CHECK( type( data.at(5) ) == Type::CPolyline );
 	}
 }
 
@@ -3772,12 +3793,11 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 	CHECK( data.size() == 3 );
 	for( const auto& p: data )
 	{
-		std::cout << *p << '\n';
-		if( p->type() == Type::Ellipse )
+		if( type( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
-			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
-			CHECK( ell == *pell );
+			const Ellipse ell2 = fct::VariantUnwrapper{ p };
+			CHECK( ell == ell2 );
 		}
 	}
 }
@@ -3889,6 +3909,7 @@ TEST_CASE( "boost geometry vector point export", "[bg-vpt-export]" )
 }
 
 #endif // HOMOG2D_USE_BOOSTGEOM
+
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

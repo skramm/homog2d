@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -16,25 +16,27 @@
 **************************************************************************/
 
 /**
-\file homog2d_test_rtp.cpp
-\brief This program will demonstrate the RunTime Polymorphism capabilities.
+\file
+\brief This program will demonstrate the pointer-based runtime polymorphism capabilities.
 Is included in test suite.
 
+Build and run with <code>$ make test_rtp</code>
 */
 
 
 #define CATCH_CONFIG_RUNNER   // alternative: main provided here
 #include "catch.hpp"
 
-#define HOMOG2D_TEST_MODE
-#define HOMOG2D_ENABLE_RTP
+#define HOMOG2D_ENABLE_PRTP
 #include "../homog2d.hpp"
 
 using namespace h2d;
 
 /// see homog2d_test_rtp.cpp
-int main( int, char** )
+int main( int, char** argv )
 {
+	std::cout << "START " << argv[0] << '\n';
+
 	auto vecpts = std::vector<Point2d>(
 		{ {0,0},{3,2},{1,4} }
 	);
@@ -59,9 +61,9 @@ int main( int, char** )
 		std::cout << getString(e->type()) << ": " << *e
 			<< "\n  -area = " << e->area();
 		if( e->type() != Type::Line2d )
-			std::cout << "\n  -length = " << e->length();
+			std::cout << "\n -length = " << e->length();
 		else
-			std::cout << "\n  -length = infinite";
+			std::cout << "\n -length = infinite";
 		std::cout << '\n';
 		e->draw( im );
 
@@ -78,5 +80,5 @@ int main( int, char** )
 */
 		}
 	}
-	im.write( "BUILD/dummy.svg" );
+	im.write( "BUILD/dummy1.svg" );
 }

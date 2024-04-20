@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -68,32 +68,21 @@ int main( int argc, const char** argv )
 	}
 
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
+	fct::DrawFunct<img::SvgImage> dfunc( out );
 
 	size_t c = 0;
 	for( const auto& e: data )
 	{
-		e->draw( out );
-		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
+		std::visit( dfunc, e );   // draw element
+
+		std::cout << "Shape " << c++ << ": " << getString( type(e) );
+
+		if( std::holds_alternative<OPolyline>(e) )
+			std::cout  << " size=" << std::get<OPolyline>(e).size();
+		if( std::holds_alternative<CPolyline>(e) )
+			std::cout  << " size=" << std::get<CPolyline>(e).size();
+
+		std::cout << '\n';
 	}
 	out.write( "demo_import.svg" );
-
-#if 0
-	auto c = 0;
-	for( const auto& p: data )
-	{
-		std::cout << ++c << ": " << getString( p->type() )
-			<<", length=" << p->length() << ", area=" << p->area() << '\n';
-		if( p->type() == Type::Circle )
-		{
-			const Circle* cir = static_cast<Circle*>( p.get() );
-			std::cout << " - Circle radius=" << cir->radius() << '\n';
-		}
-		if( p->type() == Type::CPolyline )
-		{
-			const CPolyline* pl = static_cast<CPolyline*>( p.get() );
-			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
-		}
-		std::cout << *p << '\n';
-	}
-#endif
 }

@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -48,7 +48,6 @@ void demo_something( int demo_index)
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_ENABLE_RTP
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -57,6 +56,7 @@ void demo_something( int demo_index)
 
 using namespace h2d;
 //using namespace h2d::img;
+
 
 // forward declaration
 void myMouseCB( int event, int x, int y, int, void* param );
@@ -280,6 +280,7 @@ private:
 	int                       _index = 0;
 
 public:
+/// Call this to add a new action to a given key
 	void addKeyAction(
 		char key,                              ///< the key
 		const std::function<FuncType>& action, ///< the callback function, called on key hit
@@ -1140,53 +1141,54 @@ struct Param_CIR : Data
 			{150,120}, {220,240},            // initial rectangle
 			{100,100}, {300,100}, {300,200}  // initial circle
 		};
-		ptr_cr = &cir2;
+		_variant = _cir2;
 	}
 	void setAndDraw()
 	{
-		if( buildFrom3Pts )
+		if( _buildFrom3Pts )
 		{
 			try
 			{
-				cir.set( vpt[2], vpt[3], vpt[4] );
+				_cir1.set( vpt[2], vpt[3], vpt[4] );
 			}
 			catch( std::exception& err )
 			{
 				std::cout << "unable to build circle from the 3 points given:\n=> " << err.what() << '\n';
 			}
-//			CPolyline pol;
 			_cpoly.setParallelogram( vpt[2], vpt[3], vpt[4] );
 			_cpoly.draw( img, img::DrawParams().setColor(120,200,0) );
 		}
 		else
-			cir.set( vpt[2], vpt[3] );
+			_cir1.set( vpt[2], vpt[3] );
 		try
 		{
-			rect.set( vpt[0], vpt[1] );
-			cir2.set( vpt[0], vpt[1] );
+			_rect.set( vpt[0], vpt[1] );
+			_cir2.set( vpt[0], vpt[1] );
 		}
 		catch( std::exception& err )
 		{
 			std::cout << "unable to build rectangle, invalid points\n=> "<< err.what() << '\n';
 			return;
 		}
-		ptr_cr = &cir2;
-		if( drawRect )
-			ptr_cr = &rect;
+		_variant = _cir2;
+		if( _drawRect )
+			_variant = _rect;
 
 		auto par_c = img::DrawParams().setColor(0,120,250);
 		auto par_r = img::DrawParams().setColor(120,0,250);
-		if( cir.isInside( rect ) )
+		if( _cir1.isInside( _rect ) )
 			par_c.setColor( 0,250,0);
-		if( rect.isInside( cir ) )
+		if( _rect.isInside( _cir1 ) )
 			par_r.setColor( 0,250,0);
 
-		cir.draw( img, par_c );
+		_cir1.draw( img, par_c );
 //		rect.draw( img, par_r );
-		ptr_cr->draw( img, par_r );
+
+		fct::DrawFunct dfunc( img, par_r );
+		std::visit( dfunc, _variant );
 
 		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
-		if( buildFrom3Pts )
+		if( _buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
 			for( int i=0; i<4; i++ )
@@ -1195,9 +1197,9 @@ struct Param_CIR : Data
 // intersection points
 // TODO: replace this by: 		auto it = cir.intersects( *ptr_cr );
 // once we have set a unique function for all intersections types
-		auto it_c = cir.intersects( cir2 );
-		auto it_r = cir.intersects( rect );
-		if( drawRect )
+		auto it_c = _cir1.intersects( _cir2 );
+		auto it_r = _cir1.intersects( _rect );
+		if( _drawRect )
 		{
 			if( it_r() )
 				draw( img, it_r.get(), img::DrawParams().setColor(120,0,0) );
@@ -1208,12 +1210,12 @@ struct Param_CIR : Data
 	}
 
 // DATA SECTION
-	const rtp::Root* ptr_cr;
-	Circle cir;
-	Circle cir2;
-	FRect rect;
-	bool buildFrom3Pts = true;
-	bool drawRect  = true;
+	CommonType _variant;
+	Circle _cir1;
+	Circle _cir2;
+	FRect  _rect;
+	bool   _buildFrom3Pts = true;
+	bool   _drawRect  = true;
 
 };
 
@@ -1240,13 +1242,13 @@ void demo_CIR( int demidx )
 
 	kbloop.addKeyAction( 'a', [&](void*)
 		{
-			data.buildFrom3Pts = !data.buildFrom3Pts;
+			data._buildFrom3Pts = !data._buildFrom3Pts;
 		},
 		"switch circle from 2 pts / 3 pts"
 	);
 	kbloop.addKeyAction( 'w', [&](void*)
 		{
-			data.drawRect = !data.drawRect;
+			data._drawRect = !data._drawRect;
 		},
 		"switch circle/rectangle"
 	);
@@ -1736,43 +1738,19 @@ void printFailure( std::exception& e )
 {
 	std::cout << "Unable to build BB, err=" << e.what() << "\n";
 }
-using PointPair = std::pair<Point2d,Point2d>;
+
+using PointPair = PointPair1_<double>;
 
 namespace var {
 
-using VarType = std::variant<FRect,Circle,Segment,Point2d,CPolyline,OPolyline>;
 
-/// Variant type, use with std::visit(). Enables dynamic polymorphism with templated types
-/**
-\todo 20240328: apply same technique to the reading of an SVG file
-*/
+/// Variant Functor, use with std::visit().
 struct varGetPointPair
 {
 	template<typename T>
 	PointPair operator()(const T& a)   { return priv::getPointPair(a); }
 };
-struct varGetName
-{
-	template<typename T>
-	std::string operator()(const T& a)   { return getString( a.type() ); }
-};
 
-struct varDrawElem
-{
-	varDrawElem(
-		img::Image<cv::Mat>& img,
-		img::DrawParams&     dp
-	) : _img(img), _dparams(dp)
-	{}
-	template<typename T>
-	void operator()(const T& a)
-	{
-		a.draw( _img, _dparams );
-	}
-private:
-	img::Image<cv::Mat>& _img;
-	img::DrawParams      _dparams;
-};
 
 } // namespace var
 
@@ -1783,28 +1761,29 @@ struct Param_BB : Data
 	{
 		init( _vecvar[0], 0 );
 		init( _vecvar[1], 1 );
-
+		std::srand( time(nullptr) );
 		vpt.resize( 17 );
 		for( auto& pt: vpt )
 			pt.set(
 				1.0*rand()*300/RAND_MAX+50,
-				1.0*rand()*250/RAND_MAX+30
+				1.0*rand()*250/RAND_MAX+60
 			);
 	}
-/// Fills vector of variants with elements
-	void init( std::vector<var::VarType>& vecvar, int idx )
-	{
-		vecvar.push_back( var::VarType( OPolyline() ) );
-		vecvar.push_back( var::VarType( CPolyline() ) );
-		vecvar.push_back( var::VarType( Segment()   ) );
-		vecvar.push_back( var::VarType( Point2d()   ) );
-		vecvar.push_back( var::VarType( Circle()    ) );
-		vecvar.push_back( var::VarType( FRect()     ) );
 
-		_name[idx] = std::visit( var::varGetName{}, _vecvar[idx][_current[idx]] );
+/// Fills vector of variants with elements
+	void init( std::vector<CommonType>& vecvar, int idx )
+	{
+		vecvar.push_back( CommonType( OPolyline() ) );
+		vecvar.push_back( CommonType( CPolyline() ) );
+		vecvar.push_back( CommonType( Segment()   ) );
+		vecvar.push_back( CommonType( Point2d()   ) );
+		vecvar.push_back( CommonType( Circle()    ) );
+		vecvar.push_back( CommonType( FRect()     ) );
+
+		_name[idx] = getString( type( _vecvar[idx][_current[idx]] ) );
 	}
 
-	var::VarType getCurrent( int i ) const
+	CommonType getCurrent( int i ) const
 	{
 		return _vecvar[i][_current[i]];
 	}
@@ -1814,7 +1793,7 @@ struct Param_BB : Data
 		_current[i]++;
 		if( _current[i] == _vecvar[i].size() )
 			_current[i] = 0;
-		_name[i] = std::visit( var::varGetName{}, _vecvar[i][_current[i]] );
+		_name[i] = getString( type( _vecvar[i][_current[i]] ) );
 		return _name[i];
 	}
 
@@ -1824,7 +1803,7 @@ struct Param_BB : Data
 		initElems( _vecvar[1], 1 );
 	}
 
-	void initElems( std::vector<var::VarType>& vec, int i )
+	void initElems( std::vector<CommonType>& vec, int i )
 	{
 		std::vector<Point2d> vecpl1,vecpl2;
 		for( auto j = 0; j<3; j++ )
@@ -1847,8 +1826,8 @@ struct Param_BB : Data
 	std::string _name[2];        ///< name of current primitive
 
 private:
-	size_t                    _current[2] = {0,2}; ///< index of current
-	std::vector<var::VarType> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
+	size_t                  _current[2] = {0,2}; ///< index of current primitive stored in variant
+	std::vector<CommonType> _vecvar[2];          ///< 2 vectors of variants holding all the primitives
 };
 
 void action_BB( void* param )
@@ -1862,8 +1841,8 @@ void action_BB( void* param )
 
 	data.initElemsAll();                              // first initialize objects
 
-	var::varDrawElem vde1( data.img, style1 );        // then draw the current ones
-	var::varDrawElem vde2( data.img, style2 );
+	fct::DrawFunct vde1( data.img, style1 );        // then draw the current ones
+	fct::DrawFunct vde2( data.img, style2 );
 	const auto& curr1 = data.getCurrent(0);
 	const auto& curr2 = data.getCurrent(1);
 	std::visit( vde1, curr1 );
@@ -1882,8 +1861,18 @@ void action_BB( void* param )
 
 	data._pt_mouse.draw( data.img );
 
-	data.img.drawText( "[w]->red: "  + data._name[0], Point2d( 20,30), style1 );
-	data.img.drawText( "[x]->blue: " + data._name[1], Point2d( 20,60), style2 );
+	int y0=30;
+	int dy=30;
+
+	auto l1 = length(curr1);
+	auto l2 = length(curr2);
+	auto a1 = area(curr1);
+	auto a2 = area(curr2);
+	data.img.drawText( "[w]->red: "  + data._name[0], Point2d( 20,y0),    style1 );
+	data.img.drawText( " length=" + std::to_string(l1) + " area=" + std::to_string(a1), Point2d( 20,y0+dy),  style1 );
+	data.img.drawText( "[x]->blue: " + data._name[1], Point2d( 20,y0+2*dy), style2 );
+	data.img.drawText( " length=" + std::to_string(l2) + " area=" + std::to_string(a2), Point2d( 20,y0+3*dy),  style2 );
+
 	data.showImage();
 }
 
@@ -2019,6 +2008,7 @@ int main( int argc, const char** argv )
 
 		img::DrawParams dp;
 		std::cout << "Default draw parameters: " << dp;
+
 	std::vector<std::function<void(int)>> v_demo{
 		demo_BB,
 		demo_RCP,
@@ -2047,6 +2037,7 @@ int main( int argc, const char** argv )
 		v_demo[d-1](d);
 		return 0;
 	}
+
 	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
 	{
