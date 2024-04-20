@@ -230,7 +230,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.11.1"
+#define HOMOG2D_VERSION "2.11.2"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
