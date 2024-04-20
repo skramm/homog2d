@@ -193,10 +193,8 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -DNUMTYPE=double -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_d.stderr
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp buildf
-	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
-# 20240421 : removed redirection because of GH actions failure, but fine on local machine (???)
-#	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 .PHONY: test_bg_1 test_bn
 

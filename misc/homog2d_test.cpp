@@ -3756,7 +3756,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		CHECK( data.size() == 1 );
 		auto elem = data.at(0);
 		CHECK( type( elem ) == Type::Circle );
-		Circle cir = fct::VariantUnwrapper{elem};
+		CircleD cir = fct::VariantUnwrapper{elem};
 		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
@@ -3796,7 +3796,7 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 		if( type( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
-			const Ellipse ell2 = fct::VariantUnwrapper{ p };
+			const EllipseD ell2 = fct::VariantUnwrapper{ p };
 			CHECK( ell == ell2 );
 		}
 	}
