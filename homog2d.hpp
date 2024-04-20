@@ -11981,7 +11981,7 @@ HOMOG2D_LOG( "RETURN" );
 //------------------------------------------------------------------
 /// Visitor class, derived from the tinyxml2 visitor class. Used to import SVG data.
 /**
-Holds the imported data through std::unique_ptr
+Holds the imported data through std::variant
 */
 class Visitor: public tinyxml2::XMLVisitor
 {
@@ -12008,7 +12008,7 @@ public:
 		_svgTypesTable["polyline"] = T_polyline;
 		_svgTypesTable["polygon"]  = T_polygon;
 		_svgTypesTable["ellipse"]  = T_ellipse;
-		_svgTypesTable["path"]     =  T_path;
+		_svgTypesTable["path"]     = T_path;
 	}
 /// Returns the type as a member of enum SvgType, so the type can be used in a switch
 	SvgType getSvgType( std::string s ) const
@@ -12075,7 +12075,7 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 		{
 			case T_circle:
 				_vecVar.emplace_back(
-					Circle(
+					CircleD(
 						svgp::getAttribValue( e, "cx", n ),
 						svgp::getAttribValue( e, "cy", n ),
 						svgp::getAttribValue( e, "r", n )
@@ -12089,13 +12089,13 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto y1 = svgp::getAttribValue( e, "y", n );
 				auto w  = svgp::getAttribValue( e, "width", n );
 				auto h  = svgp::getAttribValue( e, "height", n );
-				_vecVar.emplace_back( FRect( x1, y1, x1+w, y1+h ) );
+				_vecVar.emplace_back( FRectD( x1, y1, x1+w, y1+h ) );
 			}
 			break;
 
 			case T_line:
 				_vecVar.emplace_back(
-					Segment(
+					SegmentD(
 						svgp::getAttribValue( e, "x1", n ),
 						svgp::getAttribValue( e, "y1", n ),
 						svgp::getAttribValue( e, "x2", n ),
@@ -12108,7 +12108,7 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = svgp::getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( CPolyline(vec_pts) );
+				_vecVar.emplace_back( CPolylineD(vec_pts) );
 			}
 			break;
 
@@ -12116,7 +12116,7 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 			{
 				auto pts_str = svgp::getAttribString( "points", e );
 				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( OPolyline(vec_pts) );
+				_vecVar.emplace_back( OPolylineD(vec_pts) );
 			}
 			break;
 
@@ -12129,9 +12129,9 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 					const auto& vec_vec_pts = parse_res.first;  //
 					for( const auto& vec_pts: vec_vec_pts )
 						if( parse_res.second == true )
-							_vecVar.emplace_back( CPolyline(vec_pts) );
+							_vecVar.emplace_back( CPolylineD(vec_pts) );
 						else
-							_vecVar.emplace_back( OPolyline(vec_pts) );
+							_vecVar.emplace_back( OPolylineD(vec_pts) );
 					}
 				catch( std::exception& err )      // an unhandled path command will just get the whole path command ignored
 				{
@@ -12149,7 +12149,7 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				auto rx = svgp::getAttribValue( e, "rx", n );
 				auto ry = svgp::getAttribValue( e, "ry", n );
 				auto rot = svgp::getEllipseRotateAttr( svgp::getAttribString( "transform", e ) );
-				auto ell = Ellipse( x, y, rx, ry );
+				auto ell = EllipseD( x, y, rx, ry );
 
 				auto H = Homogr().addTranslation(-x,-y).addRotation(rot.second).addTranslation(x,y);
 				_vecVar.push_back( H * ell );

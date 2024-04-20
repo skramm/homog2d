@@ -3721,16 +3721,15 @@ TEST_CASE( "v-based polymorphism", "[polymorph_1]" )
 
 	{
 		auto var = vvar[0];
-		Circle c = fct::VariantUnwrapper{var};
+		Circle_<NUMTYPE> c = fct::VariantUnwrapper{var};
 		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Circle );
 		CHECK( c == Circle() );
 
 		auto var2 = vvar[1];
-		Segment s = fct::VariantUnwrapper{var2};
+		Segment_<NUMTYPE> s = fct::VariantUnwrapper{var2};
 		CHECK( std::visit( fct::TypeFunct{}, var2 ) == Type::Segment );
 		CHECK( s == Segment() );
 	}
-
 }
 
 
