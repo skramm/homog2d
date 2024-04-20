@@ -14,10 +14,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add some feature to be able to print coordinates with desired precision at runtime
   - add `Vector` type (defined by dx,dy)
 
-**2020/04**: A move to C++17 is currently underways.
-This will greatly simplify the code, by enabling auto return types and replacing lots of SFINAE stuctures by `constexpr if`.
-It will also enable run-time polymorphism without pointers, with the help of `std::variant`.
-
 - current Work In Progress
   - polygon minimization
 
@@ -26,6 +22,7 @@ It will also enable run-time polymorphism without pointers, with the help of `st
 This was possible by moving to C++17.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
+  - SVG import: added reading of image size in file
   - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example)
   - bugfixes:
     - https://github.com/skramm/homog2d/issues/11

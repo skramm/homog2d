@@ -2148,7 +2148,8 @@ It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
 
 ### 10.3 - Technical details on svg file import
 
-You can fetch the size of image in the SVG file (as `double`):
+You can fetch the size of image in the SVG file (as `double`) with `getImgSize()`.
+However, this will throw if no size can be found, so you might consider using that in a "try/catch":
 ```C++
 std::pair<double,double> imSize(500.,500.); // default size
 try

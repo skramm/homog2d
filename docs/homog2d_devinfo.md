@@ -17,6 +17,12 @@ To get the "full" reference, run:
 $ make doc-dev
 ```
 
+**2024/04/21**: A move to C++17 has been done.
+This will greatly simplify the code, by enabling auto return types and replacing lots of SFINAE stuctures by `constexpr if`.
+It also enables run-time polymorphism without pointers, with the help of `std::variant`
+[details here](homog2d_manual.md#section_rtp).
+
+
 ## 2 - Git branches
 
 `master` branch is supposed to stay stable, with all tests passing.

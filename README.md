@@ -41,16 +41,14 @@ int main()
 ```
 
 ### News ###
+
+- 2024-04-21: switch to c++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp)
 - 2024-03-23: added SVG "path" element import
 - 2023-12-26: fresh 2.11 release, see https://github.com/skramm/homog2d/releases
 - 2023-11-17: added [doc index](docs/index.md)
 - 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
 - 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
-- 2022-12-17: moved CI tests from Travis to GH actions
-- 2022-12-05: re-enabled clang compiler in test suite
-- 2022-11-23: 2.9 release
-- 2022-09-23: passed the 1000 unit tests threshold (with `$ make test -j4 USE_TINYXML2=Y USE_OPENCV=Y`)
 
 (see [history](docs/homog2d_history.md) for more)
 
