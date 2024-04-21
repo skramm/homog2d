@@ -34,7 +34,7 @@ generateSegments( int nbSegs )
 	return vseg;
 }
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim  = 5; // nb images
 	int nbSegs = 40;

@@ -9,7 +9,7 @@
 using namespace h2d;
 using namespace h2d::img;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 25; // nb images
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,10);

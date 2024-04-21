@@ -10582,6 +10582,7 @@ drawText( img::Image<U>& im, std::string str, Point2d_<FPT> pt, img::DrawParams 
 }
 
 namespace priv {
+#if 1
 #ifdef HOMOG2D_USE_OPENCV
 template<typename FPT>
 void
@@ -10598,6 +10599,8 @@ impl_drawIndexes( img::Image<cv::Mat>& img, size_t c, const img::DrawParams& dp,
 		cv::putText( img.getReal(), std::to_string(c), seg.getCenter().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
 }
 #endif
+#endif
+
 
 /// Default signature, will be instanciated if no other fits (and does nothing)
 template<typename U,typename DUMMY>

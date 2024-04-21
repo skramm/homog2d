@@ -391,7 +391,7 @@ BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase/
 	@mkdir -p BUILD/showcase/gif
 	@echo " -Building program $@"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build png files by running program
 BUILD/showcase/%_00.png: BUILD/showcase/%
