@@ -19,6 +19,13 @@
 \file
 \brief Demo of reading svg files. Build with `$ make demo_import`
 
+Then run with
+`$ BUILD/demo_svg_import misc/test_files/France.svg`
+or
+`$ BUILD/demo_svg_import misc/test_files/France_Normandie.svg`
+
+This will generate a svg file in current folder that is a copy of what was read in the file.
+
 \todo 20240326: once we have a function able to get the min/max points of a container holding
 primitives (see \c getBB()), automatically adjust the size of output image.
 */

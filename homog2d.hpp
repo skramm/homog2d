@@ -742,231 +742,8 @@ private:
 		clear();
 	}
 #endif
-};
-
-#ifdef HOMOG2D_USE_OPENCV
-template <>
-inline
-Image<cv::Mat>::Image( size_t width, size_t height )
-{
-	p_setSize( width, height );
-}
-
-template <>
-inline
-void
-Image<cv::Mat>::setSize( size_t width, size_t height )
-{
-	p_setSize( width, height );
-}
-#endif
-
-template <typename T>
-void
-Image<T>::setSize( size_t width, size_t height )
-{
-	_width = width;
-	_height = height;
-}
-
-
-template <>
-inline
-void
-Image<SvgImage>::svgInit()
-{
-	_realImg._svgString << "<svg version=\"1.1\" width=\"" << _width
-		<< "\" height=\"" << _height
-		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
-		<< "<style>\n"
-		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
-		<< "</style>\n";
-/*		<< "<defs>\n"
-		<< "<marker id=\"dot\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" "  // marker for polyline points drawing
-		<< "markerWidth=\"5\" markerHeight=\"5\">"
-		<< "<circle cx=\"5\" cy=\"5\" r=\"3\" fill=\"red\" />"
-		<< "</marker>\n</defs>\n";*/
-	_isInitialized = true;
-}
-
-template <>
-inline
-Image<SvgImage>::Image( size_t width, size_t height )
-{
-	setSize( width, height );
-}
-
-template <>
-inline
-void
-Image<SvgImage>::write( std::string fname ) const
-{
-	assert( isInit() );
-	std::ofstream file( fname );
-	if( !file.is_open() )
-	{
-		HOMOG2D_THROW_ERROR_1( "unable to open output file '" + fname + "'" );
-	}
-	file << _realImg._svgString.str();
-	file << "</svg>\n";
-}
-
-template <>
-inline
-void
-Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
-{
-	_realImg._svgString.str("");
-	_realImg._svgString.clear();
-	_isInitialized = false;
-}
-
-#ifdef HOMOG2D_USE_OPENCV
-template <>
-inline
-void
-Image<cv::Mat>::clear( uint8_t r, uint8_t g, uint8_t b )
-{
-	_realImg = cv::Scalar(b,g,r);
-}
-template <>
-inline
-void
-Image<cv::Mat>::clear( uint8_t col )
-{
-	_realImg = cv::Scalar(col,col,col);
-}
-
-template <>
-inline
-void
-Image<cv::Mat>::write( std::string fname ) const
-{
-	cv::imwrite( fname, _realImg );
-}
-#endif // HOMOG2D_USE_OPENCV
-
-/*inline
-const char* getString( PtStyle t )
-{
-	const char* s=0;
-	switch( t )
-	{
-		case PtStyle::Plus:  s="Plus";  break;
-		case PtStyle::Times: s="Times"; break;
-		case PtStyle::Star:  s="Star";  break;
-		case PtStyle::Diam:  s="Diam";  break;
-		case PtStyle::Dot:   s="Dot";   break;
-		default: assert(0);
-	}
-	return s;
-}
-*/
-
-#if 0
-/// A svg image as a wrapper around a string, see manual, "Drawing things" section
-struct SvgImage
-{
-	std::ostringstream _svgString;
-};
-
-//------------------------------------------------------------------
-/// Opaque data structure, will hold the image type, depending on back-end library.
-/// This type is the one used in all the drawing functions.
-/**
-At present the two allowed types are cv::Mat
-(external Opencv library, requires the symbol HOMOG2D_USE_OPENCV to be defined)
-or SvgImage (no dependency)
-*/
-template<typename T>
-class Image
-{
-private:
-	T      _realImg;
-	size_t _width  = 500;
-	size_t _height = 500;
-	bool   _isInitialized = false;
-
-public:
-	Image() = default;
-	Image( T& m ): _realImg(m)
-	{}
-/// Returns a reference on the underlying image
-	T& getReal()
-	{
-		return _realImg;
-	}
-/// Returns a const reference on the underlying image
-	const T& getReal() const
-	{
-		return _realImg;
-	}
-	bool isInit() const
-	{
-		return _isInitialized;
-	}
-
-	std::pair<size_t,size_t> size() const
-	{
-		return std::make_pair( _width, _height );
-	}
-	Image( size_t, size_t )
-	{
-		assert(0);
-//		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
-//		static_assert( std::false_type, "no concrete implementation available" );
-	}
-
-	void svgInit()
-	{
-		_isInitialized = true; // default implementation, for opencv
-	}
-
-	void setSize( size_t width, size_t height );
-
-	void write( std::string ) const // will be specialized
-	{
-		assert(0);
-	}
-
-	int cols() const { return _width; }
-	int rows() const { return _height; }
-	void clear( Color c=Color(255,255,255) )                  { clear(c.r,c.g,c.b); }
-
-	void clear( uint8_t, uint8_t, uint8_t )
-	{
-		assert(0);
-	}
-	void clear( uint8_t )
-	{
-		assert(0);
-	}
-	void drawText( std::string, Point2d_<float>, img::DrawParams dp=img::DrawParams() );
-
-	template<typename U>
-	void draw( const U& object, img::DrawParams dp=img::DrawParams() );
-	template<typename U,typename V>
-	void draw( const std::pair<U,V>& p_objects, img::DrawParams dp=img::DrawParams() );
-
-
-#ifdef HOMOG2D_USE_OPENCV
-/// Show image on window \c wname (not available for SVG !)
-	void show( std::string wname )
-	{
-		cv::imshow( wname, _realImg );
-	}
-private:
-	void p_setSize( size_t width, size_t height )
-	{
-		_width  = width;
-		_height = height;
-		_realImg.create( (int)height, (int)width, CV_8UC3 );
-		clear();
-	}
-#endif
 }; // class Image
 
-
 #ifdef HOMOG2D_USE_OPENCV
 template <>
 inline
@@ -1068,23 +845,6 @@ Image<cv::Mat>::write( std::string fname ) const
 	cv::imwrite( fname, _realImg );
 }
 #endif // HOMOG2D_USE_OPENCV
-
-#endif
-
-template<typename IMG>
-template<typename U>
-void Image<IMG>::draw( const U& object, img::DrawParams dp )
-{
-	object.draw( *this, dp );
-}
-
-template<typename IMG>
-template<typename U,typename V>
-void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
-{
-	pairp.first.draw( *this, dp );
-	pairp.second.draw( *this, dp );
-}
 
 } // namespace img
 
@@ -1161,6 +921,15 @@ struct TypeFunct
 	Type operator ()(const T& a)
 	{
 		return a.type();
+	}
+};
+
+struct DTypeFunct
+{
+	template<typename T>
+	Dtype operator ()(const T& a)
+	{
+		return a.dtype();
 	}
 };
 
@@ -9688,7 +9457,7 @@ operator * (
 
 /// Returns the type of object or variant
 /**
-C++17 construction, removes the need for SFINAE
+Can be printed with `getString()`
 \sa CommonType_
 */
 template<typename T>
@@ -9698,6 +9467,19 @@ Type type( const T& elem )
 		return std::visit( fct::TypeFunct{}, elem );
 	else
 		return elem.type();
+}
+
+/// Returns the underlying data type of object or variant
+/**
+Can be printed with `getString()`
+*/
+template<typename T>
+Dtype dtype( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::DTypeFunct{}, elem );
+	else
+		return elem.dtype();
 }
 
 template<typename T>
@@ -10469,8 +10251,6 @@ getTanSegs( const Circle_<FPT1>& c1, const Circle_<FPT2>& c2 )
 	auto seg1 = Segment_<HOMOG2D_INUMTYPE>( p1, cB.center() );
 	auto seg2 = Segment_<HOMOG2D_INUMTYPE>( p2, cB.center() );
 
-//	return std::make_pair( seg1, seg2 );
-
 	auto psegs1 = seg1.getParallelSegs( cB.radius() );
 	if( psegs1.first.distTo(cA.center()) <  psegs1.second.distTo(cA.center()) )
 		std::swap( psegs1.first, psegs1.second );
@@ -10509,6 +10289,7 @@ HOMOG2D_INUMTYPE height( const FRect_<FPT>& rect )
 {
 	return rect.height();
 }
+
 /// Free function
 template<typename FPT>
 HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
@@ -10576,13 +10357,6 @@ center( const Circle_<FPT>& cir )
 	return cir.center();
 }
 
-/// Free function, return floating-point type
-/// \sa detail::Common::dtype()
-template<typename T>
-Dtype dtype( const T& t )
-{
-	return t.dtype();
-}
 /// Get data size expressed as number of bits for, respectively, mantissa and exponent
 /// \sa detail::Common::dsize()
 template<typename T>

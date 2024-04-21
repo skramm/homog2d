@@ -57,7 +57,6 @@ int main( int, char** argv )
 	img::Image<img::SvgImage> im(200,200);
 
 	fct::DrawFunct vde( im );
-//	fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
 	auto h = Homogr().addTranslation(3,3).addScale(15);
 	for( auto& e: vec )
 	{
@@ -67,9 +66,9 @@ int main( int, char** argv )
 			std::cout <<  "\n -length=" << length(e);
 		else
 			std::cout << "\n -length=N/A";
-		std::cout << "\n";
 
-//		auto tr = std::visit( transf, e ); // transform,
+		std::cout << "\n- data type=" << getString(dtype(e)) << '\n';
+
 		e = transform( h, e );
 		std::visit( vde, e );              // then draw
 

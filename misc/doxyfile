@@ -108,7 +108,9 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = . \
                          docs/ \
-                         misc/showcase/
+                         misc/showcase/ \
+                         misc/ \
+                         misc/test_files/
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
