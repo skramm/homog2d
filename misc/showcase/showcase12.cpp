@@ -41,7 +41,7 @@ void processRot(
 	}
 }
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	CPolyline pl;
 	std::vector<Point2d> vpts{

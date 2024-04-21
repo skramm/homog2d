@@ -7,7 +7,7 @@
 
 using namespace h2d;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 30; // nb images
 	auto k = 60;

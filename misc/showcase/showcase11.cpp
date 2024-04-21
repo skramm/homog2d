@@ -7,11 +7,10 @@
 
 using namespace h2d;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 30; // nb images
 
-	uint8_t g = 100;
 	auto kx1 = 78;
 	auto ky1 = 30;
 	auto kx2 = 43;

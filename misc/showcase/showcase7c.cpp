@@ -20,7 +20,7 @@ void draw_intersect( const Segment& seg, const T& p )
 			pt.draw( im, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 }
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto n = 35; // nb images
 	FRect rect(35,30,110,90);

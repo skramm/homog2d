@@ -846,6 +846,22 @@ Image<cv::Mat>::write( std::string fname ) const
 }
 #endif // HOMOG2D_USE_OPENCV
 
+template<typename IMG>
+template<typename U>
+void Image<IMG>::draw( const U& object, img::DrawParams dp )
+{
+       object.draw( *this, dp );
+}
+
+template<typename IMG>
+template<typename U,typename V>
+void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
+{
+       pairp.first.draw( *this, dp );
+       pairp.second.draw( *this, dp );
+}
+
+
 } // namespace img
 
 
@@ -10582,30 +10598,29 @@ drawText( img::Image<U>& im, std::string str, Point2d_<FPT> pt, img::DrawParams 
 }
 
 namespace priv {
-#if 1
-#ifdef HOMOG2D_USE_OPENCV
-template<typename FPT>
-void
-impl_drawIndexes( img::Image<cv::Mat>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt )
-{
-	if( dp._dpValues._showIndex )
-		cv::putText( img.getReal(), std::to_string(c), pt.getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
-}
-template<typename FPT>
-void
-impl_drawIndexes( img::Image<cv::Mat>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
-{
-	if( dp._dpValues._showIndex )
-		cv::putText( img.getReal(), std::to_string(c), seg.getCenter().getCvPtd(), 0, 0.8, cv::Scalar( 250,0,0 ), 2 );
-}
-#endif
-#endif
 
+/// Draw indexes for points
+template<typename IMG,typename FPT>
+void
+impl_drawIndexes( img::Image<IMG>& img, size_t c, const img::DrawParams& dp, const Point2d_<FPT>& pt )
+{
+	if( dp._dpValues._showIndex )
+		drawText( img, std::to_string(c), pt, dp );
+}
+
+/// Draw indexes for segment
+template<typename IMG,typename FPT>
+void
+impl_drawIndexes( img::Image<IMG>& img, size_t c, const img::DrawParams& dp, const Segment_<FPT>& seg )
+{
+	if( dp._dpValues._showIndex )
+		drawText( img, std::to_string(c), seg.getCenter(), dp );
+}
 
 /// Default signature, will be instanciated if no other fits (and does nothing)
-template<typename U,typename DUMMY>
+template<typename IMG,typename DUMMY>
 void
-impl_drawIndexes( img::Image<U>&, size_t, const img::DrawParams&, const DUMMY& )
+impl_drawIndexes( img::Image<IMG>&, size_t, const img::DrawParams&, const DUMMY& )
 {}
 
 } // namespace priv
@@ -10628,8 +10643,7 @@ void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::Dra
 	for( const auto& elem: cont )
 	{
 		elem.draw( img, dp );
-		priv::impl_drawIndexes( img, c, dp, elem );
-		c++;
+		priv::impl_drawIndexes( img, c++, dp, elem );
 	}
 }
 /// This version holds a \c std::function as 3th parameter. It can be used to pass a function
@@ -10649,8 +10663,7 @@ void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)
 	{
 		auto dp = func(c);
 		elem.draw( img, dp );
-		priv::impl_drawIndexes( img, c, dp, elem );
-		c++;
+		priv::impl_drawIndexes( img, c++, dp, elem );
 	}
 }
 

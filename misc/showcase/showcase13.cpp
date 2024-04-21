@@ -8,7 +8,7 @@
 
 using namespace h2d;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 20; // nb images
 
@@ -24,7 +24,7 @@ int main( int argc, const char** argv )
 		int nbpts = 1.0*rand() / RAND_MAX * (nbpts_max-nbpts_min) + nbpts_min;
 		std::vector<Point2d> vec(nbpts);
 		auto it = std::begin(vec);
-		for( auto i=0; i<nbpts; i++ )
+		for( auto j=0; j<nbpts; j++ )
 			*it++ = Point2d(
 				1.0*rand() / RAND_MAX * (cmax-cmin) + cmin,
 				1.0*rand() / RAND_MAX * (cmax-cmin) + cmin
