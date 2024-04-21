@@ -2402,6 +2402,7 @@ for( auto& e: vec )
 		<< "\n";
 }
 ```
+(warning, the `length()` function will throw here if a `Line2d` in in the vector)
 
 To draw these on an `img::Image`, you can do this:
 ```C++

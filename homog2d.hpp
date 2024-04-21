@@ -9477,7 +9477,8 @@ Can be printed with `getString()`
 \sa CommonType_
 */
 template<typename T>
-Type type( const T& elem )
+Type
+type( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::TypeFunct{}, elem );
@@ -9490,7 +9491,8 @@ Type type( const T& elem )
 Can be printed with `getString()`
 */
 template<typename T>
-Dtype dtype( const T& elem )
+Dtype
+dtype( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::DTypeFunct{}, elem );
@@ -9499,7 +9501,8 @@ Dtype dtype( const T& elem )
 }
 
 template<typename T>
-HOMOG2D_INUMTYPE length( const T& elem )
+HOMOG2D_INUMTYPE
+length( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::LengthFunct{}, elem );
@@ -9508,7 +9511,8 @@ HOMOG2D_INUMTYPE length( const T& elem )
 }
 
 template<typename T>
-HOMOG2D_INUMTYPE area( const T& elem )
+HOMOG2D_INUMTYPE
+area( const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::AreaFunct{}, elem );
@@ -9521,7 +9525,8 @@ HOMOG2D_INUMTYPE area( const T& elem )
 \warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
 */
 template<typename T, typename FPT>
-CommonType_<FPT> transform( const Homogr_<FPT>& h, const T& elem )
+CommonType_<FPT>
+transform( const Homogr_<FPT>& h, const T& elem )
 {
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::TransformFunct<FPT>(h), elem );
@@ -9970,7 +9975,8 @@ getClosestPoints(
 );
 
 namespace priv {
-/// used in getClosestPoints()
+
+/// Used in getClosestPoints()
 template<typename PLT1,typename FPT1,typename PLT2,typename FPT2>
 class ClosestPoints
 {
@@ -10071,7 +10077,8 @@ getPts( const Segment_<FPT>& seg )
 /// Returns Segment supporting line (free function)
 /// \sa Segment_::getLine()
 template<typename FPT>
-Line2d_<FPT> getLine( const Segment_<FPT>& seg )
+Line2d_<FPT>
+getLine( const Segment_<FPT>& seg )
 {
 	return seg.getLine();
 }
@@ -10079,7 +10086,8 @@ Line2d_<FPT> getLine( const Segment_<FPT>& seg )
 /// Returns Extended Segment (free function)
 /// \sa Segment_::geExtended()
 template<typename FPT>
-Segment_<FPT> getExtended( const Segment_<FPT>& seg )
+Segment_<FPT>
+getExtended( const Segment_<FPT>& seg )
 {
 	return seg.getExtended();
 }
@@ -10110,7 +10118,6 @@ getOrthogPts( const Segment_<FPT>& seg )
 {
 	return seg.getOrthogPts();
 }
-
 
 //------------------------------------------------------------------
 /// Free function, returns segment between two circle centers (or ellipse)
@@ -10301,14 +10308,16 @@ getPts( const FRect_<FPT>& rect )
 
 /// Free function
 template<typename FPT>
-HOMOG2D_INUMTYPE height( const FRect_<FPT>& rect )
+HOMOG2D_INUMTYPE
+height( const FRect_<FPT>& rect )
 {
 	return rect.height();
 }
 
 /// Free function
 template<typename FPT>
-HOMOG2D_INUMTYPE width( const FRect_<FPT>& rect )
+HOMOG2D_INUMTYPE
+width( const FRect_<FPT>& rect )
 {
 	return rect.width();
 }
@@ -10332,7 +10341,8 @@ getDiagonals( const FRect_<FPT>& rect )
 /// Returns centroid of Polyline (free function)
 /// \sa PolylineBase::centroid()
 template<typename PLT,typename FPT>
-base::LPBase<typ::IsPoint,FPT> centroid( const base::PolylineBase<PLT,FPT>& pl )
+base::LPBase<typ::IsPoint,FPT>
+centroid( const base::PolylineBase<PLT,FPT>& pl )
 {
 	return pl.centroid();
 }
@@ -10376,7 +10386,8 @@ center( const Circle_<FPT>& cir )
 /// Get data size expressed as number of bits for, respectively, mantissa and exponent
 /// \sa detail::Common::dsize()
 template<typename T>
-std::pair<int,int> dsize( const T& t )
+std::pair<int,int>
+dsize( const T& t )
 {
 	return t.dsize();
 }
@@ -10438,7 +10449,8 @@ getCenter(const T& other )
 Calls the member function. Type checking is done there.
 */
 template<typename T,typename FP1,typename FP2>
-void translate( T& prim, FP1 dx, FP2 dy )
+void
+translate( T& prim, FP1 dx, FP2 dy )
 {
 	prim.translate( dx, dy );
 }
@@ -10448,7 +10460,8 @@ void translate( T& prim, FP1 dx, FP2 dy )
 Calls the member function. Type checking is done there.
 */
 template<typename T,typename FP1,typename FP2>
-void translate( T& prim, const std::pair<FP1,FP2>& ppt )
+void
+translate( T& prim, const std::pair<FP1,FP2>& ppt )
 {
 	prim.translate( ppt.first, ppt.second );
 }
@@ -10457,11 +10470,12 @@ void translate( T& prim, const std::pair<FP1,FP2>& ppt )
 /**
 Calls the member function. Type checking is done there.
 */
-	template<typename T,typename FP>
-	void moveTo( T& prim, const Point2d_<FP>& pt )
-	{
-		prim.moveTo( pt );
-	}
+template<typename T,typename FP>
+void
+moveTo( T& prim, const Point2d_<FP>& pt )
+{
+	prim.moveTo( pt );
+}
 
 /// Move primitive to other location (free function)
 /**
@@ -10542,7 +10556,7 @@ findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 //------------------------------------------------------------------
 /// Returns index of point in container \c cont that is the farthest to \c pt
 template<typename FPT, typename T>
-std::pair<size_t,size_t>
+auto
 findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
 	if( cont.empty() )
@@ -10590,7 +10604,6 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 
 /// Free function, draws text \c str at position \c pt
 template<typename U,typename FPT>
-inline
 void
 drawText( img::Image<U>& im, std::string str, Point2d_<FPT> pt, img::DrawParams dp=img::DrawParams() )
 {
@@ -10637,7 +10650,8 @@ template<
 		T
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
+void
+draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
 {
 	size_t c=0;
 	for( const auto& elem: cont )
@@ -10656,7 +10670,8 @@ template<
 		T
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
+void
+draw( img::Image<U>& img, const T& cont, std::function<img::DrawParams(int)>& func )
 {
 	size_t c=0;
 	for( const auto& elem: cont )
