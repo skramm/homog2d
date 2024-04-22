@@ -2767,6 +2767,17 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	CHECK( gt == osegs );
 }
 
+TEST_CASE( "min/max of two objects", "[minmax]" )
+{
+	Point2d_<NUMTYPE> pt0, pt1(1,1), pt2(2,2), pt3(3,3);
+	auto pp1 = std::make_pair( pt0,pt1 );
+	auto pp2 = std::make_pair( pt2,pt3 );
+	auto ppts = getMinMax( pp1, pp2 );
+	CHECK( ppts.first  == Point2d_<NUMTYPE>() );
+	CHECK( ppts.second == Point2d_<NUMTYPE>(3,3) );
+// TODO: EXTEND
+}
+
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
 	Point2d_<NUMTYPE> pt,pt2(1,1);
@@ -3638,7 +3649,7 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 	}
 }
 
-
+#if 0
 TEST_CASE( "general binding", "[gen_bind]" )
 {
 	struct MyType
@@ -3650,6 +3661,7 @@ TEST_CASE( "general binding", "[gen_bind]" )
 	CHECK( pt.getX() == 3 );
 	Line2d li (mtpt); // ???
 }
+#endif
 
 TEST_CASE( "SVG drawing default", "[svg_draw_default]" )
 {
@@ -3712,22 +3724,35 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 //////////////////////////////////////////////////////////////
 /////               POLYMORPHISM                       /////
 //////////////////////////////////////////////////////////////
-TEST_CASE( "v-based polymorphism", "[polymorph_1]" )
+TEST_CASE( "variant conversion tests", "[varconv]" )
+{
+	CommonType_<NUMTYPE> var;
+	var = Circle_<NUMTYPE>{};
+	Circle_<NUMTYPE> c = fct::VariantUnwrapper{var};
+	// TODO
+}
+
+TEST_CASE( "variant-based polymorphism", "[polymorph_1]" )
 {
 	std::vector<CommonType_<NUMTYPE>> vvar;
 	vvar.push_back( Circle_<NUMTYPE>{} );
 	vvar.push_back( Segment_<NUMTYPE>{} );
+	vvar.push_back( Line2d_<NUMTYPE>{} );
 
 	{
-		auto var = vvar[0];
-		Circle_<NUMTYPE> c = fct::VariantUnwrapper{var};
-		CHECK( std::visit( fct::TypeFunct{}, var ) == Type::Circle );
+		auto var0 = vvar[0];
+		Circle_<NUMTYPE> c = fct::VariantUnwrapper{var0};
+		CHECK( std::visit( fct::TypeFunct{}, var0 ) == Type::Circle );
 		CHECK( c == Circle() );
 
-		auto var2 = vvar[1];
-		Segment_<NUMTYPE> s = fct::VariantUnwrapper{var2};
-		CHECK( std::visit( fct::TypeFunct{}, var2 ) == Type::Segment );
+		auto var1 = vvar[1];
+		Segment_<NUMTYPE> s = fct::VariantUnwrapper{var1};
+		CHECK( type( var1 ) == Type::Segment );
 		CHECK( s == Segment() );
+
+		auto var2 = vvar[2];
+		Line2d_<NUMTYPE> l = fct::VariantUnwrapper{var2};
+		CHECK( type( var2 ) == Type::Line2d );
 	}
 }
 

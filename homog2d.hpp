@@ -430,7 +430,8 @@ genRandomColors( size_t nb, int minval=20, int maxval=250 )
 /// A svg image as a wrapper around a string, see manual, "Drawing things" section
 struct SvgImage
 {
-	std::ostringstream _svgString;
+	std::ostringstream _svgString; ///< the svg objects
+	std::ostringstream _svgHeader; ///< the svg header
 };
 
 
@@ -701,6 +702,8 @@ public:
 	}
 
 	void setSize( size_t width, size_t height );
+	template<typename F>
+	void setSize( const std::pair<F,F>& );
 
 	void write( std::string ) const // will be specialized
 	{
@@ -761,12 +764,20 @@ Image<cv::Mat>::setSize( size_t width, size_t height )
 }
 #endif
 
-template <typename T>
+template <typename IMG>
 void
-Image<T>::setSize( size_t width, size_t height )
+Image<IMG>::setSize( size_t width, size_t height )
 {
 	_width = width;
 	_height = height;
+}
+
+template <typename IMG>
+template <typename T>
+void
+Image<IMG>::setSize( const std::pair<T,T>& pa )
+{
+	setSize( pa.first, pa.second );
 }
 
 
@@ -978,6 +989,7 @@ struct AreaFunct
 		return a.area();
 	}
 };
+
 
 //------------------------------------------------------------------
 /// A functor used to apply a homography matrix to an object
@@ -2401,7 +2413,6 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		}
 		size_t size() const { return _doesIntersect?2:0; }
 
-//		std::pair<Point2d_<FPT>,Point2d_<FPT>>
 		PointPair1_<FPT>
 		get() const
 		{
@@ -2542,7 +2553,7 @@ public:
 
 /// Constructor from pair of points
 	template<typename FPT2>
-	FRect_( const std::pair<Point2d_<FPT2>,Point2d_<FPT2>>& ppts )
+	FRect_( const PointPair1_<FPT2>& ppts )
 	{
 		set( ppts.first, ppts.second );
 	}
@@ -2638,7 +2649,6 @@ public:
 	}
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
-//	std::pair<Point2d_<FPT>,Point2d_<FPT>>
 	PointPair1_<FPT>
 	getPts() const
 	{
@@ -3346,7 +3356,7 @@ public:
 
 private:
 	template<typename FPT2>
-	bool implC_isInside( const std::pair<Point2d_<FPT2>, Point2d_<FPT2>>& ppts ) const
+	bool implC_isInside( const PointPair1_<FPT2>& ppts ) const
 	{
 		const auto& p1 = ppts.first;
 		const auto& p2 = ppts.second;
@@ -3548,7 +3558,7 @@ namespace priv {
 
 /// Helper function, factorized here for the two impl_getPoints_A() implementations
 template<typename FPT, typename FPT2>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+auto
 getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
 {
 	auto arr = li.get();
@@ -3750,12 +3760,8 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	LPBase( T0 v0, T1 v1, T2 v2 )
 	{
 		set( v0, v1, v2 );
-/*		HOMOG2D_CHECK_IS_NUMBER(T);
-		_v[0] = v0;
-		_v[1] = v1;
-		_v[2] = v2;
-		p_normalizePL();*/
 	}
+
 /// Assign homogeneous values
 	template<typename T0,typename T1,typename T2>
 	void set( T0 v0, T1 v1, T2 v2 )
@@ -3776,6 +3782,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 		impl_init_4( x1, y1, x2, y2, detail::BaseHelper<LP>() );
 	}
 
+#if 0
 /// Constructor of Point/Line from random type holding x,y values, see manual, section
 	template<
 		typename T,
@@ -3788,6 +3795,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::BaseHelper<LP>() );
 	}
+#endif
 
 /// Constructor from an array holding 3 values of same type (a direct copy can be done)
 	template<
@@ -3992,7 +4000,6 @@ public:
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
 	template<typename FPT2>
-//	std::pair<Point2d_<FPT>,Point2d_<FPT>>
 	PointPair1_<FPT>
 	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
 	{
@@ -4001,7 +4008,7 @@ public:
 
 	/// Returns a pair of points that are lying on line at distance \c dist from point \c pt, assuming that one is lying on the line.
 	template<typename FPT2>
-	std::pair<Point2d_<FPT>,Point2d_<FPT>>
+	PointPair1_<FPT>
 	getPoints( const Point2d_<FPT>& pt, FPT2 dist ) const
 	{
 		return impl_getPoints_B( pt, dist, detail::BaseHelper<LP>() );
@@ -4879,7 +4886,7 @@ public:
 	}
 
 /// Constructor 4: build segment from pair of points
-	Segment_( const std::pair<Point2d_<FPT>,Point2d_<FPT>>& ppts )
+	Segment_( const PointPair1_<FPT>& ppts )
 		: Segment_(ppts.first, ppts.second)
 	{}
 
@@ -4910,7 +4917,7 @@ public:
 
 /// Setter from a std::pair (points need to be of same underlying type)
 	template<typename FPT2>
-	void set( const std::pair<Point2d_<FPT2>,Point2d_<FPT2>> ppts )
+	void set( const PointPair1_<FPT2>& ppts )
 	{
 		set( ppts.first, ppts.second );
 	}
@@ -9699,7 +9706,7 @@ getBB( const T& object )
 	return object.getBB();
 }
 
-namespace priv {
+namespace ppair {
 
 /// Return pair of points defining a BB of a primitive
 /// Overload 1/4, private free function
@@ -9750,7 +9757,7 @@ getPointPair( const T& poly )
 		const auto& pts = poly.getPts();
 		return std::make_pair( pts[0], pts[1] );
 	}
-	return getBB_Points( poly.getPts() );
+	return priv::getBB_Points( poly.getPts() );
 }
 
 /// Return pair of points defining a BB of a Point2d
@@ -9790,7 +9797,7 @@ getPointPair( const T& elem )
 }
 
 template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+PointPair1_<FPT>
 getPointPair( const Line2d_<FPT>& )
 {
 	HOMOG2D_START;
@@ -9798,12 +9805,31 @@ getPointPair( const Line2d_<FPT>& )
 }
 
 
-} // namespace priv
+} // namespace ppair
 
+
+namespace fct {
+//------------------------------------------------------------------
+/// A functor to get pair of points englobing the element
+/**
+\sa CommonType_
+\sa area()
+*/
+struct PtPairFunct
+{
+	template<typename T>
+	PointPair1_<typename T::FType>
+	operator ()(const T& a)
+	{
+		return ppair::getPointPair(a);
+	}
+};
+
+} // namespace fct
 
 template<typename T1,typename T2,typename T3,typename T4>
 auto
-getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
+getMinMax( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
 	HOMOG2D_START;
 
@@ -9813,7 +9839,15 @@ getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 	arr[2] = pp1.second;
 	arr[3] = pp2.second;
 
-	return FRect_<T1>( priv::getBB_Points( arr ) );
+	return priv::getBB_Points( arr );
+}
+
+template<typename T1,typename T2,typename T3,typename T4>
+auto
+getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
+{
+	HOMOG2D_START;
+	return FRect_<T1>( getMinMax( pp1, pp2 ) );
 }
 
 //------------------------------------------------------------------
@@ -9834,8 +9868,8 @@ getBB( const T1& elem1, const T2& elem2 )
 	try
 	{
 		out = getBB(
-			priv::getPointPair( elem1 ),
-			priv::getPointPair( elem2 )
+			ppair::getPointPair( elem1 ),
+			ppair::getPointPair( elem2 )
 		);
 	}
 	catch( const std::exception& err )
@@ -9869,13 +9903,13 @@ getBB( const T1& p1, const T2& p2 )
 		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
 
 	if( p1.size() != 0 &&  p2.size() == 0 )
-		return FRect_<typename T1::FType>( priv::getPointPair( p1 ) );
+		return FRect_<typename T1::FType>( ppair::getPointPair( p1 ) );
 	if( p1.size() == 0 &&  p2.size() != 0 )
-		return FRect_<typename T1::FType>( priv::getPointPair( p2 ) );
+		return FRect_<typename T1::FType>( ppair::getPointPair( p2 ) );
 
 	return getBB(
-			priv::getPointPair( p1 ),
-			priv::getPointPair( p2 )
+			ppair::getPointPair( p1 ),
+			ppair::getPointPair( p2 )
 	);
 }
 //------------------------------------------------------------------
@@ -10005,7 +10039,7 @@ private:
 	}
 
 public:
-	std::pair<Point2d_<HOMOG2D_INUMTYPE>,Point2d_<HOMOG2D_INUMTYPE>>
+	PointPair1_<HOMOG2D_INUMTYPE>
 	getPoints() const
 	{
 		return std::make_pair(
@@ -10068,7 +10102,7 @@ getClosestPoints(
 /// Returns the points of Segment as a std::pair (free function)
 /// \sa Segment_::getPts()
 template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+auto
 getPts( const Segment_<FPT>& seg )
 {
 	return seg.getPts();
@@ -10300,7 +10334,7 @@ get4Pts( const FRect_<FPT>& rect )
 /// Returns the 2 major points of the rectangle (free function)
 /// \sa FRect_::getPts()
 template<typename FPT>
-std::pair<Point2d_<FPT>,Point2d_<FPT>>
+auto
 getPts( const FRect_<FPT>& rect )
 {
 	return rect.getPts();

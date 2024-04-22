@@ -65,7 +65,11 @@ int main( int, char** argv )
 		if( type(e) != Type::Line2d )
 			std::cout <<  "\n -length=" << length(e);
 		else
+		{
 			std::cout << "\n -length=N/A";
+			Line2d li = fct::VariantUnwrapper{e};
+			std::cout << "li=" << li << '\n';
+		}
 
 		std::cout << "\n- data type=" << getString(dtype(e)) << '\n';
 

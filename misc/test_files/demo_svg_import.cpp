@@ -77,19 +77,27 @@ int main( int argc, const char** argv )
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 	fct::DrawFunct<img::SvgImage> dfunc( out );
 
+	PointPair1_<double> pp_all;
 	size_t c = 0;
 	for( const auto& e: data )
 	{
 		std::visit( dfunc, e );   // draw element
 
+		auto ptpair = std::visit( fct::PtPairFunct{}, e );
+		pp_all = getMinMax( pp_all, ptpair );
+
 		std::cout << "Shape " << c++ << ": " << getString( type(e) );
 
-		if( std::holds_alternative<OPolyline>(e) )
+		if( type(e) == Type::OPolyline )
 			std::cout  << " size=" << std::get<OPolyline>(e).size();
-		if( std::holds_alternative<CPolyline>(e) )
+		if( type(e) == Type::CPolyline )
 			std::cout  << " size=" << std::get<CPolyline>(e).size();
 
 		std::cout << '\n';
 	}
+	auto s = FRect(pp_all);
+	out.setSize( s.size() );
+	std::cout << "min/max=" << s << '\n';
+
 	out.write( "demo_import.svg" );
 }

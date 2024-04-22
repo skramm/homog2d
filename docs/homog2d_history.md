@@ -23,6 +23,7 @@ This was possible by moving to C++17.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
   - SVG import: added reading of image size in file
+  - added `getMinMax()` of a pair of `Point2d`
   - added SVG import of `path` element, [see manual](homog2d_manual.md#svg_import_example)
   - bugfixes:
     - https://github.com/skramm/homog2d/issues/11

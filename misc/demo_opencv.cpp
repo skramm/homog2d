@@ -1741,19 +1741,6 @@ void printFailure( std::exception& e )
 
 using PointPair = PointPair1_<double>;
 
-namespace var {
-
-
-/// Variant Functor, use with std::visit().
-struct varGetPointPair
-{
-	template<typename T>
-	PointPair operator()(const T& a)   { return priv::getPointPair(a); }
-};
-
-
-} // namespace var
-
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
@@ -1848,8 +1835,8 @@ void action_BB( void* param )
 	std::visit( vde1, curr1 );
 	std::visit( vde2, curr2 );
 
-	auto pp1 = std::visit( var::varGetPointPair{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
-	auto pp2 = std::visit( var::varGetPointPair{}, curr2 );
+	auto pp1 = std::visit( fct::PtPairFunct{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
+	auto pp2 = std::visit( fct::PtPairFunct{}, curr2 );
 
 	try	{
 		getBB( pp1, pp2 ).draw( data.img, style0 );
