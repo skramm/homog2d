@@ -99,7 +99,7 @@ show:
 	@echo "CXX=$(CXX)"
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
 	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
-	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
+	@echo "DOC_IMAGES_OUT=$(DOC_IMAGES_OUT)"
 	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
 	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
@@ -255,26 +255,27 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile bu
 
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/png/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
 
-.PRECIOUS: BUILD/img/png/%
+.PRECIOUS: BUILD/img/%
 
-# run the program => builds the png image
-BUILD/img/png/%.png: BUILD/img/png/bin/%
+# run the program => builds the png (or svg) image
+BUILD/img/%.png: BUILD/img/bin/%
 	@echo "Running $< to generate $@"
-	@cd BUILD/img/png; bin/$(notdir $<)
+	@cd BUILD/img; bin/$(notdir $<)
 
 # build the program
-BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
-	@mkdir -p BUILD/img/png/bin
+BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
+	@mkdir -p BUILD/img/bin
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-doc_fig: $(DOC_IMAGES_PNG) build_gif_pip
+
+doc_fig: $(DOC_IMAGES_OUT) build_gif_pip
 	@echo "done target $@"
 
 build_gif_pip:
-	convert -delay 80 BUILD/img/png/demo_pip_* BUILD/img/png/demo_pip.gif
+	convert -delay 80 BUILD/img/demo_pip_* BUILD/img/demo_pip.gif
 
 
 #=======================================================================

@@ -9836,7 +9836,8 @@ getBB( const T& t )
 			if constexpr( trait::HasBB<typename T::value_type>::value )
 			{
 //				using ElemType = typename T::value_type;
-				using FPT = typename ElemType::FType;
+//				using FPT = typename ElemType::FType;
+				using FPT = typename T::value_type::FType;
 
 				if( t.empty() )
 					HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
