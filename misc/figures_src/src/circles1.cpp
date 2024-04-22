@@ -14,7 +14,7 @@ int main()
 
 	img::Image<SvgImage> im( 450,300 );
 
-	c1.draw( im,  DrawParams().setColor(0,0,100).setAttrString("fill=\"rgb(100,0,0)\"") );
+	c1.draw( im,  DrawParams().setColor(0,0,100).setAttrString("fill=\"rgb(100,150,200)\"") );
 	c2.draw( im,  DrawParams().setColor(0,0,100) );
 	seg.draw( im, DrawParams().setColor(250,0,0) );
 //	auto lp1 = seg.getOrthonalLine( c1.center() );

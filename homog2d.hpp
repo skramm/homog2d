@@ -196,10 +196,6 @@ See https://github.com/skramm/homog2d
 	}
 
 
-#define HOMOG2D_SVG_CHECK_INIT( im ) \
-	if( !im.isInit() ) \
-		im.svgInit();
-
 ///////////////////////////////////////
 // Default values for thresholds
 #ifndef HOMOG2D_THR_ZERO_DIST
@@ -431,7 +427,6 @@ genRandomColors( size_t nb, int minval=20, int maxval=250 )
 struct SvgImage
 {
 	std::ostringstream _svgString; ///< the svg objects
-	std::ostringstream _svgHeader; ///< the svg header
 };
 
 
@@ -663,7 +658,6 @@ private:
 	T      _realImg;
 	size_t _width  = 500;
 	size_t _height = 500;
-	bool   _isInitialized = false;
 
 public:
 	Image() = default;
@@ -679,10 +673,6 @@ public:
 	{
 		return _realImg;
 	}
-	bool isInit() const
-	{
-		return _isInitialized;
-	}
 
 	std::pair<size_t,size_t> size() const
 	{
@@ -694,11 +684,6 @@ public:
 		assert(0);
 //		static_assert( detail::AlwaysFalse<std::false_type>::value, "no concrete implementation available" );
 //		static_assert( std::false_type, "no concrete implementation available" );
-	}
-
-	void svgInit()
-	{
-		_isInitialized = true; // default implementation, for opencv
 	}
 
 	void setSize( size_t width, size_t height );
@@ -780,26 +765,6 @@ Image<IMG>::setSize( const std::pair<T,T>& pa )
 	setSize( pa.first, pa.second );
 }
 
-
-template <>
-inline
-void
-Image<SvgImage>::svgInit()
-{
-	_realImg._svgString << "<svg version=\"1.1\" width=\"" << _width
-		<< "\" height=\"" << _height
-		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
-		<< "<style>\n"
-		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
-		<< "</style>\n";
-/*		<< "<defs>\n"
-		<< "<marker id=\"dot\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" "  // marker for polyline points drawing
-		<< "markerWidth=\"5\" markerHeight=\"5\">"
-		<< "<circle cx=\"5\" cy=\"5\" r=\"3\" fill=\"red\" />"
-		<< "</marker>\n</defs>\n";*/
-	_isInitialized = true;
-}
-
 template <>
 inline
 Image<SvgImage>::Image( size_t width, size_t height )
@@ -812,12 +777,18 @@ inline
 void
 Image<SvgImage>::write( std::string fname ) const
 {
-	assert( isInit() );
 	std::ofstream file( fname );
 	if( !file.is_open() )
 	{
 		HOMOG2D_THROW_ERROR_1( "unable to open output file '" + fname + "'" );
 	}
+	file << "<svg version=\"1.1\" width=\"" << _width
+		<< "\" height=\"" << _height
+		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+		<< "<style>\n"
+		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
+		<< "</style>\n";
+
 	file << _realImg._svgString.str();
 	file << "</svg>\n";
 }
@@ -829,7 +800,6 @@ Image<SvgImage>::clear( uint8_t, uint8_t, uint8_t )
 {
 	_realImg._svgString.str("");
 	_realImg._svgString.clear();
-	_isInitialized = false;
 }
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -989,7 +959,6 @@ struct AreaFunct
 		return a.area();
 	}
 };
-
 
 //------------------------------------------------------------------
 /// A functor used to apply a homography matrix to an object
@@ -4060,8 +4029,8 @@ public:
 		return impl_getParallelLines( dist, detail::BaseHelper<LP>() );
 	}
 
-	FPT getX() const { return impl_getX( detail::BaseHelper<LP>() ); }
-	FPT getY() const { return impl_getY( detail::BaseHelper<LP>() ); }
+	HOMOG2D_INUMTYPE getX() const { return impl_getX( detail::BaseHelper<LP>() ); }
+	HOMOG2D_INUMTYPE getY() const { return impl_getY( detail::BaseHelper<LP>() ); }
 
 /// Translate Point2d, does nothing for Line2d ( \sa impl_translate() )
 	template<typename T1,typename T2>
@@ -4187,11 +4156,11 @@ private:
 		HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
 	}
 
-	FPT impl_getX( const detail::BaseHelper<typename typ::IsPoint>& ) const
+	HOMOG2D_INUMTYPE impl_getX( const detail::BaseHelper<typename typ::IsPoint>& ) const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_v[0])/_v[2];
 	}
-	FPT impl_getY( const detail::BaseHelper<typename typ::IsPoint>& ) const
+	HOMOG2D_INUMTYPE impl_getY( const detail::BaseHelper<typename typ::IsPoint>& ) const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_v[1])/_v[2];
 	}
@@ -11063,11 +11032,9 @@ base::LPBase<LP,FPT>::impl_draw_LP( img::Image<T>& im, img::DrawParams dp, const
 	assert( im.rows() > 2 );
 	assert( im.cols() > 2 );
 
-	HOMOG2D_SVG_CHECK_INIT( im ); // useless if opencv, but harmless (and needed for Svg)
-
 	Point2d_<FPT> pt1; // 0,0
 	Point2d_<FPT> pt2( im.cols()-1, im.rows()-1 );
-//	FRect_<FPT> r( pt1, pt2 );
+
 	auto ri = this->intersects( pt1,  pt2 );
 	if( ri() )
 	{
@@ -11326,8 +11293,6 @@ template<typename FPT>
 void
 Circle_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
-	HOMOG2D_SVG_CHECK_INIT( im );
-
 	im.getReal()._svgString
 		<< "<circle cx=\"" << center().getX()
 		<< "\" cy=\"" << center().getY()
@@ -11347,8 +11312,6 @@ template<typename FPT>
 void
 Ellipse_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )  const
 {
-	HOMOG2D_SVG_CHECK_INIT( im );
-
 	im.getReal()._svgString << "<ellipse cx=\""
 		<< getCenter().getX()
 		<< "\" cy=\""
@@ -11373,8 +11336,6 @@ template<typename FPT>
 void
 FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
-	HOMOG2D_SVG_CHECK_INIT( im );
-
 	im.getReal()._svgString << "<rect x=\""
 		<< getPts().first.getX()
 		<< "\" y=\""
@@ -11397,8 +11358,6 @@ template<typename FPT>
 void
 Segment_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
-	HOMOG2D_SVG_CHECK_INIT( im );
-
 	if( dp._dpValues._showPoints )
 		im.getReal()._svgString << "<g>\n";
 
@@ -11510,8 +11469,6 @@ template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
-	HOMOG2D_SVG_CHECK_INIT( im );
-
 	if( size() < 2 ) // nothing to draw
 		return;
 
