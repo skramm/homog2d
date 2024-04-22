@@ -960,6 +960,7 @@ struct AreaFunct
 	}
 };
 
+
 //------------------------------------------------------------------
 /// A functor used to apply a homography matrix to an object
 template<typename FPT>
@@ -4056,6 +4057,12 @@ public:
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
 
+/// Needed because of variant (\sa CommonType)
+	FRect_<FPT> getBB() const
+	{
+		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no area" );
+	}
+
 private:
 	template<typename ANY>
 	ANY impl_getPt( const detail::BaseHelper<typename typ::IsPoint>& ) const
@@ -4960,6 +4967,11 @@ in the range \f$ [0,\pi/2] \f$
 	HOMOG2D_INUMTYPE getAngle( const U& other ) const
 	{
 		return other.getAngle( this->getLine() );
+	}
+/// Needed because of variant (\sa CommonType)
+	FRect_<FPT> getBB() const
+	{
+		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no area" );
 	}
 ///@}
 
@@ -9447,70 +9459,6 @@ operator * (
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
-/// Returns the type of object or variant
-/**
-Can be printed with `getString()`
-\sa CommonType_
-*/
-template<typename T>
-Type
-type( const T& elem )
-{
-	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( fct::TypeFunct{}, elem );
-	else
-		return elem.type();
-}
-
-/// Returns the underlying data type of object or variant
-/**
-Can be printed with `getString()`
-*/
-template<typename T>
-Dtype
-dtype( const T& elem )
-{
-	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( fct::DTypeFunct{}, elem );
-	else
-		return elem.dtype();
-}
-
-template<typename T>
-HOMOG2D_INUMTYPE
-length( const T& elem )
-{
-	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( fct::LengthFunct{}, elem );
-	else
-		return elem.length();
-}
-
-template<typename T>
-HOMOG2D_INUMTYPE
-area( const T& elem )
-{
-	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( fct::AreaFunct{}, elem );
-	else
-		return elem.area();
-}
-
-/// Apply homography to primitive
-/**
-\warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
-*/
-template<typename T, typename FPT>
-CommonType_<FPT>
-transform( const Homogr_<FPT>& h, const T& elem )
-{
-	if constexpr( trait::IsVariant<T>::value )
-		return std::visit( fct::TransformFunct<FPT>(h), elem );
-	else
-		return h * elem;
-}
-
-
 template<typename FPT>
 FPT getX( const Point2d_<FPT>& pt) { return pt.getX(); }
 
@@ -9667,17 +9615,10 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
-/// Returns Bounding Box of object (free function)
-template<typename T>
-FRect_<typename T::FType>
-getBB( const T& object )
-{
-	return object.getBB();
-}
-
+/// Holds function returning a pair of points
 namespace ppair {
 
-/// Return pair of points defining a BB of a primitive
+/// Returns pair of points defining a BB of a primitive
 /// Overload 1/4, private free function
 /**
 Arg is a neither a Point2d, a Segment, a Line2d or a polyline
@@ -9702,7 +9643,7 @@ getPointPair( const T& elem )
 	return elem.getBB().getPts();
 }
 
-/// Return pair of points defining a BB of a Polyline
+/// Returns pair of points defining a BB of a Polyline
 /// Overload 2/4, private free function
 template<
 	typename T,
@@ -9729,7 +9670,7 @@ getPointPair( const T& poly )
 	return priv::getBB_Points( poly.getPts() );
 }
 
-/// Return pair of points defining a BB of a Point2d
+/// Returns pair of points defining a BB of a Point2d
 /// Overload 3/4, private free function
 /**
 This seems useless at first glance, but it is used to get the common bounding box of two objects
@@ -9749,7 +9690,7 @@ getPointPair( const T& elem )
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
 
-/// Return pair of points defining a BB of Segment
+/// Returns pair of points defining a BB of Segment
 /// Overload 4/4, private free function
 template<
 	typename T,
@@ -9765,6 +9706,7 @@ getPointPair( const T& elem )
 	return elem.getPts();
 }
 
+/// Needed because of variant
 template<typename FPT>
 PointPair1_<FPT>
 getPointPair( const Line2d_<FPT>& )
@@ -9773,9 +9715,12 @@ getPointPair( const Line2d_<FPT>& )
 	HOMOG2D_THROW_ERROR_1( "Unable to get pair of points for a Line2d" );
 }
 
-
 } // namespace ppair
 
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION - FUNCTORS USED IN FOLLOWING FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
 
 namespace fct {
 //------------------------------------------------------------------
@@ -9794,7 +9739,147 @@ struct PtPairFunct
 	}
 };
 
+//------------------------------------------------------------------
+/// A functor to get the Bounding Box
+/// \sa getBB()
+struct BBFunct
+{
+	template<typename T>
+//	FRect_<typename T::FType> operator ()(const T& a)
+	FRect_<HOMOG2D_INUMTYPE> operator ()(const T& a)
+	{
+		return a.getBB();
+	}
+};
+
 } // namespace fct
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION  - FREE FUNCTIONS HANDLING VARIANT TYPE
+/////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------
+/// Returns the type of object or variant
+/**
+Can be printed with `getString()`
+\sa CommonType_
+*/
+template<typename T>
+Type
+type( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::TypeFunct{}, elem );
+	else
+		return elem.type();
+}
+
+//------------------------------------------------------------------
+/// Returns the underlying data type of object or variant
+/**
+Can be printed with `getString()`
+*/
+template<typename T>
+Dtype
+dtype( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::DTypeFunct{}, elem );
+	else
+		return elem.dtype();
+}
+
+//------------------------------------------------------------------
+/// Returns length of element or variant (free function)
+template<typename T>
+HOMOG2D_INUMTYPE
+length( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::LengthFunct{}, elem );
+	else
+		return elem.length();
+}
+
+//------------------------------------------------------------------
+/// Returns area of element or variant (free function)
+template<typename T>
+HOMOG2D_INUMTYPE
+area( const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::AreaFunct{}, elem );
+	else
+		return elem.area();
+}
+
+//------------------------------------------------------------------
+/// Return Bounding Box of primitive or container holding primitives (free function)
+template<typename T>
+FRect_<HOMOG2D_INUMTYPE>
+getBB( const T& t )
+{
+	HOMOG2D_START;
+
+	if constexpr( !trait::IsContainer<T>::value )
+		return t.getBB();
+	else
+	{
+		if constexpr( trait::IsPoint<typename T::value_type>::value )
+		{
+			if( t.size() < 2 )
+				HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
+			return FRect_<typename T::value_type::FType>( priv::getBB_Points( t ) );
+		}
+		else
+		{
+			if constexpr( trait::HasBB<typename T::value_type>::value )
+			{
+//				using ElemType = typename T::value_type;
+				using FPT = typename ElemType::FType;
+
+				if( t.empty() )
+					HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
+				std::vector<FRect_<FPT>> v_bb( t.size() );
+
+				auto it = v_bb.begin();
+				for( const auto& elem: t ) // compute bounding box of each element
+					*it++ = elem.getBB();
+
+				return priv::getBB_FRect( v_bb ); // compute BB of all the BB
+			}
+			else
+			{
+				if constexpr( trait::IsSegment<typename T::value_type>::value )
+				{
+					if( t.empty()  )
+						HOMOG2D_THROW_ERROR_1( "unable, need at least one segment" );
+					return priv::getBB_Segments( t );
+				}
+				else
+					assert(0); // ??? unclear
+			}
+		}
+	}
+}
+
+/// Apply homography to primitive
+/**
+\warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
+*/
+template<typename T, typename FPT>
+CommonType_<FPT>
+transform( const Homogr_<FPT>& h, const T& elem )
+{
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::TransformFunct<FPT>(h), elem );
+	else
+		return h * elem;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// SECTION - FREE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
 
 template<typename T1,typename T2,typename T3,typename T4>
 auto
@@ -9897,69 +9982,6 @@ getBB( const T1&, const T2& )
 	HOMOG2D_START;
 	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
 	return FRect_<T1>(); // to avoid a compile warning
-}
-
-//------------------------------------------------------------------
-/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding points (free function)
-template<
-	typename T,
-	typename std::enable_if<
-		( trait::IsContainer<T>::value && trait::IsPoint<typename T::value_type>::value ),
-		T
-	>::type* = nullptr
->
-auto
-getBB( const T& vpts )
-{
-	HOMOG2D_START;
-	if( vpts.size() < 2 )
-		HOMOG2D_THROW_ERROR_1( "unable, need at least two points" );
-	return FRect_<typename T::value_type::FType>( priv::getBB_Points( vpts ) );
-}
-
-//------------------------------------------------------------------
-/// Returns Bounding Box of arbitrary container (std:: vector, array or list) holding segments (free function)
-template<
-	typename T,
-	typename std::enable_if<
-		( trait::IsContainer<T>::value && trait::IsSegment<typename T::value_type>::value ),
-		T
-	>::type* = nullptr
->
-auto
-getBB( const T& vpts )
-{
-	HOMOG2D_START;
-	if( vpts.empty()  )
-		HOMOG2D_THROW_ERROR_1( "unable, need at least one segment" );
-
-	return priv::getBB_Segments( vpts );
-}
-
-//------------------------------------------------------------------
-/// Returns Bounding Box of arbitrary container (std::vector, array or list) holding other primitives (free function)
-template<
-	typename T,
-	typename std::enable_if<
-		( trait::IsContainer<T>::value && trait::HasBB<typename T::value_type>::value ),
-		T
-	>::type* = nullptr
->
-auto
-getBB( const T& cont )
-{
-	using ElemType = typename T::value_type;
-	using FPT      = typename ElemType::FType;
-
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
-	std::vector<FRect_<FPT>> v_bb( cont.size() );
-
-	auto it = v_bb.begin();
-	for( const ElemType& elem: cont ) // compute bounding box of each element
-		*it++ = elem.getBB();
-
-	return priv::getBB_FRect( v_bb ); // compute BB of all the BB
 }
 
 //------------------------------------------------------------------

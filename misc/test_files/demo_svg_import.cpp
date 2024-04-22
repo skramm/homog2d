@@ -91,16 +91,22 @@ int main( int argc, const char** argv )
 		if( type(e) == Type::OPolyline )
 		{
 			std::cout << " size=" << std::get<OPolyline>(e).size();
-			OPolyline po = fct::VariantUnwrapper{e};
-			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
+//			OPolyline po = fct::VariantUnwrapper{e};
+//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
 		}
 
 		if( type(e) == Type::CPolyline )
 		{
 			std::cout << " size=" << std::get<CPolyline>(e).size();
-			CPolyline po = fct::VariantUnwrapper{e};
-			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
+//			CPolyline po = fct::VariantUnwrapper{e};
+//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
 		}
+		if( type(e) != Type::Segment ) // because no BB is defined
+		{
+			auto bb = std::visit( fct::BBFunct{}, e );
+			bb.draw( out, img::DrawParams().setColor(50,150,250) );
+		}
+
 
 		std::cout << '\n';
 	}
