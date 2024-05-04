@@ -1,4 +1,5 @@
 // cannot use getBB() on a Point
-	Point pt;
+	Point2d pt;
 
-	auto bb = getBB( pt );
+//	auto bb = getBB( pt );
+	getBB( pt );

@@ -1902,6 +1902,11 @@ private:
 namespace trait {
 
 /// Traits class, used in generic draw() function
+/**
+\todo 20240504 this is only used in the draw() free function but actually not really needed:
+as that function just calls the member function,
+we can just let the build fail is no suitable member function is found.
+*/
 template<typename T> struct IsDrawable              : std::false_type {};
 template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
@@ -2612,11 +2617,13 @@ public:
 	{
 		return std::make_pair( width(), height() );
 	}
+#if 0
 /// Needed for getBB( pair of objects )
 	FRect_<FPT> getBB() const
 	{
 		return *this;
 	}
+#endif
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
 	PointPair1_<FPT>
@@ -4056,13 +4063,13 @@ public:
 	{
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
-
+#if 0
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no area" );
 	}
-
+#endif
 private:
 	template<typename ANY>
 	ANY impl_getPt( const detail::BaseHelper<typename typ::IsPoint>& ) const
@@ -4968,11 +4975,13 @@ in the range \f$ [0,\pi/2] \f$
 	{
 		return other.getAngle( this->getLine() );
 	}
+#if 0
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no area" );
 	}
+#endif
 ///@}
 
 /// \name Operators
@@ -9821,8 +9830,8 @@ getBB( const T& t )
 {
 	HOMOG2D_START;
 
-	if constexpr( !trait::IsContainer<T>::value )
-		return t.getBB();
+	if constexpr( !trait::IsContainer<T>::value ) // if not a container,
+		return t.getBB();                         // then call the member function
 	else
 	{
 		if constexpr( trait::IsPoint<typename T::value_type>::value )
@@ -9835,8 +9844,6 @@ getBB( const T& t )
 		{
 			if constexpr( trait::HasBB<typename T::value_type>::value )
 			{
-//				using ElemType = typename T::value_type;
-//				using FPT = typename ElemType::FType;
 				using FPT = typename T::value_type::FType;
 
 				if( t.empty() )
@@ -10615,6 +10622,9 @@ findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 
 //------------------------------------------------------------------
 /// Free function, draws any of the primitives by calling the relevant member function
+/**
+\todo 20240504: see note on the IsDrawable trait class
+*/
 template<
 	typename U,
 	typename Prim,
