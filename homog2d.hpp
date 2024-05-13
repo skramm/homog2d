@@ -4062,13 +4062,13 @@ public:
 	{
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
-#if 0
+
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
-		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no area" );
+		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no Bounding Box" );
 	}
-#endif
+
 private:
 	template<typename ANY>
 	ANY impl_getPt( const detail::BaseHelper<typename typ::IsPoint>& ) const
@@ -4974,13 +4974,13 @@ in the range \f$ [0,\pi/2] \f$
 	{
 		return other.getAngle( this->getLine() );
 	}
-#if 0
+
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
-		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no area" );
+		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no Bounding Box" );
 	}
-#endif
+
 ///@}
 
 /// \name Operators

@@ -6,7 +6,7 @@
 */
 
 #include "mylib.hpp"
-void A::foo()
+void DummyTest::foo()
 {
 	pt.set(3,4);
 }
