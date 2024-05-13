@@ -9827,6 +9827,8 @@ namespace priv {
 /**
 \note Here, we DO NOT preallocate the vector, because if the container holds lines, then no point pair will be added for these elements.
 If we would have preallocate with 2 x size of input vector, then some default-constructed points could sneak in, and introduce an error.
+
+\todo 20240513: At present, this is only implemented for std::vector. Let it handle std::list and std::array.
 */
 template<typename FPT>
 auto

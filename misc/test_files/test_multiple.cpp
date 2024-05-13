@@ -8,6 +8,6 @@
 #include "mylib.hpp"
 int main()
 {
-	A a;
+	DummyTest a;
 	a.foo();
 }
