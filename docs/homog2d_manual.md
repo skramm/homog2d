@@ -348,7 +348,7 @@ Besides points and lines, the following primitives are provided:
 * [polyline](#p_polyline)
 * [ellipse](#p_ellipse)
 
-The ones that may cover some area (polyline, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
+The ones that may cover some area (polyline, rectangle, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
 This is not available for points, lines, and segments (as a segment can be vertical or horizontal, it does not have an area).
 
 On this figure, you can see a circle, a polyline and and ellipse, along with their corresponding bounding boxes.
@@ -1528,6 +1528,11 @@ This function will throw if the returned rectangle ends up in an invalid state.
 This means that for points or segments, the container's size needs to be at least 2.
 For polylines, circles and rectangles, the size needs to be at least 1.
 
+However, as the returned rectangle may not have a null area, this function will throw if the container holds objects on which no bounding box can be defined.
+For example, if the container holds 3 identical points.
+Or even different points, but sharing a identical x or y coordinate (think: [0,0]-[0,5])
+The same situation may occur with segments, for example a container holding these two segments: [0,0]-[0,5] and [0,10]-[0,20].
+
 Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 
 ![bounding box of a set of points](img/bb_Points.svg)
@@ -1539,6 +1544,9 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 
 For points, the Top-most and Left-most point are shown in green, and the Right-most and Bottom-most points are shown in blue
 (see next section about this).
+
+**Note**: this function also works for containers holding "variant" type objects (`CommonType`), see [RTP](#section_rtp) section.
+
 
 ### 6.3 - Extremum points
 <a name="extremum_points"></a>

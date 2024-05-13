@@ -1728,12 +1728,6 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
-//template<typename T>
-//using VarType = std::variant<FRect_<T>,Circle_<T>,Segment_<T>,Point2d_<T>,CPolyline_<T>>;
-
-
-
-//------------------------------------------------------------------
 void printFailure( std::exception& e )
 {
 	std::cout << "Unable to build BB, err=" << e.what() << "\n";
@@ -1749,7 +1743,7 @@ struct Param_BB : Data
 		init( _vecvar[0], 0 );
 		init( _vecvar[1], 1 );
 		std::srand( time(nullptr) );
-		vpt.resize( 17 );
+		vpt.resize( 20 );
 		for( auto& pt: vpt )
 			pt.set(
 				1.0*rand()*300/RAND_MAX+50,
@@ -1806,7 +1800,7 @@ struct Param_BB : Data
 			if( std::holds_alternative<Segment>(v) )   std::get<Segment>(v).set( vpt[6+i*2], vpt[7+i*2] );
 			if( std::holds_alternative<FRect>(v) )     std::get<FRect>(v).set( vpt[10+i*2], vpt[11+i*2] );
 			if( std::holds_alternative<Circle>(v) )    std::get<Circle>(v).set( vpt[14+i], 60 );
-			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[16];
+			if( std::holds_alternative<Point2d>(v) )   std::get<Point2d>(v) = vpt[16+i];
 		}
 	}
 

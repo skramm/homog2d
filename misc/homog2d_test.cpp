@@ -2819,6 +2819,63 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	CHECK( getBB(pc,pc2) == FRect_<NUMTYPE>(0,0,6,1) );
 }
 
+TEST_CASE( "bounding box of container", "[BB-cont]" )
+{
+	{
+		std::vector<Point2d_<NUMTYPE>> vec(3);
+		vec[0] = Point2d_<NUMTYPE>(1,1);
+		vec[1] = Point2d_<NUMTYPE>(5,6);
+		vec[2] = Point2d_<NUMTYPE>(3,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::array<Point2d_<NUMTYPE>,3> vec;
+		vec[0] = Point2d_<NUMTYPE>(1,1);
+		vec[1] = Point2d_<NUMTYPE>(5,6);
+		vec[2] = Point2d_<NUMTYPE>(3,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::list<Point2d_<NUMTYPE>> vec;
+		vec.emplace_back( Point2d_<NUMTYPE>(1,1) );
+		vec.emplace_back( Point2d_<NUMTYPE>(5,6) );
+		vec.emplace_back( Point2d_<NUMTYPE>(3,2) );
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::vector<Line2d_<NUMTYPE>> vec(3);  // cannot get BB of a set of lines
+		CHECK_THROWS( getBB(vec) );
+	}
+	{
+		std::vector<FRect_<NUMTYPE>> vec(3);
+		vec[0] = FRect_<NUMTYPE>(1,1,2,2);
+		vec[1] = FRect_<NUMTYPE>(5,6,10,11);
+		vec[2] = FRect_<NUMTYPE>(3,2,4,5);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,10,11) );
+	}
+	{
+		std::vector<Segment_<NUMTYPE>> vec(3);
+		vec[0] = Segment_<NUMTYPE>(1,1,2,2);
+		vec[1] = Segment_<NUMTYPE>(5,6,10,11);
+		vec[2] = Segment_<NUMTYPE>(3,2,4,5);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,10,11) );
+	}
+	{
+		std::vector<Circle_<NUMTYPE>> vec(3);
+		vec[0] = Circle_<NUMTYPE>(1,1,1);
+		vec[1] = Circle_<NUMTYPE>(5,3,2);
+		vec[2] = Circle_<NUMTYPE>(10,11,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(0,0,12,13) );
+	}
+	{
+		std::vector<CommonType_<NUMTYPE>> vec(4);
+		vec[0] = Circle_<NUMTYPE>(3,4,1);
+		vec[1] = Segment_<NUMTYPE>(5,3,2,8);
+		vec[2] = FRect_<NUMTYPE>(10,11,2,2);
+		vec[3] = Line2d_<NUMTYPE>();
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(10,11,2,2) );
+	}
+}
 
 TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
 {

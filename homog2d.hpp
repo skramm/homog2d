@@ -1971,7 +1971,6 @@ template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::
 template<typename T>       struct IsVariant                       : std::false_type {};
 template<typename ...Args> struct IsVariant<std::variant<Args...>>: std::true_type {};
 
-
 } // namespace trait
 
 
@@ -2617,13 +2616,13 @@ public:
 	{
 		return std::make_pair( width(), height() );
 	}
-#if 0
+
 /// Needed for getBB( pair of objects )
 	FRect_<FPT> getBB() const
 	{
 		return *this;
 	}
-#endif
+
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
 	PointPair1_<FPT>
@@ -5710,7 +5709,7 @@ getBB_Segments( const T& vsegs )
 	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
 
-	HOMOG2D_DEBUG_ASSERT( vsegs.size(), "cannot computing bounding box of empty set of segments" );
+	HOMOG2D_DEBUG_ASSERT( vsegs.size(), "cannot compute bounding box of empty set of segments" );
 	std::vector<Point2d_<FPT>> vpts( vsegs.size()*2 );
 	auto it = vpts.begin();
 	for( const auto& seg: vsegs )
@@ -5729,7 +5728,7 @@ auto
 getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 {
 	HOMOG2D_START;
-	HOMOG2D_DEBUG_ASSERT( v_rects.size(), "cannot computing bounding box of empty set of rectangles" );
+	HOMOG2D_DEBUG_ASSERT( v_rects.size(), "cannot compute bounding box of empty set of rectangles" );
 
 	std::vector<Point2d_<FPT>> vpts( v_rects.size()*2 );
 	auto it = vpts.begin();
@@ -9822,8 +9821,46 @@ area( const T& elem )
 		return elem.area();
 }
 
+namespace priv {
+
+/// Get Bounding Box for a container holding variant objects
+/**
+\note Here, we DO NOT preallocate the vector, because if the container holds lines, then no point pair will be added for these elements.
+If we would have preallocate with 2 x size of input vector, then some default-constructed points could sneak in, and introduce an error.
+*/
+template<typename FPT>
+auto
+getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
+{
+	HOMOG2D_START;
+	HOMOG2D_DEBUG_ASSERT( v_var.size(), "cannot compute bounding box of empty set of variant" );
+
+	std::vector<Point2d_<FPT>> vpts;
+	vpts.reserve( v_var.size()*2 );
+	PointPair1_<FPT> ppair;
+	for( const auto& elem: v_var )
+	{
+		try
+		{
+			ppair = std::visit( fct::PtPairFunct{}, elem );
+		}
+		catch( const std::exception& err )
+		{
+			HOMOG2D_LOG_WARNING( "unable to compute point pair\n -msg=" << err.what() );
+		}
+		vpts.push_back( ppair.first );
+		vpts.push_back( ppair.second );
+	}
+	return FRect_<FPT>( getBB_Points( vpts ) );
+}
+
+} // namespace priv
+
 //------------------------------------------------------------------
 /// Return Bounding Box of primitive or container holding primitives (free function)
+/**
+tests: [BB-cont]
+*/
 template<typename T>
 FRect_<HOMOG2D_INUMTYPE>
 getBB( const T& t )
@@ -9834,6 +9871,9 @@ getBB( const T& t )
 		return t.getBB();                         // then call the member function
 	else
 	{
+		if( t.empty() )
+			HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
+
 		if constexpr( trait::IsPoint<typename T::value_type>::value )
 		{
 			if( t.size() < 2 )
@@ -9845,9 +9885,6 @@ getBB( const T& t )
 			if constexpr( trait::HasBB<typename T::value_type>::value )
 			{
 				using FPT = typename T::value_type::FType;
-
-				if( t.empty() )
-					HOMOG2D_THROW_ERROR_1( "unable, can't compute BB of empty container" );
 				std::vector<FRect_<FPT>> v_bb( t.size() );
 
 				auto it = v_bb.begin();
@@ -9865,7 +9902,14 @@ getBB( const T& t )
 					return priv::getBB_Segments( t );
 				}
 				else
-					assert(0); // ??? unclear
+				{
+					if constexpr( !trait::IsVariant<typename T::value_type>::value )
+					{
+						HOMOG2D_THROW_ERROR_1( "Unable, cannot compute BoundingBox of a container holding Line2d objects" );
+					}
+					else
+						return priv::getBB_CommonType( t );
+				}
 			}
 		}
 	}
@@ -9904,6 +9948,12 @@ getMinMax( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 	return priv::getBB_Points( arr );
 }
 
+//------------------------------------------------------------------
+/// Returns bounding box of two pairs of points
+/**
+\warning May throw in case of identical coordinates
+(for example with [0,0]-[1,0] and [10,0]-[20,0]
+*/
 template<typename T1,typename T2,typename T3,typename T4>
 auto
 getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )

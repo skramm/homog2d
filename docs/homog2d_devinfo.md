@@ -262,12 +262,13 @@ For example `homog2d_asin` will be replaced by `ttmath::ASin` if `HOMOG2D_USE_TT
 ## 8 - Traits classes
 
 The namespaces `trait` holds several traits classes that are used through out the code.
-Two of these, `HasBB` and `HasArea`, are detailed in the table below:
+Two of these, `HasBB` ("Has Bounding Box") and `HasArea`, are detailed in the table below, showing their "constexpr" boolean value function of the given type:
 
 |   Type    | HasBB | HasArea |
 |-----------|-------|---------|
 | Point2d   | false |  false  |
 | Line2d    | false |  false  |
+| Segment   | false |  false  |
 | FRect     | true  |  true   |
 | Circle    | true  |  true   |
 | Ellipse   | true  |  true   |
