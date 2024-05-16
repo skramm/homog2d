@@ -2317,19 +2317,17 @@ Then the value 1.0 will be used instead, but a warning will be generated.
 #### 12.1 - Introduction
 
 Runtime Polymorphism is the ability to store in a container (`std::vector`, `std::list`, ...) objects of different types and calling on those elements some free or member function.
+With this library, this is implemented using two different techniques, one with the classical pointer-based approach, and the other using a `std::variant`, enabled by upgrading to C++17.
 
-Actually (2024/04->), a move is being made from a classical pointer-based architecture to a variant-based one.
-The "svg import" subsystem has already been converted.
-
-The classical pointer-based approach is based on a common untemplated class (`Root`) which is inherited by all the primitives.
-However this will very likely **be deprecated** shortly.
-It is advised to use nowadays the "variant-based" technique, as it is more type-safe.
-And there is no feature available with that approach that isn't available with the variant-based approach.
+At present, these two techniques can be used, they both have pros and cons, but the pointer-based approach might be shortly deprecated,
+So it is advised to use nowadays the "variant-based" technique, as it is more type-safe.
+And there is no feature available with the other approach that isn't available with the variant-based approach.
 
 #### 12.2 - Pointer-based runtime polymorphism
 
 This is the "classical C++" technique:
 you store (smart)pointers of type `Root` in the container.
+All the geometric primitives will inherit from this (non-templated) class.
 That class (and its inheritance) will only exist if the symbol `HOMOG2D_ENABLE_PRTP` is defined:
 ```C++
 std::vector<std::shared_ptr<rtp::Root>> vec;
@@ -2382,7 +2380,8 @@ Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an exam
 
 #### 12.3 - Variant-based runtime polymorphism
 
-A templated common type `CommonType_` holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
+This feature is made available by defining the symbol `HOMOG2D_ENABLE_VRTP`.
+This will enable a templated common type `CommonType_` that holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
 It follows the [naming conventions of primitives](#numdt), so you can use `CommonTypeF`, `CommonTypeD` or `CommonTypeL`,
 with `CommonType` defaulting to `HOMOG2D_INUMTYPE` (`double` by default).
 
@@ -2414,7 +2413,7 @@ for( auto& e: vec )
 		<< "\n";
 }
 ```
-(warning, the `length()` function will throw here if a `Line2d` in in the vector)
+(warning, the `length()` function will throw here if a `Line2d` is in the vector).
 
 To draw these on an `img::Image`, you can do this:
 ```C++
@@ -2454,4 +2453,6 @@ Check test file [homog2d_test_rtp_2.cpp](../misc/homog2d_test_rtp_2.cpp) for an 
 * With the "variant-based" technique, a constraint is that all elements of a vector of `CommonType` will share the same underlying floating-point type.
 This constraint does not stand with the "pointer-based" technique.
 
+* With the "pointer-based" technique, adding another (user) virtual function is quite complicated.
+As opposed to the "variant-based" technique, where it just requires writing a function in user code, that call the `std::visit()` function.
 
