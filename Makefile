@@ -358,7 +358,7 @@ diff:
 # The following is used to make sure that some code constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
-NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/src/%.o, $(NOBUILD_SRC_FILES))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/src/%, $(NOBUILD_SRC_FILES))
 
 
 nobuild: $(NOBUILD_OBJ_FILES)
@@ -373,9 +373,9 @@ BUILD/no_build/src/no_build_%.cpp: misc/no_build/no_build_%.cxx
 	@cat misc/no_build/footer.txt >>BUILD/no_build/src/$(notdir $@)
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
-BUILD/no_build/src/no_build_%.o: BUILD/no_build/src/no_build_%.cpp
+BUILD/no_build/src/no_build_%: BUILD/no_build/src/no_build_%.cpp
 	@echo "Checking build failure of $<"
-	! $(CXX) $(CXXFLAGS) -o $@ -c $< 1>BUILD/no_build/log/$(notdir $(basename $<)).stdout 2>BUILD/no_build/log/$(notdir $(basename $<)).stderr
+	@! $(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS) 1>BUILD/no_build/log/$(notdir $(basename $<)).stdout 2>BUILD/no_build/log/$(notdir $(basename $<)).stderr
 
 #=================================================================
 # SHOWCASE: generates gif images of some situations
