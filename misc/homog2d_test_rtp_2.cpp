@@ -17,16 +17,13 @@
 
 /**
 \file
-\brief This program will demonstrate the variant-based runtime polymorphism capabilities
+\brief This program will demonstrate the variant-based runtime polymorphism capabilities.
 Is included in test suite.
 
 Build and run with <code>$ make test_rtp</code>
 */
 
-
-#define CATCH_CONFIG_RUNNER   // alternative: main provided here
-#include "catch.hpp"
-
+#define HOMOG2D_ENABLE_VRTP
 #include "../homog2d.hpp"
 
 using namespace h2d;
@@ -66,9 +63,8 @@ int main( int, char** argv )
 			std::cout <<  "\n -length=" << length(e);
 		else
 		{
-			std::cout << "\n -length=N/A";
 			Line2d li = fct::VariantUnwrapper{e};
-			std::cout << "li=" << li << '\n';
+			std::cout << "\n -length=N/A (li=" << li << ')';
 		}
 
 		std::cout << "\n- data type=" << getString(dtype(e)) << '\n';

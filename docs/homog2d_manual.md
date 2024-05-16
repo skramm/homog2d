@@ -2150,7 +2150,7 @@ catch( const std::exception& error )
 ```
 
 This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
-It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
+It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
 
@@ -2295,6 +2295,10 @@ For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_PRTP`: enables pointer-based runtime polymorphism.
 This will add a common base class `rtp::Root` to all the geometric primitives.
 At present, runtime polymorphism is currently moving to a variant-based approach, see [RTP](#section_rtp) section.
+- `HOMOG2D_ENABLE_VRTP`: enables variant-based runtime polymorphism.
+This will add a class `rtp::CommonType` holding all the geometric primitives as a std::variant.
+See section [RTP](#section_rtp) for details.
+
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).

@@ -1,5 +1,6 @@
-// cannot use getBB() on a Point
-	Point2d pt;
+// cannot use getBB() on a Point... except if we use the variant-based runtime polymorphism
 
-//	auto bb = getBB( pt );
-	getBB( pt );
+#ifndef HOMOG2D_ENABLE_VRTP
+	Point2d pt;
+	auto bb = getBB( pt );
+#endif

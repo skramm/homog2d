@@ -45,7 +45,16 @@ See https://github.com/skramm/homog2d
 #include <limits>
 #include <cstdint> // required for uint8_t
 #include <memory>  // required for std::unique_ptr
-#include <variant>
+
+#ifdef HOMOG2D_USE_SVG_IMPORT
+	#define HOMOG2D_ENABLE_VRTP
+//	#include <cctype> // why was that needed in the first place?
+	#include "tinyxml2.h"
+#endif
+
+#ifdef HOMOG2D_ENABLE_VRTP
+	#include <variant>
+#endif
 
 #ifdef HOMOG2D_USE_EIGEN
 	#include <Eigen/Dense>
@@ -74,13 +83,6 @@ See https://github.com/skramm/homog2d
 	#define homog2d_sqrt std::sqrt
 #endif
 
-
-#ifdef HOMOG2D_USE_SVG_IMPORT
-//	#include <cctype> // why was that needed in the first place?
-	#include "tinyxml2.h"
-#endif
-
-
 #ifdef HOMOG2D_USE_OPENCV
 	#include "opencv2/imgproc.hpp"
 	#include "opencv2/highgui.hpp"
@@ -89,7 +91,6 @@ See https://github.com/skramm/homog2d
 #ifdef HOMOG2D_USE_BOOSTGEOM
 	#include <boost/geometry.hpp>
 #endif
-
 
 #ifdef _MSC_VER
 	#define HOMOG2D_PRETTY_FUNCTION __FUNCSIG__
@@ -363,6 +364,7 @@ using CPolyline_ = base::PolylineBase<typ::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
 
+#ifdef HOMOG2D_ENABLE_VRTP
 /// A variant type, holding all possible types. Used to achieve runtime polymorphism
 /**
 See https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
@@ -378,7 +380,7 @@ using CommonType_ = std::variant<
 	CPolyline_<FPT>,
 	OPolyline_<FPT>
 >;
-
+#endif // HOMOG2D_ENABLE_VRTP
 
 //------------------------------------------------------------------
 /// Holds drawing related code, independent of back-end library
@@ -902,6 +904,7 @@ const char* getString( Type t )
 	return s;
 }
 
+#ifdef HOMOG2D_ENABLE_VRTP
 //------------------------------------------------------------------
 /// Holds functors, used to  manage runtime polymorphism using \c std::variant
 namespace fct {
@@ -1026,7 +1029,7 @@ VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
 #endif
 
 } // namespace fct
-
+#endif // HOMOG2D_ENABLE_VRTP
 
 inline
 const char* getString( Dtype t )
@@ -1968,8 +1971,10 @@ template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
 template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
 template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
 
+#ifdef HOMOG2D_ENABLE_VRTP
 template<typename T>       struct IsVariant                       : std::false_type {};
 template<typename ...Args> struct IsVariant<std::variant<Args...>>: std::true_type {};
+#endif
 
 } // namespace trait
 
@@ -4063,11 +4068,13 @@ public:
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
 
+#ifdef HOMOG2D_ENABLE_VRTP
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no Bounding Box" );
 	}
+#endif
 
 private:
 	template<typename ANY>
@@ -4975,11 +4982,13 @@ in the range \f$ [0,\pi/2] \f$
 		return other.getAngle( this->getLine() );
 	}
 
+#ifdef HOMOG2D_ENABLE_VRTP
 /// Needed because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no Bounding Box" );
 	}
+#endif
 
 ///@}
 
@@ -9730,6 +9739,7 @@ getPointPair( const Line2d_<FPT>& )
 // SECTION - FUNCTORS USED IN FOLLOWING FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+#ifdef HOMOG2D_ENABLE_VRTP
 namespace fct {
 //------------------------------------------------------------------
 /// A functor to get pair of points englobing the element
@@ -9762,6 +9772,8 @@ struct BBFunct
 
 } // namespace fct
 
+#endif // HOMOG2D_ENABLE_VRTP
+
 /////////////////////////////////////////////////////////////////////////////
 // SECTION  - FREE FUNCTIONS HANDLING VARIANT TYPE
 /////////////////////////////////////////////////////////////////////////////
@@ -9776,9 +9788,11 @@ template<typename T>
 Type
 type( const T& elem )
 {
+#ifdef HOMOG2D_ENABLE_VRTP
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::TypeFunct{}, elem );
 	else
+#endif
 		return elem.type();
 }
 
@@ -9791,9 +9805,11 @@ template<typename T>
 Dtype
 dtype( const T& elem )
 {
+#ifdef HOMOG2D_ENABLE_VRTP
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::DTypeFunct{}, elem );
 	else
+#endif
 		return elem.dtype();
 }
 
@@ -9803,9 +9819,11 @@ template<typename T>
 HOMOG2D_INUMTYPE
 length( const T& elem )
 {
+#ifdef HOMOG2D_ENABLE_VRTP
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::LengthFunct{}, elem );
 	else
+#endif
 		return elem.length();
 }
 
@@ -9815,12 +9833,15 @@ template<typename T>
 HOMOG2D_INUMTYPE
 area( const T& elem )
 {
+#ifdef HOMOG2D_ENABLE_VRTP
 	if constexpr( trait::IsVariant<T>::value )
 		return std::visit( fct::AreaFunct{}, elem );
 	else
+#endif
 		return elem.area();
 }
 
+#ifdef HOMOG2D_ENABLE_VRTP
 namespace priv {
 
 /// Get Bounding Box for a container holding variant objects
@@ -9858,6 +9879,7 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 
 } // namespace priv
 
+#endif // HOMOG2D_ENABLE_VRTP
 //------------------------------------------------------------------
 /// Return Bounding Box of primitive or container holding primitives (free function)
 /**
@@ -9905,17 +9927,23 @@ getBB( const T& t )
 				}
 				else
 				{
+#ifdef HOMOG2D_ENABLE_VRTP
 					if constexpr( !trait::IsVariant<typename T::value_type>::value )
 					{
 						HOMOG2D_THROW_ERROR_1( "Unable, cannot compute BoundingBox of a container holding Line2d objects" );
 					}
 					else
 						return priv::getBB_CommonType( t );
+#else
+					HOMOG2D_THROW_ERROR_1( "Unable, cannot compute BoundingBox of a container holding Line2d objects" );
+#endif
 				}
 			}
 		}
 	}
 }
+
+#ifdef HOMOG2D_ENABLE_VRTP
 
 /// Apply homography to primitive
 /**
@@ -9930,7 +9958,7 @@ transform( const Homogr_<FPT>& h, const T& elem )
 	else
 		return h * elem;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////
 // SECTION - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
@@ -11677,11 +11705,13 @@ using OPolylineF = base::PolylineBase<typ::IsOpen,float>;
 using OPolylineD = base::PolylineBase<typ::IsOpen,double>;
 using OPolylineL = base::PolylineBase<typ::IsOpen,long double>;
 
+#ifdef HOMOG2D_ENABLE_VRTP
 // variant type
 using CommonType = CommonType_<HOMOG2D_INUMTYPE>;
 using CommonTypeF = CommonType_<float>;
 using CommonTypeD = CommonType_<double>;
 using CommonTypeL = CommonType_<long double>;
+#endif
 
 #ifdef HOMOG2D_USE_SVG_IMPORT
 

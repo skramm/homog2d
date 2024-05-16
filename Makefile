@@ -127,15 +127,17 @@ newtests: newtests_before
 	@echo "COUCOU"
 	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
 
-.PHONY: pretest test test2 nobuild
+.PHONY: test test2 nobuild
 
-test: pretest test2 nobuild test_rtp
+test: test2 nobuild test_rtp demo_import
 	@echo "-done target $@"
 
-test2: test_SY test_SN test_single test_multiple
+test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
 	@echo "Make: run test2, build using $(CXX)"
-	BUILD/homog2d_test_SY
-	BUILD/homog2d_test_SN
+	BUILD/homog2d_test_SYVN
+	BUILD/homog2d_test_SNVN
+	BUILD/homog2d_test_SYVY
+	BUILD/homog2d_test_SNVY
 	BUILD/test_single
 	BUILD/test_multiple
 	@echo "-done target $@"
@@ -144,16 +146,23 @@ test-list: test_SY
 	@echo "Tests available:"
 	BUILD/homog2d_test_SY --list-tests
 
-pretest:
-	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
+#pretest:
+#	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
+#	@echo "-done target $@"
+
+test_SYVY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+test_SYVN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+test_SYVY: CXXFLAGS += -DHOMOG2D_ENABLE_VRTP
+test_SNVY: CXXFLAGS += -DHOMOG2D_ENABLE_VRTP
+
+
+test_SYVN: BUILD/homog2d_test_SYVN
 	@echo "-done target $@"
-
-test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
-
-test_SY: BUILD/homog2d_test_SY
+test_SNVN: BUILD/homog2d_test_SNVN
 	@echo "-done target $@"
-
-test_SN: BUILD/homog2d_test_SN
+test_SYVY: BUILD/homog2d_test_SYVY
+	@echo "-done target $@"
+test_SNVY: BUILD/homog2d_test_SNVY
 	@echo "-done target $@"
 
 test_single: BUILD/test_single
@@ -165,8 +174,8 @@ test_multiple: BUILD/test_multiple
 buildf:
 	@mkdir -p BUILD
 
-BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
-	-rm BUILD/$(notdir $@).stderr
+BUILD/homog2d_test_SYVN BUILD/homog2d_test_SNVN BUILD/homog2d_test_SYVY BUILD/homog2d_test_SNVY: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
+	@if [ -f BUILD/$(notdir $@).stderr ]; then rm BUILD/$(notdir $@).stderr; fi
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
 
 BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf

@@ -23,10 +23,6 @@ Is included in test suite.
 Build and run with <code>$ make test_rtp</code>
 */
 
-
-#define CATCH_CONFIG_RUNNER   // alternative: main provided here
-#include "catch.hpp"
-
 #define HOMOG2D_ENABLE_PRTP
 #include "../homog2d.hpp"
 

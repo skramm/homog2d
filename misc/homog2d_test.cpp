@@ -104,6 +104,13 @@ int main( int argc, char* argv[] )
 #else
 		<< "NO"
 #endif
+
+		<< "\n  - HOMOG2D_ENABLE_VRTP: "
+#ifdef HOMOG2D_ENABLE_VRTP
+		<< "YES"
+#else
+		<< "NO"
+#endif
 		<< '\n';
 
 	Catch::StringMaker<float>::precision = 25;
@@ -2778,6 +2785,7 @@ TEST_CASE( "min/max of two objects", "[minmax]" )
 // TODO: EXTEND
 }
 
+#ifdef HOMOG2D_ENABLE_VRTP
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
 	Point2d_<NUMTYPE> pt,pt2(1,1);
@@ -2818,6 +2826,7 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,1},{6,1} } );
 	CHECK( getBB(pc,pc2) == FRect_<NUMTYPE>(0,0,6,1) );
 }
+#endif // HOMOG2D_ENABLE_VRTP
 
 TEST_CASE( "bounding box of container", "[BB-cont]" )
 {
@@ -2867,6 +2876,7 @@ TEST_CASE( "bounding box of container", "[BB-cont]" )
 		vec[2] = Circle_<NUMTYPE>(10,11,2);
 		CHECK( getBB(vec) == FRect_<NUMTYPE>(0,0,12,13) );
 	}
+#ifdef HOMOG2D_ENABLE_VRTP
 	{
 		std::vector<CommonType_<NUMTYPE>> vec(4);
 		vec[0] = Circle_<NUMTYPE>(3,4,1);
@@ -2875,6 +2885,7 @@ TEST_CASE( "bounding box of container", "[BB-cont]" )
 		vec[3] = Line2d_<NUMTYPE>();
 		CHECK( getBB(vec) == FRect_<NUMTYPE>(10,11,2,2) );
 	}
+#endif
 }
 
 TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
@@ -3781,6 +3792,9 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 //////////////////////////////////////////////////////////////
 /////               POLYMORPHISM                       /////
 //////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_ENABLE_VRTP
+
 TEST_CASE( "variant conversion tests", "[varconv]" )
 {
 	CommonType_<NUMTYPE> var;
@@ -3812,7 +3826,7 @@ TEST_CASE( "variant-based polymorphism", "[polymorph_1]" )
 		CHECK( type( var2 ) == Type::Line2d );
 	}
 }
-
+#endif // HOMOG2D_ENABLE_VRTP
 
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
