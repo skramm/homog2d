@@ -9935,6 +9935,11 @@ transform( const Homogr_<FPT>& h, const T& elem )
 // SECTION - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+/// Returns a pair of points holding min and max coordinates of the two input pair of points
+/**
+Tests: search for [minmax]
+*/
+
 template<typename T1,typename T2,typename T3,typename T4>
 auto
 getMinMax( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )

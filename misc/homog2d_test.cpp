@@ -2769,11 +2769,11 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 
 TEST_CASE( "min/max of two objects", "[minmax]" )
 {
-	Point2d_<NUMTYPE> pt0, pt1(1,1), pt2(2,2), pt3(3,3);
+	Point2d_<NUMTYPE> pt0(0,0), pt1(1,1), pt2(2,2), pt3(3,3);
 	auto pp1 = std::make_pair( pt0,pt1 );
 	auto pp2 = std::make_pair( pt2,pt3 );
 	auto ppts = getMinMax( pp1, pp2 );
-	CHECK( ppts.first  == Point2d_<NUMTYPE>() );
+	CHECK( ppts.first  == Point2d_<NUMTYPE>(0,0) );
 	CHECK( ppts.second == Point2d_<NUMTYPE>(3,3) );
 // TODO: EXTEND
 }
