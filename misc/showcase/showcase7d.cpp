@@ -25,7 +25,7 @@ void draw_object( const Ellipse& ell, const T& p, img::DrawParams& dp )
 		p.draw( im, dp );
 }
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto n = 25; // nb images
 

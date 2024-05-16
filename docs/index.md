@@ -15,9 +15,9 @@
 * [Polygon Extremum points](homog2d_manual.md#poly_extremum_points)
 * [Polygon](homog2d_manual.md#p_polyline)
 * [Polygon Rotation/mirroring](homog2d_manual.md#polyline_rotate)
-* [RCP](homog2d_manual.md#set_RCP)
 * [Rectangle](homog2d_manual.md#p_frect)
-* [Regular Convex Polygon](homog2d_manual.md#set_RCP)
+* [Regular Convex Polygon (RCP)](homog2d_manual.md#set_RCP)
+* [Runtime polymorphism](homog2d_manual.md#section_rtp)
 * [Segment](homog2d_manual.md#p_segment)
 * [Showcase](homog2d_showcase.md#)
 * [SVG drawing](homog2d_manual.md#drawing)
@@ -25,4 +25,4 @@
 * [Thresholds](homog2d_thresholds.md#)
 * [ttmath library](homog2d_manual.md#bignum)
 <hr>
-Page generated on 2023-12-15
+Page generated on 2024-04-21

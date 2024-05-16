@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -18,6 +18,13 @@
 /**
 \file
 \brief Demo of reading svg files. Build with `$ make demo_import`
+
+Then run with
+`$ BUILD/demo_svg_import misc/test_files/France.svg`
+or
+`$ BUILD/demo_svg_import misc/test_files/France_Normandie.svg`
+
+This will generate a svg file in current folder that is a copy of what was read in the file.
 
 \todo 20240326: once we have a function able to get the min/max points of a container holding
 primitives (see \c getBB()), automatically adjust the size of output image.
@@ -46,6 +53,17 @@ int main( int argc, const char** argv )
 
 	svg::printFileAttrib( doc );
 
+	std::pair<double,double> imSize(500.,500.);
+	try
+	{
+		imSize = svg::getImgSize( doc );
+		std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+	}
+	catch( const std::exception& error )
+	{
+		std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
+	}
+
 	h2d::svg::Visitor visitor;
 	doc.Accept( &visitor );
 	const auto& data = visitor.get();
@@ -56,43 +74,45 @@ int main( int argc, const char** argv )
 		return 1;
 	}
 
-	img::Image<img::SvgImage> out( 500, 500 );
+	img::Image<img::SvgImage> out( imSize.first, imSize.second );
+	fct::DrawFunct<img::SvgImage> dfunc( out );
 
-/*
-	for( const auto& e: data )
-	{
-		if( e->type() != Type::Line2d )
-		{
-//			auto bb = e->getBB();
-			auto bb = e->getPointPair();
-		}
-	}
-*/
+	PointPair1_<double> pp_all;
 	size_t c = 0;
 	for( const auto& e: data )
 	{
-		e->draw( out );
-		std::cout << "Shape " << c++ << ": " << getString( e->type() ) << "\n";
-	}
-	out.write( "demo_import.svg" );
+		std::visit( dfunc, e );   // draw element
 
-#if 0
-	auto c = 0;
-	for( const auto& p: data )
-	{
-		std::cout << ++c << ": " << getString( p->type() )
-			<<", length=" << p->length() << ", area=" << p->area() << '\n';
-		if( p->type() == Type::Circle )
+		auto ptpair = std::visit( fct::PtPairFunct{}, e );
+		pp_all = getMinMax( pp_all, ptpair );
+
+		std::cout << "Shape " << c++ << ": " << getString( type(e) );
+
+		if( type(e) == Type::OPolyline )
 		{
-			const Circle* cir = static_cast<Circle*>( p.get() );
-			std::cout << " - Circle radius=" << cir->radius() << '\n';
+			std::cout << " size=" << std::get<OPolyline>(e).size();
+//			OPolyline po = fct::VariantUnwrapper{e};
+//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
 		}
-		if( p->type() == Type::CPolyline )
+
+		if( type(e) == Type::CPolyline )
 		{
-			const CPolyline* pl = static_cast<CPolyline*>( p.get() );
-			std::cout << " - CPolyline: is polygon=" << (pl->isPolygon()?'Y':'N') << '\n';
+			std::cout << " size=" << std::get<CPolyline>(e).size();
+//			CPolyline po = fct::VariantUnwrapper{e};
+//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
 		}
-		std::cout << *p << '\n';
+		if( type(e) != Type::Segment ) // because no BB is defined
+		{
+			auto bb = std::visit( fct::BBFunct{}, e );
+			bb.draw( out, img::DrawParams().setColor(50,150,250) );
+		}
+
+
+		std::cout << '\n';
 	}
-#endif
+	auto s = FRect(pp_all);
+	out.setSize( s.size() );
+	std::cout << "min/max=" << s << '\n';
+
+	out.write( "demo_import.svg" );
 }

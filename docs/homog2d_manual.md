@@ -348,7 +348,7 @@ Besides points and lines, the following primitives are provided:
 * [polyline](#p_polyline)
 * [ellipse](#p_ellipse)
 
-The ones that may cover some area (polyline, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
+The ones that may cover some area (polyline, rectangle, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
 This is not available for points, lines, and segments (as a segment can be vertical or horizontal, it does not have an area).
 
 On this figure, you can see a circle, a polyline and and ellipse, along with their corresponding bounding boxes.
@@ -1137,12 +1137,12 @@ This can also be used with all the other types (`Segment`, `FRect`, `OPolyline`,
 Homogr h;
  ... assign some planar transformation
 Segment s1( ..., ... );
-auto s2 = H * s1;
+auto s2 = h * s1;
 
 Polyline pl;
-pl = H * pl;
+pl = h * pl;
 
-auto a = H * rect; // a is a CPolyline
+auto a = h * rect; // a is a CPolyline
 ```
 It must be noted that due to the inherent projective nature of a homography, applying to a flat rectangle will not produce a rectangle but a `CPolyline`.
 Similarly, applying a homography to a `Circle` will generate an `Ellipse` object:
@@ -1170,9 +1170,9 @@ Homogr h;
 Point2d p1a( ..., ... );
 Point2d p2a( ..., ... );
 Line2d lA = p1a * p2a;
-auto p1b = H * p1a;
-auto p2b = H * p2a;
-lB = H * lA; // same as lB = p1b * p2b;
+auto p1b = h * p1a;
+auto p2b = h * p2a;
+lB = h * lA; // same as lB = p1b * p2b;
 ```
 
 ### 4.3 - Setting up from a given planar transformation
@@ -1528,6 +1528,11 @@ This function will throw if the returned rectangle ends up in an invalid state.
 This means that for points or segments, the container's size needs to be at least 2.
 For polylines, circles and rectangles, the size needs to be at least 1.
 
+However, as the returned rectangle may not have a null area, this function will throw if the container holds objects on which no bounding box can be defined.
+For example, if the container holds 3 identical points.
+Or even different points, but sharing a identical x or y coordinate (think: [0,0]-[0,5])
+The same situation may occur with segments, for example a container holding these two segments: [0,0]-[0,5] and [0,10]-[0,20].
+
 Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 
 ![bounding box of a set of points](img/bb_Points.svg)
@@ -1539,6 +1544,9 @@ Examples (generated with [this file](../misc/figures_src/src/get_bb_cont.cpp)):
 
 For points, the Top-most and Left-most point are shown in green, and the Right-most and Bottom-most points are shown in blue
 (see next section about this).
+
+**Note**: this function also works for containers holding "variant" type objects (`CommonType`), see [RTP](#section_rtp) section.
+
 
 ### 6.3 - Extremum points
 <a name="extremum_points"></a>
@@ -2120,43 +2128,48 @@ doc.Accept( &visitor );
 auto data = visitor.get();
 ```
 
-The latter function returns a vector of polymorphic (smart) pointers (`std::unique_ptr`) of type `rtp::Root`.
-You can determine the actual type of the object by using the abstract `type()` function.
-It will return an enum value of type `Type` having one of these values:<br>
-`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`
+The latter function returns a vector of polymorphic objects `CommonType`.
+This is a wrapper around a `std::variant`, on which the library provides some helper functions.
+See [RTP section](#section_rtp) on how to use this.
 
-At present, there are only three polymorphic functions available: `draw()`, `length()`, and `area()`.
-And you can get a human-readable value ot the object type with `getString(Type)`:
 
+### 10.3 - Technical details on svg file import
+
+You can fetch the size of image in the SVG file (as `double`):
 ```C++
-for( const auto& p: data )
+std::pair<double,double> imSize(500.,500.); // default size
+try
 {
-	p->draw( image );
-	std::cout << "Element is a " << getString( p->type() )
-		<<", length=" << p->length() << ", area=" << p->area() << '\n';
+	imSize = svg::getImgSize( doc );
+	std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+}
+catch( const std::exception& error )
+{
+	std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
 }
 ```
-
-You can use the type information to convert the pointer into the right type:
-
-```C++
-for( const auto& p: data )
-{
-	if( p->type() == Type::Circle )
-	{
-		const Circle* c = static_cast<Circle*>( p.get() );
-		std::cout << "circle radius=" << c->radius() << '\n';
-	}
-}
-```
-
 
 This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
-It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined
+It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
 
 ### 10.3 - Technical details on svg file import
+
+You can fetch the size of image in the SVG file (as `double`) with `getImgSize()`.
+However, this will throw if no size can be found, so you might consider using that in a "try/catch":
+```C++
+std::pair<double,double> imSize(500.,500.); // default size
+try
+{
+	imSize = svg::getImgSize( doc );
+	std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+}
+catch( const std::exception& error )
+{
+	std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
+}
+```
 
 When importing a SVG file, the following points must be considered:
 
@@ -2171,9 +2184,9 @@ either with the dedicated keywords
 ([`polyline`](https://www.w3.org/TR/SVG2/shapes.html#PolylineElement)
 or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by using the
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
-This import subsystem handles both the `polyline` , `polygon` and `path` elements.
-However, for the latter, the "curve" elements (SVG path commands C, S, Q, T) are not handled,
-the import code will throw if such a command is encoutered while importing a SVG path object.
+This import subsystem handles all three of these.
+However, for the "path", the "curve" elements (SVG path commands C, S, Q, T) are not handled,
+the import code will just ignore thoses commands, if encountered while importing a SVG path object.
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
@@ -2256,7 +2269,7 @@ sys    0m1,699s
 Below are some options that can be passed, to activate them, just define the symbol.
 You can do that in the makefile by adding `-DHOMOG2D_SYMBOL` to the compiler call options,
 or just add a `#define` on top of your program
-**before** the `#include "homog2d"`
+**before** the `#include "homog2d.hpp"`
 
 #### 11.2.1 - Build symbols related to bindings with other libs:
 
@@ -2270,42 +2283,176 @@ See [here](#bignum) for details.
 
 #### 11.2.2 - Other build symbols:
 
-- `HOMOG2D_NOCHECKS`: will disable run-time checking.
+- `HOMOG2D_NOCHECKS`: will disable runtime checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
-- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr`(1). Defining this symbol will disables this.
+- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below). Defining this symbol will disables this.
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
-- `HOMOG2D_ENABLE_RTP`: enables run-time polymorphism.
-Automatically defined if `HOMOG2D_USE_SVG_IMPORT` is.
+- `HOMOG2D_ENABLE_PRTP`: enables pointer-based runtime polymorphism.
 This will add a common base class `rtp::Root` to all the geometric primitives.
-At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
+At present, runtime polymorphism is currently moving to a variant-based approach, see [RTP](#section_rtp) section.
+- `HOMOG2D_ENABLE_VRTP`: enables variant-based runtime polymorphism.
+This will add a class `rtp::CommonType` holding all the geometric primitives as a std::variant.
+See section [RTP](#section_rtp) for details.
+
 - `HOMOG2D_DEBUGMODE`: this will be useful if some asserts triggers somewhere.
 While this shoudn't happen even with random data, numerical (floating-point) issues may still happen,
 [read this for details](homog2d_qa.md#assert_trigger).
 
-(1): at this time, there is only a single situation that generates a warning: when computing the angle between two lines/segments,
-and that this requires the computation of `arccos()` of a value slightly above 1, then the library will use the value 1.0 instead, and generates a warning.
-<br>
-In the future, other warnings could be issued, and silenced using this symbol.
+
+**Situations that will generate a warning**
+
+* When computing the angle between two lines/segments, and that this requires the computation of `arccos()` of a value slightly above 1.
+Then the value 1.0 will be used instead, but a warning will be generated.
+* When importing a SVG file and an element in the file cannot be processed.
 
 
 ### 12 - Runtime Polymorphism
 <a name="section_rtp"></a>
 
-Runtime Polymorphic behavior can be enabled for all the primitives.
-It is enabled only if symbol `HOMOG2D_ENABLE_RTP` is defined, see [build_options](#build_options).
-This will add a common base class `rtp::Root` to all the geometric primitives.
+#### 12.1 - Introduction
 
-At present, run-time polymorphism is pretty much preliminar, but required to import data from an SVG file, see [SVG import example](#svg_import_example).
+Runtime Polymorphism is the ability to store in a container (`std::vector`, `std::list`, ...) objects of different types and calling on those elements some free or member function.
+With this library, this is implemented using two different techniques, one with the classical pointer-based approach, and the other using a `std::variant`, enabled by upgrading to C++17.
 
+At present, these two techniques can be used, they both have pros and cons, but the pointer-based approach might be shortly deprecated,
+So it is advised to use nowadays the "variant-based" technique, as it is more type-safe.
+And there is no feature available with the other approach that isn't available with the variant-based approach.
 
-Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example, unrelated to the SVG import case.
+#### 12.2 - Pointer-based runtime polymorphism
+
+This is the "classical C++" technique:
+you store (smart)pointers of type `Root` in the container.
+All the geometric primitives will inherit from this (non-templated) class.
+That class (and its inheritance) will only exist if the symbol `HOMOG2D_ENABLE_PRTP` is defined:
+```C++
+std::vector<std::shared_ptr<rtp::Root>> vec;
+vec.push_back( std::make_shared<Circle>(   Circle()  ) );
+vec.push_back( std::make_shared<Segment>(  Segment() ) );
+vec.push_back( std::make_shared<FRect>(    FRect()   ) );
+```
+
+You may then call one of the polymorphic member functions on each of them:
+```C++
+for( auto& e: vec )
+{
+	std::cout << getString(e->type())
+		<< ": " << *e
+		<< "\n  -area = "
+		<< e->area()
+		<< "\n  -length = "
+	if( e->type() != Type::Line2d )
+		std::cout << e->length() << '\n';
+	else
+		std::cout << "infinite\n";
+```
+
+Remarks:
+
+* You may directly call the streaming operator (`<<`), the `Root` class takes care of redirecting to the correct class operator.
+* Notice that if the object is detected as a line, the function length is **not** called.
+This is mandatory to avoid throwing an exception, as a line cannot have a finite length.
+
+To do something more elaborate, you need to convert them using a dynamic cast:
+```C++
+if( e->type() == Type::CPolyline )
+{
+	auto pl1 = std::dynamic_pointer_cast<CPolyline>( e );
+	std::cout << "Polyline has " << pl1->size() << " points\n";
+}
+```
+
+At present, the only polymorphic member functions available:
+
+* `void draw( img::Image& )` (you may pass as second argument a `img::DrawParams` object)
+* `double length()`
+* `double area()`
 
 Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
 Bad casting will very probably lead to a segfault.
+
+Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example.
+
+#### 12.3 - Variant-based runtime polymorphism
+
+This feature is made available by defining the symbol `HOMOG2D_ENABLE_VRTP`.
+This will enable a templated common type `CommonType_` that holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
+It follows the [naming conventions of primitives](#numdt), so you can use `CommonTypeF`, `CommonTypeD` or `CommonTypeL`,
+with `CommonType` defaulting to `HOMOG2D_INUMTYPE` (`double` by default).
+
+So you can now stack up different primitives in a container of that type:
+```C++
+std::vector<CommonType_<double>> vec;
+vec.emplace_back( Circle() );
+vec.emplace_back( FRect() );
+vec.emplace_back( Point2d() );
+...
+```
+
+To get the actual type of the object, you can call the free function `type()`,
+that will return an enum value of type `Type` having one of these values:<br>
+`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
+You can get a human-readable value ot the object type with `getString(Type)`.
+
+A set of functors to be used with `std::visit()` is available, lying in the `fct` sub-namespace
+([see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html)).
+But the easyest is probably to use the associated free functions, so you don't have the hassle of functors.
+
+For example, with the above vector, you can print their type, length and area with:
+```C++
+for( auto& e: vec )
+{
+	std::cout << getString(type(e))
+		<< "\n -area=" << area(e)
+		<< "\n -length=" << length(e)
+		<< "\n";
+}
+```
+(warning, the `length()` function will throw here if a `Line2d` is in the vector).
+
+To draw these on an `img::Image`, you can do this:
+```C++
+fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pass some drawing parameters
+for( auto& e: vec )
+	std::visit( vde, e );
+```
+
+To apply the same homography on each element (and store them in-place), simple as this:
+
+```C++
+auto h = Homogr().addTranslation(3,3).addScale(15); // whatever...
+for( auto& e: vec )
+	e = transform( h, e );
+```
+
+But you may also use the associated functors and `std::visit()` if you prefer:
+```C++
+fct::TransformFunct transf( Homogr().addTranslation(3,3).addScale(15) );
+for( auto& e: vec )
+	e = std::visit( transf, e );
+```
+
+If you need to get the object as its base type, a dedicated functor is provided:
+```C++
+if( type(e) == Type::Circle )
+	Circle c = fct::VariantUnwrapper{e};
+```
+
+
+Check test file [homog2d_test_rtp_2.cpp](../misc/homog2d_test_rtp_2.cpp) for an example.
+
+
+
+#### 12.4 - Pros and cons of the two techniques
+
+* With the "variant-based" technique, a constraint is that all elements of a vector of `CommonType` will share the same underlying floating-point type.
+This constraint does not stand with the "pointer-based" technique.
+
+* With the "pointer-based" technique, adding another (user) virtual function is quite complicated.
+As opposed to the "variant-based" technique, where it just requires writing a function in user code, that call the `std::visit()` function.
 

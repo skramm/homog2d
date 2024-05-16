@@ -1,4 +1,4 @@
-# this file holds the run-time parameters and the program name to build video demos
+# this file holds the runtime parameters and the program name to build video demos
 # fields:
 # - output file name
 # - program to run

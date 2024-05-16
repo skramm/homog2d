@@ -24,7 +24,7 @@ jobs:
         with:
           arch: x64
       - name: run msvc single file
-        run: cl /EHsc misc/test_files/single_file.cpp
+        run: cl /EHsc /std:c++17 misc/test_files/single_file.cpp
       - name: run msvc multiple files
-        run: cl /EHsc misc/test_files/test_multiple.cpp misc/test_files/mylib.cpp
+        run: cl /EHsc /std:c++17 misc/test_files/test_multiple.cpp misc/test_files/mylib.cpp
 

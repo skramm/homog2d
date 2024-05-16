@@ -9,7 +9,7 @@
 using namespace h2d;
 using namespace h2d::img;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	int n=30;
 	auto im_w = 350;

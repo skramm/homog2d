@@ -9,12 +9,11 @@
 
 using namespace h2d;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 30; // nb images
 	auto Hdraw = Homogr().setScale(20).addTranslation(10,20);
 
-	uint8_t g = 100;
 	auto kx=2.5;
 	auto ky=0.9;
 	auto x0 = 4.8;

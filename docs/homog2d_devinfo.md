@@ -17,6 +17,12 @@ To get the "full" reference, run:
 $ make doc-dev
 ```
 
+**2024/04/21**: A move to C++17 has been done.
+This will greatly simplify the code, by enabling auto return types and replacing lots of SFINAE stuctures by `constexpr if`.
+It also enables run-time polymorphism without pointers, with the help of `std::variant`
+[details here](homog2d_manual.md#section_rtp).
+
+
 ## 2 - Git branches
 
 `master` branch is supposed to stay stable, with all tests passing.
@@ -96,15 +102,15 @@ the implementation of that type only holds a `static_assert`, so that can be cat
 
 With C++, polymorphism can be achieved in two ways:
 
-- classical run-time polymorphism, achieved with virtual functions.
+- classical runtime polymorphism, achieved with virtual functions.
 This is particularly useful when the need is to have a container holding objects of different types, and then calling a virtual member function on each object.
 - static Compile-time polymorphism, using function overloading.
 
 The general design here is to use compile-time polymorphism.
-However, in some situations, run-time polymorphism is required.
+However, in some situations, runtime polymorphism is required.
 For example when one wants to import an SVG file, because we can't determine the types of objects that will be read.
 
-When inheriting concrete classes from a class template, we face a problem if we need to achieve run-time polymorphism,
+When inheriting concrete classes from a class template, we face a problem if we need to achieve runtime polymorphism,
 Consider this inheritance:
 ```
 template<typename T>
@@ -144,10 +150,13 @@ Here, the member function `Dtype dtype()` enables us to fetch the underlying num
 This is why we have here a double inheritance pattern, on all concrete types (geometric primitives):
 
 - The class template `Common<T>`, provides common stuff for all types, and holds a default implementation for member functions not defined in the concrete types.
-- The non-templated class `Root`, provides real-time polymorphism.
-This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_RTP` is defined
+- The non-templated class `Root`, provides real-time polymorphism through pointers.
+This latter inheritance is only enabled if symbol `HOMOG2D_ENABLE_PRTP` is defined
 (see [build options](homog2d_manual.md#build_options)).
 
+However, the pointer-based technique is error prone: no type safety, and bad casting will lead to segfaults.
+So we have also another way of handling runtime polymorphism, by switching to C++17 and using `std::variant`.
+[See here](homog2d_manual.md#section_rtp) for details.
 
 ### 4.3 - Bounding Boxes
 
@@ -178,11 +187,11 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `CPolyline` | may throw     |
 | `Ellipse`   | never throws  |
 
+for `OPolyline` and `CPolyline`, the function will throw either if those primitives are empty, or if the points they hold do not define an area.
+
 **Bounding box of two objects**
 
-This library provides a free function `getBB( t1, t1 )` that will return the bounding boxes holding `t1` and `t2`.
-
-However, when computing the common bounding box of two arbitrary elements, things are not exactly the same.
+This library provides a free function `getBB( t1, t2 )` that will return the bounding boxes holding `t1` and `t2`, whatever the types involved.
 
 * if one of the two objects is a line, no bounding box can be computed, so a call to `getBB()` with two lines will not compile.
 * if both of the arguments have an area, then there is no problem
@@ -249,4 +258,21 @@ In the library code, all the maths functions are prefixed with `homog2d_` (for e
 Depending if the symbol `HOMOG2D_USE_TTMATH` is defined or not, these symbols are replaced with the relevant string.
 
 For example `homog2d_asin` will be replaced by `ttmath::ASin` if `HOMOG2D_USE_TTMATH` is defined, and by `std::asin` if not.
+
+## 8 - Traits classes
+
+The namespaces `trait` holds several traits classes that are used through out the code.
+Two of these, `HasBB` ("Has Bounding Box") and `HasArea`, are detailed in the table below, showing their "constexpr" boolean value function of the given type:
+
+|   Type    | HasBB | HasArea |
+|-----------|-------|---------|
+| Point2d   | false |  false  |
+| Line2d    | false |  false  |
+| Segment   | false |  false  |
+| FRect     | true  |  true   |
+| Circle    | true  |  true   |
+| Ellipse   | true  |  true   |
+| OPolyline | true  |  false  |
+| CPolyline | true  |  true   |
+
 

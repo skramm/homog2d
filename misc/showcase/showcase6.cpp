@@ -10,17 +10,13 @@
 using namespace h2d;
 using namespace h2d::img;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 25; // nb images
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,10);
 
-	auto r_w0 = 2;
-	auto r_h0 = 1;
 	auto x0 = 3.;
-	auto y0 = 1.;
 	auto k=1.8;
-	uint8_t g = 100;
 
 	Point2d p1( 2, 4 );
 	Point2d p2( 6, 5 );
@@ -32,7 +28,6 @@ int main( int argc, const char** argv )
 		auto angle_r = angle * M_PI / 180.;
 		auto x1 = std::cos(angle_r)*k;
 		auto y1 = std::sin(angle_r)*k;
-		auto r_w = r_w0 + std::sin( 2.*M_PI*i/nbim );
 
 		Point2d p0( x1+x0, y1+x0);
 		std::vector<Point2d> v1{ p1, p2, p0 };

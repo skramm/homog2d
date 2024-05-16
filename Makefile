@@ -49,7 +49,7 @@ ifeq ($(USE_BOOSTGEOM),Y)
 endif
 
 ifeq ($(USE_RTP),Y)
-	CXXFLAGS += -DHOMOG2D_ENABLE_RTP
+	CXXFLAGS += -DHOMOG2D_ENABLE_PRTP
 endif
 
 ifeq ($(DEBUG),Y)
@@ -99,7 +99,7 @@ show:
 	@echo "CXX=$(CXX)"
 	@echo "DOC_IMAGES_LOC=$(DOC_IMAGES_LOC)"
 	@echo "DOC_IMAGES_SRC=$(DOC_IMAGES_SRC)"
-	@echo "DOC_IMAGES_PNG=$(DOC_IMAGES_PNG)"
+	@echo "DOC_IMAGES_OUT=$(DOC_IMAGES_OUT)"
 	@echo "TEX_FIG_LOC=$(TEX_FIG_LOC)"
 	@echo "TEX_FIG_SRC=$(TEX_FIG_SRC)"
 	@echo "TEX_FIG_PNG=$(TEX_FIG_PNG)"
@@ -115,7 +115,7 @@ show:
 #=======================================================================
 # testing targets
 
-variants=test_SY test_SN
+variants=test_SYVN test_SNVN test_SYVY test_SNVY
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
 .PHONY: newtests_before
@@ -125,17 +125,19 @@ newtests_before: CXXFLAGS += -Wno-unused-but-set-variable
 newtests: newtests_before
 	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_ntest.stderr; fi
 	@echo "COUCOU"
-	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
+	$(foreach variant,$(variants),echo "--start $(variant)"; $(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
 
-.PHONY: pretest test test2 nobuild
+.PHONY: test test2 nobuild
 
-test: pretest test2 nobuild test_rtp
+test: test2 nobuild test_rtp
 	@echo "-done target $@"
 
-test2: test_SY test_SN test_single test_multiple
+test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
 	@echo "Make: run test2, build using $(CXX)"
-	BUILD/homog2d_test_SY
-	BUILD/homog2d_test_SN
+	BUILD/homog2d_test_SYVN
+	BUILD/homog2d_test_SNVN
+	BUILD/homog2d_test_SYVY
+	BUILD/homog2d_test_SNVY
 	BUILD/test_single
 	BUILD/test_multiple
 	@echo "-done target $@"
@@ -144,16 +146,19 @@ test-list: test_SY
 	@echo "Tests available:"
 	BUILD/homog2d_test_SY --list-tests
 
-pretest:
-	if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
+test_SYVY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+test_SYVN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
+test_SYVY: CXXFLAGS += -DHOMOG2D_ENABLE_VRTP
+test_SNVY: CXXFLAGS += -DHOMOG2D_ENABLE_VRTP
+
+
+test_SYVN: BUILD/homog2d_test_SYVN
 	@echo "-done target $@"
-
-test_SY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
-
-test_SY: BUILD/homog2d_test_SY
+test_SNVN: BUILD/homog2d_test_SNVN
 	@echo "-done target $@"
-
-test_SN: BUILD/homog2d_test_SN
+test_SYVY: BUILD/homog2d_test_SYVY
+	@echo "-done target $@"
+test_SNVY: BUILD/homog2d_test_SNVY
 	@echo "-done target $@"
 
 test_single: BUILD/test_single
@@ -165,18 +170,18 @@ test_multiple: BUILD/test_multiple
 buildf:
 	@mkdir -p BUILD
 
-BUILD/homog2d_test_SY BUILD/homog2d_test_SN: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
-	-rm BUILD/$(notdir $@).stderr
-	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+BUILD/homog2d_test_SYVN BUILD/homog2d_test_SNVN BUILD/homog2d_test_SYVY BUILD/homog2d_test_SNVY: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
+	@if [ -f BUILD/$(notdir $@).stderr ]; then rm BUILD/$(notdir $@).stderr; fi
+	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>BUILD/$(notdir $@).stderr
 
 BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
 BUILD/%.o: misc/test_files/%.cpp homog2d.hpp Makefile buildf
-	$(CXX) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 BUILD/test_multiple: BUILD/test_multiple.o BUILD/mylib.o buildf
-	$(CXX) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o
+	$(CXX) $(CXXFLAGS) -o BUILD/test_multiple BUILD/test_multiple.o BUILD/mylib.o $(LDFLAGS)
 
 
 # temporarly removed from target testall: speed_test_b
@@ -194,6 +199,7 @@ BUILD/homog2d_test_d: misc/homog2d_test.cpp homog2d.hpp buildf
 
 BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
+
 
 .PHONY: test_bg_1 test_bn
 
@@ -213,13 +219,17 @@ test_bg_1: BUILD/bg_test_1 buildf
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-test_rtp: BUILD/homog2d_test_rtp
-	@echo "-Running RTP test:"
+test_rtp: BUILD/homog2d_test_rtp BUILD/homog2d_test_rtp_2
+	@echo "-Running RTP test 1:"
 	@BUILD/homog2d_test_rtp
+	@echo "-Running RTP test 2:"
+	@BUILD/homog2d_test_rtp_2
 
 
 BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
-	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
+BUILD/homog2d_test_rtp_2: misc/homog2d_test_rtp_2.cpp homog2d.hpp buildf
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp_2.stderr
 
 #=======================================================================
 # speed test
@@ -250,26 +260,27 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile bu
 
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_PNG:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/png/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
 
-.PRECIOUS: BUILD/img/png/%
+.PRECIOUS: BUILD/img/%
 
-# run the program => builds the png image
-BUILD/img/png/%.png: BUILD/img/png/bin/%
+# run the program => builds the png (or svg) image
+BUILD/img/%.png: BUILD/img/bin/%
 	@echo "Running $< to generate $@"
-	@cd BUILD/img/png; bin/$(notdir $<)
+	@cd BUILD/img; bin/$(notdir $<)
 
 # build the program
-BUILD/img/png/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
-	@mkdir -p BUILD/img/png/bin
+BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
+	@mkdir -p BUILD/img/bin
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-doc_fig: $(DOC_IMAGES_PNG) build_gif_pip
+
+doc_fig: $(DOC_IMAGES_OUT) build_gif_pip
 	@echo "done target $@"
 
 build_gif_pip:
-	convert -delay 80 BUILD/img/png/demo_pip_* BUILD/img/png/demo_pip.gif
+	convert -delay 80 BUILD/img/demo_pip_* BUILD/img/demo_pip.gif
 
 
 #=======================================================================
@@ -347,31 +358,24 @@ diff:
 # The following is used to make sure that some code constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
-NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/src/%, $(NOBUILD_SRC_FILES))
 
 
 nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "-done target $@"
 
-#$(NOBUILD_OBJ_FILES): rm_nb
-
-rm_nb:
-	@if [ -e BUILD/no_build.stdout ]; then rm BUILD/no_build.stdout; fi
-	@if [ -e BUILD/no_build.stderr ]; then rm BUILD/no_build.stderr; fi
-
-
 # assemble file to create a cpp program holding a main()
-BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
-	@mkdir -p BUILD/no_build/
-	@cat misc/no_build/header.txt >BUILD/no_build/$(notdir $@)
-	@cat $< >>BUILD/no_build/$(notdir $@)
-	@cat misc/no_build/footer.txt >>BUILD/no_build/$(notdir $@)
+BUILD/no_build/src/no_build_%.cpp: misc/no_build/no_build_%.cxx
+	@mkdir -p BUILD/no_build/src
+	@mkdir -p BUILD/no_build/log
+	@cat misc/no_build/header.txt >BUILD/no_build/src/$(notdir $@)
+	@cat $< >>BUILD/no_build/src/$(notdir $@)
+	@cat misc/no_build/footer.txt >>BUILD/no_build/src/$(notdir $@)
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
-BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
-	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
-	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
-	@! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
+BUILD/no_build/src/no_build_%: BUILD/no_build/src/no_build_%.cpp
+	@echo "Checking build failure of $<"
+	@! $(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS) 1>BUILD/no_build/log/$(notdir $(basename $<)).stdout 2>BUILD/no_build/log/$(notdir $(basename $<)).stderr
 
 #=================================================================
 # SHOWCASE: generates gif images of some situations
@@ -386,7 +390,7 @@ BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase/
 	@mkdir -p BUILD/showcase/gif
 	@echo " -Building program $@"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build png files by running program
 BUILD/showcase/%_00.png: BUILD/showcase/%

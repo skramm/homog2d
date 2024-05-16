@@ -2,10 +2,9 @@
 
 
 #include "../../homog2d.hpp"
-struct A
+struct DummyTest
 {
 	h2d::Point2d pt;
 	void foo();
 };
-
 

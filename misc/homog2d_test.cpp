@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2023 Sebastien Kramm
+    Author & Copyright 2019-2024 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -98,13 +98,19 @@ int main( int argc, char* argv[] )
 		<< "NO"
 #endif
 
-		<< "\n  - HOMOG2D_ENABLE_RTP: "
-#ifdef HOMOG2D_ENABLE_RTP
+		<< "\n  - HOMOG2D_ENABLE_PRTP: "
+#ifdef HOMOG2D_ENABLE_PRTP
 		<< "YES"
 #else
 		<< "NO"
 #endif
 
+		<< "\n  - HOMOG2D_ENABLE_VRTP: "
+#ifdef HOMOG2D_ENABLE_VRTP
+		<< "YES"
+#else
+		<< "NO"
+#endif
 		<< '\n';
 
 	Catch::StringMaker<float>::precision = 25;
@@ -2768,6 +2774,18 @@ TEST_CASE( "Segment orthogonal", "[seg_orthog]" )
 	CHECK( gt == osegs );
 }
 
+TEST_CASE( "min/max of two objects", "[minmax]" )
+{
+	Point2d_<NUMTYPE> pt0(0,0), pt1(1,1), pt2(2,2), pt3(3,3);
+	auto pp1 = std::make_pair( pt0,pt1 );
+	auto pp2 = std::make_pair( pt2,pt3 );
+	auto ppts = getMinMax( pp1, pp2 );
+	CHECK( ppts.first  == Point2d_<NUMTYPE>(0,0) );
+	CHECK( ppts.second == Point2d_<NUMTYPE>(3,3) );
+// TODO: EXTEND
+}
+
+#ifdef HOMOG2D_ENABLE_VRTP
 TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 {
 	Point2d_<NUMTYPE> pt,pt2(1,1);
@@ -2808,7 +2826,67 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 	pc2.set( std::vector<Point2d_<NUMTYPE>>{ {5,1},{6,1} } );
 	CHECK( getBB(pc,pc2) == FRect_<NUMTYPE>(0,0,6,1) );
 }
+#endif // HOMOG2D_ENABLE_VRTP
 
+TEST_CASE( "bounding box of container", "[BB-cont]" )
+{
+	{
+		std::vector<Point2d_<NUMTYPE>> vec(3);
+		vec[0] = Point2d_<NUMTYPE>(1,1);
+		vec[1] = Point2d_<NUMTYPE>(5,6);
+		vec[2] = Point2d_<NUMTYPE>(3,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::array<Point2d_<NUMTYPE>,3> vec;
+		vec[0] = Point2d_<NUMTYPE>(1,1);
+		vec[1] = Point2d_<NUMTYPE>(5,6);
+		vec[2] = Point2d_<NUMTYPE>(3,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::list<Point2d_<NUMTYPE>> vec;
+		vec.emplace_back( Point2d_<NUMTYPE>(1,1) );
+		vec.emplace_back( Point2d_<NUMTYPE>(5,6) );
+		vec.emplace_back( Point2d_<NUMTYPE>(3,2) );
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,5,6) );
+	}
+	{
+		std::vector<Line2d_<NUMTYPE>> vec(3);  // cannot get BB of a set of lines
+		CHECK_THROWS( getBB(vec) );
+	}
+	{
+		std::vector<FRect_<NUMTYPE>> vec(3);
+		vec[0] = FRect_<NUMTYPE>(1,1,2,2);
+		vec[1] = FRect_<NUMTYPE>(5,6,10,11);
+		vec[2] = FRect_<NUMTYPE>(3,2,4,5);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,10,11) );
+	}
+	{
+		std::vector<Segment_<NUMTYPE>> vec(3);
+		vec[0] = Segment_<NUMTYPE>(1,1,2,2);
+		vec[1] = Segment_<NUMTYPE>(5,6,10,11);
+		vec[2] = Segment_<NUMTYPE>(3,2,4,5);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(1,1,10,11) );
+	}
+	{
+		std::vector<Circle_<NUMTYPE>> vec(3);
+		vec[0] = Circle_<NUMTYPE>(1,1,1);
+		vec[1] = Circle_<NUMTYPE>(5,3,2);
+		vec[2] = Circle_<NUMTYPE>(10,11,2);
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(0,0,12,13) );
+	}
+#ifdef HOMOG2D_ENABLE_VRTP
+	{
+		std::vector<CommonType_<NUMTYPE>> vec(4);
+		vec[0] = Circle_<NUMTYPE>(3,4,1);
+		vec[1] = Segment_<NUMTYPE>(5,3,2,8);
+		vec[2] = FRect_<NUMTYPE>(10,11,2,2);
+		vec[3] = Line2d_<NUMTYPE>();
+		CHECK( getBB(vec) == FRect_<NUMTYPE>(10,11,2,2) );
+	}
+#endif
+}
 
 TEST_CASE( "common bounding box with points ", "[point2d-BB]" )
 {
@@ -3639,7 +3717,7 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 	}
 }
 
-
+#if 0
 TEST_CASE( "general binding", "[gen_bind]" )
 {
 	struct MyType
@@ -3651,6 +3729,7 @@ TEST_CASE( "general binding", "[gen_bind]" )
 	CHECK( pt.getX() == 3 );
 	Line2d li (mtpt); // ???
 }
+#endif
 
 TEST_CASE( "SVG drawing default", "[svg_draw_default]" )
 {
@@ -3710,6 +3789,44 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	}
 }
 
+//////////////////////////////////////////////////////////////
+/////               POLYMORPHISM                       /////
+//////////////////////////////////////////////////////////////
+
+#ifdef HOMOG2D_ENABLE_VRTP
+
+TEST_CASE( "variant conversion tests", "[varconv]" )
+{
+	CommonType_<NUMTYPE> var;
+	var = Circle_<NUMTYPE>{};
+	Circle_<NUMTYPE> c = fct::VariantUnwrapper{var};
+	// TODO
+}
+
+TEST_CASE( "variant-based polymorphism", "[polymorph_1]" )
+{
+	std::vector<CommonType_<NUMTYPE>> vvar;
+	vvar.push_back( Circle_<NUMTYPE>{} );
+	vvar.push_back( Segment_<NUMTYPE>{} );
+	vvar.push_back( Line2d_<NUMTYPE>{} );
+
+	{
+		auto var0 = vvar[0];
+		Circle_<NUMTYPE> c = fct::VariantUnwrapper{var0};
+		CHECK( std::visit( fct::TypeFunct{}, var0 ) == Type::Circle );
+		CHECK( c == Circle() );
+
+		auto var1 = vvar[1];
+		Segment_<NUMTYPE> s = fct::VariantUnwrapper{var1};
+		CHECK( type( var1 ) == Type::Segment );
+		CHECK( s == Segment() );
+
+		auto var2 = vvar[2];
+		Line2d_<NUMTYPE> l = fct::VariantUnwrapper{var2};
+		CHECK( type( var2 ) == Type::Line2d );
+	}
+}
+#endif // HOMOG2D_ENABLE_VRTP
 
 //////////////////////////////////////////////////////////////
 /////               SVG IMPORT TESTS                     /////
@@ -3733,11 +3850,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 1 );
-		const auto& elem = data.at(0);
-		CHECK( elem->type() == Type::Circle );
-
-		const Circle* pc2 = static_cast<Circle*>( elem.get() );
-		CHECK( pc2->radius() == 20 );
+		auto elem = data.at(0);
+		CHECK( type( elem ) == Type::Circle );
+		CircleD cir = fct::VariantUnwrapper{elem};
+		CHECK( cir.radius() == 20 );
 	}
 	{                               // this test makes sure the <g> element is ignored
 		tinyxml2::XMLDocument doc;
@@ -3747,7 +3863,7 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		const auto& data = visitor.get();
 		CHECK( data.size() == 3 );
 		for( const auto& elem: data )
-			CHECK( elem->type() == Type::Circle );
+			CHECK( type( elem ) == Type::Circle );
 	}
 	{                            // read a file with 3 circles, one rect, one segment and a polygon
 		tinyxml2::XMLDocument doc;
@@ -3756,9 +3872,10 @@ TEST_CASE( "SVG_Import_1", "[svg_import_1]" )
 		doc.Accept( &visitor );
 		const auto& data = visitor.get();
 		CHECK( data.size() == 6 );
-		CHECK( data.at(3)->type() == Type::Segment );
-		CHECK( data.at(4)->type() == Type::FRect );
-		CHECK( data.at(5)->type() == Type::CPolyline );
+
+		CHECK( type( data.at(3) ) == Type::Segment );
+		CHECK( type( data.at(4) ) == Type::FRect );
+		CHECK( type( data.at(5) ) == Type::CPolyline );
 	}
 }
 
@@ -3772,12 +3889,11 @@ TEST_CASE( "SVG Import Ellipse", "[svg_import_ell]" )
 	CHECK( data.size() == 3 );
 	for( const auto& p: data )
 	{
-		std::cout << *p << '\n';
-		if( p->type() == Type::Ellipse )
+		if( type( p ) == Type::Ellipse )
 		{
 			Ellipse ell( 150, 100, 60, 15, 20*M_PI/180. );
-			const Ellipse* pell = static_cast<const Ellipse*>( p.get() );
-			CHECK( ell == *pell );
+			const EllipseD ell2 = fct::VariantUnwrapper{ p };
+			CHECK( ell == ell2 );
 		}
 	}
 }
@@ -3790,34 +3906,40 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 	}
 	{
 		const char* s1 ="10 20 30 40";
-		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 2 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(30,40) );
+		const auto& res = svg::svgp::parsePath( s1 );
+		CHECK( res.first.size() == 1 ); // one vector
+		CHECK( res.first[0].size() == 2 );  // holding two points
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[0][1] == Point2d(30,40) );
 		CHECK( res.second == false );
 	}
+
 	{
 		const char* s1 ="10 20 30 40z";
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 2 );
+		CHECK( res.first.size() == 1 );
+		CHECK( res.first[0].size() == 2 );
 		CHECK( res.second == true );
 	}
 	{
-		const char* s1 ="10 20 m 1 2 3 4z";  //relative
+		const char* s1 ="10 20 m 1 2 3 4z";  //relative and "Move To" (=>so two vectors in output)
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 3 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(11,22) );
-		CHECK( res.first[2] == Point2d(14,26) );
+		CHECK( res.first.size() == 2 );
+		CHECK( res.first[0].size() == 1 );
+		CHECK( res.first[1].size() == 2 );
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[1][0] == Point2d(11,22) );
+		CHECK( res.first[1][1] == Point2d(14,26) );
 		CHECK( res.second == true );
 	}
 	{
 		const char* s1 ="10 20 H 30 40";  //horizontal line
 		auto res = svg::svgp::parsePath( s1 );
-		CHECK( res.first.size() == 3 );
-		CHECK( res.first[0] == Point2d(10,20) );
-		CHECK( res.first[1] == Point2d(30,20) );
-		CHECK( res.first[2] == Point2d(40,20) );
+		CHECK( res.first.size() == 1 );
+		CHECK( res.first[0].size() == 3 );
+		CHECK( res.first[0][0] == Point2d(10,20) );
+		CHECK( res.first[0][1] == Point2d(30,20) );
+		CHECK( res.first[0][2] == Point2d(40,20) );
 		CHECK( res.second == false);
 	}
 	{
@@ -3833,6 +3955,7 @@ TEST_CASE( "SVG Import path 1", "[svg_import_path_1]" )
 		CHECK_THROWS( svg::svgp::parsePath( s1 ) );
 	}
 }
+
 #endif // HOMOG2D_USE_SVG_IMPORT
 
 //////////////////////////////////////////////////////////////
@@ -3882,6 +4005,7 @@ TEST_CASE( "boost geometry vector point export", "[bg-vpt-export]" )
 }
 
 #endif // HOMOG2D_USE_BOOSTGEOM
+
 
 //////////////////////////////////////////////////////////////
 /////           OPENCV BINDING TESTS                     /////

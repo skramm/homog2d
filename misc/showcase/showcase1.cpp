@@ -8,15 +8,13 @@
 using namespace h2d;
 using namespace h2d::img;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim = 30;         // number of images in gif
 	auto im_w = 400;
 	auto im_h = 250;
 	Image<cv::Mat> myImg( im_w, im_h );
 
-	int offset_h = 100;
-	int offset_v = 60;
 	Homogr Hr( 2.*M_PI/nbim );    // set up rotation
 	Homogr HT1(  im_w/2,  100 );  // centered on image center
 	Homogr HT2( -im_w/2, -100 );

@@ -8,7 +8,7 @@
 
 using namespace h2d;
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto n = 25; // nb images
 	CPolyline pl;

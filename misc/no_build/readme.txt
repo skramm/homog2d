@@ -17,10 +17,18 @@ no_build_10.cxx : homography applied to a FRect does not produce a FRect
 no_build_11.cxx : cannot build an OPolyline from a closed one
 no_build_12.cxx : cannot build an OPolyline from FRect
 
+no_build_13.cxx : make sure that draw() free function fails if something not drawable is passed
+
+no_build_14.cxx : cannot use a Line2d in a getBB( pair of objects)
+
+no_build_15.cxx : cannot set an OPolyline from a FRect
+
+
 
 no_build_16.cxx : cannot build an OPolyline from a non-container object
 no_build_17.cxx : cannot build an CPolyline from a non-container object
 
-no_build_18.cxx : a point cannot be inside a line
-no_build_19.cxx : a point cannot be inside a segment
+no_build_18.cxx : cannot create an OPolyline as a RCP
+
+no_build_19.cxx : make sure that translate() requires numeric values
 

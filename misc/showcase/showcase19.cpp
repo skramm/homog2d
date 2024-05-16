@@ -1,6 +1,8 @@
 /**
 \file
 \brief Generates random segments
+
+\todo 20240421 switch all showcases to Svg images, much nicer!
 */
 
 #define HOMOG2D_USE_OPENCV
@@ -34,7 +36,7 @@ generateSegments( int nbSegs )
 	return vseg;
 }
 
-int main( int argc, const char** argv )
+int main( int, const char** )
 {
 	auto nbim  = 5; // nb images
 	int nbSegs = 40;
@@ -43,16 +45,19 @@ int main( int argc, const char** argv )
 	auto func = [&](int i)   // lambda, needed to fetch color from index
 	{
 		return img::DrawParams().setColor(vcol[i]).showPoints();
+//		return img::DrawParams().showIndex().setColor(vcol[i]).showPoints();
 	};
 	std::function<img::DrawParams(int)> f(func);
 
 	for( int i=0; i<nbim; i++ )
 	{
 		auto vseg = generateSegments( nbSegs );
+//		Image<SvgImage> im( im_w, im_h );
 		Image<cv::Mat> im( im_w, im_h );
 		draw( im, vseg, f );
 
 		std::ostringstream ossa;
+//		ossa << "showcase19_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		ossa << "showcase19_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( ossa.str() );
 	}
