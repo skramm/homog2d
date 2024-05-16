@@ -115,7 +115,7 @@ show:
 #=======================================================================
 # testing targets
 
-variants=test_SY test_SN
+variants=test_SYVN test_SNVN test_SYVY test_SNVY
 #BUILD/homog2d_test_SY BUILD/homog2d_test_SN
 
 .PHONY: newtests_before
@@ -125,11 +125,11 @@ newtests_before: CXXFLAGS += -Wno-unused-but-set-variable
 newtests: newtests_before
 	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_ntest.stderr; fi
 	@echo "COUCOU"
-	$(foreach variant,$(variants),$(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
+	$(foreach variant,$(variants),echo "--start $(variant)"; $(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
 
 .PHONY: test test2 nobuild
 
-test: test2 nobuild test_rtp demo_import
+test: test2 nobuild test_rtp
 	@echo "-done target $@"
 
 test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
@@ -145,10 +145,6 @@ test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
 test-list: test_SY
 	@echo "Tests available:"
 	BUILD/homog2d_test_SY --list-tests
-
-#pretest:
-#	@if [ -f BUILD/homog2d_test.stderr ]; then echo "start test">BUILD/homog2d_test.stderr; fi
-#	@echo "-done target $@"
 
 test_SYVY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 test_SYVN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
@@ -176,7 +172,7 @@ buildf:
 
 BUILD/homog2d_test_SYVN BUILD/homog2d_test_SNVN BUILD/homog2d_test_SYVY BUILD/homog2d_test_SNVY: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
 	@if [ -f BUILD/$(notdir $@).stderr ]; then rm BUILD/$(notdir $@).stderr; fi
-	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>>BUILD/$(notdir $@).stderr
+	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>BUILD/$(notdir $@).stderr
 
 BUILD/test_single: misc/test_files/single_file.cpp homog2d.hpp Makefile buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
@@ -362,31 +358,24 @@ diff:
 # The following is used to make sure that some code constructions will not build
 
 NOBUILD_SRC_FILES := $(notdir $(wildcard misc/no_build/*.cxx))
-NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/%.o, $(NOBUILD_SRC_FILES))
+NOBUILD_OBJ_FILES := $(patsubst %.cxx,BUILD/no_build/src/%.o, $(NOBUILD_SRC_FILES))
 
 
 nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "-done target $@"
 
-#$(NOBUILD_OBJ_FILES): rm_nb
-
-rm_nb:
-	@if [ -e BUILD/no_build.stdout ]; then rm BUILD/no_build.stdout; fi
-	@if [ -e BUILD/no_build.stderr ]; then rm BUILD/no_build.stderr; fi
-
-
 # assemble file to create a cpp program holding a main()
-BUILD/no_build/no_build_%.cpp: misc/no_build/no_build_%.cxx
-	@mkdir -p BUILD/no_build/
-	@cat misc/no_build/header.txt >BUILD/no_build/$(notdir $@)
-	@cat $< >>BUILD/no_build/$(notdir $@)
-	@cat misc/no_build/footer.txt >>BUILD/no_build/$(notdir $@)
+BUILD/no_build/src/no_build_%.cpp: misc/no_build/no_build_%.cxx
+	@mkdir -p BUILD/no_build/src
+	@mkdir -p BUILD/no_build/log
+	@cat misc/no_build/header.txt >BUILD/no_build/src/$(notdir $@)
+	@cat $< >>BUILD/no_build/src/$(notdir $@)
+	@cat misc/no_build/footer.txt >>BUILD/no_build/src/$(notdir $@)
 
 # compile, and return 0 if compilation fails (which is supposed to happen)
-BUILD/no_build/no_build_%.o: BUILD/no_build/no_build_%.cpp
-	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
-	@echo -e "-----------------------------\nChecking build failure of $(notdir $<)\n" >>BUILD/no_build.stderr
-	@! $(CXX) $(CXXFLAGS) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
+BUILD/no_build/src/no_build_%.o: BUILD/no_build/src/no_build_%.cpp
+	@echo "Checking build failure of $<"
+	! $(CXX) $(CXXFLAGS) -o $@ -c $< 1>BUILD/no_build/log/$(notdir $(basename $<)).stdout 2>BUILD/no_build/log/$(notdir $(basename $<)).stderr
 
 #=================================================================
 # SHOWCASE: generates gif images of some situations
