@@ -160,3 +160,14 @@ Random segments, drawn with random colors
 
 ![showcase19](showcase/showcase19.gif)
 
+
+* [Showcase 20](../misc/showcase/showcase20.cpp):
+<a name="sc20"></a>
+Three moving circles, fixed radius.
+Lines formed by intersections points between pair of circles.
+The three lines intersect at same point (black).
+Also shows the common bounding box and the tangential segments.
+
+![showcase20](showcase/showcase20.gif)
+
+
