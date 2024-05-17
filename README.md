@@ -89,8 +89,8 @@ Don't hesitate, this is still beta but stable release expected soon.
   - [Wykobi](http://www.wykobi.com/), has much more computational geometry features but no direct support for homogeneous geometry.
 
 **Warning**: The images shown in the manual are there just there as an illustration of what the library does, but there is **no rendering code** included.
-The library provides drawing function whose implementation requires external code.
-The images are drawn either as Svg files, or using a third-party library (Opencv), but the latter is not needed to use this library.
+The library provides drawing functions, that can be used to generate Svg files.
+An alternative is to use a supported third-party library (Opencv), but the latter is not needed to use this library.
 
 
 (*):
