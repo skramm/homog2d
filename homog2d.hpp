@@ -5796,9 +5796,9 @@ getString( PolyMinimAlgo alg )
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased;
+	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< default algorithm
 	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
-	HOMOG2D_INUMTYPE _maxAbsDist    = thr::nullDistance();
+	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.2;
 	HOMOG2D_INUMTYPE _visvaRatio = 0.1;
 };
@@ -7190,7 +7190,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
-
+	std::cout << "p_minimizePL_angle(): angle=" << thres*180./M_PI << '\n';
 // step 1: check each point to see if it is the middle point of two segments with same angle
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )

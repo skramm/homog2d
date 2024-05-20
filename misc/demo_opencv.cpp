@@ -191,6 +191,15 @@ std::string Data::save_SVG( int demo_idx ) const
 }
 
 //------------------------------------------------------------------
+/// Check if mouse is close to one of the points, if not return -1, if yes, returns index
+int checkIfPointIsClose( Point2d mouse, std::vector<Point2d> vpt )
+{
+	for( size_t i=0; i<vpt.size(); i++ )
+		if( mouse.distTo( vpt[i] ) < 10 )  // if mouse is less than 10 pixel away
+			return (int)i;
+	return -1;
+}
+//------------------------------------------------------------------
 /// Mouse callback functions, checks if one of the points is selected.
 /**
 - If so, that point gets moved by the mouse, and the function \c action is called (if it has been assigned)
@@ -210,16 +219,18 @@ myMouseCB( int event, int x, int y, int, void* param )
 		break;
 
 		case CV_EVENT_LBUTTONDOWN:
+		{
 			data._selected = -1;
-			for( int i=0; i<data.nbPts(); i++ )
-				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
-				{
-					data._selected = i;
-					data.vpt[i].draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
-				}
+			auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
+			if( idx != -1 )
+			{
+				data._selected = idx;
+				data.vpt[idx].draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+			}
 			if( data._selected == -1 )
 				if( data.leftClicAddPoint )
 					data.addMousePoint();
+		}
 		break;
 
 		case CV_EVENT_MOUSEMOVE:
@@ -227,6 +238,16 @@ myMouseCB( int event, int x, int y, int, void* param )
 			{
 				data.vpt[data._selected] = data._pt_mouse;
 				data.vpt[data._selected].draw( data.img, img::DrawParams().selectPoint() );
+			}
+			else
+			{
+				auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
+				std::cout << "idx " << idx << "\n";
+				if( idx != -1 )
+				{
+					data.vpt[idx].draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+					std::cout << "draw point " << idx << "\n";
+				}
 			}
 		break;
 
@@ -246,7 +267,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 	}
 	if( doSomething )
 	{
-		data.clearImage();
+//		data.clearImage();
 		if( data._mouseCB )
 		{
 			data._mouseCB( param );
@@ -1975,6 +1996,8 @@ struct ProxyTrackBar
 	int slider_max;
 };
 
+void action_polyMinim( void* );
+
 /// Parameters for demo of polyline minimization
 struct Param_polyMinim : Data
 {
@@ -1984,8 +2007,6 @@ struct Param_polyMinim : Data
 		poly_c.set(vpt);
 
 		createWindows();
-		cv::namedWindow( win2 );
-		cv::moveWindow( win2, _imWidth, 50 );
 		img2.setSize( _imWidth, _imHeight );
 	}
 
@@ -1996,6 +2017,7 @@ struct Param_polyMinim : Data
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );
 		createTrackbar();
+		setMouseCB( action_polyMinim );
 	}
 
 	void showImage()
@@ -2041,11 +2063,12 @@ struct Param_polyMinim : Data
 	img::Image<cv::Mat> img2; ///< second window
 	std::string win2 = "Processes polyline";
 
-	bool pltype = true;
+	bool _pltype = true;
 	PolyMinimParams pmParams; ///< parameters
 	ProxyTrackBar proxyTB;    ///< a proxy used for the TrackBar (needed because only ints are allowed in TrackBars)
 };
 
+/// Called both by the mouse callback and by the trackbar callback
 void action_polyMinim( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
@@ -2053,12 +2076,39 @@ void action_polyMinim( void* param )
 	data.clearImage();
 	data.initPolylines();
 
+	auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
+//		std::cout << "idx=" << idx << "\n";
+	if( idx != -1 )
+	{
+		auto currPt = data.vpt[idx];
+		currPt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+		auto ptPrevious = ( idx==0                      ? data.vpt.size()-1 : idx-1 );
+		auto ptNext     = ( idx==(int)data.vpt.size()-1 ? 0                 : idx+1 );
+		if( data.pmParams._algo == PolyMinimAlgo::AngleBased )
+		{
+			auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
+			drawText( data.img, std::to_string( angle ), currPt );
+		}
+		if( data.pmParams._algo == PolyMinimAlgo::AbsDistance )
+		{
+			Segment segPN( data.vpt[ptNext], data.vpt[ptPrevious] );
+			segPN.draw( data.img );
+			auto orthogSeg = segPN.getLine().getOrthogSegment( currPt );
+			auto oseg_pts = orthogSeg.getPts();
+			auto pt_int = oseg_pts.first;
+			if( pt_int == currPt )
+				pt_int = oseg_pts.second;
+			orthogSeg.draw( data.img );
+			drawText( data.img, std::to_string( orthogSeg.length() ), pt_int );
+		}
+	}
+
 	std::cout << "Algorithm: " << getString( data.pmParams._algo ) << '\n';
 	data.convertProxyValues();
 	data.newpol_c.minimize( data.pmParams );
 	data.newpol_o.minimize( data.pmParams );
 
-	if( data.pltype )
+	if( data._pltype )
 	{
 		data.poly_c.draw( data.img, img::DrawParams().setColor(0,250,0).showPoints() );
 		data.newpol_c.draw( data.img2, img::DrawParams().setColor(250,0,0).showPoints() );
@@ -2072,6 +2122,7 @@ void action_polyMinim( void* param )
 	}
 	data.showImage();
 }
+
 /// OpenCv trackbar callback (free function), call the corresponding "action" function
 void trackbarCallback( int val, void* param )
 {
@@ -2134,15 +2185,13 @@ void demo_polyMinim( int demidx )
 	data.createWindows();
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
-//	data.pmParams._minDist = 0.5;
-//	data.pmParams._angleThres = 5 /* degrees */ * M_PI / 180.; //
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.switchAlgo(); },  "switch algorithm" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
-	kbloop.addKeyAction( 'b', [&](void*){ data.pltype = !data.pltype; }, "switch Open/Closed" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._pltype = !data._pltype; }, "switch Open/Closed" );
 
 	kbloop.addCommonAction( action_polyMinim );
-	data.setMouseCB( action_polyMinim );
+//	data.setMouseCB( action_polyMinim );
 	action_polyMinim( &data );
 	kbloop.start( data );
 }
