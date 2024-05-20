@@ -1968,6 +1968,13 @@ void demo_RCP( int demidx )
 }
 
 //------------------------------------------------------------------
+/// A proxy for the trackbar in polyline minimization demo
+struct ProxyTrackBar
+{
+	int slider;
+	int slider_max;
+};
+
 /// Parameters for demo of polyline minimization
 struct Param_polyMinim : Data
 {
@@ -1976,9 +1983,19 @@ struct Param_polyMinim : Data
 		poly_o.set(vpt);
 		poly_c.set(vpt);
 
+		createWindows();
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );
 		img2.setSize( _imWidth, _imHeight );
+	}
+
+	void createWindows()
+	{
+		cv::destroyAllWindows(); // so that the previous trackbars will be erased
+		cv::namedWindow( win1 );
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		createTrackbar();
 	}
 
 	void showImage()
@@ -1998,24 +2015,46 @@ struct Param_polyMinim : Data
 		newpol_c = poly_c;
 		newpol_o = poly_o;
 	}
+	void switchAlgo()
+	{
+		if( pmParams._algo == PolyMinimAlgo::RelDistance ) // WARNING: assuming this is the last one !!
+			pmParams._algo = PolyMinimAlgo::AngleBased;
+		else
+		{
+			auto idx = (int)pmParams._algo;
+			pmParams._algo = (PolyMinimAlgo)( ++idx );
+		}
+		createWindows();
+	}
+	void createTrackbar(); // Param_polyMinim& data ) //, PolyMinimParams params )
+	void convertProxyValues()
+	{
 
-	OPolyline poly_o;
+	}
+
+/// DATA SECTION
+	OPolyline poly_o; ///< source polyline
 	CPolyline poly_c;
-
-	img::Image<cv::Mat> img2;
-	std::string win2 = "Processes polyline";
-	bool pltype = true;
-	PolyMinimParams pmParams;
+	OPolyline newpol_o; ///< simplified polyline
 	CPolyline newpol_c;
-	OPolyline newpol_o;
+
+	img::Image<cv::Mat> img2; ///< second window
+	std::string win2 = "Processes polyline";
+
+	bool pltype = true;
+	PolyMinimParams pmParams; ///< parameters
+	ProxyTrackBar proxyTB;    ///< a proxy used for the TrackBar (needed because only ints are allowed in TrackBars)
 };
 
 void action_polyMinim( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
+
 	data.clearImage();
 	data.initPolylines();
 
+	std::cout << "Algorithm: " << getString( data.pmParams._algo ) << '\n';
+	data.convertProxyValues();
 	data.newpol_c.minimize( data.pmParams );
 	data.newpol_o.minimize( data.pmParams );
 
@@ -2033,18 +2072,72 @@ void action_polyMinim( void* param )
 	}
 	data.showImage();
 }
+/// OpenCv trackbar callback (free function), call the corresponding "action" function
+void trackbarCallback( int val, void* param )
+{
+//	std::cout << "val=" << val << '\n';
+	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
+
+	switch( data.pmParams._algo )
+	{
+		case PolyMinimAlgo::AngleBased:
+			data.pmParams._angleThres = M_PI/180.*val/10.;
+			std::cout << "angle thres (deg) = " << data.pmParams._angleThres * 180. / M_PI << '\n';
+		break;
+		case PolyMinimAlgo::Visvalingam:
+			data.pmParams._visvaRatio = val;
+			std::cout << "_visvaRatio = " << data.pmParams._visvaRatio << '\n';
+		break;
+		case PolyMinimAlgo::AbsDistance:
+			data.pmParams._maxAbsDist = val;
+			std::cout << "maxAbsDist = " << data.pmParams._maxAbsDist << '\n';
+		break;
+		case PolyMinimAlgo::RelDistance:
+			data.pmParams._maxRelDistRatio = 1.*val/100.;
+			std::cout << "maxRelDistRatio = " << data.pmParams._maxRelDistRatio << '\n';
+		break;
+	}
+	action_polyMinim( param );
+}
+
+void Param_polyMinim::createTrackbar()
+{
+	std::string tbName;
+	std::cout << "algo=" << (int)pmParams._algo << '\n';
+	switch( pmParams._algo )
+	{
+		case PolyMinimAlgo::AngleBased:
+			proxyTB.slider_max = 50; // degrees
+			tbName = "Angle (deg./10)";
+		break;
+		case PolyMinimAlgo::Visvalingam:
+			proxyTB.slider_max = 50; // % of the total number of points
+			tbName = "Visva ratio (%)";
+		break;
+		case PolyMinimAlgo::AbsDistance:
+			proxyTB.slider_max = 20; // pixels (for the demo)
+			tbName = "Max dist";
+		break;
+		case PolyMinimAlgo::RelDistance:
+			proxyTB.slider_max = 50; // % of the segment length
+			tbName = "Dist ratio";
+		break;
+		default: assert(0);
+	}
+	proxyTB.slider = proxyTB.slider_max / 2; // set current slider value to half of max value
+	cv::createTrackbar( tbName, win2, &proxyTB.slider, proxyTB.slider_max, &trackbarCallback, (void*)(this) );
+}
 
 void demo_polyMinim( int demidx )
 {
 	Param_polyMinim data( demidx, "Polygon minimization" );
+	data.createWindows();
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
-	data.pmParams._minDist = 0.5;
-	data.pmParams._angleThres = 5 /* degrees */ * M_PI / 180.; //
+//	data.pmParams._minDist = 0.5;
+//	data.pmParams._angleThres = 5 /* degrees */ * M_PI / 180.; //
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.pmParams._algo = PolyMinimAlgo::AngleBased; },  "algo: angle" );
-	kbloop.addKeyAction( 'z', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Visvalingam; }, "algo: Visvalingam" );
-	kbloop.addKeyAction( 'e', [&](void*){ data.pmParams._algo = PolyMinimAlgo::Distance; },    "algo: Distance" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.switchAlgo(); },  "switch algorithm" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data.pltype = !data.pltype; }, "switch Open/Closed" );
 

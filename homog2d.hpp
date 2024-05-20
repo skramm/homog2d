@@ -5774,15 +5774,33 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 enum class PolyMinimAlgo {
 	AngleBased,   ///< removes points based on the angle between the two segments
 	Visvalingam,  ///< iterative algorithm, see https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
-	Distance
+	AbsDistance,  ///< Uses an absolute threshold on the distance between point and line joining the two other points
+	RelDistance   ///< Uses a relative threshold on ratio of distance between point and line joining the two other points and segment length
 };
+
+const char*
+getString( PolyMinimAlgo alg )
+{
+	const char* s=0;
+	switch( alg )
+	{
+		case PolyMinimAlgo::AngleBased:  s="Angle";        break;
+		case PolyMinimAlgo::Visvalingam: s="Visvalingam";  break;
+		case PolyMinimAlgo::AbsDistance: s="AbsDistance";  break;
+		case PolyMinimAlgo::RelDistance: s="RelDistance";  break;
+		default: assert(0);
+	}
+	return s;
+}
 
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
 	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased;
 	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
-	HOMOG2D_INUMTYPE _minDist    = thr::nullDistance();
+	HOMOG2D_INUMTYPE _maxAbsDist    = thr::nullDistance();
+	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.2;
+	HOMOG2D_INUMTYPE _visvaRatio = 0.1;
 };
 
 namespace base {
@@ -6373,7 +6391,7 @@ private:
 	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsClosed>& );
 	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
 	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
-	void p_minimizePL_dist(  HOMOG2D_INUMTYPE, size_t istart, size_t iend );
+	void p_minimizePL_dist(  HOMOG2D_INUMTYPE, bool, size_t istart, size_t iend );
 	void p_minimizePL_Visva( PolyMinimParams, size_t istart, size_t iend );
 
 public:
@@ -6975,8 +6993,11 @@ PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size
 		case PolyMinimAlgo::Visvalingam:
 			p_minimizePL_Visva( params, istart, iend );
 		break;
-		case PolyMinimAlgo::Distance:
-			p_minimizePL_dist( params._minDist, istart, iend );
+		case PolyMinimAlgo::AbsDistance:
+			p_minimizePL_dist( params._maxAbsDist, true, istart, iend );
+		break;
+		case PolyMinimAlgo::RelDistance:
+			p_minimizePL_dist( params._maxRelDistRatio, false, istart, iend );
 		break;
 
 		default: assert(0);
@@ -7118,7 +7139,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolute, size_t istart, size_t iend )
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
@@ -7131,13 +7152,25 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, size_t istart,
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
-		auto d0 = dist( pnext,pprev );
-		auto d1 = dist( p0,   pprev );
-		auto d2 = dist( p0,   pnext );
+		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
+		auto d0  = seg.length();
+		auto h   = p0.distTo( seg.getLine() );
 
-		HOMOG2D_LOG( "pt " << i << " diff=" << homog2d_abs(d0 - d1 - d2) )
-		if( homog2d_abs( d0 - d1 - d2 ) < thres )
-			ptset.push_back( i );
+//		auto d1 = dist( p0,   pprev );
+//		auto d2 = dist( p0,   pnext );
+
+//		HOMOG2D_LOG( "pt " << i << " diff=" << homog2d_abs(d0 - d1 - d2) )
+		if( isAbsolute )
+		{
+			if( h < thres )
+//			if( homog2d_abs( d0 - d1 - d2 ) < thres )
+				ptset.push_back( i );
+		}
+		else
+		{
+			if( h/d0 < thres )
+				ptset.push_back( i );
+		}
 	}
 
 	if( ptset.size() == 0 ) // nothing found
@@ -7186,6 +7219,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart
 	_plinevec = std::move( newPtSet );
 }
 
+/// Minimize Open Polyline (OPolyline)
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename typ::IsOpen>& )
@@ -7194,6 +7228,7 @@ PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::Pl
 	p_minimizePL( params, 1, size()-1 );
 }
 
+/// Minimize Closed Polyline (CPolyline_)
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename typ::IsClosed>& )
@@ -7212,7 +7247,6 @@ PolylineBase<PLT,FPT>::isPolygon() const
 		return false;
 	return impl_isPolygon( detail::PlHelper<PLT>() );
 }
-
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 constexpr bool
