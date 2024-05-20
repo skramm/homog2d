@@ -5793,14 +5793,25 @@ getString( PolyMinimAlgo alg )
 	return s;
 }
 
+/// Stop criterion for the Visvalingam polyline decimating algorithm
+enum class VisvaStopCrit {
+/// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
+	NbPtsRatio,
+/// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reaches
+/// (uses the _maxRelDistRatio value)
+	DistRatio
+};
+
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
 	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< default algorithm
 	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
-	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.2;
-	HOMOG2D_INUMTYPE _visvaRatio = 0.1;
+	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
+
+	VisvaStopCrit    _visvaStopCrit = VisvaStopCrit::NbPtsRatio;
+	HOMOG2D_INUMTYPE _visvaPtsRatio = 0.3;
 };
 
 namespace base {
@@ -7024,7 +7035,7 @@ struct VisvaData
 	const PolylineBase<PLT,FPT>*  _polyp = nullptr;
 };
 
-///used in the Visvalingam algorithm
+/// Used in the Visvalingam algorithm
 /**
 The idea is to compute once all the areas when iterating
 (of course, when removal of a point n, areas of points n-1 and n+1 must be recomputed)
@@ -7091,6 +7102,8 @@ p_buildNewPolyline( const base::PolylineBase<PLT,FPT>& poly, const std::vector<s
 /**
 Ref: https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 
+!!! WIP !!!
+
 Half area of triangle is given by absolute value of determinant of matrix:
 \verbatim
 | x1  y1  1 |
@@ -7110,11 +7123,15 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 
 //	priv::printVector( triangleAreas, "triangle areas" );
 
-// step 2: find minimum value
+//	do
+//	{
+
+
+// step 1: find minimum value
 	const auto itmin = std::min_element( vdata._triangleAreas.cbegin(), vdata._triangleAreas.cend() );
 	size_t posmin = itmin - vdata._triangleAreas.cbegin();
 
-// step 3: if minimum value above a threshold, copy all the points except the one with minimum area
+// step 2: if minimum value above a threshold, copy all the points except the one with minimum area
 // (else, do nothing)
 	if( *itmin > 0.01 ) // TEMP
 	{
@@ -7132,7 +7149,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
-/// Does distance-based reduction
+/// Does distance-based reduction (absolute or relative)
 /**
 \todo Would we speed up if we did computation of squared distances, using priv::sqDist() and compare
 \$ d0^2 \$ to \$ d1^2 + d2^2 + 2 * d1 * d2 \$ ???
@@ -7148,7 +7165,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
 	{
-		const auto& p0 = _plinevec.at(i);
+		const auto& p0    = _plinevec.at(i);
 		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
@@ -7156,21 +7173,20 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 		auto d0  = seg.length();
 		auto h   = p0.distTo( seg.getLine() );
 
-//		auto d1 = dist( p0,   pprev );
-//		auto d2 = dist( p0,   pnext );
-
-//		HOMOG2D_LOG( "pt " << i << " diff=" << homog2d_abs(d0 - d1 - d2) )
+		bool doPushback = false;
 		if( isAbsolute )
 		{
 			if( h < thres )
-//			if( homog2d_abs( d0 - d1 - d2 ) < thres )
-				ptset.push_back( i );
+				doPushback = true;
 		}
 		else
 		{
 			if( h/d0 < thres )
-				ptset.push_back( i );
+				doPushback = true;
 		}
+		if( doPushback )  // this here is to avoid transforming a polygon into a segment !
+			if( istart==0 ? ptset.size() < nbpts-3 : ptset.size() < nbpts-2 )
+				ptset.push_back( i );
 	}
 
 	if( ptset.size() == 0 ) // nothing found
@@ -7190,7 +7206,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
-	std::cout << "p_minimizePL_angle(): angle=" << thres*180./M_PI << '\n';
+
 // step 1: check each point to see if it is the middle point of two segments with same angle
 	std::vector<size_t> ptset;
 	for( size_t i=istart; i<iend; i++ )
