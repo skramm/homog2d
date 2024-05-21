@@ -48,7 +48,7 @@ void demo_something( int demo_index)
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_VRTP
-
+#define HOMOG2D_USE_SVG_IMPORT
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
@@ -2047,11 +2047,34 @@ struct Param_polyMinim : Data
 		}
 		createWindows();
 	}
-	void createTrackbar(); // Param_polyMinim& data ) //, PolyMinimParams params )
-	void convertProxyValues()
+	void loadFile()
 	{
+		tinyxml2::XMLDocument doc;
+		doc.LoadFile( "misc/test_files/France_Bretagne.svg" );
 
+		svg::Visitor visitor;
+		doc.Accept( &visitor );
+//		std::cout << "DONE visitor\n";
+//		auto data = visitor.get();
+		v_loaded = visitor.get();
+//		std::cout << "DATA: ok, size=" << v_loaded.size() << '\n';
+//		img::Image<img::SvgImage> imgtest;
+//		fct::DrawFunct dfunc( img );
+//		fct::PrintFunct print( std::cout );
+//		for( const auto& e: v_loaded )
+//		{
+//			std::visit( print, e );
+//			std::visit( dfunc, e );   // draw element
+//		}
+//		std::cout << "DATA: done drawing\n";
+//		Segment(100,50,250,200).draw( img );
+//		showImage();
+//		img.write("imgtest.png");
 	}
+	void createTrackbar();
+/*	void convertProxyValues()
+	{
+	}*/
 
 /// DATA SECTION
 	OPolyline poly_o; ///< source polyline
@@ -2065,6 +2088,9 @@ struct Param_polyMinim : Data
 	bool _pltype = true;
 	PolyMinimParams pmParams;   ///< algorithm parameters
 	ProxyTrackBar   proxyTB;    ///< a proxy used for the TrackBar (needed because only ints are allowed in TrackBars)
+
+	bool hasLoadedPolyline = false;
+	std::vector<CommonType> v_loaded;
 };
 
 /// Draws the parameters on first image
@@ -2109,12 +2135,26 @@ void action_polyMinim( void* param )
 	data.clearImage();
 	data.initPolylines();
 
+	if( data.v_loaded.size() )
+	{
+		fct::DrawFunct dfunc( data.img );
+		for( const auto& e: data.v_loaded )
+		{
+			std::visit( dfunc, e );   // draw element
+			if( type(e) == Type::CPolyline )
+			{
+				CPolyline p1 = fct::VariantUnwrapper{e};
+				CPolyline p2(p1);
+				p2.minimize( data.pmParams );
+				p2.draw( data.img2 );
+			}
+		}
+	}
+
 	auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
 	if( idx != -1 )
 		drawAlgoParams( idx, data );
 
-//	std::cout << "Algorithm: " << getString( data.pmParams._algo ) << '\n';
-	data.convertProxyValues();
 	data.newpol_c.minimize( data.pmParams );
 	data.newpol_o.minimize( data.pmParams );
 
@@ -2187,7 +2227,6 @@ void Param_polyMinim::createTrackbar()
 		break;
 		default: assert(0);
 	}
-//	proxyTB.slider = proxyTB.slider_max / 2; // set current slider value to half of max value
 	cv::createTrackbar( tbName, win2, &proxyTB.slider, proxyTB.slider_max, &trackbarCallback, (void*)(this) );
 }
 
@@ -2198,8 +2237,9 @@ void demo_polyMinim( int demidx )
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.switchAlgo(); },  "switch algorithm" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); }, "reset polyline" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.switchAlgo(); },            "switch algorithm" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.loadFile(); },              "load sample SVG file" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },                 "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._pltype = !data._pltype; }, "switch Open/Closed" );
 
 	kbloop.addCommonAction( action_polyMinim );

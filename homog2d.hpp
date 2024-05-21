@@ -100,7 +100,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
-		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "()\n"
+		<< ", func=" << HOMOG2D_PRETTY_FUNCTION << "()\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -963,13 +963,26 @@ struct AreaFunct
 	}
 };
 
+//------------------------------------------------------------------
+/// A functor used to call the << operator
+struct PrintFunct
+{
+	PrintFunct( std::ostream& stream ): _stream(stream)
+	{}
+
+	template<typename T>
+	void operator ()(const T& a)
+	{
+		_stream << a << '\n';
+	}
+	std::ostream& _stream;
+};
 
 //------------------------------------------------------------------
 /// A functor used to apply a homography matrix to an object
 template<typename FPT>
-class TransformFunct
+struct TransformFunct
 {
-public:
 	TransformFunct( const Homogr_<FPT>& h ): _h(h)
 	{}
 
@@ -979,7 +992,6 @@ public:
 		return CommonType_<FPT>{_h * a};
 	}
 
-private:
 	const Homogr_<FPT>& _h;
 };
 
@@ -6226,6 +6238,8 @@ at 180° of the previous one.
 - https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 Also use the areCollinear() function
+
+\todo 20240521: add something so that the bounding box does not change (extremum points must not be discarded
 */
 	void
 	minimize( PolyMinimParams params = PolyMinimParams() )
@@ -12204,10 +12218,12 @@ generateNewPoint(
 	return out;
 }
 
+/// Returns a \ref SvgPathCommand item from a character that was read in a svg "path" command
 inline
 SvgPathCommand
-getCommand( char c )
+getSvgCommand( char c )
 {
+	HOMOG2D_START;
 	HOMOG2D_LOG( "search command for " << c );
 
 	static std::string commands( "MLHVCSQTAZ" ); // allowed SVG path commands (and their counterparts relative)
@@ -12252,6 +12268,8 @@ template<typename FPT>
 std::vector<Point2d_<FPT>>
 purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 {
+	HOMOG2D_START;
+
 	std::vector<Point2d_<FPT>> out;
 	out.reserve( pts.size() );
 	for( auto it=pts.begin(); it!=std::prev(pts.end()); it++ )
@@ -12261,7 +12279,8 @@ purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 		if( elem != next )
 			out.push_back( elem );
 	}
-	out.push_back( pts.back() ); // add last one
+	if( pts.back() != pts.front() )
+		out.push_back( pts.back() ); // add last one (if not the same as first one)
 	return out;
 }
 
@@ -12287,8 +12306,8 @@ struct SvgValuesBuffer
 				<< _values.size()
 			);
 		auto pt = generateNewPoint( mode, _previousPt, _values );
-		HOMOG2D_LOG( "new point added: " << pt );
 		out.push_back( pt );
+		HOMOG2D_LOG( "new point added: " << pt << " size=" << out.size() );
 		_previousPt = pt;
 		_values.clear();
 	}
@@ -12310,6 +12329,8 @@ inline
 auto
 parsePath( const char* s )
 {
+	HOMOG2D_START;
+
 	SvgPathCommand mode;
 	std::vector<std::vector<Point2d>> vout(1);
 	SvgValuesBuffer values;
@@ -12331,7 +12352,7 @@ parsePath( const char* s )
 			if( values.size() != 0 )              // if we have some values stored,
 				values.storeValues( vout[idx], mode );  //  first process them and add new point
 
-			mode = getCommand( e[0] );
+			mode = getSvgCommand( e[0] );
 			HOMOG2D_LOG( "command=" << e[0] );
 			if( !svgPathCommandIsAllowed(mode._command) )
 				HOMOG2D_THROW_ERROR_1( "SVG path command -" << mode._command << "- not handled" );
@@ -12343,7 +12364,7 @@ parsePath( const char* s )
 				HOMOG2D_LOG( "NEW vector idx=" << idx );
 			}
 		}
-		else // not a command, but a value
+		else // item is not a "path" command, but a value
 		{
 //			HOMOG2D_LOG( "process value, values size=" << values.size() );
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values

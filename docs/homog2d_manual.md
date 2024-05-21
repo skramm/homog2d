@@ -2417,6 +2417,7 @@ for( auto& e: vec )
 
 To draw these on an `img::Image`, you can do this:
 ```C++
+img::Image<img::SvgImage> im;
 fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pass some drawing parameters
 for( auto& e: vec )
 	std::visit( vde, e );
