@@ -10991,6 +10991,22 @@ void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::
 	prim.draw( img, dp );
 }
 
+#ifdef HOMOG2D_ENABLE_VRTP
+template<
+	typename U,
+	typename V,
+	typename std::enable_if<
+		trait::IsVariant<V>::value,
+		V
+	>::type* = nullptr
+>
+void draw( img::Image<U>& img, const V& var, const img::DrawParams& dp=img::DrawParams() )
+{
+	fct::DrawFunct df( img, dp );
+	std::visit( df, var );
+}
+#endif
+
 /// Free function, draws text \c str at position \c pt
 template<typename U,typename FPT>
 void
