@@ -749,7 +749,8 @@ pl1.set( vpt );      // sets the points
 pl2.set( vpt );
 ```
 
-It can be initialised either with a container (`std::vector`, or `std::array`, or `std::list`) holding the points, or (only for the closed version) from a `FRect`:
+It can be initialised either with a container (`std::vector`, or `std::array`, or `std::list`) holding the points,
+or (only for the closed version) from a `FRect` (producing a closed polyline of 4 points):
 ```C++
 std::vector<Point2d> vpts{ {0,0},{1,1},{3,1} };
 OPolyline op(vpts);
@@ -1032,7 +1033,13 @@ The minimum value for `nb` is 3 (will generate an equilateral triangle), the fun
 
 [source](../misc/figures_src/src/polyline_rcp_1.cpp)
 
-#### 3.4.12 - Importing from boost::geometry
+
+#### 3.4.12 - Simplifying polyline objects
+
+Several algorithms are implemented to remove unecessary points.
+See [here](homog2d_algorithms.md#poly_simplify).
+
+#### 3.4.13 - Importing from boost::geometry
 <a name="boost_geom_1"></a>
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
@@ -2287,8 +2294,8 @@ See [here](#bignum) for details.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
 - `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below). Defining this symbol will disables this.
-- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
-The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
+- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to do a lot of processing with ellipses, and you favor speed over memory.
+The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form), to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
