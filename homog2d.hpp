@@ -5808,22 +5808,26 @@ getString( PolyMinimAlgo alg )
 /// Stop criterion for the Visvalingam polyline decimating algorithm
 enum class VisvaStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
+/// \sa PolyMinimParams::_visvaPtsRatio
 	NbPtsRatio,
-/// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reaches
+/// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reached
 /// (uses the _maxRelDistRatio value)
-	DistRatio
+	DistRatio,
+/// No iterating, remove a single point (the one with smallest distance)
+	SinglePoint
 };
 
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< default algorithm
+	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< algorithm
 	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
 
 	VisvaStopCrit    _visvaStopCrit = VisvaStopCrit::NbPtsRatio;
-	HOMOG2D_INUMTYPE _visvaPtsRatio = 0.3;
+	HOMOG2D_INUMTYPE _visvaPtsRatio = 0.3; ///< ratio of nb of points to remove
+	bool             _keepBB; ///< if true, the minimized polyline will keep the same size (extremum points will not be discarded)
 };
 
 namespace base {
@@ -7010,6 +7014,8 @@ template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size_t iend )
 {
+//	if( params._keepBB )
+
 	switch( params._algo )
 	{
 		case PolyMinimAlgo::AngleBased:
