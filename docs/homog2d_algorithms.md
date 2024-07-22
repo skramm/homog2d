@@ -78,7 +78,7 @@ if it does not meet the "polygon" requirements (i.e. if there are some segments 
 The code uses the classical "ray casting" algorithm
 (see https://en.wikipedia.org/wiki/Point_in_polygon):
 the algorithm states to build a segment going from the considered point to infinity, and count the number of intersections.
-It it is even, the point is outside, else it is inside.
+If it is even, the point is outside, else it is inside.
 
 However, while mathematically exact, this algorithm needs to be implemented with caution, to avoid numerical issues.
 The most important point is how do we select the "outside" (infinity) point 'px'.
@@ -90,19 +90,32 @@ What we want to avoid is selecting a point 'px' so that a segment [p,px] will in
 Because if it does, it will generate two crossings where there oughta be only one.
 
 So the implementation sets up an iterative method:
-starting with the extended bounding box (see FRect_::getExtended() ), we take each of the associated segments and check if taking the middle point as "reference" point does the job (i.e. the reference segment is far enough from all points of the polygon).
-If not, we check the following.
-If none of the segments fit, we double the number of segments by splitting each of them, and reiterate, until we find a suitable point on the extended BB edge to build our reference segment.
+starting with the extended bounding box (see FRect_::getExtended() ), we take each of the associated segments and check if taking the middle point as "reference" point does the job
+(i.e. the reference segment is far enough from all points of the polygon).
+If not, we check the following:
+if none of the segments fits, we double the number of segments by splitting each of them, and reiterate,
+until we find a suitable point on the extended BB edge to build our reference segment.
 
 This is illustrated on this figure:
 
 [![demo_pip](img/demo_pip.gif)](../misc/figures_src/src/demo_pip.cpp)
 
-Of course, their must be a stopping criterion for this iterative method.
+Of course, there must be a stopping criterion for this iterative method.
 The number of iterations is determined by the symbol `HOMOG2D_MAXITER_PIP` (default value = 5), that you can define.
 If the function is unable to find a "good" reference segment after that threshold, it will throw an error.
 
-The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary (see [homog2d_thresholds.md](homog2d_thresholds.md)).
+The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary
+(see [homog2d_thresholds.md](homog2d_thresholds.md)).
 
 
+## 3 - Polyline simplification
+<a name="poly_simplify"></a>
 
+Several algorithms can be used, by calling the function_not_supported
+and selecting the algorithm by passing a `PolyMinimAlgo` value:
+A human-readable string can be obtained by passing it to the `getString()` free function.
+
+
+References:
+* https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
+* https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm

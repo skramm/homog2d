@@ -2048,6 +2048,7 @@ struct Param_polyMinim : Data
 			auto idx = (int)_pmParams._algo;
 			_pmParams._algo = (PolyMinimAlgo)( ++idx );
 		}
+		std::cout << "algo=" << getString( _pmParams._algo ) << '\n';
 		createWindows();
 	}
 	void switchMode()
@@ -2056,7 +2057,8 @@ struct Param_polyMinim : Data
 		if( _pminimFileMode )
 		{
 			tinyxml2::XMLDocument doc;
-			doc.LoadFile( "misc/test_files/France_Bretagne.svg" );
+//			doc.LoadFile( "misc/test_files/France_Bretagne.svg" );
+			doc.LoadFile( "misc/test_files/France_Normandie.svg" );
 
 			svg::Visitor visitor;
 			doc.Accept( &visitor );
@@ -2084,7 +2086,7 @@ struct Param_polyMinim : Data
 	img::Image<cv::Mat> img2; ///< second window
 	std::string win2 = "Processed polyline";
 
-	bool _plIsClosed     = true;  ///< show open or closed in window
+	bool _plIsClosed     = true;  ///< show open or closed polyline in window
 	bool _pminimFileMode = false; ///< either load a svg file holding some polylines, or use the mouse to draw a polyline
 
 	PolyMinimParams _pmParams;   ///< minimization algorithm parameters
@@ -2300,7 +2302,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
-		demo_polyMinim,
+		demo_polyMinim, // polyline minimization
 		demo_BB,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment

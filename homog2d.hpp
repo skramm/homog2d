@@ -6243,7 +6243,9 @@ at 180° of the previous one.
 - https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 Also use the areCollinear() function
 
-\todo 20240521: add something so that the bounding box does not change (extremum points must not be discarded
+\todo 20240521: add something so that the bounding box does not change (extremum points must not be discarded).
+
+See \ref homog2d_algorithms.md#poly_simplify
 */
 	void
 	minimize( PolyMinimParams params = PolyMinimParams() )
