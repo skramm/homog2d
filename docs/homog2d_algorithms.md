@@ -111,7 +111,12 @@ The allowed distance between a given reference segment and one of the points of 
 ## 3 - Polyline simplification
 <a name="poly_simplify"></a>
 
-Several algorithms can be used, by calling the function_not_supported
+Several algorithms can be used, by calling the member function `minimise()`.
+Several technique can be used, by passing a value of type `PolyMinimParams` as single argument, but a default value is provided.
+This latter type can be used to select the desired algorithm, as well as different threshold values, as detailed below:
+
+### 3.1 - Algorithm selection
+
 and selecting the algorithm by passing a `PolyMinimAlgo` value:
 A human-readable string can be obtained by passing it to the `getString()` free function.
 

@@ -2069,13 +2069,23 @@ struct Param_polyMinim : Data
 				{
 					CPolyline p = fct::VariantUnwrapper{elem};
 					_vecLoaded.push_back( p );
+					std::cout << "Loaded closed polyline with BB=" << getBB( p )
+						<< ", width=" << getBB(p).width()
+						<< ", height=" << getBB(p).height()
+						<< '\n';
 				}
 				if( type(elem) == Type::OPolyline )
 				{
 					OPolyline p = fct::VariantUnwrapper{elem};
 					_vecLoaded.push_back( p );
+					std::cout << "Loaded open polyline with BB=" << getBB( p )
+						<< ", width=" << getBB(p).width()
+						<< ", height=" << getBB(p).height()
+						<< '\n';
 				}
 			}
+			_vcolors = img::genRandomColors( _vecLoaded.size() );
+
 		}
 	}
 	void createTrackbar();
@@ -2095,6 +2105,7 @@ struct Param_polyMinim : Data
 	VarPoly _polySrc;     ///< holds the source polyline, in "mouse" mode
 	VarPoly _polyDst;     ///< holds the minimized polyline
 	std::vector<VarPoly> _vecLoaded; ///< holds the polylines that where loaded from file
+	std::vector<img::Color> _vcolors;   ///< colors for the polylines loaded from file
 };
 
 /// Draws the parameters on first image
@@ -2162,22 +2173,23 @@ void action_polyMinim( void* param )
 	data.clearImage();
 	data.initPolylines();
 
-	if( data._pminimFileMode )
+	if( data._pminimFileMode ) // if mode is "show real svg file"
 	{
 		int i=0;
 		for( const auto& e: data._vecLoaded )
 		{
-			draw( data.img, e );
+			auto color = img::DrawParams().setColor( data._vcolors[i] );
+			draw( data.img, e, color );
 			auto nbPts1 = std::visit( NbPts{}, e );
-			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18) );
+			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18), color );
 
 			if( type(e) == Type::CPolyline )
 			{
 				CPolyline p1 = fct::VariantUnwrapper{e};
 				CPolyline p2 = Homogr().addTranslation(0,-80).addScale(2.5) * p1;
 				p2.minimize( data._pmParams );
-				p2.draw( data.img2 );
-				drawText( data.img2,  "NbPts=" + std::to_string( p2.size() ), Point2d(15,20+i*18) );
+				p2.draw( data.img2, color );
+				drawText( data.img2,  "NbPts=" + std::to_string( p2.size() ), Point2d(15,20+i*18), color );
 			}
 			i++;
 		}
