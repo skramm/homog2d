@@ -7173,6 +7173,115 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 }
 
 //------------------------------------------------------------------
+/// Holds data types and functions used for Polyline minimization
+namespace pminim {
+
+//------------------------------------------------------------------
+/// Triplet of values used for polyline minimization
+struct DistTriplet
+{
+	double _relHeight; ///< ratio of height of point relatively to segment
+	double _height;    ///< absolute height of point relatively to segment
+	bool   _isRemoved = false;
+};
+
+//------------------------------------------------------------------
+/// Holds the data needed for the iterative process of removing points
+struct PMinimDistances
+{
+	std::vector<DistTriplet> _vecTrip;
+	bool                     _isAbsolute = false;
+	HOMOG2D_INUMTYPE         _thres;
+
+	void reserve( size_t nb ) { _vecTrip.reserve(nb); }
+};
+
+//------------------------------------------------------------------
+/// Compute initial distances between all mid-points and relative segment
+/**
+\verbatim
+    +       / \
+   / \       |
+  /   \      | d2
+ /     \     |
++-------+   \ /
+   d1
+\endverbatim
+*/
+template<typename FPT>
+PMinimDistances
+computeDistances(
+	const std::vector<Point2d_<FPT>>& plinevec,
+	size_t           istart,
+	size_t           iend
+)
+{
+	auto nbpts = plinevec.size();
+	PMinimDistances out;
+	out.reserve( nbpts );
+	for( size_t i=istart; i<iend; i++ )
+	{
+		const auto& p0    = plinevec.at(i);
+		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
+		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+
+		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
+		auto d0  = seg.length();
+		auto h   = p0.distTo( seg.getLine() );
+
+		out._vecTrip.push_back(
+			DistTriplet{
+				h/d0, h, false
+			}
+		);
+	}
+}
+
+//------------------------------------------------------------------
+bool
+removeSinglePoint( PMinimDistances& distances )
+{
+	decltype(std::begin(distances._vecTrip) ) minval;
+	if( distances._isAbsolute )
+	{
+		minval = std::min_element(
+			std::begin(distances._vecTrip),
+			std::end(distances._vecTrip),
+			[]
+			( const auto& e1, const auto& e2 )         // lambda
+			{
+				return e1._height < e2._height;
+			}
+		);
+	}
+	else
+	{
+		minval = std::min_element(
+			std::begin(distances._vecTrip),
+			std::end(distances._vecTrip),
+			[]
+			( const auto& e1, const auto& e2 )         // lambda
+			{
+				return e1._relHeight < e2._relHeight;
+			}
+		);
+	}
+
+	return true;
+}
+
+//------------------------------------------------------------------
+void
+recomputeDistances( PMinimDistances& distances )
+{
+
+}
+
+} // namespace pminim
+//------------------------------------------------------------------
+
+
+//------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
 /// Does distance-based reduction (absolute or relative)
 /**
@@ -7182,6 +7291,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolute, size_t istart, size_t iend )
+#if 0
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
@@ -7221,7 +7331,21 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 	auto newPtSet = p_buildNewPolyline( *this, ptset );
 	_plinevec = std::move( newPtSet );
 }
+#else
+{
+	auto nbpts = size();
+	HOMOG2D_LOG( "size=" << nbpts );
 
+// step 1: compute initial distances
+	auto distances = pminim::computeDistances( _plinevec, istart, iend );
+	distances._thres      = thres;
+	distances._isAbsolute = isAbsolute;
+
+// step 2: iterate until no more points are removed
+	while( pminim::removeSinglePoint( distances ) )
+		pminim::recomputeDistances( distances );
+}
+#endif
 //------------------------------------------------------------------
 /// Private member function, called by PolylineBase::p_minimizePL().
 /// Does angle-based reduction
