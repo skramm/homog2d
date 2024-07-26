@@ -2387,7 +2387,8 @@ Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an exam
 
 #### 12.3 - Variant-based runtime polymorphism
 
-This feature is made available by defining the symbol `HOMOG2D_ENABLE_VRTP`.
+This feature is made available by defining the symbol `HOMOG2D_ENABLE_VRTP`
+(automatically defined if `HOMOG2D_USE_SVG_IMPORT` is defined).
 This will enable a templated common type `CommonType_` that holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
 It follows the [naming conventions of primitives](#numdt), so you can use `CommonTypeF`, `CommonTypeD` or `CommonTypeL`,
 with `CommonType` defaulting to `HOMOG2D_INUMTYPE` (`double` by default).

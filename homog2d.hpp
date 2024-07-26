@@ -886,7 +886,8 @@ enum class Dtype: uint8_t {
 
 /// Returns stringified version of \ref type()
 inline
-const char* getString( Type t )
+const char*
+getString( Type t )
 {
 	const char* s=0;
 	switch( t )
@@ -1044,7 +1045,8 @@ VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
 #endif // HOMOG2D_ENABLE_VRTP
 
 inline
-const char* getString( Dtype t )
+const char*
+getString( Dtype t )
 {
 	const char* s=0;
 	switch( t )
@@ -5790,6 +5792,7 @@ enum class PolyMinimAlgo {
 	RelDistance   ///< Uses a relative threshold on ratio of distance between point and line joining the two other points and segment length
 };
 
+inline
 const char*
 getString( PolyMinimAlgo alg )
 {

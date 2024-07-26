@@ -2828,7 +2828,7 @@ TEST_CASE( "generalized bounding box of two objects", "[gen-BB]" )
 }
 #endif // HOMOG2D_ENABLE_VRTP
 
-TEST_CASE( "bounding box of container", "[BB-cont]" )
+TEST_CASE( "bounding box of container", "[BB-cont-1]" )
 {
 	{
 		std::vector<Point2d_<NUMTYPE>> vec(3);
@@ -3433,7 +3433,7 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 	}
 }
 
-TEST_CASE( "Bounding Box of set of objects", "[BB-cont]" )
+TEST_CASE( "Bounding Box of set of objects", "[BB-cont-2]" )
 {
 	std::vector<Point2d> vpts1{ {0,0}, {1,1.5}, {3,5}, {1,4} };
 	FRect bb1( 0,0, 3,5 );

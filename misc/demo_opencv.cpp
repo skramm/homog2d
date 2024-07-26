@@ -1896,6 +1896,7 @@ void demo_BB( int demidx )
 }
 
 //------------------------------------------------------------------
+/// Parameters for the Regular Convex Polygon demo
 struct Param_RCP : Data
 {
 	explicit Param_RCP( int demidx, std::string title ): Data( demidx, title )
@@ -2069,20 +2070,22 @@ struct Param_polyMinim : Data
 				{
 					CPolyline p = fct::VariantUnwrapper{elem};
 					_vecLoaded.push_back( p );
-					std::cout << "Loaded closed polyline with BB=" << getBB( p )
-						<< ", width=" << getBB(p).width()
-						<< ", height=" << getBB(p).height()
-						<< '\n';
 				}
 				if( type(elem) == Type::OPolyline )
 				{
 					OPolyline p = fct::VariantUnwrapper{elem};
 					_vecLoaded.push_back( p );
-					std::cout << "Loaded open polyline with BB=" << getBB( p )
+/*					std::cout << "Loaded open polyline with BB=" << getBB( p )
 						<< ", width=" << getBB(p).width()
 						<< ", height=" << getBB(p).height()
-						<< '\n';
+						<< '\n';*/
 				}
+				auto p = _vecLoaded.back();
+				std::cout << "Loaded polyline with BB=" << std::visit( fct::BBFunct{}, p ); // getBB( p )
+/*					<< ", width=" << getBB(p).width()
+					<< ", height=" << getBB(p).height()
+					<< '\n';
+*/
 			}
 			_vcolors = img::genRandomColors( _vecLoaded.size() );
 
@@ -2104,7 +2107,7 @@ struct Param_polyMinim : Data
 
 	VarPoly _polySrc;     ///< holds the source polyline, in "mouse" mode
 	VarPoly _polyDst;     ///< holds the minimized polyline
-	std::vector<VarPoly> _vecLoaded; ///< holds the polylines that where loaded from file
+	std::vector<VarPoly>    _vecLoaded; ///< holds the polylines that where loaded from file
 	std::vector<img::Color> _vcolors;   ///< colors for the polylines loaded from file
 };
 
