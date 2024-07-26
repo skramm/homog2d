@@ -2085,8 +2085,17 @@ struct Param_polyMinim : Data
 					<< '\n';
 			}
 			_vcolors = img::genRandomColors( _vecLoaded.size() );
-			_globalBB = getBB( _vecBB );
-			std::cout << "_globalBB=" << _globalBB << '\n';
+			auto globalBB = getBB( _vecBB );
+			std::cout << "globalBB=" << globalBB << '\n';
+// scaling
+			auto s_horiz = (_imWidth-100)  / globalBB.width();
+			auto s_vert  = (_imHeight-100) / globalBB.height();
+			auto scale = std::min( s_horiz, s_vert );
+			std::cout << "scale=" << scale << "\n";
+			auto pt0 = globalBB.getPts().first;
+			auto tx = -pt0.getX()+20;
+			auto ty = -pt0.getY()+20;
+			_scaling = Homogr().addTranslation(tx,ty).addScale( scale );
 		}
 	}
 	void createTrackbar();
@@ -2108,7 +2117,7 @@ struct Param_polyMinim : Data
 	std::vector<VarPoly>    _vecLoaded; ///< holds the polylines that where loaded from file
 	std::vector<FRect>      _vecBB;     ///< holds the bounding boxes of the loaded polylines
 	std::vector<img::Color> _vcolors;   ///< colors for the polylines loaded from file
-	FRect                   _globalBB;  ///< global BB of the loaded polylines
+	Homogr                  _scaling;
 };
 
 /// Draws the parameters on first image
@@ -2182,17 +2191,16 @@ void action_polyMinim( void* param )
 		for( const auto& e: data._vecLoaded )
 		{
 			auto color = img::DrawParams().setColor( data._vcolors[i] );
-			draw( data.img, e, color );
+			draw( data.img, transform( data._scaling, e ), color );
 			auto nbPts1 = std::visit( NbPts{}, e );
 			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18), color );
 
 			if( type(e) == Type::CPolyline )
 			{
 				CPolyline p1 = fct::VariantUnwrapper{e};
-				CPolyline p2 = Homogr().addTranslation(0,-80).addScale(2.5) * p1;
-				p2.minimize( data._pmParams );
-				p2.draw( data.img2, color );
-				drawText( data.img2,  "NbPts=" + std::to_string( p2.size() ), Point2d(15,20+i*18), color );
+				p1.minimize( data._pmParams );
+				draw( data.img2, transform( data._scaling, p1 ), color );
+				drawText( data.img2,  "NbPts=" + std::to_string( p1.size() ), Point2d(15,20+i*18), color );
 			}
 			i++;
 		}
