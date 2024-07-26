@@ -12372,7 +12372,7 @@ parsePath( const char* s )
 	do
 	{
 		auto e = getNextElem( str, it );
-//		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
+		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
@@ -12393,7 +12393,7 @@ parsePath( const char* s )
 		}
 		else // item is not a "path" command, but a value
 		{
-//			HOMOG2D_LOG( "process value, values size=" << values.size() );
+			HOMOG2D_LOG( "process value, values size=" << values.size() );
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values
 				values.storeValues( vout[idx], mode );
 			values.addValue( e );

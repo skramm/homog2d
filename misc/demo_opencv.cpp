@@ -2075,20 +2075,18 @@ struct Param_polyMinim : Data
 				{
 					OPolyline p = fct::VariantUnwrapper{elem};
 					_vecLoaded.push_back( p );
-/*					std::cout << "Loaded open polyline with BB=" << getBB( p )
-						<< ", width=" << getBB(p).width()
-						<< ", height=" << getBB(p).height()
-						<< '\n';*/
 				}
 				auto p = _vecLoaded.back();
-				std::cout << "Loaded polyline with BB=" << std::visit( fct::BBFunct{}, p ); // getBB( p )
-/*					<< ", width=" << getBB(p).width()
-					<< ", height=" << getBB(p).height()
+				auto bb = std::visit( fct::BBFunct{}, p );
+				_vecBB.push_back( bb );
+				std::cout << "Loaded polyline with BB=" << bb
+					<< ", width=" << bb.width()
+					<< ", height=" << bb.height()
 					<< '\n';
-*/
 			}
 			_vcolors = img::genRandomColors( _vecLoaded.size() );
-
+			_globalBB = getBB( _vecBB );
+			std::cout << "_globalBB=" << _globalBB << '\n';
 		}
 	}
 	void createTrackbar();
@@ -2108,7 +2106,9 @@ struct Param_polyMinim : Data
 	VarPoly _polySrc;     ///< holds the source polyline, in "mouse" mode
 	VarPoly _polyDst;     ///< holds the minimized polyline
 	std::vector<VarPoly>    _vecLoaded; ///< holds the polylines that where loaded from file
+	std::vector<FRect>      _vecBB;     ///< holds the bounding boxes of the loaded polylines
 	std::vector<img::Color> _vcolors;   ///< colors for the polylines loaded from file
+	FRect                   _globalBB;  ///< global BB of the loaded polylines
 };
 
 /// Draws the parameters on first image

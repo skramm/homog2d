@@ -50,7 +50,7 @@ Run with <code>$ make test USE_TINYXML2=Y</code>
 #endif
 
 // define this if there is a need for bugtracking
-//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_DEBUGMODE
 
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"
