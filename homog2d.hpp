@@ -7178,10 +7178,12 @@ namespace pminim {
 
 //------------------------------------------------------------------
 /// Triplet of values used for polyline minimization
-struct DistTriplet
+struct DistanceValue
 {
-	double _relHeight; ///< ratio of height of point relatively to segment
-	double _height;    ///< absolute height of point relatively to segment
+/// "distance" value between point and segment joining the two other points.
+/// Can actually be the absolute distance value OR the ratio of distances.
+	double _dist;
+
 	bool   _isRemoved = false;
 };
 
@@ -7189,11 +7191,11 @@ struct DistTriplet
 /// Holds the data needed for the iterative process of removing points
 struct PMinimDistances
 {
-	std::vector<DistTriplet> _vecTrip;
+	std::vector<DistanceValue> _vecTrip;
 	bool                     _isAbsolute = false;
 	HOMOG2D_INUMTYPE         _thres;
-
-	void reserve( size_t nb ) { _vecTrip.reserve(nb); }
+	size_t                   _lastOneRemoved;
+	explicit PMinimDistances( size_t nb ) { _vecTrip.reserve(nb); }
 };
 
 //------------------------------------------------------------------
@@ -7212,13 +7214,13 @@ template<typename FPT>
 PMinimDistances
 computeDistances(
 	const std::vector<Point2d_<FPT>>& plinevec,
-	size_t           istart,
-	size_t           iend
+	bool      isAbsolute,
+	size_t    istart,
+	size_t    iend
 )
 {
 	auto nbpts = plinevec.size();
-	PMinimDistances out;
-	out.reserve( nbpts );
+	PMinimDistances out( nbpts );
 	for( size_t i=istart; i<iend; i++ )
 	{
 		const auto& p0    = plinevec.at(i);
@@ -7226,51 +7228,52 @@ computeDistances(
 		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
 
 		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
-		auto d0  = seg.length();
 		auto h   = p0.distTo( seg.getLine() );
-
-		out._vecTrip.push_back(
-			DistTriplet{
-				h/d0, h, false
-			}
-		);
+		if( !isAbsolute )
+			out._vecTrip.push_back(
+				DistanceValue{ h/seg.length(), false }
+			);
+		else
+			out._vecTrip.push_back(
+				DistanceValue{ h, false }
+			);
 	}
+	return out;
 }
 
 //------------------------------------------------------------------
+/// Searches through all the points and tag as removed the one that has
+/// the minimal distance
+/**
+(this function does NOT remove points from the vector)
+*/
 bool
 removeSinglePoint( PMinimDistances& distances )
 {
-	decltype(std::begin(distances._vecTrip) ) minval;
-	if( distances._isAbsolute )
+	decltype(std::begin(distances._vecTrip) ) minval_it;
+	minval_it = std::min_element(
+		std::begin(distances._vecTrip),
+		std::end(distances._vecTrip),
+		[]
+		( const auto& e1, const auto& e2 )         // lambda
+		{
+			if( !e1._isRemoved && !e2._isRemoved )
+				return e1._dist < e2._dist;
+			return false;
+		}
+	);
+	if( minval_it->_dist < distances._thres )
 	{
-		minval = std::min_element(
-			std::begin(distances._vecTrip),
-			std::end(distances._vecTrip),
-			[]
-			( const auto& e1, const auto& e2 )         // lambda
-			{
-				return e1._height < e2._height;
-			}
-		);
+		assert( minval_it->_isRemoved == false );
+		minval_it->_isRemoved = true;
+		distances._lastOneRemoved = std::distance( std::begin(distances._vecTrip), minval_it );
+		return true;
 	}
-	else
-	{
-		minval = std::min_element(
-			std::begin(distances._vecTrip),
-			std::end(distances._vecTrip),
-			[]
-			( const auto& e1, const auto& e2 )         // lambda
-			{
-				return e1._relHeight < e2._relHeight;
-			}
-		);
-	}
-
-	return true;
+	return false;
 }
 
 //------------------------------------------------------------------
+/// Once we have removed ("tagged") a point, we need to recompute the distances value
 void
 recomputeDistances( PMinimDistances& distances )
 {
@@ -7337,7 +7340,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 	HOMOG2D_LOG( "size=" << nbpts );
 
 // step 1: compute initial distances
-	auto distances = pminim::computeDistances( _plinevec, istart, iend );
+	auto distances = pminim::computeDistances( _plinevec, isAbsolute, istart, iend );
 	distances._thres      = thres;
 	distances._isAbsolute = isAbsolute;
 
