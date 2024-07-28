@@ -221,6 +221,12 @@ Once the test app has been build (with `$ make test`), you can run a single test
 $ BUILD/<testappname> [tagname]
 ```
 
+To get the tag names, enter:
+```
+$ BUILD/<testappname> -t
+```
+
+
 ## 6 - Coding style
 
 - TABS, not spaces (1 byte per level)

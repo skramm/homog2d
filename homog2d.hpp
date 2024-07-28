@@ -7177,7 +7177,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart
 namespace pminim {
 
 //------------------------------------------------------------------
-/// Triplet of values used for polyline minimization
+/// Type used for polyline minimization
 struct DistanceValue
 {
 /// "distance" value between point and segment joining the two other points.
@@ -7189,13 +7189,56 @@ struct DistanceValue
 
 //------------------------------------------------------------------
 /// Holds the data needed for the iterative process of removing points
+template<typename FP>
 struct PMinimDistances
 {
 	std::vector<DistanceValue> _vecTrip;
 	bool                     _isAbsolute = false;
 	HOMOG2D_INUMTYPE         _thres;
-	size_t                   _lastOneRemoved;
-	explicit PMinimDistances( size_t nb ) { _vecTrip.reserve(nb); }
+	size_t                   _lastOneRemoved; ///< index on the last point that was removed
+	const std::vector<Point2d_<FP>>& _vpoints;
+
+	std::array<std::pair<size_t,int>,5> _specialCases;
+
+	explicit PMinimDistances( const std::vector<Point2d_<FP>>& vpoints )
+		: _vpoints(vpoints)
+	{
+		assert( _vpoints.size() > 2 );
+		_vecTrip.reserve( _vpoints.size() );
+		_specialCases[0] = std::make_pair(0,-1);
+		_specialCases[1] = std::make_pair(0,-2);
+		_specialCases[2] = std::make_pair(1,-2);
+		_specialCases[3] = std::make_pair(_vpoints.size(),+1);
+		_specialCases[4] = std::make_pair(_vpoints.size(),+2);
+	}
+	void recomputeDistances();
+#ifndef HOMOG2D_TEST_MODE
+private:
+#endif
+/// Compute index value, with offset in the range [-2,+2]
+	size_t getIndex( size_t current, int offset )
+	{
+		assert( offset!=0 && (offset>-3||offset<3) );
+		auto s = _vpoints.size();
+		auto pcurrent = std::make_pair( current, offset ) ;
+		auto itsc = std::find( _specialCases.begin(), _specialCases.end(), pcurrent );
+
+		if( itsc == _specialCases.end() ) // didn't find, so everything OK
+			return current + offset;
+
+		auto idxsc = std::distance( _specialCases.begin(), itsc );
+		size_t retval = 0;
+		switch( idxsc )
+		{
+			case 0: retval = s;   break;
+			case 1: retval = s-1; break;
+			case 2: retval = s;   break;
+			case 4: retval = 1;   break;
+			default: break;            // the default is case 3, where we return the index '0'
+		}
+		return retval;
+	}
+	void p_recomputeDistances_helper( size_t, int, int );
 };
 
 //------------------------------------------------------------------
@@ -7210,22 +7253,22 @@ struct PMinimDistances
    d1
 \endverbatim
 */
-template<typename FPT>
-PMinimDistances
+template<typename FP>
+PMinimDistances<FP>
 computeDistances(
-	const std::vector<Point2d_<FPT>>& plinevec,
+	const std::vector<Point2d_<FP>>& plinevec,
 	bool      isAbsolute,
 	size_t    istart,
 	size_t    iend
 )
 {
 	auto nbpts = plinevec.size();
-	PMinimDistances out( nbpts );
+	PMinimDistances out( plinevec );
 	for( size_t i=istart; i<iend; i++ )
 	{
 		const auto& p0    = plinevec.at(i);
-		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
-		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
+		const auto& pnext = plinevec[ i==nbpts-1 ? 0 : i+1 ];
+		const auto& pprev = plinevec[ i==0 ? nbpts-1 : i-1 ];
 
 		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
 		auto h   = p0.distTo( seg.getLine() );
@@ -7247,8 +7290,9 @@ computeDistances(
 /**
 (this function does NOT remove points from the vector)
 */
+template<typename FP>
 bool
-removeSinglePoint( PMinimDistances& distances )
+removeSinglePoint( PMinimDistances<FP>& distances )
 {
 	decltype(std::begin(distances._vecTrip) ) minval_it;
 	minval_it = std::min_element(
@@ -7272,12 +7316,44 @@ removeSinglePoint( PMinimDistances& distances )
 	return false;
 }
 
+
+//------------------------------------------------------------------
+/// Helper function for PMinimDistances::recomputeDistances()
+/// \todo 20240728: replace "at()" call by "[]", once debugged
+template<typename FP>
+void
+PMinimDistances<FP>::p_recomputeDistances_helper(
+	size_t idx,    ///< current index
+	int    before, ///< offset of "before" point (-2 or -1)
+	int    after   ///< offset of "after" point  (+1 or +2)
+)
+{
+	auto pt_bef = _vpoints.at( getIndex( idx, before ) );
+	auto pt_aft = _vpoints.at( getIndex( idx, after  ) );
+	auto seg    = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
+	auto h      = _vpoints.at(idx).distTo( seg.getLine() );
+
+	if( !_isAbsolute )
+		_vecTrip.at(idx) = DistanceValue{ h/seg.length(), false };
+	else
+		_vecTrip.at(idx) = DistanceValue{ h, false };
+}
+
 //------------------------------------------------------------------
 /// Once we have removed ("tagged") a point, we need to recompute the distances value
+/**
+We need to compute two distances.
+Let $n$ be the index of  the last removed point.
+We need to compute theses distances:
+- for points n-1: distance between point n-2 and n+1, and the distance between that segment and point n-1
+- for points n+1: distance between point n-1 and n+2, and the distance between that segment and point n+1
+*/
+template<typename FP>
 void
-recomputeDistances( PMinimDistances& distances )
+PMinimDistances<FP>::recomputeDistances()
 {
-
+	p_recomputeDistances_helper( _lastOneRemoved, -2, +1 );
+	p_recomputeDistances_helper( _lastOneRemoved, -1, +2 );
 }
 
 } // namespace pminim
@@ -7336,8 +7412,8 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 }
 #else
 {
-	auto nbpts = size();
-	HOMOG2D_LOG( "size=" << nbpts );
+//	auto nbpts = size();
+//	HOMOG2D_LOG( "size=" << nbpts );
 
 // step 1: compute initial distances
 	auto distances = pminim::computeDistances( _plinevec, isAbsolute, istart, iend );
@@ -7346,7 +7422,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist( HOMOG2D_INUMTYPE thres, bool isAbsolut
 
 // step 2: iterate until no more points are removed
 	while( pminim::removeSinglePoint( distances ) )
-		pminim::recomputeDistances( distances );
+		distances.recomputeDistances();
 }
 #endif
 //------------------------------------------------------------------

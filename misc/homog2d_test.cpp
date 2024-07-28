@@ -3129,7 +3129,7 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 }
 
 
-TEST_CASE( "Polyline minimization", "[polyline-min]" )
+TEST_CASE( "Polyline minimization", "[polyline-min-1]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
 	{
@@ -3716,6 +3716,30 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 		CHECK( pa != pb );
 	}
 }
+
+TEST_CASE( "polyline minimization 2", "[polyline-min-2]" )
+{
+	std::vector<Point2d> vec{ Point2d(0,0), Point2d(1,0), Point2d(0,1), Point2d(4,3) }; // 4 points
+	base::pminim::PMinimDistances pmd( vec );
+	CHECK( pmd.getIndex(0,+1) == 1 );
+	CHECK( pmd.getIndex(0,+2) == 2 );
+	CHECK( pmd.getIndex(1,+1) == 2 );
+	CHECK( pmd.getIndex(1,+2) == 3 );
+	CHECK( pmd.getIndex(2,+1) == 3 );
+	CHECK( pmd.getIndex(2,+2) == 0 );
+	CHECK( pmd.getIndex(3,+1) == 0 );
+	CHECK( pmd.getIndex(3,+2) == 1 );
+
+	CHECK( pmd.getIndex(3,-1) == 2 );
+	CHECK( pmd.getIndex(3,-2) == 1 );
+	CHECK( pmd.getIndex(2,-1) == 1 );
+	CHECK( pmd.getIndex(2,-2) == 0 );
+	CHECK( pmd.getIndex(1,-1) == 0 );
+	CHECK( pmd.getIndex(1,-2) == 3 );
+	CHECK( pmd.getIndex(0,-1) == 3 );
+	CHECK( pmd.getIndex(0,-2) == 2 );
+}
+
 
 #if 0
 TEST_CASE( "general binding", "[gen_bind]" )
