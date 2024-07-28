@@ -7192,24 +7192,34 @@ struct DistanceValue
 template<typename FP>
 struct PMinimDistances
 {
-	std::vector<DistanceValue> _vecTrip;
-	bool                     _isAbsolute = false;
-	HOMOG2D_INUMTYPE         _thres;
-	size_t                   _lastOneRemoved; ///< index on the last point that was removed
 	const std::vector<Point2d_<FP>>& _vpoints;
+	std::vector<DistanceValue>       _vecTrip;
+	bool                _isAbsolute = false;
+	HOMOG2D_INUMTYPE    _thres;
+/// Index on the last point that was removed, needed so we can recompute the distances afterwards
+	size_t              _lastOneRemoved;
 
-	std::array<std::pair<size_t,int>,5> _specialCases;
+	std::array<std::pair<size_t,int>,6> _specialCases;
+	std::array<size_t,6>                _specialCasesIndexes;
 
 	explicit PMinimDistances( const std::vector<Point2d_<FP>>& vpoints )
 		: _vpoints(vpoints)
 	{
-		assert( _vpoints.size() > 2 );
+		auto s = _vpoints.size();
+		assert( s > 2 );
 		_vecTrip.reserve( _vpoints.size() );
 		_specialCases[0] = std::make_pair(0,-1);
 		_specialCases[1] = std::make_pair(0,-2);
 		_specialCases[2] = std::make_pair(1,-2);
-		_specialCases[3] = std::make_pair(_vpoints.size(),+1);
-		_specialCases[4] = std::make_pair(_vpoints.size(),+2);
+		_specialCases[3] = std::make_pair(_vpoints.size()-1,+1);
+		_specialCases[4] = std::make_pair(_vpoints.size()-1,+2);
+		_specialCases[5] = std::make_pair(_vpoints.size()-2,+2);
+		_specialCasesIndexes[0] = s-1;
+		_specialCasesIndexes[1] = s-2;
+		_specialCasesIndexes[2] = s-1;
+		_specialCasesIndexes[3] = 0;
+		_specialCasesIndexes[4] = 1;
+		_specialCasesIndexes[5] = 0;
 	}
 	void recomputeDistances();
 #ifndef HOMOG2D_TEST_MODE
@@ -7220,23 +7230,14 @@ private:
 	{
 		assert( offset!=0 && (offset>-3||offset<3) );
 		auto s = _vpoints.size();
-		auto pcurrent = std::make_pair( current, offset ) ;
+		auto pcurrent = std::make_pair( current, offset );
 		auto itsc = std::find( _specialCases.begin(), _specialCases.end(), pcurrent );
 
 		if( itsc == _specialCases.end() ) // didn't find, so everything OK
 			return current + offset;
 
 		auto idxsc = std::distance( _specialCases.begin(), itsc );
-		size_t retval = 0;
-		switch( idxsc )
-		{
-			case 0: retval = s;   break;
-			case 1: retval = s-1; break;
-			case 2: retval = s;   break;
-			case 4: retval = 1;   break;
-			default: break;            // the default is case 3, where we return the index '0'
-		}
-		return retval;
+		return _specialCasesIndexes[idxsc];
 	}
 	void p_recomputeDistances_helper( size_t, int, int );
 };
