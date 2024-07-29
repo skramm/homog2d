@@ -5811,7 +5811,7 @@ getString( PolyMinimAlgo alg )
 /// Stop criterion for the Visvalingam polyline decimating algorithm
 enum class PminimStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
-/// \sa PolyMinimParams::_visvaPtsRatio
+/// \sa PolyMinimParams::_ptRemovalRatio
 	NbPtsRatio,
 /// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reached
 /// (uses the _maxRelDistRatio value)
@@ -5828,11 +5828,21 @@ struct PolyMinimParams
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
 
-	PminimStopCrit    _stopCrit = PminimStopCrit::NbPtsRatio;
-	HOMOG2D_INUMTYPE _visvaPtsRatio = 0.3; ///< ratio of nb of points to remove
+	PminimStopCrit    _stopCrit = PminimStopCrit::DistRatio;
+	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3; ///< ratio of nb of points to remove
 	bool             _keepBB; ///< if true, the minimized polyline will keep the same size (extremum points will not be discarded)
 	bool             _isAbsolute = false;
 	size_t           _NbPtsRemoved = 0;
+
+	void print() const
+	{
+		std::cout << "---PolyMinimParams---\n -algo="
+		<< getString(_algo)
+		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
+		<< "\n -_maxAbsDist=" << _maxAbsDist
+		<< "\n -_isAbsolute=" << _isAbsolute
+		<< "\n---/PolyMinimParams---\n";
+	}
 };
 
 namespace base {
@@ -7198,6 +7208,11 @@ struct DistanceValue
 	double _dist;
 
 	bool   _isRemoved = false;
+	friend std::ostream& operator << ( std::ostream& f, DistanceValue val )
+	{
+		f << '(' << val._dist << ',' << val._isRemoved << ")";
+		return f;
+	}
 };
 
 //------------------------------------------------------------------
@@ -7208,9 +7223,9 @@ struct PMinimDistances
 	const std::vector<Point2d_<FP>>& _vpoints;
 	std::vector<DistanceValue>       _vecTrip;
 	bool                _isAbsolute2 = false;
-	HOMOG2D_INUMTYPE    _thres;
+
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
-	size_t              _lastOneRemoved;
+	size_t              _lastOneRemoved=0;
 
 	std::array<std::pair<size_t,int>,6> _specialCases;
 	std::array<size_t,6>                _specialCasesIndexes;
@@ -7235,6 +7250,16 @@ struct PMinimDistances
 		_specialCasesIndexes[5] = 0;
 	}
 	void recomputeDistances();
+	void print() const
+	{
+		std::cout << "---PMinimDistances---\n -_lastOneRemoved="
+			<< _lastOneRemoved
+			<< '\n';
+		priv::printVector( _vpoints, "points" );
+		priv::printVector( _vecTrip, "distances" );
+		std::cout << "---/PMinimDistances---\n";
+	}
+
 #ifndef HOMOG2D_TEST_MODE
 private:
 #endif
@@ -7276,6 +7301,9 @@ computeDistances(
 	size_t    iend
 )
 {
+	HOMOG2D_START;
+	HOMOG2D_LOG( "istart=" << istart << " iend=" << iend )
+	params.print();
 	auto nbpts = plinevec.size();
 	PMinimDistances out( plinevec );
 	out._isAbsolute2 = params._isAbsolute;
@@ -7309,9 +7337,16 @@ template<typename FP>
 bool
 removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 {
+	HOMOG2D_START;
+	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved );
+	distances.print();
+
 // we have to leave at least 2 points !
-	if( params._NbPtsRemoved > distances._vpoints.size()-2 )
+	if( params._NbPtsRemoved >= distances._vpoints.size()-2 )
+	{
+		std::cout << "No remove!\n";
 		return false;
+	}
 
 // step 1: find element with minimal distance
 	decltype(std::begin(distances._vecTrip) ) minval_it;
@@ -7326,16 +7361,24 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 			return false;
 		}
 	);
+	std::cout << "min element="
+		<< std::distance(std::begin(distances._vecTrip), minval_it)
+		<< ", dist value=" << minval_it->_dist
+		<< " Abs thres=" << params._maxAbsDist
+		<< " Rel thres=" << params._maxRelDistRatio
+		<< '\n';
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
 	switch( params._stopCrit )
 	{
 		case PminimStopCrit::SinglePoint:
+			std::cout << "SC=SinglePoint\n";
 			if( params._NbPtsRemoved > 0 )
 				return false;
 		break;
 		case PminimStopCrit::DistRatio:
+			std::cout << "SC=DistRatio\n";
 			if( params._isAbsolute )
 			{
 				if( minval_it->_dist < params._maxAbsDist )
@@ -7348,7 +7391,8 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 			}
 		break;
 		case PminimStopCrit::NbPtsRatio:
-			if( 1.0*distances._vecTrip.size()/params._NbPtsRemoved > params._visvaPtsRatio )
+			std::cout << "SC=NbPtsRatio\n";
+			if( 1.0*distances._vecTrip.size()/params._NbPtsRemoved > params._ptRemovalRatio )
 				doRemovePoint = true;
 		break;
 		default: assert(0);
@@ -7386,9 +7430,10 @@ PMinimDistances<FP>::p_recomputeDistances_helper(
 	auto h      = _vpoints.at(idx).distTo( seg.getLine() );
 
 	if( !_isAbsolute2 )
-		_vecTrip.at(idx) = DistanceValue{ h/seg.length(), false };
+		_vecTrip.at(idx)._dist = h/seg.length();
 	else
-		_vecTrip.at(idx) = DistanceValue{ h, false };
+		_vecTrip.at(idx)._dist = h;
+	std::cout << "p_recomputeDistances_helper(): distance=" << _vecTrip.at(idx)._dist << '\n';
 }
 
 //------------------------------------------------------------------
@@ -7404,6 +7449,7 @@ template<typename FP>
 void
 PMinimDistances<FP>::recomputeDistances()
 {
+	HOMOG2D_START;
 	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
 	p_recomputeDistances_helper( _lastOneRemoved, -2, +1 );
 	p_recomputeDistances_helper( _lastOneRemoved, -1, +2 );
@@ -7471,6 +7517,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist(
 }
 #else
 {
+	HOMOG2D_START;
 //	auto nbpts = size();
 //	HOMOG2D_LOG( "size=" << nbpts );
 

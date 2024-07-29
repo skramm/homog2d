@@ -2237,8 +2237,8 @@ void trackbarCallback( int val, void* param )
 			std::cout << "angle thres=" << data._pmParams._angleThres * 180. / M_PI << " deg.\n";
 		break;
 		case PolyMinimAlgo::Visvalingam:
-			data._pmParams._visvaPtsRatio = 1. * val / 100.;
-			std::cout << "_visvaRatio = " << data._pmParams._visvaPtsRatio*100. << '\n';
+			data._pmParams._ptRemovalRatio = 1. * val / 100.;
+			std::cout << "_visvaRatio = " << data._pmParams._ptRemovalRatio*100. << '\n';
 		break;
 		case PolyMinimAlgo::AbsDistance:
 			data._pmParams._maxAbsDist = val;
@@ -2264,7 +2264,7 @@ void Param_polyMinim::createTrackbar()
 		break;
 		case PolyMinimAlgo::Visvalingam:
 			_proxyTB.slider_max = 50; // % of the total number of points
-			_proxyTB.slider = (int)(_pmParams._visvaPtsRatio*100);
+			_proxyTB.slider = (int)(_pmParams._ptRemovalRatio*100);
 			tbName = "Visva ratio (%)";
 		break;
 		case PolyMinimAlgo::AbsDistance:
