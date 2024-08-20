@@ -7162,7 +7162,7 @@ Half area of triangle is given by absolute value of determinant of matrix:
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams params, size_t istart, size_t iend )
+PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams /*params*/, size_t istart, size_t iend )
 {
 	auto nbpts = size();
 	HOMOG2D_LOG( "size=" << nbpts );
@@ -7220,22 +7220,42 @@ struct DistanceValue
 template<typename FP>
 struct PMinimDistances
 {
-	const std::vector<Point2d_<FP>>& _vpoints;
-	std::vector<DistanceValue>       _vecTrip;
+	const std::vector<Point2d_<FP>>& _vpoints; ///< const ref on set of points of the polyline
+	std::vector<DistanceValue>       _vecCritValue;
 	bool                _isAbsolute2 = false;
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
 	size_t              _lastOneRemoved=0;
 
+/// For closed polylines , this array holds the index values of the "special cases" that need to be considered when fetching points to compute distances.
+/**
+For a polyline of n points, when we need to get the index of point before 0 or after n-1, then
+special care has to be taken.
+There are 6 special cases, thus we initialize two arrays of 6 elements, designed to identify
+and handle these.
+The member function \ref getIndex() will check if the requested index is one of these.
+The vector \ref _specialCases holds these special cases as pairs (index position,offset), and if
+we find one of these, then the other vector \ref _specialCasesIndexes will provide the relevant
+correct index.
+
+Example:<br>
+On a set of n=7 points, we request the index of the point two points before the first element:
+\code
+getIndex(0,-2)
+\endcode
+This is the second special case (index 1), found by searching through the array \ref _specialCases.
+Thus the vector \ref _specialCasesIndexes provides with its second element the value n-2 (=5),
+which is indeed the  index of the point two points before the first one.
+*/
 	std::array<std::pair<size_t,int>,6> _specialCases;
-	std::array<size_t,6>                _specialCasesIndexes;
+	std::array<size_t,6>                _specialCasesIndexes; ///< \sa _specialCases
 
 	explicit PMinimDistances( const std::vector<Point2d_<FP>>& vpoints )
 		: _vpoints(vpoints)
 	{
 		auto s = _vpoints.size();
 		assert( s > 2 );
-		_vecTrip.reserve( _vpoints.size() );
+		_vecCritValue.reserve( _vpoints.size() );
 		_specialCases[0] = std::make_pair(0,-1);
 		_specialCases[1] = std::make_pair(0,-2);
 		_specialCases[2] = std::make_pair(1,-2);
@@ -7256,7 +7276,7 @@ struct PMinimDistances
 			<< _lastOneRemoved
 			<< '\n';
 		priv::printVector( _vpoints, "points" );
-		priv::printVector( _vecTrip, "distances" );
+		priv::printVector( _vecCritValue, "distances" );
 		std::cout << "---/PMinimDistances---\n";
 	}
 
@@ -7267,7 +7287,6 @@ private:
 	size_t getIndex( size_t current, int offset )
 	{
 		assert( offset!=0 && (offset>-3||offset<3) );
-		auto s = _vpoints.size();
 		auto pcurrent = std::make_pair( current, offset );
 		auto itsc = std::find( _specialCases.begin(), _specialCases.end(), pcurrent );
 
@@ -7316,11 +7335,11 @@ computeDistances(
 		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
 		auto h   = p0.distTo( seg.getLine() );
 		if( !params._isAbsolute )
-			out._vecTrip.push_back(
+			out._vecCritValue.push_back(
 				DistanceValue{ h/seg.length(), false }
 			);
 		else
-			out._vecTrip.push_back(
+			out._vecCritValue.push_back(
 				DistanceValue{ h, false }
 			);
 	}
@@ -7349,11 +7368,14 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 		return false;
 	}
 
+std::cout << "current status:\n";
+priv::printVector( distances._vecCritValue );
+
 // step 1: find element with minimal distance
-	decltype(std::begin(distances._vecTrip) ) minval_it;
+	decltype(std::begin(distances._vecCritValue) ) minval_it;
 	minval_it = std::min_element(
-		std::begin(distances._vecTrip),
-		std::end(distances._vecTrip),
+		std::begin(distances._vecCritValue),
+		std::end(distances._vecCritValue),
 		[]
 		( const auto& e1, const auto& e2 )         // lambda
 		{
@@ -7363,7 +7385,7 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 		}
 	);
 	std::cout << "min element="
-		<< std::distance(std::begin(distances._vecTrip), minval_it)
+		<< std::distance(std::begin(distances._vecCritValue), minval_it)
 		<< ", dist value=" << minval_it->_dist
 		<< " Abs thres=" << params._maxAbsDist
 		<< " Rel thres=" << params._maxRelDistRatio
@@ -7393,7 +7415,7 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 		break;
 		case PminimStopCrit::NbPtsRatio:
 			std::cout << "SC=NbPtsRatio\n";
-			if( 1.0*distances._vecTrip.size()/params._NbPtsRemoved > params._ptRemovalRatio )
+			if( 1.0*distances._vecCritValue.size()/params._NbPtsRemoved > params._ptRemovalRatio )
 				doRemovePoint = true;
 		break;
 		default: assert(0);
@@ -7403,7 +7425,7 @@ removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
 	{
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
 		minval_it->_isRemoved = true;
-		distances._lastOneRemoved = std::distance( std::begin(distances._vecTrip), minval_it );
+		distances._lastOneRemoved = std::distance( std::begin(distances._vecCritValue), minval_it );
 		params._NbPtsRemoved++;
 		HOMOG2D_LOG( "tag point "
 			<< distances._lastOneRemoved
@@ -7430,15 +7452,13 @@ PMinimDistances<FP>::p_recomputeDistances_helper(
 	auto seg    = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
 	auto h      = _vpoints.at(idx).distTo( seg.getLine() );
 
-	if( !_isAbsolute2 )
-		_vecTrip.at(idx)._dist = h/seg.length();
-	else
-		_vecTrip.at(idx)._dist = h;
-	std::cout << "p_recomputeDistances_helper(): distance=" << _vecTrip.at(idx)._dist << '\n';
+	_vecCritValue.at(idx)._dist = ( _isAbsolute2 ? h : h/seg.length() );
+
+	std::cout << "p_recomputeDistances_helper() idx="<<idx<< ", distance=" << _vecCritValue.at(idx)._dist << '\n';
 }
 
 //------------------------------------------------------------------
-/// Once we have removed ("tagged") a point, we need to recompute the distances value
+/// Once we have removed ("tagged") a point, we need to recompute the distance values
 /**
 We need to compute two distances.
 Let $n$ be the index of  the last removed point.
@@ -7537,7 +7557,7 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist(
 	std::vector<Point2d_<FPT>> newvec;
 	newvec.reserve( _plinevec.size() );
 	for( size_t i=0; i<_plinevec.size(); i++ )
-		if( distances._vecTrip[i]._isRemoved == false )
+		if( distances._vecCritValue[i]._isRemoved == false )
 			newvec.push_back( _plinevec[i] );
 	_plinevec = std::move( newvec );
 }
