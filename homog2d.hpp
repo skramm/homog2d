@@ -5808,7 +5808,7 @@ getString( PolyMinimAlgo alg )
 	return s;
 }
 
-/// Stop criterion for the Visvalingam polyline decimating algorithm
+/// Stop criterion for the iterative polyline decimating algorithm
 enum class PminimStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
 /// \sa PolyMinimParams::_ptRemovalRatio
@@ -7329,9 +7329,10 @@ computeDistances(
 
 //------------------------------------------------------------------
 /// Searches through all the points and tag as removed the one that has
-/// the minimal distance
+/// the minimal distance (if some criterion is met
 /**
 (this function does NOT remove points from the vector)
+If no points are removed ("tagged"), return false.
 */
 template<typename FP>
 bool
@@ -7518,7 +7519,10 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist(
 #else
 {
 	HOMOG2D_START;
-//	auto nbpts = size();
+
+	if( size() < (isClosed()?4:3) ) // nothing to do
+		return;
+
 //	HOMOG2D_LOG( "size=" << nbpts );
 
 // step 1: compute initial distances
