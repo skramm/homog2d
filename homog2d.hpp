@@ -5786,10 +5786,8 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 //------------------------------------------------------------------
 /// Used in base::PolylineBase::minimize(), see PolyMinimParams
 enum class PolyMinimAlgo {
-	AngleBased,   ///< removes points based on the angle between the two segments
 	Visvalingam,  ///< iterative algorithm, see https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
-	AbsDistance,  ///< Uses an absolute threshold on the distance between point and line joining the two other points
-	RelDistance   ///< Uses a relative threshold on ratio of distance between point and line joining the two other points and segment length
+	RDP           ///< Ramer-Douglas-Peucker, see https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 };
 
 inline
@@ -5799,10 +5797,8 @@ getString( PolyMinimAlgo alg )
 	const char* s=0;
 	switch( alg )
 	{
-		case PolyMinimAlgo::AngleBased:  s="Angle";        break;
-		case PolyMinimAlgo::Visvalingam: s="Visvalingam";  break;
-		case PolyMinimAlgo::AbsDistance: s="AbsDistance";  break;
-		case PolyMinimAlgo::RelDistance: s="RelDistance";  break;
+		case PolyMinimAlgo::Visvalingam: s="Visvalingam"; break;
+		case PolyMinimAlgo::RDP:         s="RDP";         break;
 		default: assert(0);
 	}
 	return s;
@@ -5820,24 +5816,36 @@ enum class PminimStopCrit {
 	SinglePoint
 };
 
+/// The metric used for polyline minimization, see PolyMinimParams
+enum class PminimMetric
+{
+	Angle,
+	TriangleArea,
+	Distance
+};
+
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< algorithm
+//	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< algorithm
 	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
+	HOMOG2D_INUMTYPE _maxTriangleArea = 20;
 
-	PminimStopCrit    _stopCrit = PminimStopCrit::DistRatio;
+	PminimMetric     _metric = PminimMetric::Distance; ///< The metric used for the Visvalingam algorithm
+
+	PminimStopCrit    _stopCrit = PminimStopCrit::DistRatio; ///< stop criterion for the iterative algorithm
+
 	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3; ///< ratio of nb of points to remove
-	bool             _keepBB; ///< if true, the minimized polyline will keep the same size (extremum points will not be discarded)
+//	bool             _keepBB; ///< if true, the minimized polyline will keep the same size (extremum points will not be discarded)
 	bool             _isAbsolute = false;
 	size_t           _NbPtsRemoved = 0;
 
 	void print() const
 	{
-		std::cout << "---PolyMinimParams---\n -algo="
-		<< getString(_algo)
+		std::cout << "---PolyMinimParams---"
+//		<< getString(_algo)
 		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
 		<< "\n -_maxAbsDist=" << _maxAbsDist
 		<< "\n -_isAbsolute=" << _isAbsolute
@@ -6436,10 +6444,10 @@ private:
 	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsOpen>& );
 	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsClosed>& );
 	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
-	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
+/*	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
 	void p_minimizePL_dist(  PolyMinimParams, size_t istart, size_t iend );
 	void p_minimizePL_Visva( PolyMinimParams, size_t istart, size_t iend );
-
+*/
 public:
 /// \name Operators
 ///@{
@@ -7022,103 +7030,6 @@ PolylineBase<PLT,FPT>::rotate( Rotate rot )
 }
 
 //------------------------------------------------------------------
-/// Private member function, called by PolylineBase::impl_minimizePL()
-/**
-- start index: 0 for closed, 1 for open
-- end index: size() for closed, size()-1 for open
-*/
-template<typename PLT,typename FPT>
-void
-PolylineBase<PLT,FPT>::p_minimizePL( PolyMinimParams params, size_t istart, size_t iend )
-{
-//	if( params._keepBB )
-
-	switch( params._algo )
-	{
-		case PolyMinimAlgo::AngleBased:
-			p_minimizePL_angle( params._angleThres, istart, iend );
-		break;
-		case PolyMinimAlgo::Visvalingam:
-			p_minimizePL_Visva( params, istart, iend );
-		break;
-#if 0
-		case PolyMinimAlgo::AbsDistance:
-			p_minimizePL_dist( params, istart, iend );
-		break;
-		case PolyMinimAlgo::RelDistance:
-			p_minimizePL_dist( params, istart, iend );
-		break;
-#endif
-		case PolyMinimAlgo::AbsDistance:
-			params._isAbsolute = true;
-			p_minimizePL_dist( params, istart, iend );
-		break;
-
-		case PolyMinimAlgo::RelDistance:
-			params._isAbsolute = false;
-			p_minimizePL_dist( params, istart, iend );
-		break;
-
-		default: assert(0);
-	}
-}
-
-//------------------------------------------------------------------
-template<typename PLT,typename FPT>
-struct VisvaData
-{
-// constructor
-	VisvaData( const PolylineBase<PLT,FPT>& poly )
-	{
-		_polyp = &poly;
-	}
-	void updateAreas( size_t pos_changed )
-	{
-
-	}
-	void computeAreas( size_t istart, size_t iend );
-
-// data
-	std::vector<HOMOG2D_INUMTYPE> _triangleAreas;
-	const PolylineBase<PLT,FPT>*  _polyp = nullptr;
-};
-
-/// Used in the Visvalingam algorithm
-/**
-The idea is to compute once all the areas when iterating
-(of course, when removal of a point n, areas of points n-1 and n+1 must be recomputed)
-*/
-template<typename PLT,typename FPT>
-void
-VisvaData<PLT,FPT>::computeAreas( size_t istart, size_t iend )
-{
-	_triangleAreas.resize( _polyp->isClosed() ? _polyp->size() : _polyp->size()-2 );
-	size_t c = 0;
-	size_t nbpts = _polyp->size();
-
-// step 1: compute areas of	each triangle
-	for( size_t i=istart; i<iend; i++ )
-	{
-		const auto& p0    = _polyp->getPoint(i);
-		const auto& pnext = _polyp->getPoint( i==nbpts-1 ? 0 : i+1 );
-		const auto& pprev = _polyp->getPoint( i==0 ? nbpts-1 : i-1 );
-		detail::Matrix_<HOMOG2D_INUMTYPE> mat;
-
-		mat.value(0,0) = pprev.getX();
-		mat.value(0,1) = pprev.getY();
-		mat.value(0,2) = 1.;
-		mat.value(1,0) = p0.getX();
-		mat.value(1,1) = p0.getY();
-		mat.value(1,2) = 1.;
-		mat.value(2,0) = pnext.getX();
-		mat.value(2,1) = pnext.getY();
-		mat.value(2,2) = 1.;
-
-		HOMOG2D_LOG( "i=" << i << " c=" << c << " area=" << mat.determ() );
-		_triangleAreas.at(c++) = homog2d_abs( mat.determ() );
-	}
-}
-
 template<typename PLT,typename FPT>
 std::vector<Point2d_<FPT>>
 p_buildNewPolyline( const base::PolylineBase<PLT,FPT>& poly, const std::vector<size_t>& ptset )
@@ -7145,70 +7056,21 @@ p_buildNewPolyline( const base::PolylineBase<PLT,FPT>& poly, const std::vector<s
 }
 
 //------------------------------------------------------------------
-/// Private member function, called by PolylineBase::p_minimizePL().
-/// Uses the Visvalingam algorithm
-/**
-Ref: https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
-
-!!! WIP !!!
-
-Half area of triangle is given by absolute value of determinant of matrix:
-\verbatim
-| x1  y1  1 |
-| x2  y2  1 |
-| x3  y3  1 |
-\endverbatim
-
-*/
-template<typename PLT,typename FPT>
-void
-PolylineBase<PLT,FPT>::p_minimizePL_Visva( PolyMinimParams /*params*/, size_t istart, size_t iend )
-{
-	auto nbpts = size();
-	HOMOG2D_LOG( "size=" << nbpts );
-	VisvaData<PLT,FPT> vdata( *this );
-	vdata.computeAreas( istart, iend );
-
-//	priv::printVector( triangleAreas, "triangle areas" );
-
-//	do
-//	{
-
-
-// step 1: find minimum value
-	const auto itmin = std::min_element( vdata._triangleAreas.cbegin(), vdata._triangleAreas.cend() );
-	size_t posmin = itmin - vdata._triangleAreas.cbegin();
-
-// step 2: if minimum value above a threshold, copy all the points except the one with minimum area
-// (else, do nothing)
-	if( *itmin > 0.01 ) // TEMP
-	{
-		std::vector<Point2d_<FPT>> ptset;
-		ptset.reserve( nbpts-1 );
-		for( size_t i=0; i<nbpts; i++ )
-		{
-			if( i != posmin )
-				ptset.push_back( _plinevec.at(i) );
-		}
-		HOMOG2D_LOG( "newpoly size=" << ptset.size() );
-		_plinevec = std::move( ptset );
-	}
-}
-
-//------------------------------------------------------------------
 /// Holds data types and functions used for Polyline minimization
 namespace pminim {
 
 //------------------------------------------------------------------
-/// Type used for polyline minimization
-struct DistanceValue
+/// Type used for polyline minimization, holds (for each point)
+/// the metric value used to determine if point is to be removed or not
+struct PMetricValue
 {
-/// "distance" value between point and segment joining the two other points.
-/// Can actually be the absolute distance value OR the ratio of distances.
+/// value of metric of point related to segment joining the two other points.
+/// Can actually be the absolute distance value OR the ratio of distances OR
+/// the triangle area.
 	double _dist;
 
 	bool   _isRemoved = false;
-	friend std::ostream& operator << ( std::ostream& f, DistanceValue val )
+	friend std::ostream& operator << ( std::ostream& f, PMetricValue val )
 	{
 		f << '(' << val._dist << ',' << val._isRemoved << ")";
 		return f;
@@ -7218,11 +7080,12 @@ struct DistanceValue
 //------------------------------------------------------------------
 /// Holds the data needed for the iterative process of removing points
 template<typename FP>
-struct PMinimDistances
+struct TriangleMetrics
 {
 	const std::vector<Point2d_<FP>>& _vpoints; ///< const ref on set of points of the polyline
-	std::vector<DistanceValue>       _vecCritValue;
-	bool                _isAbsolute2 = false;
+	std::vector<PMetricValue>       _vecCritValue;
+	bool                             _isAbsolute2 = false;
+	PminimMetric                     _metric2;
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
 	size_t              _lastOneRemoved=0;
@@ -7250,9 +7113,15 @@ which is indeed the  index of the point two points before the first one.
 	std::array<std::pair<size_t,int>,6> _specialCases;
 	std::array<size_t,6>                _specialCasesIndexes; ///< \sa _specialCases
 
-	explicit PMinimDistances( const std::vector<Point2d_<FP>>& vpoints )
-		: _vpoints(vpoints)
+	explicit TriangleMetrics(
+		const std::vector<Point2d_<FP>>& vpoints,
+		const PolyMinimParams&           params
+	): _vpoints(vpoints)
 	{
+		_metric2     = params._metric;
+		_isAbsolute2 = params._isAbsolute;
+		_vecCritValue.resize( vpoints.size() );
+
 		auto s = _vpoints.size();
 		assert( s > 2 );
 		_vecCritValue.reserve( _vpoints.size() );
@@ -7269,16 +7138,17 @@ which is indeed the  index of the point two points before the first one.
 		_specialCasesIndexes[4] = 1;
 		_specialCasesIndexes[5] = 0;
 	}
-	void recomputeDistances();
+	void recomputeMetrics();
 	void print() const
 	{
-		std::cout << "---PMinimDistances---\n -_lastOneRemoved="
+		std::cout << "---TriangleMetrics---\n -_lastOneRemoved="
 			<< _lastOneRemoved
 			<< '\n';
 		priv::printVector( _vpoints, "points" );
 		priv::printVector( _vecCritValue, "distances" );
-		std::cout << "---/PMinimDistances---\n";
+		std::cout << "---/TriangleMetrics---\n";
 	}
+	void computeMetric( size_t, int, int );
 
 #ifndef HOMOG2D_TEST_MODE
 private:
@@ -7296,12 +7166,79 @@ private:
 		auto idxsc = std::distance( _specialCases.begin(), itsc );
 		return _specialCasesIndexes[idxsc];
 	}
-	void p_recomputeDistances_helper( size_t, int, int );
 };
 
 //------------------------------------------------------------------
-/// Compute initial distances between all mid-points and relative segment
+/// Polyline minimization: compute metric for a given point
+/// \todo 20240728: replace "at()" call by "[]", once debugged
+template<typename FP>
+void
+TriangleMetrics<FP>::computeMetric(
+	size_t idx,    ///< current index
+	int    before, ///< offset of "before" point (-2 or -1)
+	int    after   ///< offset of "after" point  (+1 or +2)
+)
+{
+	HOMOG2D_START;
+	HOMOG2D_LOG( "size=" << _vpoints.size() << " idx=" << idx << " bef="<< before << " aft=" << after );
+
+	auto pt_bef = _vpoints.at( getIndex( idx, before ) );
+	auto pt_aft = _vpoints.at( getIndex( idx, after  ) );
+	auto p0     = _vpoints.at(idx);
+
+	switch( _metric2 )
+	{ /// \todo 20240821: fix the issue when point is "outside" the segment
+		case PminimMetric::Distance:
+		{
+			auto seg = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
+			auto h   = p0.distTo( seg.getLine() );
+			_vecCritValue.at(idx)._dist = ( _isAbsolute2 ? h : h/seg.length() );
+		}
+		break;
+
+		case PminimMetric::Angle:
+		{
+			auto vx1 = pt_aft.getX() - p0.getX();
+			auto vy1 = pt_aft.getY() - p0.getY();
+			auto vx2 = p0.getX() - pt_bef.getX();
+			auto vy2 = p0.getY() - pt_bef.getY();
+			auto a1 = std::atan2( vx1, vy1 );
+			auto a2 = std::atan2( vx2, vy2 );
+			_vecCritValue.at(idx)._dist = homog2d_abs(a1-a2);
+		}
+		break;
+
+		case PminimMetric::TriangleArea:
+		{
+			detail::Matrix_<HOMOG2D_INUMTYPE> mat;
+
+			mat.value(0,0) = pt_bef.getX();
+			mat.value(0,1) = pt_bef.getY();
+			mat.value(0,2) = 1.;
+			mat.value(1,0) = p0.getX();
+			mat.value(1,1) = p0.getY();
+			mat.value(1,2) = 1.;
+			mat.value(2,0) = pt_aft.getX();
+			mat.value(2,1) = pt_aft.getY();
+			mat.value(2,2) = 1.;
+
+			HOMOG2D_LOG( " area=" << mat.determ() );
+			_vecCritValue.at(idx)._dist = homog2d_abs( mat.determ() );
+		}
+		break;
+
+		default: assert(0);
+	}
+
+	HOMOG2D_LOG( "computeMetric() idx="<<idx<< ", distance=" << _vecCritValue.at(idx)._dist );
+}
+
+//------------------------------------------------------------------
+/// Compute initial metric values attached to all the points
 /**
+Either distances (point to segment), or angle between segments,
+or triangle areas (Visvalingam-style)
+
 \verbatim
     +       / \
    / \       |
@@ -7312,8 +7249,8 @@ private:
 \endverbatim
 */
 template<typename FP>
-PMinimDistances<FP>
-computeDistances(
+TriangleMetrics<FP>
+computeMetrics(
 	const std::vector<Point2d_<FP>>& plinevec,
 	PolyMinimParams params,
 	size_t    istart,
@@ -7323,26 +7260,10 @@ computeDistances(
 	HOMOG2D_START;
 	HOMOG2D_LOG( "istart=" << istart << " iend=" << iend )
 	params.print();
-	auto nbpts = plinevec.size();
-	PMinimDistances out( plinevec );
+	TriangleMetrics out( plinevec, params );
 	out._isAbsolute2 = params._isAbsolute;
 	for( size_t i=istart; i<iend; i++ )
-	{
-		const auto& p0    = plinevec.at(i);
-		const auto& pnext = plinevec[ i==nbpts-1 ? 0 : i+1 ];
-		const auto& pprev = plinevec[ i==0 ? nbpts-1 : i-1 ];
-
-		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
-		auto h   = p0.distTo( seg.getLine() );
-		if( !params._isAbsolute )
-			out._vecCritValue.push_back(
-				DistanceValue{ h/seg.length(), false }
-			);
-		else
-			out._vecCritValue.push_back(
-				DistanceValue{ h, false }
-			);
-	}
+		out.computeMetric( i, -1, +1 );
 	return out;
 }
 
@@ -7355,27 +7276,27 @@ If no points are removed ("tagged"), return false.
 */
 template<typename FP>
 bool
-removeSinglePoint( PolyMinimParams& params, PMinimDistances<FP>& distances )
+removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 {
 	HOMOG2D_START;
 	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved );
-	distances.print();
+	metData.print();
 
 // we have to leave at least 2 points !
-	if( params._NbPtsRemoved >= distances._vpoints.size()-2 )
+	if( params._NbPtsRemoved >= metData._vpoints.size()-2 )
 	{
 		std::cout << "No remove!\n";
 		return false;
 	}
 
 std::cout << "current status:\n";
-priv::printVector( distances._vecCritValue );
+priv::printVector( metData._vecCritValue );
 
 // step 1: find element with minimal distance
-	decltype(std::begin(distances._vecCritValue) ) minval_it;
+	decltype(std::begin(metData._vecCritValue) ) minval_it;
 	minval_it = std::min_element(
-		std::begin(distances._vecCritValue),
-		std::end(distances._vecCritValue),
+		std::begin(metData._vecCritValue),
+		std::end(metData._vecCritValue),
 		[]
 		( const auto& e1, const auto& e2 )         // lambda
 		{
@@ -7385,7 +7306,7 @@ priv::printVector( distances._vecCritValue );
 		}
 	);
 	std::cout << "min element="
-		<< std::distance(std::begin(distances._vecCritValue), minval_it)
+		<< std::distance(std::begin(metData._vecCritValue), minval_it)
 		<< ", dist value=" << minval_it->_dist
 		<< " Abs thres=" << params._maxAbsDist
 		<< " Rel thres=" << params._maxRelDistRatio
@@ -7415,7 +7336,7 @@ priv::printVector( distances._vecCritValue );
 		break;
 		case PminimStopCrit::NbPtsRatio:
 			std::cout << "SC=NbPtsRatio\n";
-			if( 1.0*distances._vecCritValue.size()/params._NbPtsRemoved > params._ptRemovalRatio )
+			if( 1.0*metData._vecCritValue.size()/params._NbPtsRemoved > params._ptRemovalRatio )
 				doRemovePoint = true;
 		break;
 		default: assert(0);
@@ -7425,36 +7346,15 @@ priv::printVector( distances._vecCritValue );
 	{
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
 		minval_it->_isRemoved = true;
-		distances._lastOneRemoved = std::distance( std::begin(distances._vecCritValue), minval_it );
+		metData._lastOneRemoved = std::distance( std::begin(metData._vecCritValue), minval_it );
 		params._NbPtsRemoved++;
 		HOMOG2D_LOG( "tag point "
-			<< distances._lastOneRemoved
+			<< metData._lastOneRemoved
 			<< " as removed, total="
 			<< params._NbPtsRemoved );
 		return true;
 	}
 	return false;
-}
-
-//------------------------------------------------------------------
-/// Helper function for PMinimDistances::recomputeDistances()
-/// \todo 20240728: replace "at()" call by "[]", once debugged
-template<typename FP>
-void
-PMinimDistances<FP>::p_recomputeDistances_helper(
-	size_t idx,    ///< current index
-	int    before, ///< offset of "before" point (-2 or -1)
-	int    after   ///< offset of "after" point  (+1 or +2)
-)
-{
-	auto pt_bef = _vpoints.at( getIndex( idx, before ) );
-	auto pt_aft = _vpoints.at( getIndex( idx, after  ) );
-	auto seg    = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
-	auto h      = _vpoints.at(idx).distTo( seg.getLine() );
-
-	_vecCritValue.at(idx)._dist = ( _isAbsolute2 ? h : h/seg.length() );
-
-	std::cout << "p_recomputeDistances_helper() idx="<<idx<< ", distance=" << _vecCritValue.at(idx)._dist << '\n';
 }
 
 //------------------------------------------------------------------
@@ -7468,75 +7368,32 @@ We need to compute theses distances:
 */
 template<typename FP>
 void
-PMinimDistances<FP>::recomputeDistances()
+TriangleMetrics<FP>::recomputeMetrics()
 {
 	HOMOG2D_START;
 	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
-	p_recomputeDistances_helper( _lastOneRemoved, -2, +1 );
-	p_recomputeDistances_helper( _lastOneRemoved, -1, +2 );
+	computeMetric( _lastOneRemoved, -2, +1 );
+	computeMetric( _lastOneRemoved, -1, +2 );
 }
 
 } // namespace pminim
 //------------------------------------------------------------------
 
-
-//------------------------------------------------------------------
-/// Private member function, called by PolylineBase::p_minimizePL().
-/// Does distance-based reduction (absolute or relative)
+/// Private member function, called by PolylineBase::impl_minimizePL()
 /**
+- start index: 0 for closed, 1 for open
+- end index: size() for closed, size()-1 for open
+
 \todo Would we speed up if we did computation of squared distances, using priv::sqDist() and compare
 \$ d0^2 \$ to \$ d1^2 + d2^2 + 2 * d1 * d2 \$ ???
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL_dist(
+PolylineBase<PLT,FPT>::p_minimizePL(
 	PolyMinimParams params,
-//HOMOG2D_INUMTYPE thres,
-//	bool isAbsolute,
 	size_t istart,
 	size_t iend
 )
-#if 0
-{
-	auto nbpts = size();
-	HOMOG2D_LOG( "size=" << nbpts );
-
-// step 1: check each point
-	std::vector<size_t> ptset;
-	for( size_t i=istart; i<iend; i++ )
-	{
-		const auto& p0    = _plinevec.at(i);
-		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
-		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
-
-		auto seg = Segment_<HOMOG2D_INUMTYPE>( pnext,pprev );
-		auto d0  = seg.length();
-		auto h   = p0.distTo( seg.getLine() );
-
-		bool doPushback = false;
-		if( isAbsolute )
-		{
-			if( h < thres )
-				doPushback = true;
-		}
-		else
-		{
-			if( h/d0 < thres )
-				doPushback = true;
-		}
-		if( doPushback )  // this here is to avoid transforming a polygon into a segment !
-			if( istart==0 ? ptset.size() < nbpts-3 : ptset.size() < nbpts-2 )
-				ptset.push_back( i );
-	}
-
-	if( ptset.size() == 0 ) // nothing found
-		return;             // then no change
-
-// step 2: build new Polyline without those points
-	auto newPtSet = p_buildNewPolyline( *this, ptset );
-	_plinevec = std::move( newPtSet );
-}
-#else
 {
 	HOMOG2D_START;
 
@@ -7546,11 +7403,11 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist(
 //	HOMOG2D_LOG( "size=" << nbpts );
 
 // step 1: compute initial distances
-	auto distances = pminim::computeDistances( _plinevec, params, istart, iend );
+	auto distances = pminim::computeMetrics( _plinevec, params, istart, iend );
 
 // step 2: iterate until no more points are removed
 	while( pminim::removeSinglePoint( params, distances ) )
-		distances.recomputeDistances();
+		distances.recomputeMetrics();
 	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
 
 // step 3: replace original points vector with the new one
@@ -7561,45 +7418,8 @@ PolylineBase<PLT,FPT>::p_minimizePL_dist(
 			newvec.push_back( _plinevec[i] );
 	_plinevec = std::move( newvec );
 }
-#endif
+
 //------------------------------------------------------------------
-/// Private member function, called by PolylineBase::p_minimizePL().
-/// Does angle-based reduction
-template<typename PLT,typename FPT>
-void
-PolylineBase<PLT,FPT>::p_minimizePL_angle( HOMOG2D_INUMTYPE thres, size_t istart, size_t iend )
-{
-	auto nbpts = size();
-	HOMOG2D_LOG( "size=" << nbpts );
-
-// step 1: check each point to see if it is the middle point of two segments with same angle
-	std::vector<size_t> ptset;
-	for( size_t i=istart; i<iend; i++ )
-	{
-		const auto& p0 = _plinevec.at(i);
-		const auto& pnext = getPoint( i==nbpts-1 ? 0 : i+1 );
-		const auto& pprev = getPoint( i==0 ? nbpts-1 : i-1 );
-
-		auto vx1 = pnext.getX() - p0.getX();
-		auto vy1 = pnext.getY() - p0.getY();
-		auto vx2 = p0.getX() - pprev.getX();
-		auto vy2 = p0.getY() - pprev.getY();
-		auto a1 = std::atan2( vx1, vy1 );
-		auto a2 = std::atan2( vx2, vy2 );
-
-//		HOMOG2D_LOG( "pt " << i << " angle=" << homog2d_abs(a1-a2)*180./M_PI << " degrees" );
-		if( homog2d_abs(a1-a2) < thres )
-			ptset.push_back( i );
-	}
-
-	if( ptset.size() == 0 ) // if no same angle segment (=no "middle point")
-		return;             // then no change
-
-// step 2: build new Polyline without those points
-	auto newPtSet = p_buildNewPolyline( *this, ptset );
-	_plinevec = std::move( newPtSet );
-}
-
 /// Minimize Open Polyline (OPolyline)
 template<typename PLT,typename FPT>
 void

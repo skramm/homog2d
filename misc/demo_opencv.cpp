@@ -2040,18 +2040,24 @@ struct Param_polyMinim : Data
 			_polySrc = p;
 		}
 	}
-	void switchAlgo()
+	void switchMetric()
 	{
-		if( _pmParams._algo == PolyMinimAlgo::RelDistance ) // WARNING: assuming this is the LAST one !!
-			_pmParams._algo = PolyMinimAlgo::AngleBased;    // WARNING: assuming this is the FIRST one !!
-		else
+		switch( _pmParams._metric )
 		{
-			auto idx = (int)_pmParams._algo;
-			_pmParams._algo = (PolyMinimAlgo)( ++idx );
+			case PminimMetric::Distance:
+				_pmParams._metric = PminimMetric::Angle;
+			break;
+			case PminimMetric::Angle:
+				_pmParams._metric = PminimMetric::TriangleArea;
+			break;
+			case PminimMetric::TriangleArea:
+				_pmParams._metric = PminimMetric::Distance;
+			break;
+			default: assert(0);
 		}
-		std::cout << "algo=" << getString( _pmParams._algo ) << '\n';
 		createWindows();
 	}
+
 	void switchMode()
 	{
 		_pminimFileMode = !_pminimFileMode;
@@ -2123,10 +2129,12 @@ struct Param_polyMinim : Data
 /// Draws the parameters on first image
 void drawAlgoParams( int idx, Param_polyMinim& data )
 {
+/*
 	auto currPt = data.vpt[idx];
 	currPt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	auto ptPrevious = ( idx==0                      ? data.vpt.size()-1 : idx-1 );
 	auto ptNext     = ( idx==(int)data.vpt.size()-1 ? 0                 : idx+1 );
+
 	if( data._pmParams._algo == PolyMinimAlgo::AngleBased )
 	{
 		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
@@ -2152,6 +2160,7 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 		}
 	}
 	catch(...){}
+*/
 }
 
 /// A functor used to call the minimizing operation
@@ -2225,14 +2234,14 @@ void action_polyMinim( void* param )
 	data.showImage();
 }
 
-/// OpenCv trackbar callback (free function), call the corresponding "action" function
+/// OpenCv trackbar callback (free function), calls the corresponding "action" function
 void trackbarCallback( int val, void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
-
-	switch( data._pmParams._algo )
+/*
+	switch( data._pmParams._metric )
 	{
-		case PolyMinimAlgo::AngleBased:
+		case PminimMetric::Angle:
 			data._pmParams._angleThres = M_PI/180.*val/10.;
 			std::cout << "angle thres=" << data._pmParams._angleThres * 180. / M_PI << " deg.\n";
 		break;
@@ -2249,33 +2258,40 @@ void trackbarCallback( int val, void* param )
 			std::cout << "maxRelDistRatio=" << data._pmParams._maxRelDistRatio*100. << " %\n";
 		break;
 	}
+*/
 	action_polyMinim( param );
 }
 
 void Param_polyMinim::createTrackbar()
 {
 	std::string tbName;
-	switch( _pmParams._algo )
+	switch( _pmParams._metric )
 	{
-		case PolyMinimAlgo::AngleBased:
+		case PminimMetric::Angle:
 			_proxyTB.slider_max = 30; // degrees
 			_proxyTB.slider = (int)(_pmParams._angleThres * 180. / M_PI);
 			tbName = "Angle (deg*10)";
 		break;
-		case PolyMinimAlgo::Visvalingam:
-			_proxyTB.slider_max = 50; // % of the total number of points
-			_proxyTB.slider = (int)(_pmParams._ptRemovalRatio*100);
-			tbName = "Visva ratio (%)";
+
+		case PminimMetric::TriangleArea:
+			_proxyTB.slider_max = 30; // degrees
+			_proxyTB.slider = (int)(_pmParams._maxTriangleArea );
+			tbName = "Triangle area";
 		break;
-		case PolyMinimAlgo::AbsDistance:
-			_proxyTB.slider_max = 20; // pixels (for the demo)
-			_proxyTB.slider = (int)_pmParams._maxAbsDist;
-			tbName = "Max dist";
-		break;
-		case PolyMinimAlgo::RelDistance:
-			_proxyTB.slider_max = 50; // % of the segment length
-			_proxyTB.slider = (int)(_pmParams._maxRelDistRatio*100);
-			tbName = "Dist ratio";
+
+		case PminimMetric::Distance:
+			if( _pmParams._isAbsolute)
+			{
+				_proxyTB.slider_max = 20; // pixels (for the demo)
+				_proxyTB.slider = (int)_pmParams._maxAbsDist;
+				tbName = "Max dist";
+			}
+			else
+			{
+				_proxyTB.slider_max = 50; // % of the segment length
+				_proxyTB.slider = (int)(_pmParams._maxRelDistRatio*100);
+				tbName = "Dist ratio";
+			}
 		break;
 		default: assert(0);
 	}
@@ -2289,7 +2305,7 @@ void demo_polyMinim( int demidx )
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.switchAlgo(); },            "switch algorithm" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },            "switch metric" );
 	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },            "switch mouse/demo file" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },                 "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._plIsClosed = !data._plIsClosed; }, "switch Open/Closed (mouse mode)" );

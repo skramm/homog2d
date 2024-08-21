@@ -3720,7 +3720,7 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 TEST_CASE( "polyline minimization 2", "[polyline-min-2]" )
 {
 	std::vector<Point2d> vec{ Point2d(0,0), Point2d(1,0), Point2d(0,1), Point2d(4,3) }; // 4 points
-	base::pminim::PMinimDistances pmd( vec );
+	base::pminim::TriangleMetrics pmd( vec );
 	CHECK( pmd.getIndex(0,+1) == 1 );
 	CHECK( pmd.getIndex(0,+2) == 2 );
 	CHECK( pmd.getIndex(1,+1) == 2 );
