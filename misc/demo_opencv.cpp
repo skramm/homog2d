@@ -2055,6 +2055,7 @@ struct Param_polyMinim : Data
 			break;
 			default: assert(0);
 		}
+		std::cout << "Metric: " << getString( _pmParams._metric ) << '\n';
 		createWindows();
 	}
 

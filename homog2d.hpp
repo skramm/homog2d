@@ -5804,6 +5804,7 @@ getString( PolyMinimAlgo alg )
 	return s;
 }
 
+//------------------------------------------------------------------
 /// Stop criterion for the iterative polyline decimating algorithm
 enum class PminimStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
@@ -5816,6 +5817,7 @@ enum class PminimStopCrit {
 	SinglePoint
 };
 
+//------------------------------------------------------------------
 /// The metric used for polyline minimization, see PolyMinimParams
 enum class PminimMetric
 {
@@ -5824,6 +5826,23 @@ enum class PminimMetric
 	Distance
 };
 
+inline
+const char*
+getString( PminimMetric met )
+{
+	const char* s=0;
+	switch( met )
+	{
+		case PminimMetric::Angle:        s="Angle";    break;
+		case PminimMetric::TriangleArea: s="Area";     break;
+		case PminimMetric::Distance:     s="Distance"; break;
+		default: assert(0);
+	}
+	return s;
+}
+
+
+//------------------------------------------------------------------
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
