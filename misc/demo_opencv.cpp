@@ -49,7 +49,7 @@ void demo_something( int demo_index)
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_VRTP
 #define HOMOG2D_USE_SVG_IMPORT
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -2058,6 +2058,13 @@ struct Param_polyMinim : Data
 		createWindows();
 	}
 
+	void switchAbsRel()
+	{
+		_pmParams._isAbsolute = !_pmParams._isAbsolute;
+		std::cout << "distance mode=" << (_pmParams._isAbsolute?"Absolute\n":"Relative\n");
+		createWindows();
+	}
+
 	void switchMode()
 	{
 		_pminimFileMode = !_pminimFileMode;
@@ -2238,14 +2245,20 @@ void action_polyMinim( void* param )
 void trackbarCallback( int val, void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
-/*
+
 	switch( data._pmParams._metric )
 	{
 		case PminimMetric::Angle:
 			data._pmParams._angleThres = M_PI/180.*val/10.;
 			std::cout << "angle thres=" << data._pmParams._angleThres * 180. / M_PI << " deg.\n";
 		break;
-		case PolyMinimAlgo::Visvalingam:
+		case PminimMetric::Distance:
+			if( data._pmParams._isAbsolute)
+				data._pmParams._maxAbsDist = val;
+			else
+				data._pmParams._maxRelDistRatio = 1.0*val/100;
+		break;
+/*		case PolyMinimAlgo::Visvalingam:
 			data._pmParams._ptRemovalRatio = 1. * val / 100.;
 			std::cout << "_visvaRatio = " << data._pmParams._ptRemovalRatio*100. << '\n';
 		break;
@@ -2256,9 +2269,11 @@ void trackbarCallback( int val, void* param )
 		case PolyMinimAlgo::RelDistance:
 			data._pmParams._maxRelDistRatio = 1.*val/100.;
 			std::cout << "maxRelDistRatio=" << data._pmParams._maxRelDistRatio*100. << " %\n";
-		break;
+		break;*/
+		default:
+			std::cout << "no handling of trackbar value!\n";
 	}
-*/
+
 	action_polyMinim( param );
 }
 
@@ -2305,9 +2320,10 @@ void demo_polyMinim( int demidx )
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },            "switch metric" );
-	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },            "switch mouse/demo file" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },                 "reset polyline" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },  "switch metric" );
+	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },  "switch abs/rel distance threshold" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },    "switch mouse/demo file" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },         "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._plIsClosed = !data._plIsClosed; }, "switch Open/Closed (mouse mode)" );
 
 	kbloop.addCommonAction( action_polyMinim );

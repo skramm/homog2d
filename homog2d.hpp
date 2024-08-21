@@ -7144,8 +7144,8 @@ which is indeed the  index of the point two points before the first one.
 		std::cout << "---TriangleMetrics---\n -_lastOneRemoved="
 			<< _lastOneRemoved
 			<< '\n';
-		priv::printVector( _vpoints, "points" );
-		priv::printVector( _vecCritValue, "distances" );
+//		priv::printVector( _vpoints, "points" );
+//		priv::printVector( _vecCritValue, "distances" );
 		std::cout << "---/TriangleMetrics---\n";
 	}
 	void computeMetric( size_t, int, int );
@@ -7289,8 +7289,8 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 		return false;
 	}
 
-std::cout << "current status:\n";
-priv::printVector( metData._vecCritValue );
+//std::cout << "current status:\n";
+//priv::printVector( metData._vecCritValue );
 
 // step 1: find element with minimal distance
 	decltype(std::begin(metData._vecCritValue) ) minval_it;
