@@ -5827,9 +5827,12 @@ enum class PminimStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
 /// \sa PolyMinimParams::_ptRemovalRatio
 	NbPtsRatio,
+/*
 /// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reached
 /// (uses the _maxRelDistRatio value)
-	DistRatio,
+	DistRatio,*/
+/// No stop, goes all the way until no more points meet the requirements
+	NoStop,
 /// No iterating, remove a single point (the one with smallest distance)
 	SinglePoint
 };
@@ -5870,14 +5873,10 @@ struct PolyMinimParams
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
 	HOMOG2D_INUMTYPE _maxTriangleArea = 20;
-
-	PminimMetric     _metric = PminimMetric::Distance; ///< The metric used for the Visvalingam algorithm
-
-	PminimStopCrit    _stopCrit = PminimStopCrit::DistRatio; ///< stop criterion for the iterative algorithm
-
+	PminimMetric     _metric = PminimMetric::Distance;   ///< The metric used for the Visvalingam algorithm
+	PminimStopCrit   _stopCrit = PminimStopCrit::NoStop; ///< stop criterion for the iterative algorithm
 	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3; ///< ratio of nb of points to remove
-//	bool             _keepBB; ///< if true, the minimized polyline will keep the same size (extremum points will not be discarded)
-	bool             _isAbsolute = false;
+	bool             _isAbsolute = false;   ///< used only for distance based metric
 	size_t           _NbPtsRemoved = 0;
 
 	void print() const
@@ -7305,21 +7304,21 @@ computeMetrics(
 
 //------------------------------------------------------------------
 /// Searches through all the points and tag as removed the one that has
-/// the minimal distance (if some criterion is met
+/// the minimal criterion value (distance, area, or angle)
 /**
-(this function does NOT remove points from the vector)
-If no points are removed ("tagged"), return false.
+- This function does NOT remove points from the vector!
+- If no points are removed ("tagged"), return false.
 */
 template<typename FP>
 bool
-removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
+removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
 	HOMOG2D_START;
 	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved );
 	metData.print();
 
-// we have to leave at least 2 points !
-	if( params._NbPtsRemoved >= metData._vpoints.size()-2 )
+// we have to leave at least 3 points (2 for open polyline)
+	if( params._NbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
 	{
 		std::cout << "No remove!\n";
 		return false;
@@ -7358,7 +7357,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 			if( params._NbPtsRemoved > 0 )
 				return false;
 		break;
-		case PminimStopCrit::DistRatio:
+/*		case PminimStopCrit::DistRatio:
 			std::cout << "SC=DistRatio\n";
 			if( params._isAbsolute )
 			{
@@ -7370,10 +7369,13 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 				if( minval_it->_dist < params._maxRelDistRatio )
 					doRemovePoint = true;
 			}
-		break;
+		break;*/
 		case PminimStopCrit::NbPtsRatio:
 			std::cout << "SC=NbPtsRatio\n";
 			if( 1.0*metData._vecCritValue.size()/params._NbPtsRemoved > params._ptRemovalRatio )
+				doRemovePoint = true;
+		break;
+		case PminimStopCrit::NoStop:
 				doRemovePoint = true;
 		break;
 		default: assert(0);
@@ -7381,6 +7383,12 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 
 	if( doRemovePoint )
 	{
+// TMP
+		if( minval_it->_isRemoved == true ) // else, mean we fucked up somewhere
+		{
+			std::cout << "FAIL!\n";
+		}
+// /TMP
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
 		minval_it->_isRemoved = true;
 		metData._lastOneRemoved = std::distance( std::begin(metData._vecCritValue), minval_it );
@@ -7439,11 +7447,11 @@ PolylineBase<PLT,FPT>::p_minimizePL(
 
 //	HOMOG2D_LOG( "size=" << nbpts );
 
-// step 1: compute initial distances
+// step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, istart, iend );
 
 // step 2: iterate until no more points are removed
-	while( pminim::removeSinglePoint( params, distances ) )
+	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 		distances.recomputeMetrics();
 	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
 

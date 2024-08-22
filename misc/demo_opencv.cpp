@@ -2137,7 +2137,6 @@ struct Param_polyMinim : Data
 /// Draws the parameters on first image
 void drawAlgoParams( int idx, Param_polyMinim& data )
 {
-
 	auto currPt = data.vpt[idx];
 	currPt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	auto ptPrevious = ( idx==0                      ? data.vpt.size()-1 : idx-1 );
@@ -2146,16 +2145,25 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 	if( data._pmParams._metric == PminimMetric::Angle )
 	{
 		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
-		drawText( data.img, util::toString( angle,4 ), currPt );
+		drawText( data.img, util::toString( angle, 4 )+"deg", currPt );
 	}
-
-
-/*	if( data._pmParams._algo == PolyMinimAlgo::AngleBased )
+	if( data._pmParams._metric == PminimMetric::Distance )
 	{
-		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
-		drawText( data.img, std::to_string( angle ), currPt );
+			Segment segPN( data.vpt[ptNext], data.vpt[ptPrevious] );
+			segPN.draw( data.img );
+			auto orthogSeg = segPN.getLine().getOrthogSegment( currPt );
+			auto oseg_pts = orthogSeg.getPts();
+			auto pt_int = oseg_pts.first;
+			if( pt_int == currPt )
+				pt_int = oseg_pts.second;
+			orthogSeg.draw( data.img );
+			if( data._pmParams._isAbsolute )
+				drawText( data.img, std::to_string( orthogSeg.length() ), pt_int );
+			else
+				drawText( data.img, std::to_string( orthogSeg.length()/segPN.length() ), pt_int );
 	}
-	try
+
+/*	try
 	{
 		if( data._pmParams._algo == PolyMinimAlgo::AbsDistance || data._pmParams._algo == PolyMinimAlgo::RelDistance )
 		{
@@ -2179,6 +2187,7 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 }
 
 /// A functor used to call the minimizing operation
+/// (needed so it can be used both for a OPolyline and a CPolyline)
 struct PolyMinimFunct
 {
 	PolyMinimFunct( const PolyMinimParams& par ) : _params(par) {}
@@ -2229,7 +2238,7 @@ void action_polyMinim( void* param )
 			i++;
 		}
 	}
-	else
+	else        // draw polyline with mouse
 	{
 		auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
 		if( idx != -1 )
@@ -2249,7 +2258,8 @@ void action_polyMinim( void* param )
 	data.showImage();
 }
 
-/// OpenCv trackbar callback (free function), calls the corresponding "action" function
+/// OpenCv trackbar callback (free function), changes parameter value
+/// according to trackbar value, and calls the corresponding "action" function
 void trackbarCallback( int val, void* param )
 {
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
@@ -2261,23 +2271,16 @@ void trackbarCallback( int val, void* param )
 			std::cout << "angle thres=" << data._pmParams._maxAngle * 180. / M_PI << " deg.\n";
 		break;
 		case PminimMetric::Distance:
-			if( data._pmParams._isAbsolute)
+			if( data._pmParams._isAbsolute )
 				data._pmParams._maxAbsDist = val;
 			else
 				data._pmParams._maxRelDistRatio = 1.0*val/100;
+			std::cout << "distance thres=" << (data._pmParams._isAbsolute ? val :  1.0*val/100 ) << '\n';
 		break;
-/*		case PolyMinimAlgo::Visvalingam:
-			data._pmParams._ptRemovalRatio = 1. * val / 100.;
-			std::cout << "_visvaRatio = " << data._pmParams._ptRemovalRatio*100. << '\n';
+		case PminimMetric::TriangleArea:
+			data._pmParams._maxTriangleArea = val;
+			std::cout << "area thres=" << data._pmParams._maxTriangleArea << '\n';
 		break;
-		case PolyMinimAlgo::AbsDistance:
-			data._pmParams._maxAbsDist = val;
-			std::cout << "maxAbsDist=" << data._pmParams._maxAbsDist << " pixels\n";
-		break;
-		case PolyMinimAlgo::RelDistance:
-			data._pmParams._maxRelDistRatio = 1.*val/100.;
-			std::cout << "maxRelDistRatio=" << data._pmParams._maxRelDistRatio*100. << " %\n";
-		break;*/
 		default:
 			std::cout << "no handling of trackbar value!\n";
 	}
