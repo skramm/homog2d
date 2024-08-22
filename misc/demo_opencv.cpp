@@ -2137,13 +2137,20 @@ struct Param_polyMinim : Data
 /// Draws the parameters on first image
 void drawAlgoParams( int idx, Param_polyMinim& data )
 {
-/*
+
 	auto currPt = data.vpt[idx];
 	currPt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	auto ptPrevious = ( idx==0                      ? data.vpt.size()-1 : idx-1 );
 	auto ptNext     = ( idx==(int)data.vpt.size()-1 ? 0                 : idx+1 );
 
-	if( data._pmParams._algo == PolyMinimAlgo::AngleBased )
+	if( data._pmParams._metric == PminimMetric::Angle )
+	{
+		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
+		drawText( data.img, util::toString( angle,4 ), currPt );
+	}
+
+
+/*	if( data._pmParams._algo == PolyMinimAlgo::AngleBased )
 	{
 		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
 		drawText( data.img, std::to_string( angle ), currPt );
@@ -2250,8 +2257,8 @@ void trackbarCallback( int val, void* param )
 	switch( data._pmParams._metric )
 	{
 		case PminimMetric::Angle:
-			data._pmParams._angleThres = M_PI/180.*val/10.;
-			std::cout << "angle thres=" << data._pmParams._angleThres * 180. / M_PI << " deg.\n";
+			data._pmParams._maxAngle = M_PI/180.*val/10.;
+			std::cout << "angle thres=" << data._pmParams._maxAngle * 180. / M_PI << " deg.\n";
 		break;
 		case PminimMetric::Distance:
 			if( data._pmParams._isAbsolute)
@@ -2284,13 +2291,13 @@ void Param_polyMinim::createTrackbar()
 	switch( _pmParams._metric )
 	{
 		case PminimMetric::Angle:
-			_proxyTB.slider_max = 30; // degrees
-			_proxyTB.slider = (int)(_pmParams._angleThres * 180. / M_PI);
+			_proxyTB.slider_max = 50; // degrees*10
+			_proxyTB.slider = (int)(_pmParams._maxAngle * 180. / M_PI);
 			tbName = "Angle (deg*10)";
 		break;
 
 		case PminimMetric::TriangleArea:
-			_proxyTB.slider_max = 30; // degrees
+			_proxyTB.slider_max = 30; // square pixel
 			_proxyTB.slider = (int)(_pmParams._maxTriangleArea );
 			tbName = "Triangle area";
 		break;
@@ -2298,7 +2305,7 @@ void Param_polyMinim::createTrackbar()
 		case PminimMetric::Distance:
 			if( _pmParams._isAbsolute)
 			{
-				_proxyTB.slider_max = 20; // pixels (for the demo)
+				_proxyTB.slider_max = 20; // pixels
 				_proxyTB.slider = (int)_pmParams._maxAbsDist;
 				tbName = "Max dist";
 			}

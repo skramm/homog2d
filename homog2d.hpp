@@ -237,6 +237,7 @@ See https://github.com/skramm/homog2d
 
 namespace h2d {
 
+//------------------------------------------------------------------
 /// Holds static counters, for runtime errors and warnings
 namespace err {
 
@@ -260,6 +261,20 @@ inline size_t& warningCount()
 
 } //namespace err
 
+//------------------------------------------------------------------
+namespace util {
+
+std::string toString( double val, int prec )
+{
+	std::ostringstream oss;
+	oss << std::setprecision(prec) << val;
+	return oss.str();
+}
+
+} //namespace util
+
+
+//------------------------------------------------------------------
 /// Holds the types needed for policy based design
 namespace typ {
 
@@ -272,6 +287,7 @@ struct IsOpen {};
 } // namespace typ
 
 
+//------------------------------------------------------------------
 namespace detail {
 
 	template<typename FPT> class Matrix_;
@@ -325,6 +341,7 @@ namespace detail {
 
 } // namespace detail
 
+//------------------------------------------------------------------
 /// Holds base classes, not part of API
 namespace base {
 	template<typename PLT,typename FPT> class PolylineBase;
@@ -5818,7 +5835,9 @@ enum class PminimStopCrit {
 };
 
 //------------------------------------------------------------------
-/// The metric used for polyline minimization, see PolyMinimParams
+/// The metric used for polyline minimization
+/// \sa PolyMinimParams
+/// \sa h2d::base::pminim
 enum class PminimMetric
 {
 	Angle,
@@ -5847,7 +5866,7 @@ getString( PminimMetric met )
 struct PolyMinimParams
 {
 //	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< algorithm
-	HOMOG2D_INUMTYPE _angleThres = thr::nullAngleValue();
+	HOMOG2D_INUMTYPE _maxAngle   = thr::nullAngleValue();
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
 	HOMOG2D_INUMTYPE _maxTriangleArea = 20;
@@ -6463,10 +6482,7 @@ private:
 	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsOpen>& );
 	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsClosed>& );
 	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
-/*	void p_minimizePL_angle( HOMOG2D_INUMTYPE, size_t istart, size_t iend );
-	void p_minimizePL_dist(  PolyMinimParams, size_t istart, size_t iend );
-	void p_minimizePL_Visva( PolyMinimParams, size_t istart, size_t iend );
-*/
+
 public:
 /// \name Operators
 ///@{
@@ -7259,21 +7275,22 @@ Either distances (point to segment), or angle between segments,
 or triangle areas (Visvalingam-style)
 
 \verbatim
-    +       / \
-   / \       |
-  /   \      | d2
- /     \     |
-+-------+   \ /
-   d1
+         p_n
+          +             / \
+         / \             |
+        /   \            | d2
+       /     \           |
+p_n-1 +-------+ p_n+1   \ /
+         d1
 \endverbatim
 */
 template<typename FP>
 TriangleMetrics<FP>
 computeMetrics(
-	const std::vector<Point2d_<FP>>& plinevec,
-	PolyMinimParams params,
-	size_t    istart,
-	size_t    iend
+	const std::vector<Point2d_<FP>>& plinevec, ///< points
+	PolyMinimParams params, ///< parameters
+	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
+	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
 )
 {
 	HOMOG2D_START;
@@ -7329,6 +7346,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData )
 		<< ", dist value=" << minval_it->_dist
 		<< " Abs thres=" << params._maxAbsDist
 		<< " Rel thres=" << params._maxRelDistRatio
+		<< " angle thres=" << params._maxAngle*180./M_PI
 		<< '\n';
 
 // step 2: determine if we do remove the point or not
@@ -7409,9 +7427,9 @@ TriangleMetrics<FP>::recomputeMetrics()
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL(
-	PolyMinimParams params,
-	size_t istart,
-	size_t iend
+	PolyMinimParams params, ///< parameters
+	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
+	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
 )
 {
 	HOMOG2D_START;
