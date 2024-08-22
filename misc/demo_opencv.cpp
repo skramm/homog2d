@@ -2139,17 +2139,18 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 {
 	auto currPt = data.vpt[idx];
 	currPt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
-	auto ptPrevious = ( idx==0                      ? data.vpt.size()-1 : idx-1 );
-	auto ptNext     = ( idx==(int)data.vpt.size()-1 ? 0                 : idx+1 );
+	auto ptPrevious = data.vpt[( idx==0                      ? data.vpt.size()-1 : idx-1 )];
+	auto ptNext     = data.vpt[( idx==(int)data.vpt.size()-1 ? 0                 : idx+1 )];
+	Segment segPN( ptNext, ptPrevious );
 
 	if( data._pmParams._metric == PminimMetric::Angle )
 	{
-		auto angle = 180. /M_PI * getAngle( currPt*data.vpt[ptNext], currPt*data.vpt[ptPrevious] );
+		auto angle = 180. /M_PI * getAngle( currPt*ptNext, currPt*ptPrevious );
 		drawText( data.img, util::toString( angle, 4 )+"deg", currPt );
 	}
 	if( data._pmParams._metric == PminimMetric::Distance )
-	{
-			Segment segPN( data.vpt[ptNext], data.vpt[ptPrevious] );
+		try  // try/catch is needed because at some point, the computation of segment might throw in demo
+		{
 			segPN.draw( data.img );
 			auto orthogSeg = segPN.getLine().getOrthogSegment( currPt );
 			auto oseg_pts = orthogSeg.getPts();
@@ -2158,32 +2159,19 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 				pt_int = oseg_pts.second;
 			orthogSeg.draw( data.img );
 			if( data._pmParams._isAbsolute )
-				drawText( data.img, std::to_string( orthogSeg.length() ), pt_int );
+				drawText( data.img, util::toString( orthogSeg.length(), 3 ), pt_int );
 			else
-				drawText( data.img, std::to_string( orthogSeg.length()/segPN.length() ), pt_int );
-	}
-
-/*	try
-	{
-		if( data._pmParams._algo == PolyMinimAlgo::AbsDistance || data._pmParams._algo == PolyMinimAlgo::RelDistance )
-		{
-			Segment segPN( data.vpt[ptNext], data.vpt[ptPrevious] );
-			segPN.draw( data.img );
-			auto orthogSeg = segPN.getLine().getOrthogSegment( currPt );
-			auto oseg_pts = orthogSeg.getPts();
-			auto pt_int = oseg_pts.first;
-			if( pt_int == currPt )
-				pt_int = oseg_pts.second;
-			orthogSeg.draw( data.img );
-
-			if( data._pmParams._algo == PolyMinimAlgo::AbsDistance )
-				drawText( data.img, std::to_string( orthogSeg.length() ), pt_int );
-			else
-				drawText( data.img, std::to_string( orthogSeg.length()/segPN.length() ), pt_int );
+				drawText( data.img, util::toString( orthogSeg.length()/segPN.length(), 4 ), pt_int );
 		}
+		catch(...){}
+	if( data._pmParams._metric == PminimMetric::TriangleArea )
+	{
+		segPN.draw( data.img );
+		std::vector<Point2d> pts{ currPt, ptPrevious, ptNext };
+		CPolyline pol( pts );
+		drawText( data.img, util::toString( pol.area(), 5 ), currPt );
 	}
-	catch(...){}
-*/
+
 }
 
 /// A functor used to call the minimizing operation
