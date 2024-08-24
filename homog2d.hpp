@@ -1252,6 +1252,7 @@ disallows providing such a method
 		return false;
 	}
 
+#if 0
 /// Fallback for classes not implementing this
 /// \todo 20240327: this class is inherited by HMatrix... on which the concept of bounding box makes no sense!
 /// Fix this.
@@ -1261,6 +1262,7 @@ disallows providing such a method
 		HOMOG2D_THROW_ERROR_1( "unable to compute BB for object of type " << getString(this->type) );
 		return FRect_<T>(); // to avoid a compile warning
 	}
+#endif
 
 	size_t size() const
 	{
