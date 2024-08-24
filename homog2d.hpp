@@ -100,7 +100,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
-		<< ", func=" << HOMOG2D_PRETTY_FUNCTION << "()\n"
+		<< ", func=" << __FUNCTION__ << "()\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -7324,12 +7324,12 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 		return false;
 	}
 
-//std::cout << "current status:\n";
-//priv::printVector( metData._vecCritValue );
+std::cout << "current status:\n";
+priv::printVector( metData._vecCritValue );
 
 // step 1: find element with minimal distance
-	decltype(std::begin(metData._vecCritValue) ) minval_it;
-	minval_it = std::min_element(
+//	decltype(std::begin(metData._vecCritValue) ) minval_it;
+	auto minval_it = std::min_element(
 		std::begin(metData._vecCritValue),
 		std::end(metData._vecCritValue),
 		[]
@@ -7340,6 +7340,8 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 			return false;
 		}
 	);
+
+
 	std::cout << "min element="
 		<< std::distance(std::begin(metData._vecCritValue), minval_it)
 		<< ", dist value=" << minval_it->_dist
@@ -7347,6 +7349,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 		<< " Rel thres=" << params._maxRelDistRatio
 		<< " angle thres=" << params._maxAngle*180./M_PI
 		<< '\n';
+	assert( !minval_it->_isRemoved );
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
@@ -7376,7 +7379,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 				doRemovePoint = true;
 		break;
 		case PminimStopCrit::NoStop:
-				doRemovePoint = true;
+			doRemovePoint = true;
 		break;
 		default: assert(0);
 	}

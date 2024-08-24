@@ -2169,6 +2169,7 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 		segPN.draw( data.img );
 		std::vector<Point2d> pts{ currPt, ptPrevious, ptNext };
 		CPolyline pol( pts );
+//		pol.draw( data.img );
 		drawText( data.img, util::toString( pol.area(), 5 ), currPt );
 	}
 
