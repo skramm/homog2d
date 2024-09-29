@@ -1,8 +1,7 @@
 // file t_header.cxx
 // used in makefile target `test_fig`
 
-//#define HOMOG2D_USE_OPENCV
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 
 // source files get build in BUILD/figures_test/src/, thus this path
 #include "../../../homog2d.hpp"

@@ -44,13 +44,13 @@ everything that gets build ends up in the `BUILD` folder
 * `doc`: build html reference (requires doxygen), with only public user API
 * `doc-dev`: build full html reference (requires doxygen), including private class members
 * `nobuild`: checks that the files in `misc/no_build` contain illegal code (part of the test process)
-
+* `test_fig`: build and run the code that generates the SVG figures used in test cases
 
 **Targets only available if Opencv is installed:**
 
 * `demo`: build and run the Opencv interactive demo
 * `showcase`: build and run the gif figures used in manual
-* `test_fig`: build and run the code that generates the figures used in test cases
+
 * `doc_fig`: build and run the code used to produce the figures of the manual
 
 **Targets only available if LaTeX installed:**

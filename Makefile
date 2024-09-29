@@ -203,7 +203,17 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp buildf
 
 .PHONY: test_bg_1 test_bn
 
-# "bigmath test, with ttmath
+# temp target, SHALL be removed
+# Polyline Minimization
+test_pm: BUILD/test_pm1
+	BUILD/test_pm1
+
+BUILD/test_pm1: misc/test_files/test_pm1.cpp homog2d.hpp Makefile buildf
+	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
+	./BUILD/test_pm1
+
+#===================================================
+# building "Big math" test file, by using external library ttmath
 test_bn: BUILD/ttmath_t1
 	BUILD/ttmath_t1
 	@echo "-done target $@"
@@ -211,7 +221,8 @@ test_bn: BUILD/ttmath_t1
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-
+#===================================================
+# building Boost Geometry test file
 test_bg_1: BUILD/bg_test_1 buildf
 	BUILD/bg_test_1
 	@echo "-done target $@"
@@ -219,12 +230,13 @@ test_bg_1: BUILD/bg_test_1 buildf
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
+#===================================================
+# building Run Time Polymorphism test file
 test_rtp: BUILD/homog2d_test_rtp BUILD/homog2d_test_rtp_2
 	@echo "-Running RTP test 1:"
 	@BUILD/homog2d_test_rtp
 	@echo "-Running RTP test 2:"
 	@BUILD/homog2d_test_rtp_2
-
 
 BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
@@ -232,7 +244,7 @@ BUILD/homog2d_test_rtp_2: misc/homog2d_test_rtp_2.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp_2.stderr
 
 #=======================================================================
-# speed test
+# speed test, to check  the effect of flag HOMOG2D_OPTIMIZE_SPEED
 speed_test: speed_test_b
 	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
@@ -279,6 +291,7 @@ BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 doc_fig: $(DOC_IMAGES_OUT) build_gif_pip
 	@echo "done target $@"
 
+# Point In Polygon: build GIF animation from generated images
 build_gif_pip:
 	convert -delay 80 BUILD/img/demo_pip_* BUILD/img/demo_pip.gif
 

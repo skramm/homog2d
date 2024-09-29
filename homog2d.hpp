@@ -5845,8 +5845,8 @@ enum class PminimStopCrit {
 /// \sa h2d::base::pminim
 enum class PminimMetric
 {
-	Angle,
-	TriangleArea,
+	Angle, ///< angle between the two segments
+	TriangleArea, ///< area of triangles
 	Distance
 };
 
@@ -5888,6 +5888,7 @@ struct PolyMinimParams
 		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
 		<< "\n -_maxAbsDist=" << _maxAbsDist
 		<< "\n -_isAbsolute=" << _isAbsolute
+		<< "\n -_metric=" << getString(_metric)
 		<< "\n---/PolyMinimParams---\n";
 	}
 };
@@ -7092,7 +7093,8 @@ p_buildNewPolyline( const base::PolylineBase<PLT,FPT>& poly, const std::vector<s
 }
 
 //------------------------------------------------------------------
-/// Holds data types and functions used for Polyline minimization
+/// Holds data types and functions used for Polyline minimization.
+/// Use through \ref h2d::base:::PolylineBase::minimize(), parameters are in h2d::PolyMinimParams
 namespace pminim {
 
 //------------------------------------------------------------------
@@ -7132,6 +7134,7 @@ For a polyline of n points, when we need to get the index of point before 0 or a
 special care has to be taken.
 There are 6 special cases, thus we initialize two arrays of 6 elements, designed to identify
 and handle these.
+
 The member function \ref getIndex() will check if the requested index is one of these.
 The vector \ref _specialCases holds these special cases as pairs (index position,offset), and if
 we find one of these, then the other vector \ref _specialCasesIndexes will provide the relevant
@@ -7297,7 +7300,7 @@ computeMetrics(
 	HOMOG2D_START;
 	HOMOG2D_LOG( "istart=" << istart << " iend=" << iend )
 	params.print();
-	TriangleMetrics out( plinevec, params );
+	TriangleMetrics<FP> out( plinevec, params );
 	out._isAbsolute2 = params._isAbsolute;
 	for( size_t i=istart; i<iend; i++ )
 		out.computeMetric( i, -1, +1 );
