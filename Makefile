@@ -304,33 +304,36 @@ doc_fig_tex: $(TEX_FIG_PNG)
 
 TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
-TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.svg, $(TEST_FIG_SRC))
+TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/out/%.svg, $(TEST_FIG_SRC))
 
 test_fig: $(TEST_FIG_SVG)
 
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
-BUILD/figures_test/%.svg: BUILD/figures_test/%
+BUILD/figures_test/out/%.svg: BUILD/figures_test/bin/%
 	@echo "Running $<"
+	@mkdir -p BUILD/figures_test/out
 	@./$<
+	@mv BUILD/figures_test/bin/*.svg BUILD/figures_test/out
 #	@mogrify -flip $<.png
 
 # build the program from source
-BUILD/figures_test/%: BUILD/figures_test/%.cpp
+BUILD/figures_test/bin/%: BUILD/figures_test/src/%.cpp Makefile
 	@echo "Building $<"
-	@$(CXX) -o $@ $<
+	@mkdir -p BUILD/figures_test/bin
+	@$(CXX) $(CXXFLAGS) -o $@ $<
 #	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file
-BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
+BUILD/figures_test/src/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
 	@echo "generating $@"
-	@mkdir -p BUILD/figures_test/
-	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_frect_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
+	@mkdir -p BUILD/figures_test/src
+	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_frect_1.cxx >BUILD/figures_test/src/$(notdir $(basename $<)).cpp
 
 # build source file
-BUILD/figures_test/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx
+BUILD/figures_test/src/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polyline_1.cxx
 	@echo "generating $@"
-	@mkdir -p BUILD/figures_test/
-	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyline_1.cxx >BUILD/figures_test/$(notdir $(basename $<)).cpp
+	@mkdir -p BUILD/figures_test/src
+	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polyline_1.cxx >BUILD/figures_test/src/$(notdir $(basename $<)).cpp
 
 #=======================================================================
 
