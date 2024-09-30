@@ -5881,6 +5881,9 @@ struct PolyMinimParams
 	bool             _isAbsolute = false;   ///< used only for distance based metric
 	size_t           _NbPtsRemoved = 0;
 
+// True if polyline is closed. Needed because when computing metrics, if the polyline is open
+// with n points, then we will only have n-2 metrics to compute (and to search in).
+//	bool             _isClosed;
 	void print() const
 	{
 		std::cout << "---PolyMinimParams---"
@@ -6315,7 +6318,8 @@ See \ref homog2d_algorithms.md#poly_simplify
 	{
 		if( size()<3 )
 			return;
-		impl_minimizePL( params, detail::PlHelper<PLT>() );
+//		impl_minimizePL( params, detail::PlHelper<PLT>() );
+		p_minimizePL( params );
 	}
 
 /// Translate Polyline using \c dx, \c dy
@@ -6481,9 +6485,7 @@ private:
 		}
 	}
 
-	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsOpen>& );
-	void impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typ::IsClosed>& );
-	void p_minimizePL( PolyMinimParams, size_t istart, size_t iend );
+	void p_minimizePL( PolyMinimParams ); //, size_t istart, size_t iend );
 
 public:
 /// \name Operators
@@ -7100,6 +7102,9 @@ namespace pminim {
 //------------------------------------------------------------------
 /// Type used for polyline minimization, holds (for each point)
 /// the metric value used to determine if point is to be removed or not
+/**
+\todo replace with a std::pair?
+*/
 struct PMetricValue
 {
 /// value of metric of point related to segment joining the two other points.
@@ -7116,14 +7121,15 @@ struct PMetricValue
 };
 
 //------------------------------------------------------------------
-/// Holds the data needed for the iterative process of removing points
+/// Holds the data needed for the iterative process of removing "useless" points of the polyline
 template<typename FP>
 struct TriangleMetrics
 {
-	const std::vector<Point2d_<FP>>& _vpoints; ///< const ref on set of points of the polyline
-	std::vector<PMetricValue>       _vecCritValue;
+	const std::vector<Point2d_<FP>>& _vpoints;      ///< const ref on set of points of the polyline
+	std::vector<PMetricValue>        _vecCritValue; ///< holds the metric values. \warning Will not have the same size if polyline is open or closed
 	bool                             _isAbsolute2 = false;
 	PminimMetric                     _metric2;
+	bool                             _isClosed; ///< needed when recomputing a metric value
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
 	size_t              _lastOneRemoved=0;
@@ -7154,16 +7160,17 @@ which is indeed the  index of the point two points before the first one.
 
 	explicit TriangleMetrics(
 		const std::vector<Point2d_<FP>>& vpoints,
-		const PolyMinimParams&           params
-	): _vpoints(vpoints)
+		const PolyMinimParams&           params,
+		bool                             isClosed
+	): _vpoints(vpoints), _isClosed( isClosed )
 	{
 		_metric2     = params._metric;
 		_isAbsolute2 = params._isAbsolute;
-		_vecCritValue.resize( vpoints.size() );
+		_vecCritValue.resize( isClosed ? vpoints.size() : vpoints.size()-2 );
 
 		auto s = _vpoints.size();
 		assert( s > 2 );
-		_vecCritValue.reserve( _vpoints.size() );
+//		_vecCritValue.reserve( _vpoints.size() );
 		_specialCases[0] = std::make_pair(0,-1);
 		_specialCases[1] = std::make_pair(0,-2);
 		_specialCases[2] = std::make_pair(1,-2);
@@ -7187,7 +7194,7 @@ which is indeed the  index of the point two points before the first one.
 //		priv::printVector( _vecCritValue, "distances" );
 		std::cout << "---/TriangleMetrics---\n";
 	}
-	void computeMetric( size_t, int, int );
+	void computeMetric( size_t, size_t, int, int );
 
 #ifndef HOMOG2D_TEST_MODE
 private:
@@ -7213,17 +7220,18 @@ private:
 template<typename FP>
 void
 TriangleMetrics<FP>::computeMetric(
-	size_t idx,    ///< current index
-	int    before, ///< offset of "before" point (-2 or -1)
-	int    after   ///< offset of "after" point  (+1 or +2)
+	size_t idxp,    ///< current index of point
+	size_t idxm,    ///< current index of metric (equal to idxp if closed polyline, or idxp-1 if open)
+	int    before,  ///< offset of "before" point (-2 or -1)
+	int    after    ///< offset of "after" point  (+1 or +2)
 )
 {
 	HOMOG2D_START;
-	HOMOG2D_LOG( "size=" << _vpoints.size() << " idx=" << idx << " bef="<< before << " aft=" << after );
+	HOMOG2D_LOG( "size=" << _vpoints.size() << " idxp=" << idxp <<  " idxm=" << idxm << " bef="<< before << " aft=" << after );
 
-	auto pt_bef = _vpoints.at( getIndex( idx, before ) );
-	auto pt_aft = _vpoints.at( getIndex( idx, after  ) );
-	auto p0     = _vpoints.at(idx);
+	auto pt_bef = _vpoints.at( getIndex( idxp, before ) );
+	auto pt_aft = _vpoints.at( getIndex( idxp, after  ) );
+	auto p0     = _vpoints.at(idxp);
 
 	switch( _metric2 )
 	{ /// \todo 20240821: fix the issue when point is "outside" the segment
@@ -7231,7 +7239,7 @@ TriangleMetrics<FP>::computeMetric(
 		{
 			auto seg = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
 			auto h   = p0.distTo( seg.getLine() );
-			_vecCritValue.at(idx)._dist = ( _isAbsolute2 ? h : h/seg.length() );
+			_vecCritValue.at(idxm)._dist = ( _isAbsolute2 ? h : h/seg.length() );
 		}
 		break;
 
@@ -7243,7 +7251,7 @@ TriangleMetrics<FP>::computeMetric(
 			auto vy2 = p0.getY() - pt_bef.getY();
 			auto a1 = std::atan2( vx1, vy1 );
 			auto a2 = std::atan2( vx2, vy2 );
-			_vecCritValue.at(idx)._dist = homog2d_abs(a1-a2);
+			_vecCritValue.at(idxm)._dist = homog2d_abs(a1-a2);
 		}
 		break;
 
@@ -7262,14 +7270,14 @@ TriangleMetrics<FP>::computeMetric(
 			mat.value(2,2) = 1.;
 
 			HOMOG2D_LOG( " area=" << mat.determ() );
-			_vecCritValue.at(idx)._dist = homog2d_abs( mat.determ() );
+			_vecCritValue.at(idxm)._dist = homog2d_abs( mat.determ() );
 		}
 		break;
 
 		default: assert(0);
 	}
 
-	HOMOG2D_LOG( "computeMetric() idx="<<idx<< ", distance=" << _vecCritValue.at(idx)._dist );
+	HOMOG2D_LOG( "computeMetric() idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
 }
 
 //------------------------------------------------------------------
@@ -7292,18 +7300,24 @@ template<typename FP>
 TriangleMetrics<FP>
 computeMetrics(
 	const std::vector<Point2d_<FP>>& plinevec, ///< points
-	PolyMinimParams params, ///< parameters
-	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
-	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
+	PolyMinimParams                  params,   ///< parameters
+	bool                             isClosed
 )
 {
 	HOMOG2D_START;
-	HOMOG2D_LOG( "istart=" << istart << " iend=" << iend )
 	params.print();
-	TriangleMetrics<FP> out( plinevec, params );
+	TriangleMetrics<FP> out( plinevec, params, isClosed );
+
 	out._isAbsolute2 = params._isAbsolute;
-	for( size_t i=istart; i<iend; i++ )
-		out.computeMetric( i, -1, +1 );
+	auto si = plinevec.size();
+
+	if( isClosed )
+		for( size_t i=0; i<si; i++ )
+			out.computeMetric( i, i, -1, +1 );
+	else
+		for( size_t i=0; i<si-2; i++ )
+			out.computeMetric( i+1, i, -1, +1 );
+
 	return out;
 }
 
@@ -7347,6 +7361,7 @@ priv::printVector( metData._vecCritValue );
 	);
 
 
+	std::cout << "min element=" << *minval_it << "\n";
 	std::cout << "min element="
 		<< std::distance(std::begin(metData._vecCritValue), minval_it)
 		<< ", dist value=" << minval_it->_dist
@@ -7425,14 +7440,22 @@ TriangleMetrics<FP>::recomputeMetrics()
 {
 	HOMOG2D_START;
 	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
-	computeMetric( _lastOneRemoved, -2, +1 );
-	computeMetric( _lastOneRemoved, -1, +2 );
+	if( _isClosed )
+	{
+		computeMetric( _lastOneRemoved, _lastOneRemoved, -2, +1 );
+		computeMetric( _lastOneRemoved, _lastOneRemoved, -1, +2 );
+	}
+	else
+	{
+		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -2, +1 );
+		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
+	}
 }
 
 } // namespace pminim
 //------------------------------------------------------------------
 
-/// Private member function, called by PolylineBase::impl_minimizePL()
+/// Private member function
 /**
 - start index: 0 for closed, 1 for open
 - end index: size() for closed, size()-1 for open
@@ -7443,9 +7466,9 @@ TriangleMetrics<FP>::recomputeMetrics()
 template<typename PLT,typename FPT>
 void
 PolylineBase<PLT,FPT>::p_minimizePL(
-	PolyMinimParams params, ///< parameters
-	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
-	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
+	PolyMinimParams params ///< parameters
+//	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
+//	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
 )
 {
 	HOMOG2D_START;
@@ -7453,10 +7476,10 @@ PolylineBase<PLT,FPT>::p_minimizePL(
 	if( size() < (isClosed()?4:3) ) // nothing to do
 		return;
 
-//	HOMOG2D_LOG( "size=" << nbpts );
+	HOMOG2D_LOG( "size=" << size() ); //<< " istart=" << istart << " ident=" << iend );
 
 // step 1: compute initial metric values
-	auto distances = pminim::computeMetrics( _plinevec, params, istart, iend );
+	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );
 
 // step 2: iterate until no more points are removed
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
@@ -7471,25 +7494,6 @@ PolylineBase<PLT,FPT>::p_minimizePL(
 			newvec.push_back( _plinevec[i] );
 	_plinevec = std::move( newvec );
 }
-
-//------------------------------------------------------------------
-/// Minimize Open Polyline (OPolyline)
-template<typename PLT,typename FPT>
-void
-PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename typ::IsOpen>& )
-{
-	assert( size() > 2 );
-	p_minimizePL( params, 1, size()-1 );
-}
-
-/// Minimize Closed Polyline (CPolyline_)
-template<typename PLT,typename FPT>
-void
-PolylineBase<PLT,FPT>::impl_minimizePL( PolyMinimParams params, const detail::PlHelper<typename typ::IsClosed>& )
-{
-	p_minimizePL( params, 0, size() );
-}
-
 
 //------------------------------------------------------------------
 /// Returns true if object is a polygon (closed, and no segment crossing)
