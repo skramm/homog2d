@@ -1,4 +1,9 @@
+/**
+\file
+\brief WIP: a test file used to test the polygon minimisation algorithm
 
+build with: $ make test_pm
+*/
 #define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

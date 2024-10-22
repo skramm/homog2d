@@ -222,6 +222,7 @@
 		<Unit filename="test_files/mylib.hpp" />
 		<Unit filename="test_files/single_file.cpp" />
 		<Unit filename="test_files/test_multiple.cpp" />
+		<Unit filename="test_files/test_pm1.cpp" />
 		<Unit filename="test_files/ttmath_t1.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
