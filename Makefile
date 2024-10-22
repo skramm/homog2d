@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -437,7 +437,7 @@ SHOWCASE3=$(patsubst $(SHOWCASE3_SRC_LOC)/%.cpp,BUILD/showcase3/%, $(SHOWCASE3_S
 BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase3/
 	@echo " -Building program $@"
-	@$(CXX) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 	./$@
 
 showcase3: $(SHOWCASE3)

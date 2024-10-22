@@ -100,7 +100,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
-		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "()\n"
+		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -833,15 +833,15 @@ template<typename IMG>
 template<typename U>
 void Image<IMG>::draw( const U& object, img::DrawParams dp )
 {
-       object.draw( *this, dp );
+	object.draw( *this, dp );
 }
 
 template<typename IMG>
 template<typename U,typename V>
 void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
 {
-       pairp.first.draw( *this, dp );
-       pairp.second.draw( *this, dp );
+	pairp.first.draw( *this, dp );
+	pairp.second.draw( *this, dp );
 }
 
 
@@ -1918,6 +1918,7 @@ template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Ellipse_<T>> : std::true_type  {};
 template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 /// Traits class, used in intersects() for Polyline
@@ -10720,7 +10721,8 @@ template<
 		Prim
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::DrawParams() )
+void
+draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::DrawParams() )
 {
 	prim.draw( img, dp );
 }
