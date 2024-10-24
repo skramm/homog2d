@@ -221,7 +221,7 @@ BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 
 test_rtp: BUILD/homog2d_test_rtp_1 BUILD/homog2d_test_rtp_2 BUILD/homog2d_test_rtp_3
 	@echo "-Running RTP test 1:"
-	@BUILD/homog2d_test_rtp
+	@BUILD/homog2d_test_rtp_1
 	@echo "-Running RTP test 2:"
 	@BUILD/homog2d_test_rtp_2
 	@echo "-Running RTP test 3:"
