@@ -24,7 +24,7 @@ Build and run with <code>$ make test_rtp</code>
 */
 
 #define HOMOG2D_ENABLE_VRTP
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 using namespace h2d;
 
