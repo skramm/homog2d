@@ -224,6 +224,8 @@ test_rtp: BUILD/homog2d_test_rtp_1 BUILD/homog2d_test_rtp_2 BUILD/homog2d_test_r
 	@BUILD/homog2d_test_rtp
 	@echo "-Running RTP test 2:"
 	@BUILD/homog2d_test_rtp_2
+	@echo "-Running RTP test 3:"
+	@BUILD/homog2d_test_rtp_3
 
 BUILD/homog2d_test_rtp_%: misc/test_files/homog2d_test_rtp_%.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>$@.stderr
