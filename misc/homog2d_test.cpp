@@ -3755,13 +3755,73 @@ TEST_CASE( "general binding", "[gen_bind]" )
 }
 #endif
 
-TEST_CASE( "SVG drawing default", "[svg_draw_default]" )
+/// Helper function for local_draw_test()
+template<typename I,typename T>
+void
+local_draw_test2( img::Image<I>& im, const T& t )
 {
-	FRect r;
-	img::Image<img::SvgImage> im;
-	r.draw( im );
-	im.write( "BUILD/dummy.svg" );
+	t.draw( im );
+	im.draw( t );
+	draw( im, t );
+
+	img::DrawParams dp;
+	t.draw( im, dp );
+	im.draw( t, dp );
+	draw( im, t, dp );
+
+	std::vector<T> v;
+	v.push_back(t);
+	v.push_back(t);
+	draw( im, v );
+	draw( im, v, dp );
+
+	std::list<T> l;
+	l.push_back(t);
+	l.push_back(t);
+	draw( im, l );
+	draw( im, l, dp );
+
+	std::array<T,2> a;
+	a[0]=t;
+	a[1]=t;
+	draw( im, a );
+	draw( im, a, dp );
 }
+
+/// Make sure all drawing functions and member functions are implemented
+/**
+No tests here, actually only checking that it builds fine
+*/
+template<typename I>
+void
+local_draw_test( img::Image<I>& im, std::string fn )
+{
+	FRect      r; local_draw_test2( im, r );
+	Segment    s; local_draw_test2( im, s );
+	Circle     c; local_draw_test2( im, c );
+	Line2d    li; local_draw_test2( im, li );
+	Point2d   pt; local_draw_test2( im, pt );
+	Ellipse   el; local_draw_test2( im, el );
+	CPolyline cp; local_draw_test2( im, cp );
+	OPolyline op; local_draw_test2( im, op );
+
+	im.write( fn );
+}
+
+TEST_CASE( "drawing (SVG)", "[draw_svg]" )
+{
+	img::Image<img::SvgImage> im;
+	local_draw_test( im, "BUILD/dummy_draw.svg" );
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+TEST_CASE( "drawing (OpenCV)", "[draw_ocv]" )
+{
+	img::Image<cv::Mat> im;
+	local_draw_test( im, "BUILD/dummy_draw.png" );
+}
+#endif // HOMOG2D_USE_OPENCV
+
 
 TEST_CASE( "convex hull", "[conv_hull]" )
 {

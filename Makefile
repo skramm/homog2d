@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
 
 
 #=======================================================================
@@ -232,16 +232,16 @@ BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 
 #===================================================
 # building Run Time Polymorphism test file
-test_rtp: BUILD/homog2d_test_rtp BUILD/homog2d_test_rtp_2
+test_rtp: BUILD/homog2d_test_rtp_1 BUILD/homog2d_test_rtp_2 BUILD/homog2d_test_rtp_3
 	@echo "-Running RTP test 1:"
-	@BUILD/homog2d_test_rtp
+	@BUILD/homog2d_test_rtp_1
 	@echo "-Running RTP test 2:"
 	@BUILD/homog2d_test_rtp_2
+	@echo "-Running RTP test 3:"
+	@BUILD/homog2d_test_rtp_3
 
-BUILD/homog2d_test_rtp: misc/homog2d_test_rtp.cpp homog2d.hpp buildf
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp.stderr
-BUILD/homog2d_test_rtp_2: misc/homog2d_test_rtp_2.cpp homog2d.hpp buildf
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_rtp_2.stderr
+BUILD/homog2d_test_rtp_%: misc/test_files/homog2d_test_rtp_%.cpp homog2d.hpp buildf
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>$@.stderr
 
 #=======================================================================
 # speed test, to check  the effect of flag HOMOG2D_OPTIMIZE_SPEED
@@ -453,7 +453,7 @@ SHOWCASE3=$(patsubst $(SHOWCASE3_SRC_LOC)/%.cpp,BUILD/showcase3/%, $(SHOWCASE3_S
 BUILD/showcase3/problem%: $(SHOWCASE3_SRC_LOC)/problem%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase3/
 	@echo " -Building program $@"
-	@$(CXX) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 	./$@
 
 showcase3: $(SHOWCASE3)

@@ -1,46 +1,17 @@
-/**************************************************************************
-
-    This file is part of the C++ library "homog2d", dedicated to
-    handle 2D lines and points, see https://github.com/skramm/homog2d
-
-    Author & Copyright 2019-2024 Sebastien Kramm
-
-    Contact: firstname.lastname@univ-rouen.fr
-
-    Licence: MPL v2
-
-	This Source Code Form is subject to the terms of the Mozilla Public
-	License, v. 2.0. If a copy of the MPL was not distributed with this
-	file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-**************************************************************************/
-
 /**
-\file
-\brief This program will demonstrate the pointer-based runtime polymorphism capabilities.
-Is included in test suite.
+Pointer-based polymorphism
 
-Build and run with <code>$ make test_rtp</code>
+ONLY TO BE USED WITH THE ASSOCIATED PROGRAMS
+\c homog2d_test_rtp_*.cpp
 */
 
-#define HOMOG2D_ENABLE_PRTP
-#include "../homog2d.hpp"
-
-using namespace h2d;
-
-/// see homog2d_test_rtp.cpp
-int main( int, char** argv )
+template<typename IM>
+void
+do_prtp( const std::vector<h2d::Point2d>& vecpts, IM& im )
 {
-	std::cout << "START " << argv[0] << '\n';
-
-	auto vecpts = std::vector<Point2d>(
-		{ {0,0},{3,2},{1,4} }
-	);
-
 	CPolyline cpol( vecpts );
 	OPolyline opol( vecpts );
 
-	img::Image<img::SvgImage> im;
 	std::vector<std::shared_ptr<rtp::Root>> vec;
 
 	vec.push_back( std::make_shared<Circle>(   Circle()  ) );
@@ -76,5 +47,4 @@ int main( int, char** argv )
 */
 		}
 	}
-	im.write( "BUILD/dummy1.svg" );
 }

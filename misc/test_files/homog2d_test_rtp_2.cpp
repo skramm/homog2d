@@ -24,9 +24,10 @@ Build and run with <code>$ make test_rtp</code>
 */
 
 #define HOMOG2D_ENABLE_VRTP
-#include "../homog2d.hpp"
+#include "../../homog2d.hpp"
 
 using namespace h2d;
+#include "rtp_v.hpp"
 
 /// see homog2d_test_rtp_2.cpp
 int main( int, char** argv )
@@ -37,41 +38,7 @@ int main( int, char** argv )
 		{ {0,0},{3,2},{1,4} }
 	);
 
-	CPolyline cpol( vecpts );
-	OPolyline opol( vecpts );
-
-	std::vector<CommonType> vec;
-
-	vec.push_back( Circle()  );
-	vec.push_back( Segment() );
-	vec.push_back( FRect()   );
-	vec.push_back( Line2d()  );
-	vec.push_back( Point2d() );
-	vec.push_back( Ellipse() );
-	vec.push_back( cpol      );
-	vec.push_back( opol      );
-
-	img::Image<img::SvgImage> im(200,200);
-
-	fct::DrawFunct vde( im );
-	auto h = Homogr().addTranslation(3,3).addScale(15);
-	for( auto& e: vec )
-	{
-		std::cout << getString(type(e))
-			<< "\n -area=" << area(e);
-		if( type(e) != Type::Line2d )
-			std::cout <<  "\n -length=" << length(e);
-		else
-		{
-			Line2d li = fct::VariantUnwrapper{e};
-			std::cout << "\n -length=N/A (li=" << li << ')';
-		}
-
-		std::cout << "\n- data type=" << getString(dtype(e)) << '\n';
-
-		e = transform( h, e );
-		std::visit( vde, e );              // then draw
-
-	}
-	im.write( "BUILD/dummy2.svg" );
+	img::Image<img::SvgImage> im;
+	do_vrtp( vecpts, im );
+	im.write( "BUILD/dummy_rtp_2.svg" );
 }
