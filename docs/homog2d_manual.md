@@ -2376,7 +2376,7 @@ Potential pitfall:
 there is no checking on the correct cast operation, it is up to the user code to make sure to cast the pointer to the correct type.
 Bad casting will very probably lead to a segfault.
 
-Check test file [homog2d_test_rtp.cpp](../misc/homog2d_test_rtp.cpp) for an example.
+Check test file [homog2d_test_rtp_1.cpp](../misc/test_files/homog2d_test_rtp_1.cpp) for an example.
 
 #### 12.3 - Variant-based runtime polymorphism
 
@@ -2444,8 +2444,7 @@ if( type(e) == Type::Circle )
 ```
 
 
-Check test file [homog2d_test_rtp_2.cpp](../misc/homog2d_test_rtp_2.cpp) for an example.
-
+Check test file [homog2d_test_rtp_2.cpp](../misc/test_files/homog2d_test_rtp_2.cpp) for an example.
 
 
 #### 12.4 - Pros and cons of the two techniques

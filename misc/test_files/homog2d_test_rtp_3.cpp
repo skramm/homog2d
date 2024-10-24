@@ -17,19 +17,21 @@
 
 /**
 \file
-\brief This program will demonstrate the variant-based runtime polymorphism capabilities.
-Is included in test suite.
+\brief This program will demonstrate that variant-based runtime polymorphism can be use simultaneously with the
+pointer-based runtime polymorphism
 
 Build and run with <code>$ make test_rtp</code>
 */
 
+#define HOMOG2D_ENABLE_PRTP
 #define HOMOG2D_ENABLE_VRTP
 #include "../../homog2d.hpp"
 
 using namespace h2d;
+#include "rtp_p.hpp"
 #include "rtp_v.hpp"
 
-/// see homog2d_test_rtp_2.cpp
+/// see homog2d_test_rtp_3.cpp
 int main( int, char** argv )
 {
 	std::cout << "START " << argv[0] << '\n';
@@ -40,5 +42,6 @@ int main( int, char** argv )
 
 	img::Image<img::SvgImage> im;
 	do_vrtp( vecpts, im );
-	im.write( "BUILD/dummy_rtp_2.svg" );
+	do_prtp( vecpts, im );
+	im.write( "BUILD/dummy_rtp_3.svg" );
 }

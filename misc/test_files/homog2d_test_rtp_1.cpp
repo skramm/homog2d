@@ -27,8 +27,9 @@ Build and run with <code>$ make test_rtp</code>
 #include "../../homog2d.hpp"
 
 using namespace h2d;
+#include "rtp_p.hpp"
 
-/// see homog2d_test_rtp.cpp
+/// see homog2d_test_rtp_1.cpp
 int main( int, char** argv )
 {
 	std::cout << "START " << argv[0] << '\n';
@@ -37,44 +38,7 @@ int main( int, char** argv )
 		{ {0,0},{3,2},{1,4} }
 	);
 
-	CPolyline cpol( vecpts );
-	OPolyline opol( vecpts );
-
 	img::Image<img::SvgImage> im;
-	std::vector<std::shared_ptr<rtp::Root>> vec;
-
-	vec.push_back( std::make_shared<Circle>(   Circle()  ) );
-	vec.push_back( std::make_shared<Segment>(  Segment() ) );
-	vec.push_back( std::make_shared<FRect>(    FRect()   ) );
-	vec.push_back( std::make_shared<Line2d>(   Line2d()  ) );
-	vec.push_back( std::make_shared<Point2d>(  Point2d() ) );
-	vec.push_back( std::make_shared<Ellipse>(  Ellipse() ) );
-	vec.push_back( std::make_shared<CPolyline>( cpol     ) );
-	vec.push_back( std::make_shared<OPolyline>( opol     ) );
-
-	for( auto& e: vec )  // demonstration of polymorphic member functions
-	{
-		std::cout << getString(e->type()) << ": " << *e
-			<< "\n  -area = " << e->area();
-		if( e->type() != Type::Line2d )
-			std::cout << "\n -length = " << e->length();
-		else
-			std::cout << "\n -length = infinite";
-		std::cout << '\n';
-		e->draw( im );
-
-		if( e->type() == Type::CPolyline )
-		{
-			auto pl1 = std::dynamic_pointer_cast<CPolyline>( e );
-			std::cout << "pl1 is closed=" << pl1->isClosed() << '\n';
-
-// demonstration of bad casting, this will segfault
-/*
-			auto pl2 = std::dynamic_pointer_cast<OPolyline>( e );
-			std::cout << "pl2 is closed=" << pl2->isClosed() << '\n';
-			std::cout << "pl2 area=" << pl2->area() << '\n';
-*/
-		}
-	}
-	im.write( "BUILD/dummy1.svg" );
+	do_prtp( vecpts, im );
+	im.write( "BUILD/dummy_rtp_1.svg" );
 }
