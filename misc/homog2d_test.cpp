@@ -3731,6 +3731,39 @@ TEST_CASE( "general binding", "[gen_bind]" )
 }
 #endif
 
+/// Helper function for local_draw_test()
+template<typename I,typename T>
+void
+local_draw_test2( img::Image<I>& im, const T& t )
+{
+	t.draw( im );
+	im.draw( t );
+	draw( im, t );
+
+	img::DrawParams dp;
+	t.draw( im, dp );
+	im.draw( t, dp );
+	draw( im, t, dp );
+
+	std::vector<T> v;
+	v.push_back(t);
+	v.push_back(t);
+	draw( im, v );
+	draw( im, v, dp );
+
+	std::list<T> l;
+	l.push_back(t);
+	l.push_back(t);
+	draw( im, l );
+	draw( im, l, dp );
+
+	std::array<T,2> a;
+	a[0]=t;
+	a[1]=t;
+	draw( im, a );
+	draw( im, a, dp );
+}
+
 /// Make sure all drawing functions and member functions are implemented
 /**
 No tests here, actually only checking that it builds fine
@@ -3739,42 +3772,14 @@ template<typename I>
 void
 local_draw_test( img::Image<I>& im, std::string fn )
 {
-	FRect     r;  r.draw( im );
-	Segment   s;  s.draw( im );
-	Circle    c;  c.draw( im );
-	Line2d   li; li.draw( im );
-	Point2d  pt; pt.draw( im );
-	Ellipse  el; el.draw( im );
-	CPolyline cp; cp.draw( im );
-	OPolyline op; op.draw( im );
-
-	img::DrawParams dp;
-	r.draw(  im, dp );
-	s.draw(  im, dp );
-	c.draw(  im, dp );
-	li.draw( im, dp );
-	pt.draw( im, dp );
-	el.draw( im, dp );
-	cp.draw( im, dp );
-	op.draw( im, dp );
-
-	im.draw( r );
-	im.draw( s );
-	im.draw( c );
-	im.draw( li );
-	im.draw( pt );
-	im.draw( el );
-	im.draw( cp );
-	im.draw( op );
-
-	im.draw( r,  dp );
-	im.draw( s,  dp );
-	im.draw( c,  dp );
-	im.draw( li, dp );
-	im.draw( pt, dp );
-	im.draw( el, dp );
-	im.draw( cp, dp );
-	im.draw( op, dp );
+	FRect      r; local_draw_test2( im, r );
+	Segment    s; local_draw_test2( im, s );
+	Circle     c; local_draw_test2( im, c );
+	Line2d    li; local_draw_test2( im, li );
+	Point2d   pt; local_draw_test2( im, pt );
+	Ellipse   el; local_draw_test2( im, el );
+	CPolyline cp; local_draw_test2( im, cp );
+	OPolyline op; local_draw_test2( im, op );
 
 	im.write( fn );
 }
@@ -3792,6 +3797,7 @@ TEST_CASE( "drawing (OpenCV)", "[draw_ocv]" )
 	local_draw_test( im, "BUILD/dummy_draw.png" );
 }
 #endif // HOMOG2D_USE_OPENCV
+
 
 TEST_CASE( "convex hull", "[conv_hull]" )
 {

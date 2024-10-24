@@ -906,7 +906,8 @@ const char* getString( Type t )
 
 #ifdef HOMOG2D_ENABLE_VRTP
 //------------------------------------------------------------------
-/// Holds functors, used to  manage runtime polymorphism using \c std::variant
+/// Holds functors, used to  manage runtime polymorphism using \c std::variant.
+/// See https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
 namespace fct {
 
 //------------------------------------------------------------------
@@ -10766,6 +10767,11 @@ impl_drawIndexes( img::Image<IMG>&, size_t, const img::DrawParams&, const DUMMY&
 /// Free function, draws a set of primitives
 /**
 Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable
+
+\note: At present, does not handle containers holding std::variant type
+(see https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
+
+\todo 20241024: Enable the use variant-base polymorphism here
 */
 template<
 	typename U,
