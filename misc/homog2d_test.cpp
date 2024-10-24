@@ -3732,18 +3732,21 @@ TEST_CASE( "general binding", "[gen_bind]" )
 #endif
 
 /// Make sure all drawing functions and member functions are implemented
-TEST_CASE( "drawing default", "[draw_default]" )
+/**
+No tests here, actually only checking that it builds fine
+*/
+template<typename I>
+void
+local_draw_test( img::Image<I>& im, std::string fn )
 {
-	img::Image<img::SvgImage> im;
-
 	FRect     r;  r.draw( im );
 	Segment   s;  s.draw( im );
 	Circle    c;  c.draw( im );
 	Line2d   li; li.draw( im );
 	Point2d  pt; pt.draw( im );
 	Ellipse  el; el.draw( im );
-	CPolygon cp; cp.draw( im );
-	OPolygon op; op.draw( im );
+	CPolyline cp; cp.draw( im );
+	OPolyline op; op.draw( im );
 
 	img::DrawParams dp;
 	r.draw(  im, dp );
@@ -3764,9 +3767,31 @@ TEST_CASE( "drawing default", "[draw_default]" )
 	im.draw( cp );
 	im.draw( op );
 
-	im.write( "BUILD/dummy_draw.svg" );
+	im.draw( r,  dp );
+	im.draw( s,  dp );
+	im.draw( c,  dp );
+	im.draw( li, dp );
+	im.draw( pt, dp );
+	im.draw( el, dp );
+	im.draw( cp, dp );
+	im.draw( op, dp );
+
+	im.write( fn );
 }
 
+TEST_CASE( "drawing (SVG)", "[draw_svg]" )
+{
+	img::Image<img::SvgImage> im;
+	local_draw_test( im, "BUILD/dummy_draw.svg" );
+}
+
+#ifdef HOMOG2D_USE_OPENCV
+TEST_CASE( "drawing (OpenCV)", "[draw_ocv]" )
+{
+	img::Image<cv::Mat> im;
+	local_draw_test( im, "BUILD/dummy_draw.png" );
+}
+#endif // HOMOG2D_USE_OPENCV
 
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
