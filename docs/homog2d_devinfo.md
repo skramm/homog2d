@@ -205,16 +205,18 @@ This library provides a free function `getBB( t1, t2 )` that will return the bou
 
 ## 5 - Testing
 
-* 20221217: recently found out that Travis, that claimed to offer illimited credits to OSS... has in fact (recently) allowed a limited
-number of credits to free plans.
-And, guess what, I incidentally discovered that my test builds were not done anymore (without any warning, of course, why would they do that...)
-Thus the migration of the CI test process to Github Actions (see folder .github/workflows).
+A lot of unit-testing id included in this package.
+It uses the Catch framework.
 
 
-* 20230215:
-Finally achieved the integration of the Microsoft C++ compiler (`CL.exe`) to the Github Action integrated CI, see [yaml file](../.github/workflows/msvc.yml).
-<br>
-Reference: https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options
+Unit-testing is automatically done with Github Actions.
+Two Yaml workflows are present.
+- one [msvc.yml](.github/workflows/msvc.yml) is only dedicated to checking that the Microsoft C++ compiler is able to build the software.
+- the [other (c-cpp.yml)](.github/workflows/c-cpp.yml) runs the unit test file using both GCC and Clang, on two different platforms (Ubuntu 22 and Ubuntu 24).
+
+If both of theses workflows succeed, it will generate the badge on front page.
+
+
 
 Once the test app has been build (with `$ make test`), you can run a single test with:
 ```

@@ -3731,13 +3731,42 @@ TEST_CASE( "general binding", "[gen_bind]" )
 }
 #endif
 
-TEST_CASE( "SVG drawing default", "[svg_draw_default]" )
+/// Make sure all drawing functions and member functions are implemented
+TEST_CASE( "drawing default", "[draw_default]" )
 {
-	FRect r;
 	img::Image<img::SvgImage> im;
-	r.draw( im );
-	im.write( "BUILD/dummy.svg" );
+
+	FRect     r;  r.draw( im );
+	Segment   s;  s.draw( im );
+	Circle    c;  c.draw( im );
+	Line2d   li; li.draw( im );
+	Point2d  pt; pt.draw( im );
+	Ellipse  el; el.draw( im );
+	CPolygon cp; cp.draw( im );
+	OPolygon op; op.draw( im );
+
+	img::DrawParams dp;
+	r.draw(  im, dp );
+	s.draw(  im, dp );
+	c.draw(  im, dp );
+	li.draw( im, dp );
+	pt.draw( im, dp );
+	el.draw( im, dp );
+	cp.draw( im, dp );
+	op.draw( im, dp );
+
+	im.draw( r );
+	im.draw( s );
+	im.draw( c );
+	im.draw( li );
+	im.draw( pt );
+	im.draw( el );
+	im.draw( cp );
+	im.draw( op );
+
+	im.write( "BUILD/dummy_draw.svg" );
 }
+
 
 TEST_CASE( "convex hull", "[conv_hull]" )
 {
