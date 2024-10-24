@@ -100,7 +100,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
-		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "()\n"
+		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "\n"
 //	#define HOMOG2D_START std::cout << __FUNCTION__ << "()\n"
 #else
 	#define HOMOG2D_START
@@ -833,15 +833,15 @@ template<typename IMG>
 template<typename U>
 void Image<IMG>::draw( const U& object, img::DrawParams dp )
 {
-       object.draw( *this, dp );
+	object.draw( *this, dp );
 }
 
 template<typename IMG>
 template<typename U,typename V>
 void Image<IMG>::draw( const std::pair<U,V>& pairp, img::DrawParams dp )
 {
-       pairp.first.draw( *this, dp );
-       pairp.second.draw( *this, dp );
+	pairp.first.draw( *this, dp );
+	pairp.second.draw( *this, dp );
 }
 
 
@@ -1252,6 +1252,7 @@ disallows providing such a method
 		return false;
 	}
 
+#if 0
 /// Fallback for classes not implementing this
 /// \todo 20240327: this class is inherited by HMatrix... on which the concept of bounding box makes no sense!
 /// Fix this.
@@ -1261,6 +1262,7 @@ disallows providing such a method
 		HOMOG2D_THROW_ERROR_1( "unable to compute BB for object of type " << getString(this->type) );
 		return FRect_<T>(); // to avoid a compile warning
 	}
+#endif
 
 	size_t size() const
 	{
@@ -1916,6 +1918,7 @@ template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
 template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
+template<typename T> struct IsDrawable<Ellipse_<T>> : std::true_type  {};
 template<typename T1,typename T2> struct IsDrawable<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 /// Traits class, used in intersects() for Polyline
@@ -10718,7 +10721,8 @@ template<
 		Prim
 	>::type* = nullptr
 >
-void draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::DrawParams() )
+void
+draw( img::Image<U>& img, const Prim& prim, const img::DrawParams& dp=img::DrawParams() )
 {
 	prim.draw( img, dp );
 }
