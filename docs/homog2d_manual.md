@@ -2172,7 +2172,7 @@ the import code will just ignore thoses commands, if encountered while importing
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
-See an example of its usage in file [demo_svg_import.cpp](../misc/demo_svg_import.cpp).
+See an example of its usage in file [demo_svg_import.cpp](../misc/test_files/demo_svg_import.cpp).
 
 SVG Reference: https://www.w3.org/TR/SVG2/shapes.html
 
@@ -2182,7 +2182,7 @@ If you have cloned the whole repo and have `Tinyxml2` installed, you may build a
 <br>
 `$ make demo_import`
 
-This will build the file `BUILD/demo_svg_import` ([source here](../misc/demo_svg_import.cpp))
+This will build the file `BUILD/demo_svg_import` ([source here](../misc/test_files/demo_svg_import.cpp))
 that will import any SVG file, print its content on screen
 (SVG general attributes and number of shapes),
 and generate another svg file `demo_import.svg` in current folder.
