@@ -100,7 +100,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
-		<< " func=\n" << HOMOG2D_PRETTY_FUNCTION << "\n"
+		<< " func=" << HOMOG2D_PRETTY_FUNCTION << "\n"
 #else
 	#define HOMOG2D_START
 #endif
@@ -7355,9 +7355,11 @@ priv::printVector( metData._vecCritValue );
 		[]
 		( const auto& e1, const auto& e2 )         // lambda
 		{
-			if( !e1._isRemoved && !e2._isRemoved )
-				return e1._dist < e2._dist;
-			return false;
+			if( e1._isRemoved )
+				return false;
+			if( e2._isRemoved )
+				return true;
+			return e1._dist < e2._dist;
 		}
 	);
 

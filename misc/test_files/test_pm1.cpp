@@ -20,4 +20,7 @@ int main()
 		}
 	);
 	poly.minimize();
+	std::cout << "\n AFTER poly size=" << poly.size() << '\n';
+	std::cout << poly << '\n';
+
 }
