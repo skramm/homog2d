@@ -2132,29 +2132,9 @@ The latter function returns a vector of polymorphic objects `CommonType`.
 This is a wrapper around a `std::variant`, on which the library provides some helper functions.
 See [RTP section](#section_rtp) on how to use this.
 
-
-### 10.3 - Technical details on svg file import
-
-You can fetch the size of image in the SVG file (as `double`):
-```C++
-std::pair<double,double> imSize(500.,500.); // default size
-try
-{
-	imSize = svg::getImgSize( doc );
-	std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
-}
-catch( const std::exception& error )
-{
-	std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
-}
-```
-
 This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
 It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
-
-
-### 10.3 - Technical details on svg file import
 
 You can fetch the size of image in the SVG file (as `double`) with `getImgSize()`.
 However, this will throw if no size can be found, so you might consider using that in a "try/catch":
@@ -2170,6 +2150,8 @@ catch( const std::exception& error )
 	std::cout << "input file has no size, size set to 500x500\n -msg=" << error.what() << '\n';
 }
 ```
+
+### 10.3 - Technical details on svg file import
 
 When importing a SVG file, the following points must be considered:
 
