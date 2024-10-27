@@ -1968,8 +1968,8 @@ template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
-/// This one is used in base;;PolylineBase::isInside()
-template<typename T> struct PolIsClosed                                               : std::false_type {};
+/// This one is used in base::PolylineBase::isInside()
+template<typename T> struct PolIsClosed                                              : std::false_type {};
 template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
 
@@ -5836,7 +5836,7 @@ enum class PminimStopCrit {
 	DistRatio,*/
 /// No stop, goes all the way until no more points meet the requirements
 	NoStop,
-/// No iterating, remove a single point (the one with smallest distance)
+/// No iterating, remove a single point (the one with smallest value for the considered metric)
 	SinglePoint
 };
 
@@ -6315,13 +6315,7 @@ Also use the areCollinear() function
 See \ref homog2d_algorithms.md#poly_simplify
 */
 	void
-	minimize( PolyMinimParams params = PolyMinimParams() )
-	{
-		if( size()<3 )
-			return;
-//		impl_minimizePL( params, detail::PlHelper<PLT>() );
-		p_minimizePL( params );
-	}
+	minimize( PolyMinimParams params = PolyMinimParams() );
 
 /// Translate Polyline using \c dx, \c dy
 	template<typename TX,typename TY>
@@ -6485,8 +6479,6 @@ private:
 				);
 		}
 	}
-
-	void p_minimizePL( PolyMinimParams ); //, size_t istart, size_t iend );
 
 public:
 /// \name Operators
@@ -7127,6 +7119,12 @@ template<typename FP>
 struct TriangleMetrics
 {
 	const std::vector<Point2d_<FP>>& _vpoints;      ///< const ref on set of points of the polyline
+
+/// Holds the metric values. \warning Will not have the same size if polyline is open or closed:
+/**
+- if "closed", will have the same size as the polyline
+- if "open", will have size n-2 (because we don't need tha values for first and last point, as these will stay there
+*/
 	std::vector<PMetricValue>        _vecCritValue; ///< holds the metric values. \warning Will not have the same size if polyline is open or closed
 	bool                             _isAbsolute2 = false;
 	PminimMetric                     _metric2;
@@ -7154,7 +7152,7 @@ getIndex(0,-2)
 \endcode
 This is the second special case (index 1), found by searching through the array \ref _specialCases.
 Thus the vector \ref _specialCasesIndexes provides with its second element the value n-2 (=5),
-which is indeed the  index of the point two points before the first one.
+which is indeed the index of the point two points before the first one.
 */
 	std::array<std::pair<size_t,int>,6> _specialCases;
 	std::array<size_t,6>                _specialCasesIndexes; ///< \sa _specialCases
@@ -7171,7 +7169,6 @@ which is indeed the  index of the point two points before the first one.
 
 		auto s = _vpoints.size();
 		assert( s > 2 );
-//		_vecCritValue.reserve( _vpoints.size() );
 		_specialCases[0] = std::make_pair(0,-1);
 		_specialCases[1] = std::make_pair(0,-2);
 		_specialCases[2] = std::make_pair(1,-2);
@@ -7192,7 +7189,7 @@ which is indeed the  index of the point two points before the first one.
 			<< _lastOneRemoved
 			<< '\n';
 //		priv::printVector( _vpoints, "points" );
-//		priv::printVector( _vecCritValue, "distances" );
+		priv::printVector( _vecCritValue, "distances" );
 		std::cout << "---/TriangleMetrics---\n";
 	}
 	void computeMetric( size_t, size_t, int, int );
@@ -7278,7 +7275,7 @@ TriangleMetrics<FP>::computeMetric(
 		default: assert(0);
 	}
 
-	HOMOG2D_LOG( "computeMetric() idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
+	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
 }
 
 //------------------------------------------------------------------
@@ -7334,10 +7331,10 @@ bool
 removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
 	HOMOG2D_START;
-	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved );
+	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved << " psize=" << metData._vpoints.size() );
 	metData.print();
 
-// we have to leave at least 3 points (2 for open polyline)
+// we have to leave at least 3 points for closed, 2 for open polylines
 	if( params._NbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
 	{
 		std::cout << "No remove!\n";
@@ -7412,7 +7409,7 @@ priv::printVector( metData._vecCritValue );
 // TMP
 		if( minval_it->_isRemoved == true ) // else, mean we fucked up somewhere
 		{
-			std::cout << "FAIL!\n";
+			std::cout << "FAIL!!!!!!!!!!!!!!!!!!!\n";
 		}
 // /TMP
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
@@ -7429,7 +7426,7 @@ priv::printVector( metData._vecCritValue );
 }
 
 //------------------------------------------------------------------
-/// Once we have removed ("tagged") a point, we need to recompute the distance values
+/// Once we have removed ("tagged") a point, we need to recompute some distance values.
 /**
 We need to compute two distances.
 Let $n$ be the index of  the last removed point.
@@ -7455,23 +7452,47 @@ TriangleMetrics<FP>::recomputeMetrics()
 	}
 }
 
+/// Generates the final new set of points
+template<typename PTYPE,typename FPT>
+std::vector<Point2d_<FPT>>
+generateNewSet(
+	const std::vector<Point2d_<FPT>>& ptSet,   ///< Initial set of points
+	const std::vector<PMetricValue>&  critVec, ///< Holds info if point is removed or not
+	size_t nbRemoved                           ///< Needed to set size of output set
+)
+{
+	std::vector<Point2d_<FPT>> newvec( ptSet.size() - nbRemoved );
+	auto it = std::begin(newvec);
+
+	if constexpr( trait::PolIsClosed<PTYPE>::value )
+	{
+		for( size_t i=0; i<ptSet.size(); i++ )
+			if( critVec[i]._isRemoved == false )
+				*it++ = ptSet[i];
+	}
+	else
+	{
+		*it = ptSet.front(); // first point
+		for( size_t i=1; i<ptSet.size()-1; i++ )
+			if( critVec[i-1]._isRemoved == false )
+				*it++ = ptSet[i];
+		*it = ptSet.back();
+	}
+	return newvec;
+}
+
 } // namespace pminim
 //------------------------------------------------------------------
 
-/// Private member function
+/// Minimize the polyline. Iterating algorithm
 /**
-- start index: 0 for closed, 1 for open
-- end index: size() for closed, size()-1 for open
-
 \todo Would we speed up if we did computation of squared distances, using priv::sqDist() and compare
 \$ d0^2 \$ to \$ d1^2 + d2^2 + 2 * d1 * d2 \$ ???
 */
 template<typename PLT,typename FPT>
 void
-PolylineBase<PLT,FPT>::p_minimizePL(
+PolylineBase<PLT,FPT>::minimize(
 	PolyMinimParams params ///< parameters
-//	size_t          istart, ///< start index (0 for closed, or 1 for open polyline)
-//	size_t          iend    ///< end index ( size() for closed, or size()-1 for open polyline)
 )
 {
 	HOMOG2D_START;
@@ -7488,14 +7509,10 @@ PolylineBase<PLT,FPT>::p_minimizePL(
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 		distances.recomputeMetrics();
 	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
+	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
 
 // step 3: replace original points vector with the new one
-	std::vector<Point2d_<FPT>> newvec;
-	newvec.reserve( _plinevec.size() );
-	for( size_t i=0; i<_plinevec.size(); i++ )
-		if( distances._vecCritValue[i]._isRemoved == false )
-			newvec.push_back( _plinevec[i] );
-	_plinevec = std::move( newvec );
+	_plinevec = pminim::generateNewSet<PLT,FPT>( _plinevec, distances._vecCritValue, params._NbPtsRemoved );
 }
 
 //------------------------------------------------------------------

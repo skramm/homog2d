@@ -19,7 +19,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - current master branch
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
-This was possible by moving to C++17.
+This was possible by moving to C++17. This switch also enable the use of `if constexpr`, so that a lot of SFINAE constructs avoided.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
   - SVG import: added reading of image size in file
