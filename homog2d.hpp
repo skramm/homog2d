@@ -98,11 +98,21 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #endif
 
-#ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_START std::cout << "START: line:" << __LINE__ \
+/*
+	#define HOMOG2D_IN std::cout << getTab(++tabcount) << "IN: line:" << __LINE__ \
 		<< " func=" << HOMOG2D_PRETTY_FUNCTION << "\n"
+	#define HOMOG2D_OUT std::cout << getTab(tabcount--) << "OUT: line:" << __LINE__ \
+		<< " func=" << HOMOG2D_PRETTY_FUNCTION << "\n"
+*/
+
+#ifdef HOMOG2D_DEBUGMODE
+	#define HOMOG2D_IN std::cout << getTab(++tabcount) << "IN: line:" << __LINE__ \
+		<< " func=" << __FUNCTION__ << "\n"
+	#define HOMOG2D_OUT std::cout << getTab(tabcount--) << "OUT: line:" << __LINE__ \
+		<< " func=" << __FUNCTION__ << "\n"
 #else
-	#define HOMOG2D_START
+	#define HOMOG2D_IN
+	#define HOMOG2D_OUT
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
@@ -233,6 +243,16 @@ See https://github.com/skramm/homog2d
 #define M_PI 3.14159265358979323846
 #endif
 
+#ifdef HOMOG2D_DEBUGMODE
+	static int tabcount = 0;
+	std::string getTab(int nb)
+	{
+		std::ostringstream oss;
+		for( int i=0;i<nb;i++)
+			oss << "  ";
+		return oss.str();
+	}
+#endif
 
 namespace h2d {
 
@@ -1279,7 +1299,7 @@ disallows providing such a method
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return false;
 	}
 
@@ -1559,7 +1579,7 @@ product( base::LPBase<T1,FPT1>&, const detail::Matrix_<FPT2>&, const base::LPBas
 template<typename T1,typename T2>
 Matrix_<T1> operator * ( const Matrix_<T1>& h1, const Matrix_<T2>& h2 )
 {
-//	HOMOG2D_START;
+//	HOMOG2D_IN;
 	Matrix_<T1> out;
 	product( out, h1, h2 );
 	return out;
@@ -2873,7 +2893,7 @@ public:
 	template<typename T>
 	bool isInside( const T& shape ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		for( const auto& pt: get4Pts() )
 			if( !pt.isInside( shape ) )
 				return false;
@@ -2944,7 +2964,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
 	{
-//		HOMOG2D_START;
+//		HOMOG2D_IN;
 		return p_intersects_R_C( circle );
 	}
 
@@ -2952,7 +2972,7 @@ public:
 	template<typename PLT2,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT2,FPT2>& pl ) const
 	{
-//		HOMOG2D_START;
+//		HOMOG2D_IN;
 		return pl.intersects( *this );
 	}
 
@@ -2960,7 +2980,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-//		HOMOG2D_START;
+//		HOMOG2D_IN;
 		if( *this == rect )                    // if rectangles are the same,
 			return detail::IntersectM<FPT>();  // no intersection
 		return p_intersects_R_C( rect );
@@ -4381,7 +4401,7 @@ public:
 /// Point is inside flat rectangle
 	bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::BaseHelper<LP>() );
 	}
 
@@ -4389,7 +4409,7 @@ public:
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsideRect( rect, detail::BaseHelper<LP>() );
 	}
 
@@ -4398,14 +4418,14 @@ public:
 	bool isInside( const Point2d_<FPT>& center, T radius ) const
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsideCircle( center, radius, detail::BaseHelper<LP>() );
 	}
 /// Point is inside Circle
 	template<typename T>
 	bool isInside( const Circle_<T>& cir ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsideCircle( cir.center(), cir.radius(), detail::BaseHelper<LP>() );
 	}
 
@@ -4413,7 +4433,7 @@ public:
 	template<typename FPT2>
 	bool isInside( const Ellipse_<FPT2>& ell ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsideEllipse( ell, detail::BaseHelper<LP>() );
 	}
 
@@ -4421,7 +4441,7 @@ public:
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		return impl_isInsidePoly( poly, detail::BaseHelper<LP>() );
 	}
 
@@ -5252,7 +5272,7 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 	{
-//		HOMOG2D_START;
+//		HOMOG2D_IN;
 		return r.intersects( *this );
 	}
 
@@ -5260,7 +5280,7 @@ public:
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
 	{
-//		HOMOG2D_START;
+//		HOMOG2D_IN;
 		return other.intersects( *this );
 	}
 ///@}
@@ -5570,7 +5590,7 @@ template<typename FPT2,typename PTYPE>
 bool
 Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	if( !poly.isPolygon() )
 		return false;
 	if( poly.getPts()[0].isInside(*this) ) // if a point of the polygon is inside the circle,
@@ -5701,7 +5721,7 @@ template<
 PointPair1_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	using FPT = typename T::value_type::FType;
 	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
 
@@ -5754,7 +5774,7 @@ template<
 FRect_<typename T::value_type::FType>
 getBB_Segments( const T& vsegs )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	using FPT = typename T::value_type::FType;
 
 	HOMOG2D_DEBUG_ASSERT( vsegs.size(), "cannot compute bounding box of empty set of segments" );
@@ -5775,7 +5795,7 @@ template<typename FPT>
 auto
 getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	HOMOG2D_DEBUG_ASSERT( v_rects.size(), "cannot compute bounding box of empty set of rectangles" );
 
 	std::vector<Point2d_<FPT>> vpts( v_rects.size()*2 );
@@ -5871,7 +5891,6 @@ getString( PminimMetric met )
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-//	PolyMinimAlgo    _algo       = PolyMinimAlgo::AngleBased; ///< algorithm
 	HOMOG2D_INUMTYPE _maxAngle   = thr::nullAngleValue();
 	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
 	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
@@ -6108,7 +6127,7 @@ public:
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 #ifndef HOMOG2D_NOCHECKS
 		if( size() < 2 )
 			HOMOG2D_THROW_ERROR_1( "cannot compute bounding box of empty Polyline" );
@@ -6582,7 +6601,7 @@ Sfinae should resolve for T=Circle,FRect,Ellipse but not for CPolyline
 	bool
 	isInside( const T& prim ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
@@ -6604,7 +6623,7 @@ Sfinae should resolve ONLY for CPolyline
 	bool
 	isInside( const T& cpol ) const
 	{
-		HOMOG2D_START;
+		HOMOG2D_IN;
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
@@ -7095,9 +7114,6 @@ namespace pminim {
 //------------------------------------------------------------------
 /// Type used for polyline minimization, holds (for each point)
 /// the metric value used to determine if point is to be removed or not
-/**
-\todo replace with a std::pair?
-*/
 struct PMetricValue
 {
 /// value of metric of point related to segment joining the two other points.
@@ -7224,8 +7240,8 @@ TriangleMetrics<FP>::computeMetric(
 	int    after    ///< offset of "after" point  (+1 or +2)
 )
 {
-	HOMOG2D_START;
-	HOMOG2D_LOG( "size=" << _vpoints.size() << " idxp=" << idxp <<  " idxm=" << idxm << " bef="<< before << " aft=" << after );
+	HOMOG2D_IN;
+//	HOMOG2D_LOG( "size=" << _vpoints.size() << " idxp=" << idxp <<  " idxm=" << idxm << " bef="<< before << " aft=" << after );
 
 	auto pt_bef = _vpoints.at( getIndex( idxp, before ) );
 	auto pt_aft = _vpoints.at( getIndex( idxp, after  ) );
@@ -7275,7 +7291,8 @@ TriangleMetrics<FP>::computeMetric(
 		default: assert(0);
 	}
 
-	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
+//	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
+	HOMOG2D_OUT;
 }
 
 //------------------------------------------------------------------
@@ -7302,8 +7319,8 @@ computeMetrics(
 	bool                             isClosed
 )
 {
-	HOMOG2D_START;
-	params.print();
+	HOMOG2D_IN;
+//	params.print();
 	TriangleMetrics<FP> out( plinevec, params, isClosed );
 
 	out._isAbsolute2 = params._isAbsolute;
@@ -7316,6 +7333,7 @@ computeMetrics(
 		for( size_t i=0; i<si-2; i++ )
 			out.computeMetric( i+1, i, -1, +1 );
 
+	HOMOG2D_OUT;
 	return out;
 }
 
@@ -7330,22 +7348,22 @@ template<typename FP>
 bool
 removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
-	HOMOG2D_START;
-	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved << " psize=" << metData._vpoints.size() );
-	metData.print();
+	HOMOG2D_IN;
+//	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved << " psize=" << metData._vpoints.size() );
+//	metData.print();
 
 // we have to leave at least 3 points for closed, 2 for open polylines
 	if( params._NbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
 	{
-		std::cout << "No remove!\n";
+//		std::cout << "No remove!\n";
+		HOMOG2D_OUT;
 		return false;
 	}
 
-std::cout << "current status:\n";
-priv::printVector( metData._vecCritValue );
+//std::cout << "current status:\n";
+//priv::printVector( metData._vecCritValue );
 
 // step 1: find element with minimal distance
-//	decltype(std::begin(metData._vecCritValue) ) minval_it;
 	auto minval_it = std::min_element(
 		std::begin(metData._vecCritValue),
 		std::end(metData._vecCritValue),
@@ -7361,14 +7379,14 @@ priv::printVector( metData._vecCritValue );
 	);
 
 
-	std::cout << "min element=" << *minval_it << "\n";
+/*	std::cout << "min element=" << *minval_it << "\n";
 	std::cout << "min element="
 		<< std::distance(std::begin(metData._vecCritValue), minval_it)
 		<< ", dist value=" << minval_it->_dist
 		<< " Abs thres=" << params._maxAbsDist
 		<< " Rel thres=" << params._maxRelDistRatio
 		<< " angle thres=" << params._maxAngle*180./M_PI
-		<< '\n';
+		<< '\n';*/
 	assert( !minval_it->_isRemoved );
 
 // step 2: determine if we do remove the point or not
@@ -7378,7 +7396,10 @@ priv::printVector( metData._vecCritValue );
 		case PminimStopCrit::SinglePoint:
 			std::cout << "SC=SinglePoint\n";
 			if( params._NbPtsRemoved > 0 )
+			{
+				HOMOG2D_OUT;
 				return false;
+			}
 		break;
 /*		case PminimStopCrit::DistRatio:
 			std::cout << "SC=DistRatio\n";
@@ -7416,12 +7437,14 @@ priv::printVector( metData._vecCritValue );
 		minval_it->_isRemoved = true;
 		metData._lastOneRemoved = std::distance( std::begin(metData._vecCritValue), minval_it );
 		params._NbPtsRemoved++;
-		HOMOG2D_LOG( "tag point "
+		HOMOG2D_LOG( "tag metric "
 			<< metData._lastOneRemoved
 			<< " as removed, total="
 			<< params._NbPtsRemoved );
+		HOMOG2D_OUT;
 		return true;
 	}
+	HOMOG2D_OUT;
 	return false;
 }
 
@@ -7438,8 +7461,8 @@ template<typename FP>
 void
 TriangleMetrics<FP>::recomputeMetrics()
 {
-	HOMOG2D_START;
-	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	HOMOG2D_IN;
+//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
 	if( _isClosed )
 	{
 		computeMetric( _lastOneRemoved, _lastOneRemoved, -2, +1 );
@@ -7450,6 +7473,7 @@ TriangleMetrics<FP>::recomputeMetrics()
 		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -2, +1 );
 		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
 	}
+	HOMOG2D_OUT;
 }
 
 /// Generates the final new set of points
@@ -7461,6 +7485,7 @@ generateNewSet(
 	size_t nbRemoved                           ///< Needed to set size of output set
 )
 {
+	HOMOG2D_IN;
 	std::vector<Point2d_<FPT>> newvec( ptSet.size() - nbRemoved );
 	auto it = std::begin(newvec);
 
@@ -7478,12 +7503,13 @@ generateNewSet(
 				*it++ = ptSet[i];
 		*it = ptSet.back();
 	}
+	HOMOG2D_OUT;
 	return newvec;
 }
 
 } // namespace pminim
-//------------------------------------------------------------------
 
+//------------------------------------------------------------------
 /// Minimize the polyline. Iterating algorithm
 /**
 \todo Would we speed up if we did computation of squared distances, using priv::sqDist() and compare
@@ -7495,12 +7521,15 @@ PolylineBase<PLT,FPT>::minimize(
 	PolyMinimParams params ///< parameters
 )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	if( size() < (isClosed()?4:3) ) // nothing to do
+	{
+		HOMOG2D_OUT;
 		return;
+	}
 
-	HOMOG2D_LOG( "size=" << size() ); //<< " istart=" << istart << " ident=" << iend );
+//	HOMOG2D_LOG( "size=" << size() ); //<< " istart=" << istart << " ident=" << iend );
 
 // step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );
@@ -7508,11 +7537,13 @@ PolylineBase<PLT,FPT>::minimize(
 // step 2: iterate until no more points are removed
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 		distances.recomputeMetrics();
-	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
-	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
+
+//	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
+//	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
 
 // step 3: replace original points vector with the new one
 	_plinevec = pminim::generateNewSet<PLT,FPT>( _plinevec, distances._vecCritValue, params._NbPtsRemoved );
+	HOMOG2D_OUT;
 }
 
 //------------------------------------------------------------------
@@ -8294,7 +8325,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Segment_<FPT2>& s2 ) const
 {
-//	HOMOG2D_START;
+//	HOMOG2D_IN;
 	if( *this == s2 )              // same segment => no intersection
 		return detail::Intersect<detail::Inters_1,FPT>();
 
@@ -8333,7 +8364,7 @@ template<typename FPT2>
 detail::Intersect<detail::Inters_1,FPT>
 Segment_<FPT>::intersects( const Line2d_<FPT2>& li1 ) const
 {
-//	HOMOG2D_START;
+//	HOMOG2D_IN;
 //	HOMOG2D_LOG( "seg=" << *this << " line=" << li1 );
 	detail::Intersect<detail::Inters_1,FPT> out;
 	auto li2 = getLine();
@@ -8380,7 +8411,7 @@ template<typename FPT2>
 detail::IntersectM<FPT>
 Segment_<FPT>::intersects( const Circle_<FPT2>& circle ) const
 {
-//	HOMOG2D_START;
+//	HOMOG2D_IN;
 	using detail::PtTag;
 
 	auto tag_ptS1 = detail::getPtLabel( _ptS1, circle ); // get status of segment points related to circle (inside/outside/on-edge)
@@ -10172,7 +10203,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	return elem.getBB().getPts();
 }
 
@@ -10191,7 +10222,7 @@ template<
 auto
 getPointPair( const T& poly )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	if( poly.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "cannot compute point pair of empty Polyline" );
@@ -10219,7 +10250,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
 
@@ -10235,7 +10266,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	return elem.getPts();
 }
 
@@ -10244,7 +10275,7 @@ template<typename FPT>
 PointPair1_<FPT>
 getPointPair( const Line2d_<FPT>& )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	HOMOG2D_THROW_ERROR_1( "Unable to get pair of points for a Line2d" );
 }
 
@@ -10371,7 +10402,7 @@ template<typename FPT>
 auto
 getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	HOMOG2D_DEBUG_ASSERT( v_var.size(), "cannot compute bounding box of empty set of variant" );
 
 	std::vector<Point2d_<FPT>> vpts;
@@ -10405,7 +10436,7 @@ template<typename T>
 FRect_<HOMOG2D_INUMTYPE>
 getBB( const T& t )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	if constexpr( !trait::IsContainer<T>::value ) // if not a container,
 		return t.getBB();                         // then call the member function
@@ -10488,7 +10519,7 @@ template<typename T1,typename T2,typename T3,typename T4>
 auto
 getMinMax( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
 	arr[0] = pp1.first;
@@ -10509,7 +10540,7 @@ template<typename T1,typename T2,typename T3,typename T4>
 auto
 getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	return FRect_<T1>( getMinMax( pp1, pp2 ) );
 }
 
@@ -10526,7 +10557,7 @@ template<
 auto
 getBB( const T1& elem1, const T2& elem2 )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	FRect_<typename T1::FType> out;
 	try
 	{
@@ -10560,7 +10591,7 @@ template<
 auto
 getBB( const T1& p1, const T2& p2 )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	if( p1.size() == 0 && p2.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
@@ -10588,7 +10619,7 @@ template<
 auto
 getBB( const T1&, const T2& )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
 	return FRect_<T1>(); // to avoid a compile warning
 }
@@ -12493,7 +12524,7 @@ inline
 SvgPathCommand
 getSvgCommand( char c )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 	HOMOG2D_LOG( "search command for " << c );
 
 	static std::string commands( "MLHVCSQTAZ" ); // allowed SVG path commands (and their counterparts relative)
@@ -12538,7 +12569,7 @@ template<typename FPT>
 std::vector<Point2d_<FPT>>
 purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	std::vector<Point2d_<FPT>> out;
 	out.reserve( pts.size() );
@@ -12599,7 +12630,7 @@ inline
 auto
 parsePath( const char* s )
 {
-	HOMOG2D_START;
+	HOMOG2D_IN;
 
 	SvgPathCommand mode;
 	std::vector<std::vector<Point2d>> vout(1);
@@ -12654,6 +12685,7 @@ parsePath( const char* s )
 	if( vout.back().empty() )
 		vout.pop_back();
 
+	HOMOG2D_OUT;
 	return std::make_pair(
 		vout,
 		mode._command == 'Z' ? true : false
