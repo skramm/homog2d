@@ -1002,6 +1002,22 @@ struct AreaFunct
 };
 
 //------------------------------------------------------------------
+/// A functor to get the number of points of a CPolyline or OPolyline embdeded in a std::variant, call with std::visit()
+/**
+\sa CommonType_
+\sa base::PolylineBase::size()
+*/
+struct SizeFunct
+{
+	template<typename T>
+	HOMOG2D_INUMTYPE operator ()(const T& a)
+	{
+		return a.size();
+	}
+};
+
+
+//------------------------------------------------------------------
 /// A functor used to call the << operator
 struct PrintFunct
 {
@@ -5719,7 +5735,7 @@ template<
 PointPair1_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 	using FPT = typename T::value_type::FType;
 	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
 
@@ -5857,6 +5873,21 @@ enum class PminimStopCrit {
 /// No iterating, remove a single point (the one with smallest value for the considered metric)
 	SinglePoint
 };
+
+inline
+const char*
+getString( PminimStopCrit sc )
+{
+	const char* s=0;
+	switch( sc )
+	{
+		case PminimStopCrit::NbPtsRatio:  s = "PointsRatio"; break;
+		case PminimStopCrit::NoStop:      s = "NoStop";      break;
+		case PminimStopCrit::SinglePoint: s = "SinglePoint"; break;
+		default: assert(0);
+	}
+	return s;
+}
 
 //------------------------------------------------------------------
 /// The metric used for polyline minimization
@@ -6135,6 +6166,7 @@ public:
 		if( shareCommonCoord( ppts.first, ppts.second ) )
 			HOMOG2D_THROW_ERROR_1( "unable, points share common coordinate" );
 #endif
+		HOMOG2D_OUT;
 		return FRect_<FPT>( ppts );
 	}
 
@@ -6621,7 +6653,7 @@ Sfinae should resolve ONLY for CPolyline
 	bool
 	isInside( const T& cpol ) const
 	{
-		HOMOG2D_IN;
+//		HOMOG2D_IN;
 		if( size() == 0 )
 			return false;
 		for( const auto& pt: getPts() )
@@ -7197,7 +7229,8 @@ which is indeed the index of the point two points before the first one.
 		_specialCasesIndexes[5] = 0;
 	}
 
-	template<typename T> void recomputeMetrics(T);
+	void recomputeMetrics(typ::IsClosed);
+	void recomputeMetrics(typ::IsOpen);
 
 	void print() const
 	{
@@ -7391,10 +7424,11 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
+	HOMOG2D_LOG( "NbPtsRemoved="<< params._NbPtsRemoved );
 	switch( params._stopCrit )
 	{
 		case PminimStopCrit::SinglePoint:
-			std::cout << "SC=SinglePoint\n";
+//			std::cout << "SC=SinglePoint\n";
 			if( params._NbPtsRemoved > 0 )
 			{
 				HOMOG2D_OUT;
@@ -7500,6 +7534,7 @@ TriangleMetrics<FP>::recomputeMetrics( typ::IsOpen )
 	HOMOG2D_OUT;
 }
 #endif
+
 /// Generates the final new set of points
 template<typename PTYPE,typename FPT>
 std::vector<Point2d_<FPT>>
@@ -10228,7 +10263,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 	return elem.getBB().getPts();
 }
 
@@ -10247,7 +10282,7 @@ template<
 auto
 getPointPair( const T& poly )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 
 	if( poly.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "cannot compute point pair of empty Polyline" );
@@ -10275,7 +10310,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 	return std::make_pair( Point2d_<HOMOG2D_INUMTYPE>(elem), Point2d_<HOMOG2D_INUMTYPE>(elem) );
 }
 
@@ -10291,7 +10326,7 @@ template<
 auto
 getPointPair( const T& elem )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 	return elem.getPts();
 }
 
@@ -10427,7 +10462,7 @@ template<typename FPT>
 auto
 getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 	HOMOG2D_DEBUG_ASSERT( v_var.size(), "cannot compute bounding box of empty set of variant" );
 
 	std::vector<Point2d_<FPT>> vpts;
@@ -10455,16 +10490,31 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 //------------------------------------------------------------------
 /// Return Bounding Box of primitive or container holding primitives (free function)
 /**
-tests: [BB-cont]
+This function is able to handle many argument types:
+- all primitives (warning: will throw for points, lines, segments)
+- variant types (if `HOMOG2D_ENABLE_VRTP` is defined)
+- containers holding plain primitives
+- containers holding variant primitives
+
+Tests: see [BB-cont]
 */
 template<typename T>
 FRect_<HOMOG2D_INUMTYPE>
 getBB( const T& t )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 
 	if constexpr( !trait::IsContainer<T>::value ) // if not a container,
-		return t.getBB();                         // then call the member function
+	{
+#ifdef HOMOG2D_ENABLE_VRTP
+		if constexpr( trait::IsVariant<T>::value ) // if std::variant
+		{
+			return std::visit( fct::BBFunct{}, t ); // call the functor
+		}
+		else
+#endif
+			return t.getBB();                      // call the member function
+	}
 	else
 	{
 		if( t.empty() )
@@ -10544,7 +10594,7 @@ template<typename T1,typename T2,typename T3,typename T4>
 auto
 getMinMax( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
-	HOMOG2D_IN;
+//	HOMOG2D_IN;
 
 	std::array<Point2d_<HOMOG2D_INUMTYPE>,4> arr;
 	arr[0] = pp1.first;
@@ -10565,7 +10615,6 @@ template<typename T1,typename T2,typename T3,typename T4>
 auto
 getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 {
-	HOMOG2D_IN;
 	return FRect_<T1>( getMinMax( pp1, pp2 ) );
 }
 
@@ -10596,6 +10645,7 @@ getBB( const T1& elem1, const T2& elem2 )
 		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box:\n -arg1="
 			<< elem1 << "\n -arg2=" << elem2 << "\n -err=" << err.what() );
 	}
+	HOMOG2D_OUT;
 	return out;
 }
 
@@ -10626,10 +10676,19 @@ getBB( const T1& p1, const T2& p2 )
 	if( p1.size() == 0 &&  p2.size() != 0 )
 		return FRect_<typename T1::FType>( ppair::getPointPair( p2 ) );
 
+#ifdef HOMOG2D_DEBUGMODE
+	auto bb = getBB(
+			ppair::getPointPair( p1 ),
+			ppair::getPointPair( p2 )
+	);
+	HOMOG2D_OUT;
+	return bb;
+#else
 	return getBB(
 			ppair::getPointPair( p1 ),
 			ppair::getPointPair( p2 )
 	);
+#endif
 }
 //------------------------------------------------------------------
 /// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
@@ -10644,7 +10703,6 @@ template<
 auto
 getBB( const T1&, const T2& )
 {
-	HOMOG2D_IN;
 	static_assert( detail::AlwaysFalse<T1>::value, "fallback: undefined function" );
 	return FRect_<T1>(); // to avoid a compile warning
 }
@@ -12584,7 +12642,7 @@ getSvgCommand( char c )
 
 	out.setCommand( commands[pos] );
 
-//	std::cout << "pos=" << pos << " _command=" << out._command << " _nbValues=" << (int)out._nbValues << '\n';
+	HOMOG2D_OUT;
 	return out;
 }
 
@@ -12607,6 +12665,8 @@ purgeSetDupes( const std::vector<Point2d_<FPT>>& pts )
 	}
 	if( pts.back() != pts.front() )
 		out.push_back( pts.back() ); // add last one (if not the same as first one)
+
+	HOMOG2D_OUT;
 	return out;
 }
 

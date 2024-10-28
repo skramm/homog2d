@@ -2048,6 +2048,23 @@ struct Param_polyMinim : Data
 			_polySrc = p;
 		}
 	}
+	void switchStopCrit()
+	{
+		switch( _pmParams._stopCrit )
+		{
+			case PminimStopCrit::NbPtsRatio:
+				_pmParams._stopCrit = PminimStopCrit::NoStop;
+			break;
+			case PminimStopCrit::NoStop:
+				_pmParams._stopCrit = PminimStopCrit::SinglePoint;
+			break;
+			case PminimStopCrit::SinglePoint:
+				_pmParams._stopCrit = PminimStopCrit::NbPtsRatio;
+			break;
+			default: assert(0);
+		}
+		std::cout << "Stop criterion: " << getString( _pmParams._stopCrit ) << '\n';
+	}
 	void switchMetric()
 	{
 		switch( _pmParams._metric )
@@ -2199,6 +2216,7 @@ struct PolyMinimFunct
 	const PolyMinimParams& _params;
 };
 
+#if 0
 /// A functor used to get the number of points
 struct NbPts
 {
@@ -2208,6 +2226,7 @@ struct NbPts
 		return poly.size();
 	}
 };
+#endif
 
 /// Called both by the mouse callback and by the trackbar callback
 void action_polyMinim( void* param )
@@ -2227,7 +2246,7 @@ void action_polyMinim( void* param )
 			draw( data.img, elem, color );
 			draw( data.img, std::visit( fct::BBFunct{}, elem ) );
 
-			auto nbPts1 = std::visit( NbPts{}, e );
+			auto nbPts1 = std::visit( fct::SizeFunct{}, e );
 			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18), color );
 
 			if( type(e) == Type::CPolyline )
@@ -2252,8 +2271,11 @@ void action_polyMinim( void* param )
 		draw( data.img,  data._polySrc, img::DrawParams().setColor(0,250,0).showPoints() );
 		draw( data.img2, data._polyDst, img::DrawParams().setColor(250,0,0).showPoints() );
 
-		auto nbPts1 = std::visit( NbPts{}, data._polySrc );
-		auto nbPts2 = std::visit( NbPts{}, data._polyDst );
+		draw( data.img,  getBB(data._polySrc), img::DrawParams().setColor(180,180,180) );
+		draw( data.img2, getBB(data._polySrc), img::DrawParams().setColor(180,180,180) );
+
+		auto nbPts1 = std::visit( fct::SizeFunct{}, data._polySrc );
+		auto nbPts2 = std::visit( fct::SizeFunct{}, data._polyDst );
 		drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20) );
 		drawText( data.img2, "NbPts=" + std::to_string( nbPts2 ), Point2d(15,20) );
 	}
@@ -2333,10 +2355,11 @@ void demo_polyMinim( int demidx )
 	std::cout << "Demo " << demidx << ": Polygon minimization\n";
 	data.leftClicAddPoint=true;
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },  "switch metric" );
-	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },  "switch abs/rel distance threshold" );
-	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },    "switch mouse/demo file" );
-	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },         "reset polyline" );
+	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },   "switch metric" );
+	kbloop.addKeyAction( 'c', [&](void*){ data.switchStopCrit(); }, "switch Stop Criterion" );
+	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },   "switch abs/rel distance threshold" );
+	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },     "switch mouse/demo file" );
+	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },          "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._plIsClosed = !data._plIsClosed; }, "switch Open/Closed (mouse mode)" );
 
 	kbloop.addCommonAction( action_polyMinim );
