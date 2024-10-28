@@ -7196,7 +7196,9 @@ which is indeed the index of the point two points before the first one.
 		_specialCasesIndexes[4] = 1;
 		_specialCasesIndexes[5] = 0;
 	}
-	void recomputeMetrics();
+
+	template<typename T> void recomputeMetrics(T);
+
 	void print() const
 	{
 		std::cout << "---TriangleMetrics---\n -_lastOneRemoved="
@@ -7455,6 +7457,7 @@ We need to compute theses distances:
 - for points n-1: distance between point n-2 and n+1, and the distance between that segment and point n-1
 - for points n+1: distance between point n-1 and n+2, and the distance between that segment and point n+1
 */
+#if 0
 template<typename FP>
 void
 TriangleMetrics<FP>::recomputeMetrics()
@@ -7473,7 +7476,30 @@ TriangleMetrics<FP>::recomputeMetrics()
 	}
 	HOMOG2D_OUT;
 }
+#else
 
+template<typename FP>
+void
+TriangleMetrics<FP>::recomputeMetrics( typ::IsClosed )
+{
+	HOMOG2D_IN;
+//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	computeMetric( _lastOneRemoved, _lastOneRemoved, -2, +1 );
+	computeMetric( _lastOneRemoved, _lastOneRemoved, -1, +2 );
+	HOMOG2D_OUT;
+}
+
+template<typename FP>
+void
+TriangleMetrics<FP>::recomputeMetrics( typ::IsOpen )
+{
+	HOMOG2D_IN;
+//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	computeMetric( _lastOneRemoved+1, _lastOneRemoved, -2, +1 );
+	computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
+	HOMOG2D_OUT;
+}
+#endif
 /// Generates the final new set of points
 template<typename PTYPE,typename FPT>
 std::vector<Point2d_<FPT>>
@@ -7484,23 +7510,20 @@ generateNewSet(
 )
 {
 	HOMOG2D_IN;
-	HOMOG2D_LOG( "initial size=" << ptSet.size()  << " nbRemoved=" << nbRemoved << " new size=" << ptSet.size() - nbRemoved );
+//	HOMOG2D_LOG( "initial size=" << ptSet.size()  << " nbRemoved=" << nbRemoved << " new size=" << ptSet.size() - nbRemoved );
 
 	std::vector<Point2d_<FPT>> newvec( ptSet.size() - nbRemoved );
 	auto it = std::begin(newvec);
 
 	if constexpr( trait::PolIsClosed<PTYPE>::value )
 	{
-		HOMOG2D_LOG( "CLOSED!!" );
 		assert( ptSet.size() == critVec.size() );
 		for( size_t i=0; i<ptSet.size(); i++ )
 			if( critVec[i]._isRemoved == false )
 				*it++ = ptSet[i];
-		//priv::printVector( critVec, "AFTER COPY" );
 	}
 	else
 	{
-		HOMOG2D_LOG( "OPEN!!" );
 		*it = ptSet.front(); // first point
 		for( size_t i=1; i<ptSet.size()-1; i++ )
 			if( critVec.at(i-1)._isRemoved == false )
@@ -7533,14 +7556,12 @@ PolylineBase<PLT,FPT>::minimize(
 		return;
 	}
 
-//	HOMOG2D_LOG( "size=" << size() ); //<< " istart=" << istart << " ident=" << iend );
-
 // step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );
 
-// step 2: iterate until no more points are removed
+// step 2: iterate until no more points are tagged as removed
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
-		distances.recomputeMetrics();
+		distances.recomputeMetrics( PLT() );
 
 //	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
 //	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
