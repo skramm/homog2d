@@ -5,6 +5,7 @@
 		<Option title="homog2d" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
+		<Option virtualFolders="misc/test_files/" />
 		<Build>
 			<Target title="demo">
 				<Option output="./homog2d" prefix_auto="1" extension_auto="1" />
@@ -31,25 +32,15 @@
 		<Unit filename="../.github/doxygen-gh-pages.yml" />
 		<Unit filename="../.github/workflows/c-cpp.yml" />
 		<Unit filename="../.github/workflows/msvc.yml" />
-		<Unit filename="../Makefile">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../README.md">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="../Makefile" />
+		<Unit filename="../README.md" />
 		<Unit filename="../docs/build_index.sh" />
 		<Unit filename="../docs/homog2d_Polyline.md" />
 		<Unit filename="../docs/homog2d_algorithms.md" />
 		<Unit filename="../docs/homog2d_devinfo.md" />
-		<Unit filename="../docs/homog2d_history.md">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/homog2d_manual.md">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../docs/homog2d_qa.md">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="../docs/homog2d_history.md" />
+		<Unit filename="../docs/homog2d_manual.md" />
+		<Unit filename="../docs/homog2d_qa.md" />
 		<Unit filename="../docs/homog2d_showcase.md" />
 		<Unit filename="../docs/homog2d_showcase2.md" />
 		<Unit filename="../docs/homog2d_showcase3.md" />
@@ -57,24 +48,16 @@
 		<Unit filename="../docs/homog2d_thresholds.md" />
 		<Unit filename="../docs/index.csv" />
 		<Unit filename="../docs/index.md" />
-		<Unit filename="../docs/opencv_notes.md">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="../homog2d.hpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="../docs/opencv_notes.md" />
+		<Unit filename="../homog2d.hpp" />
 		<Unit filename="build_gif.sh" />
 		<Unit filename="demo_opencv.cpp" />
-		<Unit filename="doxyfile">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="doxyfile" />
 		<Unit filename="doxyfile_dev" />
 		<Unit filename="dtest1.cpp" />
 		<Unit filename="dtest1.plt" />
 		<Unit filename="ellipse_speed_test.cpp" />
-		<Unit filename="extra_style_sheet.css">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="extra_style_sheet.css" />
 		<Unit filename="figures_src/latex/ellipse1.tex" />
 		<Unit filename="figures_src/latex/fig1.tex" />
 		<Unit filename="figures_src/latex/fig2.tex" />
@@ -99,28 +82,16 @@
 		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_circle_1.cpp" />
 		<Unit filename="figures_src/src/side_point_line.cpp" />
-		<Unit filename="figures_test/frect_intersect_1.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="figures_test/frect_intersect_1.code" />
 		<Unit filename="figures_test/frect_intersect_10.code" />
 		<Unit filename="figures_test/frect_intersect_11.code" />
 		<Unit filename="figures_test/frect_intersect_12.code" />
 		<Unit filename="figures_test/frect_intersect_13.code" />
-		<Unit filename="figures_test/frect_intersect_2.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_3.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_4.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_5.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_6.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="figures_test/frect_intersect_2.code" />
+		<Unit filename="figures_test/frect_intersect_3.code" />
+		<Unit filename="figures_test/frect_intersect_4.code" />
+		<Unit filename="figures_test/frect_intersect_5.code" />
+		<Unit filename="figures_test/frect_intersect_6.code" />
 		<Unit filename="figures_test/frect_intersect_7.code" />
 		<Unit filename="figures_test/frect_intersect_8.code" />
 		<Unit filename="figures_test/frect_intersect_9.code" />
@@ -143,9 +114,7 @@
 		<Unit filename="figures_test/t_footer_frect_1.cxx" />
 		<Unit filename="figures_test/t_footer_polyline_1.cxx" />
 		<Unit filename="figures_test/t_header.cxx" />
-		<Unit filename="gitlog.sh">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="gitlog.sh" />
 		<Unit filename="homog2d_test.cpp" />
 		<Unit filename="no_build/footer.txt" />
 		<Unit filename="no_build/header.txt" />
@@ -176,9 +145,7 @@
 		<Unit filename="other/test_svg_import_1.svg" />
 		<Unit filename="other/test_svg_import_2.svg" />
 		<Unit filename="other/test_svg_import_3.svg" />
-		<Unit filename="plot_gitlog.plt">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="plot_gitlog.plt" />
 		<Unit filename="scripts/plot_tags_linecount.plt" />
 		<Unit filename="scripts/tags_linecount.sh" />
 		<Unit filename="showcase/gif_duration.data" />
@@ -211,9 +178,7 @@
 		<Unit filename="showcase_v/build_vid.sh" />
 		<Unit filename="showcase_v/run_parameters.txt" />
 		<Unit filename="showcase_v/showcase_v_01.cpp" />
-		<Unit filename="test_all.sh">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="test_all.sh" />
 		<Unit filename="test_files/bg_test_1.cpp" />
 		<Unit filename="test_files/demo_svg_import.cpp" />
 		<Unit filename="test_files/homog2d_test_rtp_1.cpp" />

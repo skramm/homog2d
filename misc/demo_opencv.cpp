@@ -49,7 +49,7 @@ void demo_something( int demo_index)
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_VRTP
 #define HOMOG2D_USE_SVG_IMPORT
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
 // additional Opencv header, needed for GUI stuff
@@ -100,10 +100,11 @@ public:
 	}
 	void reset()
 	{
+		vpt.resize(4);
 		vpt[0] = Point2d(100,200);
 		vpt[1] = Point2d(200,300);
-		vpt[2] = Point2d(150,50);
-		vpt[3] = Point2d(300,250);
+		vpt[2] = Point2d(300,250);
+		vpt[3] = Point2d(150,50);
 	}
 
 	void setMousePos(int x, int y)
@@ -2027,8 +2028,15 @@ struct Param_polyMinim : Data
 		img.clear();
 		img2.clear();
 	}
+	void reset()
+	{
+		std::cout << "RESET\n";
+		Data::reset();
+		initPolylines();
+	}
 	void initPolylines()
 	{
+//		reset(); // reset points
 		if( _plIsClosed )
 		{
 			CPolyline p( vpt );
@@ -2068,16 +2076,18 @@ struct Param_polyMinim : Data
 
 	void switchMode()
 	{
+//		auto fname = "misc/test_files/France_Bretagne.svg";
+		auto fname = "misc/test_files/France_Normandie.svg";
 		_pminimFileMode = !_pminimFileMode;
 		if( _pminimFileMode )
 		{
 			tinyxml2::XMLDocument doc;
-//			doc.LoadFile( "misc/test_files/France_Bretagne.svg" );
-			doc.LoadFile( "misc/test_files/France_Normandie.svg" );
-
+			doc.LoadFile( fname );
 			svg::Visitor visitor;
 			doc.Accept( &visitor );
 			auto v_tmp = visitor.get();
+			_vecLoaded.clear();
+			std::cout << "-loaded " << v_tmp.size() << " elements from file " << fname << '\n';
 			for( const auto& elem: v_tmp )
 			{
 				if( type(elem) == Type::CPolyline )
@@ -2213,7 +2223,10 @@ void action_polyMinim( void* param )
 		for( const auto& e: data._vecLoaded )
 		{
 			auto color = img::DrawParams().setColor( data._vcolors[i] );
-			draw( data.img, transform( data._scaling, e ), color );
+			auto elem = transform( data._scaling, e );
+			draw( data.img, elem, color );
+			draw( data.img, std::visit( fct::BBFunct{}, elem ) );
+
 			auto nbPts1 = std::visit( NbPts{}, e );
 			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18), color );
 

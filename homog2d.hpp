@@ -5272,7 +5272,6 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 	{
-//		HOMOG2D_IN;
 		return r.intersects( *this );
 	}
 
@@ -5280,7 +5279,6 @@ public:
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
 	{
-//		HOMOG2D_IN;
 		return other.intersects( *this );
 	}
 ///@}
@@ -7205,7 +7203,7 @@ which is indeed the index of the point two points before the first one.
 			<< _lastOneRemoved
 			<< '\n';
 //		priv::printVector( _vpoints, "points" );
-		priv::printVector( _vecCritValue, "distances" );
+//		priv::printVector( _vecCritValue, "distances" );
 		std::cout << "---/TriangleMetrics---\n";
 	}
 	void computeMetric( size_t, size_t, int, int );
@@ -7486,20 +7484,26 @@ generateNewSet(
 )
 {
 	HOMOG2D_IN;
+	HOMOG2D_LOG( "initial size=" << ptSet.size()  << " nbRemoved=" << nbRemoved << " new size=" << ptSet.size() - nbRemoved );
+
 	std::vector<Point2d_<FPT>> newvec( ptSet.size() - nbRemoved );
 	auto it = std::begin(newvec);
 
 	if constexpr( trait::PolIsClosed<PTYPE>::value )
 	{
+		HOMOG2D_LOG( "CLOSED!!" );
+		assert( ptSet.size() == critVec.size() );
 		for( size_t i=0; i<ptSet.size(); i++ )
 			if( critVec[i]._isRemoved == false )
 				*it++ = ptSet[i];
+		//priv::printVector( critVec, "AFTER COPY" );
 	}
 	else
 	{
+		HOMOG2D_LOG( "OPEN!!" );
 		*it = ptSet.front(); // first point
 		for( size_t i=1; i<ptSet.size()-1; i++ )
-			if( critVec[i-1]._isRemoved == false )
+			if( critVec.at(i-1)._isRemoved == false )
 				*it++ = ptSet[i];
 		*it = ptSet.back();
 	}
@@ -7542,7 +7546,7 @@ PolylineBase<PLT,FPT>::minimize(
 //	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
 
 // step 3: replace original points vector with the new one
-	_plinevec = pminim::generateNewSet<PLT,FPT>( _plinevec, distances._vecCritValue, params._NbPtsRemoved );
+	_plinevec = pminim::generateNewSet<PolylineBase<PLT,FPT>,FPT>( _plinevec, distances._vecCritValue, params._NbPtsRemoved );
 	HOMOG2D_OUT;
 }
 
@@ -10492,7 +10496,7 @@ getBB( const T& t )
 
 #ifdef HOMOG2D_ENABLE_VRTP
 
-/// Apply homography to primitive
+/// Apply homography to primitive \c elem, even if it is a \c std::variant type
 /**
 \warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
 */
