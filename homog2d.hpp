@@ -5926,7 +5926,6 @@ struct PolyMinimParams
 	PminimMetric     _metric    = PminimMetric::AbsDistance; ///< The metric used for the Visvalingam algorithm
 	PminimStopCrit   _stopCrit  = PminimStopCrit::NoStop; ///< stop criterion for the iterative algorithm
 	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3;               ///< ratio of nb of points to remove
-//	bool             _isAbsolute3    = false;             ///< used only for distance based metric
 	size_t           _nbPtsRemoved   = 0;
 
 	void print() const
@@ -5934,9 +5933,8 @@ struct PolyMinimParams
 		std::cout << "---PolyMinimParams---"
 //		<< getString(_algo)
 		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
-//		<< "\n -_maxAbsDist=" << _maxAbsDist
-//		<< "\n -_isAbsolute=" << _isAbsolute3
 		<< "\n -_metric=" << getString(_metric)
+		<< "\n -_stopCrit=" << getString(_stopCrit)
 		<< "\n---/PolyMinimParams---\n";
 	}
 };
@@ -7168,7 +7166,6 @@ struct TriangleMetrics
 - if "open", will have size n-2 (because we don't need tha values for first and last point, as these will stay there
 */
 	std::vector<PMetricValue>        _vecCritValue;
-//	bool                             _isAbsolute2 = false;
 	PminimMetric                     _metric2;
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
@@ -7205,7 +7202,6 @@ which is indeed the index of the point two points before the first one.
 	): _vpoints(vpoints)
 	{
 		_metric2     = params._metric;
-//		_isAbsolute2 = params._isAbsolute;
 		_vecCritValue.resize( isClosed ? vpoints.size() : vpoints.size()-2 );
 
 		auto s = _vpoints.size();
@@ -7361,10 +7357,7 @@ computeMetrics(
 )
 {
 	HOMOG2D_IN;
-//	params.print();
 	TriangleMetrics<FP> out( plinevec, params, isClosed );
-
-//	out._isAbsolute2 = params._isAbsolute;
 	auto si = plinevec.size();
 
 	if( isClosed )
@@ -7436,6 +7429,12 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 				HOMOG2D_OUT;
 				return false;
 			}
+			else
+			{
+				std::cout << "val=" << minval_it->_value << " thres=" << params._threshold << '\n';
+				if( minval_it->_value < params._threshold )
+					doRemovePoint = true;
+			}
 		break;
 /*		case PminimStopCrit::DistRatio:
 			std::cout << "SC=DistRatio\n";
@@ -7453,11 +7452,11 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 		case PminimStopCrit::NbPtsRatio:
 			HOMOG2D_LOG( "SC=NbPtsRatio, thres=\n" << params._ptRemovalRatio );
 			if( 1.0*metData._vecCritValue.size()/params._nbPtsRemoved > params._ptRemovalRatio )
-				if( minval_it->_value > params._threshold )
+				if( minval_it->_value < params._threshold )
 					doRemovePoint = true;
 		break;
 		case PminimStopCrit::NoStop:
-			if( minval_it->_value > params._threshold )
+			if( minval_it->_value < params._threshold )
 				doRemovePoint = true;
 		break;
 		default: assert(0);

@@ -2087,27 +2087,18 @@ struct Param_polyMinim : Data
 		createWindows();
 	}
 
-/*	void switchAbsRel()
-	{
-//		_pmParams._isAbsolute4 = !_pmParams._isAbsolute3;
-//		std::cout << "distance mode=" << (_pmParams._isAbsolute4?"Absolute\n":"Relative\n");
-		createWindows();
-	}*/
-
 	void switchMode()
 	{
-//		auto fname = "misc/test_files/France_Bretagne.svg";
-		auto fname = "misc/test_files/France_Normandie.svg";
 		_pminimFileMode = !_pminimFileMode;
 		if( _pminimFileMode )
 		{
 			tinyxml2::XMLDocument doc;
-			doc.LoadFile( fname );
+			doc.LoadFile( _region_fn.c_str() );
 			svg::Visitor visitor;
 			doc.Accept( &visitor );
 			auto v_tmp = visitor.get();
 			_vecLoaded.clear();
-			std::cout << "-loaded " << v_tmp.size() << " elements from file " << fname << '\n';
+			std::cout << "-loaded " << v_tmp.size() << " elements from file " << _region_fn << '\n';
 			for( const auto& elem: v_tmp )
 			{
 				if( type(elem) == Type::CPolyline )
@@ -2161,6 +2152,13 @@ struct Param_polyMinim : Data
 			default: assert(0);
 		}
 	}
+	void switchregions()
+	{
+		if( _region_fn == "misc/test_files/France_Bretagne.svg" )
+			_region_fn ="misc/test_files/France_Normandie.svg";
+		else
+			_region_fn ="misc/test_files/France_Bretagne.svg";
+	}
 
 	void createTrackbar();
 
@@ -2188,6 +2186,7 @@ struct Param_polyMinim : Data
 	std::vector<FRect>      _vecBB;     ///< holds the bounding boxes of the loaded polylines
 	std::vector<img::Color> _vcolors;   ///< colors for the polylines loaded from file
 	Homogr                  _scaling;
+	std::string             _region_fn = "misc/test_files/France_Normandie.svg";
 };
 
 /// Draws the parameters on first image
@@ -2228,7 +2227,6 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 //		pol.draw( data.img );
 		drawText( data.img, util::toString( pol.area(), 5 ), currPt );
 	}
-
 }
 
 /// A functor used to call the minimizing operation
@@ -2253,7 +2251,6 @@ void action_polyMinim( void* param )
 	data.clearImage();
 	data.initPolylines();
 	data.assignThreshold();
-
 	drawText( data.img2, std::string("metric=") + getString( data._pmParams._metric ),      Point2d(20,40) );
 	drawText( data.img2, std::string("SC=")     + getString( data._pmParams._stopCrit ),    Point2d(20,60) );
 	auto thres = data._pmParams._threshold;
@@ -2261,6 +2258,7 @@ void action_polyMinim( void* param )
 		thres = thres * 180. / M_PI;
 	drawText( data.img2, std::string("thres=")  + std::to_string( thres ), Point2d(20,80) );
 
+	auto pos_x_txt = data.img.cols() - 200;
 	if( data._pminimFileMode ) // if mode is "show real svg file"
 	{
 		int i=0;
@@ -2269,17 +2267,18 @@ void action_polyMinim( void* param )
 			auto color = img::DrawParams().setColor( data._vcolors[i] );
 			auto elem = transform( data._scaling, e );
 			draw( data.img, elem, color );
-			draw( data.img, std::visit( fct::BBFunct{}, elem ) );
+			draw( data.img,  std::visit( fct::BBFunct{}, elem ) );
+			draw( data.img2, std::visit( fct::BBFunct{}, elem ) );
 
 			auto nbPts1 = std::visit( fct::SizeFunct{}, e );
-			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20+i*18), color );
+			drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(pos_x_txt,20+i*18), color );
 
 			if( type(e) == Type::CPolyline )
 			{
 				CPolyline p1 = fct::VariantUnwrapper{e};
 				p1.minimize( data._pmParams );
 				draw( data.img2, transform( data._scaling, p1 ), color );
-				drawText( data.img2,  "NbPts=" + std::to_string( p1.size() ), Point2d(15,20+i*18), color );
+				drawText( data.img2,  "NbPts=" + std::to_string( p1.size() ), Point2d(pos_x_txt,20+i*18), color );
 			}
 			i++;
 		}
@@ -2301,8 +2300,8 @@ void action_polyMinim( void* param )
 
 		auto nbPts1 = std::visit( fct::SizeFunct{}, data._polySrc );
 		auto nbPts2 = std::visit( fct::SizeFunct{}, data._polyDst );
-		drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(15,20) );
-		drawText( data.img2, "NbPts=" + std::to_string( nbPts2 ), Point2d(15,20) );
+		drawText( data.img,  "NbPts=" + std::to_string( nbPts1 ), Point2d(pos_x_txt,20) );
+		drawText( data.img2, "NbPts=" + std::to_string( nbPts2 ), Point2d(pos_x_txt,20) );
 	}
 	data.showImage();
 }
@@ -2385,7 +2384,7 @@ void demo_polyMinim( int demidx )
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },   "switch metric" );
 	kbloop.addKeyAction( 'c', [&](void*){ data.switchStopCrit(); }, "switch Stop Criterion" );
-//	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },   "switch abs/rel distance threshold" );
+	kbloop.addKeyAction( 'r', [&](void*){ data.switchregions(); },  "switch Regions" );
 	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },     "switch mouse/demo file" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },          "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._plIsClosed = !data._plIsClosed; }, "switch Open/Closed (mouse mode)" );
