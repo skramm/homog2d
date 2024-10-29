@@ -5939,6 +5939,21 @@ struct PolyMinimParams
 		<< "\n -_stopCrit=" << getString(_stopCrit)
 		<< "\n---/PolyMinimParams---\n";
 	}
+	PolyMinimParams& setStopCrit( PminimStopCrit sc )
+	{
+		_stopCrit = sc;
+		return *this;
+	}
+	PolyMinimParams& setMetric( PminimMetric met )
+	{
+		_metric = met;
+		return *this;
+	}
+	PolyMinimParams& setThreshold( HOMOG2D_INUMTYPE t )
+	{
+		_metricThres = t;
+		return *this;
+	}
 };
 
 namespace base {
@@ -7385,19 +7400,13 @@ bool
 removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
 	HOMOG2D_IN;
-//	HOMOG2D_LOG( "NbRemoved=" << params._nbPtsRemoved << " psize=" << metData._vpoints.size() );
-//	metData.print();
 
 // we have to leave at least 3 points for closed, 2 for open polylines
 	if( params._nbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
 	{
-//		std::cout << "No remove!\n";
 		HOMOG2D_OUT;
 		return false;
 	}
-
-//std::cout << "current status:\n";
-//priv::printVector( metData._vecCritValue );
 
 // step 1: find element with minimal distance
 	auto minval_it = std::min_element(
@@ -7413,11 +7422,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 			return e1._value < e2._value;
 		}
 	);
-
-//	std::cout << "min element=" << *minval_it << "\n";
-
 	assert( !minval_it->_isRemoved );
-//	auto idx = std::distance( std::begin(metData._vecCritValue), minval_it );
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
@@ -7426,13 +7431,12 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 	switch( params._stopCrit )
 	{
 		case PminimStopCrit::AbsNbPoints:
-//			std::cout << "SC=SinglePoint\n";
 			if( params._nbPtsRemoved >= params._maxNbPoints )
 			{
 				HOMOG2D_OUT;
 				return false;
 			}
-			std::cout << "val=" << minval_it->_value << " thres=" << params._metricThres << '\n';
+//			std::cout << "val=" << minval_it->_value << " thres=" << params._metricThres << '\n';
 			if( minval_it->_value < params._metricThres )
 				doRemovePoint = true;
 		break;
@@ -7508,7 +7512,7 @@ generateNewSet(
 )
 {
 	HOMOG2D_IN;
-//	HOMOG2D_LOG( "initial size=" << ptSet.size()  << " nbRemoved=" << nbRemoved << " new size=" << ptSet.size() - nbRemoved );
+	HOMOG2D_LOG( "initial size=" << ptSet.size()  << " nbRemoved=" << nbRemoved << " new size=" << ptSet.size() - nbRemoved );
 
 	std::vector<Point2d_<FPT>> newvec( ptSet.size() - nbRemoved );
 	auto it = std::begin(newvec);
@@ -7522,7 +7526,7 @@ generateNewSet(
 	}
 	else
 	{
-		*it = ptSet.front(); // first point
+		*it++ = ptSet.front(); // first point
 		for( size_t i=1; i<ptSet.size()-1; i++ )
 			if( critVec.at(i-1)._isRemoved == false )
 				*it++ = ptSet[i];

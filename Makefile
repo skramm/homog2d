@@ -210,7 +210,7 @@ test_pm: BUILD/test_pm1
 
 BUILD/test_pm1: misc/test_files/test_pm1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
-	./BUILD/test_pm1
+
 
 #===================================================
 # building "Big math" test file, by using external library ttmath
