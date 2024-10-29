@@ -1010,7 +1010,7 @@ struct AreaFunct
 struct SizeFunct
 {
 	template<typename T>
-	HOMOG2D_INUMTYPE operator ()(const T& a)
+	size_t operator ()(const T& a)
 	{
 		return a.size();
 	}
@@ -5895,9 +5895,10 @@ getString( PminimStopCrit sc )
 /// \sa h2d::base::pminim
 enum class PminimMetric
 {
-	Angle, ///< angle between the two segments
+	Angle,        ///< angle between the two segments
 	TriangleArea, ///< area of triangles
-	Distance
+	AbsDistance,
+	RelDistance
 };
 
 inline
@@ -5909,7 +5910,8 @@ getString( PminimMetric met )
 	{
 		case PminimMetric::Angle:        s="Angle";    break;
 		case PminimMetric::TriangleArea: s="Area";     break;
-		case PminimMetric::Distance:     s="Distance"; break;
+		case PminimMetric::AbsDistance:  s="AbsDistance"; break;
+		case PminimMetric::RelDistance:  s="RelDistance"; break;
 		default: assert(0);
 	}
 	return s;
@@ -5920,26 +5922,20 @@ getString( PminimMetric met )
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-	HOMOG2D_INUMTYPE _maxAngle   = thr::nullAngleValue();
-	HOMOG2D_INUMTYPE _maxAbsDist = thr::nullDistance();
-	HOMOG2D_INUMTYPE _maxRelDistRatio = 0.05;
-	HOMOG2D_INUMTYPE _maxTriangleArea = 20;
-	PminimMetric     _metric = PminimMetric::Distance;   ///< The metric used for the Visvalingam algorithm
-	PminimStopCrit   _stopCrit = PminimStopCrit::NoStop; ///< stop criterion for the iterative algorithm
-	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3; ///< ratio of nb of points to remove
-	bool             _isAbsolute = false;   ///< used only for distance based metric
-	size_t           _NbPtsRemoved = 0;
+	HOMOG2D_INUMTYPE _threshold = 1.0; //
+	PminimMetric     _metric    = PminimMetric::AbsDistance; ///< The metric used for the Visvalingam algorithm
+	PminimStopCrit   _stopCrit  = PminimStopCrit::NoStop; ///< stop criterion for the iterative algorithm
+	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3;               ///< ratio of nb of points to remove
+//	bool             _isAbsolute3    = false;             ///< used only for distance based metric
+	size_t           _nbPtsRemoved   = 0;
 
-// True if polyline is closed. Needed because when computing metrics, if the polyline is open
-// with n points, then we will only have n-2 metrics to compute (and to search in).
-//	bool             _isClosed;
 	void print() const
 	{
 		std::cout << "---PolyMinimParams---"
 //		<< getString(_algo)
 		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
-		<< "\n -_maxAbsDist=" << _maxAbsDist
-		<< "\n -_isAbsolute=" << _isAbsolute
+//		<< "\n -_maxAbsDist=" << _maxAbsDist
+//		<< "\n -_isAbsolute=" << _isAbsolute3
 		<< "\n -_metric=" << getString(_metric)
 		<< "\n---/PolyMinimParams---\n";
 	}
@@ -7149,12 +7145,12 @@ struct PMetricValue
 /// value of metric of point related to segment joining the two other points.
 /// Can actually be the absolute distance value OR the ratio of distances OR
 /// the triangle area.
-	double _dist;
+	double _value;
 
 	bool   _isRemoved = false;
 	friend std::ostream& operator << ( std::ostream& f, PMetricValue val )
 	{
-		f << '(' << val._dist << ',' << val._isRemoved << ")";
+		f << '(' << val._value << ',' << val._isRemoved << ")";
 		return f;
 	}
 };
@@ -7171,10 +7167,9 @@ struct TriangleMetrics
 - if "closed", will have the same size as the polyline
 - if "open", will have size n-2 (because we don't need tha values for first and last point, as these will stay there
 */
-	std::vector<PMetricValue>        _vecCritValue; ///< holds the metric values. \warning Will not have the same size if polyline is open or closed
-	bool                             _isAbsolute2 = false;
+	std::vector<PMetricValue>        _vecCritValue;
+//	bool                             _isAbsolute2 = false;
 	PminimMetric                     _metric2;
-	bool                             _isClosed; ///< needed when recomputing a metric value
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
 	size_t              _lastOneRemoved=0;
@@ -7207,10 +7202,10 @@ which is indeed the index of the point two points before the first one.
 		const std::vector<Point2d_<FP>>& vpoints,
 		const PolyMinimParams&           params,
 		bool                             isClosed
-	): _vpoints(vpoints), _isClosed( isClosed )
+	): _vpoints(vpoints)
 	{
 		_metric2     = params._metric;
-		_isAbsolute2 = params._isAbsolute;
+//		_isAbsolute2 = params._isAbsolute;
 		_vecCritValue.resize( isClosed ? vpoints.size() : vpoints.size()-2 );
 
 		auto s = _vpoints.size();
@@ -7282,13 +7277,26 @@ TriangleMetrics<FP>::computeMetric(
 
 	switch( _metric2 )
 	{ /// \todo 20240821: fix the issue when point is "outside" the segment
-		case PminimMetric::Distance:
+		case PminimMetric::AbsDistance:
+		{
+			auto seg = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
+			_vecCritValue.at(idxm)._value = p0.distTo( seg.getLine() );
+		}
+		break;
+
+		case PminimMetric::RelDistance:
 		{
 			auto seg = Segment_<HOMOG2D_INUMTYPE>( pt_bef, pt_aft );
 			auto h   = p0.distTo( seg.getLine() );
-			_vecCritValue.at(idxm)._dist = ( _isAbsolute2 ? h : h/seg.length() );
+			_vecCritValue.at(idxm)._value = h/seg.length();
 		}
 		break;
+
+/** \todo 20241029: This uses atan2 instead of atan,
+(see https://stackoverflow.com/a/12011762/193789 for details)
+but is this really needed?
+*/
+/// \todo 20241029:  adapt to "big numbers"
 
 		case PminimMetric::Angle:
 		{
@@ -7298,7 +7306,7 @@ TriangleMetrics<FP>::computeMetric(
 			auto vy2 = p0.getY() - pt_bef.getY();
 			auto a1 = std::atan2( vx1, vy1 );
 			auto a2 = std::atan2( vx2, vy2 );
-			_vecCritValue.at(idxm)._dist = homog2d_abs(a1-a2);
+			_vecCritValue.at(idxm)._value = homog2d_abs(a1-a2);
 		}
 		break;
 
@@ -7317,14 +7325,14 @@ TriangleMetrics<FP>::computeMetric(
 			mat.value(2,2) = 1.;
 
 			HOMOG2D_LOG( " area=" << mat.determ() );
-			_vecCritValue.at(idxm)._dist = homog2d_abs( mat.determ() );
+			_vecCritValue.at(idxm)._value = homog2d_abs( mat.determ() );
 		}
 		break;
 
 		default: assert(0);
 	}
 
-//	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._dist );
+//	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._value );
 	HOMOG2D_OUT;
 }
 
@@ -7356,7 +7364,7 @@ computeMetrics(
 //	params.print();
 	TriangleMetrics<FP> out( plinevec, params, isClosed );
 
-	out._isAbsolute2 = params._isAbsolute;
+//	out._isAbsolute2 = params._isAbsolute;
 	auto si = plinevec.size();
 
 	if( isClosed )
@@ -7382,11 +7390,11 @@ bool
 removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
 	HOMOG2D_IN;
-//	HOMOG2D_LOG( "NbRemoved=" << params._NbPtsRemoved << " psize=" << metData._vpoints.size() );
+//	HOMOG2D_LOG( "NbRemoved=" << params._nbPtsRemoved << " psize=" << metData._vpoints.size() );
 //	metData.print();
 
 // we have to leave at least 3 points for closed, 2 for open polylines
-	if( params._NbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
+	if( params._nbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
 	{
 //		std::cout << "No remove!\n";
 		HOMOG2D_OUT;
@@ -7407,29 +7415,23 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 				return false;
 			if( e2._isRemoved )
 				return true;
-			return e1._dist < e2._dist;
+			return e1._value < e2._value;
 		}
 	);
 
+//	std::cout << "min element=" << *minval_it << "\n";
 
-/*	std::cout << "min element=" << *minval_it << "\n";
-	std::cout << "min element="
-		<< std::distance(std::begin(metData._vecCritValue), minval_it)
-		<< ", dist value=" << minval_it->_dist
-		<< " Abs thres=" << params._maxAbsDist
-		<< " Rel thres=" << params._maxRelDistRatio
-		<< " angle thres=" << params._maxAngle*180./M_PI
-		<< '\n';*/
 	assert( !minval_it->_isRemoved );
+//	auto idx = std::distance( std::begin(metData._vecCritValue), minval_it );
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
-	HOMOG2D_LOG( "NbPtsRemoved="<< params._NbPtsRemoved );
+	HOMOG2D_LOG( "NbPtsRemoved="<< params._nbPtsRemoved );
 	switch( params._stopCrit )
 	{
 		case PminimStopCrit::SinglePoint:
 //			std::cout << "SC=SinglePoint\n";
-			if( params._NbPtsRemoved > 0 )
+			if( params._nbPtsRemoved > 0 )
 			{
 				HOMOG2D_OUT;
 				return false;
@@ -7449,12 +7451,14 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 			}
 		break;*/
 		case PminimStopCrit::NbPtsRatio:
-			std::cout << "SC=NbPtsRatio\n";
-			if( 1.0*metData._vecCritValue.size()/params._NbPtsRemoved > params._ptRemovalRatio )
-				doRemovePoint = true;
+			HOMOG2D_LOG( "SC=NbPtsRatio, thres=\n" << params._ptRemovalRatio );
+			if( 1.0*metData._vecCritValue.size()/params._nbPtsRemoved > params._ptRemovalRatio )
+				if( minval_it->_value > params._threshold )
+					doRemovePoint = true;
 		break;
 		case PminimStopCrit::NoStop:
-			doRemovePoint = true;
+			if( minval_it->_value > params._threshold )
+				doRemovePoint = true;
 		break;
 		default: assert(0);
 	}
@@ -7470,11 +7474,11 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
 		minval_it->_isRemoved = true;
 		metData._lastOneRemoved = std::distance( std::begin(metData._vecCritValue), minval_it );
-		params._NbPtsRemoved++;
+		params._nbPtsRemoved++;
 		HOMOG2D_LOG( "tag metric "
 			<< metData._lastOneRemoved
 			<< " as removed, total="
-			<< params._NbPtsRemoved );
+			<< params._nbPtsRemoved );
 		HOMOG2D_OUT;
 		return true;
 	}
@@ -7491,27 +7495,6 @@ We need to compute theses distances:
 - for points n-1: distance between point n-2 and n+1, and the distance between that segment and point n-1
 - for points n+1: distance between point n-1 and n+2, and the distance between that segment and point n+1
 */
-#if 0
-template<typename FP>
-void
-TriangleMetrics<FP>::recomputeMetrics()
-{
-	HOMOG2D_IN;
-//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
-	if( _isClosed )
-	{
-		computeMetric( _lastOneRemoved, _lastOneRemoved, -2, +1 );
-		computeMetric( _lastOneRemoved, _lastOneRemoved, -1, +2 );
-	}
-	else
-	{
-		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -2, +1 );
-		computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
-	}
-	HOMOG2D_OUT;
-}
-#else
-
 template<typename FP>
 void
 TriangleMetrics<FP>::recomputeMetrics( typ::IsClosed )
@@ -7533,7 +7516,6 @@ TriangleMetrics<FP>::recomputeMetrics( typ::IsOpen )
 	computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
 	HOMOG2D_OUT;
 }
-#endif
 
 /// Generates the final new set of points
 template<typename PTYPE,typename FPT>
@@ -7598,11 +7580,11 @@ PolylineBase<PLT,FPT>::minimize(
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 		distances.recomputeMetrics( PLT() );
 
-//	HOMOG2D_LOG( "removed " << params._NbPtsRemoved << " pts" );
+//	HOMOG2D_LOG( "removed " << params._nbPtsRemoved << " pts" );
 //	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
 
 // step 3: replace original points vector with the new one
-	_plinevec = pminim::generateNewSet<PolylineBase<PLT,FPT>,FPT>( _plinevec, distances._vecCritValue, params._NbPtsRemoved );
+	_plinevec = pminim::generateNewSet<PolylineBase<PLT,FPT>,FPT>( _plinevec, distances._vecCritValue, params._nbPtsRemoved );
 	HOMOG2D_OUT;
 }
 

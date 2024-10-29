@@ -2069,14 +2069,17 @@ struct Param_polyMinim : Data
 	{
 		switch( _pmParams._metric )
 		{
-			case PminimMetric::Distance:
+			case PminimMetric::AbsDistance:
+				_pmParams._metric = PminimMetric::RelDistance;
+			break;
+			case PminimMetric::RelDistance:
 				_pmParams._metric = PminimMetric::Angle;
 			break;
 			case PminimMetric::Angle:
 				_pmParams._metric = PminimMetric::TriangleArea;
 			break;
 			case PminimMetric::TriangleArea:
-				_pmParams._metric = PminimMetric::Distance;
+				_pmParams._metric = PminimMetric::AbsDistance;
 			break;
 			default: assert(0);
 		}
@@ -2084,12 +2087,12 @@ struct Param_polyMinim : Data
 		createWindows();
 	}
 
-	void switchAbsRel()
+/*	void switchAbsRel()
 	{
-		_pmParams._isAbsolute = !_pmParams._isAbsolute;
-		std::cout << "distance mode=" << (_pmParams._isAbsolute?"Absolute\n":"Relative\n");
+//		_pmParams._isAbsolute4 = !_pmParams._isAbsolute3;
+//		std::cout << "distance mode=" << (_pmParams._isAbsolute4?"Absolute\n":"Relative\n");
 		createWindows();
-	}
+	}*/
 
 	void switchMode()
 	{
@@ -2139,6 +2142,26 @@ struct Param_polyMinim : Data
 			_scaling = Homogr().addTranslation(tx,ty).addScale( scale );
 		}
 	}
+	void assignThreshold()
+	{
+		switch( _pmParams._metric )
+		{
+			case PminimMetric::Angle:
+				_pmParams._threshold = _maxAngle;
+			break;
+			case PminimMetric::TriangleArea:
+				_pmParams._threshold = _maxTriangleArea;
+			break;
+			case PminimMetric::AbsDistance:
+				_pmParams._threshold = _maxAbsDist;
+			break;
+			case PminimMetric::RelDistance:
+				_pmParams._threshold = _maxRelDistRatio;
+			break;
+			default: assert(0);
+		}
+	}
+
 	void createTrackbar();
 
 	using VarPoly = std::variant<CPolyline,OPolyline>;
@@ -2149,6 +2172,12 @@ struct Param_polyMinim : Data
 
 	bool _plIsClosed     = true;  ///< show open or closed polyline in window
 	bool _pminimFileMode = false; ///< either load a svg file holding some polylines, or use the mouse to draw a polyline
+
+	double _maxAngle        = 5./180.*M_PI;
+	double _maxAbsDist      = 5.0;
+	double _maxRelDistRatio = 0.05;
+	double _maxTriangleArea = 20; // square pixel
+
 
 	PolyMinimParams _pmParams;   ///< minimization algorithm parameters
 	ProxyTrackBar   _proxyTB;    ///< a proxy used for the TrackBar (needed because only ints are allowed in TrackBars)
@@ -2175,7 +2204,7 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 		auto angle = 180. /M_PI * getAngle( currPt*ptNext, currPt*ptPrevious );
 		drawText( data.img, util::toString( angle, 4 )+"deg", currPt );
 	}
-	if( data._pmParams._metric == PminimMetric::Distance )
+	if( data._pmParams._metric == PminimMetric::AbsDistance )
 		try  // try/catch is needed because at some point, the computation of segment might throw in demo
 		{
 			segPN.draw( data.img );
@@ -2185,10 +2214,10 @@ void drawAlgoParams( int idx, Param_polyMinim& data )
 			if( pt_int == currPt )
 				pt_int = oseg_pts.second;
 			orthogSeg.draw( data.img );
-			if( data._pmParams._isAbsolute )
+//			if( data._pmParams. = PminimMetric::AbsDistance )
 				drawText( data.img, util::toString( orthogSeg.length(), 3 ), pt_int );
-			else
-				drawText( data.img, util::toString( orthogSeg.length()/segPN.length(), 4 ), pt_int );
+//			else
+//				drawText( data.img, util::toString( orthogSeg.length()/segPN.length(), 4 ), pt_int );
 		}
 		catch(...){}
 	if( data._pmParams._metric == PminimMetric::TriangleArea )
@@ -2216,18 +2245,6 @@ struct PolyMinimFunct
 	const PolyMinimParams& _params;
 };
 
-#if 0
-/// A functor used to get the number of points
-struct NbPts
-{
-	template<typename T>
-	size_t operator ()(const T& poly)
-	{
-		return poly.size();
-	}
-};
-#endif
-
 /// Called both by the mouse callback and by the trackbar callback
 void action_polyMinim( void* param )
 {
@@ -2235,6 +2252,14 @@ void action_polyMinim( void* param )
 
 	data.clearImage();
 	data.initPolylines();
+	data.assignThreshold();
+
+	drawText( data.img2, std::string("metric=") + getString( data._pmParams._metric ),      Point2d(20,40) );
+	drawText( data.img2, std::string("SC=")     + getString( data._pmParams._stopCrit ),    Point2d(20,60) );
+	auto thres = data._pmParams._threshold;
+	if( data._pmParams._metric == PminimMetric::Angle )
+		thres = thres * 180. / M_PI;
+	drawText( data.img2, std::string("thres=")  + std::to_string( thres ), Point2d(20,80) );
 
 	if( data._pminimFileMode ) // if mode is "show real svg file"
 	{
@@ -2291,19 +2316,23 @@ void trackbarCallback( int val, void* param )
 	switch( data._pmParams._metric )
 	{
 		case PminimMetric::Angle:
-			data._pmParams._maxAngle = M_PI/180.*val/10.;
-			std::cout << "angle thres=" << data._pmParams._maxAngle * 180. / M_PI << " deg.\n";
+			data._maxAngle = M_PI/180.*val/10.;
+			std::cout << "angle thres=" << data._maxAngle * 180. / M_PI << " deg.\n";
 		break;
-		case PminimMetric::Distance:
-			if( data._pmParams._isAbsolute )
-				data._pmParams._maxAbsDist = val;
-			else
-				data._pmParams._maxRelDistRatio = 1.0*val/100;
-			std::cout << "distance thres=" << (data._pmParams._isAbsolute ? val :  1.0*val/100 ) << '\n';
+		case PminimMetric::AbsDistance:
+			data._maxAbsDist = val;
+			std::cout << "Abs distance thres=" << val << '\n';
 		break;
+
+		case PminimMetric::RelDistance:
+			data._maxRelDistRatio = 1.0*val/100;
+			std::cout << "Rel distance thres=" << 1.0*val/100 << '\n';
+		break;
+
+
 		case PminimMetric::TriangleArea:
-			data._pmParams._maxTriangleArea = val;
-			std::cout << "area thres=" << data._pmParams._maxTriangleArea << '\n';
+			data._maxTriangleArea = val;
+			std::cout << "area thres=" << data._maxTriangleArea << '\n';
 		break;
 		default:
 			std::cout << "no handling of trackbar value!\n";
@@ -2319,30 +2348,29 @@ void Param_polyMinim::createTrackbar()
 	{
 		case PminimMetric::Angle:
 			_proxyTB.slider_max = 50; // degrees*10
-			_proxyTB.slider = (int)(_pmParams._maxAngle * 180. / M_PI);
+			_proxyTB.slider = (int)(_maxAngle * 180. / M_PI);
 			tbName = "Angle (deg*10)";
 		break;
 
 		case PminimMetric::TriangleArea:
 			_proxyTB.slider_max = 30; // square pixel
-			_proxyTB.slider = (int)(_pmParams._maxTriangleArea );
+			_proxyTB.slider = (int)(_maxTriangleArea );
 			tbName = "Triangle area";
 		break;
 
-		case PminimMetric::Distance:
-			if( _pmParams._isAbsolute)
-			{
-				_proxyTB.slider_max = 20; // pixels
-				_proxyTB.slider = (int)_pmParams._maxAbsDist;
-				tbName = "Max dist";
-			}
-			else
-			{
-				_proxyTB.slider_max = 50; // % of the segment length
-				_proxyTB.slider = (int)(_pmParams._maxRelDistRatio*100);
-				tbName = "Dist ratio";
-			}
+		case PminimMetric::AbsDistance:
+			_proxyTB.slider_max = 20; // pixels
+			_proxyTB.slider = (int)_maxAbsDist;
+			tbName = "Max Abs dist";
 		break;
+
+		case PminimMetric::RelDistance:
+			_proxyTB.slider_max = 50; // % of the segment length
+			_proxyTB.slider = (int)(_maxRelDistRatio*100);
+			tbName = "rel Dist ratio";
+		break;
+
+
 		default: assert(0);
 	}
 	cv::createTrackbar( tbName, win2, &_proxyTB.slider, _proxyTB.slider_max, &trackbarCallback, (void*)(this) );
@@ -2357,7 +2385,7 @@ void demo_polyMinim( int demidx )
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data.switchMetric(); },   "switch metric" );
 	kbloop.addKeyAction( 'c', [&](void*){ data.switchStopCrit(); }, "switch Stop Criterion" );
-	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },   "switch abs/rel distance threshold" );
+//	kbloop.addKeyAction( 'd', [&](void*){ data.switchAbsRel(); },   "switch abs/rel distance threshold" );
 	kbloop.addKeyAction( 'l', [&](void*){ data.switchMode(); },     "switch mouse/demo file" );
 	kbloop.addKeyAction( 'w', [&](void*){ data.reset(); },          "reset polyline" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._plIsClosed = !data._plIsClosed; }, "switch Open/Closed (mouse mode)" );
