@@ -281,6 +281,7 @@ inline size_t& warningCount()
 } //namespace err
 
 //------------------------------------------------------------------
+/// Holds miscellaneous stuff...
 namespace util {
 
 std::string toString( double val, int prec )
@@ -5864,14 +5865,14 @@ enum class PminimStopCrit {
 /// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
 /// \sa PolyMinimParams::_ptRemovalRatio
 	NbPtsRatio,
-/*
-/// Stop iterating when the ratio of distance between considered point and segment joining the two other points is reached
-/// (uses the _maxRelDistRatio value)
-	DistRatio,*/
+
 /// No stop, goes all the way until no more points meet the requirements
 	NoStop,
-/// No iterating, remove a single point (the one with smallest value for the considered metric)
-	SinglePoint
+
+/// Stop iterating when a given nb of points was removed
+/// \sa  PolyMinimParams::_maxNbPoints
+	AbsNbPoints
+
 };
 
 inline
@@ -5883,7 +5884,7 @@ getString( PminimStopCrit sc )
 	{
 		case PminimStopCrit::NbPtsRatio:  s = "PointsRatio"; break;
 		case PminimStopCrit::NoStop:      s = "NoStop";      break;
-		case PminimStopCrit::SinglePoint: s = "SinglePoint"; break;
+		case PminimStopCrit::AbsNbPoints: s = "AbsNbPoints"; break;
 		default: assert(0);
 	}
 	return s;
@@ -5922,11 +5923,12 @@ getString( PminimMetric met )
 /// Parameters for the base::PolylineBase::minimize() function
 struct PolyMinimParams
 {
-	HOMOG2D_INUMTYPE _threshold = 1.0; //
+	HOMOG2D_INUMTYPE _metricThres = 1.0; //
 	PminimMetric     _metric    = PminimMetric::AbsDistance; ///< The metric used for the Visvalingam algorithm
-	PminimStopCrit   _stopCrit  = PminimStopCrit::NoStop; ///< stop criterion for the iterative algorithm
-	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3;               ///< ratio of nb of points to remove
-	size_t           _nbPtsRemoved   = 0;
+	PminimStopCrit   _stopCrit  = PminimStopCrit::NoStop;    ///< Stop criterion for the iterative algorithm
+	HOMOG2D_INUMTYPE _ptRemovalRatio = 0.3;                  ///< Ratio of nb of points to remove
+	size_t           _maxNbPoints    = 1;                    ///< Max number of point to remove
+	size_t           _nbPtsRemoved   = 0;                    ///< Nb of points that were removed
 
 	void print() const
 	{
@@ -7137,7 +7139,7 @@ namespace pminim {
 
 //------------------------------------------------------------------
 /// Type used for polyline minimization, holds (for each point)
-/// the metric value used to determine if point is to be removed or not
+/// the metric value used to determine if point is to be removed or not, and a flag
 struct PMetricValue
 {
 /// value of metric of point related to segment joining the two other points.
@@ -7419,44 +7421,30 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
+
 	HOMOG2D_LOG( "NbPtsRemoved="<< params._nbPtsRemoved );
 	switch( params._stopCrit )
 	{
-		case PminimStopCrit::SinglePoint:
+		case PminimStopCrit::AbsNbPoints:
 //			std::cout << "SC=SinglePoint\n";
-			if( params._nbPtsRemoved > 0 )
+			if( params._nbPtsRemoved >= params._maxNbPoints )
 			{
 				HOMOG2D_OUT;
 				return false;
 			}
-			else
-			{
-				std::cout << "val=" << minval_it->_value << " thres=" << params._threshold << '\n';
-				if( minval_it->_value < params._threshold )
-					doRemovePoint = true;
-			}
+			std::cout << "val=" << minval_it->_value << " thres=" << params._metricThres << '\n';
+			if( minval_it->_value < params._metricThres )
+				doRemovePoint = true;
 		break;
-/*		case PminimStopCrit::DistRatio:
-			std::cout << "SC=DistRatio\n";
-			if( params._isAbsolute )
-			{
-				if( minval_it->_dist < params._maxAbsDist )
-					doRemovePoint = true;
-			}
-			else
-			{
-				if( minval_it->_dist < params._maxRelDistRatio )
-					doRemovePoint = true;
-			}
-		break;*/
+
 		case PminimStopCrit::NbPtsRatio:
-			HOMOG2D_LOG( "SC=NbPtsRatio, thres=\n" << params._ptRemovalRatio );
-			if( 1.0*metData._vecCritValue.size()/params._nbPtsRemoved > params._ptRemovalRatio )
-				if( minval_it->_value < params._threshold )
+			if( 1.0*params._nbPtsRemoved / metData._vecCritValue.size() < params._ptRemovalRatio )
+				if( minval_it->_value < params._metricThres )
 					doRemovePoint = true;
 		break;
+
 		case PminimStopCrit::NoStop:
-			if( minval_it->_value < params._threshold )
+			if( minval_it->_value < params._metricThres )
 				doRemovePoint = true;
 		break;
 		default: assert(0);
@@ -7464,12 +7452,6 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 
 	if( doRemovePoint )
 	{
-// TMP
-		if( minval_it->_isRemoved == true ) // else, mean we fucked up somewhere
-		{
-			std::cout << "FAIL!!!!!!!!!!!!!!!!!!!\n";
-		}
-// /TMP
 		assert( minval_it->_isRemoved == false ); // else, mean we fucked up somewhere
 		minval_it->_isRemoved = true;
 		metData._lastOneRemoved = std::distance( std::begin(metData._vecCritValue), minval_it );
