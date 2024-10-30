@@ -86,6 +86,9 @@
 		<Unit filename="figures_test/frect_intersect_11.code" />
 		<Unit filename="figures_test/frect_intersect_12.code" />
 		<Unit filename="figures_test/frect_intersect_13.code" />
+		<Unit filename="figures_test/frect_intersect_14a.code" />
+		<Unit filename="figures_test/frect_intersect_14b.code" />
+		<Unit filename="figures_test/frect_intersect_14c.code" />
 		<Unit filename="figures_test/frect_intersect_2.code" />
 		<Unit filename="figures_test/frect_intersect_3.code" />
 		<Unit filename="figures_test/frect_intersect_4.code" />

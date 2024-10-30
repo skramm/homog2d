@@ -1,0 +1,5 @@
+
+	FRect_<NUMTYPE> r1(0,0,2,2);
+	FRect_<NUMTYPE> r2(1,0,3,2);
+
+
