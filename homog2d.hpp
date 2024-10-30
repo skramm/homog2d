@@ -106,13 +106,21 @@ See https://github.com/skramm/homog2d
 */
 
 #ifdef HOMOG2D_DEBUGMODE
-	#define HOMOG2D_IN std::cout << getTab(++tabcount) << "IN: line:" << __LINE__ \
-		<< " func=" << __FUNCTION__ << "\n"
-	#define HOMOG2D_OUT std::cout << getTab(tabcount--) << "OUT: line:" << __LINE__ \
-		<< " func=" << __FUNCTION__ << "\n"
+	#define HOMOG2D_IN \
+		std::cout << getTab(++tabcount) << "IN: line:" << __LINE__ \
+			<< " func=" << __FUNCTION__ << "\n"
+	#define HOMOG2D_OUT \
+		std::cout << getTab(tabcount--) << "OUT: line:" << __LINE__ \
+			<< " func=" << __FUNCTION__ << "\n"
+	#define HOMOG2D_PRINTV(a,b) \
+		{ \
+			std::cout << "Vector: (line:" << __LINE__ << " func=" << __FUNCTION__ << "() )\n"; \
+			priv::printVector( a, b ); \
+		}
 #else
 	#define HOMOG2D_IN
 	#define HOMOG2D_OUT
+	#define HOMOG2D_PRINTV(a,b)
 #endif
 
 #ifdef HOMOG2D_DEBUGMODE
@@ -245,6 +253,7 @@ See https://github.com/skramm/homog2d
 
 #ifdef HOMOG2D_DEBUGMODE
 	static int tabcount = 0;
+	inline
 	std::string getTab(int nb)
 	{
 		std::ostringstream oss;
@@ -7205,10 +7214,11 @@ struct TriangleMetrics
 - if "closed", will have the same size as the polyline
 - if "open", will have size n-2 (because we don't need tha values for first and last point, as these will stay there
 */
-	std::vector<PMetricValue>        _vecCritValue;
-	PminimMetric                     _metric2;
+	std::vector<PMetricValue> _vecCritValue;
+	PminimMetric              _metric2;
 
 /// Index on the last point that was removed, needed so we can recompute the distances afterwards
+/// \warning: this index points on the \c _vecCritValue vector, so if "open" polyline, 0 means points with index 1
 	size_t              _lastOneRemoved=0;
 
 /// For closed polylines , this array holds the index values of the "special cases" that need to be considered when fetching points to compute distances.
@@ -7310,7 +7320,14 @@ TriangleMetrics<FP>::computeMetric(
 	auto pt_bef = _vpoints.at( getIndex( idxp, before ) );
 	auto pt_aft = _vpoints.at( getIndex( idxp, after  ) );
 	auto p0     = _vpoints.at(idxp);
+	HOMOG2D_LOG( "p0=" << p0 << " idxp=" << idxp << " idxm=" << idxm << " before=" << before << " after=" << after );
 
+	if( pt_bef == pt_aft )
+	{
+		HOMOG2D_OUT;
+		return;
+	}
+	HOMOG2D_DEBUG_ASSERT( pt_bef != pt_aft, pt_bef );
 	switch( _metric2 )
 	{ /// \todo 20240821: fix the issue when point is "outside" the segment
 		case PminimMetric::AbsDistance:
@@ -7400,6 +7417,9 @@ computeMetrics(
 	TriangleMetrics<FP> out( plinevec, params, isClosed );
 	auto si = plinevec.size();
 
+	HOMOG2D_LOG( "isClosed=" << isClosed );
+	HOMOG2D_PRINTV( plinevec, "plinevec" );
+
 	if( isClosed )
 		for( size_t i=0; i<si; i++ )
 			out.computeMetric( i, i, -1, +1 );
@@ -7420,12 +7440,13 @@ computeMetrics(
 */
 template<typename FP>
 bool
-removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
+removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool /* isClosed */ )
 {
 	HOMOG2D_IN;
 
 // we have to leave at least 3 points for closed, 2 for open polylines
-	if( params._nbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
+//	if( params._nbPtsRemoved >= (isClosed ? metData._vpoints.size()-3 : metData._vpoints.size()-2) )
+	if( params._nbPtsRemoved >= metData._vpoints.size()-2 )
 	{
 		HOMOG2D_OUT;
 		return false;
@@ -7508,18 +7529,27 @@ void
 TriangleMetrics<FP>::recomputeMetrics( typ::IsClosed )
 {
 	HOMOG2D_IN;
-//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
 	computeMetric( _lastOneRemoved, _lastOneRemoved, -2, +1 );
 	computeMetric( _lastOneRemoved, _lastOneRemoved, -1, +2 );
 	HOMOG2D_OUT;
 }
 
+/// Overload for open polyline
 template<typename FP>
 void
 TriangleMetrics<FP>::recomputeMetrics( typ::IsOpen )
 {
 	HOMOG2D_IN;
-//	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	HOMOG2D_LOG( "recomputes distances for idx = " << _lastOneRemoved );
+	HOMOG2D_LOG( "_vecCritValue size=" << _vecCritValue.size() );
+
+	if( _lastOneRemoved == 0 || _lastOneRemoved == _vecCritValue.size()-1 )
+	{
+		HOMOG2D_OUT;   // no need to recompute anything
+		return;
+	}
+
 	computeMetric( _lastOneRemoved+1, _lastOneRemoved, -2, +1 );
 	computeMetric( _lastOneRemoved+1, _lastOneRemoved, -1, +2 );
 	HOMOG2D_OUT;
@@ -7575,7 +7605,8 @@ PolylineBase<PLT,FPT>::minimize(
 {
 	HOMOG2D_IN;
 
-	if( size() < (isClosed()?4:3) ) // nothing to do
+//	if( size() < (isClosed()?4:3) ) // nothing to do
+	if( size() < 3 ) // nothing to do
 	{
 		HOMOG2D_OUT;
 		return;
@@ -8327,7 +8358,9 @@ FRect_<FPT>::unionArea( const FRect_<FPT2>& other ) const
 
 // step 4: convert back vector of coordinates indexes into vector of coordinates
 	auto res1 = convertToCoord( vpts, vx, vy );
+	HOMOG2D_LOG( "res1 BEFORE=" << res1 );
 	res1.minimize(); // remove unecessary points
+	HOMOG2D_LOG( "res1 AFTER=" << res1 );
 	return res1;
 }
 
@@ -10628,6 +10661,8 @@ auto
 getBB( const T1& elem1, const T2& elem2 )
 {
 	HOMOG2D_IN;
+//	HOMOG2D_LOG( "T1=" << typeid(T1).name() );
+//	HOMOG2D_LOG( "T2=" << typeid(T2).name() );
 	FRect_<typename T1::FType> out;
 	try
 	{

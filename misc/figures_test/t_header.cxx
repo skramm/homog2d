@@ -13,6 +13,6 @@ int main( int, const char** argv )
 {
 	img::Image<img::SvgImage> img2(350,400);
 
-//#ifdef HOMOG2D_DEBUGMODE
-//	std::cout << "file: " << __FILE__ << '\n';
-//#endif
+#ifdef HOMOG2D_DEBUGMODE
+	std::cout << "file: " << __FILE__ << '\n';
+#endif

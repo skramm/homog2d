@@ -34,6 +34,19 @@ It also holds some tests that are only related to the SVG import feature, that r
 the \c tinyxml2 library, and that the symbol HOMOG2D_USE_SVG_IMPORT is defined.
 <br>
 Run with <code>$ make test USE_TINYXML2=Y</code>
+
+Some lines hold something like:
+\code
+#include "figures_test/...
+\endcode
+
+This means that the objects creation are in a separate file.
+This allows using the same definition both for the test and to make a graphical rendering.
+
+To generate that rendering, type:
+\code
+$ make test_fig
+\endcode
 */
 
 /// see test [gen_bind]
@@ -1988,14 +2001,29 @@ TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 
 TEST_CASE( "IoU of 2 rectangles", "[IOU_RECT]" )
 {
-	FRect_<NUMTYPE> r1( 0,0,1,1 );
-	FRect_<NUMTYPE> r2( 2,2,3,3 );
-	CHECK( IoU(r1,r2) == 0. );
-	r1.set(0,0,2,2);
-	CHECK( IoU(r1,r2) == 0. );
+	{
+		#include "figures_test/frect_intersect_14a.code"
+		CHECK( IoU(r1,r2) == 0. );
+	}
 
-	r2.set(1,0,3,2);
+	{
+		#include "figures_test/frect_intersect_14b.code"
+		CHECK( IoU(r1,r2) == 0. );
+	}
+	{
+		#include "figures_test/frect_intersect_14c.code"
+		std::cout << "r1=" << r1 << " r2=" << r2 << '\n';
+//tmp
+	CHECK( r1.area() == 4. );
+	CHECK( r2.area() == 4. );
+	CHECK( unionArea( r1,r2).area() == 6 );
+	auto ia = intersectArea( r1, r2 );
+	CHECK( ia() == true );
+	CHECK( ia.get().area() == 2. );
+// \tmp
+
 	CHECK( IoU(r1,r2) == Approx(1./3.) );
+	}
 }
 
 TEST_CASE( "Circle/Segment intersection", "[int_CS]" )

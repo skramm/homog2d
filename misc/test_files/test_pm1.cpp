@@ -10,6 +10,8 @@ build with: $ make test_pm
 using namespace h2d;
 int main()
 {
+#if 0
+	{
 	std::vector<Point2d> v1{
 		Point2d( 5,0),
 		Point2d( 10,1),
@@ -35,4 +37,31 @@ int main()
 	poly_c.minimize();
 	std::cout << "\n AFTER poly_c size=" << poly_c.size() << '\n';
 	std::cout << poly_c << '\n';
+	}
+	{
+		FRect r1(0,0,2,2);
+		CPolyline p1(r1);
+		p1.minimize();
+		std::cout << "p1=" << p1 << "\n";
+	}
+
+	{
+		CPolyline pl(
+			std::vector<Point2d>{
+				{0,1},{1,1},{2,1}
+			}
+		);
+		pl.minimize();
+		std::cout << "pl=" << pl << "\n";
+	}
+#endif
+	{
+		CPolyline pl(
+			std::vector<Point2d>{
+				{0,1},{1,1},{3,2}
+			}
+		);
+		pl.minimize();
+		std::cout << "pl=" << pl << "\n";
+	}
 }
