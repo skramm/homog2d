@@ -3128,18 +3128,22 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 	}
 }
 
-
-TEST_CASE( "Polyline minimization", "[polyline-min-1]" )
+// Initial tests, before implementing Visvalingam algorithm
+TEST_CASE( "Polyline minimization-1", "[polyline-min-1]" )
 {
-	INFO( "Polyline pl2( IsClosed::No" );
+	INFO( "Polyline pl2( IsClosed::No )" );
 	{
 #include "figures_test/polyline_min_1O.code" // open
-
+		OPolyline pl2=pl;
 		CHECK( pl.size() == 3 );
 		CHECK( pl.nbSegs() == 2 );
 		pl.minimize();
 		CHECK( pl.size() == 2 );
 		CHECK( pl.nbSegs() == 1 );
+
+/*		minimize( pl2 );               // this is to test the free function
+		CHECK( pl2.size() == 2 );
+		CHECK( pl2.nbSegs() == 1 );*/
 	}
 	{
 #include "figures_test/polyline_min_1C.code"  // closed
@@ -3717,10 +3721,9 @@ TEST_CASE( "Polyline comparison 2", "[polyline-comp-2]" )
 	}
 }
 
-TEST_CASE( "polyline minimization 2", "[polyline-min-2]" )
+template<typename FPT>
+void polyline_min2_helper( const base::pminim::TriangleMetrics<FPT>& pmd )
 {
-	std::vector<Point2d> vec{ Point2d(0,0), Point2d(1,0), Point2d(0,1), Point2d(4,3) }; // 4 points
-	base::pminim::TriangleMetrics pmd( vec );
 	CHECK( pmd.getIndex(0,+1) == 1 );
 	CHECK( pmd.getIndex(0,+2) == 2 );
 	CHECK( pmd.getIndex(1,+1) == 2 );
@@ -3738,6 +3741,18 @@ TEST_CASE( "polyline minimization 2", "[polyline-min-2]" )
 	CHECK( pmd.getIndex(1,-2) == 3 );
 	CHECK( pmd.getIndex(0,-1) == 3 );
 	CHECK( pmd.getIndex(0,-2) == 2 );
+}
+
+// FP type does not matter here, we only test the index stuff
+TEST_CASE( "polyline minimization 2", "[polyline-min-2]" )
+{
+	std::vector<Point2d> vec{ Point2d(0,0), Point2d(1,0), Point2d(0,1), Point2d(4,3) }; // 4 points
+	PolyMinimParams params;
+
+	base::pminim::TriangleMetrics<double> pmd1( vec, params, true );
+	polyline_min2_helper( pmd1 );
+	base::pminim::TriangleMetrics<double> pmd2( vec, params, true );
+	polyline_min2_helper( pmd2 );
 }
 
 

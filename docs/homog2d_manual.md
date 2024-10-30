@@ -1036,8 +1036,27 @@ The minimum value for `nb` is 3 (will generate an equilateral triangle), the fun
 
 #### 3.4.12 - Simplifying polyline objects
 
+The member (or free) function `minimize()` can be used to simplify polylines, open or closed types.
+It uses several techniques, all based on the "Visvalingam & Whyatt" algorithm.
+Defaults parameters are enabled, but you will probably need to set these to your specific problem.
+This is done by passing an object
+
+It uses an object of type `PolyMinimParams`:
+
+```
+CPolyline p;
+// ... assign points
+PolyMinimParams params;
+// ... set parameters
+p.minimize( params ); // of minimize( p, params );
+```
+
+
 Several algorithms are implemented to remove unecessary points.
+
 See [here](homog2d_algorithms.md#poly_simplify).
+
+
 
 #### 3.4.13 - Importing from boost::geometry
 <a name="boost_geom_1"></a>

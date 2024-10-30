@@ -284,7 +284,9 @@ inline size_t& warningCount()
 /// Holds miscellaneous stuff...
 namespace util {
 
-std::string toString( double val, int prec )
+inline
+std::string
+toString( double val, int prec )
 {
 	std::ostringstream oss;
 	oss << std::setprecision(prec) << val;
@@ -1316,7 +1318,6 @@ disallows providing such a method
 	template<typename T>
 	constexpr bool isInside( const Common<T>& ) const
 	{
-		HOMOG2D_IN;
 		return false;
 	}
 
@@ -2913,7 +2914,11 @@ public:
 		HOMOG2D_IN;
 		for( const auto& pt: get4Pts() )
 			if( !pt.isInside( shape ) )
+			{
+				HOMOG2D_OUT;
 				return false;
+			}
+		HOMOG2D_OUT;
 		return true;
 	}
 
@@ -4418,7 +4423,6 @@ public:
 /// Point is inside flat rectangle
 	bool isInside( const Point2d_<FPT>& pt1, const Point2d_<FPT>& pt2 ) const
 	{
-		HOMOG2D_IN;
 		return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::BaseHelper<LP>() );
 	}
 
@@ -4426,7 +4430,6 @@ public:
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect ) const
 	{
-		HOMOG2D_IN;
 		return impl_isInsideRect( rect, detail::BaseHelper<LP>() );
 	}
 
@@ -4435,14 +4438,12 @@ public:
 	bool isInside( const Point2d_<FPT>& center, T radius ) const
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T);
-		HOMOG2D_IN;
 		return impl_isInsideCircle( center, radius, detail::BaseHelper<LP>() );
 	}
 /// Point is inside Circle
 	template<typename T>
 	bool isInside( const Circle_<T>& cir ) const
 	{
-		HOMOG2D_IN;
 		return impl_isInsideCircle( cir.center(), cir.radius(), detail::BaseHelper<LP>() );
 	}
 
@@ -4450,7 +4451,6 @@ public:
 	template<typename FPT2>
 	bool isInside( const Ellipse_<FPT2>& ell ) const
 	{
-		HOMOG2D_IN;
 		return impl_isInsideEllipse( ell, detail::BaseHelper<LP>() );
 	}
 
@@ -4458,7 +4458,6 @@ public:
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
-		HOMOG2D_IN;
 		return impl_isInsidePoly( poly, detail::BaseHelper<LP>() );
 	}
 
@@ -5607,14 +5606,22 @@ Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
 	HOMOG2D_IN;
 	if( !poly.isPolygon() )
+	{
+		HOMOG2D_OUT;
 		return false;
+	}
 	if( poly.getPts()[0].isInside(*this) ) // if a point of the polygon is inside the circle,
+	{
+		HOMOG2D_OUT;
 		return false;                      //  then the circle cannot be inside the polygon
-
+	}
 	if( !_center.isInside( poly ) )
+	{
+		HOMOG2D_OUT;
 		return false;
-
+	}
 	auto inters = intersects( poly );
+	HOMOG2D_OUT;
 	return( inters() == 0 );
 }
 
@@ -5801,7 +5808,14 @@ getBB_Segments( const T& vsegs )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
+#ifdef HOMOG2D_DEBUGMODE
+	auto bb = getBB_Points( vpts );
+	auto r = FRect_<typename T::value_type::FType>( bb );
+	HOMOG2D_OUT;
+	return r;
+#else
 	return FRect_<typename T::value_type::FType>( getBB_Points( vpts ) );
+#endif
 }
 
 /// get BB for a set of FRect_ objects
@@ -5821,7 +5835,13 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 		*it++ = ppts.first;
 		*it++ = ppts.second;
 	}
+#ifdef HOMOG2D_DEBUGMODE
+	auto bb = getBB_Points( vpts );
+	HOMOG2D_OUT;
+	return FRect_<FPT>( bb );
+#else
 	return FRect_<FPT>( getBB_Points( vpts ) );
+#endif
 }
 
 } // namespace priv
@@ -5839,6 +5859,8 @@ auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
 //------------------------------------------------------------------
+// This is just there for future usage. At present (2024/10), only the Visvalingam is implemented
+#if 0
 /// Used in base::PolylineBase::minimize(), see PolyMinimParams
 enum class PolyMinimAlgo {
 	Visvalingam,  ///< iterative algorithm, see https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
@@ -5858,6 +5880,7 @@ getString( PolyMinimAlgo alg )
 	}
 	return s;
 }
+#endif
 
 //------------------------------------------------------------------
 /// Stop criterion for the iterative polyline decimating algorithm
@@ -6361,14 +6384,7 @@ For example, if we have the following points ("Open" polyline):
 (0,0)-(1,0)-(2,0)<br>
 This will be replaced by: (0,0)--(2,0)
 
-\note We cannot use the Segment_::getAngle() function because it returns a
-value in [0,PI/2], so we would'nt be able to detect a segment going
-at 180° of the previous one.
-
-\todo 20230217: implement these:
-- https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
-- https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
-Also use the areCollinear() function
+\todo 20241030: check the `areCollinear()` function
 
 \todo 20240521: add something so that the bounding box does not change (extremum points must not be discarded).
 
@@ -6644,10 +6660,17 @@ Sfinae should resolve for T=Circle,FRect,Ellipse but not for CPolyline
 	{
 		HOMOG2D_IN;
 		if( size() == 0 )
+		{
+			HOMOG2D_OUT;
 			return false;
+		}
 		for( const auto& pt: getPts() )
 			if( !pt.isInside( prim ) )
+			{
+				HOMOG2D_OUT;
 				return false;
+			}
+		HOMOG2D_OUT;
 		return true;
 	}
 
@@ -7255,7 +7278,7 @@ which is indeed the index of the point two points before the first one.
 private:
 #endif
 /// Compute index value, with offset in the range [-2,+2]
-	size_t getIndex( size_t current, int offset )
+	size_t getIndex( size_t current, int offset ) const
 	{
 		assert( offset!=0 && (offset>-3||offset<3) );
 		auto pcurrent = std::make_pair( current, offset );
@@ -7755,6 +7778,14 @@ base::PolylineBase<PLT,FPT>::centroid() const
 }
 
 } // namespace base
+
+//------------------------------------------------------------------
+/// Corresponding free function
+template<typename PLT,typename FPT>
+void minimize( base::PolylineBase<PLT,FPT>& poly, PolyMinimParams params=PolyMinimParams() )
+{
+	poly.minimize( params );
+}
 
 //------------------------------------------------------------------
 /// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point \c refpt
@@ -9404,8 +9435,6 @@ LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::Bas
 	return seg.distTo( *this );
 }
 
-
-
 } // namespace base
 
 //------------------------------------------------------------------
@@ -10639,10 +10668,15 @@ getBB( const T1& p1, const T2& p2 )
 		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
 
 	if( p1.size() != 0 &&  p2.size() == 0 )
+	{
+		HOMOG2D_OUT;
 		return FRect_<typename T1::FType>( ppair::getPointPair( p1 ) );
+	}
 	if( p1.size() == 0 &&  p2.size() != 0 )
+	{
+		HOMOG2D_OUT;
 		return FRect_<typename T1::FType>( ppair::getPointPair( p2 ) );
-
+	}
 #ifdef HOMOG2D_DEBUGMODE
 	auto bb = getBB(
 			ppair::getPointPair( p1 ),
