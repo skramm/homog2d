@@ -111,7 +111,7 @@ The allowed distance between a given reference segment and one of the points of 
 ## 3 - Polyline simplification
 <a name="poly_simplify"></a>
 
-Any Polyline (open or closed) can be miminimized, by calling the member function `minimise()` or the corresponding free function.
+Any Polyline (open or closed) can be miminimized, by calling the member function `minimize()` or the corresponding free function.
 Several technique can be used, by passing a value of type `PolyMinimParams` as single argument, but a default value is provided.
 At present, the algorithm used is based on the "Visvalingam" iterative algorithm, but with a few variants.
 
@@ -119,34 +119,67 @@ At present, the algorithm used is based on the "Visvalingam" iterative algorithm
 OPolyline pol; // or CPolyline
 // ... fill with points
 // with default arguments
-pol.minimise(); // or minimise( pol );
+pol.minimize(); // or minimize( pol );
 
 // with some tweaks
 PolyMinimParams p;
 // assign some values to p (see below)
-pol.minimise(p); // or minimise( pol, p );
+pol.minimize(p); // or minimize( pol, p );
 ```
-
 
 
 ### 3.1 - Algorithm
 
-The algorithm uses a metric
-Consider the following situation.
+First, the algorithm computes for each point a metric, representing its distance from surrounding points.
+
+Then, at each step of the iterative algorithm, it will remove that point (actually, "flag it" as to be removed).
 
 ![pm1](img/polyline_minim_1a.svg)]
 
+Consider the following situation, where the point `n` is the one to be removed, given its metric value computed using points
+`n_-1` and `n_+1`.
 
 ![pm1](img/polyline_minim_1b.svg)]
 
+
+Then, once that point has been flaged as "to be removed", the algorithm recomputes the metric for the two surrounding points.
+Thats means for point `n_-1` computing the metric value using points  `n_-2` and  `n_+1`, and
+for point `n_+1` computing the metric value using points  `n_-1` and  `n_+2`.
 
 ![pm1](img/polyline_minim_1c.svg)]
 
 
 ### 3.2 - Metric selection
 
-and selecting the algorithm by passing a `PolyMinimAlgo` value:
+Several metrics can be used.
+
+
 A human-readable string can be obtained by passing it to the `getString()` free function.
+
+### 3.3 - Stop criterion
+
+The stopping criterion for the iterative algorithm can be selected between 3 alternatives, that are implemented with the
+`PminimStopCrit` (class) enumeration.
+The possible values are:
+- `NoStop`: no stop until no more points meet the metric value requirement (the default);
+- `AbsNbPoints`: stop once the number of points removed reaches a threshold;
+- `NbPtsRatio`: stop once the ratio of the number of points removed over the total number of points reaches a threshold.
+
+A human-readable string can be obtained by passing it to the `getString()` free function.
+
+
+This stop criterion and associated value is selected using the member function `setStopCrit()`
+```
+PolyMinimParams p;
+p.setStopCrit( PminimStopCrit::NbPtsRatio, 1./3. ); // stop once 1/3 of the points are removed
+// or...
+p.setStopCrit( PminimStopCrit::AbsNbPoints, 350 );
+// or
+p.setStopCrit( PminimStopCrit::NoStop );
+```
+
+Please note that for `NbPtsRatio`, if you provide a value higher than the total amount of points int the polyline minus 2, this will throw ar runtime.
+
 
 
 References:

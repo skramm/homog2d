@@ -5975,11 +5975,30 @@ struct PolyMinimParams
 		<< "\n -_stopCrit=" << getString(_stopCrit)
 		<< "\n---/PolyMinimParams---\n";
 	}
-	PolyMinimParams& setStopCrit( PminimStopCrit sc )
+
+	PolyMinimParams& setStopCrit( PminimStopCrit sc, double thres=0. )
 	{
 		_stopCrit = sc;
+		switch( sc )
+		{
+			case PminimStopCrit::AbsNbPoints:
+				_maxNbPoints = static_cast<size_t>( thres );
+			break;
+			case PminimStopCrit::NbPtsRatio:
+				_ptRemovalRatio = thres;
+			break;
+			case PminimStopCrit::NoStop:
+			break;
+			default: assert(0);
+		}
+#ifndef HOMOG2D_NOCHECKS
+		if( sc == PminimStopCrit::AbsNbPoints || sc == PminimStopCrit::NbPtsRatio )
+			if( thres == 0. )
+				HOMOG2D_THROW_ERROR_1( "Illegal null value for selected stop criterion" );
+#endif
 		return *this;
 	}
+
 	PolyMinimParams& setMetric( PminimMetric met )
 	{
 		_metric = met;
@@ -7615,6 +7634,10 @@ PolylineBase<PLT,FPT>::minimize(
 		HOMOG2D_OUT;
 		return;
 	}
+	if( params._maxNbPoints > size()-1 )
+		HOMOG2D_THROW_ERROR_1( "Invalid value, polyline has only"
+			+ std::to_string(size()) + ", cannot remove "
+			+ std::to_string(params._maxNbPoints) + " points" );
 
 // step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );

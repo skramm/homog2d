@@ -1,0 +1,24 @@
+<svg version="1.1" width="500" height="250" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="30" y1="120" x2="90" y2="75" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="90" y1="75" x2="150" y2="165" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="150" y1="165" x2="210" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="210" y1="105" x2="300" y2="150" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="300" y1="150" x2="390" y2="105" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="390" y1="105" x2="450" y2="150" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="206" y1="109" x2="214" y2="109" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="214" y1="101" x2="214" y2="109" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="206" y1="101" x2="214" y2="101" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="206" y1="101" x2="206" y2="109" stroke="rgb(80,80,80)" stroke-width="1" />
+<circle cx="150" cy="165" r="4" stroke="rgb(80,80,80)" stroke-width="1" fill="none" />
+<circle cx="300" cy="150" r="4" stroke="rgb(80,80,80)" stroke-width="1" fill="none" />
+<text x="90" y="75" font-size="20px" fill="#505050">n-2</text>
+<text x="150" y="165" font-size="20px" fill="#505050">n-1</text>
+<text x="210" y="105" font-size="20px" fill="#505050">n</text>
+<text x="300" y="150" font-size="20px" fill="#505050">n+1</text>
+<text x="390" y="105" font-size="20px" fill="#505050">n+2</text>
+<line x1="150" y1="165" x2="300" y2="150" stroke="rgb(150,150,250)" stroke-width="1" />
+<line x1="210" y1="105" x2="215.347" y2="158.465" stroke="rgb(150,150,250)" stroke-width="1" />
+</svg>
