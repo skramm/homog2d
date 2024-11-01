@@ -75,6 +75,7 @@
 		<Unit filename="figures_src/src/getbb1.cpp" />
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
+		<Unit filename="figures_src/src/polyline_minim_1.cpp" />
 		<Unit filename="figures_src/src/polyline_rcp_1.cpp" />
 		<Unit filename="figures_src/src/segment1.cpp" />
 		<Unit filename="figures_src/src/segment_extended.cpp" />
