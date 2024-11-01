@@ -50,10 +50,7 @@ void process( img::Image<T>& im, std::string fn, int width )
 		for( int i=0;i<nbTypes; i++ )
 		{
 			pt.draw( im, color.setPointStyle( newPointStyle ).setPointSize(s) );
-			auto npts = static_cast<int>(newPointStyle)+1;
-			newPointStyle = static_cast<img::PtStyle>(npts);
-			if( npts == static_cast<int>( img::PtStyle::Dot )+1 )
-				newPointStyle = img::PtStyle::Plus;
+			newPointStyle = color._dpValues.nextPointStyle();
 			pt.translate(0,deltay);
 		}
 		pt.set( getX(pt)+deltax, y0+deltay );
@@ -78,11 +75,11 @@ void process( img::Image<T>& im, std::string fn, int width )
 /// Used to check the drawing parameters for points
 int main()
 {
-	img::Image<SvgImage> im1( 400,300 );
+	img::Image<SvgImage> im1( 400,350 );
 	process( im1, "drawparams_1.svg", 1 );
 	process( im1, "drawparams_2.svg", 2 );
 
-	img::Image<cv::Mat>  im2( 400,300 );
+	img::Image<cv::Mat> im2( 400,350 );
 	process( im2, "drawparams_1.png", 1 );
 	process( im2, "drawparams_2.png", 2 );
 }

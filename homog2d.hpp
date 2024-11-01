@@ -483,14 +483,17 @@ struct SvgImage
 //------------------------------------------------------------------
 /// Point drawing style, see DrawParams
 /**
+Demo: https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#drawing_params
+
 \warning Check nextPointStyle() in case of added values here!
 */
 enum class PtStyle: uint8_t
 {
-	Plus,   ///< "+" symbol
-	Times,  ///< "times" symbol
-	Star,   ///< "*" symbol
+	Plus,   ///< \c + symbol
+	Times,  ///< \c X symbol
+	Star,   ///< \c * symbol
 	Diam,   ///< diamond
+	Squ,    ///< square (new 20241101 !)
 	Dot     ///< dot (circle)
 };
 
@@ -505,7 +508,8 @@ getString( PtStyle t )
 		case PtStyle::Times: s="Times"; break;
 		case PtStyle::Star:  s="Star";  break;
 		case PtStyle::Diam:  s="Diam";  break;
-		case PtStyle::Dot:   s="Dot";   break;
+		case PtStyle::Squ:   s="Square";break;
+		case PtStyle::Dot:   s="Dot";   break; // WARNING: keep this as last one (assumed to be last one in some code)
 		default: assert(0);
 	}
 	return s;
@@ -11524,6 +11528,7 @@ drawPt(
 	switch( ps )
 	{
 		case img::PtStyle::Times:
+		case img::PtStyle::Squ:
 			vpt[0].translate( -delta2, +delta2 );
 			vpt[1].translate( +delta2, -delta2 );
 			vpt[2].translate( +delta2, +delta2 );
@@ -11543,10 +11548,24 @@ drawPt(
 	dp2.showPoints(false); //  segment drawing function. If not, infinite recursion
 	if( !drawDiag )
 	{
-		Segment_<float> s1( vpt[0], vpt[1] );
-		Segment_<float> s2( vpt[2], vpt[3] );
-		s1.draw( img, dp2 );
-		s2.draw( img, dp2 );
+		if( ps == img::PtStyle::Squ )
+		{
+			std::vector<Segment_<float>> vseg{
+				{vpt[0], vpt[1]},
+				{vpt[2], vpt[1]},
+				{vpt[2], vpt[3]},
+				{vpt[0], vpt[3]}
+			};
+			for( const auto& s:vseg )
+				s.draw( img, dp2 );
+		}
+		else
+		{
+			Segment_<float> s1( vpt[0], vpt[1] );
+			Segment_<float> s2( vpt[2], vpt[3] );
+			s1.draw( img, dp2 );
+			s2.draw( img, dp2 );
+		}
 	}
 	else // draw 4 diagonal lines
 	{
@@ -11889,6 +11908,10 @@ base::LPBase<LP,FPT>::impl_draw_LP(
 
 		case img::PtStyle::Diam:
 			detail::drawPt( im, img::PtStyle::Plus, vpt, dp, true );
+		break;
+
+		case img::PtStyle::Squ:
+			detail::drawPt( im, img::PtStyle::Squ, vpt, dp, true );
 		break;
 
 		case img::PtStyle::Times:      // "times" symbol
