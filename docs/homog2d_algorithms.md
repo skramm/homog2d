@@ -141,8 +141,7 @@ Consider the following situation, where the point `n` is the one to be removed, 
 
 ![pm1](img/polyline_minim_1b.svg)]
 
-
-Then, once that point has been flaged as "to be removed", the algorithm recomputes the metric for the two surrounding points.
+Then, once that point has been flagged as "to be removed", the algorithm recomputes the metric for the two surrounding points.
 Thats means for point `n_-1` computing the metric value using points  `n_-2` and  `n_+1`, and
 for point `n_+1` computing the metric value using points  `n_-1` and  `n_+2`.
 
@@ -151,10 +150,23 @@ for point `n_+1` computing the metric value using points  `n_-1` and  `n_+2`.
 
 ### 3.2 - Metric selection
 
-Several metrics can be used.
+Several metrics can be used, and are selected with the `PminimMetric` (class) enum, holding the following values:
 
+- `Angle`: angle between the two segments
+- `TriangleArea`: area of the triangle
+- `AbsDistance`: absolute distance
+- `RelDistance`: relative distance
 
 A human-readable string can be obtained by passing it to the `getString()` free function.
+
+To use one, a member function `setMetric()` is provided, and
+the threshold value is given with `setThreshold()`.
+For example:
+```
+PolyMinimParams p;
+p.setMetric( PminimMetric::Angle );
+p.setThreshold( 5./180*M_PI );  // 5 degrees
+```
 
 ### 3.3 - Stop criterion
 
@@ -167,7 +179,6 @@ The possible values are:
 
 A human-readable string can be obtained by passing it to the `getString()` free function.
 
-
 This stop criterion and associated value is selected using the member function `setStopCrit()`
 ```
 PolyMinimParams p;
@@ -178,11 +189,19 @@ p.setStopCrit( PminimStopCrit::AbsNbPoints, 350 );
 p.setStopCrit( PminimStopCrit::NoStop );
 ```
 
-Please note that for `NbPtsRatio`, if you provide a value higher than the total amount of points int the polyline minus 2, this will throw ar runtime.
+Please note that for `NbPtsRatio`, if you provide a value higher than the total amount of points in the polyline minus 2, this will throw at runtime.
 
 
+### 3.4 - Grouping them all
 
-References:
+These three member functions can be used in the traditional "chained-syntax", for example:
+```
+PolyMinimParams p;
+p.setMetric( PminimMetric::Angle ).setThreshold( 5./180*M_PI ).setStopCrit( PminimStopCrit::NoStop );
+```
+
+### 3.5 References
+
 * https://en.wikipedia.org/wiki/Visvalingam%E2%80%93Whyatt_algorithm
 * https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
 * https://www.scielo.br/j/jbcos/a/3V6mRSc6ybv9GbFfMLcMD8P/
