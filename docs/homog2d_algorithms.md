@@ -111,11 +111,39 @@ The allowed distance between a given reference segment and one of the points of 
 ## 3 - Polyline simplification
 <a name="poly_simplify"></a>
 
-Several algorithms can be used, by calling the member function `minimise()`.
+Any Polyline (open or closed) can be miminimized, by calling the member function `minimise()` or the corresponding free function.
 Several technique can be used, by passing a value of type `PolyMinimParams` as single argument, but a default value is provided.
-This latter type can be used to select the desired algorithm, as well as different threshold values, as detailed below:
+At present, the algorithm used is based on the "Visvalingam" iterative algorithm, but with a few variants.
 
-### 3.1 - Algorithm selection
+```
+OPolyline pol; // or CPolyline
+// ... fill with points
+// with default arguments
+pol.minimise(); // or minimise( pol );
+
+// with some tweaks
+PolyMinimParams p;
+// assign some values to p (see below)
+pol.minimise(p); // or minimise( pol, p );
+```
+
+
+
+### 3.1 - Algorithm
+
+The algorithm uses a metric
+Consider the following situation.
+
+![pm1](img/polyline_minim_1a.svg)]
+
+
+![pm1](img/polyline_minim_1b.svg)]
+
+
+![pm1](img/polyline_minim_1c.svg)]
+
+
+### 3.2 - Metric selection
 
 and selecting the algorithm by passing a `PolyMinimAlgo` value:
 A human-readable string can be obtained by passing it to the `getString()` free function.
