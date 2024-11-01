@@ -1888,14 +1888,16 @@ The available functions are given in the table below:
 ------------------|------------------|---------|
 `setColor()`      | 3 ints ([0-255]) |  |
 `setColor()`      |  `img::Color`    |  |
-`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Dot` |  |
+`setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Squ`,`Dot` |  |
 `setPointSize()`  |  1 int (pixels)  |  |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     | Only used for `drawText()`  |
 
 
-| width | png (OpenCv) |   svg  |
+The following table shows the rendering of the different point styles (`PtStyle`), with the OpenCv and SVG backend, with width (`setThickness()`) set to 1 and 2.
+
+| width | png (OpenCv) |   Svg  |
 |-------|--------------|--------|
 |   1   | ![demo_pt](img/drawparams_1.png) | ![demo_pt](img/drawparams_1.svg) |
 |   2   | ![demo_pt](img/drawparams_2.png) | ![demo_pt](img/drawparams_2.svg) |
