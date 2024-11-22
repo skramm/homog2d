@@ -5966,14 +5966,21 @@ struct PolyMinimParams
 	size_t           _maxNbPoints    = 1;                    ///< Max number of point to remove
 	size_t           _nbPtsRemoved   = 0;                    ///< Nb of points that were removed
 
+	friend std::ostream& operator << ( std::ostream& f, const PolyMinimParams& p )
+	{
+		f << "---PolyMinimParams---"
+			<< "\n -metric=" << getString(p._metric)
+			<< "\n -stopCrit=" << getString(p._stopCrit);
+		if( p._stopCrit == PminimStopCrit::AbsNbPoints )
+			f << "\n -maxNbPoints=" << p._maxNbPoints;
+		if( p._stopCrit == PminimStopCrit::NbPtsRatio )
+			f << "\n -ptRemovalRatio=" << p._ptRemovalRatio;
+		f << "\n---/PolyMinimParams---\n";
+		return f;
+	}
 	void print() const
 	{
-		std::cout << "---PolyMinimParams---"
-//		<< getString(_algo)
-		<< "\n -_ptRemovalRatio=" << _ptRemovalRatio
-		<< "\n -_metric=" << getString(_metric)
-		<< "\n -_stopCrit=" << getString(_stopCrit)
-		<< "\n---/PolyMinimParams---\n";
+		std::cout << *this;
 	}
 
 	PolyMinimParams& setStopCrit( PminimStopCrit sc, double thres=0. )

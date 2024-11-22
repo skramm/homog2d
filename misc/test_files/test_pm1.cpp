@@ -8,6 +8,22 @@ build with: $ make test_pm
 #include "../../homog2d.hpp"
 
 using namespace h2d;
+
+
+void process( const std::vector<Point2d>& vec, PminimMetric metric )
+{
+	PolyMinimParams par;
+	std::cout << "metric: " << getString( metric ) << "\n";
+	CPolyline cpol(vec);
+	CPolyline opol(vec);
+	par.setMetric( metric );
+	cpol.minimize(par);
+	std::cout << "Closed: pol=" << cpol << "\n";
+
+	opol.minimize(par);
+	std::cout << "Open: pol=" << opol << "\n";
+}
+
 int main()
 {
 #if 0
@@ -56,12 +72,20 @@ int main()
 	}
 #endif
 	{
-		CPolyline pl(
-			std::vector<Point2d>{
-				{0,1},{1,1},{3,2}
-			}
-		);
-		pl.minimize();
-		std::cout << "pl=" << pl << "\n";
+		std::vector<Point2d> v1{ {0,1},{1,1},{2,1} };
+		process( v1, PminimMetric::AbsDistance );
+		process( v1, PminimMetric::Angle );
+		process( v1, PminimMetric::RelDistance );
+		process( v1, PminimMetric::TriangleArea );
+/*		CPolyline p1(v1);
+		p1.minimize();
+		std::cout << "p1=" << p1 << "\n";
+
+		CPolyline p2(v1);
+		PolyMinimParams par;
+		par.setMetric( PminimMetric::AbsDistance );
+		p2.minimize(par);
+		std::cout << "p2=" << p2 << "\n";
+*/
 	}
 }
