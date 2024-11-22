@@ -7560,10 +7560,12 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool /
 /// Once we have removed ("tagged") a point, we need to recompute some distance values.
 /**
 We need to compute two distances.
-Let $n$ be the index of  the last removed point.
+Let \f$n\f$ be the index of  the last removed point.
 We need to compute theses distances:
 - for points n-1: distance between point n-2 and n+1, and the distance between that segment and point n-1
 - for points n+1: distance between point n-1 and n+2, and the distance between that segment and point n+1
+
+\sa recomputeMetrics( typ::IsOpen )
 */
 template<typename FP>
 void
@@ -7583,6 +7585,7 @@ TriangleMetrics<FP>::recomputeMetrics( typ::IsClosed )
 }
 
 /// Overload for open polyline
+/// \sa recomputeMetrics( typ::IsClosed )
 template<typename FP>
 void
 TriangleMetrics<FP>::recomputeMetrics( typ::IsOpen )
