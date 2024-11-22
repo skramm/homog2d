@@ -13,15 +13,19 @@ using namespace h2d;
 void process( const std::vector<Point2d>& vec, PminimMetric metric )
 {
 	PolyMinimParams par;
-	std::cout << "metric: " << getString( metric ) << "\n";
-	CPolyline cpol(vec);
-	CPolyline opol(vec);
 	par.setMetric( metric );
+	std::cout << par << "\n";
+	std::cout << "metric: " << getString( metric ) << "\n";
+
+#if 1
+	CPolyline cpol(vec);
 	cpol.minimize(par);
 	std::cout << "Closed: pol=" << cpol << "\n";
-
+#else
+	OPolyline opol(vec);
 	opol.minimize(par);
 	std::cout << "Open: pol=" << opol << "\n";
+#endif
 }
 
 int main()
@@ -72,11 +76,13 @@ int main()
 	}
 #endif
 	{
-		std::vector<Point2d> v1{ {0,1},{1,1},{2,1} };
+//		std::vector<Point2d> v1{ {0,1},{1,1.1},{2,1}, {3,1} };
+		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
 		process( v1, PminimMetric::AbsDistance );
-		process( v1, PminimMetric::Angle );
-		process( v1, PminimMetric::RelDistance );
-		process( v1, PminimMetric::TriangleArea );
+//		process( v1, PminimMetric::Angle );
+//		process( v1, PminimMetric::RelDistance );
+//		process( v1, PminimMetric::TriangleArea );
+
 /*		CPolyline p1(v1);
 		p1.minimize();
 		std::cout << "p1=" << p1 << "\n";
