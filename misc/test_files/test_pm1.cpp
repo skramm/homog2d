@@ -68,4 +68,18 @@ int main()
 		std::vector<Point2d> v0{ {0,1},{3,1} };
 		process( v1, v0 );
 	}
+	{
+		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
+		CPolyline cpol(v1);
+		CommonType cc = cpol;
+		minimize( cc );
+		CPolyline resc = fct::VariantUnwrapper{cc};
+		std::cout << "Variant-closed:" << resc << "\n";
+
+		OPolyline opol(v1);
+		CommonType co = opol;
+		minimize( co );
+		OPolyline reso = fct::VariantUnwrapper{co};
+		std::cout << "Variant-open:" << reso << "\n";
+	}
 }

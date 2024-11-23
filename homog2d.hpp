@@ -7928,7 +7928,6 @@ void minimize( base::PolylineBase<PLT,FPT>& poly, PolyMinimParams params=PolyMin
 
 #ifdef HOMOG2D_ENABLE_VRTP
 /// Minimizing Polyline in a std::variant
-/// \todo 20241123: Needs testing !!!
 template<typename FPT>
 void minimize( const CommonType_<FPT>& poly, PolyMinimParams params=PolyMinimParams() )
 {
@@ -7946,7 +7945,7 @@ void minimize( const CommonType_<FPT>& poly, PolyMinimParams params=PolyMinimPar
 		}
 		else
 		{
-			HOMOG2D_THROW_ERROR_1("Cannot minimize variant not holding a CPolyline or OPolyline" );
+			HOMOG2D_THROW_ERROR_1( "Cannot minimize variant not holding a CPolyline or OPolyline" );
 		}
 	}
 }
