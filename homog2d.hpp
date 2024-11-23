@@ -423,6 +423,8 @@ using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
 /// A variant type, holding all possible types. Used to achieve runtime polymorphism
 /**
 See https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
+
+\sa namespace fct
 */
 template<typename FPT>
 using CommonType_ = std::variant<
@@ -1039,7 +1041,6 @@ struct SizeFunct
 	}
 };
 
-
 //------------------------------------------------------------------
 /// A functor used to call the << operator
 struct PrintFunct
@@ -1092,6 +1093,43 @@ struct DrawFunct
 	}
 };
 
+#if 0
+/// NEEDS TO BE TESTED, NOT SURE IT WORKS !!!
+/// Streaming class, use as
+/// <code>std::cout << streamer{a} << streamer{b} << '\n';</code>
+/**
+source: https://stackoverflow.com/a/47169101/193789
+*/
+template<class T>
+struct Streamer {
+    const T& val;
+};
+
+template<class T> Streamer(T) -> Streamer<T>;
+
+template<class T>
+std::ostream&
+operator <<( std::ostream& os, Streamer<T> s )
+{
+    os << s.val;
+    return os;
+}
+
+template<class... Ts>
+std::ostream&
+operator <<(
+	std::ostream& os,
+	Streamer<std::variant<Ts...>> sv)
+{
+	std::visit(
+		[&os]
+		(const auto& v)
+		{ os << Streamer{v}; },
+		sv.val
+	);
+	return os;
+}
+#endif
 
 //------------------------------------------------------------------
 /// Convert std::variant object into the underlying type
@@ -2033,39 +2071,43 @@ template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClose
 
 /// Traits class used in operator * ( const Hmatrix_<typ::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
-template <typename T>               struct IsContainer                     : std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
+template <typename T>               struct IsContainer                     : std::false_type {};
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type  {};
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type  {};
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type  {};
 
 
-template <typename T> struct IsArray                  : std::false_type { };
-template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
+template <typename T> struct IsArray                  : std::false_type {};
+template <typename T> struct IsArray<std::array<T,3>> : std::true_type  {};
 
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
 template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type  {};
 
 /// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
-template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type  {};
 template<class>   struct IsPoint                : std::false_type {};
-template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type  {};
 
 /// Traits class, used to check if type has a Bounding Box
 /**
 Difference with \c trait::HasArea is that this one is true for OPolyline, whereas the other is not
 */
 template<class>   struct HasBB              : std::false_type {};
-template<class T> struct HasBB<Ellipse_<T>> : std::true_type {};
-template<class T> struct HasBB<FRect_<T>>   : std::true_type {};
-template<class T> struct HasBB<Circle_<T>>  : std::true_type {};
+template<class T> struct HasBB<Ellipse_<T>> : std::true_type  {};
+template<class T> struct HasBB<FRect_<T>>   : std::true_type  {};
+template<class T> struct HasBB<Circle_<T>>  : std::true_type  {};
 template<typename T1,typename T2> struct HasBB<base::PolylineBase<T1,T2>>: std::true_type  {};
 
 #ifdef HOMOG2D_ENABLE_VRTP
 template<typename T>       struct IsVariant                       : std::false_type {};
-template<typename ...Args> struct IsVariant<std::variant<Args...>>: std::true_type {};
+template<typename ...Args> struct IsVariant<std::variant<Args...>>: std::true_type  {};
+
+template<class>                   struct IsPolyline                           : std::false_type {};
+template<typename T1,typename T2> struct IsPolyline<base::PolylineBase<T1,T2>>: std::true_type  {};
+
 #endif
 
 } // namespace trait
@@ -5977,12 +6019,13 @@ struct PolyMinimParams
 	{
 		f << "---PolyMinimParams---"
 			<< "\n -metric=" << getString(p._metric)
+			<< "\n -thres=" << p._metricThres
 			<< "\n -stopCrit=" << getString(p._stopCrit);
 		if( p._stopCrit == PminimStopCrit::AbsNbPoints )
 			f << "\n -maxNbPoints=" << p._maxNbPoints;
 		if( p._stopCrit == PminimStopCrit::NbPtsRatio )
 			f << "\n -ptRemovalRatio=" << p._ptRemovalRatio;
-		f << "\n---/PolyMinimParams---\n";
+		f << "\n";
 		return f;
 	}
 	void print() const
@@ -7882,6 +7925,33 @@ void minimize( base::PolylineBase<PLT,FPT>& poly, PolyMinimParams params=PolyMin
 {
 	poly.minimize( params );
 }
+
+#ifdef HOMOG2D_ENABLE_VRTP
+/// Minimizing Polyline in a std::variant
+/// \todo 20241123: Needs testing !!!
+template<typename FPT>
+void minimize( const CommonType_<FPT>& poly, PolyMinimParams params=PolyMinimParams() )
+{
+	if( type(poly) == Type::CPolyline )
+	{
+		CPolyline_<FPT> pol = fct::VariantUnwrapper{poly};
+		pol.minimize( params );
+	}
+	else
+	{
+		if( type(poly) == Type::OPolyline )
+		{
+			OPolyline_<FPT> pol = fct::VariantUnwrapper{poly};
+			pol.minimize( params );
+		}
+		else
+		{
+			HOMOG2D_THROW_ERROR_1("Cannot minimize variant not holding a CPolyline or OPolyline" );
+		}
+	}
+}
+
+#endif
 
 //------------------------------------------------------------------
 /// Rotates the rectangle by either 90°, 180°, 270° (-90°) at point \c refpt

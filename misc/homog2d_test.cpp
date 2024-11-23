@@ -63,7 +63,7 @@ $ make test_fig
 #endif
 
 // define this if there is a need for bugtracking
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
 
 #define HOMOG2D_TEST_MODE
 #include "../homog2d.hpp"

@@ -4,94 +4,68 @@
 
 build with: $ make test_pm
 */
-#define HOMOG2D_DEBUGMODE
+//#define HOMOG2D_DEBUGMODE
+#define HOMOG2D_ENABLE_VRTP
 #include "../../homog2d.hpp"
 
 using namespace h2d;
 
+static size_t count = 0;
 
-void process( const std::vector<Point2d>& vec, PminimMetric metric )
+template<typename T>
+void process2( const T& pol_in, PminimMetric metric, const T& pol_out )
 {
 	PolyMinimParams par;
 	par.setMetric( metric );
-	std::cout << par << "\n";
-	std::cout << "metric: " << getString( metric ) << "\n";
 
-#if 1
-	CPolyline cpol(vec);
-	cpol.minimize(par);
-	std::cout << "Closed: pol=" << cpol << "\n";
-#else
-	OPolyline opol(vec);
-	opol.minimize(par);
-	std::cout << "Open: pol=" << opol << "\n";
-#endif
+	T pol( pol_in );
+	minimize( pol, par );
+	count++;
+
+	std::cout << "test " << count << ", metric=" << getString( metric ) << ": ";
+
+	if( pol != pol_out )
+		std::cout << "fail\n -input=" << pol_in
+			<< "\n -result=" << pol
+			<< "\n -expected=" << pol_out
+			<< "\n" << par
+			<< "\n";
+	else
+		std::cout << "success!\n";
+}
+void process1( const std::vector<Point2d>& vec_in, PminimMetric metric, const std::vector<Point2d>& vec_out )
+{
+	{
+		CPolyline pol_in(vec_in);
+		CPolyline pol_out(vec_out);
+		process2( pol_in, metric, pol_out );
+	}
+	{
+		OPolyline pol_in(vec_in);
+		OPolyline pol_out(vec_out);
+		process2( pol_in, metric, pol_out );
+	}
+}
+
+template<typename T>
+void process( const T& v1, const T& v0 )
+{
+	process1( v1, PminimMetric::AbsDistance,  v0 );
+	process1( v1, PminimMetric::RelDistance,  v0 );
+	process1( v1, PminimMetric::Angle,        v0 );
+	process1( v1, PminimMetric::TriangleArea, v0 );
 }
 
 int main()
 {
-#if 0
 	{
-	std::vector<Point2d> v1{
-		Point2d( 5,0),
-		Point2d( 10,1),
-		Point2d( 20,0),
-		Point2d( 30, 2),
-		Point2d( 40,0),
-	};
-
-	OPolyline poly_o( v1 );
-	poly_o.minimize();
-	std::cout << "\n AFTER poly_o1 size=" << poly_o.size() << '\n';
-	std::cout << poly_o << '\n';
-
-	OPolyline poly_o2( v1 );
-	PolyMinimParams p;
-	p.setStopCrit( PminimStopCrit::NoStop ).setMetric( PminimMetric::AbsDistance ).setThreshold( 10 );
-	poly_o2.minimize(p);
-	std::cout << "\n AFTER poly_o2 size=" << poly_o2.size() << '\n';
-	std::cout << poly_o2 << '\n';
-
-
-	CPolyline poly_c( v1 );
-	poly_c.minimize();
-	std::cout << "\n AFTER poly_c size=" << poly_c.size() << '\n';
-	std::cout << poly_c << '\n';
-	}
-	{
-		FRect r1(0,0,2,2);
-		CPolyline p1(r1);
-		p1.minimize();
-		std::cout << "p1=" << p1 << "\n";
-	}
-
-	{
-		CPolyline pl(
-			std::vector<Point2d>{
-				{0,1},{1,1},{2,1}
-			}
-		);
-		pl.minimize();
-		std::cout << "pl=" << pl << "\n";
-	}
-#endif
-	{
-//		std::vector<Point2d> v1{ {0,1},{1,1.1},{2,1}, {3,1} };
 		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
-		process( v1, PminimMetric::AbsDistance );
-//		process( v1, PminimMetric::Angle );
-//		process( v1, PminimMetric::RelDistance );
-//		process( v1, PminimMetric::TriangleArea );
-
-/*		CPolyline p1(v1);
-		p1.minimize();
-		std::cout << "p1=" << p1 << "\n";
-
-		CPolyline p2(v1);
-		PolyMinimParams par;
-		par.setMetric( PminimMetric::AbsDistance );
-		p2.minimize(par);
-		std::cout << "p2=" << p2 << "\n";
-*/
+		std::vector<Point2d> v0{ {0,0},{8,0} };
+		process( v1, v0 );
+	}
+	{
+		std::vector<Point2d> v1{ {0,1},{1,1.1},{2,1}, {3,1} };
+		std::vector<Point2d> v0{ {0,1},{3,1} };
+		process( v1, v0 );
 	}
 }

@@ -22,6 +22,19 @@ This will greatly simplify the code, by enabling auto return types and replacing
 It also enables run-time polymorphism without pointers, with the help of `std::variant`
 [details here](homog2d_manual.md#section_rtp).
 
+Some Q&A about this: (WIP)
+
+-Q: How can I know if a type T is a variant
+-A: use `trait::IsVariant<T>::value`
+
+-Q: How can I assign an primitive to a `CommonType` opbject:
+-A: Very simple, example:
+```
+	CPolylyne pol;
+	CommonType ct = pol;
+```
+
+
 
 ## 2 - Git branches
 
