@@ -28,13 +28,15 @@ void process2( const T& pol_in, PminimMetric metric, const T& pol_out )
 		std::cout << "fail\n -input=" << pol_in
 			<< "\n -result=" << pol
 			<< "\n -expected=" << pol_out
-			<< "\n" << par
-			<< "\n";
+			<< "\n" << par;
+//			<< "\n";
 	else
 		std::cout << "success!\n";
 }
 void process1( const std::vector<Point2d>& vec_in, PminimMetric metric, const std::vector<Point2d>& vec_out )
 {
+	static int p;
+	std::cout << "*** START " << __FUNCTION__ << "(" << ++p<< ")\n";
 	{
 		CPolyline pol_in(vec_in);
 		CPolyline pol_out(vec_out);
@@ -50,6 +52,8 @@ void process1( const std::vector<Point2d>& vec_in, PminimMetric metric, const st
 template<typename T>
 void process( const T& v1, const T& v0 )
 {
+	static int p;
+	std::cout << "* START " << __FUNCTION__ << "(" << ++p<< ")\n";
 	process1( v1, PminimMetric::AbsDistance,  v0 );
 	process1( v1, PminimMetric::RelDistance,  v0 );
 	process1( v1, PminimMetric::Angle,        v0 );
@@ -58,6 +62,17 @@ void process( const T& v1, const T& v0 )
 
 int main()
 {
+	{
+		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
+		std::vector<Point2d> v0{ {0,0},{8,0} };
+		PolyMinimParams par;
+		par.setMetric( PminimMetric::TriangleArea );
+		CPolyline pol( v1 );
+		pol.minimize( par );
+		std::cout << pol << '\n';
+	}
+	std::exit(1);
+
 	{
 		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
 		std::vector<Point2d> v0{ {0,0},{8,0} };
