@@ -10680,17 +10680,21 @@ findPoint(
 		{
 			auto currentDist = priv::sqDist( qpt, cont[i] );
 			if constexpr( std::is_same_v<S_WHAT, F_MIN> )
+			{
 				if( currentDist < resDist )
 				{
 					resIdx  = i;
 					resDist = currentDist;
 				}
+			}
 			else
+			{
 				if( currentDist > resDist )
 				{
 					resIdx  = i;
 					resDist = currentDist;
 				}
+			}
 		}
 	}
 	return resIdx;

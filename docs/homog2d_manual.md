@@ -1583,7 +1583,7 @@ bool b = areCollinear( pt1, pt2, pt3 );
 
 ### 6.5 - Finding nearest/farthest point in a container
 
-Say you have container (`std::vector` or `std::array`) holding a bunch of points.
+Say you have container (`std::vector`, `std::list`, `std::array`) holding a bunch of points.
 Three functions allow you to find among these wich one is the closest or the farthest to a given point.
 
 ```C++
@@ -1606,6 +1606,11 @@ cout << "nearest point is " << vpts[pidx.first]
 (or you could of course call the two previous function sequentially.)
 
 [see showcase](homog2d_showcase.md#sc15)
+
+Please note:
+* These functions will throw if the container is empty or holds only one point.
+* If the query point is equal to one of the points in the container, these function will still return the nearest/farthest of that point.
+
 
 ### 6.6 - Extracting data from sets/containers of primitives
 

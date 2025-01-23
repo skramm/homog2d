@@ -3862,15 +3862,14 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 {
 // 1 - make sure calling with empty container throws
 	std::vector<Point2d_<NUMTYPE>> vec;
-	checkSizeNF( Point2d_<NUMTYPE>(), vec );
-
 	std::vector<Point2d_<NUMTYPE>> lst;
+	std::array<Point2d_<NUMTYPE>,0> arr0; // very unlikely, but... who knows?
+	checkSizeNF( Point2d_<NUMTYPE>(), vec );
 	checkSizeNF( Point2d_<NUMTYPE>(), lst );
-
-// we don't check for empty std::array, as this is very likely not going to happen
+	checkSizeNF( Point2d_<NUMTYPE>(), arr0 );
 
 // 2 - make sure calling with container holding only 1 point also throws
-	vec.emplace_back( Point2d_<NUMTYPE>() );
+	vec.emplace_back( Point2d_<NUMTYPE>() ); // add point (0,0)
 	lst.emplace_back( Point2d_<NUMTYPE>() );
 	std::array<Point2d_<NUMTYPE>,1> arr;
 
@@ -3879,17 +3878,38 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 	checkSizeNF( Point2d_<NUMTYPE>(), arr );
 
 // 3 - check behavior if query point is in the container (only for vector)
-	Point2d_<NUMTYPE> ptq(1,1);
-	vec.emplace_back( ptq );
-	auto resN = findNearestPoint(  Point2d_<NUMTYPE>(), vec );
-	auto resF = findFarthestPoint( Point2d_<NUMTYPE>(), vec );
-	CHECK( resN == 1 );
-	CHECK( resF == 1 );
-	resN = findNearestPoint(  ptq, vec );
-	resF = findFarthestPoint( ptq, vec );
-	CHECK( resN == 0 );
-	CHECK( resF == 0 );
+	Point2d_<NUMTYPE> pt1(1,1);
+	Point2d_<NUMTYPE> pt0;
+	vec.emplace_back( pt1 );
+	auto resN = findNearestPoint(  pt0, vec ); // check for (0,0)
+	auto resF = findFarthestPoint( pt0, vec );
+	CHECK( resN == 1 );                        // both will return
+	CHECK( resF == 1 );                        // second point
 
+	resN = findNearestPoint(  pt1, vec );  // check for (1,1)
+	resF = findFarthestPoint( pt1, vec );
+	CHECK( resN == 0 );                    // both will return
+	CHECK( resF == 0 );                    // first point
+
+	auto pres = findNearestFarthestPoint( pt0, vec );
+	CHECK( pres.first  == 1 );
+	CHECK( pres.second == 1 );
+	auto pres2 = findNearestFarthestPoint( pt1, vec );
+	CHECK( pres2.first  == 0 );
+	CHECK( pres2.second == 0 );
+
+// 4 - check general behavior
+	{ //                                      0      1      2      3      4
+		std::vector<Point2d_<NUMTYPE>> vec{ {0,0}, {3,0}, {4,0}, {5,6}, {7,8} };
+		Point2d_<NUMTYPE> qpt(4,5);
+		auto pres = findNearestFarthestPoint( qpt, vec );
+		auto resN = findNearestPoint(  qpt, vec );
+		auto resF = findFarthestPoint( qpt, vec );
+		CHECK( pres.first  == resN );
+		CHECK( pres.second == resF );
+		CHECK( 3 == resN );
+		CHECK( 0 == resF );
+	}
 }
 
 //////////////////////////////////////////////////////////////

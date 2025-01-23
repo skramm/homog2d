@@ -19,7 +19,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - current master branch
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
-This was possible by moving to C++17.
+This was possible by moving to C++17, which is now a requirement.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
   - SVG import: added reading of image size in file
@@ -30,7 +30,7 @@ This was possible by moving to C++17.
     - https://github.com/skramm/homog2d/issues/10
   - added stream operator to draw parameters
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
-  - improved behavior of `findNearestPoint()`, added checking, and wont return given point if it is inside the container
+  - improved behavior of `findNearestPoint()`, added checking, and wont return query point if it is inside the container
 
 ## Previous releases
 
