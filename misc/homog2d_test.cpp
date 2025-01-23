@@ -3849,6 +3849,33 @@ TEST_CASE( "convex hull", "[conv_hull]" )
 	}
 }
 
+// helper function
+template<typename PT, typename CONT>
+void checkSizeNF( const PT& pt, const CONT& cont )
+{
+	CHECK_THROWS( findFarthestPoint(        pt, cont ) );
+	CHECK_THROWS( findNearestPoint(         pt, cont ) );
+	CHECK_THROWS( findNearestFarthestPoint( pt, cont ) );
+}
+
+TEST_CASE( "nearest/farthest points", "[nfp]" )
+{
+	std::vector<Point2d_<NUMTYPE>> vec;
+	checkSizeNF( Point2d_<NUMTYPE>(), vec );
+
+	std::vector<Point2d_<NUMTYPE>> lst;
+	checkSizeNF( Point2d_<NUMTYPE>(), lst );
+
+// we don't check for empty std::array, as this is very likely not going to happen
+
+	vec.emplace_back( Point2d_<NUMTYPE>() );
+	lst.emplace_back( Point2d_<NUMTYPE>() );
+	std::array<Point2d_<NUMTYPE>,1> arr;
+
+	checkSizeNF( Point2d_<NUMTYPE>(), vec );
+	checkSizeNF( Point2d_<NUMTYPE>(), lst );
+	checkSizeNF( Point2d_<NUMTYPE>(), arr );
+}
 //////////////////////////////////////////////////////////////
 /////               POLYMORPHISM                       /////
 //////////////////////////////////////////////////////////////

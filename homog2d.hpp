@@ -244,6 +244,8 @@ namespace err {
 /**
 This is used in the HOMOG2D_THROW_ERROR_1 macros. Some user code could catch the exceptions, thus
 this will enable the counting of errors
+
+\todo 20250123: for some reason, the error count is always 42! Need to investigate this.
 */
 inline size_t& errorCount()
 {
@@ -10641,8 +10643,9 @@ template<typename FPT, typename T>
 size_t
 findNearestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
+	if( cont.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
+			<< " points, minimum is 2" );
 
 	auto minDist = priv::sqDist( pt, cont[0] );
 	size_t resIdx = 0;
@@ -10663,8 +10666,9 @@ template<typename FPT, typename T>
 size_t
 findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
+	if( cont.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
+			<< " points, minimum is 2" );
 
 	auto maxDist = priv::sqDist( pt, cont[0] );
 	size_t resIdx = 0;
@@ -10685,8 +10689,9 @@ template<typename FPT, typename T>
 auto
 findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
+	if( cont.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
+			<< " points, minimum is 2" );
 
 	auto maxDist = priv::sqDist( pt, cont[0] );
 	auto minDist = maxDist;
