@@ -10719,8 +10719,10 @@ findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 	return priv::findPoint( pt, cont, priv::F_MAX() );
 }
 //------------------------------------------------------------------
-/// Returns index of point in container \c cont that is the farthest to \c pt
-/// \todo add checking that point NOT in container
+/// Returns indexes of points in container \c cont that are nearest/farthest
+/**
+- return pair: first is nearest, second is farthest
+*/
 template<typename FPT, typename T>
 auto
 findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
@@ -10729,23 +10731,34 @@ findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
 			<< " points, minimum is 2" );
 
-
 	auto maxDist = priv::sqDist( pt, cont[0] );
 	auto minDist = maxDist;
 	size_t idxMin = 0;
 	size_t idxMax = 0;
-	for( size_t i=1; i<cont.size(); i++ )
+	size_t startIdx = 1;
+	if( pt == cont[0] )
 	{
-		auto currentDist = priv::sqDist( pt, cont[i] );
-		if( currentDist > maxDist )
+		idxMin++;
+		idxMax++;
+		startIdx++;
+		maxDist = priv::sqDist( pt, cont[1] );
+		minDist = maxDist;
+	}
+	for( size_t i=startIdx; i<cont.size(); i++ )
+	{
+		if( pt != cont[i] )
 		{
-			idxMax  = i;
-			maxDist = currentDist;
-		}
-		if( currentDist < minDist )
-		{
-			idxMin  = i;
-			minDist = currentDist;
+			auto currentDist = priv::sqDist( pt, cont[i] );
+			if( currentDist > maxDist )
+			{
+				idxMax  = i;
+				maxDist = currentDist;
+			}
+			if( currentDist < minDist )
+			{
+				idxMin  = i;
+				minDist = currentDist;
+			}
 		}
 	}
 	return std::make_pair(idxMin, idxMax);
