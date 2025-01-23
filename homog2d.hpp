@@ -272,11 +272,15 @@ struct IsEpipmat {};
 struct IsClosed {};
 struct IsOpen {};
 
-struct T_Circle  {};
-struct T_FRect   {};
-struct T_Segment {};
-//struct T_CPol    {};
-//struct T_OPol    {};
+struct T_Point    {};
+struct T_Line     {};
+struct T_Circle   {};
+struct T_FRect    {};
+struct T_Segment  {};
+//struct T_Polyline {};
+struct T_OPol     {};
+struct T_CPol     {};
+struct T_Ellipse  {};
 } // namespace typ
 
 
@@ -1962,14 +1966,10 @@ template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std
 template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
 template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
 
-
-template <typename T> struct IsArray                  : std::false_type { };
-template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
-
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
-template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+template <typename T>           struct IsArray                   : std::false_type {};
+template <typename V, size_t n> struct IsArray<std::array<V, n>> : std::true_type {};
 
 /// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
@@ -2093,6 +2093,7 @@ class Ellipse_: public detail::Matrix_<FPT>
 public:
 	using FType = FPT;
 	using detail::Common<FPT>::isInside;
+	using SType = typ::T_Ellipse;
 
 	Type type() const
 	{
@@ -2519,6 +2520,8 @@ class FRect_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_FRect;
+
 	using detail::Common<FPT>::isInside;
 
 	Type type() const
@@ -3655,6 +3658,8 @@ class LPBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+// The following line enables defining the SType based on how the class is instanciated: Line or Point
+	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
 	using detail::Common<FPT>::isInside;
 
 private:
@@ -4853,6 +4858,7 @@ class Segment_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_Segment;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T> friend class Segment_;
@@ -5792,7 +5798,7 @@ The consequence is that when adding points, if you have done a comparison before
 add point after the one you thought!
 
 template args:
- - PLT: PolyLine Type: type::IsClosed or type::IsOpen
+ - PLT: PolyLine Type: typ::IsClosed or typ::IsOpen
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
@@ -5804,6 +5810,9 @@ class PolylineBase: public detail::Common<FPT>
 public:
 	using FType = FPT;
 	using PType = PLT;
+//	using SType = typ::T_Polyline;
+	using SType = std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
+
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class PolylineBase;
@@ -9446,7 +9455,7 @@ namespace priv {
 template<
 	typename Cont,
 	typename std::enable_if<
-		trait::Is_std_array<Cont>::value,
+		trait::IsArray<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -9460,7 +9469,7 @@ alloc( std::size_t /* unused here */ )
 template<
 	typename Cont,
 	typename std::enable_if<
-		!trait::Is_std_array<Cont>::value,
+		!trait::IsArray<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -10776,7 +10785,12 @@ findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 	return std::make_pair(idxMin, idxMax);
 }
 
-/// Return set of points that are inside primitive \c prim
+/// Returns set of points that are inside primitive \c prim
+/**
+Output container will be of same type as input container (vector, list or array
+
+\todo 20250123: maybe replace the bunch of static_asserts with something around trait::HasArea ?
+*/
 template<typename CONT, typename PRIM>
 CONT
 getPtsInside(
@@ -10784,13 +10798,14 @@ getPtsInside(
 	const PRIM& prim        ///< geometrical primitive (FRect, Circle, ...?)
 )
 {
-/*	if( PRIM::SType == T_CPol )
-		if( !prim.isPolygon() )
-			HOMOG2D_THROW_ERROR_1( "Polyline is not a Polygon, cannot find points inside" )
-*/
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_OPol>,    "Cannot find points inside a Open Polyline" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Line>,    "Cannot find points inside a Line" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Point>,   "Cannot find points inside a Point" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Segment>, "Cannot find points inside a Segment" );
+	static_assert( !trait::IsArray<CONT>::value, "Cannot use std::array as container" );
+
 	CONT out;
 	out.reserve( input_set.size() );
-//	auto it_out = std::begin(out);
 
 	for( auto pt: input_set )
 		if( pt.isInside( prim ) )
