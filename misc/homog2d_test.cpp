@@ -3860,6 +3860,7 @@ void checkSizeNF( const PT& pt, const CONT& cont )
 
 TEST_CASE( "nearest/farthest points", "[nfp]" )
 {
+// 1 - make sure calling with empty container throws
 	std::vector<Point2d_<NUMTYPE>> vec;
 	checkSizeNF( Point2d_<NUMTYPE>(), vec );
 
@@ -3868,6 +3869,7 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 
 // we don't check for empty std::array, as this is very likely not going to happen
 
+// 2 - make sure calling with container holding only 1 point also throws
 	vec.emplace_back( Point2d_<NUMTYPE>() );
 	lst.emplace_back( Point2d_<NUMTYPE>() );
 	std::array<Point2d_<NUMTYPE>,1> arr;
@@ -3875,7 +3877,21 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 	checkSizeNF( Point2d_<NUMTYPE>(), vec );
 	checkSizeNF( Point2d_<NUMTYPE>(), lst );
 	checkSizeNF( Point2d_<NUMTYPE>(), arr );
+
+// 3 - check behavior if query point is in the container (only for vector)
+	Point2d_<NUMTYPE> ptq(1,1);
+	vec.emplace_back( ptq );
+	auto resN = findNearestPoint(  Point2d_<NUMTYPE>(), vec );
+	auto resF = findFarthestPoint( Point2d_<NUMTYPE>(), vec );
+	CHECK( resN == 1 );
+	CHECK( resF == 1 );
+	resN = findNearestPoint(  ptq, vec );
+	resF = findFarthestPoint( ptq, vec );
+	CHECK( resN == 0 );
+	CHECK( resF == 0 );
+
 }
+
 //////////////////////////////////////////////////////////////
 /////               POLYMORPHISM                       /////
 //////////////////////////////////////////////////////////////

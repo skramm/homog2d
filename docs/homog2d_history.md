@@ -30,6 +30,7 @@ This was possible by moving to C++17.
     - https://github.com/skramm/homog2d/issues/10
   - added stream operator to draw parameters
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
+  - improved behavior of `findNearestPoint()`, added checking, and wont return given point if it is inside the container
 
 ## Previous releases
 
