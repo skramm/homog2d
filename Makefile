@@ -259,7 +259,8 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile bu
 
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_EXE:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/bin/%, $(DOC_IMAGES_SRC))
 
 .PRECIOUS: BUILD/img/%
 
@@ -275,7 +276,7 @@ BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 
-doc_fig: $(DOC_IMAGES_OUT) build_gif_pip
+doc_fig: $(DOC_IMAGES_EXE) build_gif_pip
 	@echo "done target $@"
 
 build_gif_pip:

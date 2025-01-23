@@ -271,6 +271,12 @@ struct IsHomogr {};
 struct IsEpipmat {};
 struct IsClosed {};
 struct IsOpen {};
+
+struct T_Circle  {};
+struct T_FRect   {};
+struct T_Segment {};
+//struct T_CPol    {};
+//struct T_OPol    {};
 } // namespace typ
 
 
@@ -3022,6 +3028,7 @@ class Circle_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_Circle;
 	using detail::Common<FPT>::isInside;
 
 	Type type() const
@@ -10640,7 +10647,7 @@ namespace priv {
 struct F_MIN{};
 struct F_MAX{};
 
-/// Common function for searching nearest of farthest point
+/// Private. Common function for searching nearest of farthest point
 /*
 \sa findNearestPoint()
 \sa findFarthestPoint
@@ -10651,6 +10658,7 @@ findPoint(
 	const Point2d_<FPT>& qpt,  ///< query point
 	const CONT&          cont, ///< container
 	const S_WHAT&              ///< F_MIN or F_MAX
+//	const CONT2*         mask  ///< optional vector or list or array of bool
 )
 {
 	if( cont.size() < 2 )
@@ -10766,6 +10774,28 @@ findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 		}
 	}
 	return std::make_pair(idxMin, idxMax);
+}
+
+/// Return set of points that are inside primitive \c prim
+template<typename CONT, typename PRIM>
+CONT
+getPtsInside(
+	const CONT& input_set,
+	const PRIM& prim        ///< geometrical primitive (FRect, Circle, ...?)
+)
+{
+/*	if( PRIM::SType == T_CPol )
+		if( !prim.isPolygon() )
+			HOMOG2D_THROW_ERROR_1( "Polyline is not a Polygon, cannot find points inside" )
+*/
+	CONT out;
+	out.reserve( input_set.size() );
+//	auto it_out = std::begin(out);
+
+	for( auto pt: input_set )
+		if( pt.isInside( prim ) )
+			out.push_back( pt );
+	return out;
 }
 
 /////////////////////////////////////////////////////////////////////////////
