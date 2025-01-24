@@ -4,7 +4,7 @@
 
 \note 20230216: preliminar feature, will be expanded )
 
-run with `$ make test_bg_1`
+run with `$ make test-bg`
 */
 
 #define HOMOG2D_USE_BOOSTGEOM

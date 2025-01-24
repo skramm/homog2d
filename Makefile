@@ -1,7 +1,7 @@
 # Makefile for homog2d library
 # see https://github.com/skramm/homog2d
 
-.PHONY: doc test testall install demo check demo_opencv doc_fig nobuild showcase speed_test
+.PHONY: doc test testall install demo check doc-fig nobuild showcase speed_test
 
 
 .PHONY:BUILD/html/index.html
@@ -61,10 +61,13 @@ endif
 #=======================================================================
 # general/common targets
 
+# a cppcheck target, lots of warnings, but few of them are really useful
 check:
 	@cppcheck --version
 	cppcheck . -iBUILD -imisc/figures_test -imisc/figures_src --enable=all -DHOMOG2D_INUMTYPE=double --std=c++17 2>cppcheck.log
 	xdg-open cppcheck.log
+
+.PHONY: doc doc-dev doc-all
 
 doc: DOX_FILE=doxyfile
 doc: BUILD/html/index.html
@@ -76,7 +79,7 @@ doc-dev: BUILD/html/index.html
 
 
 # also (re)builds the figures, but requires Opencv AND Latex!
-docall: BUILD/html/index.html doc_fig doc_fig_tex
+doc-all: BUILD/html/index.html doc-fig doc-fig-tex
 	xdg-open BUILD/html/index.html
 
 install:
@@ -85,7 +88,7 @@ install:
 demo: BUILD/demo_opencv
 	BUILD/demo_opencv
 
-demo_import: BUILD/demo_svg_import
+demo-import: BUILD/demo_svg_import
 	@echo "-done target $@"
 
 clean:
@@ -127,12 +130,12 @@ newtests: newtests_before
 	@echo "COUCOU"
 	$(foreach variant,$(variants),echo "--start $(variant)"; $(MAKE) $(variant) 2>>BUILD/homog2d_ntest_$(variant).stderr;)
 
-.PHONY: test test2 nobuild
+.PHONY: test test2 nobuild buildf
 
-test: test2 nobuild test_rtp
+test: test2 nobuild test-rtp
 	@echo "-done target $@"
 
-test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
+test2: test_SYVN test_SNVN test_SYVY test_SNVY test3
 	@echo "Make: run test2, build using $(CXX)"
 	BUILD/homog2d_test_SYVN
 	BUILD/homog2d_test_SNVN
@@ -142,9 +145,9 @@ test2: test_SYVN test_SNVN test_SYVY test_SNVY test_single test_multiple
 	BUILD/test_multiple
 	@echo "-done target $@"
 
-test-list: test_SY
+test-list: test_SNVN
 	@echo "Tests available:"
-	BUILD/homog2d_test_SY --list-tests
+	-BUILD/homog2d_test_SNVN --list-tests
 
 test_SYVY: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
 test_SYVN: CXXFLAGS += -DHOMOG2D_OPTIMIZE_SPEED
@@ -159,6 +162,9 @@ test_SNVN: BUILD/homog2d_test_SNVN
 test_SYVY: BUILD/homog2d_test_SYVY
 	@echo "-done target $@"
 test_SNVY: BUILD/homog2d_test_SNVY
+	@echo "-done target $@"
+
+test3: test_single test_multiple
 	@echo "-done target $@"
 
 test_single: BUILD/test_single
@@ -201,25 +207,25 @@ BUILD/homog2d_test_l: misc/homog2d_test.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) "-DHOMOG2D_INUMTYPE=long double" "-DNUMTYPE=long double" -O2 -o $@ $< $(LDFLAGS) 2>BUILD/homog2d_test_l.stderr
 
 
-.PHONY: test_bg_1 test_bn
+.PHONY: test-bg test-bn
 
 # "bigmath test, with ttmath
-test_bn: BUILD/ttmath_t1
+test-bn: BUILD/ttmath_t1
 	BUILD/ttmath_t1
 	@echo "-done target $@"
 
 BUILD/ttmath_t1: misc/test_files/ttmath_t1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-
-test_bg_1: BUILD/bg_test_1 buildf
+# test of importing a Boost::geometry polygon
+test-bg: BUILD/bg_test_1 buildf
 	BUILD/bg_test_1
 	@echo "-done target $@"
 
 BUILD/bg_test_1: misc/test_files/bg_test_1.cpp homog2d.hpp Makefile buildf
 	@$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS)
 
-test_rtp: BUILD/homog2d_test_rtp_1 BUILD/homog2d_test_rtp_2 BUILD/homog2d_test_rtp_3
+test-rtp: BUILD/homog2d_test_rtp_1 BUILD/homog2d_test_rtp_2 BUILD/homog2d_test_rtp_3
 	@echo "-Running RTP test 1:"
 	@BUILD/homog2d_test_rtp_1
 	@echo "-Running RTP test 2:"
@@ -275,7 +281,7 @@ BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
 
-doc_fig: $(DOC_IMAGES_OUT) build_gif_pip
+doc-fig: $(DOC_IMAGES_OUT) build_gif_pip
 	@echo "done target $@"
 
 build_gif_pip:
@@ -296,7 +302,7 @@ BUILD/fig_latex/%.tex: $(TEX_FIG_LOC)/%.tex
 BUILD/fig_latex/%.png: BUILD/fig_latex/%.tex
 	cd BUILD/fig_latex; pdflatex --shell-escape $(notdir $<) 1>latex.stdout 2>latex.stderr
 
-doc_fig_tex: $(TEX_FIG_PNG)
+doc-fig-tex: $(TEX_FIG_PNG)
 
 #=======================================================================
 # Generation of SVG figures for the test samples
@@ -305,7 +311,7 @@ TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
 TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.svg, $(TEST_FIG_SRC))
 
-test_fig: $(TEST_FIG_SVG)
+test-fig: $(TEST_FIG_SVG)
 
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
 BUILD/figures_test/%.svg: BUILD/figures_test/%

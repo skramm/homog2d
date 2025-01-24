@@ -38,7 +38,6 @@ then assign the \c action_something() function to the mouse callback:
 \code
 void demo_something( int demo_index)
 {
-
 	Param_something data( demo_index, "what-is-this-about" );
 	action_something( &data );                      // initial call of the "action" stuff
 	data.setMouseCB( action_something )             // assign to mouse callback

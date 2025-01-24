@@ -20,7 +20,7 @@ make
 sudo make install
 ```
 However, while this indeed generates the `opencv.pc` file (at least with Opencv3.4), it does not install it on your system.
-Thus the makefile for demo_opencv fails.
+Thus the makefile for target `demo` fails.
 You need to copy it from the opencv build folder to the pkg-config usual location.
 From the OpenCv 'build' folder, something like this should be sufficient:
 ```

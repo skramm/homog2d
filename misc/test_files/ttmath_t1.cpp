@@ -4,7 +4,7 @@
 
 See homog2d_manual.md#bignum
 
-Build and run with <code>$ make test_bn</code>
+Build and run with <code>$ make test-bn</code>
 */
 
 //#define HOMOG2D_INUMTYPE ttmath::Big<2,2>

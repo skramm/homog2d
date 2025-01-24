@@ -1759,7 +1759,7 @@ TEST_CASE( "Circle/Circle intersection", "[int_CC]" )
 // figures_test/frect_intersect_*.code
 // this is done so we can, for a single defined rectangle pair,
 // have both the test code here, and a graphical representation of the situation.
-// The corresponding svg images are built with `$ make test_fig` (no external dependency)
+// The corresponding svg images are built with `$ make test-fig` (no external dependency)
 TEST_CASE( "FRect/FRect intersection", "[int_FF]" )
 {
 	{                                   // identical rectangles

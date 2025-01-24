@@ -20,7 +20,7 @@
 \brief This program will demonstrate the variant-based runtime polymorphism capabilities.
 Is included in test suite.
 
-Build and run with <code>$ make test_rtp</code>
+Build and run with <code>$ make test-rtp</code>
 */
 
 #define HOMOG2D_ENABLE_VRTP

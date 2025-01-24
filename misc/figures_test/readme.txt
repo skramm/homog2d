@@ -3,7 +3,7 @@ The goal is to both:
 - include these lines in the test app, followed by some checkings
 - use these lines to build the associated figure, to make it more understandable
 
-To build the associated figures, enter `$ make test_fig`
+To build the associated figures, enter `$ make test-fig`
 and check BUILD/figures_test
 
 This target will produce a valid cpp file, by concatenating

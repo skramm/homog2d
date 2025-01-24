@@ -17,7 +17,7 @@ Also handles other geometric primitives, see full manual.
 
 (see [other demos here](docs/homog2d_showcase.md))
 
-- Language: C++14 or C++17
+- Language: C++17
 - Home: https://github.com/skramm/homog2d
 - Usage: just fetch the file `homog2d.hpp`, put it somewhere, and "#include" it in your source file. No build!
 - Status: beta
@@ -42,13 +42,13 @@ int main()
 
 ### News ###
 
-- 2024-04-21: switch to c++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp)
+- 2024-04-21: switch to C++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp)
 - 2024-03-23: added SVG "path" element import
 - 2023-12-26: fresh 2.11 release, see https://github.com/skramm/homog2d/releases
 - 2023-11-17: added [doc index](docs/index.md)
 - 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
-- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
+- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum) (preliminar!)
 
 (see [history](docs/homog2d_history.md) for more)
 

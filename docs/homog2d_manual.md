@@ -2064,16 +2064,16 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 
 From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both mantissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
-This library is header-only, so its very simple to install.
+This library is header-only, so it's very simple to install.
 
 To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH`.
-This will also define a default value for `HOMOG2D_INUMTYPE` (internal numerical type)as `ttmath::Big<2,2>`.
+This will also define a default value for `HOMOG2D_INUMTYPE` (homog2d internal numerical type) as `ttmath::Big<2,2>`.
 This definition means that both mantissa and exponent will be stored as 2 machine words.
 On a 64-bit platform, that will end up as 128 bits for both.
 
 This can be overridden,
 - either by another definition of `HOMOG2D_INUMTYPE` as default types.
-For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file:
+For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file (**after** the `#include` line):
 ```C++
 #define HOMOG2D_INUMTYPE ttmath::Big<2,3>
 ```
@@ -2182,12 +2182,12 @@ SVG Reference: https://www.w3.org/TR/SVG2/shapes.html
 
 If you have cloned the whole repo and have `Tinyxml2` installed, you may build a demo program with:
 <br>
-`$ make demo_import`
+`$ make demo-import`
 
 This will build the file `BUILD/demo_svg_import` ([source here](../misc/test_files/demo_svg_import.cpp))
 that will import any SVG file, print its content on screen
 (SVG general attributes and number of shapes),
-and generate another svg file `demo_import.svg` in current folder.
+and generate another svg file `demo-import.svg` in current folder.
 
 For example:
 <br>
@@ -2215,9 +2215,10 @@ For more details on the code, check [this page](homog2d_devinfo.md).
 
 A unit-test program is included, can be run locally and is also used by GitHub CI.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
-The Github CI loads the 2.13.6 release.
+The Github CI (aka "Github Acionts") loads the 2.13.6 release.
 It is build and run with `$ make test`
-The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22.
+The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22, and also makes sure that the Microsoft C++ compiler is able to build the software
+(but it does not run the tests with it).
 
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
@@ -2238,7 +2239,8 @@ These demonstrate some code that should NOT build, thus Make will fail if any of
 This is just to make sure that some invalid code does, indeed, not build.
 
 **Timing**
-Using the Catch v2 library has a small drawback: build time is pretty long (but will succeed!).
+Using the Catch v2 library has a small drawback:
+build time is pretty long (but will succeed!).
 For example:
 ```
 $ time make test -j2
@@ -2246,6 +2248,8 @@ real   0m41,986s
 user   1m21,940s
 sys    0m1,699s
 ```
+
+See some additional details on ["dev" page](homog2d_devinfo.md#testing)
 
 ### 11.2 - Build options
 <a name="build_options"></a>

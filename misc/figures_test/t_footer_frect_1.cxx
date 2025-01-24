@@ -1,5 +1,5 @@
 // file t_footer_frect_1.cxx
-// used in makefile target test_fig
+// used in makefile target test-fig
 
 	Homogr H;
 	H.addScale( 50 );
