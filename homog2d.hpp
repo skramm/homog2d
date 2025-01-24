@@ -244,6 +244,8 @@ namespace err {
 /**
 This is used in the HOMOG2D_THROW_ERROR_1 macros. Some user code could catch the exceptions, thus
 this will enable the counting of errors
+
+\todo 20250123: for some reason, the error count is always 42! Need to investigate this.
 */
 inline size_t& errorCount()
 {
@@ -269,6 +271,16 @@ struct IsHomogr {};
 struct IsEpipmat {};
 struct IsClosed {};
 struct IsOpen {};
+
+struct T_Point    {};
+struct T_Line     {};
+struct T_Circle   {};
+struct T_FRect    {};
+struct T_Segment  {};
+//struct T_Polyline {};
+struct T_OPol     {};
+struct T_CPol     {};
+struct T_Ellipse  {};
 } // namespace typ
 
 
@@ -1954,14 +1966,10 @@ template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std
 template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
 template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
 
-
-template <typename T> struct IsArray                  : std::false_type { };
-template <typename T> struct IsArray<std::array<T,3>> : std::true_type { };
-
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
-template <typename T> struct Is_std_array                             : std::false_type {};
-template <typename V, size_t n> struct Is_std_array<std::array<V, n>> : std::true_type {};
+template <typename T>           struct IsArray                   : std::false_type {};
+template <typename V, size_t n> struct IsArray<std::array<V, n>> : std::true_type {};
 
 /// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
@@ -2085,6 +2093,7 @@ class Ellipse_: public detail::Matrix_<FPT>
 public:
 	using FType = FPT;
 	using detail::Common<FPT>::isInside;
+	using SType = typ::T_Ellipse;
 
 	Type type() const
 	{
@@ -2511,6 +2520,8 @@ class FRect_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_FRect;
+
 	using detail::Common<FPT>::isInside;
 
 	Type type() const
@@ -3020,6 +3031,7 @@ class Circle_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_Circle;
 	using detail::Common<FPT>::isInside;
 
 	Type type() const
@@ -3646,6 +3658,8 @@ class LPBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+// The following line enables defining the SType based on how the class is instanciated: Line or Point
+	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
 	using detail::Common<FPT>::isInside;
 
 private:
@@ -4844,6 +4858,7 @@ class Segment_: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
+	using SType = typ::T_Segment;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T> friend class Segment_;
@@ -5783,7 +5798,7 @@ The consequence is that when adding points, if you have done a comparison before
 add point after the one you thought!
 
 template args:
- - PLT: PolyLine Type: type::IsClosed or type::IsOpen
+ - PLT: PolyLine Type: typ::IsClosed or typ::IsOpen
  - FPT: Floating Point Type
 */
 template<typename PLT,typename FPT>
@@ -5795,6 +5810,9 @@ class PolylineBase: public detail::Common<FPT>
 public:
 	using FType = FPT;
 	using PType = PLT;
+//	using SType = typ::T_Polyline;
+	using SType = std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
+
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class PolylineBase;
@@ -9437,7 +9455,7 @@ namespace priv {
 template<
 	typename Cont,
 	typename std::enable_if<
-		trait::Is_std_array<Cont>::value,
+		trait::IsArray<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -9451,7 +9469,7 @@ alloc( std::size_t /* unused here */ )
 template<
 	typename Cont,
 	typename std::enable_if<
-		!trait::Is_std_array<Cont>::value,
+		!trait::IsArray<Cont>::value,
 		Cont
 	>::type* = nullptr
 >
@@ -10631,6 +10649,76 @@ getAxisLines( const Ellipse_<FPT>& ell )
 	return ell.getAxisLines();
 }
 
+
+namespace priv {
+
+/// used in findPoint()
+struct F_MIN{};
+struct F_MAX{};
+
+/// Private. Common function for searching nearest of farthest point
+/*
+\sa findNearestPoint()
+\sa findFarthestPoint
+*/
+template<typename FPT, typename CONT, typename S_WHAT>
+size_t
+findPoint(
+	const Point2d_<FPT>& qpt,  ///< query point
+	const CONT&          cont, ///< container
+	const S_WHAT&              ///< F_MIN or F_MAX
+//	const CONT2*         mask  ///< optional vector or list or array of bool
+)
+{
+	if( cont.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
+			<< " points, minimum is 2" );
+
+	decltype( priv::sqDist( qpt, qpt ) ) resDist;
+	size_t startIdx = 1;
+	size_t resIdx = 0;
+
+// if point is the first one of the container, then
+// initialize with the second one
+	if( cont[0] == qpt )
+	{
+		startIdx++;
+		resIdx++;
+		resDist = priv::sqDist( qpt, cont[1] );
+	}
+	else // initialize with first point
+	{
+		resDist = priv::sqDist( qpt, cont[0] );
+	}
+
+	for( size_t i=startIdx; i<cont.size(); i++ )
+	{
+		if( qpt != cont[i] )
+		{
+			auto currentDist = priv::sqDist( qpt, cont[i] );
+			if constexpr( std::is_same_v<S_WHAT, F_MIN> )
+			{
+				if( currentDist < resDist )
+				{
+					resIdx  = i;
+					resDist = currentDist;
+				}
+			}
+			else
+			{
+				if( currentDist > resDist )
+				{
+					resIdx  = i;
+					resDist = currentDist;
+				}
+			}
+		}
+	}
+	return resIdx;
+}
+
+} //namespace priv
+
 //------------------------------------------------------------------
 /// Returns index of point in container \c cont that is the nearest to \c pt
 /// \todo add some sfinae and/or checking on type T
@@ -10641,21 +10729,7 @@ template<typename FPT, typename T>
 size_t
 findNearestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
-
-	auto minDist = priv::sqDist( pt, cont[0] );
-	size_t resIdx = 0;
-	for( size_t i=1; i<cont.size(); i++ )
-	{
-		auto currentDist = priv::sqDist( pt, cont[i] );
-		if( currentDist < minDist )
-		{
-			resIdx  = i;
-			minDist = currentDist;
-		}
-	}
-	return resIdx;
+	return priv::findPoint( pt, cont, priv::F_MIN() );
 }
 //------------------------------------------------------------------
 /// Returns index of point in container \c cont that is the farthest to \c pt
@@ -10663,50 +10737,80 @@ template<typename FPT, typename T>
 size_t
 findFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
-
-	auto maxDist = priv::sqDist( pt, cont[0] );
-	size_t resIdx = 0;
-	for( size_t i=1; i<cont.size(); i++ )
-	{
-		auto currentDist = priv::sqDist( pt, cont[i] );
-		if( currentDist > maxDist )
-		{
-			resIdx  = i;
-			maxDist = currentDist;
-		}
-	}
-	return resIdx;
+	return priv::findPoint( pt, cont, priv::F_MAX() );
 }
 //------------------------------------------------------------------
-/// Returns index of point in container \c cont that is the farthest to \c pt
+/// Returns indexes of points in container \c cont that are nearest/farthest
+/**
+- return pair: first is nearest, second is farthest
+*/
 template<typename FPT, typename T>
 auto
 findNearestFarthestPoint( const Point2d_<FPT>& pt, const T& cont )
 {
-	if( cont.empty() )
-		HOMOG2D_THROW_ERROR_1( "container is empty" );
+	if( cont.size() < 2 )
+		HOMOG2D_THROW_ERROR_1( "container holds " << cont.size() \
+			<< " points, minimum is 2" );
 
 	auto maxDist = priv::sqDist( pt, cont[0] );
 	auto minDist = maxDist;
 	size_t idxMin = 0;
 	size_t idxMax = 0;
-	for( size_t i=1; i<cont.size(); i++ )
+	size_t startIdx = 1;
+	if( pt == cont[0] )
 	{
-		auto currentDist = priv::sqDist( pt, cont[i] );
-		if( currentDist > maxDist )
+		idxMin++;
+		idxMax++;
+		startIdx++;
+		maxDist = priv::sqDist( pt, cont[1] );
+		minDist = maxDist;
+	}
+	for( size_t i=startIdx; i<cont.size(); i++ )
+	{
+		if( pt != cont[i] )
 		{
-			idxMax  = i;
-			maxDist = currentDist;
-		}
-		if( currentDist < minDist )
-		{
-			idxMin  = i;
-			minDist = currentDist;
+			auto currentDist = priv::sqDist( pt, cont[i] );
+			if( currentDist > maxDist )
+			{
+				idxMax  = i;
+				maxDist = currentDist;
+			}
+			if( currentDist < minDist )
+			{
+				idxMin  = i;
+				minDist = currentDist;
+			}
 		}
 	}
 	return std::make_pair(idxMin, idxMax);
+}
+
+/// Returns set of points that are inside primitive \c prim
+/**
+Output container will be of same type as input container (vector, list or array
+
+\todo 20250123: maybe replace the bunch of static_asserts with something around trait::HasArea ?
+*/
+template<typename CONT, typename PRIM>
+CONT
+getPtsInside(
+	const CONT& input_set,
+	const PRIM& prim        ///< geometrical primitive (FRect, Circle, ...?)
+)
+{
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_OPol>,    "Cannot find points inside a Open Polyline" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Line>,    "Cannot find points inside a Line" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Point>,   "Cannot find points inside a Point" );
+	static_assert( !std::is_same_v<typename PRIM::SType, typ::T_Segment>, "Cannot find points inside a Segment" );
+	static_assert( !trait::IsArray<CONT>::value, "Cannot use std::array as container" );
+
+	CONT out;
+	out.reserve( input_set.size() );
+
+	for( auto pt: input_set )
+		if( pt.isInside( prim ) )
+			out.push_back( pt );
+	return out;
 }
 
 /////////////////////////////////////////////////////////////////////////////

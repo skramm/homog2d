@@ -1583,7 +1583,7 @@ bool b = areCollinear( pt1, pt2, pt3 );
 
 ### 6.5 - Finding nearest/farthest point in a container
 
-Say you have container (`std::vector` or `std::array`) holding a bunch of points.
+Say you have container (`std::vector`, `std::list`, `std::array`) holding a bunch of points.
 Three functions allow you to find among these wich one is the closest or the farthest to a given point.
 
 ```C++
@@ -1607,6 +1607,11 @@ cout << "nearest point is " << vpts[pidx.first]
 
 [see showcase](homog2d_showcase.md#sc15)
 
+Please note:
+* These functions will throw if the container is empty or holds only one point.
+* If the query point is equal to one of the points in the container, these function will still return the nearest/farthest of that point.
+
+
 ### 6.6 - Extracting data from sets/containers of primitives
 
 If you have a container (`std::vector`, `std::list` or `std::array`) holding either segments, circles or ellipses, you can get at once all the center points, grouped in a vector:
@@ -1628,6 +1633,32 @@ std::list<Segment> vec;
  ... fill vec
 auto v_lines = getLines( vec );
 ```
+
+
+### 6.7 - Finding points inside a shape
+
+If you have a container (`std::vector`, `std::list` but not `std::array`) holding a set of points, you get can fetch the set of points lying inside a primitive with
+the free function `getPtsInside()`:
+
+```C++
+
+std::vector<Point2d> vec;
+// fill vector
+Circle cir( ... );
+auto res = getPtsInside( vec, cir );
+```
+
+The only primitives allowed are the ones having an area (`FRect`, `Circle`, `CPolyline)` and `Ellipse`).
+Using others will fail at build time.
+The returned type will be the same as the input type (vector/vector or list/list)
+
+Examples (generated with [this file](../misc/figures_src/src/get_pts_inside.cpp)):
+
+![pts inside FRect](img/pts_inside_rect.svg)
+![pts inside CPol](img/pts_inside_pol.svg)
+![pts inside Ellipse](img/pts_inside_ell.svg)
+![pts inside Circle](img/pts_inside_circle.svg)
+
 
 
 ## 7 - Bindings with other libraries
