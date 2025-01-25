@@ -888,6 +888,7 @@ enum class LineDir: uint8_t { H, V };
 
 /// Type of Root object, see rtp::Root::type().
 /// Maybe printed out with getString()
+/// \sa type()
 enum class Type: uint8_t { Line2d, Point2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
 /// Type of underlying floating point, see LPBase::dtype().
@@ -9805,7 +9806,7 @@ struct BBFunct
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
-/// Returns the type of object or variant
+/// Free function. Returns the type of object or variant
 /**
 Can be printed with `getString()`
 \sa CommonType_
@@ -10053,7 +10054,7 @@ getBB( const T1& elem1, const T2& elem2 )
 	return out;
 }
 
-/// Overload 2/3. Called if
+/// Overload 2/3. Called if 2 polyline objects
 template<
 	typename T1,
 	typename T2,

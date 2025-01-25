@@ -16,6 +16,36 @@ But the library end-user doesn't need it.
 </dd>
 
 <dt>
+Q: I am lost with all the "type" information, between the identifiers `Type`,  `type`,  `SType`,  `Dtype`, `FType`, ...
+Could I have some clarification?
+</dt>
+<dd>
+- `SType` is a static type that is redefined in all the "graphical" types.
+It can be used to statically make sure that a call to a function meets some requirement on the parameter type.
+
+- `Type` is an enum that also defines the nature of a given object, but it is object-based
+(not type-based as `SType` is),
+so it can be used to get the nature of an object, either  with the free function
+(`auto t = type(obj);`)
+or with the corresponding member function.
+(`auto t = obj.type();`).
+<br>
+You can get is as text with the free function `getString(Type)`.
+
+- `Dtype` is an enum that is used to identify the numerical datatype of an object,
+[see manual here](homog2d_manual.md#numtype).
+It is the type returned by the `dtype()` member function that every geometrical object has.
+You can have it as text with the `getString(Dtype)` free function.
+
+- `FType` is a static type that holds for a type the underlying numerical type
+(`float`, `double`, `long double` or other)
+
+- `CommonType_` is just an typedef over the `std::variant` type holding the different geometrical primitives.
+</dd>
+
+
+
+<dt>
 Q: How do I know the version that I have installed on my machine?
 </dt>
 <dd>

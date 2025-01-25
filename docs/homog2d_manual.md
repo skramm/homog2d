@@ -2377,7 +2377,7 @@ for( auto& e: vec )
 Remarks:
 
 * You may directly call the streaming operator (`<<`), the `Root` class takes care of redirecting to the correct class operator.
-* Notice that if the object is detected as a line, the function length is **not** called.
+* Notice that in this code, if the object is detected as a line, the function length is **not** called.
 This is mandatory to avoid throwing an exception, as a line cannot have a finite length.
 
 To do something more elaborate, you need to convert them using a dynamic cast:
