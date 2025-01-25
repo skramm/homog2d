@@ -1546,6 +1546,10 @@ For points, the Top-most and Left-most point are shown in green, and the Right-m
 (see next section about this).
 
 **Note**: this function also works for containers holding "variant" type objects (`CommonType`), see [RTP](#section_rtp) section.
+For example, this figure shows how you can detect the bounding box of a set containing variant-based primitives, generated with
+ [this file](../misc/figures_src/src/get_bb_cont_v.cpp):
+
+![bounding box of a set of variant](img/bb_variant.svg)
 
 
 ### 6.3 - Extremum points

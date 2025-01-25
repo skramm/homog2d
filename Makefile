@@ -281,7 +281,7 @@ BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 	@echo "Running $< to generate images"
-	@cd BUILD/img; bin/$(notdir $<)
+	cd BUILD/img; bin/$(notdir $@)
 
 doc-fig: $(DOC_IMAGES_EXE) build_gif_pip
 	@echo "done target $@"

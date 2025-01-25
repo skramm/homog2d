@@ -1,6 +1,10 @@
 // this file is part of homog2d
 // used to build a figure that is included in manual
 // see makefile target doc-fig
+/**
+\file
+\brief Demo of bounding box for a set of variant-based graphical primitives
+*/
 
 #define HOMOG2D_ENABLE_VRTP
 #include "fig_src.header"
@@ -11,12 +15,12 @@ int main()
 
 	auto nb_pts_poly_max = 5;
 	auto nb_pts_poly_min = 2;
-	size_t polySize = 1.*std::rand()/RAND_MAX * nb_pts_poly_max + nb_pts_poly_min;
+//	size_t polySize = 1.*std::rand()/RAND_MAX * nb_pts_poly_max + nb_pts_poly_min;
 
 	int xmax = 350;
 	int ymax = 280;
-	int xmin = 100;
-	int seg_max = 50;
+	int xmin = 50;
+	int seg_max = 70;
 	int seg_min = 10;
 	std::srand( std::time(nullptr) );
 
@@ -60,7 +64,7 @@ int main()
 		std::visit( vde, e );
 
 	auto bb = getBB( vec );
-	bb.draw( im, DrawParams().setColor(250,50,20) );
-	im.write( "var_set.svg" );
+	bb.draw( im, DrawParams().setColor(250,20,20) );
+	im.write( "bb_variant.svg" );
 }
 
