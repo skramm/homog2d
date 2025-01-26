@@ -15,11 +15,14 @@ int main()
 	CPolyline p1(v1);
 	CPolyline p2(v2);
 
-	img::Image<cv::Mat> img( 300, 220 );
+	img::Image<img::SvgImage> im( 300, 220 );
 
-	p1.draw( img,  DrawParams().showPoints(true).setColor(0,200,200) );
-	p2.draw( img,  DrawParams().showPoints(true).setColor(200,200,0) );
+	p1.draw( im,  DrawParams().showPoints(true).setColor(0,200,200) );
+	p2.draw( im,  DrawParams().showPoints(true).setColor(200,200,0) );
 
+	drawText( im, "from", v1[0] );
+	drawText( im, "to",   v2[0] );
+/* this was needed when using OpenCv as backend... (!)
 	cv::putText(
 		img.getReal(),
 		"from",
@@ -34,6 +37,6 @@ int main()
 		0, 0.6,
 		cv::Scalar( 0,20,20 )
 	);
-
-	img.write( "homog_from_pts.png" );
+*/
+	im.write( "homog_from_pts.svg" );
 }

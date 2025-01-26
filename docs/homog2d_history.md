@@ -8,7 +8,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - add polygon union and intersection
   - add non-convex polyline splitting into polygons
-  - extend runtime polymorphism capabilities
   - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
@@ -31,6 +30,7 @@ This was possible by moving to C++17, which is now a requirement.
   - added stream operator to draw parameters
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
   - improved behavior of `findNearestPoint()`, added checking, and wont return query point if it is inside the container
+  - `draw()` free function can now draw container holding variant type
 
 ## Previous releases
 

@@ -262,6 +262,10 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile bu
 
 #=======================================================================
 # Generation of the doc figures from code
+# WARNING: this target requires the imagemagick package (to convert some images to gif)
+
+doc-fig: $(DOC_IMAGES_EXE) build_gif_pip
+	@echo "done target $@"
 
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
@@ -282,10 +286,8 @@ BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
 
-doc-fig: $(DOC_IMAGES_EXE) build_gif_pip
-	@echo "done target $@"
 
-build_gif_pip:
+build_gif_pip: $(DOC_IMAGES_OUT)
 	convert -delay 80 BUILD/img/demo_pip_* BUILD/img/demo_pip.gif
 
 

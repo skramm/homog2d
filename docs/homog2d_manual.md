@@ -638,7 +638,7 @@ The figure below shows the extended rectangle and the diagonals.
 red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines
 ([source file](../misc/figures_src/src/frect_extended.cpp)).
 
-![Extended Rectangle](img/frect_extended.png)
+![Extended Rectangle](img/frect_extended.svg)
 
 Check [this section](#frect_union) about union and intersection area of two rectangles.
 
