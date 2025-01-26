@@ -265,23 +265,22 @@ BUILD/ellipse_speed_test_SN: misc/ellipse_speed_test.cpp homog2d.hpp Makefile bu
 
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
-DOC_IMAGES_EXE:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
-DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/bin/%, $(DOC_IMAGES_SRC))
+DOC_IMAGES_EXE:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/bin/%, $(DOC_IMAGES_SRC))
+DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
 
 .PRECIOUS: BUILD/img/%
 
+# Warning: there is no sometimes no relationship between program name and generated image
 # run the program => builds the png (or svg) image
 BUILD/img/%.png: BUILD/img/bin/%
 	@echo "Running $< to generate $@"
 	@cd BUILD/img; bin/$(notdir $<)
 
-# build the program
+# build an run the program
 BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@mkdir -p BUILD/img/bin
 	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
-	@echo "Running $< to generate images"
-	cd BUILD/img; bin/$(notdir $@)
 
 doc-fig: $(DOC_IMAGES_EXE) build_gif_pip
 	@echo "done target $@"

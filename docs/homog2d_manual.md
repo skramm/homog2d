@@ -1995,11 +1995,30 @@ draw( img, vseg, func );
 Checkout [here](#bbox_set) to see an example.
 A helper function `img::genRandomColors()` is provided, it will return a vector of `img::Color` objects filled with random RGB colors.
 For example:
-```
+```C++
 auto vcol1 = img::genRandomColors(10);        // return 10 random colors with values in the range [20-250]
 auto vcol2 = img::genRandomColors(10,100);    // return 10 random colors with values in the range [100-250]
 auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with values in the range [30-150]
 ```
+
+
+### 8.5 - Drawing containers holding variant objects (runtime polymorphism)
+
+If this build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
+
+```C++
+std::vector<CommonType> vec;
+vec.push_back( Circle() );
+vec.push_back( Frect() );
+vec.push_back( Segment() );
+img::Image<img::SvgImage> im( width, height );
+draw( im, vec );
+```
+
+You can also pass an optional third parameter of type `DrawParams`.
+
+
+See [example](../misc/figures_src/src/get_bb_cont_v.cpp)
 
 
 ## 9 - Numerical data types

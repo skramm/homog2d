@@ -1003,6 +1003,9 @@ private:
 
 //------------------------------------------------------------------
 /// A functor used to draw objects. To use with std::variant and std::visit()
+/**
+The constructor has a third optional parameter that can be used to pass drawing parameters
+*/
 template<typename IMG>
 struct DrawFunct
 {
@@ -1011,6 +1014,7 @@ struct DrawFunct
 		img::DrawParams dp=img::DrawParams()
 	): _img(img), _drawParams(dp)
 	{}
+
 	img::Image<IMG>&      _img;
 	const img::DrawParams _drawParams;
 
@@ -10893,13 +10897,25 @@ template<
 void
 draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawParams() )
 {
-	size_t c=0;
-	for( const auto& elem: cont )
+#ifdef HOMOG2D_ENABLE_VRTP
+	if constexpr( trait::IsVariant<typename T::value_type>::value )
 	{
-		elem.draw( img, dp );
-		priv::impl_drawIndexes( img, c++, dp, elem );
+		fct::DrawFunct vde( img, dp ); // functor
+		for( auto& e: cont )
+			std::visit( vde, e );
+	}
+	else
+#endif
+	{
+		size_t c=0;
+		for( const auto& elem: cont )
+		{
+			elem.draw( img, dp );
+			priv::impl_drawIndexes( img, c++, dp, elem );
+		}
 	}
 }
+
 /// This version holds a \c std::function as 3th parameter. It can be used to pass a function
 /// that will return a different img::DrawParams for a given index of the container.
 template<

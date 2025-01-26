@@ -11,11 +11,10 @@
 
 int main()
 {
-	std::vector<CommonType_<double>> vec;
+	std::vector<CommonType> vec;
 
-	auto nb_pts_poly_max = 5;
-	auto nb_pts_poly_min = 2;
-//	size_t polySize = 1.*std::rand()/RAND_MAX * nb_pts_poly_max + nb_pts_poly_min;
+//	auto nb_pts_poly_max = 5;
+//	auto nb_pts_poly_min = 2;
 
 	int xmax = 350;
 	int ymax = 280;
@@ -59,9 +58,7 @@ int main()
 	auto k = 1.4;
 	img::Image<img::SvgImage> im( k*xmax, k*ymax );
 
-	fct::DrawFunct vde( im /*, dp */ );
-	for( auto& e: vec )
-		std::visit( vde, e );
+	draw( im, vec, DrawParams().setColor(0,0,150) );
 
 	auto bb = getBB( vec );
 	bb.draw( im, DrawParams().setColor(250,20,20) );
