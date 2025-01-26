@@ -17,6 +17,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
+  - (nil)
+
+- [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
 This was possible by moving to C++17, which is now a requirement.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
@@ -31,6 +34,7 @@ This was possible by moving to C++17, which is now a requirement.
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
   - improved behavior of `findNearestPoint()`, added checking, and wont return query point if it is inside the container
   - `draw()` free function can now draw container holding variant type
+  - added some tests
 
 ## Previous releases
 

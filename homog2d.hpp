@@ -227,7 +227,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.11.2"
+#define HOMOG2D_VERSION "2.12.0"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -10879,12 +10879,9 @@ impl_drawIndexes( img::Image<IMG>&, size_t, const img::DrawParams&, const DUMMY&
 
 /// Free function, draws a set of primitives
 /**
-Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable
-
-\note: At present, does not handle containers holding std::variant type
-(see https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section_rtp
-
-\todo 20241024: Enable the use variant-base polymorphism here
+- Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable.
+- The types inside the container can be either plain \c h2d types (\c FRect, \c Segment, ...) of variant types,
+using the \c CommonType class (requires HOMOG2D_ENABLE_VRTP symbol).
 */
 template<
 	typename U,
@@ -10918,6 +10915,9 @@ draw( img::Image<U>& img, const T& cont, const img::DrawParams& dp=img::DrawPara
 
 /// This version holds a \c std::function as 3th parameter. It can be used to pass a function
 /// that will return a different img::DrawParams for a given index of the container.
+/**
+At present, cannot be used with container holding variants...
+*/
 template<
 	typename U,
 	typename T,

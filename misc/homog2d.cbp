@@ -93,6 +93,7 @@
 		<Unit filename="figures_src/src/get_bb_cont_v.cpp" />
 		<Unit filename="figures_src/src/get_pts_inside.cpp" />
 		<Unit filename="figures_src/src/getbb1.cpp" />
+		<Unit filename="figures_src/src/homog_from_pts.cpp" />
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
 		<Unit filename="figures_src/src/polyline_rcp_1.cpp" />
