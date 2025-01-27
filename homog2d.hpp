@@ -227,7 +227,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.12.0"
+#define HOMOG2D_VERSION "2.12.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -5946,7 +5946,7 @@ this should work !!! (but doesn't...)
 		if( pt_front == pt_back ) // means it's closed
 			isClosed = true;
 
-		if( isClosed && std::is_same<PLT,type::IsOpen>::value ) // cannot build an open polyline from a closed one
+		if( isClosed && std::is_same_v<PLT,typ::IsOpen> ) // cannot build an open polyline from a closed one
 			HOMOG2D_THROW_ERROR_1( "unable to convert a closed boost::polygon into an OPolyline" );
 
 		_plinevec.reserve( outer.size() - isClosed );
@@ -9288,7 +9288,7 @@ product(
 
 /// Implementation of product 3x3 by 3x1
 /**
-- T1 and T2: type::IsLine or type::IsPoint (same but also different)
+- T1 and T2: typ::IsLine or typ::IsPoint (same but also different)
 */
 template<typename T1,typename T2,typename FPT1,typename FPT2>
 void
