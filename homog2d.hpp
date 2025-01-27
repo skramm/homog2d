@@ -227,7 +227,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.12.0"
+#define HOMOG2D_VERSION "2.12.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -4053,7 +4053,7 @@ public:
 	}
 
 	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
-	/// \todo clarify orientation: on wich side will that line appear?
+	/// \todo clarify orientation: on which side will that line appear?
 	Line2d_<FPT>
 	getParallelLine( const Point2d_<FPT>& pt ) const
 	{
@@ -6567,6 +6567,9 @@ Two tasks:
 	}
 
 public:
+	template<typename T>
+	PolylineBase<typ::IsClosed,FPT>
+	buildOffset( T value ) const;
 
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
@@ -6574,6 +6577,49 @@ public:
 #endif
 
 }; // class PolylineBase
+
+/// Return an "offsetted" closed polyline
+template<typename PLT,typename FPT>
+template<typename T>
+PolylineBase<typ::IsClosed,FPT>
+PolylineBase<PLT,FPT>::buildOffset( T dist ) const
+{
+	HOMOG2D_CHECK_IS_NUMBER(T);
+	if( size()<3 )
+		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
+//	std::cout << "THIS=" << *this << '\n';
+
+	PolylineBase<typ::IsClosed,FPT> out;
+	size_t current = 0;
+	const auto segs = this->getSegs();
+	do
+	{
+		auto next = (current==size()-1 ? 0 : current+1);
+//		std::cout << "current=" << current << " next=" << next << '\n';
+/*		auto s1 = segs.at(current);
+		auto s2 = segs.at(next);
+		std::cout << "s1=" << s1 << " s2=" << s2 << '\n';*/
+		auto li1 = segs.at(current).getLine();
+		auto li2 = segs.at(next).getLine();
+		auto pli1 = li1.getParallelLines( dist );
+		auto pli2 = li2.getParallelLines( dist );
+// compute the 4 intersection points
+		auto pt1 = pli1.first  * pli2.first;
+		auto pt2 = pli1.first  * pli2.second;
+		auto pt3 = pli1.second * pli2.first;
+		auto pt4 = pli1.second * pli2.second;
+
+		current++;
+	}
+	while( current<size() );
+
+/*	for(auto seg: getSegs )
+	{
+		auto pli = getParallelLines( seg.getLine(), 50 );
+	}*/
+	return out;
+}
+
 
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
 /**
