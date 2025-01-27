@@ -42,13 +42,14 @@ int main()
 
 ### News ###
 
-- 2024-04-21: switch to c++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp), and the use of `if constexpr`
+- 2025-01-26: fresh 2.12 release, see https://github.com/skramm/homog2d/releases
+- 2024-04-21: switch to C++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp), and the use of `if constexpr`
 - 2024-03-23: added SVG "path" element import
-- 2023-12-26: fresh 2.11 release, see https://github.com/skramm/homog2d/releases
+- 2023-12-26: 2.11 release
 - 2023-11-17: added [doc index](docs/index.md)
 - 2023-07-11: added online Doxygen-generated reference, through the great https://codedocs.xyz/ [see here](https://codedocs.xyz/skramm/homog2d)
 - 2023-02-19: 2.10 release, see https://github.com/skramm/homog2d/releases
-- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum)) (preliminar!)
+- 2023-02-12: added support for "big numbers" through the [ttmath](https://www.ttmath.org/) library, [see here](docs/homog2d_manual.md#bignum) (preliminar!)
 
 (see [history](docs/homog2d_history.md) for more)
 
@@ -67,7 +68,6 @@ This will copy that file in `/usr/local/include`.
 When installed, run `$ make test` (or `$ make testall` for testing with all 3 numerical types).
 
 - **Contributing**: at present, the best you can do is testing and bug/issue reporting.
-Don't hesitate, this is still beta but stable release expected soon.
 
 - Rationale:
   - Usage simplicity, max flexibility

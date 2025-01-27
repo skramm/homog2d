@@ -8,7 +8,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - Ellipse/line, ellipse/ellipse intersection (hard task...)
   - add polygon union and intersection
   - add non-convex polyline splitting into polygons
-  - extend runtime polymorphism capabilities
   - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
@@ -18,8 +17,11 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
+  - (nil)
+
+- [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
-This was possible by moving to C++17. This switch also enable the use of `if constexpr`, so that a lot of SFINAE constructs avoided.
+This was possible by moving to C++17, which is now a requirement. This switch also enable the use of `if constexpr`, so that a lot of SFINAE constructs can be avoided.
   - removed requirement to pointer-based runtime polymorphism to import SVG file, by using `std::variant`.
   - generalization of bounding box of pair of objects
   - SVG import: added reading of image size in file
@@ -30,6 +32,9 @@ This was possible by moving to C++17. This switch also enable the use of `if con
     - https://github.com/skramm/homog2d/issues/10
   - added stream operator to draw parameters
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
+  - improved behavior of `findNearestPoint()`, added checking, and wont return query point if it is inside the container
+  - `draw()` free function can now draw container holding variant type
+  - added some tests
 
 ## Previous releases
 

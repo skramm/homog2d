@@ -17,7 +17,7 @@
 
 /**
 \file
-\brief Demo of reading svg files. Build with `$ make demo_import`
+\brief Demo of reading svg files. Build with `$ make demo-import`
 
 Then run with
 `$ BUILD/demo_svg_import misc/test_files/France.svg`

@@ -1,11 +1,11 @@
 // this file is part of homog2d
 // used to build a figure that is included in manual
-// see makefile target doc_fig
+// see makefile target doc-fig
 
 
 #include "fig_src.header"
 
-void drawGrid( img::Image<cv::Mat>& im, const Homogr& H )
+void drawGrid( img::Image<img::SvgImage>& im, const Homogr& H )
 {
 	int g=220, g0=g/2;
 	auto colgrid  = img::DrawParams().setColor(g,g,g);
@@ -33,7 +33,7 @@ void drawGrid( img::Image<cv::Mat>& im, const Homogr& H )
 template<typename T,typename U>
 void generate( std::string fname, const base::PolylineBase<T,U>& pl )
 {
-	img::Image<cv::Mat> im( 200, 200 );
+	img::Image<img::SvgImage> im( 200, 200 );
 	auto H = Homogr().setScale(30).addTranslation(10,30);
 	drawGrid( im, H );
 	auto pl2 = H * pl;
@@ -51,7 +51,8 @@ int main()
 
 	CPolyline cp1(vpts1);
 	auto H = Homogr().setScale(30).addTranslation(10,30);
-	generate( "polyline2_o1.png", op1 );
-	generate( "polyline2_o2.png", op2 );
-	generate( "polyline2_c.png", cp1 );
+
+	generate( "polyline2_o1.svg", op1 );
+	generate( "polyline2_o2.svg", op2 );
+	generate( "polyline2_c.svg", cp1 );
 }

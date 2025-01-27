@@ -638,7 +638,7 @@ The figure below shows the extended rectangle and the diagonals.
 red: the original rectangle, blue: the extended one, green: the diagonal segments, and gray: the supporting lines
 ([source file](../misc/figures_src/src/frect_extended.cpp)).
 
-![Extended Rectangle](img/frect_extended.png)
+![Extended Rectangle](img/frect_extended.svg)
 
 Check [this section](#frect_union) about union and intersection area of two rectangles.
 
@@ -1572,6 +1572,10 @@ For points, the Top-most and Left-most point are shown in green, and the Right-m
 (see next section about this).
 
 **Note**: this function also works for containers holding "variant" type objects (`CommonType`), see [RTP](#section_rtp) section.
+For example, this figure shows how you can detect the bounding box of a set containing variant-based primitives, generated with
+ [this file](../misc/figures_src/src/get_bb_cont_v.cpp):
+
+![bounding box of a set of variant](img/bb_variant.svg)
 
 
 ### 6.3 - Extremum points
@@ -1609,7 +1613,7 @@ bool b = areCollinear( pt1, pt2, pt3 );
 
 ### 6.5 - Finding nearest/farthest point in a container
 
-Say you have container (`std::vector` or `std::array`) holding a bunch of points.
+Say you have container (`std::vector`, `std::list`, `std::array`) holding a bunch of points.
 Three functions allow you to find among these wich one is the closest or the farthest to a given point.
 
 ```C++
@@ -1633,6 +1637,11 @@ cout << "nearest point is " << vpts[pidx.first]
 
 [see showcase](homog2d_showcase.md#sc15)
 
+Please note:
+* These functions will throw if the container is empty or holds only one point.
+* If the query point is equal to one of the points in the container, these function will still return the nearest/farthest of that point.
+
+
 ### 6.6 - Extracting data from sets/containers of primitives
 
 If you have a container (`std::vector`, `std::list` or `std::array`) holding either segments, circles or ellipses, you can get at once all the center points, grouped in a vector:
@@ -1654,6 +1663,32 @@ std::list<Segment> vec;
  ... fill vec
 auto v_lines = getLines( vec );
 ```
+
+
+### 6.7 - Finding points inside a shape
+
+If you have a container (`std::vector`, `std::list` but not `std::array`) holding a set of points, you get can fetch the set of points lying inside a primitive with
+the free function `getPtsInside()`:
+
+```C++
+
+std::vector<Point2d> vec;
+// fill vector
+Circle cir( ... );
+auto res = getPtsInside( vec, cir );
+```
+
+The only primitives allowed are the ones having an area (`FRect`, `Circle`, `CPolyline)` and `Ellipse`).
+Using others will fail at build time.
+The returned type will be the same as the input type (vector/vector or list/list)
+
+Examples (generated with [this file](../misc/figures_src/src/get_pts_inside.cpp)):
+
+![pts inside FRect](img/pts_inside_rect.svg)
+![pts inside CPol](img/pts_inside_pol.svg)
+![pts inside Ellipse](img/pts_inside_ell.svg)
+![pts inside Circle](img/pts_inside_circle.svg)
+
 
 
 ## 7 - Bindings with other libraries
@@ -1986,11 +2021,30 @@ draw( img, vseg, func );
 Checkout [here](#bbox_set) to see an example.
 A helper function `img::genRandomColors()` is provided, it will return a vector of `img::Color` objects filled with random RGB colors.
 For example:
-```
+```C++
 auto vcol1 = img::genRandomColors(10);        // return 10 random colors with values in the range [20-250]
 auto vcol2 = img::genRandomColors(10,100);    // return 10 random colors with values in the range [100-250]
 auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with values in the range [30-150]
 ```
+
+
+### 8.5 - Drawing containers holding variant objects (runtime polymorphism)
+
+If this build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
+
+```C++
+std::vector<CommonType> vec;
+vec.push_back( Circle() );
+vec.push_back( Frect() );
+vec.push_back( Segment() );
+img::Image<img::SvgImage> im( width, height );
+draw( im, vec );
+```
+
+You can also pass an optional third parameter of type `DrawParams`.
+
+
+See [example](../misc/figures_src/src/get_bb_cont_v.cpp)
 
 
 ## 9 - Numerical data types
@@ -2090,16 +2144,16 @@ More details and complete list on [threshold page](homog2d_thresholds.md).
 
 From release 2.10, there is a preliminar support for the [ttmath](https://www.ttmath.org/) library, that enables selecting the number of machine words for both mantissa and exponent.
 This can improve both precision of computation and maximum size of numbers, as it can extend the maximum size allowed by the standard type `long double`.
-This library is header-only, so its very simple to install.
+This library is header-only, so it's very simple to install.
 
 To enable this, you need to define the symbol `HOMOG2D_USE_TTMATH`.
-This will also define a default value for `HOMOG2D_INUMTYPE` (internal numerical type)as `ttmath::Big<2,2>`.
+This will also define a default value for `HOMOG2D_INUMTYPE` (homog2d internal numerical type) as `ttmath::Big<2,2>`.
 This definition means that both mantissa and exponent will be stored as 2 machine words.
 On a 64-bit platform, that will end up as 128 bits for both.
 
 This can be overridden,
 - either by another definition of `HOMOG2D_INUMTYPE` as default types.
-For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file:
+For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file (**after** the `#include` line):
 ```C++
 #define HOMOG2D_INUMTYPE ttmath::Big<2,3>
 ```
@@ -2208,12 +2262,12 @@ SVG Reference: https://www.w3.org/TR/SVG2/shapes.html
 
 If you have cloned the whole repo and have `Tinyxml2` installed, you may build a demo program with:
 <br>
-`$ make demo_import`
+`$ make demo-import`
 
 This will build the file `BUILD/demo_svg_import` ([source here](../misc/test_files/demo_svg_import.cpp))
 that will import any SVG file, print its content on screen
 (SVG general attributes and number of shapes),
-and generate another svg file `demo_import.svg` in current folder.
+and generate another svg file `demo-import.svg` in current folder.
 
 For example:
 <br>
@@ -2241,9 +2295,10 @@ For more details on the code, check [this page](homog2d_devinfo.md).
 
 A unit-test program is included, can be run locally and is also used by GitHub CI.
 It is uses the [Catch2](https://github.com/catchorg/Catch2) library.
-The Github CI loads the 2.13.6 release.
+The Github CI (aka "Github Acionts") loads the 2.13.6 release.
 It is build and run with `$ make test`
-The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22.
+The CI launches the tests with both Ubuntu 20 (gcc9.4) and Ubuntu 22, and also makes sure that the Microsoft C++ compiler is able to build the software
+(but it does not run the tests with it).
 
 If you have Opencv installed on your machine, you can run the additional tests that make sure the Opencv binding stuff runs fine by passing make option `USE_OPENCV=Y`:
 ```
@@ -2264,7 +2319,8 @@ These demonstrate some code that should NOT build, thus Make will fail if any of
 This is just to make sure that some invalid code does, indeed, not build.
 
 **Timing**
-Using the Catch v2 library has a small drawback: build time is pretty long (but will succeed!).
+Using the Catch v2 library has a small drawback:
+build time is pretty long (but will succeed!).
 For example:
 ```
 $ time make test -j2
@@ -2272,6 +2328,8 @@ real   0m41,986s
 user   1m21,940s
 sys    0m1,699s
 ```
+
+See some additional details on ["dev" page](homog2d_devinfo.md#testing)
 
 ### 11.2 - Build options
 <a name="build_options"></a>
@@ -2364,7 +2422,7 @@ for( auto& e: vec )
 Remarks:
 
 * You may directly call the streaming operator (`<<`), the `Root` class takes care of redirecting to the correct class operator.
-* Notice that if the object is detected as a line, the function length is **not** called.
+* Notice that in this code, if the object is detected as a line, the function length is **not** called.
 This is mandatory to avoid throwing an exception, as a line cannot have a finite length.
 
 To do something more elaborate, you need to convert them using a dynamic cast:

@@ -20,7 +20,7 @@
 \brief This program will demonstrate that variant-based runtime polymorphism can be use simultaneously with the
 pointer-based runtime polymorphism
 
-Build and run with <code>$ make test_rtp</code>
+Build and run with <code>$ make test-rtp</code>
 */
 
 #define HOMOG2D_ENABLE_PRTP

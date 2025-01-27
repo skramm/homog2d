@@ -7,3 +7,6 @@
 *.pdf
 BUILD/html/
 BUILD/
+misc/*.bak
+misc/*.depend
+*.ods

@@ -1,6 +1,6 @@
 // this file is part of homog2d
 // used to build a figure that is included in manual
-// see makefile target doc_fig
+// see makefile target doc-fig
 
 #include "fig_src.header"
 
