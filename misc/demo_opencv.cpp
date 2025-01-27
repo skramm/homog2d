@@ -1734,7 +1734,7 @@ void printFailure( std::exception& e )
 	std::cout << "Unable to build BB, err=" << e.what() << "\n";
 }
 
-using PointPair = PointPair1_<double>;
+using PointPair = PointPair2_<double,double>;
 
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
