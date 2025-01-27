@@ -4332,13 +4332,13 @@ private:
 	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
 	template<typename FPT2>
-	PointPair1_<FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
+	PointPair2_<FPT,FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr PointPair1_<FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
+	constexpr PointPair2_<FPT,FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 	template<typename FPT2>
-	PointPair1_<FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
+	PointPair2_<FPT,FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr PointPair1_<FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
+	constexpr PointPair2_<FPT,FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
 	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
 	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
@@ -6034,7 +6034,7 @@ this should work !!! (but doesn't...)
 		if( pt_front == pt_back ) // means it's closed
 			isClosed = true;
 
-		if( isClosed && std::is_same<PLT,type::IsOpen>::value ) // cannot build an open polyline from a closed one
+		if( isClosed && std::is_same_v<PLT,type::IsOpen> ) // cannot build an open polyline from a closed one
 			HOMOG2D_THROW_ERROR_1( "unable to convert a closed boost::polygon into an OPolyline" );
 
 		_plinevec.reserve( outer.size() - isClosed );
@@ -8636,7 +8636,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::Base
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-PointPair1_<FPT>
+PointPair2_<FPT,FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
 {
 	const auto pt = impl_getPoint( gc, coord, detail::BaseHelper<typ::IsLine>() );
@@ -8646,7 +8646,7 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const det
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-PointPair1_<FPT>
+PointPair2_<FPT,FPT>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
@@ -9914,7 +9914,7 @@ getPointPair( const T& elem )
 
 /// Needed because of variant
 template<typename FPT>
-PointPair1_<FPT>
+PointPair2_<FPT,FPT>
 getPointPair( const Line2d_<FPT>& )
 {
 	HOMOG2D_START;
@@ -10049,7 +10049,7 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 
 	std::vector<Point2d_<FPT>> vpts;
 	vpts.reserve( v_var.size()*2 );
-	PointPair1_<FPT> ppair;
+	PointPair2_<FPT,FPT> ppair;
 	for( const auto& elem: v_var )
 	{
 		try
