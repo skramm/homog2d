@@ -2350,7 +2350,12 @@ namespace detail {
 
 // forward declaration of template instanciation
 template<typename T1,typename T2,typename FPT1,typename FPT2>
-base::LPBase<T1,FPT1> crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
+base::LPBase<T1,FPT1>
+crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
+
+template<typename SV1,typename SV2,typename FPT1,typename FPT2>
+base::SegVec<SV1,FPT1>
+crossProduct( const base::SegVec<SV1,FPT1>&, const base::SegVec<SV2,FPT2>& );
 
 class Inters_1 {};
 class Inters_2 {};
@@ -3441,6 +3446,13 @@ fix_order( Point2d_<FPT>& ptA, Point2d_<FPT>& ptB )
 		std::swap( ptA, ptB );
 }
 
+/// Get sign of value
+/** source: https://stackoverflow.com/a/4609795/ */
+template <typename T>
+int sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 //------------------------------------------------------------------
 /// Free function, squared distance between points (sqrt not needed for comparisons, and can save some time)
 /// \sa Point2d_::distTo()
@@ -3715,7 +3727,7 @@ private:
 
 	template<typename U,typename V>
 	friend auto
-	operator << ( std::ostream& f, const h2d::base::LPBase<U,V>& r )
+	operator << ( std::ostream&, const h2d::base::LPBase<U,V>& )
 	-> std::ostream&;
 
 	template<typename T1,typename T2,typename FPT1,typename FPT2>
@@ -4002,10 +4014,14 @@ private:
 public:
 	Type type() const
 	{
-		return impl_type( detail::BaseHelper<LP>() );
+//		return impl_type( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsPoint> )
+			return Type::Point2d;
+		else
+			return Type::Line2d;
 	}
 
-private:
+/*private:
 	Type impl_type( const detail::BaseHelper<typename typ::IsPoint>& ) const
 	{
 		return Type::Point2d;
@@ -4014,6 +4030,7 @@ private:
 	{
 		return Type::Line2d;
 	}
+*/
 
 public:
 	FPT
@@ -4872,6 +4889,13 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 	}
 }
 
+/// Point related to a Vector
+///\sa SegVec::getPointSide()
+enum class PointSide: uint8_t
+{
+	Left,Right,Neither
+};
+
 namespace base {
 //------------------------------------------------------------------
 /// A line segment or vector, defined by two points.
@@ -4893,6 +4917,7 @@ public:
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class SegVec;
+
 
 /// \todo 20250127: if this works, then generalize to all the other base type() member functions
 	Type type() const
@@ -5137,8 +5162,10 @@ Requires both points inside AND no intersections
 ///@{
 
 /// Returns the points as a std::pair
-/** The one with smallest x coordinate will be returned as "first". If x-coordinate are equal, then
-the one with smallest y-coordinate will be returned first */
+/** If "Segment", then the one with smallest x coordinate will be returned as "first".
+If x-coordinate are equal, then
+the one with smallest y-coordinate will be returned first
+*/
 	PointPair1_<FPT>
 	getPts() const
 	{
@@ -5184,6 +5211,7 @@ private:
 		out[2] = Point2d_<FPT>( x2+dy, y2-dx );
 		return out;
 	}
+
 public:
 /// Returns the 4 points orthogonal to the segment/vector
 	std::array<Point2d_<FPT>,4>
@@ -5206,7 +5234,8 @@ public:
 	}
 
 /// Returns supporting line
-	Line2d_<FPT> getLine() const
+	Line2d_<FPT>
+	getLine() const
 	{
 		Point2d_<HOMOG2D_INUMTYPE> pt1( _ptS1 );
 		Point2d_<HOMOG2D_INUMTYPE> pt2( _ptS2 );
@@ -5214,14 +5243,18 @@ public:
 		return Line2d_<FPT>(li);
 	}
 
-/// Returns a pair of segments split by the middle
+	template<typename T>
+	PointSide
+	getPointSide( const Point2d_<T>& pt ) const;
+
+/// Returns a pair of segments/vectors split by the middle
 	std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
 	split() const
 	{
 		auto pt_mid = getCenter();
 		return std::make_pair(
-			Segment_<FPT>( _ptS1, pt_mid ),
-			Segment_<FPT>( _ptS2, pt_mid )
+			SegVec<SV,FPT>( _ptS1,  pt_mid ),
+			SegVec<SV,FPT>( pt_mid, _ptS2 )
 		);
 	}
 
@@ -5233,9 +5266,9 @@ public:
 	isParallelTo( const T& other ) const
 	{
 		static_assert(
-			std::is_same<T,Segment_<FPT>>::value ||
+			std::is_same<T,SegVec<SV,FPT>>::value ||
 			std::is_same<T,Line2d_<FPT>>::value,
-			"type needs to be a segment or a line" );
+			"type needs to be a segment, a vector, or a line" );
 		return getLine().isParallelTo( other );
 	}
 
@@ -5286,9 +5319,9 @@ public:
 	}
 ///@}
 
-	template<typename T>
+	template<typename U,typename V>
 	friend std::ostream&
-	operator << ( std::ostream& f, const SegVec<SV,T>& seg );
+	operator << ( std::ostream&, const SegVec<U,V>& );
 
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
@@ -5297,6 +5330,26 @@ public:
 
 }; // class Segment_
 
+//------------------------------------------------------------------
+template<typename SV,typename FPT>
+template<typename T>
+PointSide
+SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
+{
+	static_assert( std::is_same_v<SV,typ::IsVector>, "unable to get side of point related to Segment" );
+
+	Vector_<FPT> other( _ptS1, pt );
+	auto cp = crossProduct( *this, other );
+	PointSide out;
+	switch ( sign(cp) )
+	{
+		case  0: out = PointSide::Neither; break;
+		case  1: out = PointSide::Left;    break;
+		case -1: out = PointSide::Right;   break;
+		default: assert(0);
+	}
+	return out;
+}
 
 
 //------------------------------------------------------------------
@@ -5727,7 +5780,7 @@ getBB_Points( const T& vpts )
 {
 	HOMOG2D_START;
 	using FPT = typename T::value_type::FType;
-	HOMOG2D_DEBUG_ASSERT( vpts.size(), "cannot run with no points" );
+	HOMOG2D_DEBUG_ASSERT( static_cast<bool>(vpts.size()), "cannot run with no points" );
 
 	auto mm_x = std::minmax_element(
 		std::begin( vpts ),
@@ -7170,6 +7223,8 @@ This implies that:
 \todo 20221120: as points are homogeneous, the cross product can probably be computed
 in a different way (quicker? simpler?).
 Need to check this.
+
+\todo 20250127: use crossProduct free function with base::SegVec args
 */
 template<typename PLT,typename FPT>
 bool
@@ -8117,15 +8172,21 @@ operator << ( std::ostream& f, const Circle_<T>& r )
 	return f;
 }
 
-template<typename T>
+namespace base {
+
+template<typename SV,typename T>
 std::ostream&
-operator << ( std::ostream& f, const Segment_<T>& seg )
+operator << ( std::ostream& f, const h2d::base::SegVec<SV,T>& seg )
 {
-	f << seg._ptS1 << "-" << seg._ptS2;
+	f << seg._ptS1;
+	if constexpr( std::is_same_v<SV,typ::IsVector> )
+		f << "=>";
+	else
+		f << "-";
+	f << seg._ptS2;
 	return f;
 }
 
-namespace base {
 template<typename PLT,typename FPT>
 std::ostream&
 operator << ( std::ostream& f, const h2d::base::PolylineBase<PLT,FPT>& pl )
@@ -8811,7 +8872,11 @@ namespace detail {
 
 /// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
 template<typename Out,typename In,typename FPT1,typename FPT2>
-base::LPBase<Out,FPT1> crossProduct( const base::LPBase<In,FPT1>& r1, const base::LPBase<In,FPT2>& r2 )
+base::LPBase<Out,FPT1>
+crossProduct(
+	const base::LPBase<In,FPT1>& r1,
+	const base::LPBase<In,FPT2>& r2
+)
 {
 	auto r1_a = static_cast<HOMOG2D_INUMTYPE>(r1._v[0]);
 	auto r1_b = static_cast<HOMOG2D_INUMTYPE>(r1._v[1]);
@@ -8826,6 +8891,16 @@ base::LPBase<Out,FPT1> crossProduct( const base::LPBase<In,FPT1>& r1, const base
 	res._v[2] = static_cast<FPT1>( r1_a * r2_b  - r1_b * r2_a );
 
 	return res;
+}
+
+template<typename SV1,typename SV2,typename FPT1,typename FPT2>
+base::SegVec<SV1,FPT1>
+crossProduct(
+	const base::SegVec<SV1,FPT1>& v1,
+	const base::SegVec<SV2,FPT2>& v2
+)
+{
+
 }
 
 } // namespace detail
@@ -9411,10 +9486,10 @@ operator * ( const Line2d_<FPT>& lhs, const Line2d_<FPT2>& rhs )
 	return detail::crossProduct<typ::IsPoint,typ::IsLine,FPT>(lhs, rhs);
 }
 
-/// Free function template, product of two segments, returns a point
-template<typename FPT,typename FPT2>
-Point2d_<FPT>
-operator * ( const Segment_<FPT>& lhs, const Segment_<FPT2>& rhs )
+/// Free function template, product of two segments/vector, returns a point
+template<typename SV1,typename SV2,typename FPT1,typename FPT2>
+Point2d_<FPT1>
+operator * ( const base::SegVec<SV1,FPT1>& lhs, const base::SegVec<SV2,FPT2>& rhs )
 {
 	return lhs.getLine() * rhs.getLine();
 }
@@ -9468,14 +9543,14 @@ operator * ( const Homogr_<U>& h, const Line2d_<T>& in )
 }
 
 /// Apply homography to a Segment
-template<typename FPT1,typename FPT2>
+template<typename SV,typename FPT1,typename FPT2>
 Segment_<FPT1>
-operator * ( const Homogr_<FPT2>& h, const Segment_<FPT1>& seg )
+operator * ( const Homogr_<FPT1>& h, const base::SegVec<SV,FPT2>& seg )
 {
 	const auto& pts = seg.getPts();
 	Point2d_<FPT1> pt1 = h * pts.first;
 	Point2d_<FPT1> pt2 = h * pts.second;
-	return Segment_<FPT1>( pt1, pt2 );
+	return base::SegVec<SV,FPT2>( pt1, pt2 );
 }
 
 /// Apply homography to a Polyline
@@ -9576,7 +9651,7 @@ template<typename FPT,typename Cont>
 typename std::enable_if<trait::IsContainer<Cont>::value,Cont>::type
 operator * (
 	const Hmatrix_<typ::IsHomogr,FPT>& h,    ///< Matrix
-	const Cont&                         vin   ///< Input container
+	const Cont&                        vin   ///< Input container
 )
 {
 	Cont vout = priv::alloc<Cont>( vin.size() );
@@ -11503,7 +11578,7 @@ FRect_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw \c Segment (Opencv implementation)
+/// Draw \c Segment / \c Vector (Opencv implementation)
 namespace base {
 template<typename SV,typename FPT>
 void
@@ -11709,7 +11784,7 @@ FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw \c Segment (SVG implementation)
+/// Draw \c Segment / \c Vector (SVG implementation)
 namespace base {
 
 template<typename SV, typename FPT>
@@ -11717,7 +11792,7 @@ void
 SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	if( dp._dpValues._showPoints )
-		im.getReal()._svgString << "<g>\n";
+		im.getReal()._svgString << "<g>";
 
 	auto pts = getPts();
 	im.getReal()._svgString << "<line x1=\""
@@ -11733,6 +11808,20 @@ SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" "
 		<< dp.getAttrString()
 		<< "/>\n";
+
+	if constexpr( std::is_same_v<SV,typ::IsVector> )
+	{
+		Line2d_<double> li = getLine().getOrthogonalLine( _ptS1 );
+		auto ppts = li.getPoints( _ptS1, 10  /* pixels? */ );
+		im.getReal()._svgString
+			<< "<line x1='" << ppts.first.getX()
+			<< "' y1='"     << ppts.first.getY()
+			<< "' x2='"     << ppts.second.getX()
+			<< "' y2='"     << ppts.second.getY()
+			<< "' stroke='" << dp.getSvgRgbColor()
+			<< "' stroke-width='" << dp._dpValues._lineThickness
+			<< "'/>\n";
+	}
 
 	if( dp._dpValues._showPoints )
 	{

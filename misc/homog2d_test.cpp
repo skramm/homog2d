@@ -566,13 +566,14 @@ TEST_CASE( "stream operator << test", "[streamingop-test]" )
 	Line2d li;
 	Point2d pt;
 	Segment seg;
+	Vector vec;
 	Circle cir;
 	Ellipse ell;
 	CPolyline cpol;
 	OPolyline opol;
 // just to make sure that this builds !
 	std::ostringstream oss;
-	oss << li << pt << seg << cir << cpol << opol << ell;
+	oss << li << pt << seg << vec << cir << cpol << opol << ell;
 	std::ostringstream oss2;
 	oss2 << cpol;
 	CHECK( oss2.str() == "CPolyline: empty" );
@@ -3900,15 +3901,15 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 
 // 4 - check general behavior
 	{ //                                      0      1      2      3      4
-		std::vector<Point2d_<NUMTYPE>> vec{ {0,0}, {3,0}, {4,0}, {5,6}, {7,8} };
+		std::vector<Point2d_<NUMTYPE>> vec2{ {0,0}, {3,0}, {4,0}, {5,6}, {7,8} };
 		Point2d_<NUMTYPE> qpt(4,5);
-		auto pres = findNearestFarthestPoint( qpt, vec );
-		auto resN = findNearestPoint(  qpt, vec );
-		auto resF = findFarthestPoint( qpt, vec );
-		CHECK( pres.first  == resN );
-		CHECK( pres.second == resF );
-		CHECK( 3 == resN );
-		CHECK( 0 == resF );
+		auto pr    = findNearestFarthestPoint( qpt, vec2 );
+		auto resN2 = findNearestPoint(  qpt, vec2 );
+		auto resF2 = findFarthestPoint( qpt, vec2 );
+		CHECK( pr.first  == resN2 );
+		CHECK( pr.second == resF2 );
+		CHECK( 3 == resN2 );
+		CHECK( 0 == resF2 );
 	}
 }
 

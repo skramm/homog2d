@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wno-bool-compare
 
 
 #=======================================================================
