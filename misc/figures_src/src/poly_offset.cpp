@@ -11,17 +11,17 @@ template <typename T> int sgn(T val) {
 }
 
 template<typename FPT>
-struct Vector
+struct Vector2
 {
 	FPT dx,dy;
-	Vector( FPT x1, FPT y1, FPT x2, FPT y2 ): dx(x2-x1), dy(y2-y1)
+	Vector2( FPT x1, FPT y1, FPT x2, FPT y2 ): dx(x2-x1), dy(y2-y1)
 	{}
 
 };
 
 template<typename FPT>
 FPT
-crossProd( FPT x, FPT y, const Vector<FPT>& v )
+crossProd( FPT x, FPT y, const Vector2<FPT>& v )
 {
 	std::cout << "x=" << x << " v.dy=" << v.dy << " y=" << y << " v.dx=" << v.dx << '\n';
 	return x * v.dy - y * v.dx;
@@ -29,7 +29,7 @@ crossProd( FPT x, FPT y, const Vector<FPT>& v )
 
 template<typename FPT>
 FPT
-crossProd( const Vector<FPT>& v1, const Vector<FPT>& v2 )
+crossProd( const Vector2<FPT>& v1, const Vector2<FPT>& v2 )
 {
 	return v1.dx * v2.dy - v1.dy * v2.dx;
 }
@@ -65,8 +65,8 @@ int main()
 		auto pt2 = pol.getPoint(nextPt1);
 		auto pt3 = pol.getPoint(nextPt2);
 
-		Vector<double> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
-		Vector<double> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+		Vector2<double> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
+		Vector2<double> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
 
 		std::cout << "s(cp)=" << sgn(crossProd(v1,v2)) << '\n';
 //		auto v1 = std::make_pair( pol.get)
@@ -106,12 +106,12 @@ int main()
 			std::cout << "i=" << i << " pt=" << pt << " s1=" << std::to_string(side( pt, li1)) << " s2=" << side( pt, li2) << '\n';
 //			auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));
 
-			Vector vA( pt1.getX(), pt1.getY(), pt.getX(), pt.getY() );
+			Vector2 vA( pt1.getX(), pt1.getY(), pt.getX(), pt.getY() );
 			auto cpA = crossProd( vA, v1 );
 //			std::cout << "  cp=" << cp << "\n";
 			if( cpA>0 )
 			{
-				Vector vB( pt2.getX(), pt2.getY(), pt.getX(), pt.getY() );
+				Vector2 vB( pt2.getX(), pt2.getY(), pt.getX(), pt.getY() );
 				auto cpB = crossProd( vB, v2 );
 //				auto str = std::to_string(sgn(cp)) + "=>" + std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));;
 				auto str = std::to_string(sgn(cpB));;

@@ -11784,51 +11784,95 @@ FRect_<FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
+namespace priv {
+
+/// Helper function to draw SVG segment
+template<typename T>
+void drawSvgSeg(
+	img::Image<img::SvgImage>& im,
+	const Point2d_<T>& pt1,
+	const Point2d_<T>& pt2,
+	std::string    color,
+	int            thickness,
+	std::string    attribs=std::string()
+)
+{
+	im.getReal()._svgString << "<line x1=\""
+		<< pt1.getX()
+		<< "\" y1=\""
+		<< pt1.getY()
+		<< "\" x2=\""
+		<< pt2.getX()
+		<< "\" y2=\""
+		<< pt2.getY()
+		<< "\" stroke=\"" << color
+		<< "\" stroke-width=\"" << thickness << "\" "
+		<< attribs << "/>\n";
+}
+
+template<typename T>
+void drawSvgSeg(
+	img::Image<img::SvgImage>& im,
+	const std::pair<Point2d_<T>,Point2d_<T>>& ppts,
+	std::string    color,
+	int            thickness,
+	std::string    attribs=std::string()
+)
+{
+	drawSvgSeg( im, ppts.first, ppts.second, color, thickness, attribs );
+}
+
+} // namespace priv
+//------------------------------------------------------------------
 /// Draw \c Segment / \c Vector (SVG implementation)
+/// \todo 20250127: implement arrows for the Opencv/png version, and share the code between the two versions
 namespace base {
 
 template<typename SV, typename FPT>
 void
 SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
-	if( dp._dpValues._showPoints )
+	auto group = false;
+	if( dp._dpValues._showPoints || std::is_same_v<SV,typ::IsVector> )
+		group = true;
+
+	if( group )
 		im.getReal()._svgString << "<g>";
 
 	auto pts = getPts();
-	im.getReal()._svgString << "<line x1=\""
-		<< pts.first.getX()
-		<< "\" y1=\""
-		<< pts.first.getY()
-		<< "\" x2=\""
-		<< pts.second.getX()
-		<< "\" y2=\""
-		<< pts.second.getY()
-		<< "\" stroke=\""
-		<< dp.getSvgRgbColor()
-		<< "\" stroke-width=\"" << dp._dpValues._lineThickness << "\" "
-		<< dp.getAttrString()
-		<< "/>\n";
+	priv::drawSvgSeg( im, pts, dp.getSvgRgbColor(), dp._dpValues._lineThickness, dp.getAttrString() );
 
 	if constexpr( std::is_same_v<SV,typ::IsVector> )
 	{
-		Line2d_<double> li = getLine().getOrthogonalLine( _ptS1 );
-		auto ppts = li.getPoints( _ptS1, 10  /* pixels? */ );
-		im.getReal()._svgString
-			<< "<line x1='" << ppts.first.getX()
-			<< "' y1='"     << ppts.first.getY()
-			<< "' x2='"     << ppts.second.getX()
-			<< "' y2='"     << ppts.second.getY()
-			<< "' stroke='" << dp.getSvgRgbColor()
-			<< "' stroke-width='" << dp._dpValues._lineThickness
-			<< "'/>\n";
+		const int arSize = 8;
+
+		Line2d_<double> liA = getLine().getOrthogonalLine( _ptS1 );
+		auto pptsA = liA.getPoints( _ptS1, arSize );
+		priv::drawSvgSeg( im, pptsA, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
+
+		auto ppts_B = getLine().getPoints( _ptS2, arSize );
+
+		Point2d_<double> p0 = ppts_B.first;
+		if( dist( _ptS1, ppts_B.first) >  dist(_ptS1, ppts_B.second) )
+			p0 = ppts_B.second;
+
+		Line2d_<double> liB = getLine().getOrthogonalLine( p0 );
+		auto ppts_C = liB.getPoints( p0, arSize );
+
+		priv::drawSvgSeg( im, ppts_C.first,  _ptS2, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
+		priv::drawSvgSeg( im, ppts_C.second, _ptS2, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
+	}
+	else
+	{
+		if( dp._dpValues._showPoints )
+		{
+			_ptS1.draw( im, dp );
+			_ptS2.draw( im, dp );
+		}
 	}
 
-	if( dp._dpValues._showPoints )
-	{
-		_ptS1.draw( im, dp );
-		_ptS2.draw( im, dp );
+	if( group )
 		im.getReal()._svgString << "</g>\n";
-	}
 }
 
 } // namespace base

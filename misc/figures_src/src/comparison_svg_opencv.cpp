@@ -13,6 +13,7 @@ struct LocalData
 	OPolyline opl;
 	CPolyline cpl;
 	Line2d    line;
+	Vector    vec;
 
 	template<typename T>
 	void drawStuff( T& im )
@@ -22,8 +23,10 @@ struct LocalData
 		c1.draw(   im, DrawParams().setColor(0,0,100) );
 		e1.draw(   im, DrawParams().setColor(200,0,0) );
 		seg.draw(  im, DrawParams().setColor(150,0,150) );
+		vec.draw(  im, DrawParams().setColor(0,250,50) );
 		r1.draw(   im, DrawParams().setColor(150,200,0) );
 		line.draw( im, DrawParams().setColor(0,250,0) );
+
 		drawText( im, "Some Text, default size (20)", Point2d(50,50) );
 		drawText( im, "color, size=30px", Point2d(160,100), DrawParams().setFontSize(30).setColor(250,120,0) );
 
@@ -49,6 +52,7 @@ int main()
 	data.seg  = getSegment( data.c1, data.e1 );
 	data.r1   = FRect( 40, 30, 220, 112 );
 	data.line = Line2d( 22,238,280,178);
+	data.vec  = Vector(370,240,330,280 );
 
 	img::Image<SvgImage> im1( 400,300 );
 	img::Image<cv::Mat>  im2( 400,300 );
