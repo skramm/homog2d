@@ -21,6 +21,14 @@ struct Vector
 
 template<typename FPT>
 FPT
+crossProd( FPT x, FPT y, const Vector<FPT>& v )
+{
+	std::cout << "x=" << x << " v.dy=" << v.dy << " y=" << y << " v.dx=" << v.dx << '\n';
+	return x * v.dy - y * v.dx;
+}
+
+template<typename FPT>
+FPT
 crossProd( const Vector<FPT>& v1, const Vector<FPT>& v2 )
 {
 	return v1.dx * v2.dy - v1.dy * v2.dx;
@@ -34,7 +42,7 @@ int main()
 
 	CPolyline pol0(vpts1);
 
-	auto H = Homogr().setScale(40).addTranslation(120,80);
+	auto H = Homogr().setScale(50).addTranslation(100,80);
 
 	auto pol = H*pol0;
 	std::cout << "main: pol2=" << pol << '\n';
@@ -45,7 +53,7 @@ int main()
 	const auto vppts = pol.getPts();
 	do
 	{
-		img::Image<img::SvgImage> im( 800,500 );
+		img::Image<img::SvgImage> im( 800,600 );
 		draw( im, pol );
 		std::cout << "* current=" << current << '\n';
 
@@ -69,7 +77,7 @@ int main()
 		std::cout << "s1=" << s1 << " s2=" << s2 << '\n';*/
 
 		draw( im, segs.at(current), DrawParams().setColor(250, 0,  0) );
-		draw( im, segs.at(nextS),    DrawParams().setColor(  0, 0,250) );
+		draw( im, segs.at(nextS),   DrawParams().setColor(  0, 0,250) );
 
 
 
@@ -94,17 +102,24 @@ int main()
 
 		for( int i=0; i<4; i++ )
 		{
-			auto pt = vpt[i];
+			auto pt = vpt[i]; // each of the four points
 			std::cout << "i=" << i << " pt=" << pt << " s1=" << std::to_string(side( pt, li1)) << " s2=" << side( pt, li2) << '\n';
-/*			s[i] = std::make_pair(
-				side( pt, li1 ),
-				side( pt, li2 )
-			);*/
-			auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));
-			drawText( im, str, pt, DrawParams().setColor(0,0,0) );
-/*			drawText( im, std::to_string(side( pt, li1)), pt, DrawParams().setColor(250,0,0) );
-			drawText( im, std::to_string(side( pt, li2)), pt, DrawParams().setColor(0,250,0) );
-*/
+//			auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));
+
+			Vector vA( pt1.getX(), pt1.getY(), pt.getX(), pt.getY() );
+			auto cpA = crossProd( vA, v1 );
+//			std::cout << "  cp=" << cp << "\n";
+			if( cpA>0 )
+			{
+				Vector vB( pt2.getX(), pt2.getY(), pt.getX(), pt.getY() );
+				auto cpB = crossProd( vB, v2 );
+//				auto str = std::to_string(sgn(cp)) + "=>" + std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));;
+				auto str = std::to_string(sgn(cpB));;
+//				auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));;
+				drawText( im, str, pt, DrawParams().setColor(0,0,0) );
+			}
+
+
 			im.write( "poly_offset_"+std::to_string(current) + ".svg" );
 		}
 		current++;
