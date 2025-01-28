@@ -50,7 +50,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_ENABLE_VRTP
 //	#include <cctype> // why was that needed in the first place?
 	#include "tinyxml2.h"
-#endif
+#endif // HOMOG2D_USE_SVG_IMPORT
 
 #ifdef HOMOG2D_ENABLE_VRTP
 	#include <variant>
@@ -395,6 +395,8 @@ template<typename T>
 using CPolyline_ = base::PolylineBase<typ::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
+
+
 
 #ifdef HOMOG2D_ENABLE_VRTP
 /// A variant type, holding all possible types. Used to achieve runtime polymorphism
@@ -2355,7 +2357,7 @@ crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
-crossProduct( const base::SegVec<typ::IsVector,FPT1>&, const base::SegVec<typ::IsVector,FPT2>& );
+crossProductV( const base::SegVec<typ::IsVector,FPT1>&, const base::SegVec<typ::IsVector,FPT2>& );
 
 class Inters_1 {};
 class Inters_2 {};
@@ -5356,7 +5358,7 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 
 	Vector_<FPT> other( _ptS1, pt );
 //	auto cp = crossProduct( *this, other );
-	double cp = crossProduct( *this, other );
+	double cp = detail::crossProductV( *this, other );
 	PointSide out;
 	switch ( priv::sign(cp) )
 	{
@@ -8916,12 +8918,21 @@ crossProduct(
 /// Cross product of two vectors, return a scalar
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
-crossProduct(
+crossProductV(
 	const base::SegVec<typ::IsVector,FPT1>& v1,
-	const base::SegVec<typ::IsVector,FPT1>& v2
+	const base::SegVec<typ::IsVector,FPT2>& v2
 )
 {
-	return 0.; // tmp
+	auto ppts1 = v1.getPts();
+	auto ppts2 = v2.getPts();
+
+	auto dx1 = ppts1.second.getX() - ppts1.first.getX();
+	auto dy1 = ppts1.second.getY() - ppts1.first.getY();
+
+	auto dx2 = ppts2.second.getX() - ppts2.first.getX();
+	auto dy2 = ppts2.second.getY() - ppts2.first.getY();
+
+	return dx1 * dy2 - dy1 * dx2;
 }
 
 } // namespace detail
@@ -11544,39 +11555,60 @@ base::LPBase<LP,FPT>::impl_draw_LP(
 	}
 }
 
+//------------------------------------------------------------------
+/// Helper function used by the draw(Vector) function, returns the 3 segment corresponding
+/// to the "arrows" as 3 pairs of points
+/**
+Used both in the SVG and the Opencv backends
+
+\verbatim
+   /|\
+    |
+    |
+    |
+   ---
+\endverbatim
+*/
+namespace priv {
+
+template<typename FPT>
+std::array<PointPair1_<double>,3>
+getArrowSegments(
+	const base::SegVec<typ::IsVector,FPT>& vec
+)
+{
+	std::array<std::pair<Point2d_<double>,Point2d_<double>>,3> out;
+	auto ppts = vec.getPts();
+	auto pt1 = ppts.first;
+	auto pt2 = ppts.second;
+
+	const int arSize = 8;
+
+	Line2d_<double> liA = vec.getLine().getOrthogonalLine( pt1 );
+	out[0] = liA.getPoints( pt1, arSize );
+
+	auto ppts_B = vec.getLine().getPoints( pt2, arSize );
+
+	Point2d_<double> p0 = ppts_B.first;
+	if( dist( pt1, ppts_B.first) >  dist(pt1, ppts_B.second) )
+		p0 = ppts_B.second;
+
+	Line2d_<double> liB = vec.getLine().getOrthogonalLine( p0 );
+	auto ppts_C = liB.getPoints( p0, arSize );
+
+	out[1] = std::make_pair(ppts_C.first, pt2);
+	out[2] = std::make_pair(ppts_C.second, pt2);
+
+	return out;
+}
+
+} // namespace priv
 
 /////////////////////////////////////////////////////////////////////////////
 // SECTION .2 - CLASS DRAWING MEMBER FUNCTIONS (OpenCv)
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef HOMOG2D_USE_OPENCV
-#if 0
-// DEPRECATED (???)
-//------------------------------------------------------------------
-/// Extension to PolylineBase<PLT,FPT>::draw(), to draw point indexes
-/**
-(Opencv-dependent)
-*/
-template<typename PLT,typename FPT>
-template<typename T>
-void
-base::PolylineBase<PLT,FPT>::impl_draw_pl( img::Image<T>& im ) const
-{
-	for( size_t i=0; i<size(); i++ )
-	{
-		auto pt = getPoint(i);
-		cv::putText(
-			im.getReal(),
-			std::to_string(i),
-			pt.getCvPti(),
-			0,
-			0.6,
-			cv::Scalar( 20,20,20 ),
-			2
-		);
-	}
-}
-#endif
 //------------------------------------------------------------------
 /// Draw \c FRect (Opencv implementation)
 template<typename FPT>
@@ -11601,6 +11633,7 @@ FRect_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 //------------------------------------------------------------------
 /// Draw \c Segment / \c Vector (Opencv implementation)
 namespace base {
+
 template<typename SV,typename FPT>
 void
 SegVec<SV,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
@@ -11613,12 +11646,30 @@ SegVec<SV,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		dp._dpValues._lineThickness,
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
-	if( dp._dpValues._showPoints )
+
+	if constexpr( std::is_same_v<SV,typ::IsVector> )
 	{
-		_ptS1.draw( im, dp );
-		_ptS2.draw( im, dp );
+		auto arrsegs = priv::getArrowSegments( *this );
+		for( auto ppts: arrsegs )
+			cv::line(
+				im.getReal(),
+				ppts.first.getCvPtd(),
+				ppts.second.getCvPtd(),
+				dp.cvColor(),
+				dp._dpValues._lineThickness,
+				dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
+			);
+	}
+	else
+	{
+		if( dp._dpValues._showPoints )
+		{
+			_ptS1.draw( im, dp );
+			_ptS2.draw( im, dp );
+		}
 	}
 }
+
 } // namespace base
 //------------------------------------------------------------------
 /// Draw \c Circle (Opencv implementation)
@@ -11865,23 +11916,9 @@ SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 
 	if constexpr( std::is_same_v<SV,typ::IsVector> )
 	{
-		const int arSize = 8;
-
-		Line2d_<double> liA = getLine().getOrthogonalLine( _ptS1 );
-		auto pptsA = liA.getPoints( _ptS1, arSize );
-		priv::drawSvgSeg( im, pptsA, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
-
-		auto ppts_B = getLine().getPoints( _ptS2, arSize );
-
-		Point2d_<double> p0 = ppts_B.first;
-		if( dist( _ptS1, ppts_B.first) >  dist(_ptS1, ppts_B.second) )
-			p0 = ppts_B.second;
-
-		Line2d_<double> liB = getLine().getOrthogonalLine( p0 );
-		auto ppts_C = liB.getPoints( p0, arSize );
-
-		priv::drawSvgSeg( im, ppts_C.first,  _ptS2, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
-		priv::drawSvgSeg( im, ppts_C.second, _ptS2, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
+		auto arrsegs = priv::getArrowSegments( *this );
+		for( auto ppts: arrsegs )
+			priv::drawSvgSeg( im, ppts, dp.getSvgRgbColor(), dp._dpValues._lineThickness );
 	}
 	else
 	{
