@@ -5358,7 +5358,7 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 
 	Vector_<FPT> other( _ptS1, pt );
 //	auto cp = crossProduct( *this, other );
-	double cp = detail::crossProductV( *this, other );
+	HOMOG2D_INUMTYPE cp = detail::crossProductV( other, *this );
 	PointSide out;
 	switch ( priv::sign(cp) )
 	{

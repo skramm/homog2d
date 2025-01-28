@@ -21,7 +21,6 @@ int main( int, const char** )
 
 	Point2d pt0( imsize/2, 80 );
 	Line2d li( 20,20, 100,100);
-	Vector v( 200,20,250,250 );
 	img::Image<cv::Mat> im( imsize*2,imsize-100 );
 
 	for( int i=0; i<nbim; i++ )
@@ -30,10 +29,7 @@ int main( int, const char** )
 		pt0.draw( im, img::DrawParams().setColor(0,0,250) );
 		li.draw( im, img::DrawParams().setThickness(2).setColor(250,0,0) );
 		im.drawText( "side=" + std::to_string( side( pt0, li) ), Point2d(50,50), img::DrawParams() );
-
-		v.draw( im );
 		li = H * li;
-		v  = H * v;
 		std::ostringstream oss;
 		oss << "showcase16_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );
