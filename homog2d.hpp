@@ -2353,9 +2353,9 @@ template<typename T1,typename T2,typename FPT1,typename FPT2>
 base::LPBase<T1,FPT1>
 crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
-template<typename SV1,typename SV2,typename FPT1,typename FPT2>
-base::SegVec<SV1,FPT1>
-crossProduct( const base::SegVec<SV1,FPT1>&, const base::SegVec<SV2,FPT2>& );
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
+crossProduct( const base::SegVec<typ::IsVector,FPT1>&, const base::SegVec<typ::IsVector,FPT2>& );
 
 class Inters_1 {};
 class Inters_2 {};
@@ -4896,6 +4896,22 @@ enum class PointSide: uint8_t
 	Left,Right,Neither
 };
 
+inline
+const char* getString( PointSide t )
+{
+	const char* s=0;
+	switch( t )
+	{
+		case PointSide::Left:    s="Left";    break;
+		case PointSide::Right:   s="Right";   break;
+		case PointSide::Neither: s="Neither"; break;
+		assert(0);
+	}
+	return s;
+}
+
+
+
 namespace base {
 //------------------------------------------------------------------
 /// A line segment or vector, defined by two points.
@@ -5339,9 +5355,10 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 	static_assert( std::is_same_v<SV,typ::IsVector>, "unable to get side of point related to Segment" );
 
 	Vector_<FPT> other( _ptS1, pt );
-	auto cp = crossProduct( *this, other );
+//	auto cp = crossProduct( *this, other );
+	double cp = crossProduct( *this, other );
 	PointSide out;
-	switch ( sign(cp) )
+	switch ( priv::sign(cp) )
 	{
 		case  0: out = PointSide::Neither; break;
 		case  1: out = PointSide::Left;    break;
@@ -8870,7 +8887,10 @@ LPBase<LP,FPT>::impl_op_sort( const LPBase<LP,FPT>&, const detail::BaseHelper<ty
 /// Inner implementation details
 namespace detail {
 
-/// Cross product, see https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+/// Cross product of points * points or line * line
+/**
+- https://en.wikipedia.org/wiki/Cross_product#Coordinate_notation
+*/
 template<typename Out,typename In,typename FPT1,typename FPT2>
 base::LPBase<Out,FPT1>
 crossProduct(
@@ -8893,14 +8913,15 @@ crossProduct(
 	return res;
 }
 
-template<typename SV1,typename SV2,typename FPT1,typename FPT2>
-base::SegVec<SV1,FPT1>
+/// Cross product of two vectors, return a scalar
+template<typename FPT1,typename FPT2>
+HOMOG2D_INUMTYPE
 crossProduct(
-	const base::SegVec<SV1,FPT1>& v1,
-	const base::SegVec<SV2,FPT2>& v2
+	const base::SegVec<typ::IsVector,FPT1>& v1,
+	const base::SegVec<typ::IsVector,FPT1>& v2
 )
 {
-
+	return 0.; // tmp
 }
 
 } // namespace detail

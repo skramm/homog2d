@@ -1,6 +1,6 @@
 /**
 \file
-\brief random points and a moving point, draw the nearest/farthest point segment
+\brief a point and a moving line, show side of point relatively to line
 */
 #define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
