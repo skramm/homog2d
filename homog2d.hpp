@@ -6676,7 +6676,7 @@ Two tasks:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-	buildOffset( T value ) const;
+	getOffsetPoly( T value ) const;
 
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
@@ -6685,41 +6685,87 @@ public:
 
 }; // class PolylineBase
 
+
+//------------------------------------------------------------------
 /// Return an "offsetted" closed polyline
+/**
+- If dist<0, returns the polyline "outside" the source one
+- If dist<0, returns the polyline "inside" the source one
+*/
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-PolylineBase<PLT,FPT>::buildOffset( T dist ) const
+PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 {
+	if( homog2d_abs(dist) < thr::nullDistance() )
+		HOMOG2D_THROW_ERROR_1( "distance value invalid" );
+
 	HOMOG2D_CHECK_IS_NUMBER(T);
 	if( size()<3 )
 		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
-//	std::cout << "THIS=" << *this << '\n';
 
-	PolylineBase<typ::IsClosed,FPT> out;
+	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
+	auto segs = getSegs();
+	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
-	const auto segs = this->getSegs();
 	do
 	{
-		auto next = (current==size()-1 ? 0 : current+1);
+//		auto next = (current==size()-1 ? 0 : current+1);
+
+		auto nextS = (current==size()-1 ? 0 : current+1);
+		auto nextPt1 = nextS;
+		auto nextPt2 = (nextPt1==size()-1 ? 0 : nextPt1+1);
+
+		auto pt1 = getPoint(current);
+		auto pt2 = getPoint(nextPt1);
+		auto pt3 = getPoint(nextPt2);
+
+		Vector_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
+		Vector_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+
+
+
+
 //		std::cout << "current=" << current << " next=" << next << '\n';
 /*		auto s1 = segs.at(current);
 		auto s2 = segs.at(next);
 		std::cout << "s1=" << s1 << " s2=" << s2 << '\n';*/
 		auto li1 = segs.at(current).getLine();
-		auto li2 = segs.at(next).getLine();
+		auto li2 = segs.at(nextS).getLine();
 		auto pli1 = li1.getParallelLines( dist );
 		auto pli2 = li2.getParallelLines( dist );
-// compute the 4 intersection points
-		auto pt1 = pli1.first  * pli2.first;
-		auto pt2 = pli1.first  * pli2.second;
-		auto pt3 = pli1.second * pli2.first;
-		auto pt4 = pli1.second * pli2.second;
 
+		std::array<Point2d_<FPT>,4> vpt;
+// compute the 4 intersection points
+		vpt[0] = pli1.first  * pli2.first;
+		vpt[1] = pli1.first  * pli2.second;
+		vpt[2] = pli1.second * pli2.first;
+		vpt[3] = pli1.second * pli2.second;
+
+
+		int addPoint = -1;
+		for( int i=0; i<4; i++ )
+		{
+//			auto pt = vpt[i]; // each of the four points
+//			std::cout << "i=" << i << " pt=" << pt << " s1=" << std::to_string(side( pt, li1)) << " s2=" << side( pt, li2) << '\n';
+//			auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));
+
+			auto s1 = v1.getPointSide( vpt[i] );
+			auto s2 = v2.getPointSide( vpt[i] );
+			if( s1 == side && s2 == side )
+			{
+				addPoint = i;
+				break;
+			}
+		}
+		assert( addPoint != -1 );
+
+		v_out.push_back( vpt[addPoint] );
 		current++;
 	}
 	while( current<size() );
 
+	PolylineBase<typ::IsClosed,FPT> out( v_out );
 /*	for(auto seg: getSegs )
 	{
 		auto pli = getParallelLines( seg.getLine(), 50 );
@@ -6727,7 +6773,7 @@ PolylineBase<PLT,FPT>::buildOffset( T dist ) const
 	return out;
 }
 
-
+//------------------------------------------------------------------
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
 /**
 \return segment distance, inscribed circle radius

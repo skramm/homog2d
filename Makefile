@@ -94,7 +94,6 @@ demo-import: BUILD/demo_svg_import
 clean:
 	@-rm -r BUILD/*
 	@-rm homog2d_test
-	@-rm demo_opencv
 	@-rm *.gcov
 
 # just a debug target...
@@ -347,9 +346,9 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 	@mkdir -p BUILD/html
 	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
-
+# removed buildf
 # this target requires Opencv
-BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
+BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
 	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv` $$(pkg-config --libs tinyxml2)
 
 

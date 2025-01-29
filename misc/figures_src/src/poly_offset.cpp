@@ -46,7 +46,6 @@ int main()
 
 	auto pol = H*pol0;
 	std::cout << "main: pol2=" << pol << '\n';
-//	auto poff = pol2.buildOffset( 30 );
 	auto dist = 30;
 	size_t current = 0;
 	const auto segs = pol.getSegs();

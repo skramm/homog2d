@@ -1968,6 +1968,49 @@ void demo_RCP( int demidx )
 }
 
 //------------------------------------------------------------------
+struct Param_PO : Data
+{
+	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
+	{
+		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {100,420}, {270,400}, {150,250} };
+	}
+	void getOuter()
+	{
+		auto outer = _cpoly.getOffsetPoly( 20 );
+		draw( img, outer );
+		showImage();
+	}
+};
+
+void action_PO( void* param )
+{
+	auto& data = *reinterpret_cast<Param_PO*>(param);
+	data.clearImage();
+
+	data._cpoly = CPolyline( data.vpt );
+	draw( data.img, data._cpoly );
+	data.showImage();
+}
+
+void demo_PO( int demidx )
+{
+	Param_PO data( demidx, "Polygon Offset" );
+	std::cout << "Demo " << demidx << ": Offset\n";
+
+	data.setMouseCB( action_PO );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'w', [&](void*){ data.getOuter(); },   "getOuter" );
+/*	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
+	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
+*/
+	kbloop.addCommonAction( action_PO );
+	action_PO( &data );
+	kbloop.start( data );
+}
+
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -1992,6 +2035,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_PO,
 		demo_BB,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment

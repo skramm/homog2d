@@ -300,6 +300,7 @@ Two of these, `HasBB` ("Has Bounding Box") and `HasArea`, are detailed in the ta
 | Point2d   | false |  false  |
 | Line2d    | false |  false  |
 | Segment   | false |  false  |
+| Vector    | false |  false  |
 | FRect     | true  |  true   |
 | Circle    | true  |  true   |
 | Ellipse   | true  |  true   |

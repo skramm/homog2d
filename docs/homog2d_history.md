@@ -17,7 +17,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
-  - (nil)
+  - added new type `Vector` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
+  see TODO: ADD LINK TO MANUAL
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
