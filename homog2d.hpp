@@ -106,10 +106,10 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_START
 #endif
 
+// 		<< std::scientific << std::setprecision(10)
 #ifdef HOMOG2D_DEBUGMODE
 	#define HOMOG2D_LOG(a) \
 		std::cout << '-' << __FUNCTION__ << "(), line " << __LINE__ << ": " \
-		<< std::scientific << std::setprecision(10) \
 		<< a << std::endl;
 #else
 	#define HOMOG2D_LOG(a) {;}
@@ -1860,6 +1860,7 @@ Thus some assert can get triggered elsewhere.
 #endif
 
 /// Homography normalisation
+/// (const because flag \c _hasChanged declared as \c mutable)
 	void normalize() const
 	{
 		detail::Matrix_<FPT>::p_normalize(2,2);
@@ -4962,7 +4963,7 @@ public:
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment/vector with two identical points: " << p1 << " and " << p2 );
 #endif
 		if constexpr( std::is_same_v<SV,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
@@ -6387,8 +6388,8 @@ Also use the areCollinear() function
 		_plIsNormalized=false;
 		_plinevec.resize( vec.size() );
 		auto it = std::begin( _plinevec );
-		for( const auto& pt: vec )   // copying one by one will
-			*it++ = pt;              // allow type conversions (std::copy implies same type)
+		for( const auto& pt: vec )   // copying one by one will allow
+			*it++ = pt;              //  type conversions (std::copy implies same FP type)
 	}
 
 /// Build a parallelogram (4 points) from 3 points
@@ -6468,8 +6469,7 @@ private:
 		set( vpts );
 	}
 
-
-/// Checks that no contiguous identical	points are stored
+/// Checks that no contiguous identical points are stored
 	template<typename CONT>
 	void p_checkInputData( const CONT& pts )
 	{
@@ -6484,6 +6484,12 @@ private:
 					<< " in set of size " << pts.size()
 				);
 		}
+		if( pts.front() == pts.back() )
+			HOMOG2D_THROW_ERROR_1(
+				"cannot add first point equal to last point:\npt:"
+				<< pts.front()
+				<< " in set of size " << pts.size()
+			);
 	}
 
 	void impl_minimizePL( const detail::PlHelper<typ::IsOpen>& );
@@ -6638,6 +6644,7 @@ public:
 private:
 	void impl_normalizePoly( const detail::PlHelper<typ::IsClosed>& ) const
 	{
+		std::cout << "NORM before" << *this << '\n';
 		auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 		std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 		const auto& p1 = _plinevec[1];
@@ -6648,6 +6655,7 @@ private:
 			minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 		}
+		std::cout << "NORM after" << *this << '\n';
 	}
 	void impl_normalizePoly( const detail::PlHelper<typ::IsOpen>& ) const
 	{
@@ -6655,6 +6663,8 @@ private:
 			std::reverse( _plinevec.begin(), _plinevec.end() );
 	}
 
+// TMP !!!!!!!!!!
+public:
 /// Normalization of CPolyline_
 /**
 Two tasks:
@@ -6689,6 +6699,8 @@ public:
 //------------------------------------------------------------------
 /// Return an "offsetted" closed polyline
 /**
+On failure (for whatever reason, will return an empty CPolyline
+
 - If dist<0, returns the polyline "outside" the source one
 - If dist<0, returns the polyline "inside" the source one
 */
@@ -6704,14 +6716,17 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 	if( size()<3 )
 		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
 
+//HOMOG2D_LOG( "BEF " << *this );
+	p_normalizePoly();
+HOMOG2D_LOG( "AFF " << *this );
+
 	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
 	auto segs = getSegs();
 	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
+	bool paraLines = false;
 	do
 	{
-//		auto next = (current==size()-1 ? 0 : current+1);
-
 		auto nextS = (current==size()-1 ? 0 : current+1);
 		auto nextPt1 = nextS;
 		auto nextPt2 = (nextPt1==size()-1 ? 0 : nextPt1+1);
@@ -6723,54 +6738,51 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 		Vector_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
 		Vector_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
 
-
-
-
-//		std::cout << "current=" << current << " next=" << next << '\n';
-/*		auto s1 = segs.at(current);
-		auto s2 = segs.at(next);
-		std::cout << "s1=" << s1 << " s2=" << s2 << '\n';*/
 		auto li1 = segs.at(current).getLine();
 		auto li2 = segs.at(nextS).getLine();
+
 		auto pli1 = li1.getParallelLines( dist );
 		auto pli2 = li2.getParallelLines( dist );
 
-		std::array<Point2d_<FPT>,4> vpt;
-// compute the 4 intersection points
-		vpt[0] = pli1.first  * pli2.first;
-		vpt[1] = pli1.first  * pli2.second;
-		vpt[2] = pli1.second * pli2.first;
-		vpt[3] = pli1.second * pli2.second;
-
-
-		int addPoint = -1;
-		for( int i=0; i<4; i++ )
+		if( pli1.first.isParallelTo( pli2.first ) )
+			paraLines = true; // can't do much more, so quit...
+		else
 		{
-//			auto pt = vpt[i]; // each of the four points
-//			std::cout << "i=" << i << " pt=" << pt << " s1=" << std::to_string(side( pt, li1)) << " s2=" << side( pt, li2) << '\n';
-//			auto str = std::to_string(side( pt, li1)) + ":" + std::to_string(side( pt, li2 ));
+			std::array<Point2d_<FPT>,4> vpt;
+// compute the 4 intersection points
+try{
+			vpt[0] = pli1.first  * pli2.first;
+			vpt[1] = pli1.first  * pli2.second;
+			vpt[2] = pli1.second * pli2.first;
+			vpt[3] = pli1.second * pli2.second;
+}
+catch( std::exception& err )
+{
+		std::cerr << "catch pt product error, msg=" << err.what();
+}
 
-			auto s1 = v1.getPointSide( vpt[i] );
-			auto s2 = v2.getPointSide( vpt[i] );
-			if( s1 == side && s2 == side )
+			int addPoint = -1;
+			for( int i=0; i<4; i++ )  // search in the four points which one is the "good" one
 			{
-				addPoint = i;
-				break;
+				auto s1 = v1.getPointSide( vpt[i] );
+				auto s2 = v2.getPointSide( vpt[i] );
+				if( s1 == side && s2 == side )
+				{
+					addPoint = i;
+					break;  // no need to search further
+				}
 			}
+			assert( addPoint != -1 );
+
+			v_out.push_back( vpt[addPoint] );
+			current++;
 		}
-		assert( addPoint != -1 );
-
-		v_out.push_back( vpt[addPoint] );
-		current++;
 	}
-	while( current<size() );
+	while( current<size() && !paraLines );
+	if( paraLines )
+		v_out.clear();
 
-	PolylineBase<typ::IsClosed,FPT> out( v_out );
-/*	for(auto seg: getSegs )
-	{
-		auto pli = getParallelLines( seg.getLine(), 50 );
-	}*/
-	return out;
+	return PolylineBase<typ::IsClosed,FPT>( v_out );;
 }
 
 //------------------------------------------------------------------

@@ -1968,30 +1968,56 @@ void demo_RCP( int demidx )
 }
 
 //------------------------------------------------------------------
+/// Polygon Offset demo data
 struct Param_PO : Data
 {
 	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {100,420}, {270,400}, {150,250} };
 	}
-	void getOuter()
+	CPolyline _cpoly_off;
+/*	void getOuter()
 	{
-		auto outer = _cpoly.getOffsetPoly( 20 );
-		draw( img, outer );
-		showImage();
-	}
+		_cpoly_off = _cpoly.getOffsetPoly( 20 );
+//		draw( img, outer );
+//		showImage();
+	}*/
 };
 
+/// Only removes duplicates if there are consecutive
+std::vector<Point2d> removeDupes( const std::vector<Point2d>& vec )
+{
+	std::vector<Point2d> out( vec );
+	out.erase( std::unique( out.begin(), out.end() ), out.end() );
+	if( out.front() == out.back() ) // if first == last, remove last element
+		out.pop_back();
+	return out;
+}
+
+/// Polygon Offset demo action
 void action_PO( void* param )
 {
 	auto& data = *reinterpret_cast<Param_PO*>(param);
 	data.clearImage();
 
-	data._cpoly = CPolyline( data.vpt );
-	draw( data.img, data._cpoly );
+	auto withoutDupes = removeDupes( data.vpt );
+	data._cpoly = CPolyline( withoutDupes );
+	data._cpoly.p_normalizePoly() ;
+
+	data._cpoly_off = data._cpoly.getOffsetPoly( 20 );
+
+	auto pts = data._cpoly.getPts();
+	int i = 0;
+	for( auto pt: pts )
+		drawText( data.img, std::to_string(i++), pt );
+
+	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
+	draw( data.img, data._cpoly_off );
+
 	data.showImage();
 }
 
+/// Polygon Offset demo start
 void demo_PO( int demidx )
 {
 	Param_PO data( demidx, "Polygon Offset" );
@@ -1999,7 +2025,7 @@ void demo_PO( int demidx )
 
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ data.getOuter(); },   "getOuter" );
+//	kbloop.addKeyAction( 'w', [&](void*){ data.getOuter(); },   "getOuter" );
 /*	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
 	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
 	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
