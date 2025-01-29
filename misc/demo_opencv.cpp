@@ -2002,7 +2002,7 @@ void action_PO( void* param )
 
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
-	data._cpoly.p_normalizePoly() ;
+//	data._cpoly.p_normalizePoly() ;
 
 	data._cpoly_off = data._cpoly.getOffsetPoly( 20 );
 

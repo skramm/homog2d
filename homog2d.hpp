@@ -6054,7 +6054,7 @@ this should work !!! (but doesn't...)
 		if( pt_front == pt_back ) // means it's closed
 			isClosed = true;
 
-		if( isClosed && std::is_same_v<PLT,type::IsOpen> ) // cannot build an open polyline from a closed one
+		if( isClosed && std::is_same_v<PLT,typ::IsOpen> ) // cannot build an open polyline from a closed one
 			HOMOG2D_THROW_ERROR_1( "unable to convert a closed boost::polygon into an OPolyline" );
 
 		_plinevec.reserve( outer.size() - isClosed );
@@ -6641,6 +6641,7 @@ public:
 	bool isNormalized() const { return _plIsNormalized; }
 #endif
 
+#if 0 // integrated in main function
 private:
 	void impl_normalizePoly( const detail::PlHelper<typ::IsClosed>& ) const
 	{
@@ -6662,8 +6663,9 @@ private:
 		if( _plinevec.back() < _plinevec.front() )
 			std::reverse( _plinevec.begin(), _plinevec.end() );
 	}
+#endif
 
-// TMP !!!!!!!!!!
+// TMP public !!!!!!!!!!
 public:
 /// Normalization of CPolyline_
 /**
@@ -6678,7 +6680,27 @@ Two tasks:
 
 		if( !_plIsNormalized )
 		{
-			impl_normalizePoly( detail::PlHelper<PLT>() );
+//			impl_normalizePoly( detail::PlHelper<PLT>() );
+			if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
+			{
+				std::cout << "NORM before" << *this << '\n';
+				auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+				const auto& p1 = _plinevec[1];
+				const auto& p2 = _plinevec.back();
+				if( p2 < p1 )
+				{
+					std::reverse( _plinevec.begin(), _plinevec.end() );
+					minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+					std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+				}
+				std::cout << "NORM after" << *this << '\n';
+			}
+			else
+			{
+				if( _plinevec.back() < _plinevec.front() )
+					std::reverse( _plinevec.begin(), _plinevec.end() );
+			}
 			_plIsNormalized=true;
 		}
 	}
@@ -6717,7 +6739,7 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
 
 //HOMOG2D_LOG( "BEF " << *this );
-	p_normalizePoly();
+//	p_normalizePoly();
 HOMOG2D_LOG( "AFF " << *this );
 
 	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
