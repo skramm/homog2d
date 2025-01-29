@@ -10,7 +10,7 @@ using namespace h2d;
 
 int main( int, const char** )
 {
-	#if 0
+#if 0
 	auto nbim = 20; // nb images
 
 	auto cmax = 300;
@@ -32,16 +32,16 @@ int main( int, const char** )
 
 	std::vector<bool> isUsed(nbPts,false);
 
-//	for( int i=0; i<nbim; i++ )
-
+	for( int i=0; i<nbim; i++ )
+	{
 		img::Image<cv::Mat> im( cmax+30, cmax+30 );
 
-		draw( im, vec );
+//		draw( im, vec );
 		std::ostringstream oss;
 		oss << "showcase21_" << std::setfill('0') << std::setw(2) << 0 << ".png";
 
 		size_t current = 0;
-		auto finished == false;
+		auto finished = false;
 		im.write( oss.str() );
 		do
 		{
@@ -64,6 +64,7 @@ int main( int, const char** )
 		std::ostringstream oss;
 		oss << "showcase15_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );
+*/
 	}
 */
 #endif

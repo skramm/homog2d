@@ -6641,32 +6641,6 @@ public:
 	bool isNormalized() const { return _plIsNormalized; }
 #endif
 
-#if 0 // integrated in main function
-private:
-	void impl_normalizePoly( const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		std::cout << "NORM before" << *this << '\n';
-		auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-		std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-		const auto& p1 = _plinevec[1];
-		const auto& p2 = _plinevec.back();
-		if( p2 < p1 )
-		{
-			std::reverse( _plinevec.begin(), _plinevec.end() );
-			minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-		}
-		std::cout << "NORM after" << *this << '\n';
-	}
-	void impl_normalizePoly( const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		if( _plinevec.back() < _plinevec.front() )
-			std::reverse( _plinevec.begin(), _plinevec.end() );
-	}
-#endif
-
-// TMP public !!!!!!!!!!
-public:
 /// Normalization of CPolyline_
 /**
 Two tasks:
@@ -6680,7 +6654,6 @@ Two tasks:
 
 		if( !_plIsNormalized )
 		{
-//			impl_normalizePoly( detail::PlHelper<PLT>() );
 			if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
 			{
 				std::cout << "NORM before" << *this << '\n';
