@@ -342,7 +342,7 @@ Line2d li = pt * Point2d();
 <a name="shapes"></a>
 
 Besides points and lines, the following primitives are provided:
-* [segment](#p_segment)
+* [segment and vector](#p_segment)
 * [flat rectangle](#p_frect)
 * [circle](#p_circle)
 * [polyline](#p_polyline)
@@ -367,10 +367,13 @@ On this figure, you can see three combinations of bounding boxes for some object
 ![getbb1b](img/getbb1b.svg)
 [source](../misc/figures_src/src/getbb1.cpp)
 
-### 3.1 - Segments
+### 3.1 - Segments and vectors
 <a name="p_segment"></a>
 
-A segment is implemented internally as a pair of points.
+This library provides these closely related two types.
+They both share the same underlying type (a pair of points).
+The difference between them is that a vector is **oriented**, while a segment is not.
+
 Usage is straightforward:
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
@@ -379,7 +382,7 @@ std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
 
-You can also build the segment by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
+You can also build theses by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
 The only constraint is that they must be all of the same type (no int/float/double mix):
 ```C++
 Segment s1( x1, y1, x2, y2 );
@@ -1191,8 +1194,7 @@ h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale fac
 
 - You can build some complex transformation by multiplying these:
 ```C++
-Homogr h; // unit transformation
-h.setTranslation(3,4);
+auto h1 = Homogr().setTranslation(3,4);
 Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
 auto h3a = h1*h2; // first, rotation, then translation
 auto h3b = h2*h1; // first, translation, then rotation

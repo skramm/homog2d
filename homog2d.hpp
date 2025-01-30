@@ -6711,6 +6711,9 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 	if( size()<3 )
 		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
 
+	if( !isPolygon() )
+		return PolylineBase<typ::IsClosed,FPT>();
+
 //HOMOG2D_LOG( "BEF " << *this );
 //	p_normalizePoly();
 HOMOG2D_LOG( "AFF " << *this );
@@ -6777,7 +6780,7 @@ catch( std::exception& err )
 	if( paraLines )
 		v_out.clear();
 
-	return PolylineBase<typ::IsClosed,FPT>( v_out );;
+	return PolylineBase<typ::IsClosed,FPT>( v_out );
 }
 
 //------------------------------------------------------------------
