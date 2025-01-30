@@ -384,7 +384,7 @@ using Segment_ = base::SegVec<typ::IsSegment,T>;
 template<typename T>
 using Vector_  = base::SegVec<typ::IsVector,T>;
 
-/// \todo 20250127: do we need to keep these two types? Make remove the first? Both?
+/// \todo 20250127: remove the first one and replace with `PointPair_`
 template<typename T>
 using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
 template<typename T1,typename T2>
@@ -9970,12 +9970,13 @@ Arg is a neither a Point2d, a Segment, a Line2d or a polyline
 template<
 	typename T,
 	typename std::enable_if<
-		(                                                          // arg is
-			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
-			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
-			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
+		(                                                          // type is
+			   !std::is_same<T,Line2d_<typename    T::FType>>::value // not a line,
+			&& !std::is_same<T,Point2d_<typename   T::FType>>::value // not a point,
+			&& !std::is_same<T,Segment_<typename   T::FType>>::value // not a segment
+			&& !std::is_same<T,Vector_<typename    T::FType>>::value // not a vector
 			&& !std::is_same<T,CPolyline_<typename T::FType>>::value // not a CPolyline
-			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a COolyline
+			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a OPolyline
 		)
 		,T
 	>::type* = nullptr
@@ -10326,6 +10327,7 @@ getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 
 //------------------------------------------------------------------
 /// Overload 1/3. This one is called if NONE of the args are a Line2d
+/// \todo 20250130: need to rewrite this, fails is one of the elements is a polyline and is empty
 template<
 	typename T1,
 	typename T2,
@@ -10339,6 +10341,19 @@ getBB( const T1& elem1, const T2& elem2 )
 {
 	HOMOG2D_START;
 	FRect_<typename T1::FType> out;
+
+	decltype(ppair::getPointPair(elem1)) pp1, pp2;
+	try
+	{
+		pp1 = ppair::getPointPair( elem1 );
+		pp2 = ppair::getPointPair( elem2 );
+	}
+	catch( const std::exception& err )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute getPointPair():\n -arg1="
+			<< elem1 << "\n -arg2=" << elem2 << "\n -err=" << err.what() );
+	}
+
 	try
 	{
 		out = getBB(

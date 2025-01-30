@@ -1,6 +1,9 @@
 /**
 \file
 \brief offset polygon
+
+\todo 20250130: issue to fix: can't draw BB if one of the polylines is empty.
+Something to fix in hwo getBB() is handled (multiple overloads, need to clarify).
 */
 
 #define HOMOG2D_USE_OPENCV
@@ -51,7 +54,7 @@ int main( int, const char** )
 		v_poly2.push_back( v_poly2.at(i-1).getOffsetPoly( -delta ) );
 		im.draw( v_poly1.back(), img::DrawParams().setColor(0,250,0) );
 		im.draw( v_poly2.back(), img::DrawParams().setColor(0,0,250) );
-		getBB( pol2, v_poly1.back() ).draw( im );
+//		getBB( pol2, v_poly1.back() ).draw( im );
 		std::ostringstream oss;
 		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );
