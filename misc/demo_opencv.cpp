@@ -1188,7 +1188,7 @@ struct Param_CIR : Data
 		fct::DrawFunct dfunc( img, par_r );
 		std::visit( dfunc, _variant );
 
-		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
+		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(3).setPointStyle(img::PtStyle::Dot);
 		if( _buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
@@ -1300,7 +1300,7 @@ void action_CH( void* param )
 		data._cpoly.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
-	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
+	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(5).setThickness(2);
 	data._cpoly.getLmPoint().draw( data.img, dp );
 	data._cpoly.getRmPoint().draw( data.img, dp );
 	data._cpoly.getTmPoint().draw( data.img, dp );
@@ -1976,12 +1976,7 @@ struct Param_PO : Data
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {100,420}, {270,400}, {150,250} };
 	}
 	CPolyline _cpoly_off;
-/*	void getOuter()
-	{
-		_cpoly_off = _cpoly.getOffsetPoly( 20 );
-//		draw( img, outer );
-//		showImage();
-	}*/
+	bool _showSegs = true;
 };
 
 /// Only removes duplicates if there are consecutive
@@ -2013,7 +2008,20 @@ void action_PO( void* param )
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
 	draw( data.img, data._cpoly_off );
+	if( data._cpoly.isPolygon() )
+	{
+		auto centr = data._cpoly.centroid();
+		draw( data.img, centr, img::DrawParams().showPoints().setColor(0,0,250) );
 
+		if( data._showSegs )
+		{
+			for( const auto& seg: data._cpoly.getSegs() )
+			{
+				auto mid= seg.getCenter();
+				data.img.draw( Segment(mid, centr), img::DrawParams().setColor(0,200,0) );
+			}
+		}
+	}
 	data.showImage();
 }
 
@@ -2022,14 +2030,11 @@ void demo_PO( int demidx )
 {
 	Param_PO data( demidx, "Polygon Offset" );
 	std::cout << "Demo " << demidx << ": Offset\n";
-
+	data.leftClicAddPoint=true;
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
-//	kbloop.addKeyAction( 'w', [&](void*){ data.getOuter(); },   "getOuter" );
-/*	kbloop.addKeyAction( 'x', [&](void*){ data.nbPts_less(); }, "less points" );
-	kbloop.addKeyAction( 'a', [&](void*){ data._radius += data._radiusStep; }, "increase radius" );
-	kbloop.addKeyAction( 'z', [&](void*){ data.radius_less(); },               "decrease radius" );
-*/
+	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
+
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );
 	kbloop.start( data );

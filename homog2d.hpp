@@ -1265,6 +1265,7 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	return std::make_pair( p00, p11 );
 }
 
+/// An alias used to hold data of a 3x3 matrix, see detail::Matrix_
 template<typename T>
 using matrix_t = std::array<std::array<T,3>,3>;
 
@@ -1464,7 +1465,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	bool isNormalized() const { return _isNormalized; }
 
 protected:
-	void p_normalize( int r, int c ) const
+	void p_normalizeMat( int r, int c ) const
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( std::fabs(_mdata[r][c]) < thr::nullDenom() )
@@ -1533,6 +1534,7 @@ private:
 		det -=     static_cast<HOMOG2D_INUMTYPE>( _mdata[v[2]][v[3]] ) * _mdata[v[4]][v[5]];
 		return det;
 	}
+
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
 	detail::Matrix_<FPT> p_adjugate() const
 	{
@@ -1865,7 +1867,7 @@ Thus some assert can get triggered elsewhere.
 /// (const because flag \c _hasChanged declared as \c mutable)
 	void normalize() const
 	{
-		detail::Matrix_<FPT>::p_normalize(2,2);
+		detail::Matrix_<FPT>::p_normalizeMat(2,2);
 		_hasChanged = true;
 	}
 
@@ -2255,9 +2257,9 @@ public:
 		auto& data = detail::Matrix_<FPT>::_mdata;
 
 		if( !detail::Matrix_<FPT>::isNormalized() )
-			detail::Matrix_<FPT>::p_normalize(2,2);
+			detail::Matrix_<FPT>::p_normalizeMat(2,2);
 		if( !h.isNormalized() )
-			h.p_normalize(2,2);
+			h.p_normalizeMat(2,2);
 
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -6730,8 +6732,39 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 		return PolylineBase<typ::IsClosed,FPT>();
 
 //HOMOG2D_LOG( "BEF " << *this );
-//	p_normalizePoly();
+	p_normalizePoly();
 HOMOG2D_LOG( "AFF " << *this );
+
+/* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
+(bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
+and compute their
+ref:
+- http://www.faqs.org/faqs/graphics/algorithms-faq/
+Subject 2.07: How do I find the orientation of a simple polygon?
+- https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
+*/
+	auto pt0 = _plinevec[0];
+	auto ptA = _plinevec[1];
+	auto ptB = _plinevec[ size()-1];
+
+// std::cout << "pt0=" << pt0 << " ptA=" << ptA << " ptB=" << ptB << '\n';
+
+/// \todo 20250130: improve that, really ugly !!
+	detail::Matrix_<HOMOG2D_INUMTYPE> mat;
+	auto& values = mat.getRaw();
+
+	values[0][0] = values[0][1] = values[0][2] = 1;
+	values[1][0] = ptA.getX();
+	values[2][0] = ptA.getY();
+
+	values[1][1] = pt0.getX();
+	values[2][1] = pt0.getY();
+
+	values[1][2] = ptB.getX();
+	values[2][2] = ptB.getY();
+
+	auto det = mat.determ();
+	std::cout << "deter=" << det << '\n';
 
 	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
 	auto segs = getSegs();
@@ -7401,6 +7434,8 @@ PolylineBase<PLT,FPT>::p_ComputeSignedArea() const
 /// Compute centroid of polygon
 /**
 ref: https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
+
+\warning: centroid CAN be outside of polygon!
 */
 template<typename PLT,typename FPT>
 Point2d_<HOMOG2D_INUMTYPE>

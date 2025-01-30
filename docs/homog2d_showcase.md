@@ -171,3 +171,10 @@ Also shows the common bounding box and the tangential segments.
 ![showcase20](showcase/showcase20.gif)
 
 
+* [Showcase 22](../misc/showcase/showcase22.cpp):
+<a name="sc22"></a>
+Offsetting a polygon.
+
+![showcase22](showcase/showcase22.gif)
+
+

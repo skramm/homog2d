@@ -19,6 +19,9 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch
   - added new type `Vector` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
   see TODO: ADD LINK TO MANUAL
+  - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`: TODO
+  - added `getOffsetPoly()` to get a polygon "offsetted", see [showcase22](homog2d_showcase.md#sc22) (preliminar).
+
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
