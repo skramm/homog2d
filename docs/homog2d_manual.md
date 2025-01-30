@@ -915,15 +915,13 @@ If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
 // ... set points
-if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
+if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
 
-**warning**: function name will change in next release for `isSimple()`
-
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
+Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++

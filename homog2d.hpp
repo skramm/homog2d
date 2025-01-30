@@ -5672,7 +5672,7 @@ bool
 Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
 	HOMOG2D_START;
-	if( !poly.isPolygon() )
+	if( !poly.isSimple() )
 		return false;
 	if( poly.getPts()[0].isInside(*this) ) // if a point of the polygon is inside the circle,
 		return false;                      //  then the circle cannot be inside the polygon
@@ -5775,14 +5775,14 @@ struct PolylineAttribs
 {
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
-	priv::ValueFlag<bool>             _isPolygon;
+	priv::ValueFlag<bool>             _isSimplePolyg;
 	priv::ValueFlag<Point2d_<HOMOG2D_INUMTYPE>> _centroid;
 
 	void setBad()
 	{
 		_length.setBad();
 		_area.setBad();
-		_isPolygon.setBad();
+		_isSimplePolyg.setBad();
 		_centroid.setBad();
 	}
 };
@@ -6113,7 +6113,7 @@ public:
 	}
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
-	bool             isPolygon() const;
+	bool             isSimple() const;
 
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
@@ -6173,8 +6173,8 @@ private:
 		return size();
 	}
 
-	constexpr bool impl_isPolygon( const detail::PlHelper<typ::IsOpen>& )   const;
-	bool           impl_isPolygon( const detail::PlHelper<typ::IsClosed>& ) const;
+	constexpr bool impl_isSimple( const detail::PlHelper<typ::IsOpen>& )   const;
+	bool           impl_isSimple( const detail::PlHelper<typ::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -6723,7 +6723,7 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 		HOMOG2D_LOG_WARNING( "Failure, computing offsetted Polyline requires at least 3 points, returning empty CPolyline" );
 		valid = false;
 	}
-	if( !isPolygon() )
+	if( !isSimple() )
 	{
 		HOMOG2D_LOG_WARNING( "Failure, Polyline is not a polygon, returning empty CPolyline" );
 		valid = false;
@@ -7290,17 +7290,17 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename typ::IsC
 /// Returns true if object is a polygon (closed, and no segment crossing)
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::isPolygon() const
+PolylineBase<PLT,FPT>::isSimple() const
 {
 	if( size()<3 )       // needs at least 3 points to be a polygon
 		return false;
-	return impl_isPolygon( detail::PlHelper<PLT>() );
+	return impl_isSimple( detail::PlHelper<PLT>() );
 }
 
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 constexpr bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsOpen>& ) const
 {
 	return false;
 }
@@ -7308,9 +7308,9 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsOp
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsClosed>& ) const
 {
-	if( _attribs._isPolygon.isBad() )
+	if( _attribs._isSimplePolyg.isBad() )
 	{
 		auto nbs = nbSegs();
 		size_t i=0;
@@ -7330,9 +7330,9 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsCl
 			i++;
 		}
 		while( i<nbs && notDone );
-		_attribs._isPolygon.set( !hasIntersections );
+		_attribs._isSimplePolyg.set( !hasIntersections );
 	}
-	return _attribs._isPolygon.value();
+	return _attribs._isSimplePolyg.value();
 }
 
 //------------------------------------------------------------------
@@ -7353,7 +7353,7 @@ template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isConvex() const
 {
-	if( !isPolygon() )
+	if( !isSimple() )
 		return false;
 
 	int8_t sign = 0;
@@ -7404,7 +7404,7 @@ template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
 PolylineBase<PLT,FPT>::area() const
 {
-	if( !isPolygon() )  // implies that is both closed and has no intersections
+	if( !isSimple() )  // implies that is both closed and has no intersections
 		return 0.;
 
 	if( _attribs._area.isBad() )
@@ -7441,7 +7441,7 @@ template<typename PLT,typename FPT>
 Point2d_<HOMOG2D_INUMTYPE>
 base::PolylineBase<PLT,FPT>::centroid() const
 {
-	if( !isPolygon() )
+	if( !isSimple() )
 		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
 
 	if( _attribs._centroid.isBad() )
@@ -9338,7 +9338,7 @@ template<typename T,typename PTYPE>
 bool
 LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
-	if( !poly.isPolygon() )
+	if( !poly.isSimple() )
 		return false;
 
 // step 1: if point is outside bounding box, return false
@@ -9880,12 +9880,12 @@ getInscribedCircle( const FRect_<FPT>& rect )
 }
 
 /// Returns true if is a polygon (free function)
-///  \sa PolylineBase::isPolygon()
+///  \sa PolylineBase::isSimple()
 template<typename PLT,typename FPT>
 bool
-isPolygon( const base::PolylineBase<PLT,FPT>& pl )
+isSimple( const base::PolylineBase<PLT,FPT>& pl )
 {
-	return pl.isPolygon();
+	return pl.isSimple();
 }
 
 /// Returns true if polygon is convex (free function)

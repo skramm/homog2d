@@ -3190,8 +3190,8 @@ TEST_CASE( "Polyline minimization", "[polyline-min]" )
 template<typename T, typename U>
 void polytest_1( const base::PolylineBase<T,U>& pl1 )
 {
-	CHECK( pl1.isPolygon() == false );
-	CHECK( isPolygon(pl1)  == false );
+	CHECK( pl1.isSimple() == false );
+	CHECK( isSimple(pl1)  == false );
 
 	CHECK( pl1.size() == 0 );
 	CHECK( size(pl1)  == 0 );
@@ -3233,8 +3233,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		FRect r( 5,6, 7,8 );
 		CPolyline_<NUMTYPE> pl1( r );
 
-		CHECK( pl1.isPolygon() == true );
-		CHECK( isPolygon(pl1)  == true );
+		CHECK( pl1.isSimple() == true );
+		CHECK( isSimple(pl1)  == true );
 		CHECK( pl1.size()   == 4 );
 		CHECK( size(pl1)   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
@@ -3258,7 +3258,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CPolyline_<NUMTYPE> pl1;
 		pl1.set(r);
 
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.size() == 4 );
 		CHECK( pl1.getPoint(0)  == Point2d(5,6) );
 	}
@@ -3285,12 +3285,12 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( po1.nbSegs() == 3 );
 		CHECK( pc1.nbSegs() == 4 );
 
-		CHECK( po1.isPolygon() == false );
-		CHECK( pc1.isPolygon() == true );
+		CHECK( po1.isSimple() == false );
+		CHECK( pc1.isSimple() == true );
 
 		CPolyline_<NUMTYPE> pc2(po1);
 		CHECK( pc2.nbSegs()    == 4 );
-		CHECK( pc2.isPolygon() == true );
+		CHECK( pc2.isSimple() == true );
 
 		FRect bb1( 0,0, 3,5);
 		CHECK( getBB(po1) == bb1 );
@@ -3304,7 +3304,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pc1.isClosed() == true );
 		CHECK( pc1.size() == 4 );
 		CHECK( pc1.nbSegs() == 4 );
-		CHECK( pc1.isPolygon() == false ); // crossing segments
+		CHECK( pc1.isSimple() == false ); // crossing segments
 
 		pc1.translate(2,1.);
 		CHECK( pc1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
@@ -3643,19 +3643,19 @@ TEST_CASE( "Polygon area", "[polyline-area]" )
 		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
 		CHECK( pl1.size()   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.area() == 2. );
 	}
 	{
 		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
 		CHECK( pl1.size()   == 6 );
 		CHECK( pl1.nbSegs() == 6 );
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.area() == 3. );
 	}
 	OPolyline_<NUMTYPE> plo;
 	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
-	CHECK( plo.isPolygon() == false );
+	CHECK( plo.isSimple() == false );
 	CHECK( plo.area() == 0. );
 }
 

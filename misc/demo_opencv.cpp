@@ -949,7 +949,7 @@ void action_PL( void* param )
 	data.polyline_c.set( data.vpt );
 
 	auto color = img::DrawParams().setColor( 0,10,200);
-	if( data.polyline_c.isPolygon() )
+	if( data.polyline_c.isSimple() )
 		color = img::DrawParams().setColor( 250,10,20);
 
 	auto len = data.showClosedPoly ? data.polyline_c.length() : data.polyline_o.length();
@@ -987,7 +987,7 @@ void action_PL( void* param )
 	{
 		draw( data.img, i_cir_c.get() );
 		draw( data.img, i_rect_c.get() );
-		if( data.polyline_c.isPolygon() )
+		if( data.polyline_c.isSimple() )
 			str_ispoly = "Polygon: Y";
 	}
 	else
@@ -999,7 +999,7 @@ void action_PL( void* param )
 	auto bb = data.polyline_c.getBB();
 	bb.draw( data.img );
 
-	if( data.showClosedPoly && data.polyline_c.isPolygon() )
+	if( data.showClosedPoly && data.polyline_c.isSimple() )
 	{
 		auto centroid = data.polyline_c.centroid();
 		centroid.draw( data.img, img::DrawParams().setColor(40,20,250) );
@@ -2008,7 +2008,7 @@ void action_PO( void* param )
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
 	draw( data.img, data._cpoly_off );
-	if( data._cpoly.isPolygon() )
+	if( data._cpoly.isSimple() )
 	{
 		auto centr = data._cpoly.centroid();
 		draw( data.img, centr, img::DrawParams().showPoints().setColor(0,0,250) );
