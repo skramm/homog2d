@@ -149,7 +149,7 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << "\n msg=" << a << "\n";
+	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << ":\n =>" << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -583,6 +583,8 @@ public:
 	}
 	DrawParams& setPointSize( uint8_t ps )
 	{
+		if( ps%2 == 0 )
+			HOMOG2D_THROW_ERROR_1( "odd number required" );
 		_dpValues._pointSize = ps;
 		_dpValues._ptDelta = ps;
 		return *this;
@@ -6694,24 +6696,37 @@ public:
 //------------------------------------------------------------------
 /// Return an "offsetted" closed polyline
 /**
-On failure (for whatever reason, will return an empty CPolyline
+On failure (for whatever reason), will return an empty CPolyline
 
-- If dist<0, returns the polyline "outside" the source one
+- If dist>0, returns the polyline "outside" the source one
 - If dist<0, returns the polyline "inside" the source one
+
+\todo 20250130: fix the issue: inside/outside depends on ordering of points. And normalizing DOES NOT fix this.
 */
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
 PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 {
-	if( homog2d_abs(dist) < thr::nullDistance() )
-		HOMOG2D_THROW_ERROR_1( "distance value invalid" );
-
 	HOMOG2D_CHECK_IS_NUMBER(T);
-	if( size()<3 )
-		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
 
+	bool valid = true;
+	if( homog2d_abs(dist) < thr::nullDistance() )
+	{
+		HOMOG2D_LOG_WARNING( "Failure, distance value is null, returning empty CPolyline" );
+		valid = false;
+	}
+	if( size()<3 )
+	{
+		HOMOG2D_LOG_WARNING( "Failure, computing offsetted Polyline requires at least 3 points, returning empty CPolyline" );
+		valid = false;
+	}
 	if( !isPolygon() )
+	{
+		HOMOG2D_LOG_WARNING( "Failure, Polyline is not a polygon, returning empty CPolyline" );
+		valid = false;
+	}
+	if( !valid )
 		return PolylineBase<typ::IsClosed,FPT>();
 
 //HOMOG2D_LOG( "BEF " << *this );

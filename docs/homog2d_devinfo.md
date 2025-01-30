@@ -181,6 +181,7 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `Point2d`   | no build      |
 | `Line2d`    | no build      |
 | `Segment`   | no build      |
+| `Vector`    | no build      |
 | `Circle`    | never throws  |
 | `FRect`     | never throws  |
 | `OPolyline` | may throw     |

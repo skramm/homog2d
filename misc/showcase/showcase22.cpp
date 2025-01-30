@@ -22,7 +22,7 @@ int main( int, const char** )
 	CPolyline p0( vpts );
 
 	auto H1 = Homogr().addTranslation(7,6).addScale(15);
-	auto H2 = Homogr().addRotation(0.8).addScale(60).addTranslation(280,80);
+	auto H2 = Homogr().addRotation(0.8).addScale(60).addTranslation(280,100);
 	auto pol1 = H1 * p0;
 	auto pol2 = H2 * p0;
 
@@ -51,7 +51,7 @@ int main( int, const char** )
 		v_poly2.push_back( v_poly2.at(i-1).getOffsetPoly( -delta ) );
 		im.draw( v_poly1.back(), img::DrawParams().setColor(0,250,0) );
 		im.draw( v_poly2.back(), img::DrawParams().setColor(0,0,250) );
-
+		getBB( pol2, v_poly1.back() ).draw( im );
 		std::ostringstream oss;
 		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );
