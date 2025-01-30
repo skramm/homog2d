@@ -2006,7 +2006,7 @@ auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with va
 
 ### 8.5 - Drawing containers holding variant objects (runtime polymorphism)
 
-If this build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
+If the build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
 
 ```C++
 std::vector<CommonType> vec;
@@ -2032,7 +2032,7 @@ The library is fully templated, the user has the ability to select for each type
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
 
 The default datatype used for all the primitives
-(`Point2d`, `Line2d`, `Homogr`, `Segment`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
+(`Point2d`, `Line2d`, `Homogr`, `Segment`, `Vector`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
  is `double`.
 The other types can be selected by an additional suffix letter added after the type:
 
@@ -2189,8 +2189,7 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic objects `CommonType`.
 This is a wrapper around a `std::variant`, on which the library provides some helper functions.
 See [RTP section](#section_rtp) on how to use this.
-
-This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
+This polymorphic behavior is kept optional,
 It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
@@ -2226,7 +2225,7 @@ or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by us
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
 This import subsystem handles all three of these.
 However, for the "path", the "curve" elements (SVG path commands C, S, Q, T) are not handled,
-the import code will just ignore thoses commands, if encountered while importing a SVG path object.
+the import code will just ignore those SVG commands if encountered while importing a SVG path object.
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.

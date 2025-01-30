@@ -1988,8 +1988,8 @@ template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
-/// This one is used in base;;PolylineBase::isInside()
-template<typename T> struct PolIsClosed                                               : std::false_type {};
+/// This one is used in base::PolylineBase::isInside()
+template<typename T> struct PolIsClosed                                              : std::false_type {};
 template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
 
@@ -12672,6 +12672,7 @@ public:
 		return it->second;
 	}
 
+/// Used to access the data once the file has been read
 	const std::vector<CommonType_<double>>&
 	get() const
 	{
@@ -12709,13 +12710,28 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 	return pts;
 }
 
+/// Helper function called by Visitor::VisitExit() to process Polyline/Polygons
+std::vector<Point2d>
+importSvgPoints( const tinyxml2::XMLElement& e )
+{
+	auto pts_str = svgp::getAttribString( "points", e );
+	auto vec_pts = svgp::parsePoints( pts_str );
+
+	if( vec_pts.front() == vec_pts.back() ) // if first point equal to last
+		vec_pts.pop_back();                  //  point, remove last point
+
+	return vec_pts;
+}
+
 } // namespace svgp
+
 
 /// This is the place where actual SVG data is converted and stored into vector
 /**
 (see manual, section "SVG import")
 
 Overload of the root class `VisitExit()` member function
+
 */
 inline
 bool
@@ -12760,17 +12776,15 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 			case T_polygon:
 			{
-				auto pts_str = svgp::getAttribString( "points", e );
-				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( CPolylineD(vec_pts) );
+				auto vpts = svgp::importSvgPoints( e );
+				_vecVar.emplace_back( CPolylineD(vpts) );
 			}
 			break;
 
 			case T_polyline:
 			{
-				auto pts_str = svgp::getAttribString( "points", e );
-				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( OPolylineD(vec_pts) );
+				auto vpts = svgp::importSvgPoints( e );
+				_vecVar.emplace_back( OPolylineD(vpts) );
 			}
 			break;
 
@@ -12781,11 +12795,17 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				{
 					auto parse_res = svgp::parsePath( pts_str );
 					const auto& vec_vec_pts = parse_res.first;  //
-					for( const auto& vec_pts: vec_vec_pts )
+					for( auto vec_pts: vec_vec_pts ) // we need a copy so we may remove last point if equal to first
+//					for( const auto& vec_pts: vec_vec_pts ) // we need a copy so we may remove last point if equal to first
+					{
+						if( vec_pts.front() == vec_pts.back() ) // if first point equal to last
+							vec_pts.pop_back();                  //  point, remove last point
+
 						if( parse_res.second == true )
 							_vecVar.emplace_back( CPolylineD(vec_pts) );
 						else
 							_vecVar.emplace_back( OPolylineD(vec_pts) );
+					}
 				}
 				catch( std::exception& err )    // an unhandled path command will just get the whole path command ignored
 				{
