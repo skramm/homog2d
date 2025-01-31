@@ -3,7 +3,7 @@
 Rectangle;manual;p_frect
 Circle;manual;p_circle
 Ellipse;manual;p_ellipse
-Polygon;manual;p_polyline
+Polyline;manual;p_polyline
 SVG import;manual;svg_import
 Showcase;showcase;
 Numerical data types;manual;numdt

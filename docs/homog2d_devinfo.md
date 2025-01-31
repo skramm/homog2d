@@ -181,6 +181,7 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `Point2d`   | no build      |
 | `Line2d`    | no build      |
 | `Segment`   | no build      |
+| `Vector`    | no build      |
 | `Circle`    | never throws  |
 | `FRect`     | never throws  |
 | `OPolyline` | may throw     |
@@ -273,9 +274,10 @@ namespace num {
 	}
 } // namespace num
 ```
-And these would then call a hidden implementation, specialised using a dummy argument on either a standard numerical type or a ttmath type.
+And these would then call a hidden implementation, specialised using a dummy argument on either a standard numerical type or a ttmath type
+(**update 2025/C++17: or use a `if constepr`**).
 
-But this seemed a bit too much, and a simpler solution was choosen, using macros.
+But this seemed a bit "over engineered", and a simpler solution was choosen, using macros.
 As it is admitted that the standard types are no longer usable when `HOMOG2D_USE_TTMATH` is defined, a simple text replacement is used:
 In the library code, all the maths functions are prefixed with `homog2d_` (for example `homog2d_asin()` for the inverse sinus function).
 Depending if the symbol `HOMOG2D_USE_TTMATH` is defined or not, these symbols are replaced with the relevant string.

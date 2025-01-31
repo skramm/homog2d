@@ -342,7 +342,7 @@ Line2d li = pt * Point2d();
 <a name="shapes"></a>
 
 Besides points and lines, the following primitives are provided:
-* [segment](#p_segment)
+* [segment and vector](#p_segment)
 * [flat rectangle](#p_frect)
 * [circle](#p_circle)
 * [polyline](#p_polyline)
@@ -367,10 +367,13 @@ On this figure, you can see three combinations of bounding boxes for some object
 ![getbb1b](img/getbb1b.svg)
 [source](../misc/figures_src/src/getbb1.cpp)
 
-### 3.1 - Segments
+### 3.1 - Segments and vectors
 <a name="p_segment"></a>
 
-A segment is implemented internally as a pair of points.
+This library provides these closely related two types.
+They both share the same underlying type (a pair of points).
+The difference between them is that a vector is **oriented**, while a segment is not.
+
 Usage is straightforward:
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
@@ -379,7 +382,7 @@ std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
 
-You can also build the segment by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
+You can also build theses by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
 The only constraint is that they must be all of the same type (no int/float/double mix):
 ```C++
 Segment s1( x1, y1, x2, y2 );
@@ -912,15 +915,13 @@ If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
 // ... set points
-if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
+if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
 
-**warning**: function name will change in next release for `isSimple()`
-
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
+Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -1191,8 +1192,7 @@ h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale fac
 
 - You can build some complex transformation by multiplying these:
 ```C++
-Homogr h; // unit transformation
-h.setTranslation(3,4);
+auto h1 = Homogr().setTranslation(3,4);
 Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
 auto h3a = h1*h2; // first, rotation, then translation
 auto h3b = h2*h1; // first, translation, then rotation
@@ -1924,13 +1924,13 @@ The available functions are given in the table below:
 `setColor()`      | 3 ints ([0-255]) |  |
 `setColor()`      |  `img::Color`    |  |
 `setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Squ`,`Dot` |  |
-`setPointSize()`  |  1 int (pixels)  |  |
+`setPointSize()`  |  1 int (pixels)  | odd number required |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     | Only used for `drawText()`  |
 
 
-The following table shows the rendering of the different point styles (`PtStyle`), with the OpenCv and SVG backend, with width (`setThickness()`) set to 1 and 2.
+The following table shows the rendering of the different point styles (`PtStyle`) and several point sizes, with the OpenCv and SVG backend, with width (`setThickness()`) set to 1 and 2.
 
 | width | png (OpenCv) |   Svg  |
 |-------|--------------|--------|
@@ -2004,7 +2004,7 @@ auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with va
 
 ### 8.5 - Drawing containers holding variant objects (runtime polymorphism)
 
-If this build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
+If the build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
 
 ```C++
 std::vector<CommonType> vec;
@@ -2030,7 +2030,7 @@ The library is fully templated, the user has the ability to select for each type
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
 
 The default datatype used for all the primitives
-(`Point2d`, `Line2d`, `Homogr`, `Segment`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
+(`Point2d`, `Line2d`, `Homogr`, `Segment`, `Vector`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
  is `double`.
 The other types can be selected by an additional suffix letter added after the type:
 
@@ -2187,8 +2187,7 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic objects `CommonType`.
 This is a wrapper around a `std::variant`, on which the library provides some helper functions.
 See [RTP section](#section_rtp) on how to use this.
-
-This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
+This polymorphic behavior is kept optional,
 It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
@@ -2224,7 +2223,7 @@ or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by us
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
 This import subsystem handles all three of these.
 However, for the "path", the "curve" elements (SVG path commands C, S, Q, T) are not handled,
-the import code will just ignore thoses commands, if encountered while importing a SVG path object.
+the import code will just ignore those SVG commands if encountered while importing a SVG path object.
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.

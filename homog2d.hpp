@@ -149,7 +149,7 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << "\n msg=" << a << "\n";
+	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << ":\n =>" << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -384,7 +384,7 @@ using Segment_ = base::SegVec<typ::IsSegment,T>;
 template<typename T>
 using Vector_  = base::SegVec<typ::IsVector,T>;
 
-/// \todo 20250127: do we need to keep these two types? Make remove the first? Both?
+/// \todo 20250127: remove the first one and replace with `PointPair_`
 template<typename T>
 using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
 template<typename T1,typename T2>
@@ -583,6 +583,8 @@ public:
 	}
 	DrawParams& setPointSize( uint8_t ps )
 	{
+		if( ps%2 == 0 )
+			HOMOG2D_THROW_ERROR_1( "odd number required" );
 		_dpValues._pointSize = ps;
 		_dpValues._ptDelta = ps;
 		return *this;
@@ -1263,6 +1265,7 @@ getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 	return std::make_pair( p00, p11 );
 }
 
+/// An alias used to hold data of a 3x3 matrix, see detail::Matrix_
 template<typename T>
 using matrix_t = std::array<std::array<T,3>,3>;
 
@@ -1462,7 +1465,7 @@ See https://en.wikipedia.org/wiki/Determinant
 	bool isNormalized() const { return _isNormalized; }
 
 protected:
-	void p_normalize( int r, int c ) const
+	void p_normalizeMat( int r, int c ) const
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( std::fabs(_mdata[r][c]) < thr::nullDenom() )
@@ -1531,6 +1534,7 @@ private:
 		det -=     static_cast<HOMOG2D_INUMTYPE>( _mdata[v[2]][v[3]] ) * _mdata[v[4]][v[5]];
 		return det;
 	}
+
 /// Computes adjugate matrix, see https://en.wikipedia.org/wiki/Adjugate_matrix#3_%C3%97_3_generic_matrix
 	detail::Matrix_<FPT> p_adjugate() const
 	{
@@ -1863,7 +1867,7 @@ Thus some assert can get triggered elsewhere.
 /// (const because flag \c _hasChanged declared as \c mutable)
 	void normalize() const
 	{
-		detail::Matrix_<FPT>::p_normalize(2,2);
+		detail::Matrix_<FPT>::p_normalizeMat(2,2);
 		_hasChanged = true;
 	}
 
@@ -1986,8 +1990,8 @@ template<typename T> struct HasArea<FRect_<T>>   : std::true_type  {};
 template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
-/// This one is used in base;;PolylineBase::isInside()
-template<typename T> struct PolIsClosed                                               : std::false_type {};
+/// This one is used in base::PolylineBase::isInside()
+template<typename T> struct PolIsClosed                                              : std::false_type {};
 template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
 
@@ -2253,9 +2257,9 @@ public:
 		auto& data = detail::Matrix_<FPT>::_mdata;
 
 		if( !detail::Matrix_<FPT>::isNormalized() )
-			detail::Matrix_<FPT>::p_normalize(2,2);
+			detail::Matrix_<FPT>::p_normalizeMat(2,2);
 		if( !h.isNormalized() )
-			h.p_normalize(2,2);
+			h.p_normalizeMat(2,2);
 
 		for( int i=0; i<3; i++ )
 			for( int j=0; j<3; j++ )
@@ -5668,7 +5672,7 @@ bool
 Circle_<FPT>::isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 {
 	HOMOG2D_START;
-	if( !poly.isPolygon() )
+	if( !poly.isSimple() )
 		return false;
 	if( poly.getPts()[0].isInside(*this) ) // if a point of the polygon is inside the circle,
 		return false;                      //  then the circle cannot be inside the polygon
@@ -5771,14 +5775,14 @@ struct PolylineAttribs
 {
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _length;
 	priv::ValueFlag<HOMOG2D_INUMTYPE> _area;
-	priv::ValueFlag<bool>             _isPolygon;
+	priv::ValueFlag<bool>             _isSimplePolyg;
 	priv::ValueFlag<Point2d_<HOMOG2D_INUMTYPE>> _centroid;
 
 	void setBad()
 	{
 		_length.setBad();
 		_area.setBad();
-		_isPolygon.setBad();
+		_isSimplePolyg.setBad();
 		_centroid.setBad();
 	}
 };
@@ -6109,7 +6113,7 @@ public:
 	}
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
-	bool             isPolygon() const;
+	bool             isSimple() const;
 
 /// Returns Bounding Box of Polyline
 	FRect_<FPT> getBB() const
@@ -6169,8 +6173,8 @@ private:
 		return size();
 	}
 
-	constexpr bool impl_isPolygon( const detail::PlHelper<typ::IsOpen>& )   const;
-	bool           impl_isPolygon( const detail::PlHelper<typ::IsClosed>& ) const;
+	constexpr bool impl_isSimple( const detail::PlHelper<typ::IsOpen>& )   const;
+	bool           impl_isSimple( const detail::PlHelper<typ::IsClosed>& ) const;
 
 /// Add single point. private, because only to be used from other member functions
 /**
@@ -6694,26 +6698,73 @@ public:
 //------------------------------------------------------------------
 /// Return an "offsetted" closed polyline
 /**
-On failure (for whatever reason, will return an empty CPolyline
+On failure (for whatever reason), will return an empty CPolyline
 
-- If dist<0, returns the polyline "outside" the source one
+- If dist>0, returns the polyline "outside" the source one
 - If dist<0, returns the polyline "inside" the source one
+
+\todo 20250130: fix the issue: inside/outside depends on ordering of points. And normalizing DOES NOT fix this.
 */
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
 PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 {
-	if( homog2d_abs(dist) < thr::nullDistance() )
-		HOMOG2D_THROW_ERROR_1( "distance value invalid" );
-
 	HOMOG2D_CHECK_IS_NUMBER(T);
+
+	bool valid = true;
+	if( homog2d_abs(dist) < thr::nullDistance() )
+	{
+		HOMOG2D_LOG_WARNING( "Failure, distance value is null, returning empty CPolyline" );
+		valid = false;
+	}
 	if( size()<3 )
-		HOMOG2D_THROW_ERROR_1( "size needs to be >2" );
+	{
+		HOMOG2D_LOG_WARNING( "Failure, computing offsetted Polyline requires at least 3 points, returning empty CPolyline" );
+		valid = false;
+	}
+	if( !isSimple() )
+	{
+		HOMOG2D_LOG_WARNING( "Failure, Polyline is not a polygon, returning empty CPolyline" );
+		valid = false;
+	}
+	if( !valid )
+		return PolylineBase<typ::IsClosed,FPT>();
 
 //HOMOG2D_LOG( "BEF " << *this );
-//	p_normalizePoly();
+	p_normalizePoly();
 HOMOG2D_LOG( "AFF " << *this );
+
+/* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
+(bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
+and compute their
+ref:
+- http://www.faqs.org/faqs/graphics/algorithms-faq/
+Subject 2.07: How do I find the orientation of a simple polygon?
+- https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
+*/
+	auto pt0 = _plinevec[0];
+	auto ptA = _plinevec[1];
+	auto ptB = _plinevec[ size()-1];
+
+// std::cout << "pt0=" << pt0 << " ptA=" << ptA << " ptB=" << ptB << '\n';
+
+/// \todo 20250130: improve that, really ugly !!
+	detail::Matrix_<HOMOG2D_INUMTYPE> mat;
+	auto& values = mat.getRaw();
+
+	values[0][0] = values[0][1] = values[0][2] = 1;
+	values[1][0] = ptA.getX();
+	values[2][0] = ptA.getY();
+
+	values[1][1] = pt0.getX();
+	values[2][1] = pt0.getY();
+
+	values[1][2] = ptB.getX();
+	values[2][2] = ptB.getY();
+
+	auto det = mat.determ();
+	std::cout << "deter=" << det << '\n';
 
 	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
 	auto segs = getSegs();
@@ -6777,7 +6828,7 @@ catch( std::exception& err )
 	if( paraLines )
 		v_out.clear();
 
-	return PolylineBase<typ::IsClosed,FPT>( v_out );;
+	return PolylineBase<typ::IsClosed,FPT>( v_out );
 }
 
 //------------------------------------------------------------------
@@ -7239,17 +7290,17 @@ PolylineBase<PLT,FPT>::impl_minimizePL( const detail::PlHelper<typename typ::IsC
 /// Returns true if object is a polygon (closed, and no segment crossing)
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::isPolygon() const
+PolylineBase<PLT,FPT>::isSimple() const
 {
 	if( size()<3 )       // needs at least 3 points to be a polygon
 		return false;
-	return impl_isPolygon( detail::PlHelper<PLT>() );
+	return impl_isSimple( detail::PlHelper<PLT>() );
 }
 
 /// If open, then not a polygon
 template<typename PLT,typename FPT>
 constexpr bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsOpen>& ) const
+PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsOpen>& ) const
 {
 	return false;
 }
@@ -7257,9 +7308,9 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsOp
 /// If closed, we need to check for crossings
 template<typename PLT,typename FPT>
 bool
-PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsClosed>& ) const
+PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsClosed>& ) const
 {
-	if( _attribs._isPolygon.isBad() )
+	if( _attribs._isSimplePolyg.isBad() )
 	{
 		auto nbs = nbSegs();
 		size_t i=0;
@@ -7279,9 +7330,9 @@ PolylineBase<PLT,FPT>::impl_isPolygon( const detail::PlHelper<typename typ::IsCl
 			i++;
 		}
 		while( i<nbs && notDone );
-		_attribs._isPolygon.set( !hasIntersections );
+		_attribs._isSimplePolyg.set( !hasIntersections );
 	}
-	return _attribs._isPolygon.value();
+	return _attribs._isSimplePolyg.value();
 }
 
 //------------------------------------------------------------------
@@ -7302,7 +7353,7 @@ template<typename PLT,typename FPT>
 bool
 PolylineBase<PLT,FPT>::isConvex() const
 {
-	if( !isPolygon() )
+	if( !isSimple() )
 		return false;
 
 	int8_t sign = 0;
@@ -7353,7 +7404,7 @@ template<typename PLT,typename FPT>
 HOMOG2D_INUMTYPE
 PolylineBase<PLT,FPT>::area() const
 {
-	if( !isPolygon() )  // implies that is both closed and has no intersections
+	if( !isSimple() )  // implies that is both closed and has no intersections
 		return 0.;
 
 	if( _attribs._area.isBad() )
@@ -7383,12 +7434,14 @@ PolylineBase<PLT,FPT>::p_ComputeSignedArea() const
 /// Compute centroid of polygon
 /**
 ref: https://en.wikipedia.org/wiki/Centroid#Of_a_polygon
+
+\warning: centroid CAN be outside of polygon!
 */
 template<typename PLT,typename FPT>
 Point2d_<HOMOG2D_INUMTYPE>
 base::PolylineBase<PLT,FPT>::centroid() const
 {
-	if( !isPolygon() )
+	if( !isSimple() )
 		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
 
 	if( _attribs._centroid.isBad() )
@@ -9285,7 +9338,7 @@ template<typename T,typename PTYPE>
 bool
 LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
-	if( !poly.isPolygon() )
+	if( !poly.isSimple() )
 		return false;
 
 // step 1: if point is outside bounding box, return false
@@ -9827,12 +9880,12 @@ getInscribedCircle( const FRect_<FPT>& rect )
 }
 
 /// Returns true if is a polygon (free function)
-///  \sa PolylineBase::isPolygon()
+///  \sa PolylineBase::isSimple()
 template<typename PLT,typename FPT>
 bool
-isPolygon( const base::PolylineBase<PLT,FPT>& pl )
+isSimple( const base::PolylineBase<PLT,FPT>& pl )
 {
-	return pl.isPolygon();
+	return pl.isSimple();
 }
 
 /// Returns true if polygon is convex (free function)
@@ -9917,12 +9970,13 @@ Arg is a neither a Point2d, a Segment, a Line2d or a polyline
 template<
 	typename T,
 	typename std::enable_if<
-		(                                                          // arg is
-			   !std::is_same<T,Line2d_<typename T::FType>>::value  // not a line,
-			&& !std::is_same<T,Point2d_<typename T::FType>>::value // not a point,
-			&& !std::is_same<T,Segment_<typename T::FType>>::value // not a segment.
+		(                                                          // type is
+			   !std::is_same<T,Line2d_<typename    T::FType>>::value // not a line,
+			&& !std::is_same<T,Point2d_<typename   T::FType>>::value // not a point,
+			&& !std::is_same<T,Segment_<typename   T::FType>>::value // not a segment
+			&& !std::is_same<T,Vector_<typename    T::FType>>::value // not a vector
 			&& !std::is_same<T,CPolyline_<typename T::FType>>::value // not a CPolyline
-			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a COolyline
+			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a OPolyline
 		)
 		,T
 	>::type* = nullptr
@@ -10273,6 +10327,7 @@ getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 
 //------------------------------------------------------------------
 /// Overload 1/3. This one is called if NONE of the args are a Line2d
+/// \todo 20250130: need to rewrite this, fails is one of the elements is a polyline and is empty
 template<
 	typename T1,
 	typename T2,
@@ -10286,6 +10341,19 @@ getBB( const T1& elem1, const T2& elem2 )
 {
 	HOMOG2D_START;
 	FRect_<typename T1::FType> out;
+
+	decltype(ppair::getPointPair(elem1)) pp1, pp2;
+	try
+	{
+		pp1 = ppair::getPointPair( elem1 );
+		pp2 = ppair::getPointPair( elem2 );
+	}
+	catch( const std::exception& err )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable to compute getPointPair():\n -arg1="
+			<< elem1 << "\n -arg2=" << elem2 << "\n -err=" << err.what() );
+	}
+
 	try
 	{
 		out = getBB(
@@ -12654,6 +12722,7 @@ public:
 		return it->second;
 	}
 
+/// Used to access the data once the file has been read
 	const std::vector<CommonType_<double>>&
 	get() const
 	{
@@ -12691,13 +12760,28 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 	return pts;
 }
 
+/// Helper function called by Visitor::VisitExit() to process Polyline/Polygons
+std::vector<Point2d>
+importSvgPoints( const tinyxml2::XMLElement& e )
+{
+	auto pts_str = svgp::getAttribString( "points", e );
+	auto vec_pts = svgp::parsePoints( pts_str );
+
+	if( vec_pts.front() == vec_pts.back() ) // if first point equal to last
+		vec_pts.pop_back();                  //  point, remove last point
+
+	return vec_pts;
+}
+
 } // namespace svgp
+
 
 /// This is the place where actual SVG data is converted and stored into vector
 /**
 (see manual, section "SVG import")
 
 Overload of the root class `VisitExit()` member function
+
 */
 inline
 bool
@@ -12742,17 +12826,15 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 
 			case T_polygon:
 			{
-				auto pts_str = svgp::getAttribString( "points", e );
-				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( CPolylineD(vec_pts) );
+				auto vpts = svgp::importSvgPoints( e );
+				_vecVar.emplace_back( CPolylineD(vpts) );
 			}
 			break;
 
 			case T_polyline:
 			{
-				auto pts_str = svgp::getAttribString( "points", e );
-				auto vec_pts = svgp::parsePoints( pts_str );
-				_vecVar.emplace_back( OPolylineD(vec_pts) );
+				auto vpts = svgp::importSvgPoints( e );
+				_vecVar.emplace_back( OPolylineD(vpts) );
 			}
 			break;
 
@@ -12763,11 +12845,17 @@ Visitor::VisitExit( const tinyxml2::XMLElement& e )
 				{
 					auto parse_res = svgp::parsePath( pts_str );
 					const auto& vec_vec_pts = parse_res.first;  //
-					for( const auto& vec_pts: vec_vec_pts )
+					for( auto vec_pts: vec_vec_pts ) // we need a copy so we may remove last point if equal to first
+//					for( const auto& vec_pts: vec_vec_pts ) // we need a copy so we may remove last point if equal to first
+					{
+						if( vec_pts.front() == vec_pts.back() ) // if first point equal to last
+							vec_pts.pop_back();                  //  point, remove last point
+
 						if( parse_res.second == true )
 							_vecVar.emplace_back( CPolylineD(vec_pts) );
 						else
 							_vecVar.emplace_back( OPolylineD(vec_pts) );
+					}
 				}
 				catch( std::exception& err )    // an unhandled path command will just get the whole path command ignored
 				{
