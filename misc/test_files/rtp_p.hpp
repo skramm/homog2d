@@ -26,7 +26,8 @@ do_prtp( const std::vector<h2d::Point2d>& vecpts, IM& im )
 	for( auto& e: vec )  // demonstration of polymorphic member functions
 	{
 		std::cout << getString(e->type()) << ": " << *e
-			<< "\n  -area = " << e->area();
+			<< "\n -area = " << e->area()
+			<< "\n -size = " << e->size();
 		if( e->type() != Type::Line2d )
 			std::cout << "\n -length = " << e->length();
 		else

@@ -28,7 +28,8 @@ do_vrtp( const std::vector<h2d::Point2d>& vecpts, IM& im )
 	for( auto& e: vec )
 	{
 		std::cout << getString(type(e))
-			<< "\n -area=" << area(e);
+			<< "\n -area=" << area(e)
+			<< "\n -size=" << size(e);
 		if( type(e) != Type::Line2d )
 			std::cout <<  "\n -length=" << length(e);
 		else

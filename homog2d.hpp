@@ -981,6 +981,21 @@ struct AreaFunct
 	}
 };
 
+//------------------------------------------------------------------
+/// A functor to get the size  (nb of points) of an object in a std::variant, call with std::visit()
+/**
+\sa CommonType_
+\sa size()
+*/
+struct SizeFunct
+{
+	template<typename T>
+	HOMOG2D_INUMTYPE operator ()(const T& a)
+	{
+		return a.size();
+	}
+};
+
 
 //------------------------------------------------------------------
 /// A functor used to apply a homography matrix to an object
@@ -1052,6 +1067,7 @@ VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
 
 } // namespace fct
 #endif // HOMOG2D_ENABLE_VRTP
+
 
 inline
 const char* getString( Dtype t )
@@ -9636,16 +9652,6 @@ getSegs( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.getSegs();
 }
 
-
-/// Returns the number of points (free function)
-/// \sa PolylineBase::size()
-template<typename PLT,typename FPT>
-size_t
-size( const base::PolylineBase<PLT,FPT>& pl )
-{
-	return pl.size();
-}
-
 /// Rotates the primitive (only available for Polyline and FRect) around (0,0)
 template<typename T>
 void
@@ -9660,14 +9666,6 @@ void
 rotate( T& prim, Rotate rot, const Point2d_<FPT>& refpt )
 {
 	prim.rotate( rot, refpt );
-}
-
-/// Returns size (nb of points) of object
-template<typename T>
-size_t
-size( const T& e )
-{
-	return e.size();
 }
 
 /// Returns Bounding Box of Ellipse_ (free function)
@@ -9888,6 +9886,21 @@ area( const T& elem )
 		return elem.area();
 }
 
+//------------------------------------------------------------------
+/// Returns size of element or variant (free function)
+template<typename T>
+HOMOG2D_INUMTYPE
+size( const T& elem )
+{
+#ifdef HOMOG2D_ENABLE_VRTP
+	if constexpr( trait::IsVariant<T>::value )
+		return std::visit( fct::SizeFunct{}, elem );
+	else
+#endif
+		return elem.size();
+}
+
+
 #ifdef HOMOG2D_ENABLE_VRTP
 namespace priv {
 
@@ -10007,6 +10020,7 @@ transform( const Homogr_<FPT>& h, const T& elem )
 		return h * elem;
 }
 #endif
+
 /////////////////////////////////////////////////////////////////////////////
 // SECTION - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
