@@ -173,7 +173,7 @@ test_single: BUILD/test_single
 test_multiple: BUILD/test_multiple
 	@echo "-done target $@"
 
-buildf: BUILD/.
+buildf:
 	@mkdir -p BUILD
 
 
