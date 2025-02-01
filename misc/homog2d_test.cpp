@@ -3738,7 +3738,7 @@ TEST_CASE( "general binding", "[gen_bind]" )
 /// Helper function for local_draw_test()
 template<typename I,typename T>
 void
-local_draw_test2( img::Image<I>& im, const T& t )
+local_draw_test2( img::Image<I>& im, /*const*/ T& t )
 {
 	t.draw( im );
 	im.draw( t );
@@ -3750,7 +3750,9 @@ local_draw_test2( img::Image<I>& im, const T& t )
 	draw( im, t, dp );
 
 	std::vector<T> v;
+	t.translate( 50,20 );
 	v.push_back(t);
+	t.translate( 50,20 );
 	v.push_back(t);
 	draw( im, v );
 	draw( im, v, dp );
@@ -3777,7 +3779,8 @@ void
 local_draw_test( img::Image<I>& im, std::string fn )
 {
 	FRect      r; local_draw_test2( im, r );
-	Segment    s; local_draw_test2( im, s );
+	Segment    s(50,50,100,100);
+	local_draw_test2( im, s );
 	Circle     c; local_draw_test2( im, c );
 	Line2d    li; local_draw_test2( im, li );
 	Point2d   pt; local_draw_test2( im, pt );
@@ -3797,7 +3800,7 @@ TEST_CASE( "drawing (SVG)", "[draw_svg]" )
 #ifdef HOMOG2D_USE_OPENCV
 TEST_CASE( "drawing (OpenCV)", "[draw_ocv]" )
 {
-	img::Image<cv::Mat> im;
+	img::Image<cv::Mat> im(300,300);
 	local_draw_test( im, "BUILD/dummy_draw.png" );
 }
 #endif // HOMOG2D_USE_OPENCV
