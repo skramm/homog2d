@@ -1314,7 +1314,8 @@ public:
 #endif
 	virtual HOMOG2D_INUMTYPE length() const = 0;
 	virtual HOMOG2D_INUMTYPE area()   const = 0;
-	virtual Type type()               const = 0;
+	virtual Type             type()   const = 0;
+	virtual size_t           size()   const = 0;
 
 	friend std::ostream& operator << ( std::ostream& f, const Root& p );
 	virtual ~Root() {}
@@ -1374,14 +1375,14 @@ public:
 	matrix_t<FPT>&       getRaw()       { return _mdata; }
 	const matrix_t<FPT>& getRaw() const { return _mdata; }
 
-/*	template<typename T>
+	template<typename T>
 	void set( size_t r, size_t c, T v )
 	{
 		#ifndef HOMOG2D_NOCHECKS
 			HOMOG2D_CHECK_ROW_COL;
 		#endif
 		_mdata[r][c] = v;
-	}*/
+	}
 
 	const FPT& value( size_t r, size_t c ) const
 	{
@@ -1960,7 +1961,8 @@ template<typename T> struct HasArea<Ellipse_<T>> : std::true_type  {};
 template<typename T> struct HasArea<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
 /// This one is used in base;;PolylineBase::isInside()
-template<typename T> struct PolIsClosed                                               : std::false_type {};
+/// \todo 20250131: probably useless, check if this can be replaced byt some "if contexpr"
+template<typename T> struct PolIsClosed                                              : std::false_type {};
 template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClosed,T>>: std::true_type  {};
 
 
@@ -2189,6 +2191,12 @@ public:
 
 /// \name attributes of ellipse
 ///@{
+
+	constexpr size_t size() const
+	{
+		return 1;
+	}
+
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
 	Point2d_<FPT>                                getCenter() const;
 	CPolyline_<FPT>                              getOBB()    const;
@@ -2640,10 +2648,10 @@ public:
 	HOMOG2D_INUMTYPE width()  const { return  _ptR2.getX() - _ptR1.getX(); }
 	HOMOG2D_INUMTYPE area()   const { return height() * width(); }
 	HOMOG2D_INUMTYPE length() const { return 2.*height() + 2.*width(); }
-/// Return size of rectangle in a std::pair<width, height>
-	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> size() const
+
+	constexpr size_t size() const
 	{
-		return std::make_pair( width(), height() );
+		return 4;
 	}
 
 /// Needed for getBB( pair of objects )
@@ -3160,6 +3168,11 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	Point2d_<FPT>&       center()       { return _center; }
 	const Point2d_<FPT>& center() const { return _center; }
 	const Point2d_<FPT>& getCenter() const { return _center; }
+
+	constexpr size_t size() const
+	{
+		return 1;
+	}
 
 	HOMOG2D_INUMTYPE area() const
 	{
@@ -3980,17 +3993,18 @@ private:
 public:
 	Type type() const
 	{
-		return impl_type( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsPoint> )
+			return Type::Point2d;
+		else
+			return Type::Line2d;
 	}
 
-private:
-	Type impl_type( const detail::BaseHelper<typename typ::IsPoint>& ) const
+	size_t size() const
 	{
-		return Type::Point2d;
-	}
-	Type impl_type( const detail::BaseHelper<typename typ::IsLine>& ) const
-	{
-		return Type::Line2d;
+		if constexpr( std::is_same_v<LP,typ::IsPoint> )
+			return 1;
+		else
+			return 0;
 	}
 
 public:
@@ -4095,13 +4109,14 @@ public:
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
 
-#ifdef HOMOG2D_ENABLE_VRTP
-/// Needed because of variant (\sa CommonType)
+//#ifdef HOMOG2D_ENABLE_VRTP
+/// Needed so the function getBB(T1,T2) builds, whatever the types
+/// and because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no Bounding Box" );
 	}
-#endif
+//#endif
 
 private:
 	template<typename ANY>
@@ -4987,6 +5002,18 @@ public:
 /// \name Attributes access
 ///@{
 
+/// Needed so the function getBB(T1,T2) builds, whatever the types
+/// and because of variant (\sa CommonType)
+	FRect_<FPT> getBB() const
+	{
+		HOMOG2D_THROW_ERROR_1( "invalid call, Segment has no Bounding Box" );
+	}
+
+	constexpr size_t size() const
+	{
+		return 2;
+	}
+
 /// Get segment length
 	HOMOG2D_INUMTYPE length() const
 	{
@@ -5009,15 +5036,6 @@ in the range \f$ [0,\pi/2] \f$
 	{
 		return other.getAngle( this->getLine() );
 	}
-
-#ifdef HOMOG2D_ENABLE_VRTP
-/// Needed because of variant (\sa CommonType)
-	FRect_<FPT> getBB() const
-	{
-		HOMOG2D_THROW_ERROR_1( "invalid call, segment has no Bounding Box" );
-	}
-#endif
-
 ///@}
 
 /// \name Operators
@@ -5815,7 +5833,6 @@ class PolylineBase: public detail::Common<FPT>
 public:
 	using FType = FPT;
 	using PType = PLT;
-//	using SType = typ::T_Polyline;
 	using SType = std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
 
 	using detail::Common<FPT>::isInside;
@@ -9645,13 +9662,12 @@ rotate( T& prim, Rotate rot, const Point2d_<FPT>& refpt )
 	prim.rotate( rot, refpt );
 }
 
-/// Returns width, height of rectangle (free function)
-/// \sa FRect_::size()
-template<typename FPT>
-std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-size( const FRect_<FPT>& rect )
+/// Returns size (nb of points) of object
+template<typename T>
+size_t
+size( const T& e )
 {
-	return rect.size();
+	return e.size();
 }
 
 /// Returns Bounding Box of Ellipse_ (free function)
@@ -9743,7 +9759,7 @@ getPointPair( const T& elem )
 template<
 	typename T,
 	typename std::enable_if<
-		std::is_same<T,Segment_<typename T::FType>>::value
+		std::is_same_v<T,Segment_<typename T::FType>>
 		,T
 	>::type* = nullptr
 >
@@ -9911,6 +9927,7 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 } // namespace priv
 
 #endif // HOMOG2D_ENABLE_VRTP
+
 //------------------------------------------------------------------
 /// Return Bounding Box of primitive or container holding primitives (free function)
 /**
@@ -10029,13 +10046,18 @@ getBB( const PointPair2_<T1,T2>& pp1, const PointPair2_<T3,T4>& pp2 )
 }
 
 //------------------------------------------------------------------
-/// Overload 1/3. This one is called if NONE of the args are a Line2d
+/// Overload 1/3. This one is called if NONE of the args are a Line2d neither a POlyline
 template<
 	typename T1,
 	typename T2,
-	typename std::enable_if<
-		(!std::is_same<T1,Line2d_<typename T1::FType>>::value && !std::is_same<T2,Line2d_<typename T2::FType>>::value)
-		,T1
+	typename std::enable_if<(
+		   !std::is_same_v<T1,Line2d_<typename T1::FType>>
+		&& !std::is_same_v<T2,Line2d_<typename T2::FType>>
+		&& !std::is_same_v<typename T1::SType,typ::T_CPol>
+		&& !std::is_same_v<typename T1::SType,typ::T_OPol>
+		&& !std::is_same_v<typename T2::SType,typ::T_CPol>
+		&& !std::is_same_v<typename T2::SType,typ::T_OPol>
+		),T1
 	>::type* = nullptr
 >
 auto
@@ -10043,6 +10065,39 @@ getBB( const T1& elem1, const T2& elem2 )
 {
 	HOMOG2D_START;
 	FRect_<typename T1::FType> out;
+
+//	std::cout << "TYPE 1=" << getString( elem1.type() ) << " TYPE 2=" << getString( elem2.type() ) << "\n";
+
+	bool isPoly_1 = false;
+	if( elem1.type() == Type::OPolyline || elem1.type() == Type::CPolyline )
+		isPoly_1 = true;
+
+	bool isPoly_2 = false;
+	if( elem2.type() == Type::OPolyline || elem2.type() == Type::CPolyline )
+		isPoly_1 = true;
+
+	auto siz_1 = elem1.size();
+	auto siz_2 = elem2.size();
+
+	if( isPoly_1 && isPoly_2 )
+		if( siz_1==0 && siz_2==0 )
+			HOMOG2D_THROW_ERROR_1( "unable to compute bounding box of two empty polyline objects" );
+
+// we need to do that in two steps: first, copy return value into `out`, then return
+// because the underlying floating point might not be the same for the two arguments.
+	if( isPoly_2 && siz_1==0 )
+	{
+//		std::cout << "isPoly_2 && isEmpty_1\n";
+		out = getBB( elem2 );
+		return out;
+	}
+	if( isPoly_1 && siz_2==0 )
+	{
+//		std::cout << "isPoly_1 && isEmpty_2\n";
+		out = getBB( elem1 );
+		return out;
+	}
+
 	try
 	{
 		out = getBB(
@@ -10058,7 +10113,9 @@ getBB( const T1& elem1, const T2& elem2 )
 	return out;
 }
 
+#if 0
 /// Overload 2/3. Called if 2 polyline objects
+/// REMOVE: it works only if BOTH are polyline, if we have, say a polyline and a point, it will fail
 template<
 	typename T1,
 	typename T2,
@@ -10090,6 +10147,8 @@ getBB( const T1& p1, const T2& p2 )
 			ppair::getPointPair( p2 )
 	);
 }
+#endif
+
 //------------------------------------------------------------------
 /// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
 template<
@@ -11669,7 +11728,9 @@ void print( std::ostream& f )
 }
 \endcode
 */
-std::ostream& operator << ( std::ostream& f, const Root& p )
+inline
+std::ostream&
+operator << ( std::ostream& f, const Root& p )
 {
 	f << "type="<< getString( p.type() ) << std::endl;
 	switch( p.type() )

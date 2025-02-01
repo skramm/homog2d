@@ -582,13 +582,6 @@ auto a = rect.area();   // or: area(rect);
 auto l = rect.length(); // or: length(rect);
 ```
 
-You can gets its size as a pair of values (member function or free function),
-with the width as `first` element and height as `second` element:
-```C++
-FRect rect;
-auto s1 = rect.size();   // or: size(rect);
-```
-
 It is possible to translate the rectangle using some dx,dy offset:
 ```C++
 FRect rect;
@@ -1114,6 +1107,48 @@ bool b1 = isCircle( ell );
 bool b2 = isCircle( ell, 1E-15 );
 ```
 
+
+### 3.6 - Common functions
+<a name="p_commonf"></a>
+
+All the types above share some common functions, that are also declared as virtual in the root class `Root`.
+Thus, this enable classical pointer-based runtime polymorphism, [see here](#section_rtp).
+
+All of these are `const`.
+The names of theses functions are:
+
+| Name       | Return type |
+|------------|-------------|
+| `size()`   | `size_t`    |
+| `area()`   | `HOMOG2D_INUMTYPE` |
+| `length()` | `HOMOG2D_INUMTYPE` |
+| `type()`   | `Type` [see here]() |
+| `draw()`   | `void` |
+
+
+The `type()` function will return an enum value of type `Type` having one of these values:
+`Point2d`, `Line2d`, `Segment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
+You can get a human-readable value ot the object type with `getString(Type)`:
+```C++
+	Point2d pt;
+	std::cout << "type is " << getString( pt.type() );
+```
+(This example might sound silly but it can be useful in real-time polymorhism situations.)
+
+
+The return value of the `size()` member function is as follows, for the different types.
+They are declared as `constexpr`, except of course for the last 2.
+
+| Type         | Return Value |
+|--------------|--------------|
+| `Point2d`    | 1 |
+| `Line2d`     | 1 |
+| `Segment`    | 2 |
+| `FRect`      | 4 |
+| `Circle`     | 1 |
+| `Ellipse`    | 1 |
+| `OPolyline`  | Nb of points |
+| `CPolyline`  | Nb of points |
 
 
 ## 4 - Homographies
