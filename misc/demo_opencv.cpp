@@ -1974,12 +1974,14 @@ struct Param_PO : Data
 	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {100,420}, {270,400}, {150,250} };
+//		cv::createTrackbar( "dist", win1, &_offsetDist, 50, on_trackbar );
 	}
+	int _offsetDist = 20;
 	CPolyline _cpoly_off;
 	bool _showSegs = true;
 };
 
-/// Only removes duplicates if there are consecutive
+/// Helper function. Only removes duplicates if there are consecutive
 std::vector<Point2d> removeDupes( const std::vector<Point2d>& vec )
 {
 	std::vector<Point2d> out( vec );
@@ -1999,7 +2001,7 @@ void action_PO( void* param )
 	data._cpoly = CPolyline( withoutDupes );
 //	data._cpoly.p_normalizePoly() ;
 
-	data._cpoly_off = data._cpoly.getOffsetPoly( 20 );
+	data._cpoly_off = data._cpoly.getOffsetPoly( data._offsetDist );
 
 	auto pts = data._cpoly.getPts();
 	int i = 0;
@@ -2034,6 +2036,8 @@ void demo_PO( int demidx )
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
+	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );

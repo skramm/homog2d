@@ -348,6 +348,8 @@ Besides points and lines, the following primitives are provided:
 * [polyline](#p_polyline)
 * [ellipse](#p_ellipse)
 
+They all share some common member functions, [see section 3.6](#p_commonf).
+
 The ones that may cover some area (polyline, rectangle, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
 This is not available for points, lines, and segments (as a segment can be vertical or horizontal, it does not have an area).
 
@@ -1116,14 +1118,14 @@ All the types above share some common functions, that are also declared as virtu
 Thus, this enable classical pointer-based runtime polymorphism, [see here](#section_rtp).
 
 All of these are `const`.
-The names of theses functions are:
+The names of these functions are:
 
 | Name       | Return type |
 |------------|-------------|
-| `size()`   | `size_t`    |
+| `size()`   | `size_t` (see below) |
 | `area()`   | `HOMOG2D_INUMTYPE` |
 | `length()` | `HOMOG2D_INUMTYPE` |
-| `type()`   | `Type` [see here]() |
+| `type()`   | `Type` (see below) |
 | `draw()`   | `void` |
 
 
@@ -1134,20 +1136,21 @@ You can get a human-readable value ot the object type with `getString(Type)`:
 	Point2d pt;
 	std::cout << "type is " << getString( pt.type() );
 ```
-(This example might sound silly but it can be useful in real-time polymorhism situations.)
+(This example might sound silly but it can be useful in real-time polymorphism situations.)
 
 
 The return value of the `size()` member function is as follows, for the different types.
-They are declared as `constexpr`, except of course for the last 2.
+They are declared as `constexpr`, except of course for the last two.
 
 | Type         | Return Value |
 |--------------|--------------|
-| `Point2d`    | 1 |
-| `Line2d`     | 1 |
-| `Segment`    | 2 |
-| `FRect`      | 4 |
-| `Circle`     | 1 |
-| `Ellipse`    | 1 |
+| `Point2d`    |  1  |
+| `Line2d`     |  1  |
+| `Segment`    |  2  |
+| `Vector`     |  2  |
+| `FRect`      |  4  |
+| `Circle`     |  1  |
+| `Ellipse`    |  1  |
 | `OPolyline`  | Nb of points |
 | `CPolyline`  | Nb of points |
 
@@ -2471,10 +2474,7 @@ vec.emplace_back( Point2d() );
 ...
 ```
 
-To get the actual type of the object, you can call the free function `type()`,
-that will return an enum value of type `Type` having one of these values:<br>
-`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
-You can get a human-readable value ot the object type with `getString(Type)`.
+To get the actual type of the object, you can call the free function `type()`, [see here](#p_commonf).
 
 A set of functors to be used with `std::visit()` is available, lying in the `fct` sub-namespace
 ([see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html)).

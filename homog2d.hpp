@@ -9970,7 +9970,7 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
-/// Holds function returning a pair of points
+/// Holds free functions returning a pair of points
 namespace ppair {
 
 /// Returns pair of points defining a BB of a primitive
@@ -10051,7 +10051,8 @@ getPointPair( const T& elem )
 template<
 	typename T,
 	typename std::enable_if<
-		std::is_same_v<T,Segment_<typename T::FType>>
+		( std::is_same_v<T,Segment_<typename T::FType>>
+		|| std::is_same_v<T,Vector_<typename T::FType>> )
 		,T
 	>::type* = nullptr
 >

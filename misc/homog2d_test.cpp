@@ -2941,15 +2941,6 @@ TEST_CASE( "FRect pair bounding box", "[frect-BB]" )
 	}
 }
 
-TEST_CASE( "TMP", "[TMP]" )
-{
-	{  // 2 CPolyline, one is empty
-		CPolyline_<NUMTYPE> po1( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
-		CPolyline_<NUMTYPE> po2;
-		CHECK( getBB(po1,po2) == getBB(po1) );
-	}
-}
-
 TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 {
 	FRect_<NUMTYPE> r1(0,3, 2,0);
@@ -3001,7 +2992,6 @@ TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 		CPolyline_<NUMTYPE> po2;
 		CHECK( getBB(po1,po2) == getBB(po1) );
 	}
-
 	{  // Circle / Frect
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		FRect_<NUMTYPE> rect; // (0,0)--(1,1)
