@@ -12802,6 +12802,7 @@ getAttribString( const char* attribName, const tinyxml2::XMLElement& e )
 }
 
 /// Helper function called by Visitor::VisitExit() to process Polyline/Polygons
+inline
 std::vector<Point2d>
 importSvgPoints( const tinyxml2::XMLElement& e )
 {
