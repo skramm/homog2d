@@ -17,6 +17,8 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon minimization
 
 - current master branch
+  - changed behavior of the `size()` member and free functions:
+now all of these return the number of points that the primitive has, as a `size_t` type, see [details here](homog2d_manual.md#p_commonf).
   - added new type `Vector` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
   see TODO: ADD LINK TO MANUAL
   - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`: TODO

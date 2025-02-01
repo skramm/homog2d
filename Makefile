@@ -175,6 +175,7 @@ test_multiple: BUILD/test_multiple
 buildf: BUILD/.
 	@mkdir -p BUILD
 
+
 BUILD/homog2d_test_SYVN BUILD/homog2d_test_SNVN BUILD/homog2d_test_SYVY BUILD/homog2d_test_SNVY: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
 	@if [ -f BUILD/$(notdir $@).stderr ]; then rm BUILD/$(notdir $@).stderr; fi
 	$(CXX) $(CXXFLAGS) -Wno-unused-but-set-variable -O2 -o $@ $< $(LDFLAGS) 2>BUILD/$(notdir $@).stderr

@@ -83,7 +83,7 @@ The makefile then compiles it and runs it.
 ### 4.1 - Partial template implementation trick
 
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
-As the `LPBase` class is already templatized on the type (`type::IsPoint` or `type::IsLine`),
+As the `LPBase` class is already templatized on the type (`typ::IsPoint` or `typ::IsLine`),
 it would require a partial template specialization to define the behavior of each member function (or free function),
 depending on the basic type (Line or Point), and still templatize on the numerical type.
 C++ does not allow this.
