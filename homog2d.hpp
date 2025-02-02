@@ -5933,6 +5933,16 @@ template<typename FPT1,typename FPT2,typename PLT2>
 auto
 operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> base::PolylineBase<PLT2,FPT1>;
 
+
+//------------------------------------------------------------------
+/// Parameters for base::PolylineBase::getOffsetPoly()
+/**
+(Unused at present)
+*/
+struct OffsetPoly
+{
+};
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -6688,7 +6698,7 @@ Two tasks:
 		{
 			if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
 			{
-				std::cout << "NORM before" << *this << '\n';
+//				std::cout << "NORM before" << *this << '\n';
 				auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 				const auto& p1 = _plinevec[1];
@@ -6699,7 +6709,7 @@ Two tasks:
 					minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 					std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 				}
-				std::cout << "NORM after" << *this << '\n';
+//				std::cout << "NORM after" << *this << '\n';
 			}
 			else
 			{
@@ -6713,7 +6723,7 @@ Two tasks:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-	getOffsetPoly( T value ) const;
+	getOffsetPoly( T value, OffsetPoly params=OffsetPoly{} ) const;
 
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
@@ -6724,7 +6734,7 @@ public:
 
 
 //------------------------------------------------------------------
-/// Return an "offsetted" closed polyline
+/// Return an "offsetted" closed polyline, requires simple polygon (CPolyline AND no crossings) as input
 /**
 On failure (for whatever reason), will return an empty CPolyline
 
@@ -6736,7 +6746,7 @@ On failure (for whatever reason), will return an empty CPolyline
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
+PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPoly /*params*/ ) const
 {
 	HOMOG2D_CHECK_IS_NUMBER(T);
 
@@ -6761,7 +6771,7 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist ) const
 
 //HOMOG2D_LOG( "BEF " << *this );
 	p_normalizePoly();
-HOMOG2D_LOG( "AFF " << *this );
+//HOMOG2D_LOG( "AFF " << *this );
 
 /* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
 (bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
@@ -6784,17 +6794,18 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 	values[0][0] = values[0][1] = values[0][2] = 1;
 	values[1][0] = ptA.getX();
 	values[2][0] = ptA.getY();
-
 	values[1][1] = pt0.getX();
 	values[2][1] = pt0.getY();
-
 	values[1][2] = ptB.getX();
 	values[2][2] = ptB.getY();
 
 	auto det = mat.determ();
-	std::cout << "deter=" << det << '\n';
+//	std::cout << "deter=" << det << '\n';
 
-	auto side =(dist>0 ? PointSide::Left : PointSide::Right);
+	if( det < 0 )
+		dist = -dist;
+	auto side = (dist>0 ? PointSide::Left : PointSide::Right);
+
 	auto segs = getSegs();
 	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
