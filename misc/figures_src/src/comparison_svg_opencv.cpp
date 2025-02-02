@@ -13,7 +13,7 @@ struct LocalData
 	OPolyline opl;
 	CPolyline cpl;
 	Line2d    line;
-	Vector    vec;
+	OSegment  vec;
 
 	template<typename T>
 	void drawStuff( T& im )
@@ -52,7 +52,7 @@ int main()
 	data.seg  = getSegment( data.c1, data.e1 );
 	data.r1   = FRect( 40, 30, 220, 112 );
 	data.line = Line2d( 22,238,280,178);
-	data.vec  = Vector(370,240,330,280 );
+	data.vec  = OSegment(370,240,330,280 );
 
 	img::Image<SvgImage> im1( 400,300 );
 	img::Image<cv::Mat>  im2( 400,300 );

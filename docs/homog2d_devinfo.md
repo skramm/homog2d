@@ -181,7 +181,7 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `Point2d`   | no build      |
 | `Line2d`    | no build      |
 | `Segment`   | no build      |
-| `Vector`    | no build      |
+| `OSegment`  | no build      |
 | `Circle`    | never throws  |
 | `FRect`     | never throws  |
 | `OPolyline` | may throw     |
@@ -302,7 +302,7 @@ Two of these, `HasBB` ("Has Bounding Box") and `HasArea`, are detailed in the ta
 | Point2d   | false |  false  |
 | Line2d    | false |  false  |
 | Segment   | false |  false  |
-| Vector    | false |  false  |
+| OSegment  | false |  false  |
 | FRect     | true  |  true   |
 | Circle    | true  |  true   |
 | Ellipse   | true  |  true   |

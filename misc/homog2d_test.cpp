@@ -566,7 +566,7 @@ TEST_CASE( "stream operator << test", "[streamingop-test]" )
 	Line2d li;
 	Point2d pt;
 	Segment seg;
-	Vector vec;
+	OSegment vec;
 	Circle cir;
 	Ellipse ell;
 	CPolyline cpol;

@@ -274,7 +274,7 @@ struct IsEpipmat {};
 /// Used to determine the type of "point pair (segment of vector), see base::SegVec
 struct IsSegment {};
 /// \sa IsSegment
-struct IsVector {};
+struct IsOSeg {};
 
 /// Used to determine the type of polyline (\ref CPolyline_ or \ref OPolyline_), see base::PolylineBase
 struct IsClosed {};
@@ -288,7 +288,7 @@ struct T_Line     {};
 struct T_Circle   {};
 struct T_FRect    {};
 struct T_Segment  {};
-struct T_Vector   {};
+struct T_OSeg   {};
 struct T_OPol     {};
 struct T_CPol     {};
 struct T_Ellipse  {};
@@ -382,7 +382,7 @@ using Line2d_  = base::LPBase<typ::IsLine,T>;
 template<typename T>
 using Segment_ = base::SegVec<typ::IsSegment,T>;
 template<typename T>
-using Vector_  = base::SegVec<typ::IsVector,T>;
+using OSegment_  = base::SegVec<typ::IsOSeg,T>;
 
 /// \todo 20250127: remove the first one and replace with `PointPair_`
 template<typename T>
@@ -390,12 +390,10 @@ using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
 template<typename T1,typename T2>
 using PointPair2_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
 
-
 template<typename T>
 using CPolyline_ = base::PolylineBase<typ::IsClosed,T>;
 template<typename T>
 using OPolyline_ = base::PolylineBase<typ::IsOpen,T>;
-
 
 
 #ifdef HOMOG2D_ENABLE_VRTP
@@ -406,7 +404,7 @@ See https://github.com/skramm/homog2d/blob/master/docs/homog2d_manual.md#section
 template<typename FPT>
 using CommonType_ = std::variant<
 	Segment_<FPT>,
-	Vector_<FPT>,
+	OSegment_<FPT>,
 	Point2d_<FPT>,
 	Line2d_<FPT>,
 	Circle_<FPT>,
@@ -914,7 +912,7 @@ enum class LineDir: uint8_t { H, V };
 /// Type of Root object, see rtp::Root::type().
 /// Maybe printed out with getString()
 /// \sa type()
-enum class Type: uint8_t { Line2d, Point2d, Segment, Vector, FRect, Circle, Ellipse, OPolyline, CPolyline };
+enum class Type: uint8_t { Line2d, Point2d, Segment, OSegment, FRect, Circle, Ellipse, OPolyline, CPolyline };
 
 /// Type of underlying floating point, see LPBase::dtype().
 /// Maybe printed out with getString()
@@ -936,7 +934,7 @@ const char* getString( Type t )
 		case Type::Line2d:     s="Line2d";    break;
 		case Type::Point2d:    s="Point2d";   break;
 		case Type::Segment:    s="Segment";   break;
-		case Type::Vector:     s="Vector";    break;
+		case Type::OSegment:   s="OSegment";  break;
 		case Type::FRect:      s="FRect";     break;
 		case Type::Circle:     s="Circle";    break;
 		case Type::Ellipse:    s="Ellipse";   break;
@@ -1225,7 +1223,7 @@ void printThresholds( std::ostream& f )
 } // namespace thr
 
 // forward declaration
-/// \todo 20250201: why do we need this and why isn't the same required for \c Vector_ ?
+/// \todo 20250201: why do we need this and why isn't the same required for \c OSegment_ ?
 namespace base {
 template<typename LP,typename FPT>
 auto
@@ -1985,7 +1983,7 @@ template<typename T> struct IsDrawable              : std::false_type {};
 template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsDrawable<Vector_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<OSegment_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
 template<typename T> struct IsDrawable<Ellipse_<T>> : std::true_type  {};
@@ -1996,7 +1994,7 @@ template<typename T> struct IsShape              : std::false_type {};
 template<typename T> struct IsShape<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsShape<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsShape<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsShape<Vector_<T>>  : std::true_type  {};
+template<typename T> struct IsShape<OSegment_<T>>: std::true_type  {};
 template<typename T> struct IsShape<Line2d_<T>>  : std::true_type  {};
 template<typename T1,typename T2> struct IsShape<base::PolylineBase<T1,T2>>: std::true_type  {};
 //template<typename T> struct IsShape<Ellipse_<T>>:  std::true_type  {};
@@ -2387,7 +2385,7 @@ crossProduct( const base::LPBase<T2,FPT1>&, const base::LPBase<T2,FPT2>& );
 
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
-crossProductV( const base::SegVec<typ::IsVector,FPT1>&, const base::SegVec<typ::IsVector,FPT2>& );
+crossProductV( const base::SegVec<typ::IsOSeg,FPT1>&, const base::SegVec<typ::IsOSeg,FPT2>& );
 
 class Inters_1 {};
 class Inters_2 {};
@@ -4922,7 +4920,7 @@ Hmatrix_<M,FPT>::buildFrom4Points(
 	}
 }
 
-/// Point related to a Vector
+/// Point related to a OSegment
 ///\sa SegVec::getPointSide()
 enum class PointSide: uint8_t
 {
@@ -4949,7 +4947,7 @@ namespace base {
 //------------------------------------------------------------------
 /// A line segment or vector, defined by two points.
 /**
-This will get instanciated as \ref Segment_ or \ref Vector_
+This will get instanciated as \ref Segment_ or \ref OSegment_
 
 The difference between theses two types is that with \c Segment_,
 the "smallest" point is always stored as first element (see constructor).
@@ -4962,7 +4960,7 @@ class SegVec: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
-	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_Vector>;
+	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class SegVec;
@@ -4974,7 +4972,7 @@ public:
 		if constexpr( std::is_same_v<SV,typ::IsSegment> )
 			return Type::Segment;
 		else
-			return Type::Vector;
+			return Type::OSegment;
 	}
 
 private:
@@ -5389,9 +5387,9 @@ template<typename T>
 PointSide
 SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 {
-	static_assert( std::is_same_v<SV,typ::IsVector>, "unable to get side of point related to Segment" );
+	static_assert( std::is_same_v<SV,typ::IsOSeg>, "unable to get side of point related to Segment" );
 
-	Vector_<FPT> other( _ptS1, pt );
+	OSegment_<FPT> other( _ptS1, pt );
 //	auto cp = crossProduct( *this, other );
 	HOMOG2D_INUMTYPE cp = detail::crossProductV( other, *this );
 	PointSide out;
@@ -6821,8 +6819,8 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 		auto pt2 = getPoint(nextPt1);
 		auto pt3 = getPoint(nextPt2);
 
-		Vector_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
-		Vector_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+		OSegment_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
+		OSegment_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
 
 		auto li1 = segs.at(current).getLine();
 		auto li2 = segs.at(nextS).getLine();
@@ -8344,7 +8342,7 @@ std::ostream&
 operator << ( std::ostream& f, const h2d::base::SegVec<SV,T>& seg )
 {
 	f << seg._ptS1;
-	if constexpr( std::is_same_v<SV,typ::IsVector> )
+	if constexpr( std::is_same_v<SV,typ::IsOSeg> )
 		f << "=>";
 	else
 		f << "-";
@@ -9065,8 +9063,8 @@ crossProduct(
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
 crossProductV(
-	const base::SegVec<typ::IsVector,FPT1>& v1,
-	const base::SegVec<typ::IsVector,FPT2>& v2
+	const base::SegVec<typ::IsOSeg,FPT1>& v1,
+	const base::SegVec<typ::IsOSeg,FPT2>& v2
 )
 {
 	auto ppts1 = v1.getPts();
@@ -9995,7 +9993,7 @@ template<
 			   !std::is_same<T,Line2d_<typename    T::FType>>::value // not a line,
 			&& !std::is_same<T,Point2d_<typename   T::FType>>::value // not a point,
 			&& !std::is_same<T,Segment_<typename   T::FType>>::value // not a segment
-			&& !std::is_same<T,Vector_<typename    T::FType>>::value // not a vector
+			&& !std::is_same<T,OSegment_<typename  T::FType>>::value // not a vector
 			&& !std::is_same<T,CPolyline_<typename T::FType>>::value // not a CPolyline
 			&& !std::is_same<T,OPolyline_<typename T::FType>>::value // not a OPolyline
 		)
@@ -10062,7 +10060,7 @@ template<
 	typename T,
 	typename std::enable_if<
 		( std::is_same_v<T,Segment_<typename T::FType>>
-		|| std::is_same_v<T,Vector_<typename T::FType>> )
+		|| std::is_same_v<T,OSegment_<typename T::FType>> )
 		,T
 	>::type* = nullptr
 >
@@ -11742,7 +11740,7 @@ base::LPBase<LP,FPT>::impl_draw_LP(
 }
 
 //------------------------------------------------------------------
-/// Helper function used by the draw(Vector) function, returns the 3 segment corresponding
+/// Helper function used by the draw(OSegment) function, returns the 3 segment corresponding
 /// to the "arrows" as 3 pairs of points
 /**
 Used both in the SVG and the Opencv backends
@@ -11760,7 +11758,7 @@ namespace priv {
 template<typename FPT>
 std::array<PointPair1_<double>,3>
 getArrowSegments(
-	const base::SegVec<typ::IsVector,FPT>& vec
+	const base::SegVec<typ::IsOSeg,FPT>& vec
 )
 {
 	std::array<std::pair<Point2d_<double>,Point2d_<double>>,3> out;
@@ -11817,7 +11815,7 @@ FRect_<FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 }
 
 //------------------------------------------------------------------
-/// Draw \c Segment / \c Vector (Opencv implementation)
+/// Draw \c Segment / \c OSegment (Opencv implementation)
 namespace base {
 
 template<typename SV,typename FPT>
@@ -11833,7 +11831,7 @@ SegVec<SV,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		dp._dpValues._lineType==1?cv::LINE_AA:cv::LINE_8
 	);
 
-	if constexpr( std::is_same_v<SV,typ::IsVector> )
+	if constexpr( std::is_same_v<SV,typ::IsOSeg> )
 	{
 		auto arrsegs = priv::getArrowSegments( *this );
 		for( auto ppts: arrsegs )
@@ -12082,7 +12080,7 @@ void drawSvgSeg(
 
 } // namespace priv
 //------------------------------------------------------------------
-/// Draw \c Segment / \c Vector (SVG implementation)
+/// Draw \c Segment / \c OSegment (SVG implementation)
 /// \todo 20250127: implement arrows for the Opencv/png version, and share the code between the two versions
 namespace base {
 
@@ -12091,7 +12089,7 @@ void
 SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 {
 	auto group = false;
-	if( dp._dpValues._showPoints || std::is_same_v<SV,typ::IsVector> )
+	if( dp._dpValues._showPoints || std::is_same_v<SV,typ::IsOSeg> )
 		group = true;
 
 	if( group )
@@ -12100,7 +12098,7 @@ SegVec<SV,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp ) const
 	auto pts = getPts();
 	priv::drawSvgSeg( im, pts, dp.getSvgRgbColor(), dp._dpValues._lineThickness, dp.getAttrString() );
 
-	if constexpr( std::is_same_v<SV,typ::IsVector> )
+	if constexpr( std::is_same_v<SV,typ::IsOSeg> )
 	{
 		auto arrsegs = priv::getArrowSegments( *this );
 		for( auto ppts: arrsegs )
@@ -12176,9 +12174,9 @@ operator << ( std::ostream& f, const Root& p )
 			f << *p2;
 		}
 		break;
-		case Type::Vector:
+		case Type::OSegment:
 		{
-			const Vector_<double>* p2 = static_cast<const Vector_<double>*>( &p );
+			const OSegment_<double>* p2 = static_cast<const OSegment_<double>*>( &p );
 			f << *p2;
 		}
 		break;
@@ -12280,8 +12278,8 @@ using Homogr = Homogr_<HOMOG2D_INUMTYPE>;
 using Epipmat = Hmatrix_<typ::IsEpipmat,HOMOG2D_INUMTYPE>;
 
 /// Default segment type
-using Segment = Segment_<HOMOG2D_INUMTYPE>;
-using Vector  = Vector_<HOMOG2D_INUMTYPE>;
+using Segment  = Segment_<HOMOG2D_INUMTYPE>;
+using OSegment = OSegment_<HOMOG2D_INUMTYPE>;
 
 /// Default circle type
 using Circle = Circle_<HOMOG2D_INUMTYPE>;
@@ -12297,34 +12295,34 @@ using OPolyline = OPolyline_<HOMOG2D_INUMTYPE>;
 using Ellipse = Ellipse_<HOMOG2D_INUMTYPE>;
 
 // float types
-using Line2dF  = Line2d_<float>;
-using Point2dF = Point2d_<float>;
-using HomogrF  = Homogr_<float>;
-using SegmentF = Segment_<float>;
-using VectorF  = Vector_<float>;
-using CircleF  = Circle_<float>;
-using FRectF   = FRect_<float>;
-using EllipseF = Ellipse_<float>;
+using Line2dF   = Line2d_<float>;
+using Point2dF  = Point2d_<float>;
+using HomogrF   = Homogr_<float>;
+using SegmentF  = Segment_<float>;
+using OSegmentF = OSegment_<float>;
+using CircleF   = Circle_<float>;
+using FRectF    = FRect_<float>;
+using EllipseF  = Ellipse_<float>;
 
 // double types
-using Line2dD  = Line2d_<double>;
-using Point2dD = Point2d_<double>;
-using HomogrD  = Homogr_<double>;
-using SegmentD = Segment_<double>;
-using VectorD  = Vector_<double>;
-using CircleD  = Circle_<double>;
-using FRectD   = FRect_<double>;
-using EllipseD = Ellipse_<double>;
+using Line2dD   = Line2d_<double>;
+using Point2dD  = Point2d_<double>;
+using HomogrD   = Homogr_<double>;
+using SegmentD  = Segment_<double>;
+using OSegmentD = OSegment_<double>;
+using CircleD   = Circle_<double>;
+using FRectD    = FRect_<double>;
+using EllipseD  = Ellipse_<double>;
 
 // long double types
-using Line2dL  = Line2d_<long double>;
-using Point2dL = Point2d_<long double>;
-using HomogrL  = Homogr_<long double>;
-using SegmentL = Segment_<long double>;
-using VectorL  = Vector_<long double>;
-using CircleL  = Circle_<long double>;
-using FRectL   = FRect_<long double>;
-using EllipseL = Ellipse_<long double>;
+using Line2dL   = Line2d_<long double>;
+using Point2dL  = Point2d_<long double>;
+using HomogrL   = Homogr_<long double>;
+using SegmentL  = Segment_<long double>;
+using OSegmentL = OSegment_<long double>;
+using CircleL   = Circle_<long double>;
+using FRectL    = FRect_<long double>;
+using EllipseL  = Ellipse_<long double>;
 
 using CPolylineF = CPolyline_<float>;
 using CPolylineD = CPolyline_<double>;

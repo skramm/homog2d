@@ -42,7 +42,7 @@ int main( int, const char** )
 
 		Point2d ptv1( x0+x1,     y0+y1 );
 		Point2d ptv2( x0+x2+100, y0+y2 );
-		Vector v( ptv1, ptv2 );
+		OSegment v( ptv1, ptv2 );
 //		std::cout << "x1=" << x0+x1 << " y1=" << y0+y1 << " x2=" << x0+x2 << " y2=" << y0+y2 << '\n';
 
 		v.getLine().draw( im, img::DrawParams().setColor(200,200,200) );

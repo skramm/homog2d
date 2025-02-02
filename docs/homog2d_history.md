@@ -11,7 +11,6 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
-  - add `Vector` type (defined by dx,dy)
 
 - current Work In Progress
   - polygon minimization
@@ -19,7 +18,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 - current master branch
   - changed behavior of the `size()` member and free functions:
 now all of these return the number of points that the primitive has, as a `size_t` type, see [details here](homog2d_manual.md#p_commonf).
-  - added new type `Vector` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
+  - added new type `OSegment` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
   see TODO: ADD LINK TO MANUAL
   - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`: TODO
   - added `getOffsetPoly()` to get a polygon "offsetted", see [showcase22](homog2d_showcase.md#sc22) (preliminar).
