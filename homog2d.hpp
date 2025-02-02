@@ -1250,6 +1250,8 @@ product( Matrix_<FPT1>&, const Matrix_<FPT2>&, const Matrix_<FPT3>& );
 
 
 //------------------------------------------------------------------
+/// Returns true if one of the points share a common coordinate
+/// (thus making them unable to define a bounding box)
 template<typename FPT1,typename FPT2>
 bool
 shareCommonCoord( const Point2d_<FPT1>& p1, const Point2d_<FPT2>& p2 )
@@ -1260,6 +1262,16 @@ shareCommonCoord( const Point2d_<FPT1>& p1, const Point2d_<FPT2>& p2 )
 	)
 		return true;
 	return false;
+}
+
+//------------------------------------------------------------------
+/// Returns true if one of the points share a common coordinate
+/// (thus making them unable to define a bounding box)
+template<typename FPT1,typename FPT2>
+bool
+shareCommonCoord( const std::pair<Point2d_<FPT1>,Point2d_<FPT2>>& ppts )
+{
+	return shareCommonCoord( ppts.first , ppts.second );
 }
 
 //------------------------------------------------------------------
@@ -3223,16 +3235,19 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 		return 1;
 	}
 
+/// Area of circle
 	HOMOG2D_INUMTYPE area() const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_radius) * _radius * M_PI;
 	}
+
+/// Perimeter of circle
 	HOMOG2D_INUMTYPE length() const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_radius) * M_PI * 2.0;
 	}
 
-/// Returns Bounding Box
+/// Returns Bounding Box of circle
 	FRect_<FPT> getBB() const
 	{
 		return FRect_<FPT>(
@@ -4164,14 +4179,14 @@ public:
 		impl_moveTo( pt, detail::BaseHelper<LP>() );
 	}
 
-//#ifdef HOMOG2D_ENABLE_VRTP
+#ifdef HOMOG2D_ENABLE_VRTP
 /// Needed so the function getBB(T1,T2) builds, whatever the types
 /// and because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no Bounding Box" );
 	}
-//#endif
+#endif
 
 private:
 	template<typename ANY>
@@ -5092,24 +5107,26 @@ public:
 /// \name Attributes access
 ///@{
 
-/// Needed so the function getBB(T1,T2) builds, whatever the types
+#if 0
+/// Get Bounding Box of segment, always throws but needed so the function getBB(T1,T2) builds, whatever the types
 /// and because of variant (\sa CommonType)
 	FRect_<FPT> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Segment has no Bounding Box" );
 	}
+#endif
 
 	constexpr size_t size() const
 	{
 		return 2;
 	}
 
-/// Get segment/vector length
-
+/// Get segment length
 	HOMOG2D_INUMTYPE length() const
 	{
 		return _ptS1.distTo( _ptS2 );
 	}
+
 /// A segment always has a null area
 	constexpr HOMOG2D_INUMTYPE area() const
 	{
@@ -10402,15 +10419,23 @@ getBB( const T1& elem1, const T2& elem2 )
 // because the underlying floating point might not be the same for the two arguments.
 	if( isPoly_2 && siz_1==0 )
 	{
-//		std::cout << "isPoly_2 && isEmpty_1\n";
-		out = getBB( elem2 );
-		return out;
+		auto pp = ppair::getPointPair( elem2 );
+		if( shareCommonCoord(pp) )
+		{
+			HOMOG2D_THROW_ERROR_1( "Unable to build common Bounding Box of empty polyline and elem2:" << elem2 );
+		}
+		else
+			return FRect_<typename T1::FType>( pp );
 	}
 	if( isPoly_1 && siz_2==0 )
 	{
-//		std::cout << "isPoly_1 && isEmpty_2\n";
-		out = getBB( elem1 );
-		return out;
+		auto pp = ppair::getPointPair( elem1 );
+		if( shareCommonCoord(pp) )
+		{
+			HOMOG2D_THROW_ERROR_1( "Unable to build common Bounding Box of empty polyline and elem1:" << elem1 );
+		}
+		else
+			return FRect_<typename T1::FType>( pp );
 	}
 
 	try
