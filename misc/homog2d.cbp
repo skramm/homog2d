@@ -94,7 +94,6 @@
 		<Unit filename="figures_src/src/get_pts_inside.cpp" />
 		<Unit filename="figures_src/src/getbb1.cpp" />
 		<Unit filename="figures_src/src/homog_from_pts.cpp" />
-		<Unit filename="figures_src/src/poly_offset.cpp" />
 		<Unit filename="figures_src/src/polyline1.cpp" />
 		<Unit filename="figures_src/src/polyline2.cpp" />
 		<Unit filename="figures_src/src/polyline_rcp_1.cpp" />
@@ -199,7 +198,6 @@
 		<Unit filename="showcase/showcase18.cpp" />
 		<Unit filename="showcase/showcase19.cpp" />
 		<Unit filename="showcase/showcase20.cpp" />
-		<Unit filename="showcase/showcase21.cpp" />
 		<Unit filename="showcase/showcase22.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />

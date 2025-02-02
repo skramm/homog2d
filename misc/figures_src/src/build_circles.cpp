@@ -1,12 +1,14 @@
 /**
 \file
 \brief random points and circles build from nearest points
-*/
-#define HOMOG2D_USE_OPENCV
-//#define HOMOG2D_DEBUGMODE
-#include "../../homog2d.hpp"
 
+!!! WIP !!!
+*/
+
+#include "fig_src.header"
 using namespace h2d;
+
+
 
 int main( int, const char** )
 {
@@ -16,7 +18,7 @@ int main( int, const char** )
 	auto cmax = 300;
 	auto cmin = 20;
 
-	int nbPts = 30;
+	int nbPts = 80;
 	std::vector<Point2d> src(nbPts);
 	auto it = std::begin(src);
 	for( auto i=0; i<nbPts; i++ )
@@ -31,25 +33,30 @@ int main( int, const char** )
 
 
 	std::vector<bool> isUsed(nbPts,false);
-
+	isUsed[0] = true;
 	for( int i=0; i<nbim; i++ )
 	{
 		img::Image<cv::Mat> im( cmax+30, cmax+30 );
 
 //		draw( im, vec );
-		std::ostringstream oss;
-		oss << "showcase21_" << std::setfill('0') << std::setw(2) << 0 << ".png";
 
 		size_t current = 0;
 		auto finished = false;
 		im.write( oss.str() );
-		do
+//		do
 		{
-			auto np = findNearestPoint( vec[current] , vec );
-		}
-		while( finished == false );
+		findPoint( current, )
 
+			auto np1 = findNearestPoint( vec[current] , vec );
+			auto np2 = findNearestPoint( vec[np1] , vec );
+			Circle cir( vec[current], vec[np1], vec[np2] );
+		}
+//		while( finished == false );
+
+
+		std::ostringstream oss;
 		oss << "showcase21_" << std::setfill('0') << std::setw(2) << 1 << ".png";
+		im.write( oss.str() );
 
 /*		auto angle = i*360./nbim;
 		auto angle_r = angle * M_PI / 180.;

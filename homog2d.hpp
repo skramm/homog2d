@@ -149,7 +149,7 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << ":\n =>" << a << "\n";
+	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << ": =>" << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif

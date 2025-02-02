@@ -29,9 +29,8 @@ int main( int, const char** )
 	auto pol1 = H1 * p0;
 	auto pol2 = H2 * p0;
 
-	auto delta = 3;
-//	img::Image<cv::Mat> im( 600, 250 );
-	img::Image<img::SvgImage> im( 600, 250 );
+	auto delta = 4.2;
+	img::Image<cv::Mat> im( 600, 250 );
 
 	std::vector<CPolyline> v_poly1, v_poly2;
 	v_poly1.push_back( pol1 );
@@ -55,9 +54,16 @@ int main( int, const char** )
 		v_poly2.push_back( v_poly2.at(i-1).getOffsetPoly( -delta ) );
 		im.draw( v_poly1.back(), img::DrawParams().setColor(0,250,0) );
 		im.draw( v_poly2.back(), img::DrawParams().setColor(0,0,250) );
-//		getBB( pol2, v_poly1.back() ).draw( im );
+
+/*		auto segs1= v_poly1.back().getSegs();
+		auto segs2= v_poly2.back().getSegs();
+		for ( const auto& seg: segs2 )
+			im.draw( seg.getLine(), img::DrawParams().setColor(200,200,200) );
+*/
+
+		getBB( pol2, v_poly1.back() ).draw( im );
 		std::ostringstream oss;
-		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".svg";
+		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".png";
 		im.write( oss.str() );
 	}
 }

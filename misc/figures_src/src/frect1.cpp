@@ -16,7 +16,7 @@ int main()
 	auto inter = r1.intersects( r2 );
 	if( inter() )
 		for( const auto& pt: inter.get() )
-			pt.draw( im, DrawParams().setPointStyle(PtStyle::Dot).setPointSize(8).setColor(0,0,0) );
+			pt.draw( im, DrawParams().setPointStyle(PtStyle::Dot).setPointSize(7).setColor(0,0,0) );
 
 	im.write( "frect1.svg" );
 }
