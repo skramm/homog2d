@@ -1225,6 +1225,7 @@ void printThresholds( std::ostream& f )
 } // namespace thr
 
 // forward declaration
+/// \todo 20250201: why do we need this and why isn't the same required for \c Vector_ ?
 namespace base {
 template<typename LP,typename FPT>
 auto
@@ -6802,7 +6803,7 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 	auto det = mat.determ();
 //	std::cout << "deter=" << det << '\n';
 
-	if( det < 0 )
+	if( det > 0 )
 		dist = -dist;
 	auto side = (dist>0 ? PointSide::Left : PointSide::Right);
 

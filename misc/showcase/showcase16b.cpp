@@ -29,7 +29,7 @@ int main( int, const char** )
 		img::Image<cv::Mat> im( imsize*2,imsize-100 );
 
 		auto angle =  i * 360. /nbim;
-		std::cout << "angle=" << angle << '\n';
+//		std::cout << "angle=" << angle << '\n';
 //		auto angle = i*360./nbim;
 
 		auto angle1 = M_PI * angle / 180;

@@ -30,7 +30,8 @@ int main( int, const char** )
 	auto pol2 = H2 * p0;
 
 	auto delta = 3;
-	img::Image<cv::Mat> im( 600, 250 );
+//	img::Image<cv::Mat> im( 600, 250 );
+	img::Image<img::SvgImage> im( 600, 250 );
 
 	std::vector<CPolyline> v_poly1, v_poly2;
 	v_poly1.push_back( pol1 );
@@ -56,7 +57,7 @@ int main( int, const char** )
 		im.draw( v_poly2.back(), img::DrawParams().setColor(0,0,250) );
 //		getBB( pol2, v_poly1.back() ).draw( im );
 		std::ostringstream oss;
-		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase22_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }
