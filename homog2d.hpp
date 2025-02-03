@@ -5000,32 +5000,48 @@ public:
 /// Default constructor: initializes segment to (0,0)--(1,1)
 	SegVec(): _ptS2(1.,1.)
 	{}
-/// Constructor 2: build segment from two points
-	SegVec( Point2d_<FPT> p1, Point2d_<FPT> p2 )
+
+/// Constructor 2: build segment from two points, can hold different FP types
+/**
+Please note that the source (points) floating-point type is lost
+*/
+	template<typename FP1,typename FP2>
+	SegVec( Point2d_<FP1> p1, Point2d_<FP2> p2 )
 		: _ptS1(p1), _ptS2(p2)
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
-			HOMOG2D_THROW_ERROR_1( "cannot build a segment/vector with two identical points: " << p1 << " and " << p2 );
+			HOMOG2D_THROW_ERROR_1( "cannot build a segment with two identical points: " << p1 << " and " << p2 );
 #endif
 		if constexpr( std::is_same_v<SV,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
 	}
 
 /// Constructor 3: build segment from two points coordinates, calls constructor 2
-	template<typename T>
-	SegVec( T x1, T y1, T x2, T y2 )
+	template<typename FP1,typename FP2,typename FP3,typename FP4>
+	SegVec( FP1 x1, FP2 y1, FP3 x2, FP4 y2 )
 		: SegVec( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(FP1);
+		HOMOG2D_CHECK_IS_NUMBER(FP2);
+		HOMOG2D_CHECK_IS_NUMBER(FP3);
+		HOMOG2D_CHECK_IS_NUMBER(FP4);
 	}
 
 /// Constructor 4: build segment from pair of points
-	SegVec( const PointPair1_<FPT>& ppts )
+	template<typename FP1,typename FP2>
+	SegVec( const PointPair2_<FP1,FP2>& ppts )
 		: SegVec(ppts.first, ppts.second)
 	{}
 
-/// Copy-Constructor
+/// Copy-Constructor, behavior depends on concrete types
+/**
+TODO:
+- OSegment(OSegment): OK
+- Segment(OSegment): OK, but loose orientation
+- Segment(Segment):  OK
+- OSegment(Segment): throws, because orientation would be arbitrary
+*/
 	template<typename SV2,typename FPT2>
 	SegVec( const SegVec<SV2,FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
@@ -5033,14 +5049,15 @@ public:
 		if constexpr( std::is_same_v<SV2,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
 	}
+
 ///@}
 
 /// \name Modifying functions
 ///@{
 
 /// Setter
-	template<typename FPT2>
-	void set( const Point2d_<FPT>& p1, const Point2d_<FPT2>& p2 )
+	template<typename FP1,typename FP2>
+	void set( const Point2d_<FP1>& p1, const Point2d_<FP2>& p2 )
 	{
 #ifndef HOMOG2D_NOCHECKS
 		if( p1 == p2 )
@@ -5052,18 +5069,22 @@ public:
 			priv::fix_order( _ptS1, _ptS2 );
 	}
 
-/// Setter from a std::pair (points need to be of same underlying type)
-	template<typename FPT2>
-	void set( const PointPair1_<FPT2>& ppts )
+/// Setter from a std::pair
+	template<typename FP1,typename FP2>
+	void set( const PointPair2_<FP1,FP2>& ppts )
 	{
 		set( ppts.first, ppts.second );
 	}
 
 /// Setter from 4 raw point coordinates
-	template<typename FPT2>
-	void set( FPT2 x1, FPT2 y1, FPT2 x2, FPT2 y2 )
+	template<typename FP1,typename FP2,typename FP3,typename FP4>
+	void set( FP1 x1, FP2 y1, FP3 x2, FP4 y2 )
 	{
-		set( Point2d_<FPT2>(x1,y1), Point2d_<FPT2>(x2,y2) );
+		HOMOG2D_CHECK_IS_NUMBER(FP1);
+		HOMOG2D_CHECK_IS_NUMBER(FP2);
+		HOMOG2D_CHECK_IS_NUMBER(FP3);
+		HOMOG2D_CHECK_IS_NUMBER(FP4);
+		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
 	}
 
 /// Translate Segment
@@ -5396,7 +5417,7 @@ public:
 #endif
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
-}; // class Segment_
+}; // class SegVec
 
 //------------------------------------------------------------------
 template<typename SV,typename FPT>
@@ -5419,7 +5440,6 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 	}
 	return out;
 }
-
 
 //------------------------------------------------------------------
 /// Returns a segment with same support line but tripled length.
