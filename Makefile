@@ -394,16 +394,17 @@ SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
+BUILD/showcase/bin/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase/
 	@mkdir -p BUILD/showcase/gif
+	@mkdir -p BUILD/showcase/bin
 	@echo " -Building program $@"
 	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build png files by running program
-BUILD/showcase/%_00.png: BUILD/showcase/%
+BUILD/showcase/%_00.png: BUILD/showcase/bin/%
 	@echo " -Running program $< to generate images"
-	@cd BUILD/showcase/; ./$(notdir $<)
+	@cd BUILD/showcase/; bin/$(notdir $<)
 
 BUILD/showcase/gif/showcase%.gif: BUILD/showcase/showcase%.gif
 	@mv $< $@

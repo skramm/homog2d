@@ -9,6 +9,8 @@
 
 set +x
 echo " -processing $1 with frame duration=$2"
+EXT=png
+EXT=svg
 
 filename=$(basename -- "$1")
 ext="${filename##*.}"
@@ -22,8 +24,16 @@ fi
 #echo "filename=$filename"
 #echo "ext=$filename"
 #echo "fn=$filename"
+if [ -e BUILD/showcase/${fn}_00.png ]
+then
+	convert -delay $d -loop 0 BUILD/showcase/${fn}_*.png $1
+fi
 
-convert -delay $d -loop 0 BUILD/showcase/${fn}_*.png $1
+if [ -e BUILD/showcase/${fn}_00.svg ]
+then
+	convert -delay $d -loop 0 BUILD/showcase/${fn}_*.svg $1
+fi
+
 #mv BUILD/showcase/${fn}.gif BUILD/showcase/gif/
 #rm BUILD/showcase/${fn}_*.png
 
