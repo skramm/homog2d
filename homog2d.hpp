@@ -10734,7 +10734,7 @@ getParallelSegs( const Segment_<FPT>& seg, T dist )
 /// Free function, returns middle points of set of segments/circles
 /**
 \sa Segment_::getCenter()
-\sa Center_::getCenter()
+\sa Circle_::getCenter()
 - input: set of segments
 - output: set of points (same container)
 */
