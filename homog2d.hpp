@@ -149,7 +149,7 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), line " << __LINE__ << ": =>" << a << "\n";
+	std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -9773,7 +9773,7 @@ operator * ( const Homogr_<FPT2>& h, const base::PolylineBase<PLT,FPT1>& pl )
 {
 	base::PolylineBase<PLT,FPT1> out;
 	const auto& pts = pl.getPts();
-	for( const auto pt: pts )
+	for( const auto& pt: pts )
 		out.p_addPoint( h * pt );
 	return out;
 }
@@ -10407,10 +10407,6 @@ template<
 	typename std::enable_if<(
 		   !std::is_same_v<T1,Line2d_<typename T1::FType>>
 		&& !std::is_same_v<T2,Line2d_<typename T2::FType>>
-		&& !std::is_same_v<typename T1::SType,typ::T_CPol>
-		&& !std::is_same_v<typename T1::SType,typ::T_OPol>
-		&& !std::is_same_v<typename T2::SType,typ::T_CPol>
-		&& !std::is_same_v<typename T2::SType,typ::T_OPol>
 		),T1
 	>::type* = nullptr
 >
