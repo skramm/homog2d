@@ -80,7 +80,7 @@ The makefile then compiles it and runs it.
 
 ## 4 - Code details
 
-### 4.1 - Partial template implementation trick
+### 4.1 - Partial template implementation tricks
 
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
 As the `LPBase` class is already templatized on the type (`typ::IsPoint` or `typ::IsLine`),
@@ -95,8 +95,12 @@ it is there just so that the compiler can select the correct overload.
 
 The different implementations are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
-the implementation of that type only holds a `static_assert`, so that can be catched at build time.
+the implementation of that type only holds a `static_assert`, so that error can be catched at build time.
 
+This is mostly used with the three "base" classes:
+- `base::LPBase`, specialized as `Point2d_` and `Line2d_`
+- `base::PolylineBase`specialized as `CPolyline_` and `OPolyline`
+- `base::SegVec`, specialized as `Segment_` and `OSegment_`
 
 ### 4.2 - Common classes and polymorphism
 

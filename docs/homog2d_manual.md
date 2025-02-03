@@ -369,14 +369,14 @@ On this figure, you can see three combinations of bounding boxes for some object
 ![getbb1b](img/getbb1b.svg)
 [source](../misc/figures_src/src/getbb1.cpp)
 
-### 3.1 - Segments and vectors
+### 3.1 - Segments 
 <a name="p_segment"></a>
 
-This library provides these closely related two types.
-They both share the same underlying type (a pair of points).
-The difference between them is that a vector is **oriented**, while a segment is not.
+This library provides two types modelling segments that both share the same underlying type (a pair of points),
+named `Segment` and `OSegment`
+The difference between them is that a `OSegment` is **oriented**, while a `Segment` is not.
 
-Usage is straightforward:
+Usage is straightforward, and is similar for both types:
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
 Segment s2; // default value
@@ -384,8 +384,8 @@ std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
 
-You can also build theses by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
-The only constraint is that they must be all of the same type (no int/float/double mix):
+You can also build theses by giving the 4 coordinates, x1,y1 and x2, y2 of the two points,
+that may even be of different types (float/double/...).
 ```C++
 Segment s1( x1, y1, x2, y2 );
 ```
@@ -404,11 +404,15 @@ s1.translate( dx, dy );
 ```
 
 You can get the pair of points (as an `std::pair`) with `getPts()`.
-Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
+For type `Segment`, the points are stored onternally with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate).
+For type `OSegment`, there as stored as is:
 ```C++
-Segment s1( Point2d(100,100), Point2d(10,10) );
-auto pair = s1.getPts();
-std::cout << pair.first; // will print (10,10)
+Segment  s1( Point2d(100,100), Point2d(10,20) );
+OSegment s2( Point2d(100,100), Point2d(10,20) );
+auto pair1 = s1.getPts();
+auto pair2 = s2.getPts();
+std::cout << pair1.first; // will print (10,20)
+std::cout << pair2.first; // will print (100,100)
 ```
 
 Many operations available with lines apply to segments too:
