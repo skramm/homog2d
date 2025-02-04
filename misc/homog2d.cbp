@@ -162,12 +162,8 @@
 		<Unit filename="no_build/no_build_08.cxx" />
 		<Unit filename="no_build/no_build_09.cxx" />
 		<Unit filename="no_build/no_build_10.cxx" />
-		<Unit filename="no_build/no_build_11.cxx" />
-		<Unit filename="no_build/no_build_12.cxx" />
 		<Unit filename="no_build/no_build_13.cxx" />
 		<Unit filename="no_build/no_build_14.cxx" />
-		<Unit filename="no_build/no_build_15.cxx" />
-		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
 		<Unit filename="no_build/no_build_18.cxx" />
 		<Unit filename="no_build/no_build_19.cxx" />
@@ -176,6 +172,11 @@
 		<Unit filename="no_build/no_build_getbb_01.cxx" />
 		<Unit filename="no_build/no_build_getbb_02.cxx" />
 		<Unit filename="no_build/no_build_getbb_03.cxx" />
+		<Unit filename="no_build/no_build_poly_1.cxx" />
+		<Unit filename="no_build/no_build_poly_2.cxx" />
+		<Unit filename="no_build/no_build_poly_3.cxx" />
+		<Unit filename="no_build/no_build_poly_4.cxx" />
+		<Unit filename="no_build/no_build_seg.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="other/test_svg_import_1.svg" />
 		<Unit filename="other/test_svg_import_2.svg" />
