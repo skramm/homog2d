@@ -5046,6 +5046,15 @@ TODO:
 	SegVec( const SegVec<SV2,FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
 	{
+//		if constexpr( std::is_same_v<SV2,typ::IsSegment> && std::is_same_v<SV,typ::IsOSeg> )
+//			HOMOG2D_THROW_ERROR_1( "Cannot build a OSegment from a Segment" );
+		static_assert(
+			( std::is_same_v<SV,typ::IsSegment>
+			||
+			( std::is_same_v<SV,typ::IsOSeg> && std::is_same_v<SV2,typ::IsOSeg> ) ),
+			"Cannot build a OSegment from a Segment"
+		);
+
 		if constexpr( std::is_same_v<SV2,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
 	}
@@ -6019,16 +6028,10 @@ public:
 
 	Type type() const
 	{
-		return impl_Poly_type( detail::PlHelper<PLT>() );
-	}
-private:
-	Type impl_Poly_type( const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return Type::CPolyline;
-	}
-	Type impl_Poly_type( const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return Type::OPolyline;
+		if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+			return Type::CPolyline;
+		else
+			return Type::OPolyline;
 	}
 
 private:
@@ -8869,6 +8872,7 @@ constexpr Line2d_<FPT>
 LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
+	return Line2d_<FPT>(); // to avoid a compile warning
 }
 
 /// Illegal instanciation
@@ -8877,6 +8881,7 @@ constexpr Line2d_<FPT>
 LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
+	return Line2d_<FPT>(); // to avoid a compile warning
 }
 
 /// Illegal instanciation
