@@ -369,7 +369,7 @@ On this figure, you can see three combinations of bounding boxes for some object
 ![getbb1b](img/getbb1b.svg)
 [source](../misc/figures_src/src/getbb1.cpp)
 
-### 3.1 - Segments 
+### 3.1 - Segments
 <a name="p_segment"></a>
 
 This library provides two types modelling segments that both share the same underlying type (a pair of points),
@@ -1163,7 +1163,6 @@ They are declared as `constexpr`, except of course for the last two.
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
-
 
 ### 4.1 - Homographies for points
 

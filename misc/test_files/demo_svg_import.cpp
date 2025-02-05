@@ -111,7 +111,7 @@ int main( int argc, const char** argv )
 		std::cout << '\n';
 	}
 	auto s = FRect(pp_all);
-	out.setSize( s.size() );
+	out.setSize( s.width(), s.height() );
 	std::cout << "min/max=" << s << '\n';
 
 	out.write( "demo_import.svg" );

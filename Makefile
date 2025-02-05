@@ -57,7 +57,27 @@ ifeq ($(DEBUG),Y)
 	CXXFLAGS += -DHOMOG2D_DEBUGMODE
 endif
 
-
+#=======================================================================
+# default target
+help:
+	@echo "homog2d library makefile"
+	@echo "* Available targets:"
+	@echo " - doc: generates user reference pages (requires Doxygen)"
+	@echo " - doc-dev: generates full reference pages, include class private stuff (requires Doxygen)"
+	@echo " - doc-fig: builds an runs the code that draws the figures in the manual"
+	@echo " - demo: builds graphical demo, with mouse/keyboard input (requires Opencv)"
+	@echo " - test: runs the test suite (requires Catch2 test framework, see manual"
+	@echo " - test-all: runs the test suite with all numerical datatypes"
+	@echo " - install: copies into /usr/local/include (requires 'sudo')"
+	@echo " - clean: erase all build files"
+	@echo " - test-bg: builds and runs the Boost::geometry polygon binding test file"
+	@echo " - showcase: builds an runs the \"showcase\" page gif images"
+	@echo "* Available options (OPTION=Y|N)"
+	@echo "  - USE_OPENCV : link with Opencv, relevant for 'test' targets"
+	@echo "  - USE_TINYXML2 : "
+	@echo "  - USE_RTP :"
+	@echo "  - DEBUG : add -g flag and enables some inner printing"
+	
 #=======================================================================
 # general/common targets
 

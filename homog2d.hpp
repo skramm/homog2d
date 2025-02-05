@@ -2258,7 +2258,7 @@ public:
 	bool isCircle( HOMOG2D_INUMTYPE thres=1.E-10 )           const;
 	Point2d_<FPT>                                getCenter() const;
 	CPolyline_<FPT>                              getOBB()    const;
-	FRect_<FPT>                                  getBB()     const;
+	auto                                         getBB()     const;
 	HOMOG2D_INUMTYPE                             angle()     const;
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE> getMajMin() const;
 
@@ -2716,10 +2716,13 @@ public:
 		return 4;
 	}
 
-/// Needed for getBB( pair of objects )
+/// get BB of rectangle. Needed for getBB( pair of objects )
+/// \todo 20250205: fix this so that it return a "full res" rectangle
 	FRect_<FPT> getBB() const
-	{
+	{ //FRect_<HOMOG2D_INUMTYPE> out;
+//		out = *this;
 		return *this;
+//		return out;
 	}
 
 /// Returns the 2 major points of the rectangle
@@ -3248,9 +3251,9 @@ We need Sfinae because there is another 3-args constructor (x, y, radius as floa
 	}
 
 /// Returns Bounding Box of circle
-	FRect_<FPT> getBB() const
+	auto getBB() const
 	{
-		return FRect_<FPT>(
+		return FRect_<HOMOG2D_INUMTYPE>(
 			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) - _radius,
 			static_cast<HOMOG2D_INUMTYPE>( _center.getY() ) - _radius,
 			static_cast<HOMOG2D_INUMTYPE>( _center.getX() ) + _radius,
@@ -4182,7 +4185,7 @@ public:
 #ifdef HOMOG2D_ENABLE_VRTP
 /// Needed so the function getBB(T1,T2) builds, whatever the types
 /// and because of variant (\sa CommonType)
-	FRect_<FPT> getBB() const
+	FRect_<HOMOG2D_INUMTYPE> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Point/Line has no Bounding Box" );
 	}
@@ -5137,10 +5140,10 @@ TODO:
 /// \name Attributes access
 ///@{
 
-#if 0
+#ifdef HOMOG2D_ENABLE_VRTP
 /// Get Bounding Box of segment, always throws but needed so the function getBB(T1,T2) builds, whatever the types
-/// and because of variant (\sa CommonType)
-	FRect_<FPT> getBB() const
+/// and because of variant (\sa CommonType) (HOMOG2D_ENABLE_VRTP)
+	FRect_<HOMOG2D_INUMTYPE> getBB() const
 	{
 		HOMOG2D_THROW_ERROR_1( "invalid call, Segment has no Bounding Box" );
 	}
@@ -6190,10 +6193,10 @@ public:
 	}
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
-	bool             isSimple() const;
+	bool             isSimple()  const;
 
 /// Returns Bounding Box of Polyline
-	FRect_<FPT> getBB() const
+	auto getBB() const
 	{
 		HOMOG2D_START;
 #ifndef HOMOG2D_NOCHECKS
@@ -6205,7 +6208,7 @@ public:
 		if( shareCommonCoord( ppts.first, ppts.second ) )
 			HOMOG2D_THROW_ERROR_1( "unable, points share common coordinate" );
 #endif
-		return FRect_<FPT>( ppts );
+		return FRect_<HOMOG2D_INUMTYPE>( ppts );
 	}
 
 	LPBase<typ::IsPoint,HOMOG2D_INUMTYPE> centroid() const;
@@ -8601,7 +8604,7 @@ Ellipse_<FPT>::getAxisLines() const
 - see https://math.stackexchange.com/questions/91132/how-to-get-the-limits-of-rotated-ellipse
 */
 template<typename FPT>
-FRect_<FPT>
+auto
 Ellipse_<FPT>::getBB() const
 {
 	auto par = p_getParams<HOMOG2D_INUMTYPE>();
@@ -8609,9 +8612,9 @@ Ellipse_<FPT>::getBB() const
 	auto vy = par.a2 * par.sint * par.sint	+ par.b2 * par.cost * par.cost;
 	auto vx_sq = homog2d_sqrt( vx );
 	auto vy_sq = homog2d_sqrt( vy );
-	return FRect_<FPT>(
-		Point2d_<FPT>( par.x0 - vx_sq, par.y0 - vy_sq ),
-		Point2d_<FPT>( par.x0 + vx_sq, par.y0 + vy_sq )
+	return FRect_<HOMOG2D_INUMTYPE>(
+		Point2d_<HOMOG2D_INUMTYPE>( par.x0 - vx_sq, par.y0 - vy_sq ),
+		Point2d_<HOMOG2D_INUMTYPE>( par.x0 + vx_sq, par.y0 + vy_sq )
 	);
 }
 

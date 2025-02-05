@@ -25,3 +25,4 @@ ttmath library;manual;bignum
 Boost Geometry library;manual;boost_geom_1
 Opencv;manual;drawing
 SVG drawing;manual;drawing
+Rectangle union/intersection;manual;frect_union
