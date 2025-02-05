@@ -97,7 +97,7 @@ The different implementations are written as two `impl_` private functions that 
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
 the implementation of that type only holds a `static_assert`, so that error can be catched at build time.
 
-This is mostly used with the three "base" classes:
+This is mostly used with the three "base" classes, located in namespace `base`:
 - `base::LPBase`, specialized as `Point2d_` and `Line2d_`
 - `base::PolylineBase`specialized as `CPolyline_` and `OPolyline`
 - `base::SegVec`, specialized as `Segment_` and `OSegment_`
