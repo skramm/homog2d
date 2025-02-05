@@ -29,8 +29,7 @@ It can be used to statically make sure that a call to a function meets some requ
 so it can be used to get the nature of an object, either with the free function
 (`auto t = type(obj);`)
 or with the corresponding member function.
-(`auto t = obj.type();`).
-<br>
+(`auto t = obj.type();`).  
 You can get is as text with the free function `getString(Type)`.
 * `Dtype` is an enum that is used to identify the numerical datatype of an object,
 [see manual here](homog2d_manual.md#numtype).
