@@ -21,6 +21,7 @@ Q: I am lost with all the "type" information, between the identifiers `Type`,  `
 Could I have some clarification?
 </dt>
 <dd>
+
 * `SType` is a static type that is redefined in all the "graphical" types.
 It can be used to statically make sure that a call to a function meets some requirement on the parameter type.
 * `Type` is an enum that also defines the nature of a given object, but it is object-based
