@@ -2009,8 +2009,6 @@ void action_PO( void* param )
 
 	for( size_t i=0; i<pts.size(); i++ )
 	{
-//		auto i_next = (i!=size()-1 ? i+1 : 0         );
-//		auto i_prev = (i!=0        ? i-1 : size()-1 );
 //		size_t i = 0;
 		auto seg_next = data._cpoly.getSegment( i );
 		auto seg_prev = data._cpoly.getSegment( i!=0 ? i-1 : pts.size()-1 );
@@ -2064,6 +2062,47 @@ void demo_PO( int demidx )
 }
 
 
+
+//------------------------------------------------------------------
+struct Param_SegSide : Data
+{
+	explicit Param_SegSide( int demidx, std::string title ): Data( demidx, title )
+	{
+	}
+};
+
+void action_SegSide( void* param )
+{
+	auto& data = *reinterpret_cast<Param_SegSide*>(param);
+	data.clearImage();
+	OSegment s1( data.vpt[0], data.vpt[1] );
+	OSegment s2( data.vpt[2], data.vpt[3] );
+
+	s1.getLine().draw( data.img, img::DrawParams().setColor(200,200,200) );
+	s2.getLine().draw( data.img, img::DrawParams().setColor(200,200,200) );
+
+	s1.draw( data.img, img::DrawParams().setColor(0,200,0) );
+	s2.draw( data.img, img::DrawParams().setColor(200,0,0) );
+
+	std::cout << "angle1=" << 180. / M_PI * s1.getAngle( s2 ) << '\n';
+	data.showImage();
+}
+
+void demo_SegSide( int demidx )
+{
+	Param_SegSide data( demidx, "Segment Side" );
+	std::cout << "Demo " << demidx << ": Segment Sid\n";
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_SegSide );
+	KeyboardLoop kbloop;
+//	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
+
+	kbloop.addCommonAction( action_SegSide );
+	action_SegSide( &data );
+	kbloop.start( data );
+}
+
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -2089,6 +2128,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_SegSide,
 		demo_PO,
 		demo_BB,
 		demo_RCP,

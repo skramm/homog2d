@@ -288,7 +288,7 @@ struct T_Line     {};
 struct T_Circle   {};
 struct T_FRect    {};
 struct T_Segment  {};
-struct T_OSeg   {};
+struct T_OSeg     {};
 struct T_OPol     {};
 struct T_CPol     {};
 struct T_Ellipse  {};
@@ -3751,7 +3751,8 @@ class LPBase: public detail::Common<FPT>
 public:
 	using FType = FPT;
 // The following line enables defining the SType based on how the class is instanciated: Line or Point
-	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
+	using SType = LP;
+//	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
 	using detail::Common<FPT>::isInside;
 
 private:
@@ -5167,16 +5168,19 @@ Please note that the source (points) floating-point type is lost
 
 */
 	template<typename SV2,typename FPT2>
-	HOMOG2D_INUMTYPE getAngle( const SegVec<SV2,FPT2>& other ) const
+	HOMOG2D_INUMTYPE
+	getAngle( const SegVec<SV2,FPT2>& other ) const
 	{
 		auto lineAngle = other.getLine().getAngle( this->getLine() );
+
 // if one of the two is a (unoriented) segment, then we just return the lines angle
 		if constexpr( std::is_same_v<SV,typ::IsSegment> || std::is_same_v<SV2,typ::IsSegment> )
 			return lineAngle;
 		else
 		{    // both are oriented
 			auto pt_ref = other.getPts().second;
-
+			auto si = this->getPointSide( pt_ref );
+			return (si == PointSide::Left ? lineAngle : M_PI - lineAngle );
 		}
 	}
 ///@}
@@ -9243,8 +9247,6 @@ LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::Bas
 	return seg.distTo( *this );
 }
 
-
-
 } // namespace base
 
 //------------------------------------------------------------------
@@ -9257,12 +9259,12 @@ getAngle( const T1& t1, const T2& t2 )
 {
 	static_assert(
 		(
-			   std::is_same_v<typename T1::SType,typ::T_Line>
+			   std::is_same_v<typename T1::SType,typ::IsLine>
 			|| std::is_same_v<typename T1::SType,typ::T_Segment>
 			|| std::is_same_v<typename T1::SType,typ::T_OSeg>
 		) &&
 		(
-			   std::is_same_v<typename T2::SType,typ::T_Line>
+			   std::is_same_v<typename T2::SType,typ::IsLine>
 			|| std::is_same_v<typename T2::SType,typ::T_Segment>
 			|| std::is_same_v<typename T2::SType,typ::T_OSeg>
 		),
