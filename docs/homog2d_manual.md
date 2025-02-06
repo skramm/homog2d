@@ -275,7 +275,8 @@ auto dist = getParallelDistance( li1, li2 );
 ```
 This will throw if lines are not parallel (unless error checking is disabled).
 
-You can compute the angle in Radians between two lines, either with a member function or with a free function:
+You can compute the angle in Radians between two lines, either with a member function or with a free function.
+Whatever the lines, the returned value will lie in the range [0-PI/2]:
 ```C++
 auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 ); // free function

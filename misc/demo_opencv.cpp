@@ -2000,12 +2000,34 @@ void action_PO( void* param )
 	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
 
 	auto pts = data._cpoly.getPts();
-	int i = 0;
+	int idx = 0;
 	for( auto pt: pts )
-		drawText( data.img, std::to_string(i++), pt );
+		drawText( data.img, std::to_string(idx++), pt );
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
 	draw( data.img, data._cpoly_off );
+
+	for( size_t i=0; i<pts.size(); i++ )
+	{
+//		auto i_next = (i!=size()-1 ? i+1 : 0         );
+//		auto i_prev = (i!=0        ? i-1 : size()-1 );
+//		size_t i = 0;
+		auto seg_next = data._cpoly.getSegment( i );
+		auto seg_prev = data._cpoly.getSegment( i!=0 ? i-1 : pts.size()-1 );
+		auto li_n = getLine( seg_next );
+		auto li_p = getLine( seg_prev );
+		if( !li_n.isParallelTo(li_p) )
+		{
+//			auto pt_intersect = li_n * li_p;
+			auto angle = getAngle( li_n, li_p);
+			std::cout << "pt " << i << " angle=" << angle * 180./M_PI << '\n';
+			auto li_mid1 = li_n.getRotatedLine( pts[i], angle/2. );
+			auto li_mid2 = li_p.getRotatedLine( pts[i], angle/2. );
+			data.img.draw( li_mid1, img::DrawParams().setColor(150,0,250) );
+			data.img.draw( li_mid2, img::DrawParams().setColor(0,150,250) );
+		}
+	}
+
 	if( data._cpoly.isSimple() )
 	{
 		auto centr = data._cpoly.centroid();
