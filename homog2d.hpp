@@ -5039,25 +5039,21 @@ Please note that the source (points) floating-point type is lost
 
 /// Copy-Constructor, behavior depends on concrete types
 /**
-TODO:
 - OSegment(OSegment): OK
 - Segment(OSegment): OK, but loose orientation
 - Segment(Segment):  OK
-- OSegment(Segment): throws, because orientation would be arbitrary
+- OSegment(Segment): No build, because orientation would be arbitrary
 */
 	template<typename SV2,typename FPT2>
 	SegVec( const SegVec<SV2,FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
 	{
-//		if constexpr( std::is_same_v<SV2,typ::IsSegment> && std::is_same_v<SV,typ::IsOSeg> )
-//			HOMOG2D_THROW_ERROR_1( "Cannot build a OSegment from a Segment" );
 		static_assert(
 			( std::is_same_v<SV,typ::IsSegment>
 			||
 			( std::is_same_v<SV,typ::IsOSeg> && std::is_same_v<SV2,typ::IsOSeg> ) ),
 			"Cannot build a OSegment from a Segment"
 		);
-
 		if constexpr( std::is_same_v<SV2,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
 	}
@@ -5166,15 +5162,22 @@ TODO:
 		return 0.;
 	}
 
-/// Get angle between segment and other segment/line
+/// Get angle between segment and other segment
 /**
-This will call the line angle function, thus the returned value will be
-in the range \f$ [0,\pi/2] \f$
+
 */
-	template<typename U>
-	HOMOG2D_INUMTYPE getAngle( const U& other ) const
+	template<typename SV2,typename FPT2>
+	HOMOG2D_INUMTYPE getAngle( const SegVec<SV2,FPT2>& other ) const
 	{
-		return other.getAngle( this->getLine() );
+		auto lineAngle = other.getLine().getAngle( this->getLine() );
+// if one of the two is a (unoriented) segment, then we just return the lines angle
+		if constexpr( std::is_same_v<SV,typ::IsSegment> || std::is_same_v<SV2,typ::IsSegment> )
+			return lineAngle;
+		else
+		{    // both are oriented
+			auto pt_ref = other.getPts().second;
+
+		}
 	}
 ///@}
 
@@ -9245,16 +9248,30 @@ LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::Bas
 } // namespace base
 
 //------------------------------------------------------------------
-/// Free function, returns the angle (in Rad) between two lines/ or segments
+/// Free function, returns angle between two segments/lines
 /// \sa Segment_::getAngle()
 /// \sa Line2d_::getAngle()
 template<typename T1,typename T2>
 HOMOG2D_INUMTYPE
-getAngle( const T1& li1, const T2& li2 )
+getAngle( const T1& t1, const T2& t2 )
 {
-	return li1.getAngle( li2 );
+	static_assert(
+		(
+			   std::is_same_v<typename T1::SType,typ::T_Line>
+			|| std::is_same_v<typename T1::SType,typ::T_Segment>
+			|| std::is_same_v<typename T1::SType,typ::T_OSeg>
+		) &&
+		(
+			   std::is_same_v<typename T2::SType,typ::T_Line>
+			|| std::is_same_v<typename T2::SType,typ::T_Segment>
+			|| std::is_same_v<typename T2::SType,typ::T_OSeg>
+		),
+		"Both types must be either a Line or a Segment"
+	);
+	return t1.getAngle( t2 );
 }
 
+//------------------------------------------------------------------
 namespace base {
 
 template<typename LP, typename FPT>
@@ -10477,42 +10494,6 @@ getBB( const T1& elem1, const T2& elem2 )
 	return out;
 }
 
-#if 0
-/// Overload 2/3. Called if 2 polyline objects
-/// REMOVE: it works only if BOTH are polyline, if we have, say a polyline and a point, it will fail
-template<
-	typename T1,
-	typename T2,
-	typename PLT1,
-	typename PLT2,
-	typename std::enable_if<
-		(
-			std::is_same<T1,base::PolylineBase<typename T1::FType, PLT1>>::value
-			|| std::is_same<T2,base::PolylineBase<typename T2::FType, PLT2>>::value
-		)
-		,T1
-	>::type* = nullptr
->
-auto
-getBB( const T1& p1, const T2& p2 )
-{
-	HOMOG2D_START;
-
-	if( p1.size() == 0 && p2.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
-
-	if( p1.size() != 0 &&  p2.size() == 0 )
-		return FRect_<typename T1::FType>( ppair::getPointPair( p1 ) );
-	if( p1.size() == 0 &&  p2.size() != 0 )
-		return FRect_<typename T1::FType>( ppair::getPointPair( p2 ) );
-
-	return getBB(
-			ppair::getPointPair( p1 ),
-			ppair::getPointPair( p2 )
-	);
-}
-#endif
-
 //------------------------------------------------------------------
 /// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
 template<
@@ -10632,7 +10613,6 @@ getClosestPoints(
 				out.store( currentDist, i, j );
 		}
 	}
-//	out.print();
 	return out;
 }
 

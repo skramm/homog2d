@@ -2019,7 +2019,7 @@ void action_PO( void* param )
 		if( !li_n.isParallelTo(li_p) )
 		{
 //			auto pt_intersect = li_n * li_p;
-			auto angle = getAngle( li_n, li_p);
+			auto angle = getAngle( li_n, li_p );
 			std::cout << "pt " << i << " angle=" << angle * 180./M_PI << '\n';
 			auto li_mid1 = li_n.getRotatedLine( pts[i], angle/2. );
 			auto li_mid2 = li_p.getRotatedLine( pts[i], angle/2. );
