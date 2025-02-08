@@ -2,18 +2,29 @@
 \file
 \brief Generates general showcase image
 */
-#define HOMOG2D_USE_OPENCV
+
 #include "../../homog2d.hpp"
 
 using namespace h2d;
 using namespace h2d::img;
 
+DrawParams color_red;
+
+template<typename IM,typename T1,typename T2>
+void drawIntersect( IM& img, const T1& t1, const T2& t2 )
+{
+	auto intersect = t1.intersects(t2);
+	if( intersect() )
+		draw( img, intersect.get(), color_red );
+}
+
 int main( int, const char** )
 {
 	auto nbim = 30;         // number of images in gif
 	auto im_w = 400;
-	auto im_h = 250;
-	Image<cv::Mat> myImg( im_w, im_h );
+	auto im_h = 280;
+
+	Image<SvgImage> myImg( im_w, im_h );
 
 	Homogr Hr( 2.*M_PI/nbim );    // set up rotation
 	Homogr HT1(  im_w/2,  100 );  // centered on image center
@@ -29,7 +40,7 @@ int main( int, const char** )
 	CPolyline pol{ std::vector<Point2d>{ {30,20}, {140,45}, {110,110}, {20,65} } };
 
 // define some colors
-	auto color_red   = DrawParams().setColor(200,20,20);
+	color_red   = DrawParams().setColor(200,20,20);
 	auto color_green = DrawParams().setColor(20,220,20);
 	auto color_blue  = DrawParams().setColor(20,20,220);
 	auto color_poly  = DrawParams().setColor(180,0,180);
@@ -54,40 +65,26 @@ int main( int, const char** )
 		else
 			cir.draw( myImg, color_blue );
 
-		r_fixed.draw( myImg, color_green );
-		seg.draw( myImg, color_green );
+		r_fixed.draw(   myImg, color_green );
+		seg.draw(       myImg, color_green );
 		cir_fixed.draw( myImg, color_green );
 
-		auto inters1 = pol.intersects( li );
-		if( inters1() )
-			draw( myImg, inters1.get(), color_red );
+		drawIntersect( myImg, lih, li );
+		drawIntersect( myImg, lih, seg );
+		drawIntersect( myImg, liv, li );
+		drawIntersect( myImg, liv, seg );
 
-		auto inters2 = pol.intersects( r_fixed );
-		if( inters2() )
-			draw( myImg, inters2.get(), color_red );
+		drawIntersect( myImg, pol, li );
+		drawIntersect( myImg, pol, r_fixed );
+		drawIntersect( myImg, pol, cir_fixed );
+		drawIntersect( myImg, pol, seg );
 
-		auto inters3 = pol.intersects( cir_fixed );
-		if( inters3() )
-			draw( myImg, inters3.get(), color_red );
-
-		auto inters4 = pol.intersects( seg );
-		if( inters4() )
-			draw( myImg, inters4.get(), color_red );
-
-		auto intersb1 = cir.intersects( seg );
-		if( intersb1() )
-			draw( myImg, intersb1.get(), color_red );
-
-		auto intersb2 = cir.intersects( r_fixed );
-		if( intersb2() )
-			draw( myImg, intersb2.get(), color_red );
-
-		auto intersb3 = cir.intersects( cir_fixed );
-		if( intersb3() )
-			draw( myImg, intersb3.get(), color_red );
+		drawIntersect( myImg, cir, seg );
+		drawIntersect( myImg, cir, r_fixed );
+		drawIntersect( myImg, cir, cir_fixed );
 
 		std::ostringstream oss;
-		oss << "showcase1_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase1_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		myImg.write( oss.str() );
 
 		pol = H * pol;   // rotate lines and polygon
