@@ -695,6 +695,9 @@ or SvgImage (no dependency)
 template<typename T>
 class Image
 {
+//	template<typename U>
+	friend std::ostream& operator << ( std::ostream&, const Image<SvgImage>& );
+
 private:
 	T      _realImg;
 	size_t _width  = 500;
@@ -8300,6 +8303,8 @@ SegVec<SV,FPT>::intersects( const Circle_<FPT2>& circle ) const
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
+#if 0
+// DEPRECATED, REPLACED BY "if constexpr" below
 /// Overload for points
 /// \todo 20221217: add a global switch (static function) to select a printing mode: either [x, y], either [a,b,c]
 template<typename LP,typename FPT>
@@ -8313,7 +8318,6 @@ base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& pt )
 //	<< std::scientific << std::setprecision(25)
 			<< '[' << pt.getX() << ',' << pt.getY() << "]";
 }
-
 /// Overload for lines
 template<typename LP,typename FPT>
 void
@@ -8321,14 +8325,27 @@ base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) c
 {
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "]";
 }
+#endif
 
 namespace base {
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
 template<typename LP,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& r )
+operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& pl )
 {
-	r.impl_op_stream( f, r );
+//	r.impl_op_stream( f, r );
+	if constexpr( std::is_same_v<LP,typ::IsLine> )
+		f << '[' << pl._v[0] << ',' << pl._v[1] << ',' << pl._v[2] << "]";
+	else
+	{
+		if( pl.isInf() )
+			f << '[' << pl._v[0] << ',' << pl._v[1] << ',' << pl._v[2] << "]";
+		else
+			f
+		//	<< std::scientific << std::setprecision(25)
+				<< '[' << pl.getX() << ',' << pl.getY() << "]";
+	}
+
 	return f;
 }
 }
@@ -11988,6 +12005,26 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 /////////////////////////////////////////////////////////////////////////////
 // SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
+
+namespace img {
+
+/// Streaming operator (only defined for SVG)
+std::ostream&
+operator << ( std::ostream& f, const Image<SvgImage>& im )
+{
+	f << "<svg version=\"1.1\" width=\"" << im._width
+		<< "\" height=\"" << im._height
+		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+		<< "<style>\n"
+		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
+		<< "</style>\n";
+
+	f << im._realImg._svgString.str();
+	f << "</svg>\n";
+
+	return f;
+}
+} // namespace img
 
 /// Free function, draw text on Svg image
 /// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
