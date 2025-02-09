@@ -5,11 +5,11 @@ using namespace h2d::img;
 
 template<typename T1,typename T2>
 void
-drawPts( Image<SvgImage>& im, const T1& shape1, const T2& shape2 )//, Color col  )
+drawPts( Image<SvgImage>& im, const T1& shape1, const T2& shape2 )
 {
 	auto x = shape1.intersects(shape2);
 	if( x() )
-		draw( im, x.get() ); //, DrawParams().setColor(col) );
+		draw( im, x.get() );
 }
 
 int main()

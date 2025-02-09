@@ -12009,6 +12009,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 namespace img {
 
 /// Streaming operator (only defined for SVG)
+inline
 std::ostream&
 operator << ( std::ostream& f, const Image<SvgImage>& im )
 {

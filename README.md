@@ -57,6 +57,8 @@ will print:
 [7,8]
 ```
 
+(Depending on your GCC version, you might need to add `--std::c++17` to the compiler call above.)
+
 #### TRYME2:
 
 A slightly more significant file is [available here](misc/tryme2.cpp), try this:
@@ -64,7 +66,7 @@ A slightly more significant file is [available here](misc/tryme2.cpp), try this:
 ```
 $ wget https://raw.githubusercontent.com/skramm/homog2d/master/misc/tryme2.cpp
 $ g++ tryme2.cpp
-$ ./a.out
+$ ./a.out > tryme2.svg
 ```
 
 It will generate this Svg file:
