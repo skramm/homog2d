@@ -9,7 +9,7 @@
 
 using namespace h2d;
 
-img::Image<cv::Mat> im( 380, 160 );
+img::Image<img::SvgImage> im( 380, 160 );
 
 template<typename T>
 void draw_intersect( const Segment& seg, const T& p )
@@ -63,7 +63,7 @@ int main( int, const char** )
 		translate( pt1, 10, 0);
 		translate( pt2, 8, 2) ;
 		std::ostringstream oss;
-		oss << "showcase7c_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase7c_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -15,7 +15,7 @@ int main( int, const char** )
 	Circle cir( 100,100,15 );
 	FRect rect(70,60,150,130);
 
-	img::Image<cv::Mat> im( 320, 250 );
+	img::Image<img::SvgImage> im( 320, 250 );
 
 	auto col_outside = img::DrawParams().setColor(50,20,200);
 	auto col_inside  = img::DrawParams().setColor(200,20,20).setThickness(2);
@@ -47,7 +47,7 @@ int main( int, const char** )
 			cir.set( cir.radius() * 1./1.2 );
 
 		std::ostringstream oss;
-		oss << "showcase7b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase7b_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -20,7 +20,7 @@ int main( int, const char** )
 	auto extr_col = img::DrawParams().setColor(100,250,0).setPointStyle( img::PtStyle::Dot );
 	for( int i=0; i<nbim; i++ )
 	{
-		img::Image<cv::Mat> im( cmax+30, cmax+30 );
+		img::Image<img::SvgImage> im( cmax+30, cmax+30 );
 		int nbpts = 1.0*rand() / RAND_MAX * (nbpts_max-nbpts_min) + nbpts_min;
 		std::vector<Point2d> vec(nbpts);
 		auto it = std::begin(vec);
@@ -44,7 +44,7 @@ int main( int, const char** )
 		getBmPoint(vec).draw( im, extr_col );
 
 		std::ostringstream oss;
-		oss << "showcase13_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase13_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -31,14 +31,14 @@ int main( int, const char** )
 		auto cir_b = rect.getBoundingCircle();
 		auto cir_i = rect.getInscribedCircle();
 
-		img::Image<cv::Mat> imb( 250, 200 );
+		img::Image<img::SvgImage> imb( 250, 200 );
 
 		(Hdraw * cir_b).draw( imb, img::DrawParams().setColor(50,250,50)  );
 		(Hdraw * cir_i).draw( imb, img::DrawParams().setColor(50,25,250)  );
 		(Hdraw * rect).draw( imb,  img::DrawParams().setColor(250,25,25)  );
 
 		std::ostringstream ossb;
-		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossb << "showcase4b_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		imb.write( ossb.str() );
 	}
 }

@@ -25,7 +25,7 @@ int main( int, const char** )
 
 	auto Hdraw = Homogr().addTranslation(7,6).addScale(15);
 
-	img::Image<cv::Mat> im( 300, 200 );
+	img::Image<img::SvgImage> im( 300, 200 );
 
 	auto col_outside = img::DrawParams().setColor(50,20,200);
 	auto col_inside  = img::DrawParams().setColor(200,20,20).setThickness(2);
@@ -67,7 +67,7 @@ int main( int, const char** )
 			pl = H2*pl;
 
 		std::ostringstream oss;
-		oss << "showcase7_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase7_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

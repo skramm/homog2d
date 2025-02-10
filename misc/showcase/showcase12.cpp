@@ -8,7 +8,7 @@
 
 using namespace h2d;
 
-img::Image<cv::Mat> im( 300, 400 );
+img::Image<img::SvgImage> im( 300, 400 );
 
 void processRot(
 	CPolyline&  pl,      ///< Polyline
@@ -22,12 +22,15 @@ void processRot(
 	for( int i=0; i<nb_img; i++ )
 	{
 		im.clear();
+#if 0
 		cv::putText(
 			im.getReal(),
 			std::to_string(out_idx) + ": " + msg + ": " + std::to_string(i+1) + "/" + std::to_string(nb_img),
 			cv::Point2i( 20, 40 ), 0, 0.6, cv::Scalar( 50,0,0 ), 1
 		);
-
+#else
+		drawText( im, std::to_string(out_idx) + ": " + msg + ": " + std::to_string(i+1) + "/" + std::to_string(nb_img), Point2d(20,40) );
+#endif
 		pl.rotate( rot, pl.getPoint(pt_idx) );
 		pl.getPoint(0).draw( im, img::DrawParams().setColor(250,120,20).setPointStyle(img::PtStyle::Diam) );
 		draw( im, Line2d( LineDir::H, pl.getPoint(0) ), img::DrawParams().setColor(200,200,200) );
@@ -36,7 +39,7 @@ void processRot(
 //		pl.getBB().draw( im, img::DrawParams().setColor(150,150,120) );
 
 		std::ostringstream oss;
-		oss << "showcase12_" << std::setfill('0') << std::setw(2) << out_idx++ << ".png";
+		oss << "showcase12_" << std::setfill('0') << std::setw(2) << out_idx++ << ".svg";
 		im.write( oss.str() );
 	}
 }

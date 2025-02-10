@@ -15,12 +15,13 @@ using DrawType = std::pair<CPolyline,img::Color>;
 auto max_color = 200.;
 
 /// Each polyline in the input vector \c v_pl will be replaced by 3
+template<typename IM>
 void recurseTriangles(
 	std::vector<CPolyline>& v_pl,       ///< the set of triangles that will be split
 	std::vector<DrawType>&  v_all,      ///< what we actually draw
 	int                     max_depth,
 	Homogr&                 H,
-	img::Image<cv::Mat>&    im          ///< output image
+	img::Image<IM>&         im          ///< output image
 )
 {
 	static int depth;
@@ -56,7 +57,7 @@ void recurseTriangles(
 	}
 
 	std::ostringstream oss;
-	oss << "showcase10_" << std::setfill('0') << std::setw(2) << depth << ".png";
+	oss << "showcase10_" << std::setfill('0') << std::setw(2) << depth << ".svg";
 	im.write( oss.str() );
 
 	recurseTriangles( v_pl_new, v_all, max_depth, H, im );
@@ -78,9 +79,9 @@ int main()
 	std::vector<DrawType> v_draw(1);
 	v_draw[0] = std::make_pair( pl, img::Color(250,0,20) );
 
-	img::Image<cv::Mat> im( 600, 600 );
+	img::Image<img::SvgImage> im( 600, 600 );
 	pl.draw( im, img::DrawParams().setColor(250,0,20) );
-	im.write( "showcase10_00.png" );
+	im.write( "showcase10_00.svg" );
 
 	recurseTriangles( v_pl, v_draw, max_depth, H, im );
 }

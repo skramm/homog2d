@@ -37,7 +37,7 @@ int main( int, const char** )
 		auto y2 = org_y2+std::sin(angle_r2)*k;
 		Segment s( x1, y1, x2, y2 );
 
-		img::Image<cv::Mat> im( 280, 250 );
+		img::Image<img::SvgImage> im( 280, 250 );
 		s.draw( im, img::DrawParams().setColor(250,25,0).setThickness(2) );
 		auto osegs = s.getOrthogSegs();
 		auto opts = s.getOrthogPts();
@@ -47,7 +47,7 @@ int main( int, const char** )
 			draw( im, opts, style );
 
 		std::ostringstream ossa;
-		ossa << "showcase17_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase17_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( ossa.str() );
 	}
 }

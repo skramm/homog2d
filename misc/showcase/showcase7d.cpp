@@ -9,7 +9,7 @@
 
 using namespace h2d;
 
-img::Image<cv::Mat> im( 280, 220 );
+img::Image<img::SvgImage> im( 280, 220 );
 
 template<typename T>
 void draw_object( const Ellipse& ell, const T& p, img::DrawParams& dp )
@@ -67,7 +67,7 @@ int main( int, const char** )
 		seg.translate( 2, 7) ;
 
 		std::ostringstream oss;
-		oss << "showcase7d_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase7d_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

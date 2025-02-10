@@ -53,12 +53,12 @@ int main( int, const char** )
 	{
 		auto vseg = generateSegments( nbSegs );
 //		Image<SvgImage> im( im_w, im_h );
-		Image<cv::Mat> im( im_w, im_h );
+		Image<img::SvgImage> im( im_w, im_h );
 		draw( im, vseg, f );
 
 		std::ostringstream ossa;
 //		ossa << "showcase19_" << std::setfill('0') << std::setw(2) << i << ".svg";
-		ossa << "showcase19_" << std::setfill('0') << std::setw(2) << i << ".png";
+		ossa << "showcase19_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( ossa.str() );
 	}
 }

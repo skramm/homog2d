@@ -29,7 +29,7 @@ int main( int, const char** )
 	auto Hdraw = Homogr().setScale(30).addTranslation(10,30);
 
 	Line2d li(1,1,6,3);
-	img::Image<cv::Mat> img2( 300, 250 );
+	img::Image<img::SvgImage> img2( 300, 250 );
 
 	Homogr H;
 	H.addTranslation(-4,-3).addRotation(360./n/180*M_PI ).addTranslation(4,3);
@@ -46,7 +46,7 @@ int main( int, const char** )
 		auto pts2 = Hdraw * pts.get();
 		draw( img2, pts2 );
 		std::ostringstream ossa;
-		ossa << "showcase3_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase3_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		img2.write( ossa.str() );
 	}
 }

@@ -31,7 +31,7 @@ int main( int, const char** )
 	auto rad2 = 83;
 	for( int i=0; i<nbim; i++ )
 	{
-		Image<cv::Mat> im( 320, 320 );
+		Image<img::SvgImage> im( 320, 320 );
 
 		auto angle = 2. * M_PI * i / nbim;
 		auto xr1 = std::cos(angle)*k1;
@@ -83,7 +83,7 @@ int main( int, const char** )
 		centerpt.draw( im, DrawParams().setColor(0,0,0).setPointStyle(PtStyle::Dot) );
 
 		std::ostringstream oss;
-		oss << "showcase20_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase20_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -33,7 +33,7 @@ int main( int, const char** )
 
 		auto ell2 = Hdraw * ell;
 
-		img::Image<cv::Mat> im( 250, 200 );
+		img::Image<img::SvgImage> im( 250, 200 );
 		ell2.getCenter().draw( im, img::DrawParams().setColor(0,250,0) );
 		auto lines = ell2.getAxisLines();
 		lines.first.draw( im );
@@ -43,7 +43,7 @@ int main( int, const char** )
 		getOBB(ell2).draw( im, img::DrawParams().setColor(0,0,250) );
 		ell2.draw( im, img::DrawParams().setColor(250,0,0) );
 		std::ostringstream ossa;
-		ossa << "showcase5_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase5_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( ossa.str() );
 	}
 }

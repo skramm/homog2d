@@ -26,7 +26,7 @@ int main( int, const char** )
 	auto pol2 = H2 * p0;
 
 	auto delta = 5.6;
-//	img::Image<cv::Mat> im( 500, 250 );
+//	img::Image<img::SvgImage> im( 500, 250 );
 	img::Image<img::SvgImage> im( 500, 250 );
 
 	std::vector<CPolyline> v_poly1, v_poly2;

@@ -34,7 +34,7 @@ int main( int, const char** )
 		pol2.setParallelogram( p1, p0, p2 );
 		pol3.setParallelogram( p2, p1, p0 );
 
-		Image<cv::Mat> im1( 250, 200 );
+		Image<img::SvgImage> im1( 250, 200 );
 		(Hdraw * pol1).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 250,25,20 ) );
 		(Hdraw * pol2).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 25,250,20 ) );
 		(Hdraw * pol3).draw( im1, DrawParams().setPointStyle( PtStyle::Diam ).setColor( 25,25,250 ) );
@@ -45,7 +45,7 @@ int main( int, const char** )
 		(Hdraw * p2).draw(im1, drawparams );
 
 		std::ostringstream ossa;
-		ossa << "showcase18_" << std::setfill('0') << std::setw(2) << i << ".png";
+		ossa << "showcase18_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im1.write( ossa.str() );
 	}
 }
