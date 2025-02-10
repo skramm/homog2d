@@ -1874,6 +1874,14 @@ To have an idea, here are two renderings of the same objects done with the two b
 | ![SVG drawing](img/comparison_1.svg) | ![Opencv drawing](img/comparison_2.png) |
 
 
+With both types, you can store the generated image with the `write()` member function (see examples below).
+A streaming operator is also provided for the `SvgImage` type, so you may use it to stream on `std::cout`
+(or a previously opened file) in your app to check the output,
+and redirect to a Svg file:
+```
+$ myapp > myFile.svg
+```
+
 ### 8.2 - Drawing objects
 
 Generic drawing member functions are provided for all the types.
@@ -2050,9 +2058,9 @@ If the build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw
 
 ```C++
 std::vector<CommonType> vec;
-vec.push_back( Circle() );
-vec.push_back( Frect() );
-vec.push_back( Segment() );
+vec.emplace_back( Circle() );
+vec.emplace_back( Frect() );
+vec.emplace_back( Segment() );
 img::Image<img::SvgImage> im( width, height );
 draw( im, vec );
 ```

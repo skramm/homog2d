@@ -27,6 +27,8 @@ From the OpenCv 'build' folder, something like this should be sufficient:
 $ sudo cp unix-install/opencv.pc /usr/share/pkgconfig/
 ```
 
+You can also try to copy it in `/usr/local/lib/pkgconfig/`, seems to be another usual location.
+
 FWIW, in case it does not get generated with your Opencv release, here is the content of that file for release 3.4.14.
 Name it `opencv.pc` and copy it to `/usr/share/pkgconfig/`.
 

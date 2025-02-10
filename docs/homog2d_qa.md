@@ -29,7 +29,7 @@ It can be used to statically make sure that a call to a function meets some requ
 so it can be used to get the nature of an object, either with the free function
 (`auto t = type(obj);`)
 or with the corresponding member function.
-(`auto t = obj.type();`).  
+(`auto t = obj.type();`).
 You can get is as text with the free function `getString(Type)`.
 * `Dtype` is an enum that is used to identify the numerical datatype of an object,
 [see manual here](homog2d_manual.md#numtype).
@@ -114,7 +114,6 @@ Thus, the need for the class `rtp::Root`
 </dd>
 
 
-
 <dt>
 Q: `Circle_::center()` and `FRect_::getCenter()`?
 Why not the same identifier?
@@ -126,7 +125,16 @@ Thus, the intent is clearer.
 </dd>
 
 
-
+<dt>
+Q: What is the difference between types `PointPair` and `Segment`?
+Don't these two types just hold two points?
+</dt>
+<dd>
+A: They both indeed hold two points, but they dont have the same semantic.
+The latter represents a real geometrical object, thus cannot have a null length
+(two identical points).
+The first one just hold two arbitrary points.
+</dd>
 
 
 <dt>
