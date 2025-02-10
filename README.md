@@ -46,7 +46,7 @@ Try the above snippet
 [online here](https://godbolt.org/z/d9oqYs34f),
 or on your own Debian-style Linux box:
 ```
-$ sudo apt install build-essentials
+$ sudo apt install build-essential
 $ wget https://raw.githubusercontent.com/skramm/homog2d/master/homog2d.hpp
 $ wget https://raw.githubusercontent.com/skramm/homog2d/master/misc/tryme.cpp
 $ g++ tryme.cpp

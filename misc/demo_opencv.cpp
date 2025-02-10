@@ -1729,8 +1729,6 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
-using PointPair = PointPair2_<double,double>;
-
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {

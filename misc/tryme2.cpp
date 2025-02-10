@@ -1,3 +1,19 @@
+/**************************************************************************
+
+    This file is part of the C++ library "homog2d", dedicated to
+    handle 2D lines and points, see https://github.com/skramm/homog2d
+
+    Author & Copyright 2019-2025 Sebastien Kramm
+
+    Contact: firstname.lastname@univ-rouen.fr
+
+    Licence: MPL v2
+
+	This Source Code Form is subject to the terms of the Mozilla Public
+	License, v. 2.0. If a copy of the MPL was not distributed with this
+	file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+**************************************************************************/
 
 #include "homog2d.hpp"
 using namespace h2d;
