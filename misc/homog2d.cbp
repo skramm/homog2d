@@ -233,6 +233,8 @@
 		<Unit filename="test_files/single_file.cpp" />
 		<Unit filename="test_files/test_multiple.cpp" />
 		<Unit filename="test_files/ttmath_t1.cpp" />
+		<Unit filename="tryme.cpp" />
+		<Unit filename="tryme2.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

@@ -25,9 +25,6 @@ or
 `$ BUILD/demo_svg_import misc/test_files/France_Normandie.svg`
 
 This will generate a svg file in current folder that is a copy of what was read in the file.
-
-\todo 20240326: once we have a function able to get the min/max points of a container holding
-primitives (see \c getBB()), automatically adjust the size of output image.
 */
 
 //#define HOMOG2D_DEBUGMODE
@@ -77,7 +74,7 @@ int main( int argc, const char** argv )
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 	fct::DrawFunct<img::SvgImage> dfunc( out );
 
-	PointPair2_<double,double> pp_all;
+	PointPair pp_all;
 	size_t c = 0;
 	for( const auto& e: data )
 	{

@@ -27,7 +27,7 @@ endif
 
 ifeq ($(USE_OPENCV),Y)
 	CXXFLAGS += -DHOMOG2D_USE_OPENCV
-	LDFLAGS += `pkg-config --libs opencv`
+	LDFLAGS += $$(pkg-config --libs opencv)
 endif
 
 ifeq "$(USE_TINYXML2)" ""
@@ -36,7 +36,7 @@ endif
 
 ifeq ($(USE_TINYXML2),Y)
 	CXXFLAGS += -DHOMOG2D_USE_SVG_IMPORT
-	LDFLAGS += `pkg-config --libs tinyxml2`
+	LDFLAGS += $$(pkg-config --libs tinyxml2)
 endif
 
 
@@ -77,7 +77,7 @@ help:
 	@echo "  - USE_TINYXML2 : "
 	@echo "  - USE_RTP :"
 	@echo "  - DEBUG : add -g flag and enables some inner printing"
-	
+
 #=======================================================================
 # general/common targets
 
@@ -304,7 +304,7 @@ BUILD/img/%.svg: BUILD/img/bin/%
 BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@mkdir -p BUILD/img/bin
 	@echo "Building $@"
-	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -I. -o $@ $< $$(pkg-config --libs opencv4)
 
 
 build_gif_pip: $(DOC_IMAGES_OUT)
@@ -346,7 +346,7 @@ BUILD/figures_test/%.svg: BUILD/figures_test/%
 BUILD/figures_test/%: BUILD/figures_test/%.cpp
 	@echo "Building $<"
 	@$(CXX) -o $@ $<
-#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+
 
 # build source file
 BUILD/figures_test/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
@@ -370,7 +370,7 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 # removed buildf
 # this target requires Opencv
 BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
-	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv` $$(pkg-config --libs tinyxml2)
+	$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -I. -o $@ $< $$(pkg-config --libs opencv4)
 
 
 # this target requires Tinyxml2
@@ -419,7 +419,7 @@ BUILD/showcase/bin/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Make
 	@mkdir -p BUILD/showcase/gif
 	@mkdir -p BUILD/showcase/bin
 	@echo " -Building program $@"
-	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -o $@ $< $$(pkg-config --libs opencv4)
 
 # build png files by running program
 BUILD/showcase/%_00.png: BUILD/showcase/bin/%
@@ -452,7 +452,7 @@ SHOWCASE2=$(patsubst $(SHOWCASE2_SRC_LOC)/%.cpp,BUILD/showcase2/%, $(SHOWCASE2_S
 BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase2/
 	@echo " -Building program $@"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $$(pkg-config --cflags opencv4) -o $@ $< $$(pkg-config --libs opencv4)
 
 showcase2: $(SHOWCASE2)
 	@echo "-done target $@"

@@ -384,11 +384,11 @@ using Segment_ = base::SegVec<typ::IsSegment,T>;
 template<typename T>
 using OSegment_  = base::SegVec<typ::IsOSeg,T>;
 
-/// \todo 20250127: remove the first one and replace with `PointPair_`
-template<typename T>
-using PointPair1_ = std::pair<Point2d_<T>,Point2d_<T>>;
+
 template<typename T1,typename T2>
 using PointPair2_ = std::pair<Point2d_<T1>,Point2d_<T2>>;
+template<typename T>
+using PointPair_  = std::pair<Point2d_<T>,Point2d_<T>>;
 
 template<typename T>
 using CPolyline_ = base::PolylineBase<typ::IsClosed,T>;
@@ -695,6 +695,9 @@ or SvgImage (no dependency)
 template<typename T>
 class Image
 {
+//	template<typename U>
+	friend std::ostream& operator << ( std::ostream&, const Image<SvgImage>& );
+
 private:
 	T      _realImg;
 	size_t _width  = 500;
@@ -1278,7 +1281,7 @@ shareCommonCoord( const std::pair<Point2d_<FPT1>,Point2d_<FPT2>>& ppts )
 /// Private free function, get top-left and bottom-right points from two arbitrary points
 /** Throws if one of the coordinates is equal to the other (x1=x2 or y1=y2)*/
 template<typename FPT>
-PointPair1_<FPT>
+PointPair_<FPT>
 getCorrectPoints( const Point2d_<FPT>& p0, const Point2d_<FPT>& p1 )
 {
 #ifndef HOMOG2D_NOCHECKS
@@ -2484,7 +2487,7 @@ class Intersect<Inters_2,FPT>: public IntersectCommon
 		}
 		size_t size() const { return _doesIntersect?2:0; }
 
-		PointPair1_<FPT>
+		PointPair_<FPT>
 		get() const
 		{
 			if( !_doesIntersect )
@@ -2626,7 +2629,7 @@ public:
 
 /// Constructor from pair of points
 	template<typename FPT2>
-	FRect_( const PointPair1_<FPT2>& ppts )
+	FRect_( const PointPair_<FPT2>& ppts )
 	{
 		set( ppts.first, ppts.second );
 	}
@@ -2727,7 +2730,7 @@ public:
 
 /// Returns the 2 major points of the rectangle
 /// \sa getPts( const FRect_<FPT>& )
-	PointPair1_<FPT>
+	PointPair_<FPT>
 	getPts() const
 	{
 		return std::make_pair( _ptR1, _ptR2 );
@@ -3442,7 +3445,7 @@ public:
 
 private:
 	template<typename FPT2>
-	bool implC_isInside( const PointPair1_<FPT2>& ppts ) const
+	bool implC_isInside( const PointPair_<FPT2>& ppts ) const
 	{
 		const auto& p1 = ppts.first;
 		const auto& p2 = ppts.second;
@@ -4095,7 +4098,7 @@ public:
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
 	template<typename FPT2>
-	PointPair1_<FPT>
+	PointPair_<FPT>
 	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
 	{
 		return impl_getPoints_A( gc, coord, dist, detail::BaseHelper<LP>() );
@@ -4103,7 +4106,7 @@ public:
 
 	/// Returns a pair of points that are lying on line at distance \c dist from point \c pt, assuming that one is lying on the line.
 	template<typename FPT2>
-	PointPair1_<FPT>
+	PointPair_<FPT>
 	getPoints( const Point2d_<FPT>& pt, FPT2 dist ) const
 	{
 		return impl_getPoints_B( pt, dist, detail::BaseHelper<LP>() );
@@ -4381,13 +4384,13 @@ private:
 	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
 	template<typename FPT2>
-	PointPair2_<FPT,FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
+	PointPair_<FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr PointPair2_<FPT,FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
+	constexpr PointPair_<FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 	template<typename FPT2>
-	PointPair2_<FPT,FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
+	PointPair_<FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
-	constexpr PointPair2_<FPT,FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
+	constexpr PointPair_<FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
 	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
 	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
@@ -5267,7 +5270,7 @@ Requires both points inside AND no intersections
 If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first
 */
-	PointPair1_<FPT>
+	PointPair_<FPT>
 	getPts() const
 	{
 		return std::make_pair( _ptS1, _ptS2 );
@@ -5876,7 +5879,7 @@ template<
 		T
 	>::type* = nullptr
 >
-PointPair1_<typename T::value_type::FType>
+PointPair_<typename T::value_type::FType>
 getBB_Points( const T& vpts )
 {
 	HOMOG2D_START;
@@ -8300,6 +8303,8 @@ SegVec<SV,FPT>::intersects( const Circle_<FPT2>& circle ) const
 /////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------
+#if 0
+// DEPRECATED, REPLACED BY "if constexpr" below
 /// Overload for points
 /// \todo 20221217: add a global switch (static function) to select a printing mode: either [x, y], either [a,b,c]
 template<typename LP,typename FPT>
@@ -8313,7 +8318,6 @@ base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Point2d_<FPT>& pt )
 //	<< std::scientific << std::setprecision(25)
 			<< '[' << pt.getX() << ',' << pt.getY() << "]";
 }
-
 /// Overload for lines
 template<typename LP,typename FPT>
 void
@@ -8321,14 +8325,27 @@ base::LPBase<LP,FPT>::impl_op_stream( std::ostream& f, const Line2d_<FPT>& r ) c
 {
 	f << '[' << r._v[0] << ',' << r._v[1] << ',' << r._v[2] << "]";
 }
+#endif
 
 namespace base {
 /// Stream operator, free function, call member function pseudo operator impl_op_stream()
 template<typename LP,typename FPT>
 std::ostream&
-operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& r )
+operator << ( std::ostream& f, const h2d::base::LPBase<LP,FPT>& pl )
 {
-	r.impl_op_stream( f, r );
+//	r.impl_op_stream( f, r );
+	if constexpr( std::is_same_v<LP,typ::IsLine> )
+		f << '[' << pl._v[0] << ',' << pl._v[1] << ',' << pl._v[2] << "]";
+	else
+	{
+		if( pl.isInf() )
+			f << '[' << pl._v[0] << ',' << pl._v[1] << ',' << pl._v[2] << "]";
+		else
+			f
+		//	<< std::scientific << std::setprecision(25)
+				<< '[' << pl.getX() << ',' << pl.getY() << "]";
+	}
+
 	return f;
 }
 }
@@ -8826,14 +8843,14 @@ LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelpe
 /// ILLEGAL INSTANCIATION
 template<typename LP,typename FPT>
 template<typename FPT2>
-constexpr PointPair1_<FPT>
+constexpr PointPair_<FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
 template<typename LP,typename FPT>
 template<typename FPT2>
-constexpr PointPair1_<FPT>
+constexpr PointPair_<FPT>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
@@ -8842,7 +8859,7 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::Base
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-PointPair2_<FPT,FPT>
+PointPair_<FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
 {
 	const auto pt = impl_getPoint( gc, coord, detail::BaseHelper<typ::IsLine>() );
@@ -8852,7 +8869,7 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const det
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
 template<typename FPT2>
-PointPair2_<FPT,FPT>
+PointPair_<FPT>
 LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
 {
 #ifndef HOMOG2D_NOCHECKS
@@ -10118,7 +10135,7 @@ getPointPair( const T& elem )
 
 /// Needed because of variant
 template<typename FPT>
-PointPair2_<FPT,FPT>
+PointPair_<FPT>
 getPointPair( const Line2d_<FPT>& )
 {
 	HOMOG2D_START;
@@ -10143,7 +10160,7 @@ namespace fct {
 struct PtPairFunct
 {
 	template<typename T>
-	PointPair1_<typename T::FType>
+	PointPair_<typename T::FType>
 	operator ()(const T& a)
 	{
 		return ppair::getPointPair(a);
@@ -10268,7 +10285,7 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 
 	std::vector<Point2d_<FPT>> vpts;
 	vpts.reserve( v_var.size()*2 );
-	PointPair2_<FPT,FPT> ppair;
+	PointPair_<FPT> ppair;
 	for( const auto& elem: v_var )
 	{
 		try
@@ -10577,7 +10594,7 @@ private:
 	}
 
 public:
-	PointPair1_<HOMOG2D_INUMTYPE>
+	PointPair_<HOMOG2D_INUMTYPE>
 	getPoints() const
 	{
 		return std::make_pair(
@@ -11805,7 +11822,7 @@ Used both in the SVG and the Opencv backends
 namespace priv {
 
 template<typename FPT>
-std::array<PointPair1_<double>,3>
+std::array<PointPair_<double>,3>
 getArrowSegments(
 	const base::SegVec<typ::IsOSeg,FPT>& vec
 )
@@ -11988,6 +12005,27 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 /////////////////////////////////////////////////////////////////////////////
 // SECTION .3 - CLASS DRAWING MEMBER FUNCTIONS (SVG)
 /////////////////////////////////////////////////////////////////////////////
+
+namespace img {
+
+/// Streaming operator (only defined for SVG)
+inline
+std::ostream&
+operator << ( std::ostream& f, const Image<SvgImage>& im )
+{
+	f << "<svg version=\"1.1\" width=\"" << im._width
+		<< "\" height=\"" << im._height
+		<< "\" style=\"background-color:white;\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+		<< "<style>\n"
+		<< ".txt1 { font: bold 12px sans-serif; };\n"   // text style, you can change or add classes as required
+		<< "</style>\n";
+
+	f << im._realImg._svgString.str();
+	f << "</svg>\n";
+
+	return f;
+}
+} // namespace img
 
 /// Free function, draw text on Svg image
 /// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
@@ -12380,6 +12418,11 @@ using CPolylineL = CPolyline_<long double>;
 using OPolylineF = OPolyline_<float>;
 using OPolylineD = OPolyline_<double>;
 using OPolylineL = OPolyline_<long double>;
+
+using PointPairF = PointPair_<float>;
+using PointPairD = PointPair_<double>;
+using PointPairL = PointPair_<long double>;
+using PointPair  = PointPair_<double>;
 
 #ifdef HOMOG2D_ENABLE_VRTP
 // variant type

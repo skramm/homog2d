@@ -20,9 +20,10 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 now all of these return the number of points that the primitive has, as a `size_t` type, see [details here](homog2d_manual.md#p_commonf).
   - added new type `OSegment` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
   see TODO: ADD LINK TO MANUAL
-  - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`: TODO
+  - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`
   - added `getOffsetPoly()` to get a polygon "offsetted", see [showcase22](homog2d_showcase.md#sc22) (preliminar).
-
+  - added streaming operator to class Image (only for Svg)
+  - switch to opencv4, minor changes in opencv demo (mouse events).
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).

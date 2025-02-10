@@ -205,11 +205,11 @@ myMouseCB( int event, int x, int y, int, void* param )
 
 	switch( event )
 	{
-		case CV_EVENT_LBUTTONUP:
+		case cv::EVENT_LBUTTONUP:
 			data._selected = -1;
 		break;
 
-		case CV_EVENT_LBUTTONDOWN:
+		case cv::EVENT_LBUTTONDOWN:
 			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
@@ -222,7 +222,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 					data.addMousePoint();
 		break;
 
-		case CV_EVENT_MOUSEMOVE:
+		case cv::EVENT_MOUSEMOVE:
 			if( data._selected != -1 )
 			{
 				data.vpt[data._selected] = data._pt_mouse;
@@ -230,7 +230,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 			}
 		break;
 
-		case CV_EVENT_RBUTTONDOWN:
+		case cv::EVENT_RBUTTONDOWN:
 			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
@@ -1729,8 +1729,6 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
-using PointPair = PointPair2_<double,double>;
-
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
