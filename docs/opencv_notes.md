@@ -11,7 +11,7 @@ Building the app using the provided Makefile (`$ make demo`) relies on the [`pkg
 Recently, with Opencv4 (and probably also with latest 3.x releases), the Opencv team seems to have dropped support of pkg-config
 (see https://github.com/opencv/opencv/issues/13154).
 
-The demo program has been tested using Opencv 3.4, build from source.
+The demo program has been tested using Opencv 4.10, build from source.
 The trick is to activate the pkg-config option when building Opencv with Cmake.
 I used:
 ```
@@ -29,8 +29,10 @@ $ sudo cp unix-install/opencv.pc /usr/share/pkgconfig/
 
 You can also try to copy it in `/usr/local/lib/pkgconfig/`, seems to be another usual location.
 
-FWIW, in case it does not get generated with your Opencv release, here is the content of that file for release 3.4.14.
+FWIW, in case it does not get generated with your Opencv release, here is the content of that file for release 4.10.
 Name it `opencv.pc` and copy it to `/usr/share/pkgconfig/`.
+
+Be sure to run `$ sudo ldconfig` after (re)installing Opencv!
 
 ```
 # Package Information for pkg-config
@@ -38,15 +40,14 @@ Name it `opencv.pc` and copy it to `/usr/share/pkgconfig/`.
 prefix=/usr/local
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
-includedir_old=${prefix}/include/opencv
-includedir_new=${prefix}/include
+includedir=${prefix}/include/opencv4
 
 Name: OpenCV
 Description: Open Source Computer Vision Library
-Version: 3.4.14
-Libs: -L${exec_prefix}/lib -lopencv_dnn -lopencv_highgui -lopencv_ml -lopencv_objdetect -lopencv_shape -lopencv_stitching -lopencv_superres -lopencv_videostab -lopencv_calib3d -lopencv_videoio -lopencv_imgcodecs -lopencv_features2d -lopencv_video -lopencv_photo -lopencv_imgproc -lopencv_flann -lopencv_core
+Version: 4.10.0
+Libs: -L${exec_prefix}/lib -lopencv_gapi -lopencv_highgui -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_video -lopencv_calib3d -lopencv_features2d -lopencv_dnn -lopencv_flann -lopencv_videoio -lopencv_imgcodecs -lopencv_imgproc -lopencv_core
 Libs.private: -ldl -lm -lpthread -lrt
-Cflags: -I${includedir_old} -I${includedir_new}
+Cflags: -I${includedir}
 ```
 
 
