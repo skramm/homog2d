@@ -4274,27 +4274,28 @@ Please check out warning described in impl_getAngle()
 /// Returns true if point is at infinity (third value less than thr::nullDenom() )
 	bool isInf() const
 	{
-		return impl_isInf( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+			return false;
+		else
+			return homog2d_abs( _v[2] ) < thr::nullDenom();
 	}
 
+/// A point has a null length, a line has an infinite length
 	HOMOG2D_INUMTYPE length() const
 	{
-		return impl_length( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+		{
+			HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
+		}
+		else
+			return 0.;
 	}
-/// Neither lines nor points have an area
-	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
-private:
-/// A point has a null length
-	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename typ::IsPoint>& ) const
+/// Neither lines nor points have an area
+	constexpr HOMOG2D_INUMTYPE area() const
 	{ return 0.; }
 
-/// A line has an infinite length
-	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename typ::IsLine>& ) const
-	{
-		HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
-	}
-
+private:
 	HOMOG2D_INUMTYPE impl_getX( const detail::BaseHelper<typename typ::IsPoint>& ) const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_v[0])/_v[2];
@@ -4364,14 +4365,6 @@ private:
 	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
 	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
-	constexpr bool impl_isInf( const detail::BaseHelper<typename typ::IsLine>& ) const
-	{
-		return false;
-	}
-	bool impl_isInf( const detail::BaseHelper<typ::IsPoint>& ) const
-	{
-		return homog2d_abs( _v[2] ) < thr::nullDenom();
-	}
 
 	template<typename FPT2>
 	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
@@ -5183,6 +5176,7 @@ Please note that the source (points) floating-point type is lost
 		{    // both are oriented
 			auto pt_ref = other.getPts().second;
 			auto si = this->getPointSide( pt_ref );
+			std::cout << "si=" << getString(si) << " line_angle=" << lineAngle*180./M_PI << '\n';
 			return (si == PointSide::Left ? lineAngle : M_PI - lineAngle );
 		}
 	}

@@ -2082,7 +2082,8 @@ void action_SegSide( void* param )
 	s1.draw( data.img, img::DrawParams().setColor(0,200,0) );
 	s2.draw( data.img, img::DrawParams().setColor(200,0,0) );
 
-	std::cout << "angle1=" << 180. / M_PI * s1.getAngle( s2 ) << '\n';
+	auto a = s1.getAngle( s2 );
+	std::cout << "angle1=" << 180. / M_PI * a << '\n';
 	data.showImage();
 }
 
