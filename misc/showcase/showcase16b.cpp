@@ -3,7 +3,7 @@
 \brief random point and a moving vector, show side of point
 (WIP !!!)
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -26,7 +26,7 @@ int main( int, const char** )
 
 	for( int i=0; i<nbim; i++ )
 	{
-		img::Image<cv::Mat> im( imsize*2,imsize-100 );
+		img::Image<img::SvgImage> im( imsize*2,imsize-100 );
 
 		auto angle =  i * 360. /nbim;
 //		std::cout << "angle=" << angle << '\n';
@@ -55,7 +55,7 @@ int main( int, const char** )
 
 
 		std::ostringstream oss;
-		oss << "showcase16b_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase16b_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }

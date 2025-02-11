@@ -2,7 +2,7 @@
 \file
 \brief Generates area of union of two rectangles
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -14,7 +14,7 @@ int main( int, const char** )
 	int n=30;
 	auto im_w = 350;
 	auto im_h = 180;
-	img::Image<cv::Mat> imgb( im_w, im_h );
+	img::Image<img::SvgImage> imgb( im_w, im_h );
 
 	FRect r1(40,30, 130,90 );
 	FRect r2(160,45, 210,150 );
@@ -46,7 +46,7 @@ int main( int, const char** )
 		}
 
 		std::ostringstream ossb;
-		ossb << "showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossb << "showcase2b_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		imgb.write( ossb.str() );
 
 		r1.translate( mul*20,0);

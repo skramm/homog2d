@@ -2,7 +2,7 @@
 \file
 \brief Generates two moving objects and the common bounding box
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -37,7 +37,7 @@ int main( int, const char** )
 		auto bcir_d = Hdraw * bcir;
 		auto cbb_d  = Hdraw * cbb;
 
-		Image<cv::Mat> ima( 250, 200 );
+		Image<img::SvgImage> ima( 250, 200 );
 
 		obj1_d.draw( ima, DrawParams().setColor(250,0,0) );
 		obj2_d.draw( ima, DrawParams().setColor(0,0,250) );
@@ -49,7 +49,7 @@ int main( int, const char** )
 		bb.getBoundingCircle().draw( ima, DrawParams().setColor(50,50,125)  );
 
 		std::ostringstream ossa;
-		ossa << "showcase4a_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase4a_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		ima.write( ossa.str() );
 	}
 }

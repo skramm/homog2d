@@ -3,7 +3,6 @@
 \brief Generates a circle from 2/3 points
 */
 
-#define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -42,7 +41,7 @@ int main( int, const char** )
 		auto cir2d = Hdraw * cir2;
 		auto segd  = Hdraw * seg;
 
-		Image<cv::Mat> im1( 250, 200 );
+		Image<img::SvgImage> im1( 250, 200 );
 
 		auto dpinter= DrawParams().setPointStyle( PtStyle::Diam ).setColor( 20,250,20 );
 		auto int1 = cir1.intersects( seg );
@@ -62,7 +61,7 @@ int main( int, const char** )
 		cir2d.draw( im1, DrawParams().setColor(0,0,250) );
 
 		std::ostringstream ossa;
-		ossa << "showcase6_" << std::setfill('0') << std::setw(2) << i << ".png";
+		ossa << "showcase6_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im1.write( ossa.str() );
 	}
 }

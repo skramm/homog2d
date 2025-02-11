@@ -2,7 +2,7 @@
 \file
 \brief Generates rotating point and draw the orthogonal segment to a line
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -30,7 +30,7 @@ int main( int, const char** )
 		Segment seg2( -.9, +1.4, +.45, +1.0 );
 		auto seg2_d = Hdraw * seg2;
 
-		img::Image<cv::Mat> im( 250, 200 );
+		img::Image<img::SvgImage> im( 250, 200 );
 		pt_d.draw(   im, img::DrawParams().setColor(250,0,0) );
 		li_d.draw(   im, img::DrawParams().setColor(0,250,0) );
 		seg2_d.draw( im, img::DrawParams().setColor(0,250,0) );
@@ -58,7 +58,7 @@ int main( int, const char** )
 		}
 
 		std::ostringstream oss;
-		oss << "showcase8_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase8_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

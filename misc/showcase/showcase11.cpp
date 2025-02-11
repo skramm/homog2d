@@ -2,7 +2,7 @@
 \file
 \brief Generates a moving segment, its supporting line, and its two parallel segments
 */
-#define HOMOG2D_USE_OPENCV
+
 #include "../../homog2d.hpp"
 
 using namespace h2d;
@@ -34,7 +34,7 @@ int main( int, const char** )
 		Segment s( x1, y1, x2, y2 );
 		auto bis = s.getBisector();
 
-		img::Image<cv::Mat> im( 280, 250 );
+		img::Image<img::SvgImage> im( 280, 250 );
 		s.getLine().draw( im, img::DrawParams().setColor(200,200,200) );
 		s.draw( im, img::DrawParams().setColor(250,25,0) );
 		auto psegs = s.getParallelSegs( 35 );
@@ -42,7 +42,7 @@ int main( int, const char** )
 		draw( im, psegs.second, img::DrawParams().setColor(50,150,0) );
 		bis.draw( im, img::DrawParams().setColor(0,50,250) );
 		std::ostringstream ossa;
-		ossa << "showcase11_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		ossa << "showcase11_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( ossa.str() );
 	}
 }

@@ -2,7 +2,7 @@
 \file
 \brief Generates two moving circles and the tangential segments
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -29,7 +29,7 @@ int main( int, const char** )
 
 		Circle cir2( Point2d(x0+x1, y0+y1), rad );
 
-		Image<cv::Mat> im( 250, 220 );
+		Image<img::SvgImage> im( 250, 220 );
 		auto seg = getSegment( cir1, cir2 ); //.draw( im, DrawParams().setColor(150,150,0) );
 		seg.draw( im, DrawParams().setColor(150,150,0) );
 
@@ -46,7 +46,7 @@ int main( int, const char** )
 		draw( im, segs.first,  DrawParams().setColor(250,250,0) );
 		draw( im, segs.second, DrawParams().setColor(0,250,250) );
 		std::ostringstream oss;
-		oss << "showcase9_" << std::setfill('0') << std::setw(2) <<i << ".png";
+		oss << "showcase9_" << std::setfill('0') << std::setw(2) <<i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -2,7 +2,7 @@
 \file
 \brief random points and a moving point, draw the nearest/farthest point segment
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -29,7 +29,7 @@ int main( int, const char** )
 
 	for( int i=0; i<nbim; i++ )
 	{
-		img::Image<cv::Mat> im( cmax+30, cmax+30 );
+		img::Image<img::SvgImage> im( cmax+30, cmax+30 );
 
 
 		draw( im, vec );
@@ -45,7 +45,7 @@ int main( int, const char** )
 		Segment(vec[pidx.second], pt).draw( im, img::DrawParams().setColor( 0,250,0) );
 
 		std::ostringstream oss;
-		oss << "showcase15_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase15_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }
