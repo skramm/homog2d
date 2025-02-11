@@ -415,22 +415,23 @@ SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/sho
 
 # compile program that will generate the set of png files
 BUILD/showcase/bin/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
-	@mkdir -p BUILD/showcase/
+	@mkdir -p BUILD/showcase/svg
 	@mkdir -p BUILD/showcase/gif
 	@mkdir -p BUILD/showcase/bin
 	@echo " -Building program $@"
-	@$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -o $@ $< $$(pkg-config --libs opencv4)
+	@$(CXX) $(CXXFLAGS) -o $@ $<
 
-# build png files by running program
-BUILD/showcase/%_00.png: BUILD/showcase/bin/%
+
+# build svg files by running program
+BUILD/showcase/svg/%_00.svg: BUILD/showcase/bin/%
 	@echo " -Running program $< to generate images"
-	@cd BUILD/showcase/; bin/$(notdir $<)
+	@cd BUILD/showcase/svg; ../bin/$(notdir $<)
 
 BUILD/showcase/gif/showcase%.gif: BUILD/showcase/showcase%.gif
 	@mv $< $@
 
 # build final gif by running script
-BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
+BUILD/showcase/showcase%.gif: BUILD/showcase/svg/showcase%_00.svg
 	@echo " -Generating gif $@ from images"
 	@b=$(notdir $(basename $@)); \
 	a=$$(grep $$b misc/showcase/gif_duration.data); arr=($$a); \

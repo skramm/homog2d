@@ -29,9 +29,9 @@ then
 	convert -delay $d -loop 0 BUILD/showcase/${fn}_*.png $1
 fi
 
-if [ -e BUILD/showcase/${fn}_00.svg ]
+if [ -e BUILD/showcase/svg/${fn}_00.svg ]
 then
-	convert -delay $d -loop 0 BUILD/showcase/${fn}_*.svg $1
+	convert -delay $d -loop 0 BUILD/showcase/svg/${fn}_*.svg $1
 fi
 
 #mv BUILD/showcase/${fn}.gif BUILD/showcase/gif/
