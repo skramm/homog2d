@@ -2081,6 +2081,7 @@ void action_SegSide( void* param )
 
 	const auto& pts  = pl.getPts();
 	const auto& segs = pl.getSegs();
+	OSegment seg( pts[1], pts[0] );
 
 			auto s1 = segs[0];
 			auto s2 = segs[1];
@@ -2091,8 +2092,6 @@ void action_SegSide( void* param )
 		std::cout << "l1=" << s1.getLine() << '\n';
 		std::cout << "l2=" << s2.getLine() << '\n';
 
-draw( data.img, s1, img::DrawParams().setColor(250,0,0) );
-draw( data.img, s2, img::DrawParams().setColor(0,0,250) );
 
 			Line2d_<HOMOG2D_INUMTYPE> li0;
 			HOMOG2D_INUMTYPE angle;
@@ -2109,11 +2108,20 @@ draw( data.img, s2, img::DrawParams().setColor(0,0,250) );
 				std::cout << "angle s2/s1=" << angle*180./M_PI << '\n';
 				angle = -angle;
 			}
+			draw( data.img, li0 );
 
-			auto l1a = l1.get();
+draw( data.img, seg, img::DrawParams().setColor(250,0,0) );
+drawText( data.img, "s1", s1.getCenter() );
+draw( data.img, s2, img::DrawParams().setColor(0,0,250) );
+
+
+			if( seg.getPointSide( pts[2] ) == PointSide::Left )
+				angle = -angle;
+/*			auto l1a = l1.get();
 			auto l2a = l2.get();
 			if( l1a[1]<0 ) //&& l2a[1]>0  )
 				angle = -angle;
+*/
 
 			l1 = li0.getRotatedLine( pts[1], angle/2. );
 //			auto lo = l1.getOrthogonalLine( pts[1] );
