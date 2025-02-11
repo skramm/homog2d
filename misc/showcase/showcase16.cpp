@@ -2,7 +2,7 @@
 \file
 \brief a point and a moving line, show side of point relatively to line
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

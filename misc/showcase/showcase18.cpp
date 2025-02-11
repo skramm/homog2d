@@ -3,7 +3,6 @@
 \brief Generates a parallelogram from 2 fixed point and a rotating one.
 */
 
-#define HOMOG2D_USE_OPENCV
 #include "../../homog2d.hpp"
 
 using namespace h2d;

@@ -3,7 +3,6 @@
 \brief shows Segment isInside() FRect , Circle, CPolyline
 */
 
-#define HOMOG2D_USE_OPENCV
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

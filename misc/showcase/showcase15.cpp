@@ -2,7 +2,7 @@
 \file
 \brief random points and a moving point, draw the nearest/farthest point segment
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

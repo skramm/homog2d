@@ -3,7 +3,6 @@
 \brief offset polygon
 */
 
-#define HOMOG2D_USE_OPENCV
 #include "../../homog2d.hpp"
 
 using namespace h2d;

@@ -2,7 +2,7 @@
 \file
 \brief Generates two moving objects and the common bounding box
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

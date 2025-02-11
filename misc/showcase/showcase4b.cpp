@@ -2,7 +2,7 @@
 \file
 \brief Generates rotating rectangle and its bounding circle
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

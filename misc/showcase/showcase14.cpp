@@ -2,7 +2,7 @@
 \file
 \brief Generates moving polygons and shows their intersection points
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

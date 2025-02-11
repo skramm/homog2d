@@ -2,7 +2,7 @@
 \file
 \brief Generates moving ellipse and bounding boxes
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 //#define HOMOG2D_NOCHECKS
 #include "../../homog2d.hpp"

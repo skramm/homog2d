@@ -2,7 +2,7 @@
 \file
 \brief demo of full steps rotating of a Polyline (2022-11-06: WIP !!)
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

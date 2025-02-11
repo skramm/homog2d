@@ -3,7 +3,7 @@
 \brief Three circles, one fixed and two whose center rotates. Fixed radius.
 It shows the line formed by intersections points. The three lines intersect at same point (black).
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

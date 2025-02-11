@@ -2,7 +2,7 @@
 \file
 \brief Generates two moving circles and the tangential segments
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

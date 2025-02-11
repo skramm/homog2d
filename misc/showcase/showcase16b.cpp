@@ -3,7 +3,7 @@
 \brief random point and a moving vector, show side of point
 (WIP !!!)
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 

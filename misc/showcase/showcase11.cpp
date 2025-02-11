@@ -2,7 +2,7 @@
 \file
 \brief Generates a moving segment, its supporting line, and its two parallel segments
 */
-#define HOMOG2D_USE_OPENCV
+
 #include "../../homog2d.hpp"
 
 using namespace h2d;

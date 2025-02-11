@@ -5,7 +5,6 @@
 \todo 20240421 switch all showcases to Svg images, much nicer!
 */
 
-#define HOMOG2D_USE_OPENCV
 #include "../../homog2d.hpp"
 
 using namespace h2d;
