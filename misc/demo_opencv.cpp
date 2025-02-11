@@ -2074,9 +2074,55 @@ void action_SegSide( void* param )
 	auto& data = *reinterpret_cast<Param_SegSide*>(param);
 	data.clearImage();
 
-	OPolyline opol(  std::vector<Point2d>{
+	OPolyline pl(  std::vector<Point2d>{
 		data.vpt[0], data.vpt[1], data.vpt[2] }); //, data.vpt[3] );
-		std::cout << "size=" << opol.size() << '\n';
+		std::cout << "size=" << pl.size() << '\n';
+
+
+	const auto& pts  = pl.getPts();
+	const auto& segs = pl.getSegs();
+
+			auto s1 = segs[0];
+			auto s2 = segs[1];
+
+		auto l1 = s1.getLine();
+		auto l2 = s2.getLine();
+
+		std::cout << "l1=" << s1.getLine() << '\n';
+		std::cout << "l2=" << s2.getLine() << '\n';
+
+draw( data.img, s1, img::DrawParams().setColor(250,0,0) );
+draw( data.img, s2, img::DrawParams().setColor(0,0,250) );
+
+			Line2d_<HOMOG2D_INUMTYPE> li0;
+			HOMOG2D_INUMTYPE angle;
+			if( s1.length()>s2.length() )
+			{
+				li0 = s1.getLine();
+				angle = li0.getAngle( s2 );
+				std::cout << "angle s1/s2=" << angle*180./M_PI << '\n';
+			}
+			else
+			{
+				li0 = s2.getLine();
+				angle = li0.getAngle( s1 );
+				std::cout << "angle s2/s1=" << angle*180./M_PI << '\n';
+				angle = -angle;
+			}
+
+			auto l1a = l1.get();
+			auto l2a = l2.get();
+			if( l1a[1]<0 ) //&& l2a[1]>0  )
+				angle = -angle;
+
+			l1 = li0.getRotatedLine( pts[1], angle/2. );
+//			auto lo = l1.getOrthogonalLine( pts[1] );
+			draw( data.img, l1, img::DrawParams().setColor(0,250,0) );
+
+			// which one lies between the two points?
+			auto li_opp = pts[0] * pts[2]; // opposite line
+			draw( data.img, li_opp );
+
 
 /*	OSegment s1( data.vpt[0], data.vpt[1] );
 	OSegment s2( data.vpt[2], data.vpt[3] );
@@ -2089,10 +2135,14 @@ void action_SegSide( void* param )
 
 	auto a = s1.getAngle( s2 );
 	std::cout << "angle1=" << 180. / M_PI * a << '\n';*/
-	auto midlines = getBisectorLines( opol );
-	opol.draw( data.img );
+
+
+
+/*	auto midlines = getBisectorLines( opol );
+	pl.draw( data.img );
 	midlines.first.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	midlines.second.draw( data.img, img::DrawParams().setColor(0,0,250) );
+*/
 	data.showImage();
 }
 
