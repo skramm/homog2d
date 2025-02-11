@@ -2073,7 +2073,12 @@ void action_SegSide( void* param )
 {
 	auto& data = *reinterpret_cast<Param_SegSide*>(param);
 	data.clearImage();
-	OSegment s1( data.vpt[0], data.vpt[1] );
+
+	OPolyline opol(  std::vector<Point2d>{
+		data.vpt[0], data.vpt[1], data.vpt[2] }); //, data.vpt[3] );
+		std::cout << "size=" << opol.size() << '\n';
+
+/*	OSegment s1( data.vpt[0], data.vpt[1] );
 	OSegment s2( data.vpt[2], data.vpt[3] );
 
 	s1.getLine().draw( data.img, img::DrawParams().setColor(200,200,200) );
@@ -2083,7 +2088,11 @@ void action_SegSide( void* param )
 	s2.draw( data.img, img::DrawParams().setColor(200,0,0) );
 
 	auto a = s1.getAngle( s2 );
-	std::cout << "angle1=" << 180. / M_PI * a << '\n';
+	std::cout << "angle1=" << 180. / M_PI * a << '\n';*/
+	auto midlines = getBisectorLines( opol );
+	opol.draw( data.img );
+	midlines.first.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	midlines.second.draw( data.img, img::DrawParams().setColor(0,0,250) );
 	data.showImage();
 }
 

@@ -10053,6 +10053,55 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
+template<typename PLT,typename FPT>
+std::pair<Line2d_<HOMOG2D_INUMTYPE>,Line2d_<HOMOG2D_INUMTYPE>>
+getBisectorLines( const base::PolylineBase<PLT,FPT>& pl )
+{
+	std::cout << "SIZE=" << pl.size() << '\n';
+	if( pl.size() < 3 )
+	{
+		; //HOMOG2D_THROW_ERROR_1( "unable, minimum size is 3, currently=" << pl.size() );
+	}
+	const auto& pts  = pl.getPts();
+	const auto& segs = pl.getSegs();
+	if constexpr ( std::is_same_v<PLT,typ::IsOpen> )
+	{
+		if( pl.size() == 3 ) // simplest case
+		{
+			auto s1 = segs[0];
+			auto s2 = segs[1];
+
+			Line2d_<HOMOG2D_INUMTYPE> li0;
+			HOMOG2D_INUMTYPE angle;
+			if( s1.length()>s2.length() )
+			{
+				li0 = s1.getLine();
+				angle = li0.getAngle( s2 );
+			}
+			else
+			{
+				li0 = s2.getLine();
+				angle = li0.getAngle( s1 );
+			}
+			auto l1 = li0.getRotatedLine( pts[1], angle/2. );
+			auto l2 = l1.getOrthogonalLine( pts[1] );
+
+			// which one lies between the two points?
+			auto li_opp = pts[0] * pts[2]; // opposite line
+			if( l1.intersects(li_opp)() )
+				return std::make_pair(l1,l2);
+			else
+				return std::make_pair(l2,l1);
+
+		}
+		else
+		{
+			;
+		}	 // TODO
+	}
+}
+
+
 /// Holds free functions returning a pair of points
 namespace ppair {
 
