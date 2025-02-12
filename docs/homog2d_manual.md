@@ -166,6 +166,8 @@ This is illustrated on this figure, showing a rotating point and the computed or
 
 ![showcase8](showcase/showcase8.gif)
 
+Upon return, the first point will hold the intersection point (line and segment supporting line), and the second will hold the given point.
+
 
 ### 2.2 - Get point(s) lying on line
 
