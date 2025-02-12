@@ -1967,12 +1967,12 @@ struct Param_PO : Data
 	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420}, {150,250} };
-//		cv::createTrackbar( "dist", win1, &_offsetDist, 50, on_trackbar );
 	}
 	int _offsetDist = 20;
 	CPolyline _cpoly_off;
 	bool _showSegs = true;
 	bool _side     = true;
+	bool _drawBisectorLines = false;
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -1993,7 +1993,6 @@ void action_PO( void* param )
 
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
-//	data._cpoly.p_normalizePoly() ;
 
 	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
 
@@ -2003,28 +2002,10 @@ void action_PO( void* param )
 		drawText( data.img, std::to_string(idx++), pt );
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
-	draw( data.img, data._cpoly_off );
+	draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
 
-	for( size_t i=0; i<pts.size(); i++ )
-	{
-//		auto i_next = (i!=size()-1 ? i+1 : 0         );
-//		auto i_prev = (i!=0        ? i-1 : size()-1 );
-//		size_t i = 0;
-		auto seg_next = data._cpoly.getSegment( i );
-		auto seg_prev = data._cpoly.getSegment( i!=0 ? i-1 : pts.size()-1 );
-		auto li_n = getLine( seg_next );
-		auto li_p = getLine( seg_prev );
-		if( !li_n.isParallelTo(li_p) )
-		{
-//			auto pt_intersect = li_n * li_p;
-			auto angle = getAngle( li_n, li_p);
-			std::cout << "pt " << i << " angle=" << angle * 180./M_PI << '\n';
-			auto li_mid1 = li_n.getRotatedLine( pts[i], angle/2. );
-			auto li_mid2 = li_p.getRotatedLine( pts[i], angle/2. );
-			data.img.draw( li_mid1, img::DrawParams().setColor(150,0,250) );
-			data.img.draw( li_mid2, img::DrawParams().setColor(0,150,250) );
-		}
-	}
+	if( data._drawBisectorLines )
+		draw( data.img, data._cpoly.getBisectorLines() );
 
 	if( data._cpoly.isSimple() )
 	{
@@ -2055,9 +2036,59 @@ void demo_PO( int demidx )
 	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
 	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
 	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );
+	kbloop.start( data );
+}
+
+
+//------------------------------------------------------------------
+struct Param_SegSide : Data
+{
+	explicit Param_SegSide( int demidx, std::string title ): Data( demidx, title )
+	{
+	}
+	bool _closedPol = false;
+};
+
+void action_SegSide( void* param )
+{
+	auto& data = *reinterpret_cast<Param_SegSide*>(param);
+	data.clearImage();
+
+	OPolyline opl( data.vpt );
+	CPolyline cpl( data.vpt );
+
+	auto col = img::DrawParams().setColor(200,0,0);
+
+	decltype( getBisectorLines( opl ) ) lines;
+	if( data._closedPol )
+	{
+		cpl.draw( data.img, col );
+		lines = getBisectorLines( cpl );
+	}
+	else
+	{
+		opl.draw( data.img, col );
+		lines = getBisectorLines( opl );
+	}
+	draw( data.img, lines, img::DrawParams().setColor(0,200,0) );
+	data.showImage();
+}
+
+void demo_SegSide( int demidx )
+{
+	Param_SegSide data( demidx, "Polyline bisector lines" );
+	std::cout << "Demo " << demidx << ": Polyline bisector lines\n" ;
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_SegSide );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._closedPol = !data._closedPol; }, "Toggle open/closed" );
+
+	kbloop.addCommonAction( action_SegSide );
+	action_SegSide( &data );
 	kbloop.start( data );
 }
 
@@ -2087,6 +2118,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
+		demo_SegSide,
 		demo_PO,
 		demo_BB,
 		demo_RCP,

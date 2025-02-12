@@ -149,7 +149,8 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
+	if( err::printWarnings() == true ) \
+		std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -249,16 +250,24 @@ this will enable the counting of errors
 */
 inline size_t& errorCount()
 {
-	static size_t c;
-	return c;
+	static size_t c_err;
+	return c_err;
 }
 
 /// Used in macro HOMOG2D_LOG_WARNING
 inline size_t& warningCount()
 {
-	static size_t c;
-	return c;
+	static size_t c_war;
+	return c_war;
 }
+
+/// User can use this to silence warnings at runtime.
+inline bool& printWarnings()
+{
+	static bool b_war = true;
+	return b_war;
+}
+
 
 } //namespace err
 
@@ -288,7 +297,7 @@ struct T_Line     {};
 struct T_Circle   {};
 struct T_FRect    {};
 struct T_Segment  {};
-struct T_OSeg   {};
+struct T_OSeg     {};
 struct T_OPol     {};
 struct T_CPol     {};
 struct T_Ellipse  {};
@@ -1237,12 +1246,18 @@ template<typename T1,typename T2>
 auto
 operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& )
 -> std::ostream&;
-}
+} // namespace base
 
 // forward declaration, related to https://github.com/skramm/homog2d/issues/2
 template<typename T,typename U>
 Line2d_<T>
 operator * ( const Homogr_<U>&, const Line2d_<T>& );
+
+// forward declaration
+template<typename PLT,typename FPT>
+std::vector<Line2d_<HOMOG2D_INUMTYPE>>
+getBisectorLines( const base::PolylineBase<PLT,FPT>& pl );
+
 
 namespace detail {
 
@@ -3754,7 +3769,8 @@ class LPBase: public detail::Common<FPT>
 public:
 	using FType = FPT;
 // The following line enables defining the SType based on how the class is instanciated: Line or Point
-	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
+	using SType = LP;
+//	using SType = std::conditional<std::is_same_v<LP,typ::IsPoint>,typ::T_Point,typ::T_Line>;
 	using detail::Common<FPT>::isInside;
 
 private:
@@ -4136,16 +4152,15 @@ public:
 	}
 
 	/// Returns the segment from the point (not on line) to the line, shortest path
-	Segment_<FPT>
-	getOrthogSegment( const Point2d_<FPT>& pt ) const
-	{
-		return impl_getOrthogSegment( pt, detail::BaseHelper<LP>() );
-	}
+	template<typename FPT2>
+	OSegment_<FPT>
+	getOrthogSegment( const Point2d_<FPT2>& pt ) const;
 
 	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
 	/// \todo clarify orientation: on which side will that line appear?
+	template<typename FPT2>
 	Line2d_<FPT>
-	getParallelLine( const Point2d_<FPT>& pt ) const
+	getParallelLine( const Point2d_<FPT2>& pt ) const
 	{
 		return impl_getParallelLine( pt, detail::BaseHelper<LP>() );
 	}
@@ -4253,47 +4268,42 @@ public:
 	{
 		return impl_isParallelTo( seg.getLine(), detail::BaseHelper<LP>() );
 	}
-/// Returns angle in rad. between the lines. \sa h2d::getAngle()
-/**
-Please check out warning described in impl_getAngle()
-*/
+
 	template<typename T,typename FPT2>
-	HOMOG2D_INUMTYPE getAngle( const LPBase<T,FPT2>& other ) const
-	{
-		return impl_getAngle( other, detail::BaseHelper<T>() );
-	}
+	HOMOG2D_INUMTYPE getAngle( const LPBase<T,FPT2>& other ) const;
 
 /// Returns angle in rad. between line and segment \c seg. \sa  h2d::getAngle()
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
+	template<typename T,typename FPT2>
+	HOMOG2D_INUMTYPE getAngle( const base::SegVec<T,FPT2>& seg ) const
 	{
-		return impl_getAngle( seg.getLine(), detail::BaseHelper<LP>() );
+		return getAngle( seg.getLine() );
 	}
 
 /// Returns true if point is at infinity (third value less than thr::nullDenom() )
 	bool isInf() const
 	{
-		return impl_isInf( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+			return false;
+		else
+			return homog2d_abs( _v[2] ) < thr::nullDenom();
 	}
 
+/// A point has a null length, a line has an infinite length
 	HOMOG2D_INUMTYPE length() const
 	{
-		return impl_length( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+		{
+			HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
+		}
+		else
+			return 0.;
 	}
-/// Neither lines nor points have an area
-	HOMOG2D_INUMTYPE area()   const { return 0.; }
 
-private:
-/// A point has a null length
-	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename typ::IsPoint>& ) const
+/// Neither lines nor points have an area
+	constexpr HOMOG2D_INUMTYPE area() const
 	{ return 0.; }
 
-/// A line has an infinite length
-	HOMOG2D_INUMTYPE impl_length( const detail::BaseHelper<typename typ::IsLine>& ) const
-	{
-		HOMOG2D_THROW_ERROR_1( "unable, a line has an infinite length" );
-	}
-
+private:
 	HOMOG2D_INUMTYPE impl_getX( const detail::BaseHelper<typename typ::IsPoint>& ) const
 	{
 		return static_cast<HOMOG2D_INUMTYPE>(_v[0])/_v[2];
@@ -4359,18 +4369,6 @@ private:
 	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 	template<typename FPT2>
 	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-
-	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-
-	constexpr bool impl_isInf( const detail::BaseHelper<typename typ::IsLine>& ) const
-	{
-		return false;
-	}
-	bool impl_isInf( const detail::BaseHelper<typ::IsPoint>& ) const
-	{
-		return homog2d_abs( _v[2] ) < thr::nullDenom();
-	}
 
 	template<typename FPT2>
 	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
@@ -4630,9 +4628,6 @@ private:
 	Line2d_<FPT>           impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typ::IsLine>&  ) const;
 	template<typename FPT2,typename T>
 	constexpr Line2d_<FPT> impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typ::IsPoint>& ) const;
-
-	Segment_<FPT>           impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
-	constexpr Segment_<FPT> impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
 	Line2d_<FPT>           impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
@@ -4981,7 +4976,8 @@ class SegVec: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
-	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
+//	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
+	using SType = SV; //std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class SegVec;
@@ -5042,25 +5038,21 @@ Please note that the source (points) floating-point type is lost
 
 /// Copy-Constructor, behavior depends on concrete types
 /**
-TODO:
 - OSegment(OSegment): OK
 - Segment(OSegment): OK, but loose orientation
 - Segment(Segment):  OK
-- OSegment(Segment): throws, because orientation would be arbitrary
+- OSegment(Segment): No build, because orientation would be arbitrary
 */
 	template<typename SV2,typename FPT2>
 	SegVec( const SegVec<SV2,FPT2>& other )
 		: _ptS1(other._ptS1), _ptS2(other._ptS2)
 	{
-//		if constexpr( std::is_same_v<SV2,typ::IsSegment> && std::is_same_v<SV,typ::IsOSeg> )
-//			HOMOG2D_THROW_ERROR_1( "Cannot build a OSegment from a Segment" );
 		static_assert(
 			( std::is_same_v<SV,typ::IsSegment>
 			||
 			( std::is_same_v<SV,typ::IsOSeg> && std::is_same_v<SV2,typ::IsOSeg> ) ),
 			"Cannot build a OSegment from a Segment"
 		);
-
 		if constexpr( std::is_same_v<SV2,typ::IsSegment> )
 			priv::fix_order( _ptS1, _ptS2 );
 	}
@@ -5069,6 +5061,14 @@ TODO:
 
 /// \name Modifying functions
 ///@{
+
+/// Reverse oriented segment
+	SegVec<SV,FPT> operator - ()
+	{
+		static_assert( !std::is_same_v<SV,typ::IsSegment>, "cannot reverse non-oriented segment" );
+		std::swap( _ptS1, _ptS2 );
+		return *this;
+	}
 
 /// Setter
 	template<typename FP1,typename FP2>
@@ -5169,15 +5169,52 @@ TODO:
 		return 0.;
 	}
 
-/// Get angle between segment and other segment/line
-/**
-This will call the line angle function, thus the returned value will be
-in the range \f$ [0,\pi/2] \f$
-*/
-	template<typename U>
-	HOMOG2D_INUMTYPE getAngle( const U& other ) const
+/// Get vector of Oriented segment as a pair of values
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+	getVector() const
 	{
-		return other.getAngle( this->getLine() );
+		static_assert( std::is_same_v<SV,typ::IsOSeg>, "cannot return vector of unoriented segment" );
+		return std::make_pair(
+			_ptS2.getX() - _ptS1.getX(),
+			_ptS2.getY() - _ptS1.getY()
+		);
+	}
+
+/// Get angle between segment and other segment
+/**
+- if either the object or the argument is not oriented, then this will return the line angles,
+in the range [0:+PI]
+- if both are oriented, will return a value in the range [-PI:+PI]
+*/
+	template<typename SV2,typename FPT2>
+	HOMOG2D_INUMTYPE
+	getAngle( const SegVec<SV2,FPT2>& other ) const
+	{
+// if one of the two is a (unoriented) segment, then we just return the lines angle
+		if constexpr( std::is_same_v<SV,typ::IsSegment> || std::is_same_v<SV2,typ::IsSegment> )
+			return other.getLine().getAngle( this->getLine() );
+		else
+		{                                          // both are oriented segments
+			auto v1 = this->getVector();
+			auto v2 = other.getVector();
+			auto dx1 = v1.first;
+			auto dx2 = v2.first;
+			auto dy1 = v1.second;
+			auto dy2 = v2.second;
+			return std::atan2(
+				dx1 * dy2 - dy1 * dx2,
+				dx1 * dx2 + dy1 * dy2
+			);
+		}
+	}
+
+/// Get angle between segment and line
+	template<typename LP,typename FPT2>
+	HOMOG2D_INUMTYPE
+	getAngle( const base::LPBase<LP,FPT2>& other ) const
+	{
+		static_assert( std::is_same_v<LP,typ::IsLine>, "cannot compute angle between segment and point" );
+		return getLine().getAngle( other );
 	}
 ///@}
 
@@ -6769,6 +6806,12 @@ public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
 	getOffsetPoly( T value, OffsetPoly params=OffsetPoly{} ) const;
+
+	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
+	getBisectorLines() const
+	{
+		 return h2d::getBisectorLines( *this );
+	}
 
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
@@ -8962,11 +9005,18 @@ LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const de
 	return H * *this;
 }
 
-/// Returns the shortest segment that joins a point and a line
+/// Returns the shortest (oriented) segment that joins a point and a line
+/**
+Upon return, the first point will hold the intersection point (projection of point on line),
+and the second will hold the given point.
+*/
 template<typename LP,typename FPT>
-Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::BaseHelper<typename typ::IsLine>& ) const
+template<typename FPT2>
+OSegment_<FPT>
+LPBase<LP,FPT>::getOrthogSegment( const Point2d_<FPT2>& pt ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsPoint>, "Invalid call, cannot compute orthogonal segment between two points" );
+
 	Line2d_<HOMOG2D_INUMTYPE> src = *this;  // copy to highest precision
 	auto dist = src.distTo(pt);
 #ifndef HOMOG2D_NOCHECKS
@@ -8982,16 +9032,8 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::Ba
 
 	auto oline = pline->getOrthogonalLine( pt );
 	auto p2 = *this * oline;
-	return Segment_<FPT>( pt, p2 );
+	return OSegment_<FPT>( p2, pt );
 }
-
-template<typename LP,typename FPT>
-constexpr Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid call" );
-}
-
 
 //------------------------------------------------------------------
 /// Illegal instanciation
@@ -9257,21 +9299,33 @@ LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::Bas
 	return seg.distTo( *this );
 }
 
-
-
 } // namespace base
 
 //------------------------------------------------------------------
-/// Free function, returns the angle (in Rad) between two lines/ or segments
+/// Free function, returns angle between two segments/lines
 /// \sa Segment_::getAngle()
 /// \sa Line2d_::getAngle()
 template<typename T1,typename T2>
 HOMOG2D_INUMTYPE
-getAngle( const T1& li1, const T2& li2 )
+getAngle( const T1& t1, const T2& t2 )
 {
-	return li1.getAngle( li2 );
+	static_assert(
+		(
+			   std::is_same_v<typename T1::SType,typ::IsLine>
+			|| std::is_same_v<typename T1::SType,typ::IsSegment>
+			|| std::is_same_v<typename T1::SType,typ::IsOSeg>
+		) &&
+		(
+			   std::is_same_v<typename T2::SType,typ::IsLine>
+			|| std::is_same_v<typename T2::SType,typ::IsSegment>
+			|| std::is_same_v<typename T2::SType,typ::IsOSeg>
+		),
+		"Both types must be either a Line or a Segment"
+	);
+	return t1.getAngle( t2 );
 }
 
+//------------------------------------------------------------------
 namespace base {
 
 template<typename LP, typename FPT>
@@ -9316,9 +9370,12 @@ This is logged on \c std::cerr so that the user may take that into consideration
 \todo more investigation needed ! : what are the exact situation that will lead to this event?
 */
 template<typename LP, typename FPT>
+template<typename LP2, typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getAngle( const LPBase<LP2,FPT2>& li ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsPoint>, "cannot get angle of a point" );
+
 	HOMOG2D_INUMTYPE l1_a = _v[0];
 	HOMOG2D_INUMTYPE l1_b = _v[1];
 	HOMOG2D_INUMTYPE l2_a = li._v[0];
@@ -9340,15 +9397,6 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 	}
 	return homog2d_acos( fres );
 }
-
-template<typename LP, typename FPT>
-constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
-	return 0.; // to avoid a warning
-}
-
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)
@@ -10040,6 +10088,55 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
+/// Returns bisector lines of a Polyline
+/**
+Size of vector will be:
+- equal to size() of polyline if closed
+- equal to size()-2 of polyline if open
+
+\warning:
+- if open: the FIRST line (index 0) will correspond to SECOND point of the polyline
+*/
+template<typename PLT,typename FPT>
+std::vector<Line2d_<HOMOG2D_INUMTYPE>>
+getBisectorLines( const base::PolylineBase<PLT,FPT>& pl )
+{
+	if( pl.size() < 3 )
+	{
+		HOMOG2D_THROW_ERROR_1( "unable, minimum size is 3, currently=" << pl.size() );
+	}
+	const auto& pts  = pl.getPts();
+	std::vector<Line2d_<HOMOG2D_INUMTYPE>> out;
+
+	if constexpr ( std::is_same_v<PLT,typ::IsOpen> )
+	{
+		out.reserve( pl.size()-2 );
+		OSegment_<HOMOG2D_INUMTYPE> seg1( pts[1], pts[0] );
+		for( size_t i=0; i<pl.size()-2; i++ )
+		{
+			OSegment_<HOMOG2D_INUMTYPE> seg2( pts[i+1], pts[i+2] );
+			auto angle = seg1.getAngle( seg2 );
+			out.emplace_back( seg1.getLine().getRotatedLine( pts[i+1], angle/2. ) );
+			seg1 = -seg2;
+		}
+	}
+	else
+	{
+		out.reserve( pl.size() );
+		OSegment_<HOMOG2D_INUMTYPE> seg1( pts[0], pts[pl.size()-1] );
+		for( size_t i=0; i<pl.size(); i++ )
+		{
+			auto next = ( i != pl.size()-1 ? i+1 : 0 );
+			OSegment_<HOMOG2D_INUMTYPE> seg2( pts[i], pts[next] );
+			auto angle = seg1.getAngle( seg2 );
+			out.emplace_back( seg1.getLine().getRotatedLine( pts[i], angle/2. ) );
+			seg1 = -seg2;
+		}
+	}
+	return out;
+}
+
+
 /// Holds free functions returning a pair of points
 namespace ppair {
 
@@ -10494,42 +10591,6 @@ getBB( const T1& elem1, const T2& elem2 )
 	return out;
 }
 
-#if 0
-/// Overload 2/3. Called if 2 polyline objects
-/// REMOVE: it works only if BOTH are polyline, if we have, say a polyline and a point, it will fail
-template<
-	typename T1,
-	typename T2,
-	typename PLT1,
-	typename PLT2,
-	typename std::enable_if<
-		(
-			std::is_same<T1,base::PolylineBase<typename T1::FType, PLT1>>::value
-			|| std::is_same<T2,base::PolylineBase<typename T2::FType, PLT2>>::value
-		)
-		,T1
-	>::type* = nullptr
->
-auto
-getBB( const T1& p1, const T2& p2 )
-{
-	HOMOG2D_START;
-
-	if( p1.size() == 0 && p2.size() == 0 )
-		HOMOG2D_THROW_ERROR_1( "unable to compute bounding box, both polylines are empty" );
-
-	if( p1.size() != 0 &&  p2.size() == 0 )
-		return FRect_<typename T1::FType>( ppair::getPointPair( p1 ) );
-	if( p1.size() == 0 &&  p2.size() != 0 )
-		return FRect_<typename T1::FType>( ppair::getPointPair( p2 ) );
-
-	return getBB(
-			ppair::getPointPair( p1 ),
-			ppair::getPointPair( p2 )
-	);
-}
-#endif
-
 //------------------------------------------------------------------
 /// Overload 3/3. Called if one of the args is a Line2d (=> no build!)
 template<
@@ -10649,7 +10710,6 @@ getClosestPoints(
 				out.store( currentDist, i, j );
 		}
 	}
-//	out.print();
 	return out;
 }
 
