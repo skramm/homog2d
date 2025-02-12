@@ -3976,14 +3976,14 @@ Thus, we need the second one.
 	template<typename BFPT> // Boost Floating Point Type
 	LPBase( const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt )
 	{
-		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
+		init_BoostGeomPoint( pt );
 	}
 
 /// Constructor from boost::geometry second point type
 	template<typename BFPT> // Boost Floating Point Type
 	LPBase( const boost::geometry::model::d2::point_xy<BFPT>& pt )
 	{
-		impl_init_BoostGeomPoint( pt, detail::BaseHelper<LP>() );
+		init_BoostGeomPoint( pt );
 	}
 
 /// Set from boost::geometry point type
@@ -4145,11 +4145,7 @@ public:
 	/// Returns a line rotated at point \c pt with angle \c theta
 	template<typename FPT2, typename T>
 	Line2d_<FPT>
-	getRotatedLine( const Point2d_<FPT2>& pt, T theta ) const
-	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
-		return impl_getRotatedLine( pt, theta, detail::BaseHelper<LP>() );
-	}
+	getRotatedLine( const Point2d_<FPT2>& pt, T theta ) const;
 
 	/// Returns the segment from the point (not on line) to the line, shortest path
 	template<typename FPT2>
@@ -4160,32 +4156,33 @@ public:
 	/// \todo clarify orientation: on which side will that line appear?
 	template<typename FPT2>
 	Line2d_<FPT>
-	getParallelLine( const Point2d_<FPT2>& pt ) const
-	{
-		return impl_getParallelLine( pt, detail::BaseHelper<LP>() );
-	}
+	getParallelLine( const Point2d_<FPT2>& ) const;
 
 	/// Returns the pair of parallel lines at a distance \c dist from line.
 	template<typename T>
 	std::pair<Line2d_<FPT>,Line2d_<FPT>>
-	getParallelLines( T dist ) const
-	{
-		return impl_getParallelLines( dist, detail::BaseHelper<LP>() );
-	}
+	getParallelLines( T dist ) const;
 
 	HOMOG2D_INUMTYPE getX() const { return impl_getX( detail::BaseHelper<LP>() ); }
 	HOMOG2D_INUMTYPE getY() const { return impl_getY( detail::BaseHelper<LP>() ); }
 
-/// Translate Point2d, does nothing for Line2d ( \sa impl_translate() )
+/// Translate Point2d, does nothing for Line2d
 	template<typename T1,typename T2>
 	void translate( T1 dx, T2 dy )
 	{
 		HOMOG2D_CHECK_IS_NUMBER( T1 );
 		HOMOG2D_CHECK_IS_NUMBER( T2 );
-		impl_translate( dx, dy, detail::BaseHelper<LP>() );
+
+		if constexpr( std::is_same_v<LP,typ::IsPoint> )
+		{
+			_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
+			_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
+			_v[2] = 1.;
+			p_normalizePL();
+		}
 	}
 
-/// Translate Point2d, does nothing for Line2d ( \sa impl_translate() )
+/// Translate Point2d, does nothing for Line2d
 	template<typename T1, typename T2>
 	void translate( const std::pair<T1,T2>& pa )
 	{
@@ -4193,11 +4190,12 @@ public:
 	}
 
 /// Move point to other location (same as set(), but this one will be virtual).
-/// Does nothing for lines
+/// Does nothing for lines => NO, FAILS TO BUILD !
 	template<typename T1>
 	void moveTo( const Point2d_<T1>& pt )
 	{
-		impl_moveTo( pt, detail::BaseHelper<LP>() );
+		static_assert( std::is_same_v<LP,typ::IsPoint>, "Invalid: cannot move a line" );
+		*this = pt;
 	}
 
 #ifdef HOMOG2D_ENABLE_VRTP
@@ -4247,26 +4245,19 @@ public:
 	{
 		return impl_distToPoint( pt, detail::BaseHelper<LP>() );
 	}
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE distTo( const Line2d_<FPT2>& li ) const
-	{
-		return impl_distToLine( li, detail::BaseHelper<LP>() );
-	}
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE distTo( const Segment_<FPT2>& seg ) const
-	{
-		return impl_distToSegment( seg, detail::BaseHelper<LP>() );
-	}
 
-	template<typename T,typename FPT2>
-	bool isParallelTo( const LPBase<T,FPT2>& li ) const
-	{
-		return impl_isParallelTo( li, detail::BaseHelper<T>() );
-	}
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Line2d_<FPT2>& ) const;
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE distTo( const Segment_<FPT2>& ) const;
+
+	template<typename FPT2>
+	bool isParallelTo( const Line2d_<FPT2>& ) const;
+
 	template<typename T>
 	bool isParallelTo( const Segment_<T>& seg ) const
 	{
-		return impl_isParallelTo( seg.getLine(), detail::BaseHelper<LP>() );
+		return isParallelTo( seg.getLine() );
 	}
 
 	template<typename T,typename FPT2>
@@ -4330,50 +4321,10 @@ private:
 		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
 	}
 
-	template<typename T1,typename T2>
-	void impl_translate( T1 dx, T2 dy, const detail::BaseHelper<typename typ::IsPoint>& )
-	{
-		_v[0] = static_cast<HOMOG2D_INUMTYPE>(_v[0]) / _v[2] + dx;
-		_v[1] = static_cast<HOMOG2D_INUMTYPE>(_v[1]) / _v[2] + dy;
-		_v[2] = 1.;
-		p_normalizePL();
-	}
-	template<typename T1,typename T2>
-	constexpr void
-	impl_translate( T1, T2, const detail::BaseHelper<typ::IsLine>& )
-	{
-// changed on 20231216: this does now nothing. That way, it can become a virtual function, if needed
-//		static_assert( detail::AlwaysFalse<LP>::value, "Invalid call for lines" );
-	}
-
-	template<typename T1>
-	void impl_moveTo( const Point2d_<T1>& pt,  const detail::BaseHelper<typename typ::IsPoint>& )
-	{
-		*this = pt;
-	}
-	template<typename T1>
-	void impl_moveTo( const Point2d_<T1>& pt,  const detail::BaseHelper<typename typ::IsLine>& )
-	{
-	}
-
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE           impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-	template<typename FPT2>
-	constexpr HOMOG2D_INUMTYPE impl_distToLine(  const Line2d_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-	template<typename FPT2>
-	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-
-	template<typename FPT2>
-	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-	template<typename FPT2>
-	constexpr bool impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 
 	FPT           impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	constexpr FPT impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsPoint>& ) const;
@@ -4624,19 +4575,6 @@ private:
 	Line2d_<FPT>           impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
-	template<typename FPT2,typename T>
-	Line2d_<FPT>           impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typ::IsLine>&  ) const;
-	template<typename FPT2,typename T>
-	constexpr Line2d_<FPT> impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typ::IsPoint>& ) const;
-
-	Line2d_<FPT>           impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
-	constexpr Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
-
-	template<typename T>
-	std::pair<Line2d_<FPT>,Line2d_<FPT>>           impl_getParallelLines( T, const detail::BaseHelper<typ::IsLine>&  ) const;
-	template<typename T>
-	constexpr std::pair<Line2d_<FPT>,Line2d_<FPT>> impl_getParallelLines( T, const detail::BaseHelper<typ::IsPoint>& ) const;
-
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
@@ -4671,20 +4609,12 @@ private:
 	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<typ::IsLine>& );
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
-	template<typename BFPT>
-	void impl_init_BoostGeomPoint(
-		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>&,
-		const detail::BaseHelper<typ::IsLine>&
-	)
-	{
-		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a Line2d using a boost::geometry point" );
-	}
 	template<typename BFPT> // Boost Floating Point Type
-	void impl_init_BoostGeomPoint(
-		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt,
-		const detail::BaseHelper<typ::IsPoint>&
+	void init_BoostGeomPoint(
+		const boost::geometry::model::point<BFPT, 2, boost::geometry::cs::cartesian>& pt
 	)
 	{
+		static_assert( std::is_same_v<LP,typ::IsPoint>, "Invalid: you cannot build a Line2d using a boost::geometry point" );
 		set( pt );
 	}
 #endif
@@ -8947,15 +8877,6 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::Ba
 	return Line2d_<FPT>(); // to avoid a compile warning
 }
 
-/// Illegal instanciation
-template<typename LP,typename FPT>
-template<typename FPT2,typename T>
-constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getRotatedLine() on a point" );
-}
-
 /// Returns an orthogonal line, implementation of getOrthogonalLine().
 template<typename LP,typename FPT>
 Line2d_<FPT>
@@ -8987,11 +8908,15 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail:
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
 
+//------------------------------------------------------------------
 template<typename LP,typename FPT>
 template<typename FPT2,typename T>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getRotatedLine( const Point2d_<FPT2>& pt, T theta ) const
 {
+	HOMOG2D_CHECK_IS_NUMBER(T);
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getRotatedLine() on a point" );
+
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
 	{
@@ -9036,19 +8961,14 @@ LPBase<LP,FPT>::getOrthogSegment( const Point2d_<FPT2>& pt ) const
 }
 
 //------------------------------------------------------------------
-/// Illegal instanciation
-template<typename LP,typename FPT>
-constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLine() on a point" );
-}
-
 /// Returns an parallel line, implementation of getParallelLine().
 template<typename LP,typename FPT>
+template<typename FPT2>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getParallelLine( const Point2d_<FPT2>& pt ) const
 {
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getParallelLine() on a point" );
+
 	Line2d_<FPT> out = *this;
 	out._v[2] = static_cast<HOMOG2D_INUMTYPE>(-_v[0]) * pt.getX() - _v[1] * pt.getY();
 	out.p_normalizePL();
@@ -9056,21 +8976,15 @@ LPBase<LP,FPT>::impl_getParallelLine( const Point2d_<FPT>& pt, const detail::Bas
 }
 
 //------------------------------------------------------------------
-/// Illegal instanciation
-template<typename LP,typename FPT>
-template<typename T>
-constexpr std::pair<Line2d_<FPT>,Line2d_<FPT>>
-LPBase<LP,FPT>::impl_getParallelLines( T, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getParallelLines() on a point" );
-}
 
 /// Implementation for lines
 template<typename LP,typename FPT>
 template<typename T>
 std::pair<Line2d_<FPT>,Line2d_<FPT>>
-LPBase<LP,FPT>::impl_getParallelLines( T dist, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getParallelLines( T dist ) const
 {
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getParallelLines() on a point" );
+
 	Line2d_<FPT> l1 = *this;
 	Line2d_<FPT> l2 = *this;
 	l1._v[2] = static_cast<HOMOG2D_INUMTYPE>(this->_v[2]) + dist;
@@ -9266,36 +9180,18 @@ LPBase<LP,FPT>::impl_distToPoint( const Point2d_<FPT2>& pt, const detail::BaseHe
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>& li, const detail::BaseHelper<typename typ::IsPoint>& ) const
+LPBase<LP,FPT>::distTo( const Line2d_<FPT2>& li ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot compute distance between two lines" );
 	return li.distTo( *this );
-}
-
-/// overload for line to line distance. Aborts build if instanciated (distance between two lines makes no sense).
-template<typename LP, typename FPT>
-template<typename FPT2>
-constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToLine( const Line2d_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between two lines" );
-	return 0.;    // to avoid warning message on build
-}
-
-
-template<typename LP, typename FPT>
-template<typename FPT2>
-constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot compute distance between a line and a segment" );
-	return 0.;    // to avoid warning message on build
 }
 
 template<typename LP, typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_distToSegment( const Segment_<FPT2>& seg, const detail::BaseHelper<typename typ::IsPoint>& ) const
+LPBase<LP,FPT>::distTo( const Segment_<FPT2>& seg ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot compute distance between a line and a segment" );
 	return seg.distTo( *this );
 }
 
@@ -9331,19 +9227,13 @@ namespace base {
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>& li, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::isParallelTo( const Line2d_<FPT2>& li ) const
 {
-	if( getAngle(li) < thr::nullAngleValue() )
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot use IsParallel() with a point" );
+
+	if( this->getAngle(li) < thr::nullAngleValue() )
 		return true;
 	return false;
-}
-template<typename LP, typename FPT>
-template<typename FPT2>
-constexpr bool
-LPBase<LP,FPT>::impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot use IsParallel() with a point" );
-	return false;    // to avoid a warning message on build
 }
 
 //------------------------------------------------------------------
