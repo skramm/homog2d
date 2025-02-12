@@ -61,6 +61,7 @@
 		<Unit filename="figures_src/latex/fig1.tex" />
 		<Unit filename="figures_src/latex/fig2.tex" />
 		<Unit filename="figures_src/latex/fig3.tex" />
+		<Unit filename="figures_src/src/build_circles.cpp" />
 		<Unit filename="figures_src/src/circles1.cpp" />
 		<Unit filename="figures_src/src/comparison_svg_opencv.cpp" />
 		<Unit filename="figures_src/src/convex_hull.cpp" />
@@ -133,20 +134,22 @@
 		<Unit filename="no_build/no_build_08.cxx" />
 		<Unit filename="no_build/no_build_09.cxx" />
 		<Unit filename="no_build/no_build_10.cxx" />
-		<Unit filename="no_build/no_build_11.cxx" />
-		<Unit filename="no_build/no_build_12.cxx" />
 		<Unit filename="no_build/no_build_13.cxx" />
 		<Unit filename="no_build/no_build_14.cxx" />
-		<Unit filename="no_build/no_build_15.cxx" />
-		<Unit filename="no_build/no_build_16.cxx" />
 		<Unit filename="no_build/no_build_17.cxx" />
 		<Unit filename="no_build/no_build_18.cxx" />
 		<Unit filename="no_build/no_build_19.cxx" />
 		<Unit filename="no_build/no_build_21.cxx" />
 		<Unit filename="no_build/no_build_22.cxx" />
+		<Unit filename="no_build/no_build_23.cxx" />
 		<Unit filename="no_build/no_build_getbb_01.cxx" />
 		<Unit filename="no_build/no_build_getbb_02.cxx" />
 		<Unit filename="no_build/no_build_getbb_03.cxx" />
+		<Unit filename="no_build/no_build_poly_1.cxx" />
+		<Unit filename="no_build/no_build_poly_2.cxx" />
+		<Unit filename="no_build/no_build_poly_3.cxx" />
+		<Unit filename="no_build/no_build_poly_4.cxx" />
+		<Unit filename="no_build/no_build_seg.cxx" />
 		<Unit filename="no_build/readme.txt" />
 		<Unit filename="other/test_svg_import_1.svg" />
 		<Unit filename="other/test_svg_import_2.svg" />
@@ -163,10 +166,12 @@
 		<Unit filename="showcase/showcase14.cpp" />
 		<Unit filename="showcase/showcase15.cpp" />
 		<Unit filename="showcase/showcase16.cpp" />
+		<Unit filename="showcase/showcase16b.cpp" />
 		<Unit filename="showcase/showcase17.cpp" />
 		<Unit filename="showcase/showcase18.cpp" />
 		<Unit filename="showcase/showcase19.cpp" />
 		<Unit filename="showcase/showcase20.cpp" />
+		<Unit filename="showcase/showcase22.cpp" />
 		<Unit filename="showcase/showcase2a.cpp" />
 		<Unit filename="showcase/showcase2b.cpp" />
 		<Unit filename="showcase/showcase3.cpp" />
@@ -198,6 +203,8 @@
 		<Unit filename="test_files/test_multiple.cpp" />
 		<Unit filename="test_files/test_pm1.cpp" />
 		<Unit filename="test_files/ttmath_t1.cpp" />
+		<Unit filename="tryme.cpp" />
+		<Unit filename="tryme2.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

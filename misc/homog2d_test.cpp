@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2024 Sebastien Kramm
+    Author & Copyright 2019-2025 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -579,13 +579,14 @@ TEST_CASE( "stream operator << test", "[streamingop-test]" )
 	Line2d li;
 	Point2d pt;
 	Segment seg;
+	OSegment vec;
 	Circle cir;
 	Ellipse ell;
 	CPolyline cpol;
 	OPolyline opol;
 // just to make sure that this builds !
 	std::ostringstream oss;
-	oss << li << pt << seg << cir << cpol << opol << ell;
+	oss << li << pt << seg << vec << cir << cpol << opol << ell;
 	std::ostringstream oss2;
 	oss2 << cpol;
 	CHECK( oss2.str() == "CPolyline: empty" );
@@ -2974,7 +2975,7 @@ TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 	FRect_<NUMTYPE> r2(4,5, 6,8);
 	FRect_<NUMTYPE> bbr(0,0, 6,8);
 	CHECK( bbr == getBB( r1,r2 ) );
-/*	{                                    // distant segments
+	{                                    // distant segments
 		Segment_<NUMTYPE> s1(0,3, 2,0);
 		Segment_<NUMTYPE> s2(4,5, 6,8);
 		FRect_<NUMTYPE> bbs(0,0, 6,8);
@@ -2986,7 +2987,7 @@ TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 		FRect_<NUMTYPE> bbs(0,0, 5,6);
 		CHECK( bbs == getBB( s1,s2 ) );
 	}
-*/
+
 	{                                  // one circle inside the other
 		Circle_<NUMTYPE> c1(0,0, 2);
 		Circle_<NUMTYPE> c2(0,1, 4);
@@ -3009,22 +3010,26 @@ TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 		FRect_<NUMTYPE> rect;
 		CHECK( getBB(po,rect) == FRect_<NUMTYPE>(0,0,3,2) );
 	}
-/*	{  // OPolyline / Segment
+	{  // OPolyline / Segment
 		OPolyline_<NUMTYPE> po( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
-		Segment_<NUMTYPE> seg;
+		Segment_<NUMTYPE> seg; // [0,0]-[1,1]
 		CHECK( getBB(seg,po) == FRect_<NUMTYPE>(0,0,3,2) );
-	}*/
-
+	}
+	{  // 2 CPolyline, one is empty
+		CPolyline_<NUMTYPE> po1( std::vector<Point2d>{ {0,0}, {1,1}, {3,2} } );
+		CPolyline_<NUMTYPE> po2;
+		CHECK( getBB(po1,po2) == getBB(po1) );
+	}
 	{  // Circle / Frect
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		FRect_<NUMTYPE> rect; // (0,0)--(1,1)
 		CHECK( getBB(cir,rect) == FRect_<NUMTYPE>(0,0,8,8) );
 	}
-/*	{  // Circle / Segment
+	{  // Circle / Segment
 		Circle_<NUMTYPE> cir( 5,5,3 ); // center at 5,5, radius=3
 		Segment_<NUMTYPE> seg(10,20,30,40);
 		CHECK( getBB(cir,seg) == FRect_<NUMTYPE>(2,2,30,40) );
-	}*/
+	}
 	{  // Circle / Circle (one inside the other)
 		Circle_<NUMTYPE> cir1( 5,5,3 ); // center at 5,5, radius=3
 		Circle_<NUMTYPE> cir2( 5,5,1 ); // center at 5,5, radius=1
@@ -3039,7 +3044,6 @@ TEST_CASE( "bounding box of two objects", "[getBB-pair]" )
 		CHECK( getBB(e1,e2) == FRect_<NUMTYPE>(-2,-1,2,1) );
 	}
 }
-
 
 TEST_CASE( "FRect", "[frect]" )
 {
@@ -3221,8 +3225,8 @@ TEST_CASE( "Polyline minimization-1", "[polyline-min-1]" )
 template<typename T, typename U>
 void polytest_1( const base::PolylineBase<T,U>& pl1 )
 {
-	CHECK( pl1.isPolygon() == false );
-	CHECK( isPolygon(pl1)  == false );
+	CHECK( pl1.isSimple() == false );
+	CHECK( isSimple(pl1)  == false );
 
 	CHECK( pl1.size() == 0 );
 	CHECK( size(pl1)  == 0 );
@@ -3264,8 +3268,8 @@ TEST_CASE( "Polyline", "[polyline]" )
 		FRect r( 5,6, 7,8 );
 		CPolyline_<NUMTYPE> pl1( r );
 
-		CHECK( pl1.isPolygon() == true );
-		CHECK( isPolygon(pl1)  == true );
+		CHECK( pl1.isSimple() == true );
+		CHECK( isSimple(pl1)  == true );
 		CHECK( pl1.size()   == 4 );
 		CHECK( size(pl1)   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
@@ -3289,7 +3293,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CPolyline_<NUMTYPE> pl1;
 		pl1.set(r);
 
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.size() == 4 );
 		CHECK( pl1.getPoint(0)  == Point2d(5,6) );
 	}
@@ -3316,12 +3320,12 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( po1.nbSegs() == 3 );
 		CHECK( pc1.nbSegs() == 4 );
 
-		CHECK( po1.isPolygon() == false );
-		CHECK( pc1.isPolygon() == true );
+		CHECK( po1.isSimple() == false );
+		CHECK( pc1.isSimple() == true );
 
 		CPolyline_<NUMTYPE> pc2(po1);
 		CHECK( pc2.nbSegs()    == 4 );
-		CHECK( pc2.isPolygon() == true );
+		CHECK( pc2.isSimple() == true );
 
 		FRect bb1( 0,0, 3,5);
 		CHECK( getBB(po1) == bb1 );
@@ -3335,7 +3339,7 @@ TEST_CASE( "Polyline", "[polyline]" )
 		CHECK( pc1.isClosed() == true );
 		CHECK( pc1.size() == 4 );
 		CHECK( pc1.nbSegs() == 4 );
-		CHECK( pc1.isPolygon() == false ); // crossing segments
+		CHECK( pc1.isSimple() == false ); // crossing segments
 
 		pc1.translate(2,1.);
 		CHECK( pc1.getPoint(0) == Point2d(2,1.) ); // (0,0) translated to (2,1)
@@ -3674,19 +3678,19 @@ TEST_CASE( "Polygon area", "[polyline-area]" )
 		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
 		CHECK( pl1.size()   == 4 );
 		CHECK( pl1.nbSegs() == 4 );
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.area() == 2. );
 	}
 	{
 		pl1.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {0,1} } );
 		CHECK( pl1.size()   == 6 );
 		CHECK( pl1.nbSegs() == 6 );
-		CHECK( pl1.isPolygon() == true );
+		CHECK( pl1.isSimple() == true );
 		CHECK( pl1.area() == 3. );
 	}
 	OPolyline_<NUMTYPE> plo;
 	plo.set( std::vector<Point2d>{ {0,0}, {2,0}, {2,1}, {0,1} } );
-	CHECK( plo.isPolygon() == false );
+	CHECK( plo.isSimple() == false );
 	CHECK( plo.area() == 0. );
 }
 
@@ -3801,7 +3805,7 @@ TEST_CASE( "general binding", "[gen_bind]" )
 /// Helper function for local_draw_test()
 template<typename I,typename T>
 void
-local_draw_test2( img::Image<I>& im, const T& t )
+local_draw_test2( img::Image<I>& im, /*const*/ T& t )
 {
 	t.draw( im );
 	im.draw( t );
@@ -3813,7 +3817,9 @@ local_draw_test2( img::Image<I>& im, const T& t )
 	draw( im, t, dp );
 
 	std::vector<T> v;
+	t.translate( 50,20 );
 	v.push_back(t);
+	t.translate( 50,20 );
 	v.push_back(t);
 	draw( im, v );
 	draw( im, v, dp );
@@ -3840,7 +3846,8 @@ void
 local_draw_test( img::Image<I>& im, std::string fn )
 {
 	FRect      r; local_draw_test2( im, r );
-	Segment    s; local_draw_test2( im, s );
+	Segment    s(50,50,100,100);
+	local_draw_test2( im, s );
 	Circle     c; local_draw_test2( im, c );
 	Line2d    li; local_draw_test2( im, li );
 	Point2d   pt; local_draw_test2( im, pt );
@@ -3860,7 +3867,7 @@ TEST_CASE( "drawing (SVG)", "[draw_svg]" )
 #ifdef HOMOG2D_USE_OPENCV
 TEST_CASE( "drawing (OpenCV)", "[draw_ocv]" )
 {
-	img::Image<cv::Mat> im;
+	img::Image<cv::Mat> im(300,300);
 	local_draw_test( im, "BUILD/dummy_draw.png" );
 }
 #endif // HOMOG2D_USE_OPENCV
@@ -3945,33 +3952,35 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 	checkSizeNF( Point2d_<NUMTYPE>(), arr );
 
 // 3 - check behavior if query point is in the container (only for vector)
-	Point2d_<NUMTYPE> pt1(1,1);
-	Point2d_<NUMTYPE> pt0;
-	vec.emplace_back( pt1 );
-	auto resN = findNearestPoint(  pt0, vec ); // check for (0,0)
-	auto resF = findFarthestPoint( pt0, vec );
-	CHECK( resN == 1 );                        // both will return
-	CHECK( resF == 1 );                        // second point
+	{
+		Point2d_<NUMTYPE> pt1(1,1);
+		Point2d_<NUMTYPE> pt0;
+		vec.emplace_back( pt1 );
+		auto resN = findNearestPoint(  pt0, vec ); // check for (0,0)
+		auto resF = findFarthestPoint( pt0, vec );
+		CHECK( resN == 1 );                        // both will return
+		CHECK( resF == 1 );                        // second point
 
-	resN = findNearestPoint(  pt1, vec );  // check for (1,1)
-	resF = findFarthestPoint( pt1, vec );
-	CHECK( resN == 0 );                    // both will return
-	CHECK( resF == 0 );                    // first point
+		resN = findNearestPoint(  pt1, vec );  // check for (1,1)
+		resF = findFarthestPoint( pt1, vec );
+		CHECK( resN == 0 );                    // both will return
+		CHECK( resF == 0 );                    // first point
 
-	auto pres = findNearestFarthestPoint( pt0, vec );
-	CHECK( pres.first  == 1 );
-	CHECK( pres.second == 1 );
-	auto pres2 = findNearestFarthestPoint( pt1, vec );
-	CHECK( pres2.first  == 0 );
-	CHECK( pres2.second == 0 );
+		auto pres = findNearestFarthestPoint( pt0, vec );
+		CHECK( pres.first  == 1 );
+		CHECK( pres.second == 1 );
+		auto pres2 = findNearestFarthestPoint( pt1, vec );
+		CHECK( pres2.first  == 0 );
+		CHECK( pres2.second == 0 );
+	}
 
 // 4 - check general behavior
 	{ //                                      0      1      2      3      4
-		std::vector<Point2d_<NUMTYPE>> vec{ {0,0}, {3,0}, {4,0}, {5,6}, {7,8} };
+		std::vector<Point2d_<NUMTYPE>> vec2{ {0,0}, {3,0}, {4,0}, {5,6}, {7,8} };
 		Point2d_<NUMTYPE> qpt(4,5);
-		auto pres = findNearestFarthestPoint( qpt, vec );
-		auto resN = findNearestPoint(  qpt, vec );
-		auto resF = findFarthestPoint( qpt, vec );
+		auto pres = findNearestFarthestPoint( qpt, vec2 );
+		auto resN = findNearestPoint(  qpt, vec2 );
+		auto resF = findFarthestPoint( qpt, vec2 );
 		CHECK( pres.first  == resN );
 		CHECK( pres.second == resF );
 		CHECK( 3 == resN );
@@ -3979,6 +3988,37 @@ TEST_CASE( "nearest/farthest points", "[nfp]" )
 	}
 }
 
+TEST_CASE( "size() function tests", "[size_tests]" )
+{
+	OPolyline opol;
+	CPolyline cpol;
+	Segment seg;
+	Point2d pt;
+	Line2d li;
+	Circle cir;
+	Ellipse ell;
+	FRect rect;
+
+	CHECK( opol.size() == 0 );
+	CHECK( cpol.size() == 0 );
+	CHECK( cir.size()  == 1 );
+	CHECK( ell.size()  == 1 );
+	CHECK( rect.size() == 4 );
+	CHECK( seg.size()  == 2 );
+	CHECK( li.size()   == 0 );
+	CHECK( pt.size()   == 1 );
+
+	CHECK( size(opol) == 0 );
+	CHECK( size(cpol) == 0 );
+	CHECK( size(cir)  == 1 );
+	CHECK( size(ell)  == 1 );
+	CHECK( size(rect) == 4 );
+	CHECK( size(seg)  == 2 );
+	CHECK( size(li)   == 0 );
+	CHECK( size(pt)   == 1 );
+}
+
+/// \todo 20250201: add tests cases
 TEST_CASE( "pts_inside", "[ptsins]" )
 {
 	OPolyline opol;

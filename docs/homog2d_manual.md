@@ -166,6 +166,9 @@ This is illustrated on this figure, showing a rotating point and the computed or
 
 ![showcase8](showcase/showcase8.gif)
 
+Upon return, the first point will hold the intersection point (projection of point on line),
+and the second will hold the given point.
+
 
 ### 2.2 - Get point(s) lying on line
 
@@ -275,7 +278,8 @@ auto dist = getParallelDistance( li1, li2 );
 ```
 This will throw if lines are not parallel (unless error checking is disabled).
 
-You can compute the angle in Radians between two lines, either with a member function or with a free function:
+You can compute the angle in Radians between two lines, either with a member function or with a free function.
+Whatever the lines, the returned value will lie in the range [0-PI/2] (no negative angles):
 ```C++
 auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 ); // free function
@@ -286,6 +290,18 @@ You can rotate a line at a given point (must be lying on the line):
 auto li1 = pt1 * pt2;
 auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
 ```
+
+As lines are not oriented by design, positive and negative angles will achieve the same rotation
+Rotation by a value of M_PI
+(`auto li2 = li.getRotatedLine( pt, M_PI );`)
+will produce an identical line.
+
+Any `angle` value above 90°
+(in the range [M_PI/2--M_PI])
+will produce a line rotated by an angle of `M_PI-angle`
+
+See demo here: https://godbolt.org/z/j3nT563P4
+
 
 ### 2.5 - Side of a point related to a line
 
@@ -342,11 +358,13 @@ Line2d li = pt * Point2d();
 <a name="shapes"></a>
 
 Besides points and lines, the following primitives are provided:
-* [segment](#p_segment)
+* [segment and vector](#p_segment)
 * [flat rectangle](#p_frect)
 * [circle](#p_circle)
 * [polyline](#p_polyline)
 * [ellipse](#p_ellipse)
+
+They all share some common member functions, [see section 3.6](#p_commonf).
 
 The ones that may cover some area (polyline, rectangle, ellipse, circle) provide a function `getBB()` that returns a [flat rectangle](#p_frect) holding the bounding box.
 This is not available for points, lines, and segments (as a segment can be vertical or horizontal, it does not have an area).
@@ -370,8 +388,11 @@ On this figure, you can see three combinations of bounding boxes for some object
 ### 3.1 - Segments
 <a name="p_segment"></a>
 
-A segment is implemented internally as a pair of points.
-Usage is straightforward:
+This library provides two types modelling segments that both share the same underlying type (a pair of points),
+named `Segment` and `OSegment`
+The difference between them is that a `OSegment` is **oriented**, while a `Segment` is not.
+
+Usage is straightforward, and is similar for both types:
 ```C++
 Segment s1( Point2d(12,34), Point2d(45,67) );
 Segment s2; // default value
@@ -379,8 +400,8 @@ std::cout << s2;  // prints "(0,0) - (1,1)"
 s2.set( Point2d(12,34), Point2d(45,67) );
 ```
 
-You can also build the segment by giving the 4 coordinates, x1,y1 and x2, y2 of the two points.
-The only constraint is that they must be all of the same type (no int/float/double mix):
+You can also build theses by giving the 4 coordinates, x1,y1 and x2, y2 of the two points,
+that may even be of different types (float/double/...).
 ```C++
 Segment s1( x1, y1, x2, y2 );
 ```
@@ -399,11 +420,15 @@ s1.translate( dx, dy );
 ```
 
 You can get the pair of points (as an `std::pair`) with `getPts()`.
-Internally, the points are stored with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate):
+For type `Segment`, the points are stored onternally with the "smallest" one as first (using x coordinate, or, if equal, using y coordinate).
+For type `OSegment`, there as stored as is:
 ```C++
-Segment s1( Point2d(100,100), Point2d(10,10) );
-auto pair = s1.getPts();
-std::cout << pair.first; // will print (10,10)
+Segment  s1( Point2d(100,100), Point2d(10,20) );
+OSegment s2( Point2d(100,100), Point2d(10,20) );
+auto pair1 = s1.getPts();
+auto pair2 = s2.getPts();
+std::cout << pair1.first; // will print (10,20)
+std::cout << pair2.first; // will print (100,100)
 ```
 
 Many operations available with lines apply to segments too:
@@ -415,6 +440,18 @@ bool b1 = l1.isParallelTo( s1 );
 bool b2 = s1.isParallelTo( l1 );  // also works
 auto a1 = l1.getAngle( s1 );
 auto a2 = s1.getAngle( l1 );
+```
+
+For angle, if one of the type is a line, or an unoriented segment, then the angle will stay in the range [0:+M_PI].
+However, if both of the types are oriented, then the returned value will be in the range [-M_PI:+-M_PI].
+
+
+Oriented segments can be reversed with the unary `-` operator:
+```C++
+OSegment s( Point2d(1,2), Point2d(3,4) );
+std::cout << s; // print [1,2]-[3,4]
+s = -s;
+std::cout << s; // print [3,4]-[1,2]
 ```
 
 You can get the point lying in the middle of the segment:
@@ -580,13 +617,6 @@ auto w = rect.width();  // or: width(rect);
 auto h = rect.height(); // or: height(rect);
 auto a = rect.area();   // or: area(rect);
 auto l = rect.length(); // or: length(rect);
-```
-
-You can gets its size as a pair of values (member function or free function),
-with the width as `first` element and height as `second` element:
-```C++
-FRect rect;
-auto s1 = rect.size();   // or: size(rect);
 ```
 
 It is possible to translate the rectangle using some dx,dy offset:
@@ -913,15 +943,13 @@ If it is, you can get its area and its centroid point:
 ```C++
 CPolyline pl;
 // ... set points
-if( pl.isPolygon() ) {  // or : if( isPolygon(pl) )  (free function)
+if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 	std::cout << "area=" << pl.area();
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
 
-**warning**: function name will change in next release for `isSimple()`
-
-Please note that if not a polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
+Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
 ```C++
@@ -1141,12 +1169,54 @@ bool b2 = isCircle( ell, 1E-15 );
 ```
 
 
+### 3.6 - Common functions
+<a name="p_commonf"></a>
+
+All the types above share some common functions, that are also declared as virtual in the root class `Root`.
+Thus, this enable classical pointer-based runtime polymorphism, [see here](#section_rtp).
+
+All of these are `const`.
+The names of these functions are:
+
+| Name       | Return type |
+|------------|-------------|
+| `size()`   | `size_t` (see below) |
+| `area()`   | `HOMOG2D_INUMTYPE` |
+| `length()` | `HOMOG2D_INUMTYPE` |
+| `type()`   | `Type` (see below) |
+| `draw()`   | `void` |
+
+
+The `type()` function will return an enum value of type `Type` having one of these values:
+`Point2d`, `Line2d`, `Segment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
+You can get a human-readable value ot the object type with `getString(Type)`:
+```C++
+	Point2d pt;
+	std::cout << "type is " << getString( pt.type() );
+```
+(This example might sound silly but it can be useful in real-time polymorphism situations.)
+
+
+The return value of the `size()` member function is as follows, for the different types.
+They are declared as `constexpr`, except of course for the last two.
+
+| Type         | Return Value |
+|--------------|--------------|
+| `Point2d`    |  1  |
+| `Line2d`     |  1  |
+| `Segment`    |  2  |
+| `OSegment`   |  2  |
+| `FRect`      |  4  |
+| `Circle`     |  1  |
+| `Ellipse`    |  1  |
+| `OPolyline`  | Nb of points |
+| `CPolyline`  | Nb of points |
+
 
 ## 4 - Homographies
 <a name="matrix"></a>
 
 You can manipulate 2D transformations as 3x3 homogeneous matrices (aka "Homography"), using the class `Homogr`.
-
 
 ### 4.1 - Homographies for points
 
@@ -1217,8 +1287,7 @@ h.setScale( 2., 3. ); // discard previous rotation, and set horizontal scale fac
 
 - You can build some complex transformation by multiplying these:
 ```C++
-Homogr h; // unit transformation
-h.setTranslation(3,4);
+auto h1 = Homogr().setTranslation(3,4);
 Homogr h2( 45. * M_PI / 180.); // 45° rotation matrix
 auto h3a = h1*h2; // first, rotation, then translation
 auto h3b = h2*h1; // first, translation, then rotation
@@ -1858,6 +1927,14 @@ To have an idea, here are two renderings of the same objects done with the two b
 | ![SVG drawing](img/comparison_1.svg) | ![Opencv drawing](img/comparison_2.png) |
 
 
+With both types, you can store the generated image with the `write()` member function (see examples below).
+A streaming operator is also provided for the `SvgImage` type, so you may use it to stream on `std::cout`
+(or a previously opened file) in your app to check the output,
+and redirect to a Svg file:
+```
+$ myapp > myFile.svg
+```
+
 ### 8.2 - Drawing objects
 
 Generic drawing member functions are provided for all the types.
@@ -1950,13 +2027,13 @@ The available functions are given in the table below:
 `setColor()`      | 3 ints ([0-255]) |  |
 `setColor()`      |  `img::Color`    |  |
 `setPointStyle()` | enum `PtStyle`: `Plus`,`Times`,`Star`,`Diam`,`Squ`,`Dot` |  |
-`setPointSize()`  |  1 int (pixels)  |  |
+`setPointSize()`  |  1 int (pixels)  | odd number required |
 `setThickness()`  |  1 int (pixels)  |  |
 `showPoints()`    | bool (default is `true`) | Draws the points for<br>Segment and Polyline types |
 `setFontSize()`   | int (size in pixels)     | Only used for `drawText()`  |
 
 
-The following table shows the rendering of the different point styles (`PtStyle`), with the OpenCv and SVG backend, with width (`setThickness()`) set to 1 and 2.
+The following table shows the rendering of the different point styles (`PtStyle`) and several point sizes, with the OpenCv and SVG backend, with width (`setThickness()`) set to 1 and 2.
 
 | width | png (OpenCv) |   Svg  |
 |-------|--------------|--------|
@@ -2030,13 +2107,13 @@ auto vcol3 = img::genRandomColors(10,30,150); // return 10 random colors with va
 
 ### 8.5 - Drawing containers holding variant objects (runtime polymorphism)
 
-If this build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
+If the build time option is enabled (symbol `HOMOG2D_ENABLE_VRTP`), you can draw at once all the objects in a container holding "variant" types
 
 ```C++
 std::vector<CommonType> vec;
-vec.push_back( Circle() );
-vec.push_back( Frect() );
-vec.push_back( Segment() );
+vec.emplace_back( Circle() );
+vec.emplace_back( Frect() );
+vec.emplace_back( Segment() );
 img::Image<img::SvgImage> im( width, height );
 draw( im, vec );
 ```
@@ -2056,7 +2133,7 @@ The library is fully templated, the user has the ability to select for each type
 `float`, `double` or `long double` as underlying numerical datatype, on a per-object basis.
 
 The default datatype used for all the primitives
-(`Point2d`, `Line2d`, `Homogr`, `Segment`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
+(`Point2d`, `Line2d`, `Homogr`, `Segment`, `OSegment`, `FRect`, `Circle`, `Polyline`, `Ellipse`)
  is `double`.
 The other types can be selected by an additional suffix letter added after the type:
 
@@ -2213,8 +2290,7 @@ auto data = visitor.get();
 The latter function returns a vector of polymorphic objects `CommonType`.
 This is a wrapper around a `std::variant`, on which the library provides some helper functions.
 See [RTP section](#section_rtp) on how to use this.
-
-This polymorphic behavior is kept optional [see here](#section_rtp) for more details.
+This polymorphic behavior is kept optional,
 It is enabled only if symbol `HOMOG2D_ENABLE_VRTP` is defined
 (which is automatically done if `HOMOG2D_USE_SVG_IMPORT` is defined).
 
@@ -2250,7 +2326,7 @@ or [`polygon`](https://www.w3.org/TR/SVG2/shapes.html#PolygonElement)), or by us
 [`path`](https://www.w3.org/TR/SVG2/paths.html#PathElement) element, that is much more general.
 This import subsystem handles all three of these.
 However, for the "path", the "curve" elements (SVG path commands C, S, Q, T) are not handled,
-the import code will just ignore thoses commands, if encountered while importing a SVG path object.
+the import code will just ignore those SVG commands if encountered while importing a SVG path object.
 * When importing a SVG "path", it will be automatically converted to a `CPolyline` or a `OPolyline`, depending on the fact
 that it holds a `z` at the end of the SVG path "d" string.
 * If you have trouble with some SVG file, a helper function `printFileAttrib()` is provided that will output all the SVG attributes of a file on `stdout`.
@@ -2283,6 +2359,7 @@ The previous line imports a file that has been generated by this library, so to 
 - The two types `Point2d` and `Line2d` are actually two typedefs of class `base::LPBase`,
 behavior differs due to some policy-based design.
 Similarly, the types `CPolyline` and `OPolyline` (Closed and Open polyline) are specializations of the root class `base::PolylineBase`.
+Same with the two types `Segment` and `OSegment`, that are a specialization of class `base::SegVec`
 - Points are stored as non-normalized values, except for the sign: the first value will always be positive.
 So the point `[-1,1,1]` will be automatically converted to `[1,-1,-1]`.
 Besides that, any computation will keep the resulting values.
@@ -2354,10 +2431,13 @@ See [here](#bignum) for details.
 - `HOMOG2D_NOCHECKS`: will disable runtime checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
-- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below). Defining this symbol will disables this.
-- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to do a lot of processing with ellipses, and you favor speed over memory.
-The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form), to minimize memory footprint.
-This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
+- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below).
+Defining this symbol will disables this.
+Besides this build symbol, user code can silence all the warnings with `err:printWarnings() = false;`
+(can be reactivated any time by passing `true`).
+- `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
+The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
+The drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
 With this option activated, each ellipse will store both representations, so access to values is faster.
 For more on this, [see this page](homog2d_speed.md).
 - `HOMOG2D_ENABLE_PRTP`: enables pointer-based runtime polymorphism.
@@ -2463,10 +2543,7 @@ vec.emplace_back( Point2d() );
 ...
 ```
 
-To get the actual type of the object, you can call the free function `type()`,
-that will return an enum value of type `Type` having one of these values:<br>
-`Point2d, Line2d, Segment, FRect, Circle, Ellipse, OPolyline, CPolyline`.
-You can get a human-readable value ot the object type with `getString(Type)`.
+To get the actual type of the object, you can call the free function `type()`, [see here](#p_commonf).
 
 A set of functors to be used with `std::visit()` is available, lying in the `fct` sub-namespace
 ([see here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html)).

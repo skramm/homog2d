@@ -9,7 +9,8 @@ Q: Is this library usable on a Windows platform?
 <dd>
 A: Sure, should be!
 I am not a Windows user myself, so I can't help on specific issues but as long as you are able to handle the inclusion of a file in your build process, it will work.
-FWIW, the GH action CI test process includes building using the Microsoft Visual C++ compiler (known as MSVC), [see here yamlfile](../.github/workflows/msvc.yml).
+FWIW, the GH action CI test process includes building using the Microsoft Visual C++ compiler (known as MSVC),
+[see here yamlfile](../.github/workflows/msvc.yml).
 <br>
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 But the library end-user doesn't need it.
@@ -20,27 +21,23 @@ Q: I am lost with all the "type" information, between the identifiers `Type`,  `
 Could I have some clarification?
 </dt>
 <dd>
-- `SType` is a static type that is redefined in all the "graphical" types.
-It can be used to statically make sure that a call to a function meets some requirement on the parameter type.
 
-- `Type` is an enum that also defines the nature of a given object, but it is object-based
+* `SType` is a static type that is redefined in all the "graphical" types.
+It can be used to statically make sure that a call to a function meets some requirement on the parameter type.
+* `Type` is an enum that also defines the nature of a given object, but it is object-based
 (not type-based as `SType` is),
-so it can be used to get the nature of an object, either  with the free function
+so it can be used to get the nature of an object, either with the free function
 (`auto t = type(obj);`)
 or with the corresponding member function.
 (`auto t = obj.type();`).
-<br>
 You can get is as text with the free function `getString(Type)`.
-
-- `Dtype` is an enum that is used to identify the numerical datatype of an object,
+* `Dtype` is an enum that is used to identify the numerical datatype of an object,
 [see manual here](homog2d_manual.md#numtype).
 It is the type returned by the `dtype()` member function that every geometrical object has.
 You can have it as text with the `getString(Dtype)` free function.
-
-- `FType` is a static type that holds for a type the underlying numerical type
+* `FType` is a static type that holds for a type the underlying numerical type
 (`float`, `double`, `long double` or other)
-
-- `CommonType_` is just an typedef over the `std::variant` type holding the different geometrical primitives.
+* `CommonType_` is just an typedef over the `std::variant` type holding the different geometrical primitives.
 </dd>
 
 
@@ -92,7 +89,7 @@ A: This seems to be an issue with Catch, regular program shouldn't issue those, 
 
 
 <dt>
-Q: why do
+Q: Why do
 <code>unionArea()</code> and <code>intersectArea()</code> not return the same data type?
 </dt>
 <dd>
@@ -103,23 +100,23 @@ A contrario, the second function will return a <code>Polyline</code> object, and
 </dd>
 
 <dt>
-Q: what is the difference between the classes \ref rtp::Root and detail::Common ?
+Q: What is the difference between the classes `rtp::Root` and `detail::Common` ?
 Don't they serve the main purpose?
 </dt>
 <dd>
-A: The class detail::Common is always enabled and serves as a common class for all the geometric types.
+A: The class `detail::Common` is always enabled and serves as a common class for all the geometric types.
 It is templated by the underlying numerical type, but does not provide polymorphic functions.
 This is because a class templated cannot be virtual.
 
-Thus, the need for the class tp::Root
-(only enabled if \c HOMOG2D_ENABLE_PRTP is defined, see
+Thus, the need for the class `rtp::Root`
+(only enabled if `HOMOG2D_ENABLE_PRTP` is defined, see
 <a href="md_docs_homog2d_manual.html#build_options">build options</a>).
 </dd>
 
 
-
 <dt>
-Q: Circle_::center() and FRect_::getCenter()? Why not the same identifier?
+Q: `Circle_::center()` and `FRect_::getCenter()`?
+Why not the same identifier?
 </dt>
 <dd>
 A: because the first function returns a reference, and can be used to edit the value.
@@ -128,7 +125,16 @@ Thus, the intent is clearer.
 </dd>
 
 
-
+<dt>
+Q: What is the difference between types `PointPair` and `Segment`?
+Don't these two types just hold two points?
+</dt>
+<dd>
+A: They both indeed hold two points, but they dont have the same semantic.
+The latter represents a real geometrical object, thus cannot have a null length
+(two identical points).
+The first one just hold two arbitrary points.
+</dd>
 
 
 <dt>

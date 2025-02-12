@@ -2,7 +2,7 @@
 \file
 \brief Generates moving polygons and shows their intersection points
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -39,7 +39,7 @@ int main( int, const char** )
 	auto extr_col = img::DrawParams().setColor(100,250,0).setPointStyle( img::PtStyle::Dot );
 	for( int i=0; i<nbim; i++ )
 	{
-		img::Image<cv::Mat> im( 360, 280 );
+		img::Image<img::SvgImage> im( 360, 280 );
 //		poly1.draw( im, img::DrawParams().setColor(250,128,0) );
 //		poly2.draw( im, img::DrawParams().setColor(250,0,128) );
 		im.draw( poly1, img::DrawParams().setColor(250,128,0) );
@@ -64,7 +64,7 @@ int main( int, const char** )
 		poly2 = Homogr().addTranslation( -c2.getX(), -c2.getY() ).addRotation(10.*M_PI/180.).addTranslation( c2.getX(), c2.getY() ) * poly2;
 
 		std::ostringstream oss;
-		oss << "showcase14_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase14_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }

@@ -80,9 +80,10 @@ Shows a fixed ellipse with other objects moving around and turning bold when ins
 
 * [Showcase 8](../misc/showcase/showcase8.cpp):
 <a name="sc8"></a>
-A rotating point, a fixed segment and a fixed line.
+A rotating point, a fixed segment (red) and a fixed line (green).
 The blue segment is generated between the point and the line, using `getOrthogSegment()`.
-The other segment shows the distance between the point and the fixed segment, with two alternate colors showing the case (orthogonal distance or distance to segment edge).
+The other segment shows the distance between the point and the fixed segment, with two alternate colors showing the case
+(cyan: orthogonal distance or yellow: distance to segment edge).
 
 ![showcase8](showcase/showcase8.gif)
 
@@ -169,5 +170,12 @@ The three lines intersect at same point (black).
 Also shows the common bounding box and the tangential segments.
 
 ![showcase20](showcase/showcase20.gif)
+
+
+* [Showcase 22](../misc/showcase/showcase22.cpp):
+<a name="sc22"></a>
+Offsetting a polygon.
+
+![showcase22](showcase/showcase22.gif)
 
 

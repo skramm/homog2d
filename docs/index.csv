@@ -3,7 +3,7 @@
 Rectangle;manual;p_frect
 Circle;manual;p_circle
 Ellipse;manual;p_ellipse
-Polygon;manual;p_polyline
+Polyline;manual;p_polyline
 SVG import;manual;svg_import
 Showcase;showcase;
 Numerical data types;manual;numdt
@@ -25,3 +25,4 @@ ttmath library;manual;bignum
 Boost Geometry library;manual;boost_geom_1
 Opencv;manual;drawing
 SVG drawing;manual;drawing
+Rectangle union/intersection;manual;frect_union

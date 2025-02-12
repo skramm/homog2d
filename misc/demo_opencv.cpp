@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2024 Sebastien Kramm
+    Author & Copyright 2019-2025 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -215,11 +215,11 @@ myMouseCB( int event, int x, int y, int, void* param )
 
 	switch( event )
 	{
-		case CV_EVENT_LBUTTONUP:
+		case cv::EVENT_LBUTTONUP:
 			data._selected = -1;
 		break;
 
-		case CV_EVENT_LBUTTONDOWN:
+		case cv::EVENT_LBUTTONDOWN:
 		{
 			data._selected = -1;
 			auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
@@ -234,7 +234,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 		}
 		break;
 
-		case CV_EVENT_MOUSEMOVE:
+		case cv::EVENT_MOUSEMOVE:
 			if( data._selected != -1 )
 			{
 				data.vpt[data._selected] = data._pt_mouse;
@@ -251,7 +251,7 @@ myMouseCB( int event, int x, int y, int, void* param )
 			}*/
 		break;
 
-		case CV_EVENT_RBUTTONDOWN:
+		case cv::EVENT_RBUTTONDOWN:
 			data._selected = -1;
 			for( int i=0; i<data.nbPts(); i++ )
 				if( data._pt_mouse.distTo( data.vpt[i]) < 10 )  // if mouse is less than 10 pixel away
@@ -970,7 +970,7 @@ void action_PL( void* param )
 	data.polyline_c.set( data.vpt );
 
 	auto color = img::DrawParams().setColor( 0,10,200);
-	if( data.polyline_c.isPolygon() )
+	if( data.polyline_c.isSimple() )
 		color = img::DrawParams().setColor( 250,10,20);
 
 	auto len = data.showClosedPoly ? data.polyline_c.length() : data.polyline_o.length();
@@ -1008,7 +1008,7 @@ void action_PL( void* param )
 	{
 		draw( data.img, i_cir_c.get() );
 		draw( data.img, i_rect_c.get() );
-		if( data.polyline_c.isPolygon() )
+		if( data.polyline_c.isSimple() )
 			str_ispoly = "Polygon: Y";
 	}
 	else
@@ -1020,7 +1020,7 @@ void action_PL( void* param )
 	auto bb = data.polyline_c.getBB();
 	bb.draw( data.img );
 
-	if( data.showClosedPoly && data.polyline_c.isPolygon() )
+	if( data.showClosedPoly && data.polyline_c.isSimple() )
 	{
 		auto centroid = data.polyline_c.centroid();
 		centroid.draw( data.img, img::DrawParams().setColor(40,20,250) );
@@ -1209,7 +1209,7 @@ struct Param_CIR : Data
 		fct::DrawFunct dfunc( img, par_r );
 		std::visit( dfunc, _variant );
 
-		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(2).setPointStyle(img::PtStyle::Dot);
+		auto par_pt = img::DrawParams().setColor(250,20,50).setPointSize(3).setPointStyle(img::PtStyle::Dot);
 		if( _buildFrom3Pts )
 			draw( img, vpt, par_pt );
 		else                                  // draw only 4 points
@@ -1321,7 +1321,7 @@ void action_CH( void* param )
 		data._cpoly.draw( data.img, img::DrawParams().setColor(250,0,0) );
 	cir.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
-	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(4).setThickness(2);
+	auto dp = img::DrawParams().setColor(0,0,0).setPointStyle( img::PtStyle::Dot ).setPointSize(5).setThickness(2);
 	data._cpoly.getLmPoint().draw( data.img, dp );
 	data._cpoly.getRmPoint().draw( data.img, dp );
 	data._cpoly.getTmPoint().draw( data.img, dp );
@@ -1750,13 +1750,6 @@ void demo_orthSeg( int demidx )
 }
 
 //------------------------------------------------------------------
-void printFailure( std::exception& e )
-{
-	std::cout << "Unable to build BB, err=" << e.what() << "\n";
-}
-
-using PointPair = PointPair1_<double>;
-
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
@@ -2433,6 +2426,139 @@ void demo_polyMinim( int demidx )
 	kbloop.start( data );
 }
 
+
+//------------------------------------------------------------------
+/// Polygon Offset demo data
+struct Param_PO : Data
+{
+	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
+	{
+		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420}, {150,250} };
+	}
+	int _offsetDist = 20;
+	CPolyline _cpoly_off;
+	bool _showSegs = true;
+	bool _side     = true;
+	bool _drawBisectorLines = false;
+};
+
+/// Helper function. Only removes duplicates if there are consecutive
+std::vector<Point2d> removeDupes( const std::vector<Point2d>& vec )
+{
+	std::vector<Point2d> out( vec );
+	out.erase( std::unique( out.begin(), out.end() ), out.end() );
+	if( out.front() == out.back() ) // if first == last, remove last element
+		out.pop_back();
+	return out;
+}
+
+/// Polygon Offset demo action
+void action_PO( void* param )
+{
+	auto& data = *reinterpret_cast<Param_PO*>(param);
+	data.clearImage();
+
+	auto withoutDupes = removeDupes( data.vpt );
+	data._cpoly = CPolyline( withoutDupes );
+
+	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
+
+	auto pts = data._cpoly.getPts();
+	int idx = 0;
+	for( auto pt: pts )
+		drawText( data.img, std::to_string(idx++), pt );
+
+	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
+	draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+
+	if( data._drawBisectorLines )
+		draw( data.img, data._cpoly.getBisectorLines() );
+
+	if( data._cpoly.isSimple() )
+	{
+		auto centr = data._cpoly.centroid();
+		draw( data.img, centr, img::DrawParams().showPoints().setColor(0,0,250) );
+
+		if( data._showSegs )
+		{
+			for( const auto& seg: data._cpoly.getSegs() )
+			{
+				auto mid= seg.getCenter();
+				data.img.draw( Segment(mid, centr), img::DrawParams().setColor(0,200,0) );
+			}
+		}
+	}
+	data.showImage();
+}
+
+/// Polygon Offset demo start
+void demo_PO( int demidx )
+{
+	Param_PO data( demidx, "Polygon Offset" );
+	std::cout << "Demo " << demidx << ": Offset\n";
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_PO );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
+	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
+	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
+
+	kbloop.addCommonAction( action_PO );
+	action_PO( &data );
+	kbloop.start( data );
+}
+
+
+//------------------------------------------------------------------
+struct Param_SegSide : Data
+{
+	explicit Param_SegSide( int demidx, std::string title ): Data( demidx, title )
+	{
+	}
+	bool _closedPol = false;
+};
+
+void action_SegSide( void* param )
+{
+	auto& data = *reinterpret_cast<Param_SegSide*>(param);
+	data.clearImage();
+
+	OPolyline opl( data.vpt );
+	CPolyline cpl( data.vpt );
+
+	auto col = img::DrawParams().setColor(200,0,0);
+
+	decltype( getBisectorLines( opl ) ) lines;
+	if( data._closedPol )
+	{
+		cpl.draw( data.img, col );
+		lines = getBisectorLines( cpl );
+	}
+	else
+	{
+		opl.draw( data.img, col );
+		lines = getBisectorLines( opl );
+	}
+	draw( data.img, lines, img::DrawParams().setColor(0,200,0) );
+	data.showImage();
+}
+
+void demo_SegSide( int demidx )
+{
+	Param_SegSide data( demidx, "Polyline bisector lines" );
+	std::cout << "Demo " << demidx << ": Polyline bisector lines\n" ;
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_SegSide );
+	KeyboardLoop kbloop;
+	kbloop.addKeyAction( 'a', [&](void*){ data._closedPol = !data._closedPol; }, "Toggle open/closed" );
+
+	kbloop.addCommonAction( action_SegSide );
+	action_SegSide( &data );
+	kbloop.start( data );
+}
+
 //------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
@@ -2459,6 +2585,8 @@ int main( int argc, const char** argv )
 
 	std::vector<std::function<void(int)>> v_demo{
 		demo_polyMinim, // polyline minimization
+		demo_SegSide,
+		demo_PO,
 		demo_BB,
 		demo_RCP,
 		demo_orthSeg,   // Perpendicular segment

@@ -98,10 +98,10 @@ The makefile then compiles it and runs it.
 
 ## 4 - Code details
 
-### 4.1 - Partial template implementation trick
+### 4.1 - Partial template implementation tricks
 
 To be able to templatize all the code on the root numerical data type (float, double, ...), we implement some trick.
-As the `LPBase` class is already templatized on the type (`type::IsPoint` or `type::IsLine`),
+As the `LPBase` class is already templatized on the type (`typ::IsPoint` or `typ::IsLine`),
 it would require a partial template specialization to define the behavior of each member function (or free function),
 depending on the basic type (Line or Point), and still templatize on the numerical type.
 C++ does not allow this.
@@ -113,8 +113,12 @@ it is there just so that the compiler can select the correct overload.
 
 The different implementations are written as two `impl_` private functions that are templated by the numerical data type.
 If the situation only makes sense for one of the types (for example `getAngle()` cannot be considered for two points), then
-the implementation of that type only holds a `static_assert`, so that can be catched at build time.
+the implementation of that type only holds a `static_assert`, so that error can be catched at build time.
 
+This is mostly used with the three "base" classes, located in namespace `base`:
+- `base::LPBase`, specialized as `Point2d_` and `Line2d_`
+- `base::PolylineBase`specialized as `CPolyline_` and `OPolyline`
+- `base::SegVec`, specialized as `Segment_` and `OSegment_`
 
 ### 4.2 - Common classes and polymorphism
 
@@ -199,6 +203,7 @@ The table below summarizes what happens when attempt to call `getBB()` on an obj
 | `Point2d`   | no build      |
 | `Line2d`    | no build      |
 | `Segment`   | no build      |
+| `OSegment`  | no build      |
 | `Circle`    | never throws  |
 | `FRect`     | never throws  |
 | `OPolyline` | may throw     |
@@ -291,9 +296,10 @@ namespace num {
 	}
 } // namespace num
 ```
-And these would then call a hidden implementation, specialised using a dummy argument on either a standard numerical type or a ttmath type.
+And these would then call a hidden implementation, specialised using a dummy argument on either a standard numerical type or a ttmath type
+(**update 2025/C++17: or use a `if constepr`**).
 
-But this seemed a bit too much, and a simpler solution was choosen, using macros.
+But this seemed a bit "over engineered", and a simpler solution was choosen, using macros.
 As it is admitted that the standard types are no longer usable when `HOMOG2D_USE_TTMATH` is defined, a simple text replacement is used:
 In the library code, all the maths functions are prefixed with `homog2d_` (for example `homog2d_asin()` for the inverse sinus function).
 Depending if the symbol `HOMOG2D_USE_TTMATH` is defined or not, these symbols are replaced with the relevant string.
@@ -318,6 +324,7 @@ Two of these, `HasBB` ("Has Bounding Box") and `HasArea`, are detailed in the ta
 | Point2d   | false |  false  |
 | Line2d    | false |  false  |
 | Segment   | false |  false  |
+| OSegment  | false |  false  |
 | FRect     | true  |  true   |
 | Circle    | true  |  true   |
 | Ellipse   | true  |  true   |

@@ -3,7 +3,7 @@
     This file is part of the C++ library "homog2d", dedicated to
     handle 2D lines and points, see https://github.com/skramm/homog2d
 
-    Author & Copyright 2019-2024 Sebastien Kramm
+    Author & Copyright 2019-2025 Sebastien Kramm
 
     Contact: firstname.lastname@univ-rouen.fr
 
@@ -25,9 +25,6 @@ or
 `$ BUILD/demo_svg_import misc/test_files/France_Normandie.svg`
 
 This will generate a svg file in current folder that is a copy of what was read in the file.
-
-\todo 20240326: once we have a function able to get the min/max points of a container holding
-primitives (see \c getBB()), automatically adjust the size of output image.
 */
 
 //#define HOMOG2D_DEBUGMODE
@@ -77,7 +74,7 @@ int main( int argc, const char** argv )
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 	fct::DrawFunct<img::SvgImage> dfunc( out );
 
-	PointPair1_<double> pp_all;
+	PointPair pp_all;
 	size_t c = 0;
 	for( const auto& e: data )
 	{
@@ -111,7 +108,7 @@ int main( int argc, const char** argv )
 		std::cout << '\n';
 	}
 	auto s = FRect(pp_all);
-	out.setSize( s.size() );
+	out.setSize( s.width(), s.height() );
 	std::cout << "min/max=" << s << '\n';
 
 	out.write( "demo_import.svg" );

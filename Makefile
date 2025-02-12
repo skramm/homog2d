@@ -15,7 +15,7 @@
 
 
 SHELL=bash
-CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+CXXFLAGS += -O2 -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wno-bool-compare
 
 
 #=======================================================================
@@ -27,7 +27,7 @@ endif
 
 ifeq ($(USE_OPENCV),Y)
 	CXXFLAGS += -DHOMOG2D_USE_OPENCV
-	LDFLAGS += `pkg-config --libs opencv`
+	LDFLAGS += $$(pkg-config --libs opencv)
 endif
 
 ifeq "$(USE_TINYXML2)" ""
@@ -36,7 +36,7 @@ endif
 
 ifeq ($(USE_TINYXML2),Y)
 	CXXFLAGS += -DHOMOG2D_USE_SVG_IMPORT
-	LDFLAGS += `pkg-config --libs tinyxml2`
+	LDFLAGS += $$(pkg-config --libs tinyxml2)
 endif
 
 
@@ -57,6 +57,26 @@ ifeq ($(DEBUG),Y)
 	CXXFLAGS += -DHOMOG2D_DEBUGMODE
 endif
 
+#=======================================================================
+# default target
+help:
+	@echo "homog2d library makefile"
+	@echo "* Available targets:"
+	@echo " - doc: generates user reference pages (requires Doxygen)"
+	@echo " - doc-dev: generates full reference pages, include class private stuff (requires Doxygen)"
+	@echo " - doc-fig: builds an runs the code that draws the figures in the manual"
+	@echo " - demo: builds graphical demo, with mouse/keyboard input (requires Opencv)"
+	@echo " - test: runs the test suite (requires Catch2 test framework, see manual"
+	@echo " - test-all: runs the test suite with all numerical datatypes"
+	@echo " - install: copies into /usr/local/include (requires 'sudo')"
+	@echo " - clean: erase all build files"
+	@echo " - test-bg: builds and runs the Boost::geometry polygon binding test file"
+	@echo " - showcase: builds an runs the \"showcase\" page gif images"
+	@echo "* Available options (OPTION=Y|N)"
+	@echo "  - USE_OPENCV : link with Opencv, relevant for 'test' targets"
+	@echo "  - USE_TINYXML2 : "
+	@echo "  - USE_RTP :"
+	@echo "  - DEBUG : add -g flag and enables some inner printing"
 
 #=======================================================================
 # general/common targets
@@ -94,7 +114,6 @@ demo-import: BUILD/demo_svg_import
 clean:
 	@-rm -r BUILD/*
 	@-rm homog2d_test
-	@-rm demo_opencv
 	@-rm *.gcov
 
 # just a debug target...
@@ -175,6 +194,7 @@ test_multiple: BUILD/test_multiple
 
 buildf:
 	@mkdir -p BUILD
+
 
 BUILD/homog2d_test_SYVN BUILD/homog2d_test_SNVN BUILD/homog2d_test_SYVY BUILD/homog2d_test_SNVY: misc/homog2d_test.cpp homog2d.hpp Makefile buildf
 	@if [ -f BUILD/$(notdir $@).stderr ]; then rm BUILD/$(notdir $@).stderr; fi
@@ -283,13 +303,13 @@ doc-fig: $(DOC_IMAGES_EXE) build_gif_pip
 DOC_IMAGES_LOC:=misc/figures_src/src
 DOC_IMAGES_SRC:=$(wildcard $(DOC_IMAGES_LOC)/*.cpp)
 DOC_IMAGES_EXE:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/bin/%, $(DOC_IMAGES_SRC))
-DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.png, $(DOC_IMAGES_SRC))
+DOC_IMAGES_OUT:=$(patsubst $(DOC_IMAGES_LOC)/%.cpp,BUILD/img/%.svg, $(DOC_IMAGES_SRC))
 
 .PRECIOUS: BUILD/img/%
 
 # Warning: there is no sometimes no relationship between program name and generated image
 # run the program => builds the png (or svg) image
-BUILD/img/%.png: BUILD/img/bin/%
+BUILD/img/%.svg: BUILD/img/bin/%
 	@echo "Running $< to generate $@"
 	@cd BUILD/img; bin/$(notdir $<)
 
@@ -297,7 +317,7 @@ BUILD/img/%.png: BUILD/img/bin/%
 BUILD/img/bin/%: $(DOC_IMAGES_LOC)/%.cpp homog2d.hpp
 	@mkdir -p BUILD/img/bin
 	@echo "Building $@"
-	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -I. -o $@ $< $$(pkg-config --libs opencv4)
 
 # Point In Polygon: build GIF animation from generated images
 build_gif_pip: $(DOC_IMAGES_OUT)
@@ -342,7 +362,6 @@ BUILD/figures_test/bin/%: BUILD/figures_test/src/%.cpp Makefile
 	@echo "Building $<"
 	@mkdir -p BUILD/figures_test/bin
 	@$(CXX) $(CXXFLAGS) -o $@ $<
-#	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
 
 # build source file
 BUILD/figures_test/src/frect_%.cpp: $(TEST_FIG_LOC)/frect_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_frect_1.cxx
@@ -363,10 +382,10 @@ BUILD/html/index.html: misc/homog2d_test.cpp homog2d.hpp misc/doxyfile README.md
 	@mkdir -p BUILD/html
 	doxygen misc/$(DOX_FILE) 1>BUILD/doxygen.stdout 2>BUILD/doxygen.stderr
 
-
+# removed buildf
 # this target requires Opencv
-BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp buildf
-	$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -I. -o $@ $< `pkg-config --libs opencv` $$(pkg-config --libs tinyxml2)
+BUILD/demo_opencv: misc/demo_opencv.cpp homog2d.hpp
+	$(CXX) $(CXXFLAGS) $$(pkg-config --cflags opencv4) -I. -o $@ $< $$(pkg-config --libs opencv4)
 
 
 # this target requires Tinyxml2
@@ -410,22 +429,24 @@ SHOWCASE_SRC=$(wildcard $(SHOWCASE_SRC_LOC)/showcase*.cpp)
 SHOWCASE_GIF=$(patsubst $(SHOWCASE_SRC_LOC)/showcase%.cpp,BUILD/showcase/gif/showcase%.gif, $(SHOWCASE_SRC))
 
 # compile program that will generate the set of png files
-BUILD/showcase/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
-	@mkdir -p BUILD/showcase/
+BUILD/showcase/bin/showcase%: $(SHOWCASE_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
+	@mkdir -p BUILD/showcase/svg
 	@mkdir -p BUILD/showcase/gif
+	@mkdir -p BUILD/showcase/bin
 	@echo " -Building program $@"
-	@$(CXX) $(CXXFLAGS) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $(CXXFLAGS) -o $@ $<
 
-# build png files by running program
-BUILD/showcase/%_00.png: BUILD/showcase/%
+
+# build svg files by running program
+BUILD/showcase/svg/%_00.svg: BUILD/showcase/bin/%
 	@echo " -Running program $< to generate images"
-	@cd BUILD/showcase/; ./$(notdir $<)
+	@cd BUILD/showcase/svg; ../bin/$(notdir $<)
 
 BUILD/showcase/gif/showcase%.gif: BUILD/showcase/showcase%.gif
 	@mv $< $@
 
 # build final gif by running script
-BUILD/showcase/showcase%.gif: BUILD/showcase/showcase%_00.png
+BUILD/showcase/showcase%.gif: BUILD/showcase/svg/showcase%_00.svg
 	@echo " -Generating gif $@ from images"
 	@b=$(notdir $(basename $@)); \
 	a=$$(grep $$b misc/showcase/gif_duration.data); arr=($$a); \
@@ -447,7 +468,7 @@ SHOWCASE2=$(patsubst $(SHOWCASE2_SRC_LOC)/%.cpp,BUILD/showcase2/%, $(SHOWCASE2_S
 BUILD/showcase2/showcase%: $(SHOWCASE2_SRC_LOC)/showcase%.cpp homog2d.hpp Makefile
 	@mkdir -p BUILD/showcase2/
 	@echo " -Building program $@"
-	@$(CXX) `pkg-config --cflags opencv` -o $@ $< `pkg-config --libs opencv`
+	@$(CXX) $$(pkg-config --cflags opencv4) -o $@ $< $$(pkg-config --libs opencv4)
 
 showcase2: $(SHOWCASE2)
 	@echo "-done target $@"

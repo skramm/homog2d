@@ -1,0 +1,20 @@
+<svg version="1.1" width="300" height="250" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="0" y1="37.1429" x2="299" y2="165.286" stroke="rgb(0,0,250)" stroke-width="1" />
+<polygon stroke="rgb(200,0,0)" stroke-width="1" fill="none" points="42.4625,26.3996 55.5358,175.829 214.927,161.884 201.854,12.4547 "/>
+<circle cx="162" cy="141" r="65" stroke="rgb(0,250,0)" stroke-width="1" fill="none" />
+<line x1="117.279" y1="89.5483" x2="127.279" y2="89.5483" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="122.279" y1="84.5483" x2="122.279" y2="94.5483" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="221.652" y1="134.279" x2="231.652" y2="134.279" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="226.652" y1="129.279" x2="226.652" y2="139.279" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="40.0931" y1="56.4685" x2="50.0931" y2="56.4685" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="45.0931" y1="51.4685" x2="45.0931" y2="61.4685" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="206.961" y1="127.983" x2="216.961" y2="127.983" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="211.961" y1="122.983" x2="211.961" y2="132.983" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="99.6185" y1="171.535" x2="109.619" y2="171.535" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="104.619" y1="166.535" x2="104.619" y2="176.535" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="204.189" y1="96.2988" x2="214.189" y2="96.2988" stroke="rgb(80,80,80)" stroke-width="1" />
+<line x1="209.189" y1="91.2988" x2="209.189" y2="101.299" stroke="rgb(80,80,80)" stroke-width="1" />
+</svg>

@@ -11,13 +11,23 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - add list-initialization with points to `PolylineBase_` class
   - cleanout the `Intersect()` family of functions, so that they always return the same type
   - add some feature to be able to print coordinates with desired precision at runtime
-  - add `Vector` type (defined by dx,dy)
 
 - current Work In Progress
   - polygon minimization
 
 - current master branch
-  - (nil)
+  - changed behavior of the `size()` member and free functions:
+now all of these return the number of points that the primitive has, as a `size_t` type, see [details here](homog2d_manual.md#p_commonf).
+  - added new type `OSegment` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
+  see TODO: ADD LINK TO MANUAL
+  - `Cpolyline`: renaming `isPolygon()` is now `isSimple()`
+  - added `getOffsetPoly()` to get a polygon "offsetted", see [showcase22](homog2d_showcase.md#sc22) (preliminar).
+  - added streaming operator to class Image (only for Svg)
+  - switch to opencv4, minor changes in opencv demo (mouse events).
+  - added unary operator `-` and `getVector()` to `OSegment`.
+  The latter member function returns the associated displacement as a pair of numerical values.
+  - clarified `getAngle()` for segments: now returns the full range [-PI:+PI] if both are oriented.
+  - added `getBisectorLines()` for polyline objects
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).

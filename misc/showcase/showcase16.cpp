@@ -1,8 +1,8 @@
 /**
 \file
-\brief random points and a moving point, draw the nearest/farthest point segment
+\brief a point and a moving line, show side of point relatively to line
 */
-#define HOMOG2D_USE_OPENCV
+
 //#define HOMOG2D_DEBUGMODE
 #include "../../homog2d.hpp"
 
@@ -21,7 +21,7 @@ int main( int, const char** )
 
 	Point2d pt0( imsize/2, 80 );
 	Line2d li( 20,20, 100,100);
-	img::Image<cv::Mat> im( imsize,imsize-100 );
+	img::Image<img::SvgImage> im( imsize*2,imsize-100 );
 
 	for( int i=0; i<nbim; i++ )
 	{
@@ -30,9 +30,8 @@ int main( int, const char** )
 		li.draw( im, img::DrawParams().setThickness(2).setColor(250,0,0) );
 		im.drawText( "side=" + std::to_string( side( pt0, li) ), Point2d(50,50), img::DrawParams() );
 		li = H * li;
-
 		std::ostringstream oss;
-		oss << "showcase16_" << std::setfill('0') << std::setw(2) << i << ".png";
+		oss << "showcase16_" << std::setfill('0') << std::setw(2) << i << ".svg";
 		im.write( oss.str() );
 	}
 }

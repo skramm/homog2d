@@ -4,24 +4,28 @@
 
 As this library does not use arbitrary precision arithmetic, it may suffer from the weaknesses of traditional floating-point computation.
 Thus several thresholds are used to manage numerical issues.
-They are used in the situations described below.
+They are used in the situations described below (and some others).
 
 ### 1 - Situations
 
 * Checking for parallel lines (see `isParallelTo()` )is done by computing the angle between the lines.
 If it is below a threshold, the function returns true.
 The default value is one thousand of a radian (0.001 rad).
-This is checked for when computing an intersection point between two lines/segments, for example when attempting to build a point from 2 lines.
+This is checked for when computing an intersection point between two lines/segments,
+for example when attempting to build a point from 2 lines
+(`auto pt = li1 * li2;`).
 
-* When attempting to compute a line out of two points, if the distance between the two points is less than `thr::nullDistance()`,
+* When attempting to compute a line out of two points (`auto li = pt1 * pt2;`),
+if the distance between the two points is less than `thr::nullDistance()`,
 then the library will throw an exception.
 
 * When attempting to compute the inverse of a homography matrix, if the determinant is less
 than `thr::nullDeter()`, the inversion code will throw.
 
 All the thresholds have default values.
-These can be changed at build time, globally, but the values can also be changed at runtime.
-However, as they are stored as static variables, you may not have different values in different threads, in case of a multithreading app.
+These can be changed at build time, globally, but also be changed at runtime.
+However, as they are stored as static variables, you may not have different values in different threads, in case of a multithreading app
+(but you can store/restore them any time, see example below).
 
 
 ### 2 - Changing thresholds at build time
@@ -74,8 +78,9 @@ Precision of computation and the associated threshold values greatly depend on t
 
 Below is a plot that shows the result of an experiment ([code provided](../misc/dtest1.cpp)).
 It shows the distance (max and mean value) between a line and the points it was generated with.
-When you build a line using two points (line = pt1 * pt2), the distance between the computed line and both of the points should be 0.
-But (as you got it), its not. And that is the distance that is shown on the plot below.
+When you build a line using two points (`line = pt1 * pt2`), the distance between the computed line and both of the points should be 0.
+But (as you got it), its not.
+And that is the distance that is shown on the plot below.
 
 This is done on 1 M random point coordinates, in the range shown on horizontal axis,
 using `double` and `long double` as internal numerical type (`HOMOG2D_INUMTYPE`).

@@ -11,7 +11,7 @@ Current test status: [![GH actions build status](https://github.com/skramm/homog
 A single-file header-only C++ library dedicated to
 handling 2D lines, points and homographies (2D planar transformations) in Cartesian geometry,
 using internally [homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates).
-Also handles other geometric primitives, see full manual.
+Also handles other geometric primitives, see [full manual](docs/homog2d_manual.md).
 
 ![showcase1](docs/showcase/showcase1.gif)
 
@@ -40,7 +40,41 @@ int main()
 }
 ```
 
-### News ###
+### TRYME
+
+Try the above snippet
+[online here](https://godbolt.org/z/d9oqYs34f),
+or on your own Debian-style Linux box:
+```
+$ sudo apt install build-essential
+$ wget https://raw.githubusercontent.com/skramm/homog2d/master/homog2d.hpp
+$ wget https://raw.githubusercontent.com/skramm/homog2d/master/misc/tryme.cpp
+$ g++ tryme.cpp
+$ ./a.out
+```
+will print:
+```
+[7,8]
+```
+
+(Depending on your GCC version, you might need to add `--std::c++17` to the compiler call above.)
+
+#### TRYME2:
+
+A slightly more significant file is [available here](misc/tryme2.cpp), try this:
+
+```
+$ wget https://raw.githubusercontent.com/skramm/homog2d/master/misc/tryme2.cpp
+$ g++ tryme2.cpp
+$ ./a.out > tryme2.svg
+```
+
+It will generate this Svg file:
+
+![tryme2](docs/tryme2.svg)
+
+
+### News
 
 - 2025-01-26: fresh 2.12 release, see https://github.com/skramm/homog2d/releases
 - 2024-04-21: switch to C++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp), and the use of `if constexpr`
@@ -53,7 +87,7 @@ int main()
 
 (see [history](docs/homog2d_history.md) for more)
 
-### Details ##
+### Details
 
 - Install: to install on your machine, copy file `homog2d.hpp` somewhere where your compiler can reach it, or `$ sudo make install` after cloning repo.
 This will copy that file in `/usr/local/include`.

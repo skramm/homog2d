@@ -19,7 +19,7 @@ void drawFig( const CPolyline& poly, const FRect& bb, const Point2d& pt, const P
 		auto seg = Segment( pt, *pt2 );
 		seg.draw( im, DrawParams().setColor(0,0,250)  );
 		auto inter = seg.intersects( poly );
-		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(2).setPointSize(10);
+		auto color = DrawParams().setColor(0,250,0).setPointStyle(PtStyle::Dot).setThickness(2).setPointSize(11);
 		pt2->draw( im, color );
 		if( inter() )
 		{
