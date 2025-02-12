@@ -4976,7 +4976,8 @@ class SegVec: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
-	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
+//	using SType = std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
+	using SType = SV; //std::conditional<std::is_same_v<SV,typ::IsSegment>,typ::T_Segment,typ::T_OSeg>;
 	using detail::Common<FPT>::isInside;
 
 	template<typename T1,typename T2> friend class SegVec;
@@ -5178,6 +5179,7 @@ Please note that the source (points) floating-point type is lost
 			_ptS2.getY() - _ptS1.getY()
 		);
 	}
+
 /// Get angle between segment and other segment
 /**
 - if either the object or the argument is not oriented, then this will return the line angles,
@@ -5204,6 +5206,15 @@ in the range [0:+PI]
 				dx1 * dx2 + dy1 * dy2
 			);
 		}
+	}
+
+/// Get angle between segment and line
+	template<typename LP,typename FPT2>
+	HOMOG2D_INUMTYPE
+	getAngle( const base::LPBase<LP,FPT2>& other ) const
+	{
+		static_assert( std::is_same_v<LP,typ::IsLine>, "cannot compute angle between segment and point" );
+		return getLine().getAngle( other );
 	}
 ///@}
 
@@ -9301,13 +9312,13 @@ getAngle( const T1& t1, const T2& t2 )
 	static_assert(
 		(
 			   std::is_same_v<typename T1::SType,typ::IsLine>
-			|| std::is_same_v<typename T1::SType,typ::T_Segment>
-			|| std::is_same_v<typename T1::SType,typ::T_OSeg>
+			|| std::is_same_v<typename T1::SType,typ::IsSegment>
+			|| std::is_same_v<typename T1::SType,typ::IsOSeg>
 		) &&
 		(
 			   std::is_same_v<typename T2::SType,typ::IsLine>
-			|| std::is_same_v<typename T2::SType,typ::T_Segment>
-			|| std::is_same_v<typename T2::SType,typ::T_OSeg>
+			|| std::is_same_v<typename T2::SType,typ::IsSegment>
+			|| std::is_same_v<typename T2::SType,typ::IsOSeg>
 		),
 		"Both types must be either a Line or a Segment"
 	);
