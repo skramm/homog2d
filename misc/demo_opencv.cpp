@@ -47,8 +47,11 @@ void demo_something( int demo_index)
 */
 
 #define HOMOG2D_USE_OPENCV
-#define HOMOG2D_ENABLE_VRTP
+//#define HOMOG2D_ENABLE_VRTP
+
+// this is required to load some SVG files in `demo_polyMinim`
 #define HOMOG2D_USE_SVG_IMPORT
+
 //#define HOMOG2D_DEBUGMODE
 #include "homog2d.hpp"
 
