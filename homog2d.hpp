@@ -149,7 +149,8 @@ See https://github.com/skramm/homog2d
 
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
-	std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
+	if( err::printWarnings() == true ) \
+		std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -249,16 +250,24 @@ this will enable the counting of errors
 */
 inline size_t& errorCount()
 {
-	static size_t c;
-	return c;
+	static size_t c_err;
+	return c_err;
 }
 
 /// Used in macro HOMOG2D_LOG_WARNING
 inline size_t& warningCount()
 {
-	static size_t c;
-	return c;
+	static size_t c_war;
+	return c_war;
 }
+
+/// User can use this to silence warnings at runtime.
+inline bool& printWarnings()
+{
+	static bool b_war = true;
+	return b_war;
+}
+
 
 } //namespace err
 
@@ -4254,21 +4263,15 @@ public:
 	{
 		return impl_isParallelTo( seg.getLine(), detail::BaseHelper<LP>() );
 	}
-/// Returns angle in rad. between the lines. \sa h2d::getAngle()
-/**
-Please check out warning described in impl_getAngle()
-*/
+
 	template<typename T,typename FPT2>
-	HOMOG2D_INUMTYPE getAngle( const LPBase<T,FPT2>& other ) const
-	{
-		return impl_getAngle( other, detail::BaseHelper<T>() );
-	}
+	HOMOG2D_INUMTYPE getAngle( const LPBase<T,FPT2>& other ) const;
 
 /// Returns angle in rad. between line and segment \c seg. \sa  h2d::getAngle()
-	template<typename FPT2>
-	HOMOG2D_INUMTYPE getAngle( const Segment_<FPT2>& seg ) const
+	template<typename T,typename FPT2>
+	HOMOG2D_INUMTYPE getAngle( const base::SegVec<T,FPT2>& seg ) const
 	{
-		return impl_getAngle( seg.getLine(), detail::BaseHelper<LP>() );
+		return getAngle( seg.getLine() );
 	}
 
 /// Returns true if point is at infinity (third value less than thr::nullDenom() )
@@ -4361,10 +4364,6 @@ private:
 	HOMOG2D_INUMTYPE           impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
 	template<typename FPT2>
 	constexpr HOMOG2D_INUMTYPE impl_distToSegment(  const Segment_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-
-	HOMOG2D_INUMTYPE           impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
-	constexpr HOMOG2D_INUMTYPE impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-
 
 	template<typename FPT2>
 	bool           impl_isParallelTo( const LPBase<LP,FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
@@ -5161,7 +5160,7 @@ Please note that the source (points) floating-point type is lost
 
 /// Get angle between segment and other segment
 /**
-
+TODO
 */
 	template<typename SV2,typename FPT2>
 	HOMOG2D_INUMTYPE
@@ -5173,7 +5172,7 @@ Please note that the source (points) floating-point type is lost
 		if constexpr( std::is_same_v<SV,typ::IsSegment> || std::is_same_v<SV2,typ::IsSegment> )
 			return lineAngle;
 		else
-		{    // both are oriented
+		{                                          // both are oriented segments
 			auto pt_ref = other.getPts().second;
 			auto si = this->getPointSide( pt_ref );
 			std::cout << "si=" << getString(si) << " line_angle=" << lineAngle*180./M_PI << '\n';
@@ -9329,9 +9328,12 @@ This is logged on \c std::cerr so that the user may take that into consideration
 \todo more investigation needed ! : what are the exact situation that will lead to this event?
 */
 template<typename LP, typename FPT>
+template<typename LP2, typename FPT2>
 HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getAngle( const LPBase<LP2,FPT2>& li ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsPoint>, "cannot get angle of a point" );
+
 	HOMOG2D_INUMTYPE l1_a = _v[0];
 	HOMOG2D_INUMTYPE l1_b = _v[1];
 	HOMOG2D_INUMTYPE l2_a = li._v[0];
@@ -9353,15 +9355,6 @@ LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>& li, const detail::BaseHelpe
 	}
 	return homog2d_acos( fres );
 }
-
-template<typename LP, typename FPT>
-constexpr HOMOG2D_INUMTYPE
-LPBase<LP,FPT>::impl_getAngle( const LPBase<LP,FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "cannot get angle of a point" );
-	return 0.; // to avoid a warning
-}
-
 
 //------------------------------------------------------------------
 /// Returns true if point is inside (or on the edge) of a flat rectangle defined by (p0,p1)

@@ -276,7 +276,7 @@ auto dist = getParallelDistance( li1, li2 );
 This will throw if lines are not parallel (unless error checking is disabled).
 
 You can compute the angle in Radians between two lines, either with a member function or with a free function.
-Whatever the lines, the returned value will lie in the range [0-PI/2]:
+Whatever the lines, the returned value will lie in the range [0-PI/2] (no negative angles):
 ```C++
 auto angle1 = li2.getAngle( li1 );
 auto angle2 = getAngle( li1, li2 ); // free function
@@ -287,6 +287,18 @@ You can rotate a line at a given point (must be lying on the line):
 auto li1 = pt1 * pt2;
 auto li2 = li1.getRotatedLine( pt1, angle /* in rads */ );
 ```
+
+As lines are not oriented by design, positive and negative angles will achieve the same rotation
+Rotation by a value of M_PI
+(`auto li2 = li.getRotatedLine( pt, M_PI );`)
+will produce an identical line.
+
+Any `angle` value above 90°
+(in the range [M_PI/2--M_PI])
+will produce a line rotated by an angle of `M_PI-angle`
+
+See demo here: https://godbolt.org/z/j3nT563P4
+
 
 ### 2.5 - Side of a point related to a line
 
@@ -2378,7 +2390,10 @@ See [here](#bignum) for details.
 - `HOMOG2D_NOCHECKS`: will disable runtime checking.
 If not defined, incorrect situations will throw a `std::runtime_error`.
 If defined, program will very likely crash in case an abnormal situation is encountered.
-- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below). Defining this symbol will disables this.
+- `HOMOG2D_NOWARNINGS`: on some situations, some warnings may be printed out to `stderr` (see below).
+Defining this symbol will disables this.
+Besides this build symbol, user code can silence all the warnings with `err:printWarnings() = false;`
+(can be reactivated any time by passing `true`).
 - `HOMOG2D_OPTIMIZE_SPEED`: this option may be useful if you intend to to a lot of processing with ellipses, and you favor speed over memory.
 The default behavior for class `Ellipse` is to store only the homogeneous matrix representation (conic form),to minimize memory footprint.
 This drawback is that every time we need to access some parameter (say, center point), a lot of computations are required to get back to the "human-readable" values.
