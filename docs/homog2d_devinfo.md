@@ -63,13 +63,8 @@ everything that gets build ends up in the `BUILD` folder
 
 * `demo`: build and run the Opencv interactive demo
 * `showcase`: build and run the gif figures used in manual
-<<<<<<< HEAD
-
 * `doc_fig`: build and run the code used to produce the figures of the manual
-=======
 * `test-fig`: build and run the code that generates the figures used in test cases
-* `doc-fig`: build and run the code used to produce the figures of the manual
->>>>>>> master
 
 **Targets only available if LaTeX installed:**
 
