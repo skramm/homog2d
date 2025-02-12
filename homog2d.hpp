@@ -1246,12 +1246,18 @@ template<typename T1,typename T2>
 auto
 operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& )
 -> std::ostream&;
-}
+} // namespace base
 
 // forward declaration, related to https://github.com/skramm/homog2d/issues/2
 template<typename T,typename U>
 Line2d_<T>
 operator * ( const Homogr_<U>&, const Line2d_<T>& );
+
+// forward declaration
+template<typename PLT,typename FPT>
+std::vector<Line2d_<HOMOG2D_INUMTYPE>>
+getBisectorLines( const base::PolylineBase<PLT,FPT>& pl );
+
 
 namespace detail {
 
@@ -4146,16 +4152,15 @@ public:
 	}
 
 	/// Returns the segment from the point (not on line) to the line, shortest path
-	Segment_<FPT>
-	getOrthogSegment( const Point2d_<FPT>& pt ) const
-	{
-		return impl_getOrthogSegment( pt, detail::BaseHelper<LP>() );
-	}
+	template<typename FPT2>
+	OSegment_<FPT>
+	getOrthogSegment( const Point2d_<FPT2>& pt ) const;
 
 	/// Returns an parallel line to the one it is called on, with \c pt lying on it.
 	/// \todo clarify orientation: on which side will that line appear?
+	template<typename FPT2>
 	Line2d_<FPT>
-	getParallelLine( const Point2d_<FPT>& pt ) const
+	getParallelLine( const Point2d_<FPT2>& pt ) const
 	{
 		return impl_getParallelLine( pt, detail::BaseHelper<LP>() );
 	}
@@ -4624,9 +4629,6 @@ private:
 	template<typename FPT2,typename T>
 	constexpr Line2d_<FPT> impl_getRotatedLine( const Point2d_<FPT2>&, T, const detail::BaseHelper<typ::IsPoint>& ) const;
 
-	Segment_<FPT>           impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
-	constexpr Segment_<FPT> impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
-
 	Line2d_<FPT>           impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	constexpr Line2d_<FPT> impl_getParallelLine( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
@@ -5059,6 +5061,14 @@ Please note that the source (points) floating-point type is lost
 /// \name Modifying functions
 ///@{
 
+/// Reverse oriented segment
+	SegVec<SV,FPT> operator - ()
+	{
+		static_assert( !std::is_same_v<SV,typ::IsSegment>, "cannot reverse non-oriented segment" );
+		std::swap( _ptS1, _ptS2 );
+		return *this;
+	}
+
 /// Setter
 	template<typename FP1,typename FP2>
 	void set( const Point2d_<FP1>& p1, const Point2d_<FP2>& p2 )
@@ -5158,25 +5168,41 @@ Please note that the source (points) floating-point type is lost
 		return 0.;
 	}
 
+/// Get vector of Oriented segment as a pair of values
+	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
+	getVector() const
+	{
+		static_assert( std::is_same_v<SV,typ::IsOSeg>, "cannot return vector of unoriented segment" );
+		return std::make_pair(
+			_ptS2.getX() - _ptS1.getX(),
+			_ptS2.getY() - _ptS1.getY()
+		);
+	}
 /// Get angle between segment and other segment
 /**
-TODO
+- if either the object or the argument is not oriented, then this will return the line angles,
+in the range [0:+PI]
+- if both are oriented, will return a value in the range [-PI:+PI]
 */
 	template<typename SV2,typename FPT2>
 	HOMOG2D_INUMTYPE
 	getAngle( const SegVec<SV2,FPT2>& other ) const
 	{
-		auto lineAngle = other.getLine().getAngle( this->getLine() );
-
 // if one of the two is a (unoriented) segment, then we just return the lines angle
 		if constexpr( std::is_same_v<SV,typ::IsSegment> || std::is_same_v<SV2,typ::IsSegment> )
-			return lineAngle;
+			return other.getLine().getAngle( this->getLine() );
 		else
 		{                                          // both are oriented segments
-			auto pt_ref = other.getPts().second;
-			auto si = this->getPointSide( pt_ref );
-			std::cout << "si=" << getString(si) << " line_angle=" << lineAngle*180./M_PI << '\n';
-			return (si == PointSide::Left ? lineAngle : M_PI - lineAngle );
+			auto v1 = this->getVector();
+			auto v2 = other.getVector();
+			auto dx1 = v1.first;
+			auto dx2 = v2.first;
+			auto dy1 = v1.second;
+			auto dy2 = v2.second;
+			return std::atan2(
+				dx1 * dy2 - dy1 * dx2,
+				dx1 * dx2 + dy1 * dy2
+			);
 		}
 	}
 ///@}
@@ -6769,6 +6795,12 @@ public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
 	getOffsetPoly( T value, OffsetPoly params=OffsetPoly{} ) const;
+
+	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
+	getBisectorLines() const
+	{
+		 return h2d::getBisectorLines( *this );
+	}
 
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 #ifdef HOMOG2D_USE_OPENCV
@@ -8962,11 +8994,18 @@ LPBase<LP,FPT>::impl_getRotatedLine( const Point2d_<FPT2>& pt, T theta, const de
 	return H * *this;
 }
 
-/// Returns the shortest segment that joins a point and a line
+/// Returns the shortest (oriented) segment that joins a point and a line
+/**
+Upon return, the first point will hold the intersection point (projection of point on line),
+and the second will hold the given point.
+*/
 template<typename LP,typename FPT>
-Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::BaseHelper<typename typ::IsLine>& ) const
+template<typename FPT2>
+OSegment_<FPT>
+LPBase<LP,FPT>::getOrthogSegment( const Point2d_<FPT2>& pt ) const
 {
+	static_assert( !std::is_same_v<LP,typ::IsPoint>, "Invalid call, cannot compute orthogonal segment between two points" );
+
 	Line2d_<HOMOG2D_INUMTYPE> src = *this;  // copy to highest precision
 	auto dist = src.distTo(pt);
 #ifndef HOMOG2D_NOCHECKS
@@ -8982,16 +9021,8 @@ LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>& pt, const detail::Ba
 
 	auto oline = pline->getOrthogonalLine( pt );
 	auto p2 = *this * oline;
-	return Segment_<FPT>( pt, p2 );
+	return OSegment_<FPT>( p2, pt );
 }
-
-template<typename LP,typename FPT>
-constexpr Segment_<FPT>
-LPBase<LP,FPT>::impl_getOrthogSegment( const Point2d_<FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid call" );
-}
-
 
 //------------------------------------------------------------------
 /// Illegal instanciation
@@ -10046,52 +10077,52 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
+/// Returns bisector lines of a Polyline
+/**
+Size of vector will be:
+- equal to size() of polyline if closed
+- equal to size()-2 of polyline if open
+
+\warning:
+- if open: the FIRST line (index 0) will correspond to SECOND point of the polyline
+*/
 template<typename PLT,typename FPT>
-std::pair<Line2d_<HOMOG2D_INUMTYPE>,Line2d_<HOMOG2D_INUMTYPE>>
+std::vector<Line2d_<HOMOG2D_INUMTYPE>>
 getBisectorLines( const base::PolylineBase<PLT,FPT>& pl )
 {
-	std::cout << "SIZE=" << pl.size() << '\n';
 	if( pl.size() < 3 )
 	{
-		; //HOMOG2D_THROW_ERROR_1( "unable, minimum size is 3, currently=" << pl.size() );
+		HOMOG2D_THROW_ERROR_1( "unable, minimum size is 3, currently=" << pl.size() );
 	}
 	const auto& pts  = pl.getPts();
-	const auto& segs = pl.getSegs();
+	std::vector<Line2d_<HOMOG2D_INUMTYPE>> out;
+
 	if constexpr ( std::is_same_v<PLT,typ::IsOpen> )
 	{
-		if( pl.size() == 3 ) // simplest case
+		out.reserve( pl.size()-2 );
+		OSegment_<HOMOG2D_INUMTYPE> seg1( pts[1], pts[0] );
+		for( size_t i=0; i<pl.size()-2; i++ )
 		{
-			auto s1 = segs[0];
-			auto s2 = segs[1];
-
-			Line2d_<HOMOG2D_INUMTYPE> li0;
-			HOMOG2D_INUMTYPE angle;
-			if( s1.length()>s2.length() )
-			{
-				li0 = s1.getLine();
-				angle = li0.getAngle( s2 );
-			}
-			else
-			{
-				li0 = s2.getLine();
-				angle = li0.getAngle( s1 );
-			}
-			auto l1 = li0.getRotatedLine( pts[1], angle/2. );
-			auto l2 = l1.getOrthogonalLine( pts[1] );
-
-			// which one lies between the two points?
-			auto li_opp = pts[0] * pts[2]; // opposite line
-			if( l1.intersects(li_opp)() )
-				return std::make_pair(l1,l2);
-			else
-				return std::make_pair(l2,l1);
-
+			OSegment_<HOMOG2D_INUMTYPE> seg2( pts[i+1], pts[i+2] );
+			auto angle = seg1.getAngle( seg2 );
+			out.emplace_back( seg1.getLine().getRotatedLine( pts[i+1], angle/2. ) );
+			seg1 = -seg2;
 		}
-		else
-		{
-			;
-		}	 // TODO
 	}
+	else
+	{
+		out.reserve( pl.size() );
+		OSegment_<HOMOG2D_INUMTYPE> seg1( pts[0], pts[pl.size()-1] );
+		for( size_t i=0; i<pl.size(); i++ )
+		{
+			auto next = ( i != pl.size()-1 ? i+1 : 0 );
+			OSegment_<HOMOG2D_INUMTYPE> seg2( pts[i], pts[next] );
+			auto angle = seg1.getAngle( seg2 );
+			out.emplace_back( seg1.getLine().getRotatedLine( pts[i], angle/2. ) );
+			seg1 = -seg2;
+		}
+	}
+	return out;
 }
 
 

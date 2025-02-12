@@ -1967,12 +1967,12 @@ struct Param_PO : Data
 	explicit Param_PO( int demidx, std::string title ): Data( demidx, title )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420}, {150,250} };
-//		cv::createTrackbar( "dist", win1, &_offsetDist, 50, on_trackbar );
 	}
 	int _offsetDist = 20;
 	CPolyline _cpoly_off;
 	bool _showSegs = true;
 	bool _side     = true;
+	bool _drawBisectorLines = false;
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -1993,7 +1993,6 @@ void action_PO( void* param )
 
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
-//	data._cpoly.p_normalizePoly() ;
 
 	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
 
@@ -2003,26 +2002,10 @@ void action_PO( void* param )
 		drawText( data.img, std::to_string(idx++), pt );
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
-	draw( data.img, data._cpoly_off );
+	draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
 
-	for( size_t i=0; i<pts.size(); i++ )
-	{
-//		size_t i = 0;
-		auto seg_next = data._cpoly.getSegment( i );
-		auto seg_prev = data._cpoly.getSegment( i!=0 ? i-1 : pts.size()-1 );
-		auto li_n = getLine( seg_next );
-		auto li_p = getLine( seg_prev );
-		if( !li_n.isParallelTo(li_p) )
-		{
-//			auto pt_intersect = li_n * li_p;
-			auto angle = getAngle( li_n, li_p );
-			std::cout << "pt " << i << " angle=" << angle * 180./M_PI << '\n';
-			auto li_mid1 = li_n.getRotatedLine( pts[i], angle/2. );
-			auto li_mid2 = li_p.getRotatedLine( pts[i], angle/2. );
-			data.img.draw( li_mid1, img::DrawParams().setColor(150,0,250) );
-			data.img.draw( li_mid2, img::DrawParams().setColor(0,150,250) );
-		}
-	}
+	if( data._drawBisectorLines )
+		draw( data.img, data._cpoly.getBisectorLines() );
 
 	if( data._cpoly.isSimple() )
 	{
@@ -2053,12 +2036,12 @@ void demo_PO( int demidx )
 	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
 	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
 	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
+	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );
 	kbloop.start( data );
 }
-
 
 
 //------------------------------------------------------------------
@@ -2067,6 +2050,7 @@ struct Param_SegSide : Data
 	explicit Param_SegSide( int demidx, std::string title ): Data( demidx, title )
 	{
 	}
+	bool _closedPol = false;
 };
 
 void action_SegSide( void* param )
@@ -2074,94 +2058,34 @@ void action_SegSide( void* param )
 	auto& data = *reinterpret_cast<Param_SegSide*>(param);
 	data.clearImage();
 
-	OPolyline pl(  std::vector<Point2d>{
-		data.vpt[0], data.vpt[1], data.vpt[2] }); //, data.vpt[3] );
-		std::cout << "size=" << pl.size() << '\n';
+	OPolyline opl( data.vpt );
+	CPolyline cpl( data.vpt );
 
+	auto col = img::DrawParams().setColor(200,0,0);
 
-	const auto& pts  = pl.getPts();
-	const auto& segs = pl.getSegs();
-	OSegment seg( pts[1], pts[0] );
-
-			auto s1 = segs[0];
-			auto s2 = segs[1];
-
-		auto l1 = s1.getLine();
-		auto l2 = s2.getLine();
-
-		std::cout << "l1=" << s1.getLine() << '\n';
-		std::cout << "l2=" << s2.getLine() << '\n';
-
-
-			Line2d_<HOMOG2D_INUMTYPE> li0;
-			HOMOG2D_INUMTYPE angle;
-			if( s1.length()>s2.length() )
-			{
-				li0 = s1.getLine();
-				angle = li0.getAngle( s2 );
-				std::cout << "angle s1/s2=" << angle*180./M_PI << '\n';
-			}
-			else
-			{
-				li0 = s2.getLine();
-				angle = li0.getAngle( s1 );
-				std::cout << "angle s2/s1=" << angle*180./M_PI << '\n';
-				angle = -angle;
-			}
-			draw( data.img, li0 );
-
-draw( data.img, seg, img::DrawParams().setColor(250,0,0) );
-drawText( data.img, "s1", s1.getCenter() );
-draw( data.img, s2, img::DrawParams().setColor(0,0,250) );
-
-
-			if( seg.getPointSide( pts[2] ) == PointSide::Left )
-				angle = -angle;
-/*			auto l1a = l1.get();
-			auto l2a = l2.get();
-			if( l1a[1]<0 ) //&& l2a[1]>0  )
-				angle = -angle;
-*/
-
-			l1 = li0.getRotatedLine( pts[1], angle/2. );
-//			auto lo = l1.getOrthogonalLine( pts[1] );
-			draw( data.img, l1, img::DrawParams().setColor(0,250,0) );
-
-			// which one lies between the two points?
-			auto li_opp = pts[0] * pts[2]; // opposite line
-			draw( data.img, li_opp );
-
-
-/*	OSegment s1( data.vpt[0], data.vpt[1] );
-	OSegment s2( data.vpt[2], data.vpt[3] );
-
-	s1.getLine().draw( data.img, img::DrawParams().setColor(200,200,200) );
-	s2.getLine().draw( data.img, img::DrawParams().setColor(200,200,200) );
-
-	s1.draw( data.img, img::DrawParams().setColor(0,200,0) );
-	s2.draw( data.img, img::DrawParams().setColor(200,0,0) );
-
-	auto a = s1.getAngle( s2 );
-	std::cout << "angle1=" << 180. / M_PI * a << '\n';*/
-
-
-
-/*	auto midlines = getBisectorLines( opol );
-	pl.draw( data.img );
-	midlines.first.draw( data.img, img::DrawParams().setColor(250,0,0) );
-	midlines.second.draw( data.img, img::DrawParams().setColor(0,0,250) );
-*/
+	decltype( getBisectorLines( opl ) ) lines;
+	if( data._closedPol )
+	{
+		cpl.draw( data.img, col );
+		lines = getBisectorLines( cpl );
+	}
+	else
+	{
+		opl.draw( data.img, col );
+		lines = getBisectorLines( opl );
+	}
+	draw( data.img, lines, img::DrawParams().setColor(0,200,0) );
 	data.showImage();
 }
 
 void demo_SegSide( int demidx )
 {
-	Param_SegSide data( demidx, "Segment Side" );
-	std::cout << "Demo " << demidx << ": Segment Sid\n";
+	Param_SegSide data( demidx, "Polyline bisector lines" );
+	std::cout << "Demo " << demidx << ": Polyline bisector lines\n" ;
 	data.leftClicAddPoint=true;
 	data.setMouseCB( action_SegSide );
 	KeyboardLoop kbloop;
-//	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
+	kbloop.addKeyAction( 'a', [&](void*){ data._closedPol = !data._closedPol; }, "Toggle open/closed" );
 
 	kbloop.addCommonAction( action_SegSide );
 	action_SegSide( &data );

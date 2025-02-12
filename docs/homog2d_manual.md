@@ -166,7 +166,8 @@ This is illustrated on this figure, showing a rotating point and the computed or
 
 ![showcase8](showcase/showcase8.gif)
 
-Upon return, the first point will hold the intersection point (line and segment supporting line), and the second will hold the given point.
+Upon return, the first point will hold the intersection point (projection of point on line),
+and the second will hold the given point.
 
 
 ### 2.2 - Get point(s) lying on line
@@ -439,6 +440,18 @@ bool b1 = l1.isParallelTo( s1 );
 bool b2 = s1.isParallelTo( l1 );  // also works
 auto a1 = l1.getAngle( s1 );
 auto a2 = s1.getAngle( l1 );
+```
+
+For angle, if one of the type is a line, or an unoriented segment, then the angle will stay in the range [0:+M_PI].
+However, if both of the types are oriented, then the returned value will be in the range [-M_PI:+-M_PI].
+
+
+Oriented segments can be reversed with the unary `-` operator:
+```C++
+OSegment s( Point2d(1,2), Point2d(3,4) );
+std::cout << s; // print [1,2]-[3,4]
+s = -s;
+std::cout << s; // print [3,4]-[1,2]
 ```
 
 You can get the point lying in the middle of the segment:
