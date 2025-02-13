@@ -1256,7 +1256,11 @@ operator * ( const Homogr_<U>&, const Line2d_<T>& );
 // forward declaration
 template<typename PLT,typename FPT>
 std::vector<Line2d_<HOMOG2D_INUMTYPE>>
-getBisectorLines( const base::PolylineBase<PLT,FPT>& pl );
+getBisectorLines( const base::PolylineBase<PLT,FPT>& );
+
+template<typename T1,typename T2>
+HOMOG2D_INUMTYPE
+getAngle( const T1&, const T2& );
 
 
 namespace detail {
@@ -5957,10 +5961,19 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 /**
 (Unused at present)
 */
-struct OffsetPoly
+struct OffsetPolyParams
 {
+	bool _angleSplit = false;
 };
-
+#if 0
+struct TmpDebug
+{
+	Point2d_<double> pt1;
+	Point2d_<double> ptnew;
+	Segment_<double> seg;
+	std::pair<Line2d_<double>,Line2d_<double>> plines;
+};
+#endif
 namespace base {
 
 //------------------------------------------------------------------
@@ -6735,7 +6748,8 @@ Two tasks:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-	getOffsetPoly( T value, OffsetPoly params=OffsetPoly{} ) const;
+//	getOffsetPoly( T value, TmpDebug&, OffsetPolyParams p=OffsetPolyParams{} ) const;
+	getOffsetPoly( T value, OffsetPolyParams p=OffsetPolyParams{} ) const;
 
 	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
 	getBisectorLines() const
@@ -6752,19 +6766,41 @@ public:
 
 
 //------------------------------------------------------------------
+/// Helper function for cutting angles, used in getOffsetPoly()
+/// Issue: output points are in wrong order when angle not convex
+template<typename FP1,typename FP2>
+PointPair_<HOMOG2D_INUMTYPE>
+p_computeAngleCut(
+	Point2d_<FP1>                               pt1,  ///< source polyline point
+	Point2d_<HOMOG2D_INUMTYPE>                  pt2,  ///< intersection point that we want to "cut"
+	const std::pair<Line2d_<FP2>,Line2d_<FP2>>& pli   ///< pair of lines that we want to joint before the point pt2
+//	TmpDebug& debug
+)
+{
+	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
+//	debug.seg= seg;
+	auto mid = seg.getCenter();
+	auto oline = seg.getLine().getOrthogonalLine( mid );
+	auto inters1 = oline.intersects(pli.first);
+	auto inters2 = oline.intersects(pli.second);
+	return std::make_pair(
+		inters1.get(),
+		inters2.get()
+	);
+}
+//------------------------------------------------------------------
 /// Return an "offsetted" closed polyline, requires simple polygon (CPolyline AND no crossings) as input
 /**
 On failure (for whatever reason), will return an empty CPolyline
 
 - If dist>0, returns the polyline "outside" the source one
 - If dist<0, returns the polyline "inside" the source one
-
-\todo 20250130: fix the issue: inside/outside depends on ordering of points. And normalizing DOES NOT fix this.
 */
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPoly /*params*/ ) const
+//PolylineBase<PLT,FPT>::getOffsetPoly( T dist, TmpDebug& debug, OffsetPolyParams params ) const
+PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 {
 	HOMOG2D_CHECK_IS_NUMBER(T);
 
@@ -6787,9 +6823,7 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPoly /*params*/ ) const
 	if( !valid )
 		return PolylineBase<typ::IsClosed,FPT>();
 
-//HOMOG2D_LOG( "BEF " << *this );
 	p_normalizePoly();
-//HOMOG2D_LOG( "AFF " << *this );
 
 /* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
 (bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
@@ -6838,8 +6872,11 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 		auto pt2 = getPoint(nextPt1);
 		auto pt3 = getPoint(nextPt2);
 
-		OSegment_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
-		OSegment_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+//		OSegment_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
+//		OSegment_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+
+		OSegment_<HOMOG2D_INUMTYPE> v1( pt1, pt2 );
+		OSegment_<HOMOG2D_INUMTYPE> v2( pt2, pt3 );
 
 		auto li1 = segs.at(current).getLine();
 		auto li2 = segs.at(nextS).getLine();
@@ -6851,18 +6888,19 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 			paraLines = true; // can't do much more, so quit...
 		else
 		{
-			std::array<Point2d_<FPT>,4> vpt;
-// compute the 4 intersection points
-try{
-			vpt[0] = pli1.first  * pli2.first;
-			vpt[1] = pli1.first  * pli2.second;
-			vpt[2] = pli1.second * pli2.first;
-			vpt[3] = pli1.second * pli2.second;
-}
-catch( std::exception& err )
-{
-		std::cerr << "catch pt product error, msg=" << err.what();
-}
+			std::array<Point2d_<HOMOG2D_INUMTYPE>,4> vpt;
+			try
+			{
+				vpt[0] = pli1.first  * pli2.first;
+				vpt[1] = pli1.first  * pli2.second;
+				vpt[2] = pli1.second * pli2.first;
+				vpt[3] = pli1.second * pli2.second;
+			}
+			catch( std::exception& err )
+			{
+				std::cerr << "pt product error, msg:" << err.what();
+				HOMOG2D_THROW_ERROR_1( "unexpected error, please post an issue online" );
+			}
 
 			int addPoint = -1;
 			for( int i=0; i<4; i++ )  // search in the four points which one is the "good" one
@@ -6877,7 +6915,34 @@ catch( std::exception& err )
 			}
 			assert( addPoint != -1 );
 
-			v_out.push_back( vpt[addPoint] );
+			if( !params._angleSplit || v1.getPointSide(pt3) != PointSide::Left )
+				v_out.push_back( vpt[addPoint] );
+			else
+			{
+				std::array<std::pair<Line2d_<FPT>,Line2d_<FPT>>,4>  vplines;
+				vplines[0] = std::make_pair( pli1.first,  pli2.first  );
+				vplines[1] = std::make_pair( pli1.first,  pli2.second );
+				vplines[2] = std::make_pair( pli1.second, pli2.first  );
+				vplines[3] = std::make_pair( pli1.second, pli2.second );
+
+				auto ppair = p_computeAngleCut( pt2, vpt[addPoint], vplines[addPoint] ); //, debug );
+
+/*				debug.pt1 = pt2;
+				debug.ptnew = vpt[addPoint];
+				debug.plines = vplines[addPoint];
+*/
+//				if( getAngle(v1,v2) < M_PI )
+				{
+					v_out.push_back( ppair.first );
+					v_out.push_back( ppair.second );
+				}
+/*				else
+				{
+					v_out.push_back( ppair.second );
+					v_out.push_back( ppair.first );
+				}*/
+
+			}
 			current++;
 		}
 	}

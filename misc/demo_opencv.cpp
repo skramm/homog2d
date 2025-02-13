@@ -1973,6 +1973,7 @@ struct Param_PO : Data
 	bool _showSegs = true;
 	bool _side     = true;
 	bool _drawBisectorLines = false;
+	OffsetPolyParams _params;
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -1993,8 +1994,8 @@ void action_PO( void* param )
 
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
-
-	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
+//TmpDebug debug;
+	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist, /*debug,*/ data._params );
 
 	auto pts = data._cpoly.getPts();
 	int idx = 0;
@@ -2002,7 +2003,7 @@ void action_PO( void* param )
 		drawText( data.img, std::to_string(idx++), pt );
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
-	draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+	draw( data.img, data._cpoly_off, img::DrawParams().setColor(0,0,250) );
 
 	if( data._drawBisectorLines )
 		draw( data.img, data._cpoly.getBisectorLines() );
@@ -2021,7 +2022,13 @@ void action_PO( void* param )
 			}
 		}
 	}
+/*	data.img.draw( debug.pt1, img::DrawParams().setColor(0,250,0).setPointSize(7) );
+	data.img.draw( debug.ptnew, img::DrawParams().setColor(0,250,0).setPointSize(7) );
+	data.img.draw( debug.plines, img::DrawParams().setColor(0,250,0) );
+	data.img.draw( debug.seg, img::DrawParams().setColor(0,250,0) );
+*/
 	data.showImage();
+
 }
 
 /// Polygon Offset demo start
@@ -2037,6 +2044,7 @@ void demo_PO( int demidx )
 	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
 	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
+	kbloop.addKeyAction( 'v', [&](void*){ data._params._angleSplit = !data._params._angleSplit; }, "switch angles cut" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );
