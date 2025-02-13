@@ -1994,7 +1994,6 @@ void action_PO( void* param )
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
 
-	data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
 
 	auto pts = data._cpoly.getPts();
 	int idx = 0;
@@ -2002,7 +2001,12 @@ void action_PO( void* param )
 		drawText( data.img, std::to_string(idx++), pt );
 
 	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
-	draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+
+	if( data._cpoly.isSimple() )
+	{
+		data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
+		draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+	}
 
 	if( data._drawBisectorLines )
 		draw( data.img, data._cpoly.getBisectorLines() );

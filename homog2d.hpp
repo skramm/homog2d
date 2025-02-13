@@ -3866,7 +3866,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	{
 		HOMOG2D_CHECK_IS_NUMBER(T1);
 		HOMOG2D_CHECK_IS_NUMBER(T2);
-		impl_init_2( v1, v2, detail::BaseHelper<LP>() );
+		p_init_2( v1, v2 );
 	}
 
 /// Constructor of line/point from 3 values
@@ -3907,7 +3907,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	>
 	LPBase( T val )
 	{
-		impl_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y, detail::BaseHelper<LP>() );
+		p_init_2( val.HOMOG2D_BIND_X, val.HOMOG2D_BIND_Y );
 	}
 #endif
 
@@ -4121,26 +4121,20 @@ public:
 	}
 
 	/// Returns a pair of points that are lying on line at distance \c dist from point \c pt, assuming that one is lying on the line.
-	template<typename FPT2>
+	template<typename FPT2,typename FPT3>
 	PointPair_<FPT>
-	getPoints( const Point2d_<FPT>& pt, FPT2 dist ) const
+	getPoints( const Point2d_<FPT2>& pt, FPT3 dist ) const
 	{
-		return impl_getPoints_B( pt, dist, detail::BaseHelper<LP>() );
+		return impl_getPoints_B( pt, dist );
 	}
 
-	/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
+	template<typename FPT2>
 	Line2d_<FPT>
-	getOrthogonalLine( GivenCoord gc, FPT other ) const
-	{
-		return impl_getOrthogonalLine_A( gc, other, detail::BaseHelper<LP>() );
-	}
+	getOrthogonalLine( GivenCoord gc, FPT2 other ) const;
 
-	/// Returns an orthogonal line to the one it is called on, at point \c pt, assuming that one is lying on the line.
+	template<typename FPT2>
 	Line2d_<FPT>
-	getOrthogonalLine( const Point2d_<FPT>& pt ) const
-	{
-		return impl_getOrthogonalLine_B( pt, detail::BaseHelper<LP>() );
-	}
+	getOrthogonalLine( const Point2d_<FPT2>& pt ) const;
 
 	/// Returns a line rotated at point \c pt with angle \c theta
 	template<typename FPT2, typename T>
@@ -4336,10 +4330,9 @@ private:
 	PointPair_<FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
 	constexpr PointPair_<FPT> impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-	template<typename FPT2>
-	PointPair_<FPT>           impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
-	template<typename FPT2>
-	constexpr PointPair_<FPT> impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const;
+
+	template<typename FPT2,typename FPT3>
+	PointPair_<FPT> impl_getPoints_B( const Point2d_<FPT2>&, FPT3 ) const;
 
 	void impl_op_stream( std::ostream&, const Point2d_<FPT>& ) const;
 	void impl_op_stream( std::ostream&, const Line2d_<FPT>&  ) const;
@@ -4487,7 +4480,7 @@ private:
 	template<typename T>
 	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<typ::IsPoint>& )
 	{
-		impl_init_2( pt.x, pt.y, detail::BaseHelper<typ::IsPoint>() );
+		p_init_2( pt.x, pt.y );
 	}
 /// Build line from Opencv point
 	template<typename T>
@@ -4570,11 +4563,6 @@ private:
 	template<typename T,typename PTYPE>
 	constexpr bool impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 
-	Line2d_<FPT>           impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::BaseHelper<typ::IsLine>&  ) const;
-	constexpr Line2d_<FPT> impl_getOrthogonalLine_A( GivenCoord, FPT,      const detail::BaseHelper<typ::IsPoint>& ) const;
-	Line2d_<FPT>           impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
-	constexpr Line2d_<FPT> impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
-
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
@@ -4604,9 +4592,7 @@ private:
 		_v[2] = 1.;
 	}
 	template<typename T1,typename T2>
-	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<typ::IsPoint>& );
-	template<typename T1,typename T2>
-	void impl_init_2( const T1&, const T2&, const detail::BaseHelper<typ::IsLine>& );
+	void p_init_2( const T1&, const T2& );
 
 #ifdef HOMOG2D_USE_BOOSTGEOM
 	template<typename BFPT> // Boost Floating Point Type
@@ -5957,8 +5943,9 @@ operator * ( const Homogr_<FPT2>&, const base::PolylineBase<PLT2,FPT1>& ) -> bas
 /**
 (Unused at present)
 */
-struct OffsetPoly
+struct OffsetPolyParams
 {
+	bool cutAngles = false;
 };
 
 namespace base {
@@ -6735,7 +6722,7 @@ Two tasks:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-	getOffsetPoly( T value, OffsetPoly params=OffsetPoly{} ) const;
+	getOffsetPoly( T value, OffsetPolyParams p=OffsetPolyParams{} ) const;
 
 	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
 	getBisectorLines() const
@@ -6764,7 +6751,7 @@ On failure (for whatever reason), will return an empty CPolyline
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPoly /*params*/ ) const
+PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 {
 	HOMOG2D_CHECK_IS_NUMBER(T);
 
@@ -6787,13 +6774,11 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPoly /*params*/ ) const
 	if( !valid )
 		return PolylineBase<typ::IsClosed,FPT>();
 
-//HOMOG2D_LOG( "BEF " << *this );
 	p_normalizePoly();
-//HOMOG2D_LOG( "AFF " << *this );
 
 /* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
 (bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
-and compute their
+and compute their relative orientation
 ref:
 - http://www.faqs.org/faqs/graphics/algorithms-faq/
 Subject 2.07: How do I find the orientation of a simple polygon?
@@ -6852,17 +6837,19 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 		else
 		{
 			std::array<Point2d_<FPT>,4> vpt;
-// compute the 4 intersection points
-try{
-			vpt[0] = pli1.first  * pli2.first;
-			vpt[1] = pli1.first  * pli2.second;
-			vpt[2] = pli1.second * pli2.first;
-			vpt[3] = pli1.second * pli2.second;
-}
-catch( std::exception& err )
-{
-		std::cerr << "catch pt product error, msg=" << err.what();
-}
+// compute the 4 intersection points of the two pairs of lines
+			try
+			{
+				vpt[0] = pli1.first  * pli2.first;
+				vpt[1] = pli1.first  * pli2.second;
+				vpt[2] = pli1.second * pli2.first;
+				vpt[3] = pli1.second * pli2.second;
+			}
+			catch( std::exception& err )
+			{
+				std::cerr << "point product error, error:" << err.what();
+				HOMOG2D_THROW_ERROR_1( "Unexpected error, please report this online" );
+			}
 
 			int addPoint = -1;
 			for( int i=0; i<4; i++ )  // search in the four points which one is the "good" one
@@ -8821,13 +8808,6 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelpe
 {
 	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
 }
-template<typename LP,typename FPT>
-template<typename FPT2>
-constexpr PointPair_<FPT>
-LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>&, FPT2, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoints() on a point" );
-}
 
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
@@ -8841,10 +8821,12 @@ LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const det
 
 /// Returns pair of points on line at distance \c dist from point on line at coord \c coord. Implementation for lines
 template<typename LP,typename FPT>
-template<typename FPT2>
+template<typename FPT2,typename FPT3>
 PointPair_<FPT>
-LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT2>& pt, FPT3 dist ) const
 {
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getPoints() on a point" );
+
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
 	{
@@ -8859,29 +8841,14 @@ LPBase<LP,FPT>::impl_getPoints_B( const Point2d_<FPT>& pt, FPT2 dist, const deta
 
 
 //------------------------------------------------------------------
-/// Illegal instanciation
+/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
 template<typename LP,typename FPT>
-constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord, FPT, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
-	return Line2d_<FPT>(); // to avoid a compile warning
-}
-
-/// Illegal instanciation
-template<typename LP,typename FPT>
-constexpr Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>&, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getOrthogonalLine() on a point" );
-	return Line2d_<FPT>(); // to avoid a compile warning
-}
-
-/// Returns an orthogonal line, implementation of getOrthogonalLine().
-template<typename LP,typename FPT>
+template<typename FPT2>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getOrthogonalLine( GivenCoord gc, FPT2 val ) const
 {
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogonalLine() on a point" );
+
 	auto other_val = impl_getCoord( gc, val, detail::BaseHelper<typ::IsLine>() );
 
 	Point2d_<FPT> pt( other_val, val ) ;
@@ -8891,11 +8858,14 @@ LPBase<LP,FPT>::impl_getOrthogonalLine_A( GivenCoord gc, FPT val, const detail::
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
 
-/// Returns an orthogonal line, implementation of getOrthogonalLine().
+/// Returns an orthogonal line to the one it is called on, at point \c pt, assuming that it is lying on the line.
 template<typename LP,typename FPT>
+template<typename FPT2>
 Line2d_<FPT>
-LPBase<LP,FPT>::impl_getOrthogonalLine_B( const Point2d_<FPT>& pt, const detail::BaseHelper<typename typ::IsLine>& ) const
+LPBase<LP,FPT>::getOrthogonalLine( const Point2d_<FPT2>& pt ) const
 {
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogonalLine() on a point" );
+
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
 	{
@@ -9107,28 +9077,26 @@ crossProductV(
 
 namespace base {
 
-/// Points overload: generic init from two numeric args
+/// Generic init from two numeric args
 template<typename LP, typename FPT>
 template<typename T1,typename T2>
 void
-LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<typename typ::IsPoint>& )
+LPBase<LP,FPT>::p_init_2( const T1& v1, const T2& v2 )
 {
-	_v[0] = v1;
-	_v[1] = v2;
-	_v[2] = 1.;
-}
-
-/// Lines overload: generic init from two numeric args
-template<typename LP, typename FPT>
-template<typename T1,typename T2>
-void
-LPBase<LP,FPT>::impl_init_2( const T1& v1, const T2& v2, const detail::BaseHelper<typename typ::IsLine>& )
-{
-	Point2d_<FPT> pt1;                // 0,0
-	Point2d_<FPT> pt2(v1,v2);
-	pt2.p_normalizePL();
-	*this = detail::crossProduct<typ::IsLine>( pt1, pt2 );
-	p_normalizePL();
+	if constexpr( std::is_same_v<LP,typ::IsPoint> )
+	{
+		_v[0] = v1;
+		_v[1] = v2;
+		_v[2] = 1.;
+	}
+	else
+	{
+		Point2d_<FPT> pt1;                // 0,0
+		Point2d_<FPT> pt2(v1,v2);
+		pt2.p_normalizePL();
+		*this = detail::crossProduct<typ::IsLine>( pt1, pt2 );
+		p_normalizePL();
+	}
 }
 
 /// Overload for point to point distance
