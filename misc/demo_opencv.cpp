@@ -378,6 +378,12 @@ void KeyboardLoop::start( Data& data )
 }
 
 //------------------------------------------------------------------
+void toggle( bool& b, std::string msg )
+{
+	b = !b;
+	std::cout << msg << "=" << b << '\n';
+}
+//------------------------------------------------------------------
 void action_1( void* param )
 {
 	auto& data = *reinterpret_cast<Data*>(param);
@@ -1974,7 +1980,12 @@ struct Param_PO : Data
 	bool _side     = true;
 	bool _drawBisectorLines = false;
 	OffsetPolyParams _params;
-	bool _showAngles = false;
+	bool _showPolyAngles = false;
+	bool _showPolyIdx    = false;
+
+	OPolyline _opl;
+	CPolyline _cpl;
+
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -1995,14 +2006,18 @@ void action_PO( void* param )
 
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
+	data._cpol = CPolyline( withoutDupes );
+	data._opol = OPolyline( withoutDupes );
 
 
-	auto pts = data._cpoly.getPts();
-	int idx = 0;
-	for( auto pt: pts )
+//	auto pts = data._cpoly.getPts();
+//	int idx = 0;
+/*	for( auto pt: pts )
 		drawText( data.img, std::to_string(idx++), pt );
+*/
+	draw( data.img, data._cpoly,
+		img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showPolyAngles).showIndex(data._showPolyIdx) );
 
-	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showAngles) );
 	if( data._cpoly.isSimple() )
 	{
 		data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
@@ -2044,13 +2059,14 @@ void demo_PO( int demidx )
 	data.leftClicAddPoint=true;
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data._showSegs = !data._showSegs; }, "Toggle segments to centroid" );
 	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
 	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
-	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
-	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
-	kbloop.addKeyAction( 'v', [&](void*){ data._params._angleSplit = !data._params._angleSplit; }, "switch angles cut" );
-	kbloop.addKeyAction( 'f', [&](void*){ data._showAngles = !data._showAngles; }, "switch angles cut" );
+	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._showSegs,           "showSegs");          }, "Toggle segments to centroid" );
+	kbloop.addKeyAction( 'q', [&](void*){ toggle(data._side,               "side");              }, "Reverse side" );
+	kbloop.addKeyAction( 'b', [&](void*){ toggle(data._drawBisectorLines,  "drawBisectorLines"); }, "toggle draw bisector lines" );
+	kbloop.addKeyAction( 'v', [&](void*){ toggle(data._params._angleSplit, "angleSplit");        }, "switch angles cut" );
+	kbloop.addKeyAction( 'f', [&](void*){ toggle(data._showPolyAngles,     "showPolyAngles");    }, "toggle angles" );
+	kbloop.addKeyAction( 'g', [&](void*){ toggle(data._showPolyIdx,        "showPolyIdx");       }, "toggle indexes" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );

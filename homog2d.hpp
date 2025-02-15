@@ -11990,6 +11990,30 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 				2
 			);
 		}
+
+	if( dp._dpValues._showAngles )
+	{
+		auto osegs = getOSegs();
+			std::cout << "osegs size=" << osegs.size() << "\n";
+
+		const auto& pts = getPts();
+		for( size_t i=0; i<osegs.size()-1; i++ )
+		{
+			auto seg1 = osegs[i];
+			auto seg2 = -osegs[i+1];
+			auto angle = getAngle( seg1, seg2 );
+			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
+			drawText( im, std::to_string(angle * 180./M_PI), pts[i+1] );
+		}
+		if( isClosed() )
+		{
+			auto seg1 = osegs.back();
+			auto seg2 = -osegs.front();
+			auto angle = getAngle( seg1, seg2 );
+			std::cout << "final angle " << "=" << angle*180/3.1415 << "\n";
+			drawText( im, std::to_string(angle * 180./M_PI), pts[0] );
+		}
+	}
 }
 
 } // namespace base
@@ -12022,7 +12046,7 @@ operator << ( std::ostream& f, const Image<SvgImage>& im )
 }
 } // namespace img
 
-/// Free function, draw text on Svg image
+/// Draw text on Svg image
 /// \todo 20230118: find a way to add a default parameter for dp (not allowed on explicit instanciation)
 template <>
 inline
@@ -12040,11 +12064,11 @@ img::Image<img::SvgImage>::drawText( std::string str, Point2d_<float> pt, img::D
 }
 
 #ifdef HOMOG2D_USE_OPENCV
-/// Free function, draw text on Opencv image
+/// Draw text on Opencv image
 template <>
 inline
 void
-img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp ) //=img::DrawParams() )
+img::Image<cv::Mat>::drawText( std::string str, Point2d_<float> pt, img::DrawParams dp )
 {
 	auto col = dp.color();
 	cv::putText(
@@ -12340,10 +12364,16 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 	if( dp._dpValues._showAngles )
 	{
 		auto osegs = getOSegs();
+			std::cout << "osegs size=" << osegs.size() << "\n";
+
 		const auto& pts = getPts();
-		for( size_t i=0; i<osegs.size(); i++ )
+		for( size_t i=0; i<osegs.size()-1; i++ )
 		{
 			auto seg1 = osegs[i];
+			auto seg2 = osegs[i+1];
+			auto angle = getAngle( seg1, seg2 );
+			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
+			drawText( im, std::to_string(angle * 180./M_PI), pts[i+1] );
 		}
 	}
 
