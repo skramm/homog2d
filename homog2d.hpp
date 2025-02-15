@@ -533,6 +533,7 @@ class DrawParams
 		bool        _enhancePoint  = false;     ///< to draw selected points
 		bool        _showPoints    = false;     ///< show the points (useful only for Segment_ and Polyline_)
 		bool        _showIndex     = false;     ///< show the index as number
+		bool        _showAngles    = false;
 		int         _fontSize      = 20;        ///< font size for drawText()
 		std::string _attrString;                ///< added attributes (SVG only)
 
@@ -633,6 +634,12 @@ public:
 	DrawParams& showIndex( bool b=true )
 	{
 		_dpValues._showIndex = b;
+		return *this;
+	}
+/// Set or unset the drawing of angles of polylines
+	DrawParams& showAngles( bool b=true )
+	{
+		_dpValues._showAngles = b;
 		return *this;
 	}
 
@@ -2017,7 +2024,7 @@ template<typename T> struct IsDrawable              : std::false_type {};
 template<typename T> struct IsDrawable<Circle_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<FRect_<T>>   : std::true_type  {};
 template<typename T> struct IsDrawable<Segment_<T>> : std::true_type  {};
-template<typename T> struct IsDrawable<OSegment_<T>>  : std::true_type  {};
+template<typename T> struct IsDrawable<OSegment_<T>>  : std::true_type{};
 template<typename T> struct IsDrawable<Line2d_<T>>  : std::true_type  {};
 template<typename T> struct IsDrawable<Point2d_<T>> : std::true_type  {};
 template<typename T> struct IsDrawable<Ellipse_<T>> : std::true_type  {};
@@ -2048,10 +2055,10 @@ template<typename T> struct PolIsClosed<base::PolylineBase<typename typ::IsClose
 
 /// Traits class used in operator * ( const Hmatrix_<typ::IsHomogr,FPT>& h, const Cont& vin ),
 /// used to detect if container is valid
-template <typename T>               struct IsContainer                     : std::false_type { };
-template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type { };
-template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type { };
+template <typename T>               struct IsContainer                     : std::false_type{};
+template <typename T,std::size_t N> struct IsContainer<std::array<T,N>>    : std::true_type {};
+template <typename... Ts>           struct IsContainer<std::vector<Ts...>> : std::true_type {};
+template <typename... Ts>           struct IsContainer<std::list<Ts...  >> : std::true_type {};
 
 /// Traits class used to detect if container \c T is a \c std::array
 /** (because allocation is different, see \ref alloc() ) */
@@ -2060,9 +2067,9 @@ template <typename V, size_t n> struct IsArray<std::array<V, n>> : std::true_typ
 
 /// Traits class, used for getBB() set of functions
 template<class>   struct IsSegment              : std::false_type {};
-template<class T> struct IsSegment<Segment_<T>> : std::true_type {};
+template<class T> struct IsSegment<Segment_<T>> : std::true_type  {};
 template<class>   struct IsPoint                : std::false_type {};
-template<class T> struct IsPoint<Point2d_<T>>   : std::true_type {};
+template<class T> struct IsPoint<Point2d_<T>>   : std::true_type  {};
 
 /// Traits class, used to check if type has a Bounding Box
 /**
@@ -5927,6 +5934,28 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 	return FRect_<FPT>( getBB_Points( vpts ) );
 }
 
+/// Private helper function for base::PolylineBase::getSegs() and base::PolylineBase::getOSegs()
+template<typename ST,typename PLT, typename FPT> // Segment Type, PolyLine Type
+std::vector<ST>
+p_getSegs( const base::PolylineBase<PLT,FPT>& pl, const ST& )
+{
+	auto siz = pl.size();
+	if( siz < 2 ) // nothing to return
+		return std::vector<ST>();
+
+	std::vector<ST> out;
+	out.reserve( siz );
+	for( size_t i=0; i<siz-1; i++ )
+	{
+		const auto& pt1 = pl.getPoint(i);
+		const auto& pt2 = pl.getPoint(i+1);
+		out.emplace_back( ST(pt1,pt2) );
+	}
+	if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+		out.push_back( ST(pl.getPoint(siz-1), pl.getPoint(0) ) );
+	return out;
+}
+
 } // namespace priv
 
 // Forward declaration
@@ -6265,22 +6294,17 @@ public:
 		return _plinevec;
 	}
 
+
+/// Returns (as a copy) the oriented segments of the polyline
+	std::vector<OSegment_<FPT>> getOSegs() const
+	{
+		return priv::p_getSegs( *this, OSegment_<FPT>() );
+	}
+
 /// Returns (as a copy) the segments of the polyline
 	std::vector<Segment_<FPT>> getSegs() const
 	{
-		if( size() < 2 ) // nothing to return
-			return std::vector<Segment_<FPT>>();
-
-		std::vector<Segment_<FPT>> out;
-		out.reserve( size() );
-		for( size_t i=0; i<size()-1; i++ )
-		{
-			const auto& pt1 = _plinevec[i];
-			const auto& pt2 = _plinevec[i+1];
-			out.emplace_back( Segment_<FPT>(pt1,pt2) );
-		}
-		impl_getSegs( out, detail::PlHelper<PLT>() );
-		return out;
+		return priv::p_getSegs( *this, Segment_<FPT>() );
 	}
 
 /// Returns one point of the polyline.
@@ -6293,6 +6317,13 @@ public:
 			);
 #endif
 		return _plinevec[idx];
+	}
+
+/// Returns one oriented segment of the polyline.
+/// \todo 20250215
+	OSegment_<FPT> getOSegment( size_t idx ) const
+	{
+		HOMOG2D_THROW_ERROR_1( "TODO" );
 	}
 
 /// Returns one segment of the polyline.
@@ -6308,38 +6339,18 @@ Segment \c n is the one between point \c n and point \c n+1
 			);
 
 		if( size() < 2 )
-			HOMOG2D_THROW_ERROR_1( "no segment " << idx );
+			HOMOG2D_THROW_ERROR_1( "empty, no segment " << idx );
 #endif
-
-		return impl_getSegment( idx, detail::PlHelper<PLT>() );
+	if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
+	else
+		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
 	}
 
 	CPolyline_<FPT> convexHull() const;
 ///@}
 
-private:
-/// empty implementation
-	void impl_getSegs( std::vector<Segment_<FPT>>&, const detail::PlHelper<typ::IsOpen>& ) const
-	{}
-/// that one is for closed Polyline, adds the last segment
-	void impl_getSegs( std::vector<Segment_<FPT>>& out, const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		out.push_back( Segment_<FPT>(_plinevec.front(),_plinevec.back() ) );
-	}
-
-	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
-	}
-	Segment_<FPT>
-	impl_getSegment( size_t idx, const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
-	}
-
 public:
-
 /// \name Modifiers (non-const member functions)
 ///@{
 
@@ -12300,6 +12311,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 		im.getReal()._svgString << pt.getX() << ',' << pt.getY() << ' ';
 	im.getReal()._svgString << "\"/>\n";
 
+/// \todo 20240215 Why don't we use the drawText() function ?
 	if( dp._dpValues._showIndex )
 	{
 		im.getReal()._svgString << "<g>\n";
@@ -12323,6 +12335,16 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 		for( size_t i=0; i<size(); i++ )
 			getPoint(i).draw( im, dp );
 		im.getReal()._svgString << "</g>\n";
+	}
+
+	if( dp._dpValues._showAngles )
+	{
+		auto osegs = getOSegs();
+		const auto& pts = getPts();
+		for( size_t i=0; i<osegs.size(); i++ )
+		{
+			auto seg1 = osegs[i];
+		}
 	}
 
 	if( dp._dpValues._showIndex || dp._dpValues._showPoints )

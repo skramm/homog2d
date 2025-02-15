@@ -1974,6 +1974,7 @@ struct Param_PO : Data
 	bool _side     = true;
 	bool _drawBisectorLines = false;
 	OffsetPolyParams _params;
+	bool _showAngles = false;
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -1995,12 +1996,13 @@ void action_PO( void* param )
 	auto withoutDupes = removeDupes( data.vpt );
 	data._cpoly = CPolyline( withoutDupes );
 
+
 	auto pts = data._cpoly.getPts();
 	int idx = 0;
 	for( auto pt: pts )
 		drawText( data.img, std::to_string(idx++), pt );
 
-	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0) );
+	draw( data.img, data._cpoly, img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showAngles) );
 	if( data._cpoly.isSimple() )
 	{
 		data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
@@ -2048,6 +2050,7 @@ void demo_PO( int demidx )
 	kbloop.addKeyAction( 'q', [&](void*){ data._side = !data._side; }, "Reverse side" );
 	kbloop.addKeyAction( 'b', [&](void*){ data._drawBisectorLines = !data._drawBisectorLines; }, "toogle draw bisector lines" );
 	kbloop.addKeyAction( 'v', [&](void*){ data._params._angleSplit = !data._params._angleSplit; }, "switch angles cut" );
+	kbloop.addKeyAction( 'f', [&](void*){ data._showAngles = !data._showAngles; }, "switch angles cut" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );
