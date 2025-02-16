@@ -1982,9 +1982,10 @@ struct Param_PO : Data
 	OffsetPolyParams _params;
 	bool _showPolyAngles = false;
 	bool _showPolyIdx    = false;
+	bool _closedPol      = true;
 
-	OPolyline _opl;
-	CPolyline _cpl;
+	OPolyline _opol;
+	CPolyline _cpol;
 
 };
 
@@ -1998,6 +1999,37 @@ std::vector<Point2d> removeDupes( const std::vector<Point2d>& vec )
 	return out;
 }
 
+template<typename IM, typename POL>
+void process_PO( IM& im, const POL& pol, Param_PO& data )
+{
+	draw( im, pol,
+		img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showPolyAngles).showIndex(data._showPolyIdx) );
+
+	if( data._drawBisectorLines )
+		draw( im, pol.getBisectorLines() );
+
+	if( pol.isSimple() )
+	{
+		data._cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
+		draw( im, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+
+		auto centr = pol.centroid();
+		draw( im, centr, img::DrawParams().showPoints().setColor(0,0,250) );
+
+		draw( im, pol.centroid(), img::DrawParams().showPoints().setColor(0,0,250) );
+
+		if( data._showSegs )
+		{
+			for( const auto& seg: pol.getSegs() )
+			{
+				auto mid= seg.getCenter();
+				im.draw( Segment(mid, centr), img::DrawParams().setColor(0,200,0) );
+			}
+		}
+	}
+}
+
+
 /// Polygon Offset demo action
 void action_PO( void* param )
 {
@@ -2009,46 +2041,17 @@ void action_PO( void* param )
 	data._cpol = CPolyline( withoutDupes );
 	data._opol = OPolyline( withoutDupes );
 
+	if( data._closedPol )
+		process_PO( data.img, data._cpol, data );
+	else
+		process_PO( data.img, data._opol, data );
 
-//	auto pts = data._cpoly.getPts();
-//	int idx = 0;
-/*	for( auto pt: pts )
-		drawText( data.img, std::to_string(idx++), pt );
-*/
-	draw( data.img, data._cpoly,
-		img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showPolyAngles).showIndex(data._showPolyIdx) );
-
-	if( data._cpoly.isSimple() )
-	{
-		data._cpoly_off = data._cpoly.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
-		draw( data.img, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
-	}
-
-
-	if( data._drawBisectorLines )
-		draw( data.img, data._cpoly.getBisectorLines() );
-
-	if( data._cpoly.isSimple() )
-	{
-		auto centr = data._cpoly.centroid();
-		draw( data.img, centr, img::DrawParams().showPoints().setColor(0,0,250) );
-
-		if( data._showSegs )
-		{
-			for( const auto& seg: data._cpoly.getSegs() )
-			{
-				auto mid= seg.getCenter();
-				data.img.draw( Segment(mid, centr), img::DrawParams().setColor(0,200,0) );
-			}
-		}
-	}
 /*	data.img.draw( debug.pt1, img::DrawParams().setColor(0,250,0).setPointSize(7) );
 	data.img.draw( debug.ptnew, img::DrawParams().setColor(0,250,0).setPointSize(7) );
 	data.img.draw( debug.plines, img::DrawParams().setColor(0,250,0) );
 	data.img.draw( debug.seg, img::DrawParams().setColor(0,250,0) );
 */
 	data.showImage();
-
 }
 
 /// Polygon Offset demo start
@@ -2067,6 +2070,7 @@ void demo_PO( int demidx )
 	kbloop.addKeyAction( 'v', [&](void*){ toggle(data._params._angleSplit, "angleSplit");        }, "switch angles cut" );
 	kbloop.addKeyAction( 'f', [&](void*){ toggle(data._showPolyAngles,     "showPolyAngles");    }, "toggle angles" );
 	kbloop.addKeyAction( 'g', [&](void*){ toggle(data._showPolyIdx,        "showPolyIdx");       }, "toggle indexes" );
+	kbloop.addKeyAction( 'k', [&](void*){ toggle(data._closedPol,          "closedPol");         }, "toggle open/closed" );
 
 	kbloop.addCommonAction( action_PO );
 	action_PO( &data );

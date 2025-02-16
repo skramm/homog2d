@@ -280,7 +280,7 @@ struct IsPoint  {};
 struct IsHomogr {};
 struct IsEpipmat {};
 
-/// Used to determine the type of "point pair (segment of vector), see base::SegVec
+/// Used to determine the type of "point pair (segment or vector), see base::SegVec
 struct IsSegment {};
 /// \sa IsSegment
 struct IsOSeg {};
