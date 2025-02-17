@@ -86,9 +86,13 @@ private:
 	std::function<void(void*)> _mouseCB = nullptr;
 
 public:
-	explicit Data( int demidx, std::string wname )
+	explicit Data( int demidx, std::string wname, std::string helpText=std::string() )
 		: _demo_idx( demidx )
 	{
+		if( helpText.empty() )
+			helpText = wname;
+
+		std::cout << "Demo " << demidx << ": " << helpText << "\n press 'h' anytime for available keys\n";
 		win1 = std::string("Demo ") + std::to_string(demidx) + ": " + wname;
 		cv::destroyAllWindows();
 		cv::namedWindow( win1 );
@@ -433,7 +437,7 @@ void demo_1( int demidx )
 //------------------------------------------------------------------
 struct Param_B: public Data
 {
-	explicit Param_B( int demidx, std::string wname ): Data( demidx, wname )
+	explicit Param_B( int demidx, std::string wname, std::string text ): Data( demidx, wname, text )
 	{}
 	void initPts()
 	{
@@ -449,9 +453,8 @@ struct Param_B: public Data
 /// Build H from R,T,S (no mouse)
 void demo_B( int demidx )
 {
-	Param_B data( demidx, "build Homography" );
-	std::cout << "Demo " << demidx << ": build Homography from Rotation, Translation, Scale\n"
-		<< "Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r\n";
+	Param_B data( demidx, "build Homography", "build Homography from Rotation, Translation, Scale \
+		Hit a key: scale:[op], angle:[lm], translation:[gh,yb], reset: r" );
 
 	double angle = 0.;
 	double angle_delta = 5.;
@@ -494,7 +497,7 @@ void demo_B( int demidx )
 //------------------------------------------------------------------
 struct Param_C: public Data
 {
-	explicit Param_C( int demidx, std::string wname ): Data( demidx, wname )
+	explicit Param_C( int demidx, std::string wname, std::string txt ): Data( demidx, wname, txt )
 	{
 		rect.set( Point2d( 180,120), Point2d( 380,280) );
 		vpt[0] = Point2d( 70,70 );
@@ -580,8 +583,7 @@ void action_C( void* param )
 
 void demo_C( int demidx )
 {
-	std::cout << "Demo " << demidx << ": move circle over line, hit [lm] to change circle radius\n";
-	Param_C data( demidx, "circle demo" );
+	Param_C data( demidx, "circle demo", "move circle over line, hit [lm] to change circle radius" );
 
 	data.li[0] = Point2d() * Point2d(200,100);
 	data.li[1] = Point2d(200,0) * Point2d(200,200);
@@ -604,7 +606,7 @@ void demo_C( int demidx )
 //------------------------------------------------------------------
 struct Param_SI: Data
 {
-	explicit Param_SI( int demidx, std::string wname): Data( demidx, wname )
+	explicit Param_SI( int demidx, std::string wname, std::string txt ): Data( demidx, wname, txt )
 	{}
 
 	Segment seg1,seg2;
@@ -689,10 +691,10 @@ void action_SI( void* param )
 /// Segment intersection demo
 void demo_SI( int demidx )
 {
-	Param_SI data( demidx, "segment_intersection" );
-	std::cout << "Demo " << demidx << ": intersection of segments\n Select a point and move it around. "
-		<< "When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n"
-		<< "Also shows parallel segments\n";
+	Param_SI data( demidx, "segment_intersection",
+		"Intersection of segments\n Select a point and move it around.  \
+		When they intersect, you get the orthogonal lines of the two segments, at the intersection point.\n \
+		Also shows parallel segments" );
 
 	data.vpt[0] = Point2d(100,200);
 	data.vpt[1] = Point2d(200,300);
@@ -709,7 +711,7 @@ void demo_SI( int demidx )
 //------------------------------------------------------------------
 struct Param_6 : Data
 {
-	explicit Param_6( int demidx, std::string wname): Data( demidx, wname )
+	explicit Param_6( int demidx, std::string wname, std::string txt ): Data( demidx, wname, txt )
 	{}
 
 	float angle = 20;
@@ -757,9 +759,10 @@ void action_6( void* param )
 
 void demo_6( int demidx )
 {
-	std::cout << "Demo " << demidx << ": apply homography to lines and segments\n Hit [lm] to change angle, "
-		<< "and select points of blue segment with mouse\n";
-	Param_6 data( demidx, "homography_lines_seg" );
+	Param_6 data( demidx, "homography_lines_seg",
+	"Apply homography to lines and segments\n Hit [lm] to change angle, \
+	and select points of blue segment with mouse" );
+
 	double angle_delta = 5.; // degrees
 
 	data.setMouseCB( action_6 );
@@ -935,7 +938,7 @@ void demo_H( int demidx )
 /// we switch drawing
 struct Param_PL : Data
 {
-	explicit Param_PL( int demidx, std::string title ):Data( demidx, title )
+	explicit Param_PL( int demidx, std::string title, std::string txt ):Data( demidx, title, txt )
 	{
 		v_po.push_back( &polyline_o );
 		v_po.push_back( &polyline_c );
@@ -1038,12 +1041,11 @@ void action_PL( void* param )
 
 void demo_PL( int demidx )
 {
-	Param_PL data( demidx, "Polyline demo" );
-	std::cout << "Demo " << demidx
-		<< ": polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n"
-		<< "Lclick to add point, Rclick to remove\n";
-	data.leftClicAddPoint=true;
+	Param_PL data( demidx, "Polyline demo",
+		"polyline\n-Colors\n -Red: polygon (needs to be closed)\n -Blue: intersections\n \
+		Lclick to add point, Rclick to remove" );
 
+	data.leftClicAddPoint=true;
 	data.setMouseCB( action_PL );
 
 	action_PL( &data );
@@ -1062,7 +1064,7 @@ void demo_PL( int demidx )
 //------------------------------------------------------------------
 struct Param_ELL : Data
 {
-	explicit Param_ELL(  int demidx, std::string title ):Data( demidx, title )
+	explicit Param_ELL(  int demidx, std::string title, std::string txt ):Data( demidx, title, txt )
 	{}
 	void draw()
 	{
@@ -1114,11 +1116,10 @@ void action_ELL( void* param )
 /// Ellipse demo
 void demo_ELL( int demidx )
 {
-	Param_ELL data( demidx, "Ellipse demo" );
-	std::cout << "Demo " << demidx
-		<< ": Ellipse (no mouse, enter 'h' for valid keys)\n"
-		<< " -blue rectangle: ellipse bounding box\n"
-		<< " -green rectangle: blue rectangle bounding box\n";
+	Param_ELL data( demidx, "Ellipse demo",
+		"Ellipse (no mouse, enter 'h' for valid keys)\n \
+		 -blue rectangle: ellipse bounding box\n \
+		 -green rectangle: blue rectangle bounding box" );
 
 	double trans_delta = 20;
 	double angle_delta = 5.;
@@ -1142,7 +1143,7 @@ void demo_ELL( int demidx )
 /// Circle demo
 struct Param_CIR : Data
 {
-	explicit Param_CIR( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_CIR( int demidx, std::string title, std::string txt ): Data( demidx, title, txt )
 	{
 		vpt = std::vector<Point2d>{
 			{150,120}, {220,240},            // initial rectangle
@@ -1236,10 +1237,9 @@ void action_CIR( void* param )
 
 void demo_CIR( int demidx )
 {
-	Param_CIR data( demidx, "Circle demo" );
-	std::cout << "Demo " << demidx << ": Compute circle from 3 points/2 points\n"
-		<< "Colors: green if inside, blue if not\n"
-		<< "if 3 points, also computes the corresponding parallelogram\n";
+	Param_CIR data( demidx, "Circle demo", "Compute circle from 3 points/2 points\n \
+		Colors: green if inside, blue if not\n \
+		if 3 points, also computes the corresponding parallelogram" );
 
 	action_CIR( &data );
 	data.setMouseCB( action_CIR );
@@ -1267,7 +1267,7 @@ void demo_CIR( int demidx )
 /// Convex hull + Minimum Enclosing Circle demo
 struct Param_CH : Data
 {
-	explicit Param_CH( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_CH( int demidx, std::string title, std::string txt ): Data( demidx, title, txt )
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420},{150,250} };
 	}
@@ -1316,8 +1316,8 @@ void action_CH( void* param )
 
 void demo_CH( int demidx )
 {
-	Param_CH data( demidx, "Convex Hull + MEC demo" );
-	std::cout << "Demo " << demidx << ": Convex hull + Minimum Enclosing Circle. Lclick to add points, Rclick to remove\n";
+	Param_CH data( demidx, "Convex Hull + MEC demo",
+		"Convex hull + Minimum Enclosing Circle. Lclick to add points, Rclick to remove" );
 	action_CH( &data );
 	data.setMouseCB( action_CH );
 
@@ -1377,7 +1377,6 @@ void action_RI( void* param )
 void demo_RI( int demidx )
 {
 	Param_RI data( demidx, "Rectangle intersection demo" );
-	std::cout << "Demo " << demidx << ": RI demo\n(Move rectangle with mouse)\n";
 
 	data.setMouseCB( action_RI );
 	KeyboardLoop kbloop;
@@ -1484,7 +1483,6 @@ void action_SEG( void* param )
 void demo_SEG( int demidx )
 {
 	Param_SEG data( demidx, "Segments demo" );
-	std::cout << "Demo " << demidx << ": Segments demo\n";
 	data.generateSegments();
 
 	KeyboardLoop kbloop;
@@ -1507,7 +1505,7 @@ void demo_SEG( int demidx )
 /// Polyline full step rotate demo parameters
 struct Param_polRot : Data
 {
-	explicit Param_polRot( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_polRot( int demidx, std::string title, std::string txt ): Data( demidx, title, txt )
 	{
 		_cpoly.set(
 			std::vector<Point2d>{
@@ -1579,11 +1577,11 @@ void action_polRot( void* param )
 
 void demo_polRot( int demidx )
 {
-	Param_polRot data( demidx, "Polyline/Rectangle full step rotate demo" );
-	std::cout << "Demo " << demidx << ": Polyline/Rectangle full step rotate demo\n"
-		<< " - Polyline: center point is one of the points\n"
-		<< " - Rectangle: center point is free, use mouse\n"
-		<< "Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!\n";
+	Param_polRot data( demidx, "Polyline/Rectangle full step rotate demo",
+		"Polyline/Rectangle full step rotate demo\n \
+		- Polyline: center point is one of the points\n \
+		- Rectangle: center point is free, use mouse\n \
+		Warning: as images as shown here with vertical axis reversed, what appears as a CW is actually a CCW rotation!" );
 
 	data.setMouseCB( action_polRot );
 
@@ -1664,7 +1662,6 @@ void action_NFP( void* param )
 void demo_NFP( int demidx )
 {
 	Param_NFP data( demidx, "Closest/Farthest Point" );
-	std::cout << "Demo " << demidx << ": Closest/Farthest Point\n";
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._mode==2? data._mode=0: data._mode++; }, "switch mode (nearest/farthest/both)" );
@@ -1680,7 +1677,7 @@ void demo_NFP( int demidx )
 /// Demo of pts/segments perpendicular to a segment
 struct Param_ORS : Data
 {
-	explicit Param_ORS( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_ORS( int demidx, std::string title, std::string text ): Data( demidx, title, text )
 	{
 		_vcol[0]=img::Color(0,250,125);
 		_vcol[1]=img::Color(0,125,250);
@@ -1720,8 +1717,7 @@ void action_ORS( void* param )
 
 void demo_orthSeg( int demidx )
 {
-	Param_ORS data( demidx, "Orthogonal segments" );
-	std::cout << "Demo " << demidx << ": Orthogonal segments\n(Move the segment with mouse)\n";
+	Param_ORS data( demidx, "Orthogonal segments", "Orthogonal segments\n(Move the segment with mouse)" );
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ data._ptsOrSegs=!data._ptsOrSegs; }, "switch mode: points or segments" );
@@ -1738,7 +1734,7 @@ void demo_orthSeg( int demidx )
 /// Parameters for points Bounding Box demo
 struct Param_BB : Data
 {
-	explicit Param_BB( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_BB( int demidx, std::string title, std::string text ): Data( demidx, title, text )
 	{
 		init( _vecvar[0], 0 );
 		init( _vecvar[1], 1 );
@@ -1859,9 +1855,8 @@ void action_BB( void* param )
 
 void demo_BB( int demidx )
 {
-	Param_BB data( demidx, "Generalized Bounding Box demo" );
-	std::cout << "Demo " << demidx << ": Bounding Box demo\n \
-	Move the points to see the common bounding box of the two elements. hit [w] and [x] to change.\n";
+	Param_BB data( demidx, "Generalized Bounding Box demo", ": Bounding Box demo\n \
+	Move the points to see the common bounding box of the two elements. hit [w] and [x] to change." );
 
 	action_BB( &data );
 	data.setMouseCB( action_BB );
@@ -1941,7 +1936,7 @@ void action_RCP( void* param )
 	}
 	data.putTextLine( "NbPts="         + std::to_string(data._nbPts)    );
 	data.putTextLine( "segment dist="  + std::to_string(values.first)  );
-	data.putTextLine( "circle radius=" + std::to_string(values.second) );
+	data.putTextLine( "red circle radius=" + std::to_string(values.second) );
 
 	Circle c1( data._trans_x,data._trans_y,data._radius);
 	Circle c2( data._trans_x,data._trans_y,values.second);
@@ -1953,7 +1948,6 @@ void action_RCP( void* param )
 void demo_RCP( int demidx )
 {
 	Param_RCP data( demidx, "Regular Convex Polygon" );
-	std::cout << "Demo " << demidx << ": Regular Convex Polygon\n";
 
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'w', [&](void*){ data._nbPts++; },      "more points" );
@@ -1986,7 +1980,6 @@ struct Param_PO : Data
 
 	OPolyline _opol;
 	CPolyline _cpol;
-
 };
 
 /// Helper function. Only removes duplicates if there are consecutive
@@ -2058,12 +2051,11 @@ void action_PO( void* param )
 void demo_PO( int demidx )
 {
 	Param_PO data( demidx, "Polygon Offset" );
-	std::cout << "Demo " << demidx << ": Offset\n";
 	data.leftClicAddPoint=true;
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2; }, "Increase distance" );
-	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2); }, "Reduce distance" );
+	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2;                                 }, "Increase distance" );
+	kbloop.addKeyAction( 'x', [&](void*){ data._offsetDist = std::max(1,data._offsetDist-2);     }, "Reduce distance" );
 	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._showSegs,           "showSegs");          }, "Toggle segments to centroid" );
 	kbloop.addKeyAction( 'q', [&](void*){ toggle(data._side,               "side");              }, "Reverse side" );
 	kbloop.addKeyAction( 'b', [&](void*){ toggle(data._drawBisectorLines,  "drawBisectorLines"); }, "toggle draw bisector lines" );
@@ -2079,50 +2071,52 @@ void demo_PO( int demidx )
 
 
 //------------------------------------------------------------------
-struct Param_SegSide : Data
+struct Param_OSegAngle : Data
 {
-	explicit Param_SegSide( int demidx, std::string title ): Data( demidx, title )
+	explicit Param_OSegAngle( int demidx, std::string title ): Data( demidx, title )
 	{
 	}
-	bool _closedPol = false;
+	bool _reverseS1 = false;
+	bool _reverseS2 = false;
 };
 
-void action_SegSide( void* param )
+void action_OSegAngle( void* param )
 {
-	auto& data = *reinterpret_cast<Param_SegSide*>(param);
+	auto& data = *reinterpret_cast<Param_OSegAngle*>(param);
 	data.clearImage();
 
-	OPolyline opl( data.vpt );
-	CPolyline cpl( data.vpt );
+	OSegment s1( data.vpt[0], data.vpt[1] );
+	OSegment s2( data.vpt[1], data.vpt[2] );
 
-	auto col = img::DrawParams().setColor(200,0,0);
+	if( data._reverseS2 )
+		s2 = -s2;
+	if( data._reverseS1 )
+		s1 = -s1;
+	auto col1 = img::DrawParams().setColor(200,0,0);
+	auto col2 = img::DrawParams().setColor(0,0,200);
 
-	decltype( getBisectorLines( opl ) ) lines;
-	if( data._closedPol )
-	{
-		cpl.draw( data.img, col );
-		lines = getBisectorLines( cpl );
-	}
-	else
-	{
-		opl.draw( data.img, col );
-		lines = getBisectorLines( opl );
-	}
-	draw( data.img, lines, img::DrawParams().setColor(0,200,0) );
+	data.img.draw( s1, col1 );
+	data.img.draw( s2, col2 );
+	auto angle = getAngle( s1, s2 );
+	drawText( data.img, std::to_string(angle*180./M_PI), data.vpt[1] );
+
+	drawText( data.img, "S1", s1.getCenter() );
+	drawText( data.img, "S2", s2.getCenter() );
+
 	data.showImage();
 }
 
-void demo_SegSide( int demidx )
+void demo_OSegAngle( int demidx )
 {
-	Param_SegSide data( demidx, "Polyline bisector lines" );
-	std::cout << "Demo " << demidx << ": Polyline bisector lines\n" ;
+	Param_OSegAngle data( demidx, "OSegment angle" );
 	data.leftClicAddPoint=true;
-	data.setMouseCB( action_SegSide );
+	data.setMouseCB( action_OSegAngle );
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*){ data._closedPol = !data._closedPol; }, "Toggle open/closed" );
+	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._reverseS1,"reverse S1"); }, "reverse S1" );
+	kbloop.addKeyAction( 'z', [&](void*){ toggle(data._reverseS2,"reverse S2"); }, "reverse S2" );
 
-	kbloop.addCommonAction( action_SegSide );
-	action_SegSide( &data );
+	kbloop.addCommonAction( action_OSegAngle );
+	action_OSegAngle( &data );
 	kbloop.start( data );
 }
 
@@ -2152,7 +2146,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
-		demo_SegSide,
+		demo_OSegAngle,
 		demo_PO,
 		demo_BB,
 		demo_RCP,
