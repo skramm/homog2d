@@ -28,6 +28,8 @@ now all of these return the number of points that the primitive has, as a `size_
   The latter member function returns the associated displacement as a pair of numerical values.
   - clarified `getAngle()` for segments: now returns the full range [-PI:+PI] if both are oriented.
   - added `getBisectorLines()` for polyline objects
+  - added `getOSegment()` to Polyline class
+
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).

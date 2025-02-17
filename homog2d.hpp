@@ -5935,7 +5935,7 @@ getBB_FRect( const std::vector<FRect_<FPT>>& v_rects )
 }
 
 /// Private helper function for base::PolylineBase::getSegs() and base::PolylineBase::getOSegs()
-template<typename ST,typename PLT, typename FPT> // Segment Type, PolyLine Type
+template<typename ST,typename PLT, typename FPT> // Segment Type, PolyLine Type, Floating Point Type
 std::vector<ST>
 p_getSegs( const base::PolylineBase<PLT,FPT>& pl, const ST& )
 {
@@ -5990,6 +5990,7 @@ struct TmpDebug
 	std::pair<Line2d_<double>,Line2d_<double>> plines;
 };
 #endif
+
 namespace base {
 
 //------------------------------------------------------------------
@@ -6012,7 +6013,7 @@ class PolylineBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
-	using PType = PLT;
+//	using PType = PLT;
 	using SType = std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
 
 	using detail::Common<FPT>::isInside;
@@ -6319,11 +6320,31 @@ public:
 		return _plinevec[idx];
 	}
 
+private:
+/// Private helper function
+	template<typename ST>
+	ST impl_getSegment( size_t idx, const ST& ) const
+	{
+	#ifndef HOMOG2D_NOCHECKS
+		if( idx >= nbSegs() )
+			HOMOG2D_THROW_ERROR_1( "requesting segment " << idx
+				<< ", only has "  << nbSegs()
+			);
+
+		if( size() < 2 )
+			HOMOG2D_THROW_ERROR_1( "empty, no segment " << idx );
+	#endif
+	if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+		return ST( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
+	else
+		return ST( _plinevec[idx], _plinevec[idx+1] );
+	}
+
+public:
 /// Returns one oriented segment of the polyline.
-/// \todo 20250215
 	OSegment_<FPT> getOSegment( size_t idx ) const
 	{
-		HOMOG2D_THROW_ERROR_1( "TODO" );
+		return impl_getSegment( idx, OSegment_<FPT>() );
 	}
 
 /// Returns one segment of the polyline.
@@ -6332,19 +6353,7 @@ Segment \c n is the one between point \c n and point \c n+1
 */
 	Segment_<FPT> getSegment( size_t idx ) const
 	{
-#ifndef HOMOG2D_NOCHECKS
-		if( idx >= nbSegs() )
-			HOMOG2D_THROW_ERROR_1( "requesting segment " << idx
-				<< ", only has "  << nbSegs()
-			);
-
-		if( size() < 2 )
-			HOMOG2D_THROW_ERROR_1( "empty, no segment " << idx );
-#endif
-	if constexpr( std::is_same_v<PLT,typ::IsClosed> )
-		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1==nbSegs()?0:idx+1] );
-	else
-		return Segment_<FPT>( _plinevec[idx], _plinevec[idx+1] );
+		return impl_getSegment( idx, Segment_<FPT>() );
 	}
 
 	CPolyline_<FPT> convexHull() const;
@@ -6700,48 +6709,13 @@ Sfinae should resolve ONLY for CPolyline
 	friend std::ostream&
 	h2d::base::operator << ( std::ostream&, const h2d::base::PolylineBase<T1,T2>& );
 
-public:
 #ifdef HOMOG2D_TEST_MODE
 /// this is only needed for testing
 	bool isNormalized() const { return _plIsNormalized; }
 #endif
 
-/// Normalization of CPolyline_
-/**
-Two tasks:
-- rotating so that the smallest one is first
-- reverse if needed, so that the second point is smaller than the last one
-*/
-	void p_normalizePoly() const
-	{
-		if( size() == 0 )
-			return;
-
-		if( !_plIsNormalized )
-		{
-			if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
-			{
-//				std::cout << "NORM before" << *this << '\n';
-				auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-				const auto& p1 = _plinevec[1];
-				const auto& p2 = _plinevec.back();
-				if( p2 < p1 )
-				{
-					std::reverse( _plinevec.begin(), _plinevec.end() );
-					minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
-					std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-				}
-//				std::cout << "NORM after" << *this << '\n';
-			}
-			else
-			{
-				if( _plinevec.back() < _plinevec.front() )
-					std::reverse( _plinevec.begin(), _plinevec.end() );
-			}
-			_plIsNormalized=true;
-		}
-	}
+private:
+	void p_normalizePoly() const;
 
 public:
 	template<typename T>
@@ -6833,7 +6807,7 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 */
 	auto pt0 = _plinevec[0];
 	auto ptA = _plinevec[1];
-	auto ptB = _plinevec[ size()-1];
+	auto ptB = _plinevec[size()-1];
 
 // std::cout << "pt0=" << pt0 << " ptA=" << ptA << " ptB=" << ptB << '\n';
 
@@ -7591,6 +7565,52 @@ base::PolylineBase<PLT,FPT>::centroid() const
 		_attribs._centroid.set( c );
 	}
 	return _attribs._centroid.value();
+}
+
+//------------------------------------------------------------------
+/// Normalization of CPolyline_
+/**
+Two tasks:
+- rotating so that the smallest one is first
+- reverse if needed, so that the second point is smaller than the last one
+20250217: WIP - for closed polylines: constant orientation instead
+*/
+template<typename PLT,typename FPT>
+void
+base::PolylineBase<PLT,FPT>::p_normalizePoly() const
+{
+	if( size() == 0 )
+		return;
+
+	if( !_plIsNormalized )
+	{
+		if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
+		{
+//				std::cout << "NORM before" << *this << '\n';
+			auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+#ifdef NEW_NORMALISATION
+#else
+//		std::cout << "NORMALISATION !!!\n";
+			const auto& p1 = _plinevec[1];
+			const auto& p2 = _plinevec.back();
+			if( p2 < p1 )
+			{
+				std::reverse( _plinevec.begin(), _plinevec.end() );
+				minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
+				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
+//				std::cout << "reverse + rotate !!!\n";
+			}
+#endif
+//				std::cout << "NORM after" << *this << '\n';
+		}
+		else
+		{
+			if( _plinevec.back() < _plinevec.front() )
+				std::reverse( _plinevec.begin(), _plinevec.end() );
+		}
+		_plIsNormalized=true;
+	}
 }
 
 } // namespace base

@@ -3618,13 +3618,27 @@ TEST_CASE( "Polyline basic", "[polyline-basic]" )
 
 	std::vector<OSegment> voseg_o;                   // oriented segments
 	std::vector<OSegment> voseg_c;
-	voseg_o.emplace_back( OSegment( 0,0, 1,0 ) );
-	voseg_o.emplace_back( OSegment( 1,0, 1,1 ) );
+
+	auto os0 = OSegment( 0,0, 1,0 );
+	auto os1 = OSegment( 1,0, 1,1 );
+	auto os2 = OSegment( 1,1, 0,0 );
+	voseg_o.emplace_back( os0 );
+	voseg_o.emplace_back( os1 );
 	voseg_c = voseg_o;
-	voseg_c.emplace_back( OSegment( 1,1, 0,0 ) );
+	voseg_c.emplace_back( os2 );
 
 	CHECK( cpol.getOSegs() == voseg_c );
 	CHECK( opol.getOSegs() == voseg_o );
+
+	CHECK( cpol.getOSegment(0) == os0 );
+	CHECK( opol.getOSegment(0) == os0 );
+
+	CHECK( cpol.getOSegment(1) == os1 );
+	CHECK( opol.getOSegment(1) == os1 );
+
+	CHECK( cpol.getOSegment(2) == os2 );
+	CHECK_THROWS( opol.getOSegment(2) );
+	CHECK_THROWS( cpol.getOSegment(3) );
 }
 
 
