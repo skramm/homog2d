@@ -3590,6 +3590,58 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 	}
 }
 
+
+TEST_CASE( "Polyline basic", "[polyline-basic]" )
+{
+	std::vector<Point2d> vpts{ {0,0}, {1,0}, {1,1} };
+
+	std::vector<Segment> vseg_o;
+	std::vector<Segment> vseg_c;
+	vseg_o.emplace_back( Segment( 0,0, 1,0 ) );
+	vseg_o.emplace_back( Segment( 1,0, 1,1 ) );
+	vseg_c = vseg_o;
+	vseg_c.emplace_back( Segment( 1,1, 0,0 ) );
+
+	CPolyline_<NUMTYPE> cpol(vpts);
+	OPolyline_<NUMTYPE> opol(vpts);
+	CHECK( cpol.isClosed() );
+	CHECK( !opol.isClosed() );
+
+	CHECK( cpol.size() == 3 );
+	CHECK( opol.size() == 3 );
+
+	CHECK( cpol.getPts() == vpts );
+	CHECK( opol.getPts() == vpts );
+
+	CHECK( cpol.getSegs() == vseg_c );
+	CHECK( opol.getSegs() == vseg_o );
+
+	std::vector<OSegment> voseg_o;                   // oriented segments
+	std::vector<OSegment> voseg_c;
+
+	auto os0 = OSegment( 0,0, 1,0 );
+	auto os1 = OSegment( 1,0, 1,1 );
+	auto os2 = OSegment( 1,1, 0,0 );
+	voseg_o.emplace_back( os0 );
+	voseg_o.emplace_back( os1 );
+	voseg_c = voseg_o;
+	voseg_c.emplace_back( os2 );
+
+	CHECK( cpol.getOSegs() == voseg_c );
+	CHECK( opol.getOSegs() == voseg_o );
+
+	CHECK( cpol.getOSegment(0) == os0 );
+	CHECK( opol.getOSegment(0) == os0 );
+
+	CHECK( cpol.getOSegment(1) == os1 );
+	CHECK( opol.getOSegment(1) == os1 );
+
+	CHECK( cpol.getOSegment(2) == os2 );
+	CHECK_THROWS( opol.getOSegment(2) );
+	CHECK_THROWS( cpol.getOSegment(3) );
+}
+
+
 TEST_CASE( "Polyline fullstep rotation", "[polyline-rot]" )
 {
 	OPolyline_<NUMTYPE> plo;
