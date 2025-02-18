@@ -6218,9 +6218,6 @@ public:
 private:
 	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
 
-	constexpr bool impl_isSimple( const detail::PlHelper<typ::IsOpen>& )   const;
-	bool           impl_isSimple( const detail::PlHelper<typ::IsClosed>& ) const;
-
 /// Add single point. private, because only to be used from other member functions
 /**
 \warning This function was discarded from public API in dec. 2021, because
@@ -6485,13 +6482,24 @@ private:
 public:
 /// \name Operators
 ///@{
-
 	template<typename PLT2,typename FPT2>
 	bool operator == ( const PolylineBase<PLT2,FPT2>& other ) const
 	{
 		if( size() != other.size() )          // for quick exit
 			return false;
-		return impl_operatorComp( other, detail::PlHelper<PLT>() );
+		if constexpr( std::is_same_v<PLT,PLT2> )
+		{
+			p_normalizePoly();
+			other.p_normalizePoly();
+
+			auto it = other._plinevec.begin();
+			for( const auto& elem: _plinevec )
+				if( *it++ != elem )
+					return false;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	template<typename PLT2,typename FPT2>
@@ -6501,51 +6509,6 @@ public:
 	}
 ///@}
 
-private:
-/// This one is guaranteed to operate on same 'PLT' types, is called by the four others.
-/**  Assumes the size is the same */
-	template<typename FPT2>
-	bool impl_operatorComp_root( const PolylineBase<PLT,FPT2>& other ) const
-	{
-		p_normalizePoly();
-		other.p_normalizePoly();
-
-		auto it = other._plinevec.begin();
-		for( const auto& elem: _plinevec )
-			if( *it++ != elem )
-				return false;
-		return true;
-	}
-
-	template<typename FPT2>
-	bool
-	impl_operatorComp( const OPolyline_<FPT2>& other, const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return impl_operatorComp_root( other );
-	}
-	template<typename FPT2>
-	bool
-	impl_operatorComp( const CPolyline_<FPT2>& other, const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return impl_operatorComp_root( other );
-	}
-
-/// Comparing open and closed polyline objects returns always \c false
-	template<typename FPT2>
-	constexpr bool
-	impl_operatorComp( const OPolyline_<FPT2>&, const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return false;
-	}
-/// Comparing open and closed polyline objects returns always \c false
-	template<typename FPT2>
-	constexpr bool
-	impl_operatorComp( const CPolyline_<FPT2>&, const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return false;
-	}
-
-public:
 /// Polyline intersection with Line, Segment, FRect, Circle
 	template<
 		typename T,
@@ -7330,47 +7293,35 @@ PolylineBase<PLT,FPT>::isSimple() const
 {
 	if( size()<3 )       // needs at least 3 points to be a polygon
 		return false;
-	return impl_isSimple( detail::PlHelper<PLT>() );
-}
-
-/// If open, then not a polygon
-template<typename PLT,typename FPT>
-constexpr bool
-PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsOpen>& ) const
-{
-	return false;
-}
-
-/// If closed, we need to check for crossings
-template<typename PLT,typename FPT>
-bool
-PolylineBase<PLT,FPT>::impl_isSimple( const detail::PlHelper<typename typ::IsClosed>& ) const
-{
-	if( _attribs._isSimplePolyg.isBad() )
+	if constexpr( std::is_same_v<PLT,typ::IsOpen> ) // If open, then not a polygon
+		return false;
+	else                  // If closed, we need to check for crossings
 	{
-		auto nbs = nbSegs();
-		size_t i=0;
-		bool notDone = true;
-		bool hasIntersections = false;
-		do
+		if( _attribs._isSimplePolyg.isBad() )
 		{
-			auto seg1 = getSegment(i);
-			auto lastone = i==0?nbs-1:nbs;
-			for( auto j=i+2; j<lastone; j++ )
-				if( getSegment(j).intersects(seg1)() )
-				{
-					notDone = false;
-					hasIntersections = true;
-					break;
-				}
-			i++;
+			auto nbs = nbSegs();
+			size_t i=0;
+			bool notDone = true;
+			bool hasIntersections = false;
+			do
+			{
+				auto seg1 = getSegment(i);
+				auto lastone = i==0?nbs-1:nbs;
+				for( auto j=i+2; j<lastone; j++ )
+					if( getSegment(j).intersects(seg1)() )
+					{
+						notDone = false;
+						hasIntersections = true;
+						break;
+					}
+				i++;
+			}
+			while( i<nbs && notDone );
+			_attribs._isSimplePolyg.set( !hasIntersections );
 		}
-		while( i<nbs && notDone );
-		_attribs._isSimplePolyg.set( !hasIntersections );
+		return _attribs._isSimplePolyg.value();
 	}
-	return _attribs._isSimplePolyg.value();
 }
-
 //------------------------------------------------------------------
 /// Returns true if polygon is convex
 /**
