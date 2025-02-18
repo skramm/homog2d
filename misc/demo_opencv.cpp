@@ -1968,12 +1968,11 @@ struct Param_PO : Data
 	{
 		vpt = std::vector<Point2d>{ {100,100}, {300,80}, {270,400}, {100,420}, {150,250} };
 	}
+	OffsetPolyParams _params;
 	int _offsetDist = 20;
-	CPolyline _cpoly_off;
 	bool _showSegs = true;
 	bool _side     = true;
 	bool _drawBisectorLines = false;
-	OffsetPolyParams _params;
 	bool _showPolyAngles = false;
 	bool _showPolyIdx    = false;
 	bool _closedPol      = true;
@@ -2003,8 +2002,8 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 
 	if( pol.isSimple() )
 	{
-		data._cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
-		draw( im, data._cpoly_off, img::DrawParams().showPoints().setColor(0,0,250) );
+		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
+		draw( im, cpoly_off , img::DrawParams().showPoints().setColor(0,0,250) );
 
 		auto centr = pol.centroid();
 		draw( im, centr, img::DrawParams().showPoints().setColor(0,0,250) );
@@ -2030,7 +2029,7 @@ void action_PO( void* param )
 	data.clearImage();
 
 	auto withoutDupes = removeDupes( data.vpt );
-	data._cpoly = CPolyline( withoutDupes );
+//	data._cpoly = CPolyline( withoutDupes );
 	data._cpol = CPolyline( withoutDupes );
 	data._opol = OPolyline( withoutDupes );
 

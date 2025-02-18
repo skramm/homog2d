@@ -6053,7 +6053,9 @@ public:
 	template<typename FPT2>
 	PolylineBase( const FRect_<FPT2>& rect )
 	{
-		imp_constrFRect( rect, detail::PlHelper<PLT>() );
+		static_assert( std::is_same_v<PLT,typ::IsClosed>, "cannot build an OPolyline object from a FRect");
+		for( const auto& pt: rect.get4Pts() )
+			_plinevec.push_back( pt );
 	}
 
 	template<typename FPT2>
@@ -6081,7 +6083,7 @@ template<
 	template<typename FPT2,typename T>
 	PolylineBase( FPT2 rad, T n )
 	{
-		impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
+		set( rad, n );
 	}
 
 /// Copy-Constructor from Closed Polyline
@@ -6154,43 +6156,21 @@ this should work !!! (but doesn't...)
 
 ///@}
 
-private:
-	template<typename FPT2,typename T>
-	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2 rad, T n, const typename detail::PlHelper<typ::IsClosed>& );
-
-	template<typename FPT2,typename T>
-	constexpr std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	impl_set_RCP( FPT2, T, const typename detail::PlHelper<typ::IsOpen>& )
-	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an regular convex polygon for a OPolyline object" );
-		return std::make_pair(0.,0.); // to avoid a compiler warning
-	}
-
-	template<typename FPT2>
-	void
-	imp_constrFRect( const FRect_<FPT2>& rect, const detail::PlHelper<typ::IsClosed>& )
-	{
-		for( const auto& pt: rect.get4Pts() )
-			_plinevec.push_back( pt );
-	}
-	template<typename FPT2>
-	constexpr void
-	imp_constrFRect( const FRect_<FPT2>&, const detail::PlHelper<typ::IsOpen>& )
-	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "cannot build an OPolyline object from a FRect");
-	}
-
 public:
 /// \name Attributes access
 ///@{
 
 /// Returns the number of points
 	size_t size() const { return _plinevec.size(); }
+
 	constexpr bool isClosed() const
 	{
-		return impl_isClosed( detail::PlHelper<PLT>());
+		if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+			return true;
+		else
+			return false;
 	}
+
 	HOMOG2D_INUMTYPE length()    const;
 	HOMOG2D_INUMTYPE area()      const;
 	bool             isSimple()  const;
@@ -6219,7 +6199,10 @@ public:
 	{
 		if( size() < 2 )
 			return 0;
-		return impl_nbSegs( detail::PlHelper<PLT>() );
+		if constexpr( std::is_same_v<PLT,typ::IsClosed> )
+			return size();
+		else
+			return size() - 1;
 	}
 
 	Point2d_<FPT> getExtremePoint( CardDir ) const;
@@ -6234,24 +6217,6 @@ public:
 
 private:
 	HOMOG2D_INUMTYPE p_ComputeSignedArea() const;
-
-	constexpr bool impl_isClosed( const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return false;
-	}
-	constexpr bool impl_isClosed( const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return true;
-	}
-
-	size_t impl_nbSegs( const detail::PlHelper<typ::IsOpen>& ) const
-	{
-		return size() - 1;
-	}
-	size_t impl_nbSegs( const detail::PlHelper<typ::IsClosed>& ) const
-	{
-		return size();
-	}
 
 	constexpr bool impl_isSimple( const detail::PlHelper<typ::IsOpen>& )   const;
 	bool           impl_isSimple( const detail::PlHelper<typ::IsClosed>& ) const;
@@ -6294,7 +6259,6 @@ public:
 	{
 		return _plinevec;
 	}
-
 
 /// Returns (as a copy) the oriented segments of the polyline
 	std::vector<OSegment_<FPT>> getOSegs() const
@@ -6466,83 +6430,31 @@ Also use the areCollinear() function
 			*it++ = pt;              //  type conversions (std::copy implies same FP type)
 	}
 
-/// Build a parallelogram (4 points) from 3 points
 	template<typename FPT1,typename FPT2,typename FPT3>
 	void setParallelogram(
 		const Point2d_<FPT1>& pt1,
 		const Point2d_<FPT2>& pt2,
 		const Point2d_<FPT3>& pt3
-	)
-	{
-		impl_setParallelogram( pt1, pt2, pt3, detail::PlHelper<PLT>() );
-	}
+	);
 
 /// Set from FRect
 	template<typename FPT2>
-	void set( const FRect_<FPT2>& rec )
+	void set( const FRect_<FPT2>& rect )
 	{
-		impl_setFromFRect( rec, detail::PlHelper<PLT>() );
+		static_assert( std::is_same_v<PLT,typ::IsClosed>, "Invalid: cannot set a OPolyline from a FRect" );
+
+		CPolyline_<FPT> tmp(rect);
+		std::swap( *this, tmp );
 	}
 
 /// Build RCP (Regular Convex Polygon), and return distance between consecutive points
 	template<typename FPT2,typename T>
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-	set( FPT2 rad, T n )
-	{
-		return impl_set_RCP( rad, n, detail::PlHelper<PLT>() );
-	}
+	set( FPT2 rad, T n );
 
 ///@}
 
 private:
-	template<typename FPT2>
-	void impl_setFromFRect( const FRect_<FPT2>&, const detail::PlHelper<typ::IsOpen>& )
-	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline from a FRect" );
-	}
-	template<typename FPT2>
-	void impl_setFromFRect( const FRect_<FPT2>& rect, const detail::PlHelper<typ::IsClosed>& )
-	{
-		CPolyline_<FPT> tmp(rect);
-		std::swap( *this, tmp );
-	}
-
-	template<typename FPT1,typename FPT2,typename FPT3>
-	void impl_setParallelogram(
-		const Point2d_<FPT1>&,
-		const Point2d_<FPT2>&,
-		const Point2d_<FPT3>&,
-		const detail::PlHelper<typ::IsOpen>&
-	)
-	{
-		static_assert( detail::AlwaysFalse<PLT>::value, "Invalid: cannot set a OPolyline as a parallelogram" );
-	}
-
-	template<typename FPT1,typename FPT2,typename FPT3>
-	void impl_setParallelogram(
-		const Point2d_<FPT1>& p1,
-		const Point2d_<FPT2>& p2,
-		const Point2d_<FPT3>& p3,
-		const detail::PlHelper<typ::IsClosed>&
-	)
-	{
-		Point2d_<HOMOG2D_INUMTYPE> pt1(p1);
-		Point2d_<HOMOG2D_INUMTYPE> pt2(p2);
-		Point2d_<HOMOG2D_INUMTYPE> pt3(p3);
-
-		std::vector<Point2d_<FPT>> vpts(4);
-		vpts[0] = pt1;
-		vpts[1] = pt2;
-		vpts[2] = pt3;
-
-		auto li_21 = pt1 * pt2;
-		auto li_23 = pt3 * pt2;
-		auto li_34 = li_21.getParallelLine( pt3 );
-		auto li_14 = li_23.getParallelLine( pt1 );
-		vpts[3] = li_34 * li_14;
-		set( vpts );
-	}
-
 /// Checks that no contiguous identical points are stored
 	template<typename CONT>
 	void p_checkInputData( const CONT& pts )
@@ -6927,6 +6839,36 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 }
 
 //------------------------------------------------------------------
+/// Build a parallelogram (4 points) from 3 points
+template<typename PLT,typename FPT>
+template<typename FPT1,typename FPT2,typename FPT3>
+void
+PolylineBase<PLT,FPT>::setParallelogram(
+	const Point2d_<FPT1>& p1,
+	const Point2d_<FPT2>& p2,
+	const Point2d_<FPT3>& p3
+)
+{
+	static_assert( std::is_same_v<PLT,typ::IsClosed>, "Invalid: cannot set a OPolyline as a parallelogram" );
+
+	Point2d_<HOMOG2D_INUMTYPE> pt1(p1);
+	Point2d_<HOMOG2D_INUMTYPE> pt2(p2);
+	Point2d_<HOMOG2D_INUMTYPE> pt3(p3);
+
+	std::vector<Point2d_<FPT>> vpts(4);
+	vpts[0] = pt1;
+	vpts[1] = pt2;
+	vpts[2] = pt3;
+
+	auto li_21 = pt1 * pt2;
+	auto li_23 = pt3 * pt2;
+	auto li_34 = li_21.getParallelLine( pt3 );
+	auto li_14 = li_23.getParallelLine( pt1 );
+	vpts[3] = li_34 * li_14;
+	set( vpts );
+}
+
+//------------------------------------------------------------------
 /// Build a Regular Convex Polygon of radius \c rad with \c n points, centered at (0,0)
 /**
 \return segment distance, inscribed circle radius
@@ -6934,10 +6876,9 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 template<typename PLT,typename FPT>
 template<typename FPT2,typename T>
 std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
-PolylineBase<PLT,FPT>::impl_set_RCP(
+PolylineBase<PLT,FPT>::set(
 	FPT2 rad,   ///< Radius
-	T    ni,    ///< Nb of points
-	const typename detail::PlHelper<typ::IsClosed>&
+	T    ni     ///< Nb of points
 )
 {
 	static_assert(
@@ -6947,7 +6888,7 @@ PolylineBase<PLT,FPT>::impl_set_RCP(
 	if( ni < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
 	if( rad <= 0  )
-		HOMOG2D_THROW_ERROR_1( "unable, radius must be >= 0" );
+		HOMOG2D_THROW_ERROR_1( "unable, radius must be > 0" );
 
 	size_t n(ni);
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v_pts(n);
@@ -7591,7 +7532,7 @@ base::PolylineBase<PLT,FPT>::p_normalizePoly() const
 			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
 #ifdef NEW_NORMALISATION
 #else
-//		std::cout << "NORMALISATION !!!\n";
+		std::cout << "NORMALISATION !!!\n";
 			const auto& p1 = _plinevec[1];
 			const auto& p2 = _plinevec.back();
 			if( p2 < p1 )
@@ -7599,7 +7540,7 @@ base::PolylineBase<PLT,FPT>::p_normalizePoly() const
 				std::reverse( _plinevec.begin(), _plinevec.end() );
 				minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-//				std::cout << "reverse + rotate !!!\n";
+				std::cout << "reverse + rotate !!!\n";
 			}
 #endif
 //				std::cout << "NORM after" << *this << '\n';
@@ -12000,6 +11941,8 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		for( size_t i=0; i<size(); i++ )
 		{
 			auto pt = getPoint(i);
+			if( i==0 )
+				std::cout << "point 0=" << pt << '\n';
 			cv::putText(
 				im.getReal(),
 				std::to_string(i),
@@ -12014,13 +11957,13 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 	if( dp._dpValues._showAngles )
 	{
 		auto osegs = getOSegs();
-			std::cout << "osegs size=" << osegs.size() << "\n";
+//			std::cout << "osegs size=" << osegs.size() << "\n";
 
 		const auto& pts = getPts();
 		for( size_t i=0; i<osegs.size()-1; i++ )
 		{
-			auto seg1 = osegs[i];
-			auto seg2 = -osegs[i+1];
+			auto seg1 = -osegs[i];
+			auto seg2 = osegs[i+1];
 			auto angle = getAngle( seg1, seg2 );
 			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
 			drawText( im, std::to_string(angle * 180./M_PI), pts[i+1] );
