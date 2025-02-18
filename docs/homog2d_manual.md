@@ -2204,7 +2204,7 @@ On a 64-bit platform, that will end up as 128 bits for both.
 
 This can be overridden,
 - either by another definition of `HOMOG2D_INUMTYPE` as default types.
-For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file (**after** the `#include` line):
+For example, to have 2 machine words for exponent and 3 for mantissa as default, you can add this on top of your file (**before** the `#include` line):
 ```C++
 #define HOMOG2D_INUMTYPE ttmath::Big<2,3>
 ```
