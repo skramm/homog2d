@@ -5393,6 +5393,9 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 {
 	static_assert( std::is_same_v<SV,typ::IsOSeg>, "unable to get side of point related to Segment" );
 
+	if( pt == _ptS1 || pt == _ptS2 )
+		return PointSide::Neither;
+
 	OSegment_<FPT> other( _ptS1, pt );
 	HOMOG2D_INUMTYPE cp = detail::crossProductV( other, *this );
 	PointSide out;
@@ -5481,11 +5484,16 @@ SegVec<SV,FPT>::getExtended() const
 source: https://stackoverflow.com/a/6853926/193789
 
 Temp implementation, until we get into this a bit more deeper
+
+\todo 20250219: pass an enum instead as an int, for \c segDistCase
 */
 template<typename SV,typename FPT>
 template<typename FPT2>
 HOMOG2D_INUMTYPE
-SegVec<SV,FPT>::distTo( const Point2d_<FPT2>& pt, int* segDistCase ) const
+SegVec<SV,FPT>::distTo(
+	const Point2d_<FPT2>& pt, ///< the point
+	int* segDistCase          ///< optional, may be used to know if its the orthogonal distance or not
+) const
 {
 	auto ppts = getPts();
 	auto x1 = static_cast<HOMOG2D_INUMTYPE>( ppts.first.getX() );
@@ -5493,8 +5501,8 @@ SegVec<SV,FPT>::distTo( const Point2d_<FPT2>& pt, int* segDistCase ) const
 	auto x2 = static_cast<HOMOG2D_INUMTYPE>( ppts.second.getX() );
 	auto y2 = static_cast<HOMOG2D_INUMTYPE>( ppts.second.getY() );
 
-	auto A = pt.getX() - x1;
-	auto B = pt.getY() - y1;
+	auto A = static_cast<HOMOG2D_INUMTYPE>(pt.getX()) - x1;
+	auto B = static_cast<HOMOG2D_INUMTYPE>(pt.getY()) - y1;
 	auto C = x2 - x1;
 	auto D = y2 - y1;
 
@@ -6732,7 +6740,7 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 	if( det > 0 )
 		dist = -dist;
 #endif
-	auto side = (dist>0 ? PointSide::Left : PointSide::Right);
+	auto side = (dist<0 ? PointSide::Left : PointSide::Right);
 	auto segs = getSegs();
 	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
@@ -11958,7 +11966,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 			auto seg1 = -osegs[i];
 			auto seg2 = osegs[i+1];
 			auto angle = getAngle( seg1, seg2 );
-			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
+//			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
 			drawText( im, std::to_string(angle * 180./M_PI), pts[i+1] );
 		}
 		if( isClosed() )
@@ -11966,7 +11974,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 			auto seg1 = osegs.back();
 			auto seg2 = -osegs.front();
 			auto angle = getAngle( seg1, seg2 );
-			std::cout << "final angle " << "=" << angle*180/3.1415 << "\n";
+//			std::cout << "final angle " << "=" << angle*180/3.1415 << "\n";
 			drawText( im, std::to_string(angle * 180./M_PI), pts[0] );
 		}
 	}

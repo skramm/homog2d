@@ -2117,16 +2117,13 @@ void action_OSegAngle( void* param )
 	drawText( data.img, "S2", s2.getCenter() );
 
 	draw( data.img, data._pt_mouse, img::DrawParams().setColor(150,150,0).setPointSize(7) );
-	try{
-		drawText(
-			data.img,
-			std::string("S1:") + getString( s1.getPointSide(data._pt_mouse) )
-			+ " S2:"           + getString( s2.getPointSide(data._pt_mouse) ),
-			data._pt_mouse
-		);
-	}
-	catch( const std::exception& )
-	{ /* do nothing */ }
+	drawText(
+		data.img,
+		std::string("S1:") + getString( s1.getPointSide(data._pt_mouse) )
+		+ " S2:"           + getString( s2.getPointSide(data._pt_mouse) ),
+		data._pt_mouse
+	);
+
 	data.showImage();
 }
 
