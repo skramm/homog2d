@@ -36,7 +36,8 @@ void DrawExtremePoints( img::Image<img::SvgImage>&, const T& )
 template<typename T>
 void process( img::Image<img::SvgImage>& im, const T& vec, std::string fname )
 {
-	auto lamb_func = [&v_colors](int i)   // lambda, needed to fetch color from index
+//	auto lamb_func = [&v_colors](int i)   // lambda, needed to fetch color from index
+	auto lamb_func = [](int i)   // lambda, needed to fetch color from index. No need to capture, v_colors is global
 	{
 		return img::DrawParams().setColor( v_colors[i] );
 	};
