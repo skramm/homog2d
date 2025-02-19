@@ -228,7 +228,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.12.1"
+#define HOMOG2D_VERSION "2.12.2"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -945,7 +945,8 @@ enum class Dtype: uint8_t {
 
 /// Returns stringified version of \ref type()
 inline
-const char* getString( Type t )
+const char*
+getString( Type t )
 {
 	const char* s=0;
 	switch( t )
@@ -1113,7 +1114,8 @@ VariantUnwrapper( const std::variant<Ts...>& ) -> VariantUnwrapper<Ts...>;
 
 
 inline
-const char* getString( Dtype t )
+const char*
+getString( Dtype t )
 {
 	const char* s=0;
 	switch( t )
@@ -4871,7 +4873,8 @@ enum class PointSide: uint8_t
 };
 
 inline
-const char* getString( PointSide t )
+const char*
+getString( PointSide t )
 {
 	const char* s=0;
 	switch( t )
@@ -4888,7 +4891,7 @@ const char* getString( PointSide t )
 
 namespace base {
 //------------------------------------------------------------------
-/// A line segment or vector, defined by two points.
+/// A line segment, oriented (\ref OSegment_) or not (\ref Segment_). Holds the two points.
 /**
 This will get instanciated as \ref Segment_ or \ref OSegment_
 
@@ -5242,24 +5245,7 @@ the one with smallest y-coordinate will be returned first
 
 	template<typename T>
 	std::pair<SegVec,SegVec>
-	getParallelSegs( T dist ) const
-	{
-		HOMOG2D_CHECK_IS_NUMBER( T );
-
-		auto plines = getLine().getParallelLines( dist );
-		auto lo1 = getLine().getOrthogonalLine( _ptS1 );
-		auto lo2 = getLine().getOrthogonalLine( _ptS2 );
-
-		auto pA1 = lo1 * plines.first;
-		auto pA2 = lo2 * plines.first;
-		auto pB1 = lo1 * plines.second;
-		auto pB2 = lo2 * plines.second;
-
-		return std::make_pair(
-			SegVec( pA1, pA2 ),
-			SegVec( pB1, pB2 )
-		);
-	}
+	getParallelSegs( T dist ) const;
 
 private:
 /// Computes the 4 points orthogonal to the segment
@@ -5399,6 +5385,7 @@ public:
 }; // class SegVec
 
 //------------------------------------------------------------------
+/// Return side of point \c pt relatively to the segment (Oriented only)
 template<typename SV,typename FPT>
 template<typename T>
 PointSide
@@ -5407,7 +5394,6 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 	static_assert( std::is_same_v<SV,typ::IsOSeg>, "unable to get side of point related to Segment" );
 
 	OSegment_<FPT> other( _ptS1, pt );
-//	auto cp = crossProduct( *this, other );
 	HOMOG2D_INUMTYPE cp = detail::crossProductV( other, *this );
 	PointSide out;
 	switch ( priv::sign(cp) )
@@ -5419,6 +5405,47 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 	}
 	return out;
 }
+
+//------------------------------------------------------------------
+/// Returns two parallel segments to the current one in a pair
+/**
+Behavior differs depending on type of segment:
+ - if oriented (\ref OSegment_), the returned pair will hold as \c first the segment that is \b left of the original
+ - if not oriented (\ref Segment_), the order will be unpredictable
+*/
+template<typename SV, typename FPT>
+template<typename T>
+std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
+SegVec<SV,FPT>::getParallelSegs( T dist ) const
+{
+	HOMOG2D_CHECK_IS_NUMBER( T );
+#ifndef HOMOG2D_NOCHECKS
+	if( dist <= 0 )
+		HOMOG2D_THROW_ERROR_1( "Invalid value for distance:" << dist );
+#endif
+
+	auto plines = getLine().getParallelLines( dist );
+	auto lo1 = getLine().getOrthogonalLine( _ptS1 );
+	auto lo2 = getLine().getOrthogonalLine( _ptS2 );
+
+	auto pA1 = lo1 * plines.first;
+	auto pA2 = lo2 * plines.first;
+	auto pB1 = lo1 * plines.second;
+	auto pB2 = lo2 * plines.second;
+
+	if constexpr( std::is_same_v<SV,typ::IsOSeg> )
+		if( getPointSide(pB1) == PointSide::Left )
+		{
+			std::swap( pA1, pB1 );
+			std::swap( pA2, pB2 );
+		}
+
+	return std::make_pair(
+		SegVec( pA1, pA2 ),
+		SegVec( pB1, pB2 )
+	);
+}
+
 
 //------------------------------------------------------------------
 /// Returns a segment with same support line but tripled length.
@@ -6485,10 +6512,11 @@ public:
 	template<typename PLT2,typename FPT2>
 	bool operator == ( const PolylineBase<PLT2,FPT2>& other ) const
 	{
-		if( size() != other.size() )          // for quick exit
-			return false;
 		if constexpr( std::is_same_v<PLT,PLT2> )
 		{
+			if( size() != other.size() )          // for quick exit
+				return false;
+
 			p_normalizePoly();
 			other.p_normalizePoly();
 
@@ -6671,7 +6699,7 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 		return PolylineBase<typ::IsClosed,FPT>();
 
 	p_normalizePoly();
-
+#if 0
 /* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
 (bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
 and compute their relative orientation
@@ -6703,8 +6731,8 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 
 	if( det > 0 )
 		dist = -dist;
+#endif
 	auto side = (dist>0 ? PointSide::Left : PointSide::Right);
-
 	auto segs = getSegs();
 	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
@@ -7464,8 +7492,13 @@ base::PolylineBase<PLT,FPT>::centroid() const
 /**
 Two tasks:
 - rotating so that the smallest one is first
-- reverse if needed, so that the second point is smaller than the last one
-20250217: WIP - for closed polylines: constant orientation instead
+- for closed polylines: constant orientation
+
+\note: is \c const, although it moves the points, but all the attributes are the same
+(done by declaring the vector of points as \c mutable).
+
+Reference for the orientation:
+https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
 */
 template<typename PLT,typename FPT>
 void
@@ -7478,23 +7511,27 @@ base::PolylineBase<PLT,FPT>::p_normalizePoly() const
 	{
 		if constexpr ( std::is_same_v<PLT,typ::IsClosed> )
 		{
-//				std::cout << "NORM before" << *this << '\n';
 			auto minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 			std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-#ifdef NEW_NORMALISATION
-#else
-		std::cout << "NORMALISATION !!!\n";
-			const auto& p1 = _plinevec[1];
-			const auto& p2 = _plinevec.back();
-			if( p2 < p1 )
+
+			auto ptB = _plinevec[0];
+			auto ptA = _plinevec[1];
+			auto ptC = _plinevec[size()-1];
+
+			HOMOG2D_INUMTYPE xA = ptA.getX();
+			HOMOG2D_INUMTYPE xB = ptB.getX();
+			HOMOG2D_INUMTYPE xC = ptC.getX();
+			HOMOG2D_INUMTYPE yA = ptA.getY();
+			HOMOG2D_INUMTYPE yB = ptB.getY();
+			HOMOG2D_INUMTYPE yC = ptC.getY();
+
+			auto det = (xB-xA)*(yC-yA) - (xC-xA)*(yB-yA);
+			if( det < 0)
 			{
 				std::reverse( _plinevec.begin(), _plinevec.end() );
 				minpos = std::min_element( _plinevec.begin(), _plinevec.end() );
 				std::rotate( _plinevec.begin(), minpos, _plinevec.end() );
-				std::cout << "reverse + rotate !!!\n";
 			}
-#endif
-//				std::cout << "NORM after" << *this << '\n';
 		}
 		else
 		{
@@ -9036,7 +9073,7 @@ crossProduct(
 	return res;
 }
 
-/// Cross product of two vectors, return a scalar
+/// Cross product of two oriented segments, return a scalar
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
 crossProductV(
@@ -9047,11 +9084,18 @@ crossProductV(
 	auto ppts1 = v1.getPts();
 	auto ppts2 = v2.getPts();
 
-	auto dx1 = ppts1.second.getX() - ppts1.first.getX();
-	auto dy1 = ppts1.second.getY() - ppts1.first.getY();
-
-	auto dx2 = ppts2.second.getX() - ppts2.first.getX();
-	auto dy2 = ppts2.second.getY() - ppts2.first.getY();
+	auto dx1 =
+		static_cast<HOMOG2D_INUMTYPE>( ppts1.second.getX()  )
+		- static_cast<HOMOG2D_INUMTYPE>( ppts1.first.getX() );
+	auto dy1 =
+		static_cast<HOMOG2D_INUMTYPE>(   ppts1.second.getY() )
+		- static_cast<HOMOG2D_INUMTYPE>( ppts1.first.getY()  );
+	auto dx2 =
+		static_cast<HOMOG2D_INUMTYPE>(   ppts2.second.getX() )
+		- static_cast<HOMOG2D_INUMTYPE>( ppts2.first.getX()  );
+	auto dy2 =
+		static_cast<HOMOG2D_INUMTYPE>(   ppts2.second.getY() )
+		- static_cast<HOMOG2D_INUMTYPE>( ppts2.first.getY()  );
 
 	return dx1 * dy2 - dy1 * dx2;
 }
@@ -11892,8 +11936,6 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		for( size_t i=0; i<size(); i++ )
 		{
 			auto pt = getPoint(i);
-			if( i==0 )
-				std::cout << "point 0=" << pt << '\n';
 			cv::putText(
 				im.getReal(),
 				std::to_string(i),

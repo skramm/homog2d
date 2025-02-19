@@ -385,7 +385,7 @@ void KeyboardLoop::start( Data& data )
 void toggle( bool& b, std::string msg )
 {
 	b = !b;
-	std::cout << msg << "=" << b << '\n';
+	std::cout << "toogle " << msg << "=" << b << '\n';
 }
 //------------------------------------------------------------------
 void action_1( void* param )
@@ -1994,9 +1994,6 @@ std::vector<Point2d> removeDupes( const std::vector<Point2d>& vec )
 template<typename IM, typename POL>
 void process_PO( IM& im, const POL& pol, Param_PO& data )
 {
-	draw( im, pol,
-		img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showPolyAngles).showIndex(data._showPolyIdx) );
-
 	if( data._drawBisectorLines )
 		draw( im, pol.getBisectorLines() );
 
@@ -2015,10 +2012,12 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 			for( const auto& seg: pol.getSegs() )
 			{
 				auto mid= seg.getCenter();
-				im.draw( Segment(mid, centr), img::DrawParams().setColor(0,200,0) );
+				im.draw( Segment(mid, centr), img::DrawParams().setColor(0,150,0) );
 			}
 		}
 	}
+	draw( im, pol,
+		img::DrawParams().showPoints().setColor(250,0,0).showAngles(data._showPolyAngles).showIndex(data._showPolyIdx) );
 }
 
 
@@ -2029,7 +2028,7 @@ void action_PO( void* param )
 	data.clearImage();
 
 	auto withoutDupes = removeDupes( data.vpt );
-//	data._cpoly = CPolyline( withoutDupes );
+	data._cpoly = CPolyline( withoutDupes );
 	data._cpol = CPolyline( withoutDupes );
 	data._opol = OPolyline( withoutDupes );
 
@@ -2051,6 +2050,10 @@ void demo_PO( int demidx )
 {
 	Param_PO data( demidx, "Polygon Offset" );
 	data.leftClicAddPoint=true;
+
+//	data._cpol = CPolyline( data.vpt );
+//	data._opol = OPolyline( data.vpt );
+
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'w', [&](void*){ data._offsetDist += 2;                                 }, "Increase distance" );
@@ -2077,6 +2080,7 @@ struct Param_OSegAngle : Data
 	}
 	bool _reverseS1 = false;
 	bool _reverseS2 = false;
+	bool _showParallel = true;
 };
 
 void action_OSegAngle( void* param )
@@ -2096,12 +2100,33 @@ void action_OSegAngle( void* param )
 
 	data.img.draw( s1, col1 );
 	data.img.draw( s2, col2 );
+
+	if( data._showParallel )
+	{
+		auto psegs = s1.getParallelSegs( 25 );
+		draw( data.img, psegs.first,  img::DrawParams().setColor(250,100,0) );
+		draw( data.img, psegs.second, img::DrawParams().setColor(250,0,100) );
+		drawText( data.img, "L", psegs.first.getCenter()  );
+		drawText( data.img, "R", psegs.second.getCenter() );
+	}
+
 	auto angle = getAngle( s1, s2 );
 	drawText( data.img, std::to_string(angle*180./M_PI), data.vpt[1] );
 
 	drawText( data.img, "S1", s1.getCenter() );
 	drawText( data.img, "S2", s2.getCenter() );
 
+	draw( data.img, data._pt_mouse, img::DrawParams().setColor(150,150,0).setPointSize(7) );
+	try{
+		drawText(
+			data.img,
+			std::string("S1:") + getString( s1.getPointSide(data._pt_mouse) )
+			+ " S2:"           + getString( s2.getPointSide(data._pt_mouse) ),
+			data._pt_mouse
+		);
+	}
+	catch( const std::exception& )
+	{ /* do nothing */ }
 	data.showImage();
 }
 
@@ -2113,6 +2138,7 @@ void demo_OSegAngle( int demidx )
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._reverseS1,"reverse S1"); }, "reverse S1" );
 	kbloop.addKeyAction( 'z', [&](void*){ toggle(data._reverseS2,"reverse S2"); }, "reverse S2" );
+	kbloop.addKeyAction( 'w', [&](void*){ toggle(data._showParallel,"showParallel lines"); }, "showParallel lines" );
 
 	kbloop.addCommonAction( action_OSegAngle );
 	action_OSegAngle( &data );
@@ -2175,7 +2201,8 @@ int main( int argc, const char** argv )
 		return 0;
 	}
 
-	std::cout << " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
+	std::cout << " - currently " << v_demo.size() << " demo cases available\n"
+		<< " - to switch to next demo, hit [SPC]\n - to exit, hit [ESC]\n";
 	for( size_t i=0; i<v_demo.size(); i++ )
 	{
 		std::cout << "----------------------------------\n";
