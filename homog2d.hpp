@@ -3971,7 +3971,18 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 /// Default constructor, depends on the type
 	LPBase()
 	{
-		impl_init( detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+		{
+			_v[0] = 1.;
+			_v[1] = 0.;
+			_v[2] = 0.;
+		}
+		else
+		{
+			_v[0] = 0.;
+			_v[1] = 0.;
+			_v[2] = 1.;
+		}
 	}
 
 /// Constructor of horizontal/vertical line
@@ -4362,13 +4373,8 @@ public:
 
 /// Point is inside Ellipse
 	template<typename FPT2>
-	bool isInside( const Ellipse_<FPT2>& ell ) const
-	{
-		HOMOG2D_START;
-		return impl_isInsideEllipse( ell, detail::BaseHelper<LP>() );
-	}
+	bool isInside( const Ellipse_<FPT2>& ell ) const;
 
-/// Point or line is inside Polyline
 	template<typename FPT2,typename PTYPE>
 	bool isInside( const base::PolylineBase<PTYPE,FPT2>& poly ) const
 	{
@@ -4464,11 +4470,6 @@ private:
 	constexpr detail::Intersect<detail::Inters_2,FPT>
 	impl_intersectsCircle( const Point2d_<FPT>&, T r, const detail::BaseHelper<typ::IsPoint>& ) const;
 
-	template<typename FPT2>
-	bool           impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseHelper<typ::IsPoint>& ) const;
-	template<typename FPT2>
-	constexpr bool impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseHelper<typ::IsLine>& ) const;
-
 	template<typename T,typename PTYPE>
 	bool           impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 	template<typename T,typename PTYPE>
@@ -4477,28 +4478,14 @@ private:
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 	bool impl_op_equal( const LPBase<LP,FPT>&, const detail::BaseHelper<typ::IsPoint>& ) const;
 
-	Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::BaseHelper<typ::IsPoint>& ) const;
-	Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
+//	Point2d_<FPT> impl_op_product( const Line2d_<FPT>& , const Line2d_<FPT>& , const detail::BaseHelper<typ::IsPoint>& ) const;
+//	Line2d_<FPT>  impl_op_product( const Point2d_<FPT>&, const Point2d_<FPT>&, const detail::BaseHelper<typ::IsLine>&  ) const;
 
 	template<typename T>
 	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<typ::IsPoint>& )  const;
 	template<typename T>
 	void impl_draw_LP( img::Image<T>&, img::DrawParams, const detail::BaseHelper<typ::IsLine>& )  const;
 
-	/// Called by default constructor, overload for lines
-	void impl_init( const detail::BaseHelper<typ::IsLine>& )
-	{
-		_v[0] = 1.;
-		_v[1] = 0.;
-		_v[2] = 0.;
-	}
-	/// Called by default constructor, overload for points. Initialize to (0,0)
-	void impl_init( const detail::BaseHelper<typ::IsPoint>& )
-	{
-		_v[0] = 0.;
-		_v[1] = 0.;
-		_v[2] = 1.;
-	}
 	template<typename T1,typename T2>
 	void p_init_2( const T1&, const T2& );
 
@@ -6685,6 +6672,7 @@ Subject 2.07: How do I find the orientation of a simple polygon?
 	if( det > 0 )
 		dist = -dist;
 #endif
+
 	auto side = (dist<0 ? PointSide::Left : PointSide::Right);
 	auto segs = getSegs();
 	std::vector<Point2d_<FPT>> v_out;
@@ -9194,6 +9182,7 @@ LPBase<LP,FPT>::isInside( const FRect_<FPT2>& rect ) const
 }
 
 //------------------------------------------------------------------
+/// Point is inside circle
 template<typename LP, typename FPT>
 template<typename T>
 bool
@@ -9333,20 +9322,16 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>&, const det
 }
 
 //------------------------------------------------------------------
+/// Point is inside Polyline
 template<typename LP, typename FPT>
 template<typename FPT2>
 bool
-LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>& ell, const detail::BaseHelper<typename typ::IsPoint>& ) const
+LPBase<LP,FPT>::isInside( const Ellipse_<FPT2>& ell ) const
 {
-	return ell.pointIsInside( *this );
-}
-
-template<typename LP, typename FPT>
-template<typename FPT2>
-constexpr bool
-LPBase<LP,FPT>::impl_isInsideEllipse( const Ellipse_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>& ) const
-{
-	return false;
+	if constexpr( std::is_same_v<LP,typ::IsPoint> )
+		return ell.pointIsInside( *this );
+	else
+		return false;
 }
 
 
