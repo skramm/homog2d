@@ -2567,6 +2567,17 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	}
 }
 
+TEST_CASE( "OSegment point side", "[oseg-pt-side]" )
+{
+	OSegment_<NUMTYPE> s1( 0,0,10,0);
+	Point2d_<NUMTYPE> pt;
+	CHECK( s1.getPointSide(pt) == PointSide::Neither );
+	pt.translate(1,1);
+	CHECK( s1.getPointSide(pt) == PointSide::Left );
+	pt.translate(0,-5);
+	CHECK( s1.getPointSide(pt) == PointSide::Right );
+}
+
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{                              // test order of points

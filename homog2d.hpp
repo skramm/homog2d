@@ -3858,7 +3858,8 @@ to convert a line (or point) from double to float, but I don't get why...
 //		explicit
 	LPBase( const Line2d_<T>& li )
 	{
-		impl_init_1_Line<T>( li, detail::BaseHelper<LP>() );
+		static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot build a point from a line" );
+		p_copyFrom( li );
 	}
 
 /// Constructor with single arg of type "Point"
@@ -3970,8 +3971,7 @@ This will call one of the two overloads of \c impl_init_1_Point(), depending on 
 	template<typename T>
 	LPBase( LineDir orient, T value )
 	{
-//		HOMOG2D_CHECK_IS_NUMBER(T);
-		impl_init_or( orient, value, detail::BaseHelper<LP>() );
+		impl_init_or( orient, value );
 	}
 
 
@@ -4030,58 +4030,10 @@ private:
 		p_normalizePL();
 	}
 
-	/// Arg is a line, object is a point: ILLEGAL INSTANCIATION
 	template<typename T>
-	constexpr void impl_init_1_Line( const Line2d_<T>&, const detail::BaseHelper<typename typ::IsPoint>& )
-	{
-		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a point from a line" );
-	}
-	/// Arg is a line, object is a line => copy-constructor
+	void impl_init_or( LineDir, T );
 	template<typename T>
-	void impl_init_1_Line( const Line2d_<T>& li, const detail::BaseHelper<typename typ::IsLine>& )
-	{
-		p_copyFrom( li );
-	}
-
-	template<typename T>
-	constexpr void impl_init_or( LineDir, T, const detail::BaseHelper<typename typ::IsPoint>& )
-	{
-		static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot build a horiz/vertical point" );
-	}
-
-	template<
-		typename T,
-		typename std::enable_if<
-			std::is_arithmetic<T>::value
-			,T
-		>::type* = nullptr
-	>
-	void impl_init_or( LineDir dir, T value, const detail::BaseHelper<typename typ::IsLine>& )
-	{
-		_v[2] = -value;
-		if( dir == LineDir::V )
-		{
-			_v[0] = 1.; _v[1] = 0.;
-		}
-		else  // = LineDir::H
-		{
-			_v[0] = 0.; _v[1] = 1.;
-		}
-	}
-	template<typename T>
-	void impl_init_or( LineDir dir, const Point2d_<T>& pt, const detail::BaseHelper<typename typ::IsLine>& )
-	{
-		if( dir == LineDir::V )
-		{
-			_v[2] = -pt.getX();
-			_v[0] = 1.; _v[1] = 0.;
-		}
-		else  // = LineDir::H
-		{
-			_v[2] = -pt.getY();
-			_v[0] = 0.; _v[1] = 1.;
-		}
-	}
+	void impl_init_or( LineDir, const Point2d_<T>& );
 
 	template<typename T>
 	constexpr void
@@ -4113,16 +4065,21 @@ public:
 			return 0;
 	}
 
-	FPT
-	getCoord( GivenCoord gc, FPT other ) const
-	{
-		return impl_getCoord( gc, other, detail::BaseHelper<LP>() );
-	}
+	template<typename FPT2>
+	HOMOG2D_INUMTYPE
+	getCoord( GivenCoord gc, FPT2 other ) const;
 
+	template<typename FPT2>
 	Point2d_<FPT>
-	getPoint( GivenCoord gc, FPT other ) const
+	getPoint( GivenCoord gc, FPT2 other ) const
 	{
-		return impl_getPoint( gc, other, detail::BaseHelper<LP>() );
+		static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
+		HOMOG2D_CHECK_IS_NUMBER( FPT2 );
+
+		auto coord = getCoord( gc, other );
+		if( gc == GivenCoord::X )
+			return Point2d_<FPT>( other, coord );
+		return Point2d_<FPT>( coord, other );
 	}
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
@@ -4333,12 +4290,6 @@ private:
 	template<typename FPT2>
 	HOMOG2D_INUMTYPE impl_distToPoint( const Point2d_<FPT2>&, const detail::BaseHelper<typename typ::IsLine>&  ) const;
 
-	FPT           impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsLine>& ) const;
-	constexpr FPT impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-
-	Point2d_<FPT>           impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsLine>& ) const;
-	constexpr Point2d_<FPT> impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsPoint>& ) const;
-
 	template<typename FPT2>
 	PointPair_<FPT>           impl_getPoints_A( GivenCoord, FPT, FPT2, const detail::BaseHelper<typename typ::IsLine>& ) const;
 	template<typename FPT2>
@@ -4489,20 +4440,6 @@ private:
 		return OPENCVT( getX(),getY() );
 	}
 
-/// Build point from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<typ::IsPoint>& )
-	{
-		p_init_2( pt.x, pt.y );
-	}
-/// Build line from Opencv point
-	template<typename T>
-	void impl_init_opencv( cv::Point_<T> pt, const detail::BaseHelper<typ::IsLine>& )
-	{
-		Point2d_<FPT> p(pt);
-		impl_init_1_Point<FPT>( p, detail::BaseHelper<typ::IsLine>() );
-	}
-
 public:
 /// Opencv draw function
 	void draw( img::Image<cv::Mat>& im, img::DrawParams dp=img::DrawParams() ) const
@@ -4514,11 +4451,19 @@ public:
 	cv::Point2i getCvPtd() const { return impl_getPt<cv::Point2d>( detail::BaseHelper<typename typ::IsPoint>() ); }
 	cv::Point2i getCvPtf() const { return impl_getPt<cv::Point2f>( detail::BaseHelper<typename typ::IsPoint>() ); }
 
-/// Constructor: build from a single OpenCv point.
+/// Constructor: build point or line from a single OpenCv point.
 	template<typename T>
 	LPBase( cv::Point_<T> pt )
 	{
-		impl_init_opencv( pt, detail::BaseHelper<LP>() );
+		if constexpr( std::is_same_v<LP,typ::IsPoint> )
+		{
+			p_init_2( pt.x, pt.y );
+		}
+		else
+		{
+			Point2d_<FPT> p(pt);
+			impl_init_1_Point<FPT>( p, detail::BaseHelper<typ::IsLine>() );
+		}
 	}
 #endif // HOMOG2D_USE_OPENCV
 
@@ -4620,6 +4565,53 @@ private:
 
 }; // class LPBase
 
+//------------------------------------------------------------------
+/// Helper function for constructor of horizontal or vertical line
+/// (overload for argument of type Point2d)
+/// \sa LineDir
+template<typename LP,typename FPT>
+template<typename T>
+void
+LPBase<LP,FPT>::impl_init_or( LineDir dir, const Point2d_<T>& pt )
+{
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot build a horiz/vertical point" );
+
+	if( dir == LineDir::V )
+	{
+		_v[2] = -pt.getX();
+		_v[0] = 1.; _v[1] = 0.;
+	}
+	else  // = LineDir::H
+	{
+		_v[2] = -pt.getY();
+		_v[0] = 0.; _v[1] = 1.;
+	}
+}
+
+//------------------------------------------------------------------
+/// Helper function for constructor of horizontal or vertical line
+/// (overload for numerical argument)
+/// \sa LineDir
+template<typename LP,typename FPT>
+template<typename T>
+void
+LPBase<LP,FPT>::impl_init_or( LineDir dir, T arg )
+{
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot build a horiz/vertical point" );
+
+	HOMOG2D_CHECK_IS_NUMBER(T);
+	_v[2] = -arg;
+	if( dir == LineDir::V )
+	{
+		_v[0] = 1.; _v[1] = 0.;
+	}
+	else  // = LineDir::H
+	{
+		_v[0] = 0.; _v[1] = 1.;
+	}
+}
+
+
 } // namespace base
 
 
@@ -4671,6 +4663,8 @@ getCvPti( const Point2d_<FPT>& pt )
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+
+//------------------------------------------------------------------
 /// Generic free function to return a point of other type
 /**
 - RT: return type
@@ -4690,6 +4684,7 @@ getPt( const Point2d_<FPT>& pt )
 	return pt.template getPt<RT>();
 }
 
+//------------------------------------------------------------------
 /// Free function, returns a vector of points of other type from a vector of h2d points
 /**
 - RT: return type
@@ -8792,22 +8787,18 @@ LPBase<LP,FPT>::impl_normalize( const detail::BaseHelper<typename typ::IsPoint>&
 }
 //------------------------------------------------------------------
 template<typename LP,typename FPT>
-constexpr FPT
-LPBase<LP,FPT>::impl_getCoord( GivenCoord, FPT, const detail::BaseHelper<typename typ::IsPoint>& ) const
+template<typename FPT2>
+HOMOG2D_INUMTYPE
+LPBase<LP,FPT>::getCoord( GivenCoord gc, FPT2 other ) const
 {
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getCoord() on a point" );
-}
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
 
-template<typename LP,typename FPT>
-FPT
-LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsLine>& ) const
-{
 	const auto a = static_cast<HOMOG2D_INUMTYPE>( _v[0] );
 	const auto b = static_cast<HOMOG2D_INUMTYPE>( _v[1] );
 	auto denom = ( gc == GivenCoord::X ? b : a );
 #ifndef HOMOG2D_NOCHECKS
 	if( homog2d_abs(denom) < thr::nullDenom() )
-		HOMOG2D_THROW_ERROR_2( "getCoord", "null denominator encountered" );
+		HOMOG2D_THROW_ERROR_1( "null denominator encountered" );
 #endif
 	if( gc == GivenCoord::X )
 		return ( -a * other - _v[2] ) / b;
@@ -8815,23 +8806,6 @@ LPBase<LP,FPT>::impl_getCoord( GivenCoord gc, FPT other, const detail::BaseHelpe
 		return ( -b * other - _v[2] ) / a;
 }
 
-
-template<typename LP,typename FPT>
-constexpr Point2d_<FPT>
-LPBase<LP,FPT>::impl_getPoint( GivenCoord, FPT, const detail::BaseHelper<typename typ::IsPoint>& ) const
-{
-	static_assert( detail::AlwaysFalse<LP>::value, "Invalid: you cannot call getPoint() on a point" );
-}
-
-template<typename LP,typename FPT>
-Point2d_<FPT>
-LPBase<LP,FPT>::impl_getPoint( GivenCoord gc, FPT other, const detail::BaseHelper<typename typ::IsLine>& ) const
-{
-	auto coord = impl_getCoord( gc, other, detail::BaseHelper<typ::IsLine>() );
-	if( gc == GivenCoord::X )
-		return Point2d_<FPT>( other, coord );
-	return Point2d_<FPT>( coord, other );
-}
 
 //------------------------------------------------------------------
 /// ILLEGAL INSTANCIATION
@@ -8849,7 +8823,7 @@ template<typename FPT2>
 PointPair_<FPT>
 LPBase<LP,FPT>::impl_getPoints_A( GivenCoord gc, FPT coord, FPT2 dist, const detail::BaseHelper<typename typ::IsLine>& ) const
 {
-	const auto pt = impl_getPoint( gc, coord, detail::BaseHelper<typ::IsLine>() );
+	const auto pt = getPoint( gc, coord );
 	return priv::getPoints_B2( pt, dist, *this );
 }
 
@@ -8883,7 +8857,8 @@ LPBase<LP,FPT>::getOrthogonalLine( GivenCoord gc, FPT2 val ) const
 {
 	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogonalLine() on a point" );
 
-	auto other_val = impl_getCoord( gc, val, detail::BaseHelper<typ::IsLine>() );
+	auto other_val = getCoord( gc, val );
+//	auto other_val = impl_getCoord( gc, val, detail::BaseHelper<typ::IsLine>() );
 
 	Point2d_<FPT> pt( other_val, val ) ;
 	if( gc == GivenCoord::X )
