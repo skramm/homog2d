@@ -2093,6 +2093,7 @@ void action_OSegAngle( void* param )
 	OSegment s1( data.vpt[0], data.vpt[1] );
 	OSegment s2( data.vpt[1], data.vpt[2] );
 
+
 	if( data._reverseS2 )
 		s2 = -s2;
 	if( data._reverseS1 )
@@ -2102,6 +2103,8 @@ void action_OSegAngle( void* param )
 
 	data.img.draw( s1, col1 );
 	data.img.draw( s2, col2 );
+
+	draw( data.img, data.vpt, img::DrawParams().setColor(0,200,0).setPointStyle(img::PtStyle::Dot) );
 
 	if( data._showParallel )
 	{
@@ -2134,6 +2137,7 @@ void demo_OSegAngle( int demidx )
 	Param_OSegAngle data( demidx, "OSegment angle" );
 	data.leftClicAddPoint=true;
 	data.setMouseCB( action_OSegAngle );
+	data.vpt.resize(3);
 	KeyboardLoop kbloop;
 	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._reverseS1,"reverse S1"); }, "reverse S1" );
 	kbloop.addKeyAction( 'z', [&](void*){ toggle(data._reverseS2,"reverse S2"); }, "reverse S2" );

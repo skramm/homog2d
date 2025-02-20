@@ -5208,13 +5208,13 @@ public:
 	}
 
 /// Returns supporting line
-	Line2d_<FPT>
+	auto
 	getLine() const
 	{
 		Point2d_<HOMOG2D_INUMTYPE> pt1( _ptS1 );
 		Point2d_<HOMOG2D_INUMTYPE> pt2( _ptS2 );
 		auto li = pt1 * pt2;
-		return Line2d_<FPT>(li);
+		return Line2d_<HOMOG2D_INUMTYPE>(li);
 	}
 
 	template<typename T>
@@ -5247,10 +5247,10 @@ public:
 	}
 
 	/// Returns point that at middle distance between \c p1 and \c p2
-	Point2d_<FPT>
+	auto
 	getCenter() const
 	{
-		return Point2d_<FPT>(
+		return Point2d_<HOMOG2D_INUMTYPE>(
 			( static_cast<HOMOG2D_INUMTYPE>(_ptS1.getX()) + _ptS2.getX() ) / 2.,
 			( static_cast<HOMOG2D_INUMTYPE>(_ptS1.getY()) + _ptS2.getY() ) / 2.
 		);
@@ -5260,7 +5260,7 @@ public:
 
 /// Returns the bisector line of the segment
 /// \sa free function h2d::getBisector()
-	Line2d_<FPT>
+	auto
 	getBisector() const
 	{
 		SegVec<SV,HOMOG2D_INUMTYPE> seg2 = *this; // convert to (possibly) enhance precision
@@ -5280,7 +5280,6 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& r ) const
 	{
-//		HOMOG2D_START;
 		return r.intersects( *this );
 	}
 
@@ -5288,7 +5287,6 @@ public:
 	template<typename PLT,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT,FPT2>& other ) const
 	{
-//		HOMOG2D_START;
 		return other.intersects( *this );
 	}
 ///@}
