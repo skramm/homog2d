@@ -719,7 +719,7 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lV; // vertical line at x=0
 
 // get orthogonal line at y=100
-		Line2d_<NUMTYPE> li2 = lV.getOrthogonalLine( GivenCoord::Y, 100 );
+		Line2d_<NUMTYPE> li2 = lV.getOrthogLine( GivenCoord::Y, 100 );
 		CHECK( li2.getAngle( lV ) == Approx(M_PI/2.) );
 		CHECK( getAngle( li2,lV ) == Approx(M_PI/2.) );
 

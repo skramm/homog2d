@@ -922,7 +922,7 @@ enum class Rotate: int8_t
 
 enum class CardDir: int8_t { Bottom,Top, Left, Right };
 
-/// Used in Line2d::getValue() and getOrthogonalLine()
+/// Used in Line2d::getValue() and getOrthogLine()
 enum class GivenCoord: uint8_t { X, Y };
 
 /// Used in line constructor, to instanciate a H or V line, see base::LPBase( LineDir, T )
@@ -4094,11 +4094,11 @@ public:
 
 	template<typename FPT2>
 	Line2d_<FPT>
-	getOrthogonalLine( GivenCoord gc, FPT2 other ) const;
+	getOrthogLine( GivenCoord gc, FPT2 other ) const;
 
 	template<typename FPT2>
 	Line2d_<FPT>
-	getOrthogonalLine( const Point2d_<FPT2>& pt ) const;
+	getOrthogLine( const Point2d_<FPT2>& pt ) const;
 
 	/// Returns a line rotated at point \c pt with angle \c theta
 	template<typename FPT2, typename T>
@@ -5264,7 +5264,7 @@ public:
 	getBisector() const
 	{
 		SegVec<SV,HOMOG2D_INUMTYPE> seg2 = *this; // convert to (possibly) enhance precision
-		return seg2.getLine().getOrthogonalLine( seg2.getCenter() );
+		return seg2.getLine().getOrthogLine( seg2.getCenter() );
 	}
 ///@}
 
@@ -5348,8 +5348,8 @@ SegVec<SV,FPT>::getParallelSegs( T dist ) const
 #endif
 
 	auto plines = getLine().getParallelLines( dist );
-	auto lo1 = getLine().getOrthogonalLine( _ptS1 );
-	auto lo2 = getLine().getOrthogonalLine( _ptS2 );
+	auto lo1 = getLine().getOrthogLine( _ptS1 );
+	auto lo2 = getLine().getOrthogLine( _ptS2 );
 
 	auto pA1 = lo1 * plines.first;
 	auto pA2 = lo2 * plines.first;
@@ -6588,7 +6588,7 @@ p_computeAngleCut(
 	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
 //	debug.seg= seg;
 	auto mid = seg.getCenter();
-	auto oline = seg.getLine().getOrthogonalLine( mid );
+	auto oline = seg.getLine().getOrthogLine( mid );
 	auto inters1 = oline.intersects(pli.first);
 	auto inters2 = oline.intersects(pli.second);
 	return std::make_pair(
@@ -7151,20 +7151,17 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 struct TMP_DebugSquare
 {
 	Line2d_<double> li0;
+	Line2d_<double> line_ortho;
+	Line2d_<double> li_L, li_R;
+
 	Segment_<double> s1;
 	Segment_<double> sL,sR;
 
-	Segment_<double> seg_orth;
 	double dist;
 	PointPair_<double>  ppts;
 	Point2d_<double> pt_resL, pt_resR;
 };
 
-/*
-Les 4 points sources sont-ils obligatoirement sur le carré résultat?
-Parce que en s'appuyant sur l'égalité des longueurs, j'arrive à avoir certains carrés
-avec les points source en dehors, donc j'ai peut-être loupé un truc?
-*/
 template<typename CONT>
 auto
 buildSquare( const CONT& pts )
@@ -7189,15 +7186,11 @@ buildSquare( const CONT& pts )
 	auto pt_B = getBmPoint( pts );
 	Segment_<HOMOG2D_INUMTYPE> s1( pt_L.first, pt_R.first );
 dbg.s1 = s1;
-/*	auto idxL = pt_L.second;
-	auto idxR = pt_R.second;
-	std::cout << "idxL=" << idxL << " idxR=" << idxR << '\n'; */
-
-	auto seg_orth = s1.getLine().getOrthogSegment( pt_T.first );
-dbg.seg_orth = seg_orth;
 	auto dist = s1.length();
 dbg.dist = dist;
-	auto line_ortho = seg_orth.getLine();
+
+	auto line_ortho = s1.getLine().getOrthogLine( pt_T.first );
+dbg.line_ortho = line_ortho;
 
 	auto ppts = line_ortho.getPoints( pt_T.first, dist );
 dbg.ppts = ppts;
@@ -7210,12 +7203,12 @@ dbg.ppts = ppts;
 
 	auto li0 = goodpt * pt_B.first;
 dbg.li0 = li0;
-	auto sL = li0.getOrthogSegment( pt_L.first );
-	auto sR = li0.getOrthogSegment( pt_R.first );
-dbg.sL = sL;
-dbg.sR = sR;
-	auto li_L = sL.getLine();
-	auto li_R = sR.getLine();
+
+	auto li_L = li0.getOrthogLine( pt_L.first );
+	auto li_R = li0.getOrthogLine( pt_R.first );
+dbg.li_L = li_L;
+dbg.li_R = li_R;
+
 	auto pt_resL = li_L * li0;
 	auto pt_resR = li_R * li0;
 dbg.pt_resL = pt_resL;
@@ -7227,18 +7220,11 @@ dbg.pt_resR = pt_resR;
 	auto pt_res4 = li_R * li_Top;
 
 	std::vector<Point2d_<double>> vout;
-//	vout.push_back( goodpt );
-
 	vout.push_back( pt_resL );
 	vout.push_back( pt_res3 );
 	vout.push_back( pt_res4 );
 	vout.push_back( pt_resR );
 
-//	vout.push_back( pt_B.first );
-
-/*	std::vector<Line2d_<double>> vli;
-	vli.push_back( s1.getLine() );
-	vli.push_back( line_ortho );*/
 	return std::make_pair(
 		PolylineBase<typ::IsClosed,typename CONT::value_type::FType>( vout ),
 		dbg
@@ -8648,7 +8634,7 @@ Ellipse_<FPT>::getAxisLines() const
 	auto li_H = ptA * pt0;
 	HOMOG2D_LOG( std::scientific << "ptA=" << ptA << " pt0=" << pt0 << " li_H=" << li_H );
 
-	auto li_V = li_H.getOrthogonalLine( pt0 );
+	auto li_V = li_H.getOrthogLine( pt0 );
 	return std::make_pair( li_H, li_V );
 }
 
@@ -8709,8 +8695,8 @@ Ellipse_<FPT>::getOBB() const
 		ptB = ppts.second;
 
 	auto para = getParallelLines( li_H, par.b );
-	auto li_V1 = li_H.getOrthogonalLine( ptA );
-	auto li_V2 = li_H.getOrthogonalLine( ptB );
+	auto li_V1 = li_H.getOrthogLine( ptA );
+	auto li_V2 = li_H.getOrthogLine( ptB );
 
 	CPolyline_<FPT> out;
 #ifndef	HOMOG2D_DEBUGMODE
@@ -8879,41 +8865,40 @@ LPBase<LP,FPT>::getPoints( const Point2d_<FPT2>& pt, FPT3 dist ) const
 
 
 //------------------------------------------------------------------
-/// Returns an orthogonal line to the one it is called on, at a point defined by one of its coordinates.
+/// Returns an orthogonal line to the one it is called on, at a point on the line defined by one of its coordinates.
 template<typename LP,typename FPT>
 template<typename FPT2>
 Line2d_<FPT>
-LPBase<LP,FPT>::getOrthogonalLine( GivenCoord gc, FPT2 val ) const
+LPBase<LP,FPT>::getOrthogLine( GivenCoord gc, FPT2 val ) const
 {
-	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogonalLine() on a point" );
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogLine() on a point" );
 
 	auto other_val = getCoord( gc, val );
-//	auto other_val = impl_getCoord( gc, val, detail::BaseHelper<typ::IsLine>() );
-
-	Point2d_<FPT> pt( other_val, val ) ;
+	Point2d_<HOMOG2D_INUMTYPE> pt( other_val, val ) ;
 	if( gc == GivenCoord::X )
 		pt.set( val, other_val );
 
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
 
-/// Returns an orthogonal line to the one it is called on, at point \c pt, assuming that it is lying on the line.
+/// Returns an orthogonal line to the one it is called on, at point \c pt
 template<typename LP,typename FPT>
 template<typename FPT2>
 Line2d_<FPT>
-LPBase<LP,FPT>::getOrthogonalLine( const Point2d_<FPT2>& pt ) const
+LPBase<LP,FPT>::getOrthogLine( const Point2d_<FPT2>& pt ) const
 {
-	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogonalLine() on a point" );
+	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call getOrthogLine() on a point" );
 
+/*
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
 	{
 		std::cerr << "homog2d: distance=" << std::scientific << this->distTo( pt )
 			<< "> null distance (" << thr::nullDistance() << ")\n";
-		HOMOG2D_THROW_ERROR_2( "getOrthogonalLine", "point is not on line" );
+		HOMOG2D_THROW_ERROR_1( "point is not on line" );
 	}
 #endif
-
+*/
 	return priv::getOrthogonalLine_B2( pt, *this );
 }
 
@@ -8964,7 +8949,7 @@ LPBase<LP,FPT>::getOrthogSegment( const Point2d_<FPT2>& pt ) const
 	if( pt.distTo(pair_lines.second) < thr::nullDistance() )
 		pline = &pair_lines.second;
 
-	auto oline = pline->getOrthogonalLine( pt );
+	auto oline = pline->getOrthogLine( pt );
 	auto p2 = *this * oline;
 	return OSegment_<FPT>( p2, pt );
 }
@@ -11790,7 +11775,7 @@ getArrowSegments(
 
 	const int arSize = 8;
 
-	Line2d_<double> liA = vec.getLine().getOrthogonalLine( pt1 );
+	Line2d_<double> liA = vec.getLine().getOrthogLine( pt1 );
 	out[0] = liA.getPoints( pt1, arSize );
 
 	auto ppts_B = vec.getLine().getPoints( pt2, arSize );
@@ -11799,7 +11784,7 @@ getArrowSegments(
 	if( dist( pt1, ppts_B.first) >  dist(pt1, ppts_B.second) )
 		p0 = ppts_B.second;
 
-	Line2d_<double> liB = vec.getLine().getOrthogonalLine( p0 );
+	Line2d_<double> liB = vec.getLine().getOrthogLine( p0 );
 	auto ppts_C = liB.getPoints( p0, arSize );
 
 	out[1] = std::make_pair(ppts_C.first, pt2);

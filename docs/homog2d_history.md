@@ -33,6 +33,7 @@ now all of these return the number of points that the primitive has, as a `size_
   - `getLmPoint()` and associated functions now return a `std::pair`, so user can fetch its position in the container.
   The downside is that it is now not possible to use a `std::list` as input container.
   See [details here](homog2d_manual.md#extremum_points).
+  - renamed `getOrthogonalLine()` to `getOrthogLine()` so it's similar to `getOrthogSegment()`
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).

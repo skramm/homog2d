@@ -240,7 +240,7 @@ Upon return, the "first" point will hold the one with smallest 'x' coordinates, 
 You can compute a line orthogonal to another one at a given coordinate, using the above enum.
 For example, this:
 ```C++
-auto lB = lA.getOrthogonalLine( GivenCoord::X, x1 );
+auto lB = lA.getOrthogLine( GivenCoord::X, x1 );
 ```
 will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
@@ -248,7 +248,7 @@ will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
 Similarly, you can also directly use as input a point on the line:
 ```C++
-Line2d liB = lA.getOrthogonalLine( p1 );
+Line2d liB = lA.getOrthogLine( p1 );
 ```
 Again, point is checked and this will throw if distance from point to line is above some threshold
 (see ["numerical issues"](#num_issues)).

@@ -39,8 +39,8 @@ int main( int, const char** )
 		getBB(cir1, cir2).draw( im, DrawParams().setColor(g,g,g) );
 
 		auto lightgray = DrawParams().setColor(200,200,200);
-		seg.getLine().getOrthogonalLine( seg.getPts().first ).draw( im,  lightgray );
-		seg.getLine().getOrthogonalLine( seg.getPts().second ).draw( im, lightgray );
+		seg.getLine().getOrthogLine( seg.getPts().first ).draw( im,  lightgray );
+		seg.getLine().getOrthogLine( seg.getPts().second ).draw( im, lightgray );
 
 		auto segs = getTanSegs(cir1,cir2);
 		draw( im, segs.first,  DrawParams().setColor(250,250,0) );

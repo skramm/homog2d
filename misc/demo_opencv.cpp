@@ -46,6 +46,8 @@ void demo_something( int demo_index)
 \endcode
 */
 
+//#define HOMOG2D_PRELIMINAR
+
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_VRTP
 
@@ -397,7 +399,7 @@ void action_1( void* param )
 	auto p_lines = l_mouse.getParallelLines( 30 );
 
 	auto ppts = l_mouse.getPoints( Point2d(), 200 );
-	Line2d l_mouse_o = l_mouse.getOrthogonalLine( ppts.second );
+	Line2d l_mouse_o = l_mouse.getOrthogLine( ppts.second );
 	l_mouse.draw( data.img );
 	l_mouse_o.draw( data.img );
 
@@ -665,10 +667,10 @@ void action_SI( void* param )
 	{
 		auto pti = inters.get();
 		pti.draw( data.img );
-		Line2d l1 = data.seg1.getLine().getOrthogonalLine( pti );
+		Line2d l1 = data.seg1.getLine().getOrthogLine( pti );
 		l1.draw( data.img, img::DrawParams().setColor( 0,0,100) );
 
-		Line2d l2 = data.seg2.getLine().getOrthogonalLine( pti );
+		Line2d l2 = data.seg2.getLine().getOrthogLine( pti );
 		l2.draw( data.img, img::DrawParams().setColor( 100,0,0) );
 	}
 
@@ -2156,38 +2158,48 @@ void action_Square( void* param )
 	auto& data = *reinterpret_cast<Param_Square*>(param);
 	data.clearImage();
 	for( const auto& pt: data.vpt )
-		pt.draw( data.img );
+		pt.draw( data.img, img::DrawParams().setPointStyle(img::PtStyle::Dot).setColor(255,0,0) );
 
-	auto res = buildSquare( data.vpt ); // four lines
+	drawText( data.img, "A", data.vpt[0] );
+	drawText( data.img, "B", data.vpt[1] );
+	drawText( data.img, "C", data.vpt[2] );
+	drawText( data.img, "D", data.vpt[3] );
+
+	decltype(buildSquare( data.vpt )) res;
+	try {
+		res = buildSquare( data.vpt ); // four lines
+	}
+	catch( std::exception& err )
+	{
+		std::cout << "unable, msg=" << err.what() << '\n';
+	}
+
 	auto poly = res.first;
 	poly.draw( data.img );
 
 	auto dbg = res.second;
 
 	dbg.s1.draw( data.img, img::DrawParams().setColor(250,0,0) );
-	dbg.seg_orth.draw( data.img, img::DrawParams().setColor(0,0,250) );
-	dbg.sL.draw( data.img, img::DrawParams().setColor(0,150,250) );
-	dbg.sR.draw( data.img, img::DrawParams().setColor(150,0,250) );
+	dbg.line_ortho.draw( data.img, img::DrawParams().setColor(100,100,250) );
+	dbg.li_L.draw( data.img, img::DrawParams().setColor(0,150,250) );
+	dbg.li_R.draw( data.img, img::DrawParams().setColor(150,0,250) );
 	dbg.li0.draw( data.img ); //, img::DrawParams().setColor(0,0,250) );
+
 	data.img.draw( dbg.ppts, img::DrawParams().setColor(0,250,0) );
+	drawText( data.img, "E", dbg.ppts.second );
+
 	data.img.draw( dbg.pt_resL, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	data.img.draw( dbg.pt_resR, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 
-	std::cout << "dist =" << dbg.dist << "\n";
+	std::cout << "dist=" << dbg.dist << "\n";
 	data.showImage();
 }
-
 
 void demo_Square( int demidx )
 {
 	Param_Square data( demidx, "Square computation" );
-	data.leftClicAddPoint=true;
 	data.setMouseCB( action_Square );
 	KeyboardLoop kbloop;
-/*	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._reverseS1,"reverse S1"); }, "reverse S1" );
-	kbloop.addKeyAction( 'z', [&](void*){ toggle(data._reverseS2,"reverse S2"); }, "reverse S2" );
-	kbloop.addKeyAction( 'w', [&](void*){ toggle(data._showParallel,"showParallel lines"); }, "showParallel lines" );
-*/
 	kbloop.addCommonAction( action_Square );
 	action_Square( &data );
 	kbloop.start( data );
@@ -2221,7 +2233,9 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
-//		demo_Square,
+#ifdef HOMOG2D_PRELIMINAR
+		demo_Square,
+#endif
 		demo_OSegAngle,
 		demo_PO,
 		demo_BB,
