@@ -17,10 +17,10 @@ void DrawExtremePoints( img::Image<img::SvgImage>& img, const T& vec )
 {
 	auto style1 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(3).setColor(0,250,0);
 	auto style2 = DrawParams().setPointStyle(PtStyle::Dot).setThickness(3).setColor(0,0,250);
-	getTmPoint( vec ).draw( img, style1 );
-	getRmPoint( vec ).draw( img, style2 );
-	getLmPoint( vec ).draw( img, style1 );
-	getBmPoint( vec ).draw( img, style2 );
+	getTmPoint( vec ).first.draw( img, style1 );
+	getRmPoint( vec ).first.draw( img, style2 );
+	getLmPoint( vec ).first.draw( img, style1 );
+	getBmPoint( vec ).first.draw( img, style2 );
 }
 
 /// This one is enabled for all other types, and will do nothing

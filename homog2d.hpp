@@ -3235,17 +3235,8 @@ We need Sfinae because there is another 3-args constructor (circle from 3 points
 	}
 
 /// 3-arg constructor 2: builds a circle from 3 points
-/**
-We need Sfinae because there is another 3-args constructor (x, y, radius as floating point values)
-*/
-	template<
-		typename PT,
-		typename std::enable_if<
-			!std::is_arithmetic<PT>::value
-			,PT
-		>::type* = nullptr
-	>
-	Circle_( const PT& pt1, const PT& pt2, const PT& pt3 )
+	template<typename T1, typename T2, typename T3>
+	Circle_( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2, const Point2d_<T3>& pt3 )
 	{
 		set( pt1, pt2, pt3 );
 	}
@@ -3342,13 +3333,10 @@ Use of Sfinae so it can be selected only for arithmetic types
 		set( Point2d_<FPT2>(x,y), rad );
 	}
 
-/// Set circle from 2 points
 	template<typename T1, typename T2>
-	void set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 );
-
-// Set circle from 3 points
-	template<typename T>
-	void set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 );
+	void set( const Point2d_<T1>&, const Point2d_<T2>& );
+	template<typename T1, typename T2, typename T3>
+	void set( const Point2d_<T1>&, const Point2d_<T2>&, const Point2d_<T3>& );
 
 // set Minimum Enclosing Circle (MEC) from a set of points
 	template<
@@ -5480,7 +5468,8 @@ SegVec<SV,FPT>::distTo(
 /// Set circle from 2 points
 template<typename FPT>
 template<typename T1, typename T2>
-void Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
+void
+Circle_<FPT>::set( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( pt1 == pt2 )
@@ -5511,9 +5500,13 @@ Thus the second checking.
 https://www.johndcook.com/blog/2023/06/18/circle-through-three-points/
 */
 template<typename FPT>
-template<typename T>
+template<typename T1,typename T2,typename T3>
 void
-Circle_<FPT>::set( const Point2d_<T>& pt1, const Point2d_<T>& pt2, const Point2d_<T>& pt3 )
+Circle_<FPT>::set(
+	const Point2d_<T1>& pt1,
+	const Point2d_<T2>& pt2,
+	const Point2d_<T3>& pt3
+)
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( areCollinear( pt1, pt2, pt3 ) )
@@ -6919,14 +6912,18 @@ template<
 		), T
 	>::type* = nullptr
 >
-Point2d_<typename T::value_type::FType>
+auto
 getBmPoint( const T& t )
 {
 #ifndef HOMOG2D_NOCHECKS
 	if( t.size() == 0 )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
 #endif
-	return *priv::getBmPoint_helper( t );
+	auto it = priv::getBmPoint_helper( t );
+	return std::make_pair(
+		*it,
+		std::distance( std::begin(t), it )
+	);
 }
 
 //------------------------------------------------------------------
@@ -6940,7 +6937,7 @@ template<
 		), T
 	>::type* = nullptr
 >
-Point2d_<typename T::value_type::FType>
+auto
 getTmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
@@ -6950,7 +6947,7 @@ getTmPoint( const T& t )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
 #endif
 
-	return *std::min_element(
+	auto it = std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
@@ -6963,10 +6960,18 @@ getTmPoint( const T& t )
 			return( pt1.getX() < pt2.getX() );
 		}
 	);
+	return std::make_pair(
+		*it,
+		std::distance( std::begin(t), it )
+	);
 }
 
 //------------------------------------------------------------------
-/// Return Left-most point of container
+/// Return Left-most point of container as a pair holding:
+/**
+- first: the point
+- second: the distance (index) from begin position
+*/
 template<
 	typename T,
 	typename std::enable_if<
@@ -6976,7 +6981,7 @@ template<
 		), T
 	>::type* = nullptr
 >
-Point2d_<typename T::value_type::FType>
+auto
 getLmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
@@ -6986,7 +6991,7 @@ getLmPoint( const T& t )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
 #endif
 
-	return *std::min_element(
+	auto it = std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
@@ -6998,6 +7003,11 @@ getLmPoint( const T& t )
 				return false;
 			return( pt1.getY() < pt2.getY() );
 		}
+	);
+
+	return std::make_pair(
+		*it,
+		std::distance( std::begin(t), it )
 	);
 }
 
@@ -7012,7 +7022,7 @@ template<
 		), T
 	>::type* = nullptr
 >
-Point2d_<typename T::value_type::FType>
+auto
 getRmPoint( const T& t )
 {
 	using FPT = typename T::value_type::FType;
@@ -7022,7 +7032,7 @@ getRmPoint( const T& t )
 		HOMOG2D_THROW_ERROR_1( "invalid call, container is empty" );
 #endif
 
-	return *std::min_element(
+	auto it = std::min_element(
 		std::begin(t),
 		std::end(t),
 		[]                  // lambda
@@ -7035,6 +7045,11 @@ getRmPoint( const T& t )
 			return( pt1.getY() < pt2.getY() );
 		}
 	);
+
+	return std::make_pair(
+		*it,
+		std::distance( std::begin(t), it )
+	);
 }
 
 //------------------------------------------------------------------
@@ -7043,28 +7058,28 @@ template<typename PLT,typename FPT>
 Point2d_<FPT>
 getBmPoint( const base::PolylineBase<PLT,FPT>& poly )
 {
-	return getBmPoint( poly.getPts() );
+	return getBmPoint( poly.getPts() ).first;
 }
 /// Return Top-most point of Polyline (free function)
 template<typename PLT,typename FPT>
 Point2d_<FPT>
 getTmPoint( const base::PolylineBase<PLT,FPT>& poly )
 {
-	return getTmPoint( poly.getPts() );
+	return getTmPoint( poly.getPts() ).first;
 }
 /// Return Left-most point of Polyline (free function)
 template<typename PLT,typename FPT>
 Point2d_<FPT>
 getLmPoint( const base::PolylineBase<PLT,FPT>& poly )
 {
-	return getLmPoint( poly.getPts() );
+	return getLmPoint( poly.getPts() ).first;
 }
 /// Return Right-most point of Polyline (free function)
 template<typename PLT,typename FPT>
 Point2d_<FPT>
 getRmPoint( const base::PolylineBase<PLT,FPT>& poly )
 {
-	return getRmPoint( poly.getPts() );
+	return getRmPoint( poly.getPts() ).first;
 }
 
 //------------------------------------------------------------------
@@ -7130,6 +7145,123 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 	return h2d::getRmPoint( *this );
 }
 
+//------------------------------------------------------------------
+#ifdef HOMOG2D_PRELIMINAR
+/// TMP
+struct TMP_DebugSquare
+{
+	Line2d_<double> li0;
+	Segment_<double> s1;
+	Segment_<double> sL,sR;
+
+	Segment_<double> seg_orth;
+	double dist;
+	PointPair_<double>  ppts;
+	Point2d_<double> pt_resL, pt_resR;
+};
+
+/*
+Les 4 points sources sont-ils obligatoirement sur le carré résultat?
+Parce que en s'appuyant sur l'égalité des longueurs, j'arrive à avoir certains carrés
+avec les points source en dehors, donc j'ai peut-être loupé un truc?
+*/
+template<typename CONT>
+auto
+buildSquare( const CONT& pts )
+{
+	TMP_DebugSquare dbg;
+
+	if( pts.size() != 4 )
+		HOMOG2D_THROW_ERROR_1( "Error, size must be = 4, current size=" << pts.size() );
+
+	if( areCollinear( pts[0], pts[1], pts[2] ) )
+		HOMOG2D_THROW_ERROR_1( "Unable, points 012 are colinear" );
+	if( areCollinear( pts[1], pts[2], pts[3] ) )
+		HOMOG2D_THROW_ERROR_1( "Unable, points 123 are colinear" );
+	if( areCollinear( pts[1], pts[0], pts[3] ) )
+		HOMOG2D_THROW_ERROR_1( "Unable, points 013 are colinear" );
+	if( areCollinear( pts[0], pts[2], pts[3] ) )
+		HOMOG2D_THROW_ERROR_1( "Unable, points 023 are colinear" );
+
+	auto pt_L = getLmPoint( pts );
+	auto pt_R = getRmPoint( pts );
+	auto pt_T = getTmPoint( pts );
+	auto pt_B = getBmPoint( pts );
+	Segment_<HOMOG2D_INUMTYPE> s1( pt_L.first, pt_R.first );
+dbg.s1 = s1;
+/*	auto idxL = pt_L.second;
+	auto idxR = pt_R.second;
+	std::cout << "idxL=" << idxL << " idxR=" << idxR << '\n'; */
+
+	auto seg_orth = s1.getLine().getOrthogSegment( pt_T.first );
+dbg.seg_orth = seg_orth;
+	auto dist = s1.length();
+dbg.dist = dist;
+	auto line_ortho = seg_orth.getLine();
+
+	auto ppts = line_ortho.getPoints( pt_T.first, dist );
+dbg.ppts = ppts;
+	auto d1 = ppts.first.distTo( pt_L.first );
+	auto d2 = ppts.second.distTo( pt_L.first );
+
+	auto goodpt = ppts.first;
+	if( d2 < d1 )
+		goodpt = ppts.second;
+
+	auto li0 = goodpt * pt_B.first;
+dbg.li0 = li0;
+	auto sL = li0.getOrthogSegment( pt_L.first );
+	auto sR = li0.getOrthogSegment( pt_R.first );
+dbg.sL = sL;
+dbg.sR = sR;
+	auto li_L = sL.getLine();
+	auto li_R = sR.getLine();
+	auto pt_resL = li_L * li0;
+	auto pt_resR = li_R * li0;
+dbg.pt_resL = pt_resL;
+dbg.pt_resR = pt_resR;
+	auto s_Top = li_L.getOrthogSegment( pt_T.first );
+	auto li_Top = s_Top.getLine();
+
+	auto pt_res3 = li_L * li_Top;
+	auto pt_res4 = li_R * li_Top;
+
+	std::vector<Point2d_<double>> vout;
+//	vout.push_back( goodpt );
+
+	vout.push_back( pt_resL );
+	vout.push_back( pt_res3 );
+	vout.push_back( pt_res4 );
+	vout.push_back( pt_resR );
+
+//	vout.push_back( pt_B.first );
+
+/*	std::vector<Line2d_<double>> vli;
+	vli.push_back( s1.getLine() );
+	vli.push_back( line_ortho );*/
+	return std::make_pair(
+		PolylineBase<typ::IsClosed,typename CONT::value_type::FType>( vout ),
+		dbg
+	);
+}
+
+template<typename T1,typename T2,typename T3,typename T4>
+PolylineBase<typ::IsClosed,T1>
+buildSquare(
+	const Point2d_<T1>& p1,
+	const Point2d_<T2>& p2,
+	const Point2d_<T3>& p3,
+	const Point2d_<T4>& p4
+)
+{
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> v(4);
+	v[0] = p1;
+	v[1] = p2;
+	v[2] = p3;
+	v[3] = p4;
+	return buildSquare( v );
+}
+#endif // HOMOG2D_PRELIMINAR
 //------------------------------------------------------------------
 /// Rotates the polyline by either 90°, 180°, 270° (-90°) at point \c refpt
 /**
@@ -8823,7 +8955,7 @@ LPBase<LP,FPT>::getOrthogSegment( const Point2d_<FPT2>& pt ) const
 	auto dist = src.distTo(pt);
 #ifndef HOMOG2D_NOCHECKS
 	if( dist < thr::nullDistance() )   // sanity check
-		HOMOG2D_THROW_ERROR_1( "unable to compute segment" );
+		HOMOG2D_THROW_ERROR_1( "unable to compute segment, distance too small=" << dist );
 #endif
 	auto pair_lines = getParallelLines( dist );
 

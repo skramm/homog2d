@@ -2144,6 +2144,59 @@ void demo_OSegAngle( int demidx )
 
 
 //------------------------------------------------------------------
+#ifdef HOMOG2D_PRELIMINAR
+struct Param_Square : Data
+{
+	explicit Param_Square( int demidx, std::string title ): Data( demidx, title )
+	{}
+};
+
+void action_Square( void* param )
+{
+	auto& data = *reinterpret_cast<Param_Square*>(param);
+	data.clearImage();
+	for( const auto& pt: data.vpt )
+		pt.draw( data.img );
+
+	auto res = buildSquare( data.vpt ); // four lines
+	auto poly = res.first;
+	poly.draw( data.img );
+
+	auto dbg = res.second;
+
+	dbg.s1.draw( data.img, img::DrawParams().setColor(250,0,0) );
+	dbg.seg_orth.draw( data.img, img::DrawParams().setColor(0,0,250) );
+	dbg.sL.draw( data.img, img::DrawParams().setColor(0,150,250) );
+	dbg.sR.draw( data.img, img::DrawParams().setColor(150,0,250) );
+	dbg.li0.draw( data.img ); //, img::DrawParams().setColor(0,0,250) );
+	data.img.draw( dbg.ppts, img::DrawParams().setColor(0,250,0) );
+	data.img.draw( dbg.pt_resL, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+	data.img.draw( dbg.pt_resR, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
+
+	std::cout << "dist =" << dbg.dist << "\n";
+	data.showImage();
+}
+
+
+void demo_Square( int demidx )
+{
+	Param_Square data( demidx, "Square computation" );
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_Square );
+	KeyboardLoop kbloop;
+/*	kbloop.addKeyAction( 'a', [&](void*){ toggle(data._reverseS1,"reverse S1"); }, "reverse S1" );
+	kbloop.addKeyAction( 'z', [&](void*){ toggle(data._reverseS2,"reverse S2"); }, "reverse S2" );
+	kbloop.addKeyAction( 'w', [&](void*){ toggle(data._showParallel,"showParallel lines"); }, "showParallel lines" );
+*/
+	kbloop.addCommonAction( action_Square );
+	action_Square( &data );
+	kbloop.start( data );
+}
+
+#endif // HOMOG2D_PRELIMINAR
+
+
+//------------------------------------------------------------------
 /// Demo program, using Opencv.
 /**
 - if called with no arguments, will switch through all the demos, with SPC
@@ -2168,6 +2221,7 @@ int main( int argc, const char** argv )
 		std::cout << "Default draw parameters: " << dp;
 
 	std::vector<std::function<void(int)>> v_demo{
+//		demo_Square,
 		demo_OSegAngle,
 		demo_PO,
 		demo_BB,

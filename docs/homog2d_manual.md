@@ -360,7 +360,7 @@ Line2d li = pt * Point2d();
 <a name="shapes"></a>
 
 Besides points and lines, the following primitives are provided:
-* [segment and vector](#p_segment)
+* [segment](#p_segment)
 * [flat rectangle](#p_frect)
 * [circle](#p_circle)
 * [polyline](#p_polyline)
@@ -1637,7 +1637,7 @@ For example, this figure shows how you can detect the bounding box of a set cont
 <a name="extremum_points"></a>
 
 Given a set of points in a container
-(`std::vector`, `std::list` or `std::array`),
+(`std::vector` or  `std::array`),
 you can get the Top-most / Bottom-most / Left-most / Right-most point with a simple call to one of these:
 
 ```C++
@@ -1647,6 +1647,8 @@ auto pt_R = getRmPoint( vec );                  // Right-most
 auto pt_T = getTmPoint( vec );                  // Top-most
 auto pt_B = getBmPoint( vec );                  // Bottom-most
 ```
+
+All these function actually return a pair of values, the `first` element being the point itself, and the `second` holds the distance from beggining of container (index).
 
 Or use the generic function with a `CardDir` value
 (see [here for that enum definition](#enum_carddir)).
