@@ -2,7 +2,7 @@
 \file
 \brief test of importing a polygon from Boost Geometry
 
-\note 20230216: preliminar feature, will be expanded )
+\note 20230216: preliminar feature, will be expanded
 
 run with `$ make test-bg`
 */
@@ -14,7 +14,8 @@ run with `$ make test-bg`
 int main()
 {
 	namespace bg = boost::geometry;
-
+	std::cout << "Boost version:"     << BOOST_VERSION << '\n';
+	std::cout << "Boost lib version:" << BOOST_LIB_VERSION << '\n';
 // two types of boost points
 	using point_t1 = bg::model::point<double, 2, bg::cs::cartesian>;
 	using point_t2 = bg::model::d2::point_xy<double>;

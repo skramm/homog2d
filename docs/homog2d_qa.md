@@ -146,13 +146,24 @@ As "branching is free", I tend to create branches on the fly, but sometimes forg
 But the point to remember is that "master" will always stay clean (build and tests ok), and will regularly be updated with bugfixes and new features.
 </dd>
 
+
 <dt>
 Q: Any plans to deliver this as a (deb or rpm) package?
 </dt>
 <dd>
 A: As the whole library is contained in a single file, there's not much difference between downloading  it or a package, so, no, not at present due to lack of time.
 <br>
-But if you feel like adding required code to build a package through a PR, you are welcome!
+But if you feel like adding required code to build a package through a PR, you are welcome.
+</dd>
+
+
+<dt>
+Q: Why does `getLmPoint( vector<Point2d> )` (and associated functions, [see here](homog2d_manual.md#extremum_points)) return a `std::pair`,
+while the same functions applied on a Polyline (member of free functions) just return the point we are searching for?
+</dt>
+<dd>
+A: Because when you are searching for a point in a container, there are some situations where not only you want the point but also its **position** in the container.
+But with polylines (`CPolyline` or `OPolyline`), the concept of position makes no sense, as these are arbitrary and may change upon comparison or other events.
 </dd>
 
 

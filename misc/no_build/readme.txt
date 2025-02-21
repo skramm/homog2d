@@ -6,7 +6,7 @@ Below, file and illegal code that is checked for
 file:
 no_build_01.cxx : li1.distTo(li2)
 no_build_02.cxx : li.isInside(pt1,pt2);
-no_build_03.cxx : pt.getOrthogonalLine( GivenCoord::X, 2 );
+no_build_03.cxx : pt.getOrthogLine( GivenCoord::X, 2 );
 no_build_04.cxx : pt.isParallelTo( li );
 no_build_05.cxx : point.getAngle( line )
 no_build_06.cxx : build a homography matrix using a point

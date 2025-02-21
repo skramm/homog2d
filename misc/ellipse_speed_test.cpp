@@ -1,6 +1,8 @@
 /**
 \file ellipse_speed_test.cpp
 \brief test app dedicated to measure speed improvements when using HOMOG2D_OPTIMIZE_SPEED
+
+Build and run with `$ make speed-test`
 */
 //#define HOMOG2D_DEBUGMODE
 #include "../homog2d.hpp"

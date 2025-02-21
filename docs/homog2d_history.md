@@ -28,6 +28,12 @@ now all of these return the number of points that the primitive has, as a `size_
   The latter member function returns the associated displacement as a pair of numerical values.
   - clarified `getAngle()` for segments: now returns the full range [-PI:+PI] if both are oriented.
   - added `getBisectorLines()` for polyline objects
+  - added `getOSegment()` to Polyline class
+  - changed normalization of closed polyline: now constant orientation
+  - `getLmPoint()` and associated functions now return a `std::pair`, so user can fetch its position in the container.
+  The downside is that it is now not possible to use a `std::list` as input container.
+  See [details here](homog2d_manual.md#extremum_points).
+  - renamed `getOrthogonalLine()` to `getOrthogLine()` so it's similar to `getOrthogSegment()`
 
 - [v2.12](https://github.com/skramm/homog2d/releases/tag/v2.12), released on 2025-01-26
   - **heavy architectural change**: runtime polymorphism is now achieved in a more modern way, using `std::variant`, [see here](homog2d_manual.md#section_rtp).
@@ -44,7 +50,7 @@ This was possible by moving to C++17, which is now a requirement. This switch al
   - removed unneeded `HOMOG2D_SVG_CHECK_INIT` macro
   - improved behavior of `findNearestPoint()`, added checking, and wont return query point if it is inside the container
   - `draw()` free function can now draw container holding variant type
-  - added some tests
+  - added many tests
 
 ## Previous releases
 

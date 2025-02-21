@@ -732,7 +732,7 @@ TEST_CASE( "test1", "[test1]" )
 		Line2d_<NUMTYPE> lV; // vertical line at x=0
 
 // get orthogonal line at y=100
-		Line2d_<NUMTYPE> li2 = lV.getOrthogonalLine( GivenCoord::Y, 100 );
+		Line2d_<NUMTYPE> li2 = lV.getOrthogLine( GivenCoord::Y, 100 );
 		CHECK( li2.getAngle( lV ) == Approx(M_PI/2.) );
 		CHECK( getAngle( li2,lV ) == Approx(M_PI/2.) );
 
@@ -2595,6 +2595,21 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	}
 }
 
+TEST_CASE( "OSegment point side", "[oseg-pt-side]" )
+{
+	OSegment_<NUMTYPE> s1( 0,0,10,0);
+	Point2d_<NUMTYPE> pt;
+	CHECK( s1.getPointSide(pt) == PointSide::Neither );
+	pt.translate(1,1);
+	CHECK( s1.getPointSide(pt) == PointSide::Left );
+	pt.translate(0,-5);
+	CHECK( s1.getPointSide(pt) == PointSide::Right );
+
+	pt.set(0,0);
+	s1.set( 1,0, 1,10 );
+	CHECK( s1.getPointSide(pt) == PointSide::Left );
+}
+
 TEST_CASE( "Segment", "[seg1]" )
 {
 	{                              // test order of points
@@ -3434,10 +3449,11 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		Point2d_<NUMTYPE> pt( 3, 4 );
 		std::vector<Point2d_<NUMTYPE>> vpt{ pt };
 
-		CHECK( getLmPoint(vpt) == pt );
-		CHECK( getRmPoint(vpt) == pt );
-		CHECK( getTmPoint(vpt) == pt );
-		CHECK( getBmPoint(vpt) == pt );
+		CHECK( getLmPoint(vpt).first == pt );
+		CHECK( getRmPoint(vpt).first == pt );
+		CHECK( getTmPoint(vpt).first == pt );
+		CHECK( getBmPoint(vpt).first == pt );
+		CHECK( getExtremePoint(CardDir::Left,vpt).first == pt );
 	}
 	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {1,0}, {0,1}, {-1,0}, {0,-1} };
@@ -3448,10 +3464,10 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,1) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,-1) );
 
-		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(-1,0) );
-		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(1,0) );
-		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,1) );
-		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,-1) );
+		CHECK( getLmPoint(vpt).first == Point2d_<NUMTYPE>(-1,0) );
+		CHECK( getRmPoint(vpt).first == Point2d_<NUMTYPE>(1,0) );
+		CHECK( getTmPoint(vpt).first == Point2d_<NUMTYPE>(0,1) );
+		CHECK( getBmPoint(vpt).first == Point2d_<NUMTYPE>(0,-1) );
 	}
 	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {0,0}, {1,0}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {0,1} };
@@ -3462,10 +3478,10 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,2) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,0) );
 
-		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
-		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(2,0) );
-		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,2) );
-		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
+		CHECK( getLmPoint(vpt).first == Point2d_<NUMTYPE>(0,0) );
+		CHECK( getRmPoint(vpt).first == Point2d_<NUMTYPE>(2,0) );
+		CHECK( getTmPoint(vpt).first == Point2d_<NUMTYPE>(0,2) );
+		CHECK( getBmPoint(vpt).first == Point2d_<NUMTYPE>(0,0) );
 	}
 }
 
@@ -3621,6 +3637,58 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 		CHECK( po1 == po2 );
 	}
 }
+
+
+TEST_CASE( "Polyline basic", "[polyline-basic]" )
+{
+	std::vector<Point2d> vpts{ {0,0}, {1,0}, {1,1} };
+
+	std::vector<Segment> vseg_o;
+	std::vector<Segment> vseg_c;
+	vseg_o.emplace_back( Segment( 0,0, 1,0 ) );
+	vseg_o.emplace_back( Segment( 1,0, 1,1 ) );
+	vseg_c = vseg_o;
+	vseg_c.emplace_back( Segment( 1,1, 0,0 ) );
+
+	CPolyline_<NUMTYPE> cpol(vpts);
+	OPolyline_<NUMTYPE> opol(vpts);
+	CHECK( cpol.isClosed() );
+	CHECK( !opol.isClosed() );
+
+	CHECK( cpol.size() == 3 );
+	CHECK( opol.size() == 3 );
+
+	CHECK( cpol.getPts() == vpts );
+	CHECK( opol.getPts() == vpts );
+
+	CHECK( cpol.getSegs() == vseg_c );
+	CHECK( opol.getSegs() == vseg_o );
+
+	std::vector<OSegment> voseg_o;                   // oriented segments
+	std::vector<OSegment> voseg_c;
+
+	auto os0 = OSegment( 0,0, 1,0 );
+	auto os1 = OSegment( 1,0, 1,1 );
+	auto os2 = OSegment( 1,1, 0,0 );
+	voseg_o.emplace_back( os0 );
+	voseg_o.emplace_back( os1 );
+	voseg_c = voseg_o;
+	voseg_c.emplace_back( os2 );
+
+	CHECK( cpol.getOSegs() == voseg_c );
+	CHECK( opol.getOSegs() == voseg_o );
+
+	CHECK( cpol.getOSegment(0) == os0 );
+	CHECK( opol.getOSegment(0) == os0 );
+
+	CHECK( cpol.getOSegment(1) == os1 );
+	CHECK( opol.getOSegment(1) == os1 );
+
+	CHECK( cpol.getOSegment(2) == os2 );
+	CHECK_THROWS( opol.getOSegment(2) );
+	CHECK_THROWS( cpol.getOSegment(3) );
+}
+
 
 TEST_CASE( "Polyline fullstep rotation", "[polyline-rot]" )
 {

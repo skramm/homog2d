@@ -71,6 +71,7 @@ help:
 	@echo " - install: copies into /usr/local/include (requires 'sudo')"
 	@echo " - clean: erase all build files"
 	@echo " - test-bg: builds and runs the Boost::geometry polygon binding test file"
+	@echo " - test-rtp: builds and runs the 3 tests files fo Run Time Polymorphism"
 	@echo " - showcase: builds an runs the \"showcase\" page gif images"
 	@echo "* Available options (OPTION=Y|N)"
 	@echo "  - USE_OPENCV : link with Opencv, relevant for 'test' targets"
@@ -270,8 +271,9 @@ BUILD/homog2d_test_rtp_%: misc/test_files/homog2d_test_rtp_%.cpp homog2d.hpp bui
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>$@.stderr
 
 #=======================================================================
+
 # speed test, to check  the effect of flag HOMOG2D_OPTIMIZE_SPEED
-speed_test: speed_test_b
+speed-test: speed_test_b
 	@time BUILD/ellipse_speed_test_SYCN
 	@time BUILD/ellipse_speed_test_SY
 	@time BUILD/ellipse_speed_test_SN
