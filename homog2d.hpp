@@ -4460,12 +4460,7 @@ public:
 	template<typename T1,typename T2>
 	bool isInside( const Point2d_<T1>& pt1, const Point2d_<T2>& pt2 ) const
 	{
-<<<<<<< HEAD
-		return impl_isInsideRect( FRect_<FPT>(pt1, pt2), detail::BaseHelper<LP>() );
-=======
-		HOMOG2D_START;
 		return isInside( FRect_<FPT>(pt1, pt2) );
->>>>>>> master
 	}
 
 /// Point is inside FRect
