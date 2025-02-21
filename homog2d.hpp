@@ -711,7 +711,6 @@ or SvgImage (no dependency)
 template<typename T>
 class Image
 {
-//	template<typename U>
 	friend std::ostream& operator << ( std::ostream&, const Image<SvgImage>& );
 
 private:
@@ -5342,8 +5341,8 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 	switch ( priv::sign(cp) )
 	{
 		case  0: out = PointSide::Neither; break;
-		case  1: out = PointSide::Left;    break;
-		case -1: out = PointSide::Right;   break;
+		case -1: out = PointSide::Left;    break;
+		case +1: out = PointSide::Right;   break;
 		default: assert(0);
 	}
 	return out;
@@ -12317,7 +12316,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 	if( dp._dpValues._showAngles )
 	{
 		auto osegs = getOSegs();
-			std::cout << "osegs size=" << osegs.size() << "\n";
+//			std::cout << "osegs size=" << osegs.size() << "\n";
 
 		const auto& pts = getPts();
 		for( size_t i=0; i<osegs.size()-1; i++ )
@@ -12325,7 +12324,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<img::SvgImage>& im, img::DrawParams dp )
 			auto seg1 = osegs[i];
 			auto seg2 = osegs[i+1];
 			auto angle = getAngle( seg1, seg2 );
-			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
+//			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
 			drawText( im, std::to_string(angle * 180./M_PI), pts[i+1] );
 		}
 	}

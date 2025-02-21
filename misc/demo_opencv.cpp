@@ -138,7 +138,10 @@ public:
 	}
 	void showImage()
 	{
+//		cv::Mat dst;
+//		cv::flip(img.getReal(), dst, 0 );
 		img.show( win1 );
+//		cv::imshow( win1, dst );
 	}
 	void putTextLine( std::string msg, int lineindex=-1 )
 	{
@@ -2077,9 +2080,8 @@ void demo_PO( int demidx )
 //------------------------------------------------------------------
 struct Param_OSegAngle : Data
 {
-	explicit Param_OSegAngle( int demidx, std::string title ): Data( demidx, title )
-	{
-	}
+	explicit Param_OSegAngle( int demidx, std::string title, std::string txt ): Data( demidx, title, txt )
+	{}
 	bool _reverseS1 = false;
 	bool _reverseS2 = false;
 	bool _showParallel = true;
@@ -2089,10 +2091,9 @@ void action_OSegAngle( void* param )
 {
 	auto& data = *reinterpret_cast<Param_OSegAngle*>(param);
 	data.clearImage();
-
+	drawText( data.img, "Warning: flipped image on x axis: Left/Right reversed!", Point2d( 170, 20 ) );
 	OSegment s1( data.vpt[0], data.vpt[1] );
 	OSegment s2( data.vpt[1], data.vpt[2] );
-
 
 	if( data._reverseS2 )
 		s2 = -s2;
@@ -2103,7 +2104,6 @@ void action_OSegAngle( void* param )
 
 	data.img.draw( s1, col1 );
 	data.img.draw( s2, col2 );
-
 	draw( data.img, data.vpt, img::DrawParams().setColor(0,200,0).setPointStyle(img::PtStyle::Dot) );
 
 	if( data._showParallel )
@@ -2134,8 +2134,7 @@ void action_OSegAngle( void* param )
 
 void demo_OSegAngle( int demidx )
 {
-	Param_OSegAngle data( demidx, "OSegment angle" );
-	data.leftClicAddPoint=true;
+	Param_OSegAngle data( demidx, "OSegment angle", "move the 3 points with mouse" );
 	data.setMouseCB( action_OSegAngle );
 	data.vpt.resize(3);
 	KeyboardLoop kbloop;
