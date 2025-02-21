@@ -4349,8 +4349,30 @@ public:
 	bool isInside( const FRect_<FPT2>& rect ) const;
 
 /// Point is inside circle defined by center and radius
-	template<typename T>
-	bool isInside( const Point2d_<FPT>& center, T radius ) const;
+	template<
+		typename T,
+		typename std::enable_if<
+			!std::is_same_v<T,Point2d_<FPT>>
+			,T
+		>::type* = nullptr
+	>
+	bool
+	isInside( const Point2d_<FPT>& center, T radius ) const
+	{
+		HOMOG2D_CHECK_IS_NUMBER(T);
+
+		if constexpr( std::is_same_v<LP,typ::IsLine> )
+			return false;
+		else
+		{
+			if( distTo( center ) < radius )
+				return true;
+			return false;
+		}
+	}
+
+
+
 
 /// Point is inside Circle
 	template<typename T>
@@ -6808,6 +6830,11 @@ PolylineBase<PLT,FPT>::set(
 		std::is_integral<T>::value,
 		"2nd argument type must be integral type"
 	);
+	static_assert(
+		std::is_same_v<PLT,typ::IsClosed>,
+		"Cannot build a RCP as open polyline"
+	);
+
 	if( ni < 3 )
 		HOMOG2D_THROW_ERROR_1( "unable, nb of points must be > 2" );
 	if( rad <= 0  )
@@ -7087,7 +7114,7 @@ getRmPoint( const base::PolylineBase<PLT,FPT>& poly )
 Type \c T can be either a Polyline (open or closed), or a container holding points, or a FRect_
 */
 template<typename T>
-Point2d_<T>
+auto
 getExtremePoint( CardDir dir, const T& t )
 {
 	switch( dir )
@@ -9296,24 +9323,6 @@ LPBase<LP,FPT>::isInside( const FRect_<FPT2>& rect ) const
 	}
 }
 
-//------------------------------------------------------------------
-/// Point is inside circle
-template<typename LP, typename FPT>
-template<typename T>
-bool
-LPBase<LP,FPT>::isInside( const Point2d_<FPT>& center, T radius ) const
-{
-	HOMOG2D_CHECK_IS_NUMBER(T);
-
-	if constexpr( std::is_same_v<LP,typ::IsLine> )
-		return false;
-	else
-	{
-		if( distTo( center ) < radius )
-			return true;
-		return false;
-	}
-}
 
 //------------------------------------------------------------------
 #if 0

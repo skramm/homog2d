@@ -2576,6 +2576,10 @@ TEST_CASE( "OSegment point side", "[oseg-pt-side]" )
 	CHECK( s1.getPointSide(pt) == PointSide::Left );
 	pt.translate(0,-5);
 	CHECK( s1.getPointSide(pt) == PointSide::Right );
+
+	pt.set(0,0);
+	s1.set( 1,0, 1,10 );
+	CHECK( s1.getPointSide(pt) == PointSide::Left );
 }
 
 TEST_CASE( "Segment", "[seg1]" )
@@ -3413,10 +3417,11 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		Point2d_<NUMTYPE> pt( 3, 4 );
 		std::vector<Point2d_<NUMTYPE>> vpt{ pt };
 
-		CHECK( getLmPoint(vpt) == pt );
-		CHECK( getRmPoint(vpt) == pt );
-		CHECK( getTmPoint(vpt) == pt );
-		CHECK( getBmPoint(vpt) == pt );
+		CHECK( getLmPoint(vpt).first == pt );
+		CHECK( getRmPoint(vpt).first == pt );
+		CHECK( getTmPoint(vpt).first == pt );
+		CHECK( getBmPoint(vpt).first == pt );
+		CHECK( getExtremePoint(CardDir::Left,vpt).first == pt );
 	}
 	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {1,0}, {0,1}, {-1,0}, {0,-1} };
@@ -3427,10 +3432,10 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,1) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,-1) );
 
-		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(-1,0) );
-		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(1,0) );
-		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,1) );
-		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,-1) );
+		CHECK( getLmPoint(vpt).first == Point2d_<NUMTYPE>(-1,0) );
+		CHECK( getRmPoint(vpt).first == Point2d_<NUMTYPE>(1,0) );
+		CHECK( getTmPoint(vpt).first == Point2d_<NUMTYPE>(0,1) );
+		CHECK( getBmPoint(vpt).first == Point2d_<NUMTYPE>(0,-1) );
 	}
 	{
 		std::vector<Point2d_<NUMTYPE>> vpt{ {0,0}, {1,0}, {2,0}, {2,1}, {2,2}, {1,2}, {0,2}, {0,1} };
@@ -3441,10 +3446,10 @@ TEST_CASE( "Polyline get extreme point", "[polyline-getExtremePoint]" )
 		CHECK( cp.getTmPoint() == Point2d_<NUMTYPE>(0,2) );
 		CHECK( cp.getBmPoint() == Point2d_<NUMTYPE>(0,0) );
 
-		CHECK( getLmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
-		CHECK( getRmPoint(vpt) == Point2d_<NUMTYPE>(2,0) );
-		CHECK( getTmPoint(vpt) == Point2d_<NUMTYPE>(0,2) );
-		CHECK( getBmPoint(vpt) == Point2d_<NUMTYPE>(0,0) );
+		CHECK( getLmPoint(vpt).first == Point2d_<NUMTYPE>(0,0) );
+		CHECK( getRmPoint(vpt).first == Point2d_<NUMTYPE>(2,0) );
+		CHECK( getTmPoint(vpt).first == Point2d_<NUMTYPE>(0,2) );
+		CHECK( getBmPoint(vpt).first == Point2d_<NUMTYPE>(0,0) );
 	}
 }
 
