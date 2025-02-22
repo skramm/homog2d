@@ -246,12 +246,12 @@ will build `lB` so that it is orthogonal to `lA` at `x=x1`.
 
 ![Orthogonal lines](img_latex/fig3.png)
 
-Similarly, you can also directly use as input a point on the line:
+Similarly, you can also directly use as input a point on the line. But this time, the point does not need to be on the line:
 ```C++
 Line2d liB = lA.getOrthogLine( p1 );
 ```
-Again, point is checked and this will throw if distance from point to line is above some threshold
-(see ["numerical issues"](#num_issues)).
+
+![OrthogLines](img/line_orthog_1)
 
 
 You can get a line parallel to another one with the member function `getParallelLine()`.
