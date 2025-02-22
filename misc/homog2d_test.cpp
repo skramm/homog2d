@@ -2567,6 +2567,15 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	}
 }
 
+TEST_CASE( "OSegment getPointAt()", "[oseg-pt-at]" )
+{
+	OSegment_<NUMTYPE> s1( 0,0,10,0);
+	CHECK( s1.getPointAt(0) == Point2d_<NUMTYPE>(0,0) );
+	CHECK( s1.getPointAt(5) == Point2d_<NUMTYPE>(5,0) );
+	CHECK( s1.getPointAt(10) == Point2d_<NUMTYPE>(10,0) );
+	CHECK( s1.getPointAt(20) == Point2d_<NUMTYPE>(20,0) );
+}
+
 TEST_CASE( "OSegment point side", "[oseg-pt-side]" )
 {
 	OSegment_<NUMTYPE> s1( 0,0,10,0);

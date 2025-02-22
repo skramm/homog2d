@@ -2004,12 +2004,8 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 
 	if( pol.isSimple() )
 	{
-		TmpDebug dbg;
-		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist, dbg, data._params );
-		draw( im, cpoly_off , img::DrawParams().showPoints().setColor(0,0,250) );
-
-		draw( im, dbg.segs, img::DrawParams().showPoints().setColor(0,250,0) );
-		draw( im, dbg.pt_cut, img::DrawParams().showPoints().setColor(250,0,200) );
+		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist, data._params );
+		draw( im, cpoly_off , img::DrawParams().showPoints(false).setColor(0,0,250) );
 
 		draw( im, dbg.psegs );
 		auto centr = pol.centroid();

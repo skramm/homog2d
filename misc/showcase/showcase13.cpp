@@ -38,10 +38,10 @@ int main( int, const char** )
 		cir.set( vec ); // Minimum Enclosing Circle (MEC)
 		cir.draw( im, img::DrawParams().setColor(0,100,150) );
 
-		getTmPoint(vec).draw( im, extr_col );
-		getRmPoint(vec).draw( im, extr_col );
-		getLmPoint(vec).draw( im, extr_col );
-		getBmPoint(vec).draw( im, extr_col );
+		getTmPoint(vec).first.draw( im, extr_col );
+		getRmPoint(vec).first.draw( im, extr_col );
+		getLmPoint(vec).first.draw( im, extr_col );
+		getBmPoint(vec).first.draw( im, extr_col );
 
 		std::ostringstream oss;
 		oss << "showcase13_" << std::setfill('0') << std::setw(2) << i << ".svg";

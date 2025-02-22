@@ -1072,7 +1072,19 @@ The minimum value for `nb` is 3 (will generate an equilateral triangle), the fun
 
 [source](../misc/figures_src/src/polyline_rcp_1.cpp)
 
-#### 3.4.12 - Importing from boost::geometry
+
+#### 3.4.12 - Offsetted polyline
+
+For closed Polyline objects, the member function `getOffsetPoly()` can compute a new polyline at a given distance.
+Its argument is a distance (numerical value).
+If positive, the returned polyline will be "outside", if negative, il will be inside.
+
+An optional second argument of type `OffsetPolyParams` holds a boolean value `_angleSplit` that can be set to `true` to "smoothen" the return polyline, by adding some points on sharp angles
+(applies only to "outside" computation).
+
+See [showcase 22](homog2d_showcase.md#sc22)
+
+#### 3.4.13 - Importing from boost::geometry
 <a name="boost_geom_1"></a>
 
 If the symbol `HOMOG2D_USE_BOOSTGEOM` is defined (see [build options](#build_options)), you can import a Polyline from a boost Polygon type.
@@ -1159,7 +1171,7 @@ bool b2 = isCircle( ell, 1E-15 );
 <a name="p_commonf"></a>
 
 All the types above share some common functions, that are also declared as virtual in the root class `Root`.
-Thus, this enable classical pointer-based runtime polymorphism, [see here](#section_rtp).
+Thus, this enables classical pointer-based runtime polymorphism, [see here](#section_rtp).
 
 All of these are `const`.
 The names of these functions are:

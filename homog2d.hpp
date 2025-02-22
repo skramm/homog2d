@@ -5990,17 +5990,6 @@ struct OffsetPolyParams
 	bool _angleSplit = false;
 };
 
-#if 1
-struct TmpDebug
-{
-	Point2d_<double> pt1;
-	Point2d_<double> pt_cut;
-	Point2d_<double> ptnew;
-	std::vector<Segment_<double>> segs;
-	std::pair<Line2d_<double>,Line2d_<double>> plines;
-	std::pair<OSegment_<double>,OSegment_<double>> psegs;
-};
-#endif
 
 namespace base {
 
@@ -6607,8 +6596,7 @@ private:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-	getOffsetPoly( T value, TmpDebug&, OffsetPolyParams p=OffsetPolyParams{} ) const;
-//	getOffsetPoly( T value, OffsetPolyParams p=OffsetPolyParams{} ) const;
+	getOffsetPoly( T value, OffsetPolyParams p=OffsetPolyParams{} ) const;
 
 	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
 	getBisectorLines() const
@@ -6625,29 +6613,6 @@ public:
 
 
 //------------------------------------------------------------------
-/// Helper function for cutting angles, used in getOffsetPoly()
-/// Issue: output points are in wrong order when angle not convex
-template<typename FP1,typename FP2>
-PointPair_<HOMOG2D_INUMTYPE>
-p_computeAngleCut(
-	Point2d_<FP1>                               pt1,  ///< source polyline point
-	Point2d_<HOMOG2D_INUMTYPE>                  pt2,  ///< intersection point that we want to "cut"
-	const std::pair<Line2d_<FP2>,Line2d_<FP2>>& pli   ///< pair of lines that we want to joint before the point pt2
-//	TmpDebug& debug
-)
-{
-	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
-//	debug.seg= seg;
-	auto mid = seg.getCenter();
-	auto oline = seg.getLine().getOrthogLine( mid );
-	auto inters1 = oline.intersects(pli.first);
-	auto inters2 = oline.intersects(pli.second);
-	return std::make_pair(
-		inters1.get(),
-		inters2.get()
-	);
-}
-//------------------------------------------------------------------
 /// Return an "offsetted" closed polyline, requires simple polygon (CPolyline AND no crossings) as input
 /**
 On failure (for whatever reason), will return an empty CPolyline
@@ -6658,11 +6623,11 @@ On failure (for whatever reason), will return an empty CPolyline
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-PolylineBase<PLT,FPT>::getOffsetPoly( T dist, TmpDebug& dbg, OffsetPolyParams params ) const
-//PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
+PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 {
 	HOMOG2D_CHECK_IS_NUMBER(T);
-	auto dist0 = (HOMOG2D_INUMTYPE)dist;
+	auto dist0 = (HOMOG2D_INUMTYPE)dist; // casting
+
 	bool valid = true;
 	if( homog2d_abs(dist) < thr::nullDistance() )
 	{
@@ -6684,24 +6649,19 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, TmpDebug& dbg, OffsetPolyParams pa
 
 	p_normalizePoly();
 
-	auto side = (dist<0 ? PointSide::Left : PointSide::Right);
-
 	size_t current = 0;
-	bool paraLines = false;
+//	bool paraLines = false;
 
 	std::vector<Point2d_<FPT>> v_out;
 	auto osegs = getOSegs();
 	auto oseg1 = osegs.at(current);
 	do
 	{
-		auto next1 = (current==size()-1 ? 0 : current+1);
-		auto next2 = (current==size()-1 ? 0 : current+1);
+		auto next = (current==size()-1 ? 0 : current+1);
 
-		auto pt1 = getPoint(current);
-		auto pt2 = getPoint(next1);
-		auto pt3 = getPoint(next2);
+		auto pt1 = getPoint(next);
 
-		auto oseg2 = osegs.at(next1);
+		auto oseg2 = osegs.at(next);
 
 		auto psegs1 = oseg1.getParallelSegs(homog2d_abs(dist0));
 		auto psegs2 = oseg2.getParallelSegs(homog2d_abs(dist0));
@@ -6718,37 +6678,34 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, TmpDebug& dbg, OffsetPolyParams pa
 		auto li2 = pseg2->getLine();
 		if( !areParallel(li1,li2) )
 		{
-			auto pt = li1 * li2;
-			if( !params._angleSplit || getAngle(oseg1,oseg2)>0 )
+			auto pt_int = li1 * li2;
+			if( !params._angleSplit || getAngle(oseg1,oseg2)>0 || dist < 0 )
 			{
-				v_out.push_back( pt );  // add point intersection of the two lines
+				v_out.push_back( pt_int );  // add point intersection of the two lines
 			}
 			else
 			{
-				auto sseg = OSegment_<HOMOG2D_INUMTYPE>( pt, pt2 );
-				std::cout << "seg=" << oseg << '\n';
-				dbg.segs.push_back( oseg );
+				auto oseg = OSegment_<HOMOG2D_INUMTYPE>( pt1, pt_int );
+				auto dist_cut = std::min( oseg.length(), dist0 );
 
-
-				auto dist2 = pt2.distTo( seg.getCenter() );
-				auto dist_cut = std::min( dist2, dist0 );
-				std::cout << "current:" << current << " d0=" << dist0 << " d2=" << dist2 << " dist_cut="<<dist_cut << '\n';
 				auto pt_cut = oseg.getPointAt( dist_cut );
-				dbg.pt_cut = pt_cut;
-				auto oli = seg.getLine().getOrthogLine( pt_cut );
+				auto oli = oseg.getLine().getOrthogLine( pt_cut );
+
 				auto pt_cut1 = oli * li1;
 				auto pt_cut2 = oli * li2;
+
 				v_out.push_back( pt_cut1 );
-				v_out.push_back( pt_cut2 );
+				if( pt_cut1 != pt_cut2 )        // so we don't add two identical pts (in case they were computed as such)
+					v_out.push_back( pt_cut2 );
 			}
 		}
-		else
-			std::cout << "parallel!\n";
+//		else
+//			std::cout << "parallel!\n";
 
 		current++;
 		oseg1 = oseg2;
 	}
-	while( current<size() && !paraLines );
+	while( current<size() ); //&& !paraLines );
 
 	return PolylineBase<typ::IsClosed,FPT>( v_out );
 }
@@ -6966,6 +6923,9 @@ getTmPoint( const T& t )
 /**
 - first: the point
 - second: the distance (index) from begin position
+
+\todo 20250222: CHANGE RETURN TYPE! => should return an iterator, not a pair
+(so this allows usage of any non-random access container)
 */
 template<
 	typename T,
