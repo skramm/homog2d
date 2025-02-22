@@ -3670,9 +3670,9 @@ Ellipse_<FPT>::Ellipse_( const Circle_<FPT>& cir )
 namespace priv {
 
 /// Helper function, factorized here for the two impl_getPoints_A() implementations
-template<typename FPT, typename FPT2>
+template<typename FPT, typename FPT2,  typename FPT3>
 auto
-getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
+getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT3>& li )
 {
 	auto arr = li.get();
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
@@ -4076,11 +4076,13 @@ public:
 	}
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
-	template<typename FPT2>
+	template<typename FPT2,typename FPT3>
 	PointPair_<FPT>
-	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
+	getPoints( GivenCoord gc, FPT2 coord, FPT3 dist ) const
 	{
 		static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
+		HOMOG2D_CHECK_IS_NUMBER(FPT2);
+		HOMOG2D_CHECK_IS_NUMBER(FPT3);
 
 		const auto pt = getPoint( gc, coord );
 		return priv::getPoints_B2( pt, dist, *this );
@@ -8807,6 +8809,8 @@ PointPair_<FPT>
 LPBase<LP,FPT>::getPoints( const Point2d_<FPT2>& pt, FPT3 dist ) const
 {
 	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
+	HOMOG2D_CHECK_IS_NUMBER(FPT2);
+	HOMOG2D_CHECK_IS_NUMBER(FPT3);
 
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
