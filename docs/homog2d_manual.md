@@ -586,7 +586,6 @@ The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
 
 You can also build the rectangle by giving the 4 coordinates x1,y1 and x2,y2.
-The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
 ```

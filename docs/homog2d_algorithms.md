@@ -26,7 +26,7 @@ Here, their sum is obviously higher than the segment length, thus there is no in
 
 For Segment/Segment, the checking is done twice, once for each segment.
 
-A threshold is used to compare theses distances, the computation is actually (pseudocode):
+A threshold is used to compare these distances, the computation is actually (pseudocode):
 ```
 if( | d(ac) + d(bc) - segment_length | < thr::nullDistance() )
 	... then intersection point

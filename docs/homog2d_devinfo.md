@@ -219,7 +219,7 @@ Two Yaml workflow files are present.
 - one [msvc.yml](.github/workflows/msvc.yml) is only dedicated to checking that the Microsoft C++ compiler is able to build the software.
 - the [other (c-cpp.yml)](.github/workflows/c-cpp.yml) runs the unit test file using both GCC and Clang, on two different platforms (Ubuntu 22 and Ubuntu 24).
 
-If both of theses workflows succeed, it will generate the badge on front page.
+If both of these workflows succeed, it will generate the badge on front page.
 
 Once the test app has been build (with `$ make test`), you can run a single test with:
 ```

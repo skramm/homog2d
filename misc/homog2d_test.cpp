@@ -540,7 +540,7 @@ TEST_CASE( "types testing 3", "[test-types-3]" )
 		EllipseD elld4 = elll;
 
 /**
-The goal of theses is to make sure that the conversion (float to double, ...)
+The goal of these is to make sure that the conversion (float to double, ...)
 does not trigger a build failure.
 The checking is only there to avoid a warning about "unused variable".
 \todo Once we switch to C++17, we can remove the checking and use:
@@ -1240,7 +1240,7 @@ TEST_CASE( "getCorrectPoints", "[gcpts]" )
 /////           ISINSIDE TESTS                       /////
 //////////////////////////////////////////////////////////////
 
-// this test only makes sure that all theses situations compile
+// this test only makes sure that all these situations compile
 TEST_CASE( "IsInside - manual", "[IsInside_man]" )
 {
 	Point2d pt1(10,10),pt2(10,10);
