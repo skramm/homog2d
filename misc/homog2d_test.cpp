@@ -2595,6 +2595,15 @@ TEST_CASE( "Ellipse", "[ell1]" )
 	}
 }
 
+TEST_CASE( "OSegment getPointAt()", "[oseg-pt-at]" )
+{
+	OSegment_<NUMTYPE> s1( 0,0,10,0);
+	CHECK( s1.getPointAt(0) == Point2d_<NUMTYPE>(0,0) );
+	CHECK( s1.getPointAt(5) == Point2d_<NUMTYPE>(5,0) );
+	CHECK( s1.getPointAt(10) == Point2d_<NUMTYPE>(10,0) );
+	CHECK( s1.getPointAt(20) == Point2d_<NUMTYPE>(20,0) );
+}
+
 TEST_CASE( "OSegment point side", "[oseg-pt-side]" )
 {
 	OSegment_<NUMTYPE> s1( 0,0,10,0);
@@ -3641,14 +3650,14 @@ TEST_CASE( "Polygon orientation", "[polyline-orient]" )
 
 TEST_CASE( "Polyline basic", "[polyline-basic]" )
 {
-	std::vector<Point2d> vpts{ {0,0}, {1,0}, {1,1} };
+	std::vector<Point2d_<NUMTYPE>> vpts{ {0,0}, {1,0}, {1,1} };
 
-	std::vector<Segment> vseg_o;
-	std::vector<Segment> vseg_c;
-	vseg_o.emplace_back( Segment( 0,0, 1,0 ) );
-	vseg_o.emplace_back( Segment( 1,0, 1,1 ) );
+	std::vector<Segment_<NUMTYPE>> vseg_o;
+	std::vector<Segment_<NUMTYPE>> vseg_c;
+	vseg_o.emplace_back( Segment_<NUMTYPE>( 0,0, 1,0 ) );
+	vseg_o.emplace_back( Segment_<NUMTYPE>( 1,0, 1,1 ) );
 	vseg_c = vseg_o;
-	vseg_c.emplace_back( Segment( 1,1, 0,0 ) );
+	vseg_c.emplace_back( Segment_<NUMTYPE>( 1,1, 0,0 ) );
 
 	CPolyline_<NUMTYPE> cpol(vpts);
 	OPolyline_<NUMTYPE> opol(vpts);
@@ -3664,12 +3673,12 @@ TEST_CASE( "Polyline basic", "[polyline-basic]" )
 	CHECK( cpol.getSegs() == vseg_c );
 	CHECK( opol.getSegs() == vseg_o );
 
-	std::vector<OSegment> voseg_o;                   // oriented segments
-	std::vector<OSegment> voseg_c;
+	std::vector<OSegment_<NUMTYPE>> voseg_o;                   // oriented segments
+	std::vector<OSegment_<NUMTYPE>> voseg_c;
 
-	auto os0 = OSegment( 0,0, 1,0 );
-	auto os1 = OSegment( 1,0, 1,1 );
-	auto os2 = OSegment( 1,1, 0,0 );
+	auto os0 = OSegment_<NUMTYPE>( 0,0, 1,0 );
+	auto os1 = OSegment_<NUMTYPE>( 1,0, 1,1 );
+	auto os2 = OSegment_<NUMTYPE>( 1,1, 0,0 );
 	voseg_o.emplace_back( os0 );
 	voseg_o.emplace_back( os1 );
 	voseg_c = voseg_o;

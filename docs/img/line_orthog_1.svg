@@ -1,0 +1,10 @@
+<svg version="1.1" width="250" height="180" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<line x1="0" y1="24" x2="249" y2="153.48" stroke="rgb(250,0,20)" stroke-width="1" />
+<line x1="114.52" y1="179" x2="207.6" y2="-0" stroke="rgb(20,0,250)" stroke-width="1" />
+<line x1="36.84" y1="179" x2="129.92" y2="-0" stroke="rgb(20,0,250)" stroke-width="1" />
+<circle cx="80" cy="96" r="4" stroke="rgb(20,0,200)" stroke-width="1" fill="none" />
+<circle cx="166" cy="80" r="4" stroke="rgb(20,0,200)" stroke-width="1" fill="none" />
+</svg>

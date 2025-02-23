@@ -54,7 +54,7 @@ int main( int argc, const char** argv )
 	try
 	{
 		imSize = svg::getImgSize( doc );
-		std::cout << "size: " << imSize.first << " x " << imSize.second << '\n';
+		std::cout << "Input image size: " << imSize.first << " x " << imSize.second << '\n';
 	}
 	catch( const std::exception& error )
 	{
@@ -74,6 +74,7 @@ int main( int argc, const char** argv )
 	img::Image<img::SvgImage> out( imSize.first, imSize.second );
 	fct::DrawFunct<img::SvgImage> dfunc( out );
 
+	auto vcolors = img::genRandomColors( data.size() );
 	PointPair pp_all;
 	size_t c = 0;
 	for( const auto& e: data )
@@ -83,29 +84,15 @@ int main( int argc, const char** argv )
 		auto ptpair = std::visit( fct::PtPairFunct{}, e );
 		pp_all = getMinMax( pp_all, ptpair );
 
-		std::cout << "Shape " << c++ << ": " << getString( type(e) );
+		std::cout << "Shape " << c << ": " << getString( type(e) )
+			<< ", size " << size(e) << "\n";
 
-		if( type(e) == Type::OPolyline )
-		{
-			std::cout << " size=" << std::get<OPolyline>(e).size();
-//			OPolyline po = fct::VariantUnwrapper{e};
-//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
-		}
-
-		if( type(e) == Type::CPolyline )
-		{
-			std::cout << " size=" << std::get<CPolyline>(e).size();
-//			CPolyline po = fct::VariantUnwrapper{e};
-//			po.getBB().draw( out, img::DrawParams().setColor(50,150,250) );
-		}
 		if( type(e) != Type::Segment ) // because no BB is defined
 		{
 			auto bb = std::visit( fct::BBFunct{}, e );
-			bb.draw( out, img::DrawParams().setColor(50,150,250) );
+			bb.draw( out, img::DrawParams().setColor(vcolors[c]) );
 		}
-
-
-		std::cout << '\n';
+		c++;
 	}
 	auto s = FRect(pp_all);
 	out.setSize( s.width(), s.height() );

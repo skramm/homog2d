@@ -2394,6 +2394,7 @@ public:
 /// \name attributes of ellipse
 ///@{
 
+/// Returns 1
 	constexpr size_t size() const
 	{
 		return 1;
@@ -3791,9 +3792,9 @@ Ellipse_<FPT>::Ellipse_( const Circle_<FPT>& cir )
 namespace priv {
 
 /// Helper function, factorized here for the two impl_getPoints_A() implementations
-template<typename FPT, typename FPT2>
+template<typename FPT, typename FPT2,  typename FPT3>
 auto
-getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT>& li )
+getPoints_B2( const Point2d_<FPT>& pt, FPT2 dist, const Line2d_<FPT3>& li )
 {
 	auto arr = li.get();
 	const HOMOG2D_INUMTYPE a = static_cast<HOMOG2D_INUMTYPE>(arr[0]);
@@ -4197,11 +4198,13 @@ public:
 	}
 
 	/// Returns a pair of points that are lying on line at distance \c dist from a point defined by one of its coordinates.
-	template<typename FPT2>
+	template<typename FPT2,typename FPT3>
 	PointPair_<FPT>
-	getPoints( GivenCoord gc, FPT coord, FPT2 dist ) const
+	getPoints( GivenCoord gc, FPT2 coord, FPT3 dist ) const
 	{
 		static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
+		HOMOG2D_CHECK_IS_NUMBER(FPT2);
+		HOMOG2D_CHECK_IS_NUMBER(FPT3);
 
 		const auto pt = getPoint( gc, coord );
 		return priv::getPoints_B2( pt, dist, *this );
@@ -4727,6 +4730,14 @@ getCvPti( const Point2d_<FPT>& pt )
 // SECTION  - FREE FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////
 
+//------------------------------------------------------------------
+/// Returns true is lines (or segments) are parallel
+template<typename T1,typename T2>
+bool
+areParallel( const T1& t1, const T2& t2 )
+{
+	return t1.isParallelTo(t2);
+}
 
 //------------------------------------------------------------------
 /// Generic free function to return a point of other type
@@ -5141,6 +5152,7 @@ Please note that the source (points) floating-point type is lost
 	}
 #endif
 
+/// Returns 2
 	constexpr size_t size() const
 	{
 		return 2;
@@ -5291,7 +5303,7 @@ Requires both points inside AND no intersections
 /// \name Other const functions
 ///@{
 
-/// Returns the points as a std::pair
+/// Returns the points of segment as a std::pair
 /** If "Segment", then the one with smallest x coordinate will be returned as "first".
 If x-coordinate are equal, then
 the one with smallest y-coordinate will be returned first
@@ -5305,6 +5317,10 @@ the one with smallest y-coordinate will be returned first
 	template<typename T>
 	std::pair<SegVec,SegVec>
 	getParallelSegs( T dist ) const;
+
+	template<typename FPT2>
+	Point2d_<HOMOG2D_INUMTYPE>
+	getPointAt( FPT2 dist ) const;
 
 private:
 /// Computes the 4 points orthogonal to the segment
@@ -5464,6 +5480,24 @@ SegVec<SV,FPT>::getPointSide( const Point2d_<T>& pt ) const
 		default: assert(0);
 	}
 	return out;
+}
+
+//------------------------------------------------------------------
+/// Returns the point at a distance \c dist from starting point of oriented vector
+template<typename SV,typename FPT>
+template<typename FPT2>
+Point2d_<HOMOG2D_INUMTYPE>
+SegVec<SV,FPT>::getPointAt( FPT2 dist ) const
+{
+	static_assert( std::is_same_v<SV,typ::IsOSeg>, "Cannot apply on non-oriented segment" );
+	HOMOG2D_CHECK_IS_NUMBER(FPT2);
+
+	Line2d_<HOMOG2D_INUMTYPE> li = getLine();
+	auto ppts = li.getPoints( _ptS1, dist );
+	if( _ptS2.distTo( ppts.first ) < _ptS2.distTo( ppts.second ) )
+		return ppts.first;
+	else
+		return ppts.second;
 }
 
 //------------------------------------------------------------------
@@ -6246,15 +6280,6 @@ struct OffsetPolyParams
 	bool _angleSplit = false;
 };
 
-#if 0
-struct TmpDebug
-{
-	Point2d_<double> pt1;
-	Point2d_<double> ptnew;
-	Segment_<double> seg;
-	std::pair<Line2d_<double>,Line2d_<double>> plines;
-};
-#endif
 
 
 namespace base {
@@ -6858,7 +6883,6 @@ private:
 public:
 	template<typename T>
 	PolylineBase<typ::IsClosed,FPT>
-//	getOffsetPoly( T value, TmpDebug&, OffsetPolyParams p=OffsetPolyParams{} ) const;
 	getOffsetPoly( T value, OffsetPolyParams p=OffsetPolyParams{} ) const;
 
 	std::vector<Line2d_<HOMOG2D_INUMTYPE>>
@@ -6876,29 +6900,6 @@ public:
 
 
 //------------------------------------------------------------------
-/// Helper function for cutting angles, used in getOffsetPoly()
-/// Issue: output points are in wrong order when angle not convex
-template<typename FP1,typename FP2>
-PointPair_<HOMOG2D_INUMTYPE>
-p_computeAngleCut(
-	Point2d_<FP1>                               pt1,  ///< source polyline point
-	Point2d_<HOMOG2D_INUMTYPE>                  pt2,  ///< intersection point that we want to "cut"
-	const std::pair<Line2d_<FP2>,Line2d_<FP2>>& pli   ///< pair of lines that we want to joint before the point pt2
-//	TmpDebug& debug
-)
-{
-	Segment_<HOMOG2D_INUMTYPE> seg( pt1, pt2 );
-//	debug.seg= seg;
-	auto mid = seg.getCenter();
-	auto oline = seg.getLine().getOrthogLine( mid );
-	auto inters1 = oline.intersects(pli.first);
-	auto inters2 = oline.intersects(pli.second);
-	return std::make_pair(
-		inters1.get(),
-		inters2.get()
-	);
-}
-//------------------------------------------------------------------
 /// Return an "offsetted" closed polyline, requires simple polygon (CPolyline AND no crossings) as input
 /**
 On failure (for whatever reason), will return an empty CPolyline
@@ -6909,10 +6910,10 @@ On failure (for whatever reason), will return an empty CPolyline
 template<typename PLT,typename FPT>
 template<typename T>
 PolylineBase<typ::IsClosed,FPT>
-//PolylineBase<PLT,FPT>::getOffsetPoly( T dist, TmpDebug& debug, OffsetPolyParams params ) const
 PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 {
 	HOMOG2D_CHECK_IS_NUMBER(T);
+	auto dist0 = (HOMOG2D_INUMTYPE)dist; // casting
 
 	bool valid = true;
 	if( homog2d_abs(dist) < thr::nullDistance() )
@@ -6934,133 +6935,64 @@ PolylineBase<PLT,FPT>::getOffsetPoly( T dist, OffsetPolyParams params ) const
 		return PolylineBase<typ::IsClosed,FPT>();
 
 	p_normalizePoly();
-#if 0
-/* to get the offsetted poly on the right side (inside or outside) whatever the orientation, wee need to check orientation of first point
-(bottom most point, this is already done by the normalizing step), then get the two segments joining at that point,
-and compute their relative orientation
-ref:
-- http://www.faqs.org/faqs/graphics/algorithms-faq/
-Subject 2.07: How do I find the orientation of a simple polygon?
-- https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
-*/
-	auto pt0 = _plinevec[0];
-	auto ptA = _plinevec[1];
-	auto ptB = _plinevec[size()-1];
 
-// std::cout << "pt0=" << pt0 << " ptA=" << ptA << " ptB=" << ptB << '\n';
-
-/// \todo 20250130: improve that, really ugly !!
-	detail::Matrix_<HOMOG2D_INUMTYPE> mat;
-	auto& values = mat.getRaw();
-
-	values[0][0] = values[0][1] = values[0][2] = 1;
-	values[1][0] = ptA.getX();
-	values[2][0] = ptA.getY();
-	values[1][1] = pt0.getX();
-	values[2][1] = pt0.getY();
-	values[1][2] = ptB.getX();
-	values[2][2] = ptB.getY();
-
-	auto det = mat.determ();
-//	std::cout << "deter=" << det << '\n';
-
-	if( det > 0 )
-		dist = -dist;
-#endif
-
-	auto side = (dist<0 ? PointSide::Left : PointSide::Right);
-	auto segs = getSegs();
-	std::vector<Point2d_<FPT>> v_out;
 	size_t current = 0;
-	bool paraLines = false;
+//	bool paraLines = false;
+
+	std::vector<Point2d_<FPT>> v_out;
+	auto osegs = getOSegs();
+	auto oseg1 = osegs.at(current);
 	do
 	{
-		auto nextS = (current==size()-1 ? 0 : current+1);
-		auto nextPt1 = nextS;
-		auto nextPt2 = (nextPt1==size()-1 ? 0 : nextPt1+1);
+		auto next = (current==size()-1 ? 0 : current+1);
 
-		auto pt1 = getPoint(current);
-		auto pt2 = getPoint(nextPt1);
-		auto pt3 = getPoint(nextPt2);
+		auto pt1 = getPoint(next);
 
-//		OSegment_<HOMOG2D_INUMTYPE> v1( pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY() );
-//		OSegment_<HOMOG2D_INUMTYPE> v2( pt2.getX(), pt2.getY(), pt3.getX(), pt3.getY() );
+		auto oseg2 = osegs.at(next);
 
-		OSegment_<HOMOG2D_INUMTYPE> v1( pt1, pt2 );
-		OSegment_<HOMOG2D_INUMTYPE> v2( pt2, pt3 );
+		auto psegs1 = oseg1.getParallelSegs(homog2d_abs(dist0));
+		auto psegs2 = oseg2.getParallelSegs(homog2d_abs(dist0));
 
-		auto li1 = segs.at(current).getLine();
-		auto li2 = segs.at(nextS).getLine();
-
-		auto pli1 = li1.getParallelLines( dist );
-		auto pli2 = li2.getParallelLines( dist );
-
-		if( pli1.first.isParallelTo( pli2.first ) )
-			paraLines = true; // can't do much more, so quit...
-		else
+		auto pseg1 = &psegs1.first;
+		auto pseg2 = &psegs2.first;
+		if( dist < 0 )
 		{
-			std::array<Point2d_<HOMOG2D_INUMTYPE>,4> vpt;
-// compute the 4 intersection points of the two pairs of lines
-			try
-			{
-				vpt[0] = pli1.first  * pli2.first;
-				vpt[1] = pli1.first  * pli2.second;
-				vpt[2] = pli1.second * pli2.first;
-				vpt[3] = pli1.second * pli2.second;
-			}
-			catch( std::exception& err )
-			{
-				std::cerr << "point product error, error:" << err.what();
-				HOMOG2D_THROW_ERROR_1( "Unexpected error, please report this online" );
-			}
+			pseg1 = &psegs1.second;
+			pseg2 = &psegs2.second;
+		}
 
-			int addPoint = -1;
-			for( int i=0; i<4; i++ )  // search in the four points which one is the "good" one
+		auto li1 = pseg1->getLine();
+		auto li2 = pseg2->getLine();
+		if( !areParallel(li1,li2) )
+		{
+			auto pt_int = li1 * li2;
+			if( !params._angleSplit || getAngle(oseg1,oseg2)>0 || dist < 0 )
 			{
-				auto s1 = v1.getPointSide( vpt[i] );
-				auto s2 = v2.getPointSide( vpt[i] );
-				if( s1 == side && s2 == side )
-				{
-					addPoint = i;
-					break;  // no need to search further
-				}
+				v_out.push_back( pt_int );  // add point intersection of the two lines
 			}
-			assert( addPoint != -1 );
-
-			if( !params._angleSplit || v1.getPointSide(pt3) != PointSide::Left )
-				v_out.push_back( vpt[addPoint] );
 			else
 			{
-				std::array<std::pair<Line2d_<FPT>,Line2d_<FPT>>,4>  vplines;
-				vplines[0] = std::make_pair( pli1.first,  pli2.first  );
-				vplines[1] = std::make_pair( pli1.first,  pli2.second );
-				vplines[2] = std::make_pair( pli1.second, pli2.first  );
-				vplines[3] = std::make_pair( pli1.second, pli2.second );
+				auto oseg = OSegment_<HOMOG2D_INUMTYPE>( pt1, pt_int );
+				auto dist_cut = std::min( oseg.length(), dist0 );
 
-				auto ppair = p_computeAngleCut( pt2, vpt[addPoint], vplines[addPoint] ); //, debug );
+				auto pt_cut = oseg.getPointAt( dist_cut );
+				auto oli = oseg.getLine().getOrthogLine( pt_cut );
 
-/*				debug.pt1 = pt2;
-				debug.ptnew = vpt[addPoint];
-				debug.plines = vplines[addPoint];
-*/
-//				if( getAngle(v1,v2) < M_PI )
-				{
-					v_out.push_back( ppair.first );
-					v_out.push_back( ppair.second );
-				}
-/*				else
-				{
-					v_out.push_back( ppair.second );
-					v_out.push_back( ppair.first );
-				}*/
+				auto pt_cut1 = oli * li1;
+				auto pt_cut2 = oli * li2;
 
+				v_out.push_back( pt_cut1 );
+				if( pt_cut1 != pt_cut2 )        // so we don't add two identical pts (in case they were computed as such)
+					v_out.push_back( pt_cut2 );
 			}
-			current++;
 		}
+//		else
+//			std::cout << "parallel!\n";
+
+		current++;
+		oseg1 = oseg2;
 	}
-	while( current<size() && !paraLines );
-	if( paraLines )
-		v_out.clear();
+	while( current<size() ); //&& !paraLines );
 
 	return PolylineBase<typ::IsClosed,FPT>( v_out );
 }
@@ -7278,6 +7210,9 @@ getTmPoint( const T& t )
 /**
 - first: the point
 - second: the distance (index) from begin position
+
+\todo 20250222: CHANGE RETURN TYPE! => should return an iterator, not a pair
+(so this allows usage of any non-random access container)
 */
 template<
 	typename T,
@@ -8261,7 +8196,7 @@ Point2d_<HOMOG2D_INUMTYPE>
 base::PolylineBase<PLT,FPT>::centroid() const
 {
 	if( !isSimple() )
-		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
+		HOMOG2D_THROW_ERROR_1( "unable, Polyline object is not simple" );
 
 	if( _attribs._centroid.isBad() )
 	{
@@ -8302,7 +8237,9 @@ Two tasks:
 (done by declaring the vector of points as \c mutable).
 
 Reference for the orientation:
-https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
+- http://www.faqs.org/faqs/graphics/algorithms-faq/
+Subject 2.07: How do I find the orientation of a simple polygon?
+- https://en.wikipedia.org/wiki/Curve_orientation#Orientation_of_a_simple_polygon
 */
 template<typename PLT,typename FPT>
 void
@@ -9631,6 +9568,8 @@ PointPair_<FPT>
 LPBase<LP,FPT>::getPoints( const Point2d_<FPT2>& pt, FPT3 dist ) const
 {
 	static_assert( std::is_same_v<LP,typ::IsLine>, "Invalid: you cannot call on a point" );
+	HOMOG2D_CHECK_IS_NUMBER(FPT2);
+	HOMOG2D_CHECK_IS_NUMBER(FPT3);
 
 #ifndef HOMOG2D_NOCHECKS
 	if( this->distTo( pt ) > thr::nullDistance() )
@@ -10614,6 +10553,7 @@ side( const Point2d_<FPT1>& pt, const Line2d_<FPT2>& li )
 	return (std::signbit( dist ) ? -1 : +1);
 }
 
+//------------------------------------------------------------------
 /// Free function, distance between points
 /// \sa Point2d_::distTo()
 template<typename FPT1,typename FPT2>
@@ -10623,6 +10563,8 @@ dist( const Point2d_<FPT1>& pt1, const Point2d_<FPT2>& pt2 )
 	return pt1.distTo( pt2 );
 }
 
+//------------------------------------------------------------------
+/// Intersection area over Union area (free function)
 template<typename FPT1,typename FPT2>
 HOMOG2D_INUMTYPE
 IoU( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
@@ -10633,6 +10575,7 @@ IoU( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 	return 0.;
 }
 
+//------------------------------------------------------------------
 /// Free function, see FRect_::unionArea()
 template<typename FPT1,typename FPT2>
 CPolyline_<FPT1>
@@ -10641,6 +10584,7 @@ unionArea( const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 	return r1.unionArea(r2);
 }
 
+//------------------------------------------------------------------
 /// Free function, see FRect_::intersectArea()
 template<typename FPT1,typename FPT2>
 detail::RectArea<FPT1>
@@ -10649,6 +10593,7 @@ intersectArea(  const FRect_<FPT1>& r1, const FRect_<FPT2>& r2 )
 	return r1.intersectArea(r2);
 }
 
+//------------------------------------------------------------------
 /// Returns circle passing through 4 points of flat rectangle (free function)
 /// \sa FRect_::getBoundingCircle()
 template<typename FPT>
@@ -10658,6 +10603,7 @@ getBoundingCircle( const FRect_<FPT>& rect )
 	return rect.getBoundingCircle();
 }
 
+//------------------------------------------------------------------
 /// Return circle inscribed in rectangle
 /// \sa hFRect_::getInscribedCircle()
 template<typename FPT>
@@ -10667,6 +10613,7 @@ getInscribedCircle( const FRect_<FPT>& rect )
 	return rect.getInscribedCircle();
 }
 
+//------------------------------------------------------------------
 /// Returns true if is a polygon (free function)
 ///  \sa PolylineBase::isSimple()
 template<typename PLT,typename FPT>
@@ -10676,6 +10623,7 @@ isSimple( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.isSimple();
 }
 
+//------------------------------------------------------------------
 /// Returns true if polygon is convex (free function)
 /// \sa PolylineBase::isConvex()
 template<typename PLT,typename FPT>
@@ -10685,6 +10633,7 @@ isConvex( const base::PolylineBase<PLT,FPT>& poly )
 	return poly.isConvex();
 }
 
+//------------------------------------------------------------------
 /// Returns the number of segments (free function)
 /// \sa PolylineBase::nbSegs()
 template<typename PLT,typename FPT>
@@ -10694,6 +10643,7 @@ nbSegs( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.nbSegs();
 }
 
+//------------------------------------------------------------------
 /// Returns the segments of the polyline (free function)
 /// \sa PolylineBase::getSegs()
 template<typename PLT,typename FPT>
@@ -10703,6 +10653,7 @@ getSegs( const base::PolylineBase<PLT,FPT>& pl )
 	return pl.getSegs();
 }
 
+//------------------------------------------------------------------
 /// Rotates the primitive (only available for Polyline and FRect) around (0,0)
 template<typename T>
 void
@@ -10711,6 +10662,7 @@ rotate( T& prim, Rotate rot )
 	prim.rotate( rot );
 }
 
+//------------------------------------------------------------------
 /// Rotates the primitive (only available for Polyline and FRect) around \c refpt
 template<typename T,typename FPT>
 void
@@ -10719,6 +10671,7 @@ rotate( T& prim, Rotate rot, const Point2d_<FPT>& refpt )
 	prim.rotate( rot, refpt );
 }
 
+//------------------------------------------------------------------
 /// Returns Bounding Box of Ellipse_ (free function)
 /// \sa Ellipse_::getBB()
 template<typename FPT>
@@ -10728,6 +10681,7 @@ getOBB( const Ellipse_<FPT>& ell )
 	return ell.getOBB();
 }
 
+//------------------------------------------------------------------
 /// Returns bisector lines of a Polyline
 /**
 Size of vector will be:
@@ -10777,6 +10731,7 @@ getBisectorLines( const base::PolylineBase<PLT,FPT>& pl )
 }
 
 
+//------------------------------------------------------------------
 /// Holds free functions returning a pair of points
 namespace ppair {
 
@@ -10925,11 +10880,24 @@ struct BBFunct
 // SECTION  - FREE FUNCTIONS HANDLING VARIANT TYPE
 /////////////////////////////////////////////////////////////////////////////
 
+/**
+\addtogroup varff Free functions handling variant type
+
+
+defgroup
+
+These function can be used on a "regular" geometric object or on a `CommonType` object,
+holding a std::variant and allowing run-time polymorphism,
+
+See md_docs_homog2d_manual.html#section_rtp
+*/
+
 //------------------------------------------------------------------
 /// Free function. Returns the type of object or variant
 /**
 Can be printed with `getString()`
 \sa CommonType_
+\ingroup varff
 */
 template<typename T>
 Type
@@ -10947,6 +10915,7 @@ type( const T& elem )
 /// Returns the underlying data type of object or variant
 /**
 Can be printed with `getString()`
+\ingroup varff
 */
 template<typename T>
 Dtype
@@ -10962,6 +10931,7 @@ dtype( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns length of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 length( const T& elem )
@@ -10976,6 +10946,7 @@ length( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns area of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 area( const T& elem )
@@ -10990,6 +10961,7 @@ area( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns size of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 size( const T& elem )
@@ -11053,6 +11025,8 @@ This function is able to handle many argument types:
 - containers holding variant primitives
 
 Tests: see [BB-cont]
+
+\ingroup varff
 */
 template<typename T>
 FRect_<HOMOG2D_INUMTYPE>
@@ -11125,7 +11099,9 @@ getBB( const T& t )
 
 /// Apply homography to primitive \c elem, even if it is a \c std::variant type
 /**
-\warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
+\warning The floating-point type of the returned object (variant) will be the one of the homography \c h,
+\b NOT the one of the input element.
+\ingroup varff
 */
 template<typename T, typename FPT>
 CommonType_<FPT>
@@ -11404,7 +11380,7 @@ split( const Segment_<FPT>& seg )
 	return seg.split();
 }
 
-/// Returns orthogonal segments
+/// Returns the 4 orthogonal segments to the segment
 /// \sa Segment_::getOrthogSegs()
 template<typename FPT>
 std::array<Segment_<FPT>,4>
@@ -11413,7 +11389,7 @@ getOrthogSegs( const Segment_<FPT>& seg )
 	return seg.getOrthogSegs();
 }
 
-/// Returns orthogonal points
+/// Returns the 4 orthogonal points to the segment
 /// \sa Segment_::getOrthogPts()
 template<typename FPT>
 std::array<Point2d_<FPT>,4>
@@ -12052,6 +12028,8 @@ impl_drawIndexes( img::Image<IMG>&, size_t, const img::DrawParams&, const DUMMY&
 - Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable.
 - The types inside the container can be either plain \c h2d types (\c FRect, \c Segment, ...) of variant types,
 using the \c CommonType class (requires HOMOG2D_ENABLE_VRTP symbol).
+
+\ingroup varff
 */
 template<
 	typename U,
@@ -12738,7 +12716,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		const auto& pts = getPts();
 		for( size_t i=0; i<osegs.size()-1; i++ )
 		{
-			auto seg1 = -osegs[i];
+			auto seg1 = osegs[i];
 			auto seg2 = osegs[i+1];
 			auto angle = getAngle( seg1, seg2 );
 //			std::cout << "angle " << i << "=" << angle*180/3.1415 << "\n";
@@ -12747,7 +12725,7 @@ PolylineBase<PLT,FPT>::draw( img::Image<cv::Mat>& im, img::DrawParams dp ) const
 		if( isClosed() )
 		{
 			auto seg1 = osegs.back();
-			auto seg2 = -osegs.front();
+			auto seg2 = osegs.front();
 			auto angle = getAngle( seg1, seg2 );
 //			std::cout << "final angle " << "=" << angle*180/3.1415 << "\n";
 			drawText( im, std::to_string(angle * 180./M_PI), pts[0] );

@@ -2445,7 +2445,7 @@ struct Param_PO : Data
 	}
 	OffsetPolyParams _params;
 	int _offsetDist = 20;
-	bool _showSegs = true;
+	bool _showSegs = false;
 	bool _side     = true;
 	bool _drawBisectorLines = false;
 	bool _showPolyAngles = false;
@@ -2474,9 +2474,10 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 
 	if( pol.isSimple() )
 	{
-		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist );
-		draw( im, cpoly_off , img::DrawParams().showPoints().setColor(0,0,250) );
+		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist, data._params );
+		draw( im, cpoly_off , img::DrawParams().showPoints(false).setColor(0,0,250) );
 
+		draw( im, dbg.psegs );
 		auto centr = pol.centroid();
 		draw( im, centr, img::DrawParams().showPoints().setColor(0,0,250) );
 
@@ -2525,9 +2526,6 @@ void demo_PO( int demidx )
 {
 	Param_PO data( demidx, "Polygon Offset" );
 	data.leftClicAddPoint=true;
-
-//	data._cpol = CPolyline( data.vpt );
-//	data._opol = OPolyline( data.vpt );
 
 	data.setMouseCB( action_PO );
 	KeyboardLoop kbloop;
