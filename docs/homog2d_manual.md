@@ -472,12 +472,39 @@ Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getCenter(); // or: getCenter(s1)
 ```
 
+For oriented segments, you can get a point at an arbitrary (positive) distance from the starting point:
+```C++
+OSegment s( 0,0, 10,0 );
+auto pt = s.getPointAt(6);
+std::cout << pt;       // will print [6,0]
+auto pt = s.getPointAt(15);
+std::cout << pt;       // will print [15,0]
+```
+
 This middle point can be used to split a segment into two equal length segments,
 returned as a `std::pair`:
 ```C++
-Segment seg( Point2d(1,2), Point2d(3,4) );
-auto p_segs = seg.split(); // or: split(seg)
+Segment  segu( Point2d(0,0), Point2d(10,0) );
+OSegment sego( Point2d(0,0), Point2d(10,0) );
+auto p_segsu = segu.split(); // or: split(segu)
+auto p_segso = sego.split(); // or: split(sego)
+std::cout << p_segsu.first; // print [0,0]--[5,0]
+std::cout << p_segso.second; // print [5,0]--[10,0]
 ```
+
+Types are preserved: if the source segment is not oriented (`Segment`), then this will produce two non-oriented segments,
+il source is oriented (`OSegment`), this will produce two oriented segments, with same direction.
+
+Similarly, you can split oriented segments at an arbitrary position, defined by a distance
+(but must be >0 and less than the length of the segment):
+
+```C++
+OSegment seg( Point2d(0,0), Point2d(10,0) );
+auto p_segs = seg.split(4); // or split(seg,4)
+std::cout << p_segs.first; // print [0,0]--[4,0]
+std::cout << p_segs.second; // print [4,0]--[10,0]
+```
+
 
 The bisector line is available, using a member or free function:
 ```C++

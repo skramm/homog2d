@@ -2734,15 +2734,43 @@ TEST_CASE( "MoveTo", "[moveto]")
 
 }
 
-TEST_CASE( "Segment-split", "[seg-split]" )
+TEST_CASE( "Segment-split-1", "[seg-split-1]" )
 {
-	Segment_<NUMTYPE> s1( Point2d(0,0), Point2d(2,0) );
-	auto psegs1 = s1.split();
-	auto psegs2 = split(s1);
-	CHECK( psegs1 == psegs2 );
+	Segment_<NUMTYPE>  s1( Point2d(0,0), Point2d(20,0) );
+	OSegment_<NUMTYPE> s2( Point2d(0,0), Point2d(20,0) );
+	{
+		auto psegs1 = s1.split();
+		auto psegs2 = split(s1);
+		CHECK( psegs1 == psegs2 );
+		CHECK( psegs1.first  == Segment_<NUMTYPE>( Point2d(0,0), Point2d(10,0) ) );
+		CHECK( psegs1.second == Segment_<NUMTYPE>( Point2d(10,0), Point2d(20,0) ) );
+	}
+	{
+		auto psegs1 = s2.split();
+		auto psegs2 = split(s2);
+		CHECK( psegs1 == psegs2 );
+		CHECK( psegs1.first  == OSegment_<NUMTYPE>( Point2d(0,0), Point2d(10,0) ) );
+		CHECK( psegs1.second == OSegment_<NUMTYPE>( Point2d(10,0), Point2d(20,0) ) );
+	}
+}
 
-	CHECK( psegs1.first  == Segment( Point2d(0,0), Point2d(1,0) ) );
-	CHECK( psegs1.second == Segment( Point2d(1,0), Point2d(2,0) ) );
+TEST_CASE( "Segment-split-2", "[seg-split-2]" )
+{
+	OSegment_<NUMTYPE> s1( Point2d(0,0), Point2d(20,0) );
+
+	CHECK_THROWS( s1.split(-4) );
+	CHECK_THROWS( s1.split(0) );
+	CHECK_THROWS( s1.split(20) );
+
+	CHECK_THROWS( split(s1,-4) );
+	CHECK_THROWS( split(s1,0) );
+	CHECK_THROWS( split(s1,20) );
+
+	auto psegs1 = s1.split(4);
+	auto psegs2 = split(s1,4);
+	CHECK( psegs1 == psegs2 );
+	CHECK( psegs1.first  == OSegment_<NUMTYPE>( Point2d(0,0), Point2d(4,0) ) );
+	CHECK( psegs1.second == OSegment_<NUMTYPE>( Point2d(4,0), Point2d(20,0) ) );
 }
 
 TEST_CASE( "Segment 2", "[seg2]" )

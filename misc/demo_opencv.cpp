@@ -2007,7 +2007,7 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist, data._params );
 		draw( im, cpoly_off , img::DrawParams().showPoints(false).setColor(0,0,250) );
 
-		draw( im, dbg.psegs );
+//		draw( im, dbg.psegs );
 		auto centr = pol.centroid();
 		draw( im, centr, img::DrawParams().showPoints().setColor(0,0,250) );
 

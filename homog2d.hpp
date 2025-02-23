@@ -5254,23 +5254,20 @@ public:
 		return Line2d_<HOMOG2D_INUMTYPE>(li);
 	}
 
-	template<typename T>
+	template<typename FPT2>
 	PointSide
-	getPointSide( const Point2d_<T>& pt ) const;
+	getPointSide( const Point2d_<FPT2>& pt ) const;
 
-/// Returns a pair of segments/vectors split by the middle
 	std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
-	split() const
-	{
-		auto pt_mid = getCenter();
-		return std::make_pair(
-			SegVec<SV,FPT>( _ptS1,  pt_mid ),
-			SegVec<SV,FPT>( pt_mid, _ptS2 )
-		);
-	}
+	split() const;
+
+	template<typename T>
+	std::pair<SegVec<typ::IsOSeg,FPT>,SegVec<typ::IsOSeg,FPT>>
+	split( T dist ) const;
 
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
+	HOMOG2D_INUMTYPE
+	distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
 
 	template<typename T>
 	constexpr bool
@@ -5283,7 +5280,7 @@ public:
 		return getLine().isParallelTo( other );
 	}
 
-	/// Returns point that at middle distance between \c p1 and \c p2
+	/// Returns point at middle distance between \c p1 and \c p2
 	auto
 	getCenter() const
 	{
@@ -5340,6 +5337,45 @@ public:
 }; // class SegVec
 
 //------------------------------------------------------------------
+/// Returns a pair of segments/vectors split by the middle
+template<typename SV,typename FPT>
+std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
+SegVec<SV,FPT>::split() const
+{
+	auto pt_mid = getCenter();
+	return std::make_pair(
+		SegVec<SV,FPT>( _ptS1,  pt_mid ),
+		SegVec<SV,FPT>( pt_mid, _ptS2 )
+	);
+}
+
+//------------------------------------------------------------------
+/// Returns a pair of segments/vectors split by point at arbitrary distance
+/// \note: distance value must be >0 and less than segment length
+template<typename SV,typename FPT>
+template<typename T>
+std::pair<OSegment_<FPT>,OSegment_<FPT>>
+SegVec<SV,FPT>::split( T dist ) const
+{
+	static_assert( std::is_same_v<SV,typ::IsOSeg>, "cannot use this on non-oriented segments" );
+	HOMOG2D_CHECK_IS_NUMBER(T);
+#ifndef HOMOG2D_NOCHECKS
+	if( dist <= 0 )
+		HOMOG2D_THROW_ERROR_1( "distance value must be >=0, current value=" << dist );
+	if( dist >= length() )
+		HOMOG2D_THROW_ERROR_1( "distance value must less than length, current value="
+			<< dist << " length=" << length() );
+#endif
+
+	auto pt = getPointAt(dist);
+	return std::make_pair(
+		SegVec<SV,FPT>( _ptS1, pt ),
+		SegVec<SV,FPT>( pt, _ptS2 )
+	);
+}
+
+
+//------------------------------------------------------------------
 /// Return side of point \c pt relatively to the segment (Oriented only)
 template<typename SV,typename FPT>
 template<typename T>
@@ -5373,6 +5409,10 @@ SegVec<SV,FPT>::getPointAt( FPT2 dist ) const
 {
 	static_assert( std::is_same_v<SV,typ::IsOSeg>, "Cannot apply on non-oriented segment" );
 	HOMOG2D_CHECK_IS_NUMBER(FPT2);
+#ifndef HOMOG2D_NOCHECKS
+	if( dist < 0 )
+		HOMOG2D_THROW_ERROR_1( "distance value must be >0, current value=" << dist );
+#endif
 
 	Line2d_<HOMOG2D_INUMTYPE> li = getLine();
 	auto ppts = li.getPoints( _ptS1, dist );
@@ -10601,12 +10641,24 @@ getExtended( const Segment_<FPT>& seg )
 
 /// Returns a pair of segments, corresponding to the input segment split by middle point (free function)
 /// \sa Segment_::split()
-template<typename FPT>
-std::pair<Segment_<FPT>,Segment_<FPT>>
-split( const Segment_<FPT>& seg )
+template<typename SV,typename FPT>
+std::pair<base::SegVec<SV,FPT>,base::SegVec<SV,FPT>>
+split( const base::SegVec<SV,FPT>& seg )
 {
 	return seg.split();
 }
+
+/// Returns a pair of segments, corresponding to the input segment split by point at distance \c dist (free function)
+/// \note: can only be used on oriented segments
+/// \sa Segment_::split( T )
+template<typename FPT, typename T>
+std::pair<OSegment_<FPT>,OSegment_<FPT>>
+split( const OSegment_<FPT>& seg, T dist )
+{
+	HOMOG2D_CHECK_IS_NUMBER(T);
+	return seg.split( dist );
+}
+
 
 /// Returns the 4 orthogonal segments to the segment
 /// \sa Segment_::getOrthogSegs()
