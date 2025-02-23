@@ -2282,6 +2282,7 @@ public:
 /// \name attributes of ellipse
 ///@{
 
+/// Returns 1
 	constexpr size_t size() const
 	{
 		return 1;
@@ -5033,6 +5034,7 @@ Please note that the source (points) floating-point type is lost
 	}
 #endif
 
+/// Returns 2
 	constexpr size_t size() const
 	{
 		return 2;
