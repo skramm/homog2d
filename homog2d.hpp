@@ -7475,7 +7475,7 @@ Point2d_<HOMOG2D_INUMTYPE>
 base::PolylineBase<PLT,FPT>::centroid() const
 {
 	if( !isSimple() )
-		HOMOG2D_THROW_ERROR_2( "PolylineBase::centroid", "unable, is not a polygon" );
+		HOMOG2D_THROW_ERROR_1( "unable, Polyline object is not simple" );
 
 	if( _attribs._centroid.isBad() )
 	{
@@ -10123,11 +10123,24 @@ struct BBFunct
 // SECTION  - FREE FUNCTIONS HANDLING VARIANT TYPE
 /////////////////////////////////////////////////////////////////////////////
 
+/**
+\addtogroup varff Free functions handling variant type
+
+
+defgroup
+
+These function can be used on a "regular" geometric object or on a `CommonType` object,
+holding a std::variant and allowing run-time polymorphism,
+
+See md_docs_homog2d_manual.html#section_rtp
+*/
+
 //------------------------------------------------------------------
 /// Free function. Returns the type of object or variant
 /**
 Can be printed with `getString()`
 \sa CommonType_
+\ingroup varff
 */
 template<typename T>
 Type
@@ -10145,6 +10158,7 @@ type( const T& elem )
 /// Returns the underlying data type of object or variant
 /**
 Can be printed with `getString()`
+\ingroup varff
 */
 template<typename T>
 Dtype
@@ -10160,6 +10174,7 @@ dtype( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns length of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 length( const T& elem )
@@ -10174,6 +10189,7 @@ length( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns area of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 area( const T& elem )
@@ -10188,6 +10204,7 @@ area( const T& elem )
 
 //------------------------------------------------------------------
 /// Returns size of element or variant (free function)
+/// \ingroup varff
 template<typename T>
 HOMOG2D_INUMTYPE
 size( const T& elem )
@@ -10245,6 +10262,7 @@ getBB_CommonType( const std::vector<CommonType_<FPT>>& v_var )
 /// Return Bounding Box of primitive or container holding primitives (free function)
 /**
 tests: [BB-cont]
+\ingroup varff
 */
 template<typename T>
 FRect_<HOMOG2D_INUMTYPE>
@@ -10308,7 +10326,9 @@ getBB( const T& t )
 
 /// Apply homography to primitive
 /**
-\warning The floating-point type of the returned object (variant) will be the one of the homography \c h, NOT the one of the input element.
+\warning The floating-point type of the returned object (variant) will be the one of the homography \c h,
+\b NOT the one of the input element.
+\ingroup varff
 */
 template<typename T, typename FPT>
 CommonType_<FPT>
@@ -11220,6 +11240,8 @@ impl_drawIndexes( img::Image<IMG>&, size_t, const img::DrawParams&, const DUMMY&
 - Type \c T can be \c std::array<type> or \c std::vector<type>, with \c type being anything drawable.
 - The types inside the container can be either plain \c h2d types (\c FRect, \c Segment, ...) of variant types,
 using the \c CommonType class (requires HOMOG2D_ENABLE_VRTP symbol).
+
+\ingroup varff
 */
 template<
 	typename U,

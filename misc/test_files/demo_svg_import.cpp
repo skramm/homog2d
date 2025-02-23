@@ -85,7 +85,7 @@ int main( int argc, const char** argv )
 		pp_all = getMinMax( pp_all, ptpair );
 
 		std::cout << "Shape " << c << ": " << getString( type(e) )
-			<< ", size " << size(e) << ": " << print(e) << "\n";
+			<< ", size " << size(e) << "\n";
 
 		if( type(e) != Type::Segment ) // because no BB is defined
 		{

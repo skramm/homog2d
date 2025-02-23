@@ -2539,6 +2539,7 @@ Bad casting will very probably lead to a segfault.
 Check test file [homog2d_test_rtp_1.cpp](../misc/test_files/homog2d_test_rtp_1.cpp) for an example.
 
 #### 12.3 - Variant-based runtime polymorphism
+<a name="section_vrtp"></a>
 
 This feature is made available by defining the symbol `HOMOG2D_ENABLE_VRTP`.
 This will enable a templated common type `CommonType_` that holds all the geometrical primitives, as a `std::variant` (requiring a move to `C++17`).
@@ -2578,6 +2579,12 @@ fct::DrawFunct vde( im ); // or fct::DrawFunct vde( im, dp ); if you need to pas
 for( auto& e: vec )
 	std::visit( vde, e );
 ```
+Or, much simpler:
+```C++
+for( auto& e: vec )
+	draw( e );      // or: draw( e, drawParams );
+```
+
 
 To apply the same homography on each element (and store them in-place), simple as this:
 
@@ -2600,6 +2607,9 @@ if( type(e) == Type::Circle )
 	Circle c = fct::VariantUnwrapper{e};
 ```
 
+
+Checkout all the [default functors here](https://codedocs.xyz/skramm/homog2d/namespaceh2d_1_1fct.html), and the list of free functions
+that handle basic types or variant types (`CommonType`) [here](https://codedocs.xyz/skramm/homog2d/group__varff.html).
 
 Check test file [homog2d_test_rtp_2.cpp](../misc/test_files/homog2d_test_rtp_2.cpp) for an example.
 
