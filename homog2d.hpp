@@ -2680,7 +2680,10 @@ public:
 	template<typename T1,typename T2,typename T3,typename T4>
 	FRect_( T1 x1, T2 y1, T3 x2, T4 y2 )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		HOMOG2D_CHECK_IS_NUMBER(T3);
+		HOMOG2D_CHECK_IS_NUMBER(T4);
 		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
 	}
 
