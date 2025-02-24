@@ -6496,6 +6496,11 @@ Also use the areCollinear() function
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 	set( FPT2 rad, T n );
 
+/// Split Polyline by line
+	template<typename FPT2>
+	std::vector<PolylineBase<PLT,FPT>>
+	split( const Line2d_<FPT2>&, bool closedOutput=false ) const;
+
 ///@}
 
 private:
@@ -6658,6 +6663,26 @@ public:
 
 }; // class PolylineBase
 
+
+//------------------------------------------------------------------
+/// Split Polyline by line
+template<typename PLT,typename FPT>
+template<typename FPT2>
+std::vector<PolylineBase<PLT,FPT>>
+PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li, bool closedOutput ) const
+{
+	auto inters = intersects( li );
+
+	std::vector<PolylineBase<PLT,FPT>> vout;
+
+	if( inters() )
+		return vout; // empty
+
+	auto pts = inters.get(); // intersection points
+	if( pts.size()%2 == 1 )
+		HOMOG2D_THROW_ERROR_1( "failure, odd number of intersection points, #=" << pts.size() );
+	return vout;
+}
 
 //------------------------------------------------------------------
 /// Return an "offsetted" closed polyline, requires simple polygon (CPolyline AND no crossings) as input

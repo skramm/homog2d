@@ -1056,15 +1056,53 @@ void demo_PL( int demidx )
 	action_PL( &data );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*)
-		{
-			data.showClosedPoly = !data.showClosedPoly;
-		},
-		"switch open/close"
-	);
+	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.showClosedPoly, "IsOpen="); }, "switch open/close" );
 //	kbloop.addCommonAction( [&] { action_PL(&data); } );
 	kbloop.start( data );
 }
+
+
+
+//------------------------------------------------------------------
+/// This datatype holds two Polyline objects, one closed, one open. They are both edited the same way and
+/// we switch drawing
+struct Param_polysplit : Data
+{
+	explicit Param_polysplit( int demidx, std::string title, std::string txt ):Data( demidx, title, txt )
+	{
+		v_po.push_back( &polyline_o );
+		v_po.push_back( &polyline_c );
+	}
+	OPolyline polyline_o;
+	CPolyline polyline_c;
+	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
+	bool showClosedPoly = false;
+};
+
+void action_polysplit( void* param )
+{
+	auto& data = *reinterpret_cast<Param_polysplit*>(param);
+
+	data.clearImage();
+	data.showImage();
+}
+
+
+void demo_polysplit( int demidx )
+{
+	Param_polysplit data( demidx, "Polyline split demo", "move the line" );
+
+	data.leftClicAddPoint=true;
+	data.setMouseCB( action_polysplit );
+
+	action_polysplit( &data );
+
+	KeyboardLoop kbloop;
+//	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.showClosedPoly, "IsOpen="); }, "switch open/close" );
+//	kbloop.addCommonAction( [&] { action_PL(&data); } );
+	kbloop.start( data );
+}
+
 
 //------------------------------------------------------------------
 struct Param_ELL : Data
@@ -2237,6 +2275,7 @@ int main( int argc, const char** argv )
 #ifdef HOMOG2D_PRELIMINAR
 		demo_Square,
 #endif
+		demo_polysplit,
 		demo_OSegAngle,
 		demo_PO,
 		demo_BB,
