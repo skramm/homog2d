@@ -758,7 +758,8 @@ Circle c1( vpts);
 c1.set( vpts );
 ```
 See [showcase13](homog2d_showcase.md#sc13) for an example.
-It uses the Welzl algorithm, that require O(n) time and O(n) memory (recursive technique).
+It uses the [Welzl algorithm](https://en.wikipedia.org/wiki/Smallest-circle_problem),
+that require O(n) time and O(n) memory (recursive technique).
 The input container can be `std::vector`, `std::array`, or `std::list`.
 It requires a least 2 points in the container, and will throw if condition not met.
 
@@ -1101,11 +1102,14 @@ The minimum value for `nb` is 3 (will generate an equilateral triangle), the fun
 
 #### 3.4.12 - Offsetted polyline
 
-For closed Polyline objects, the member function `getOffsetPoly()` can compute a new polyline at a given distance.
+For closed Polyline objects, the member function `getOffsetPoly()` can compute a new polyline at a given distance, by using
+[parallel curves](https://en.wikipedia.org/wiki/Parallel_curve).
 Its argument is a distance (numerical value).
-If positive, the returned polyline will be "outside", if negative, il will be inside.
+If positive, the returned polyline will be "outside" the original one, if negative, il will be inside.
 
-An optional second argument of type `OffsetPolyParams` holds a boolean value `_angleSplit` that can be set to `true` to "smoothen" the return polyline, by adding some points on sharp angles
+The source polyline must be "simple" (closed, and no intersections).
+
+An optional second argument of type `OffsetPolyParams` holds a boolean value `_angleSplit` that can be set to `true` to "smoothen" the return polyline, by adding two points on sharp angles
 (applies only to "outside" computation).
 
 See [showcase 22](homog2d_showcase.md#sc22)
@@ -1197,7 +1201,8 @@ bool b2 = isCircle( ell, 1E-15 );
 ### 3.6 - Common functions
 <a name="p_commonf"></a>
 
-All the types above share some common functions, that are also declared as virtual in the root class `Root`.
+All the types above share some common member functions.
+These are also declared as virtual in the root class `Root`.
 Thus, this enables classical pointer-based runtime polymorphism, [see here](#section_rtp).
 
 All of these are `const`.
@@ -1213,7 +1218,7 @@ The names of these functions are:
 
 
 The `type()` function will return an enum value of type `Type` having one of these values:
-`Point2d`, `Line2d`, `Segment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
+`Point2d`, `Line2d`, `Segment`, `OSegment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
 You can get a human-readable value ot the object type with `getString(Type)`:
 ```C++
 	Point2d pt;
@@ -1228,7 +1233,7 @@ They are declared as `constexpr`, except of course for the last two.
 | Type         | Return Value |
 |--------------|--------------|
 | `Point2d`    |  1  |
-| `Line2d`     |  1  |
+| `Line2d`     |  0  |
 | `Segment`    |  2  |
 | `OSegment`   |  2  |
 | `FRect`      |  4  |

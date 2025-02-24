@@ -8,14 +8,15 @@
 * [Ellipse](homog2d_manual.md#p_ellipse)
 * [Homographies](homog2d_manual.md#matrix)
 * [Lines and Points](homog2d_manual.md#basic)
-* [Minimum Enclosing Circle](homog2d_manual.md#minenccir)
+* [Minimum Enclosing Circle (MEC)](homog2d_manual.md#minenccir)
 * [Numerical data types](homog2d_manual.md#numdt)
 * [Opencv](homog2d_manual.md#drawing)
 * [Parallelogram](homog2d_manual.md#build_parallelo)
 * [Polygon Extremum points](homog2d_manual.md#poly_extremum_points)
-* [Polygon](homog2d_manual.md#p_polyline)
 * [Polygon Rotation/mirroring](homog2d_manual.md#polyline_rotate)
+* [Polyline](homog2d_manual.md#p_polyline)
 * [Rectangle](homog2d_manual.md#p_frect)
+* [Rectangle union/intersection](homog2d_manual.md#frect_union)
 * [Regular Convex Polygon (RCP)](homog2d_manual.md#set_RCP)
 * [Runtime polymorphism](homog2d_manual.md#section_rtp)
 * [Segment](homog2d_manual.md#p_segment)
@@ -24,5 +25,6 @@
 * [SVG import](homog2d_manual.md#svg_import)
 * [Thresholds](homog2d_thresholds.md#)
 * [ttmath library](homog2d_manual.md#bignum)
+* [Welzl](homog2d_manual.md#minenccir)
 <hr>
-Page generated on 2024-04-21
+Page generated on 2025-02-24

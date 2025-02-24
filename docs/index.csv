@@ -8,7 +8,7 @@ SVG import;manual;svg_import
 Showcase;showcase;
 Numerical data types;manual;numdt
 Segment;manual;p_segment
-Minimum Enclosing Circle;manual;minenccir
+Minimum Enclosing Circle (MEC);manual;minenccir
 Polygon Extremum points;manual;poly_extremum_points
 Convex Hull;manual;convex-hull-ff
 Polygon Rotation/mirroring;manual;polyline_rotate
@@ -26,3 +26,4 @@ Boost Geometry library;manual;boost_geom_1
 Opencv;manual;drawing
 SVG drawing;manual;drawing
 Rectangle union/intersection;manual;frect_union
+Welzl;manual;minenccir

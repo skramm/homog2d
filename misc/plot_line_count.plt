@@ -7,7 +7,7 @@
 # that is generated with the script: generate_line_count_graph.sh
 
 set datafile separator " "
-set terminal pngcairo size 900,600
+set terminal pngcairo size 1200,600
 set output "BUILD/line_count.png"
 
 #set terminal qt

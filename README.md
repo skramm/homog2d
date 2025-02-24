@@ -57,7 +57,7 @@ will print:
 [7,8]
 ```
 
-(Depending on your GCC version, you might need to add `--std::c++17` to the compiler call above.)
+(Depending on your GCC version, you might need to add `--std=c++17` to the compiler call above.)
 
 #### TRYME2:
 
