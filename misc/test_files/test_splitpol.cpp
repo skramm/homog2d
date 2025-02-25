@@ -20,7 +20,7 @@ int main()
 		{-2,0},{-1,1},{1,1},{2,0},{1,-1},{-1,-1}
 	};
 	CPolyline pol(vpts);
-	Line2d li;
+	Line2d li;           // vertical line at x=0
 	auto res = pol.split(li);
 
 }
