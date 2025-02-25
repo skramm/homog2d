@@ -6675,12 +6675,73 @@ PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li, bool closedOutput ) const
 
 	std::vector<PolylineBase<PLT,FPT>> vout;
 
-	if( inters() )
-		return vout; // empty
+	size_t current = 0;
+	do
+	{
+		std::cout<< "Current=" << current << '\n';
+		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpolypts;
+		bool found_first  = false;
+		bool found_second = false;
+		Point2d_<HOMOG2D_INUMTYPE> pt1, pt2;
+		OSegment_<HOMOG2D_INUMTYPE> seg1, seg2;
+		size_t idx1, idx2;
+		do  // fetch first intersection
+		{
+			seg1 = getOSegment(current);
+			auto inters1 = seg1.intersects( li );
+			if( inters1() )
+			{
+				std::cout << "inters1 size=" << inters1.size() << '\n';
+				pt1 = inters1.get();
+				found_first = true;
+				idx1 = current+1;
+			}
+			current++;
+		}
+		while( !found_first && current<nbSegs() );
 
-	auto pts = inters.get(); // intersection points
-	if( pts.size()%2 == 1 )
+		do   // fetch second intersection
+		{
+			seg2 = getOSegment(current);
+			auto inters2 = seg2.intersects( li );
+			if( inters() )
+			{
+				std::cout << "inters2 size=" << inters2.size() << '\n';
+				pt2 = inters2.get();
+				found_second = true;
+				idx2 = current;
+			}
+			current++;
+		}
+		while( !found_second && current<nbSegs() );
+
+		if( found_first && !found_second )
+			HOMOG2D_THROW_ERROR_1( "Found 1st but not second!" );
+
+		if( !found_first ) // no intersection
+		{
+			std::cout << "NO INTERSECTION\n";
+			return vout;
+		}
+
+		vpolypts.push_back( pt1 ); // ajout point initial
+
+		std::cout << "idx1=" << idx1 << " idx2=" << idx2 << '\n';
+		for(size_t i=0; i< idx2-idx1+1; i++ )
+		{
+			std::cout << "ajout pt " << idx1+i << ": " << _plinevec.at(idx1+i) << '\n';
+			vpolypts.push_back( _plinevec.at(idx1+i) );
+		}
+		vpolypts.push_back( pt2 ); // ajout pt final
+		CPolyline_<HOMOG2D_INUMTYPE> pol(vpolypts);
+		vout.push_back( pol );
+	}
+	while( current<nbSegs() );
+
+
+/*	if( pts.size()%2 == 1 )
 		HOMOG2D_THROW_ERROR_1( "failure, odd number of intersection points, #=" << pts.size() );
+*/
 	return vout;
 }
 
