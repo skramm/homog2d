@@ -2176,21 +2176,39 @@ TEST_CASE( "Circle/Line intersection", "[int_CL]" )
 	}
 }
 
+template<typename FPT,typename SEG> // either Segment or OSegment
+auto helper_test_seg_intersect( Line2d_<FPT> li, const SEG& seg, bool doesIntersects )
+{
+	CHECK( li.intersects( seg )() == doesIntersects );
+	CHECK( seg.intersects( li )() == doesIntersects );
+	auto ri1 = li.intersects( seg );
+	auto ri2 = seg.intersects( li );
+	CHECK( ri1.size() == (doesIntersects?1:0) );
+	CHECK( ri2.size() == (doesIntersects?1:0) );
+	if( !doesIntersects )
+	{
+		CHECK_THROWS( ri1.get() );
+		CHECK_THROWS( ri2.get() );
+	}
+	return std::make_pair( ri1, ri2 );
+}
 
 TEST_CASE( "Line/Segment intersection", "[int_LS]" )
 {
 	Line2d_<NUMTYPE> li;             // vertical line x=0
-	{
+	{                 // Segment: NO intersection
+		Segment_<NUMTYPE> seg( 1,0,2,0);
+		helper_test_seg_intersect( li, seg, false );
+	}
+	{                 // OSegment: NO intersection
+		OSegment_<NUMTYPE> seg( 1,0,2,0);
+		helper_test_seg_intersect( li, seg, false );
+	}
+	{                 // INTERSECTION
 		Segment_<NUMTYPE> seg;           // (0,0 -- (1,1)
-		CHECK( li.intersects( seg )() );
-		CHECK( seg.intersects( li )() );
-		auto ri1 = li.intersects( seg );
-		auto ri2 = seg.intersects( li );
-		CHECK( ri1.size() == 1 );
-		CHECK( ri2.size() == 1 );
-
-		CHECK( ri1.get() == Point2d(0,0) );
-		CHECK( ri2.get() == Point2d(0,0) );
+		auto pri = helper_test_seg_intersect( li, seg, true );
+		CHECK( pri.first.get()  == Point2d(0,0) );
+		CHECK( pri.second.get() == Point2d(0,0) );
 	}
 	{
 		Segment_<NUMTYPE> seg( 0,0, 0,2 );  // vertical x=0
