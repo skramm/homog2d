@@ -3014,35 +3014,13 @@ public:
 		return line.intersects( *this );
 	}
 
-/// FRect/Segment intersection
-	template<typename FPT2>
-	detail::IntersectM<FPT> intersects( const Segment_<FPT2>& seg ) const
-	{
-		detail::IntersectM<FPT> out;
-		for( const auto& rseg: getSegs() )
-		{
-			auto inters = rseg.intersects( seg ); // call of Segment/Segment
-			if( inters() )
-			{
-				auto pt =  inters.get();
-				bool addPoint = true;
-				if( out.size() == 1 ) // if we have already one
-					if( out.get()[0] == pt )
-						addPoint = false;
-				if( addPoint )
-					out.add( pt );
-				if( out.size() == 2 )
-					break;
-			}
-		}
-		return out;
-	}
+	template<typename SV,typename FPT2>
+	detail::IntersectM<FPT> intersects( const base::SegVec<SV,FPT2>& ) const;
 
 /// FRect/Circle intersection
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const Circle_<FPT2>& circle ) const
 	{
-//		HOMOG2D_START;
 		return p_intersects_R_C( circle );
 	}
 
@@ -3050,7 +3028,6 @@ public:
 	template<typename PLT2,typename FPT2>
 	detail::IntersectM<FPT> intersects( const base::PolylineBase<PLT2,FPT2>& pl ) const
 	{
-//		HOMOG2D_START;
 		return pl.intersects( *this );
 	}
 
@@ -3058,7 +3035,6 @@ public:
 	template<typename FPT2>
 	detail::IntersectM<FPT> intersects( const FRect_<FPT2>& rect ) const
 	{
-//		HOMOG2D_START;
 		if( *this == rect )                    // if rectangles are the same,
 			return detail::IntersectM<FPT>();  // no intersection
 		return p_intersects_R_C( rect );
@@ -3133,6 +3109,33 @@ public:
 	void draw( img::Image<img::SvgImage>&, img::DrawParams dp=img::DrawParams() ) const;
 
 }; // class FRect_
+
+//------------------------------------------------------------------
+/// FRect/Segment intersection
+template<typename FPT>
+template<typename SV,typename FPT2>
+detail::IntersectM<FPT>
+FRect_<FPT>::intersects( const base::SegVec<SV,FPT2>& seg ) const
+{
+	detail::IntersectM<FPT> out;
+	for( const auto& rseg: getSegs() )
+	{
+		auto inters = rseg.intersects( seg ); // call of Segment/Segment
+		if( inters() )
+		{
+			auto pt =  inters.get();
+			bool addPoint = true;
+			if( out.size() == 1 ) // if we have already one
+				if( out.get()[0] == pt )
+					addPoint = false;
+			if( addPoint )
+				out.add( pt );
+			if( out.size() == 2 )
+				break;
+		}
+	}
+	return out;
+}
 
 //------------------------------------------------------------------
 /// A circle
@@ -3437,9 +3440,9 @@ public:
 	}
 
 /// Circle/Segment intersection
-	template<typename FPT2>
+	template<typename SV,typename FPT2>
 	detail::IntersectM<FPT>
-	intersects( const Segment_<FPT2>& seg ) const
+	intersects( const base::SegVec<SV,FPT2>& seg ) const
 	{
 		return seg.intersects( *this );
 	}
@@ -4305,8 +4308,8 @@ public:
 
 /// Line/Segment intersection
 /** \warning no implementation for points */
-	template<typename FPT2>
-	detail::Intersect<detail::Inters_1,FPT> intersects( const Segment_<FPT2>& seg ) const
+	template<typename SV,typename FPT2>
+	detail::Intersect<detail::Inters_1,FPT> intersects( const SegVec<SV,FPT2>& seg ) const
 	{
 		return seg.intersects( *this );
 	}
