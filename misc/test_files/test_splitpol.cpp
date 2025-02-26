@@ -22,5 +22,8 @@ int main()
 	CPolyline pol(vpts);
 	Line2d li;           // vertical line at x=0
 	auto res = pol.split(li);
+	std::cout << "\n* RESULTATsize=" << res.size() << '\n';
+	for( const auto& p: res )
+		std::cout << p << '\n';
 
 }
