@@ -1062,7 +1062,6 @@ void demo_PL( int demidx )
 }
 
 
-
 //------------------------------------------------------------------
 /// This datatype holds two Polyline objects, one closed, one open. They are both edited the same way and
 /// we switch drawing
@@ -1076,7 +1075,9 @@ struct Param_polysplit : Data
 
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );
-		img2.setSize( _imHeight, _imWidth );
+		img2.setSize( _imWidth, _imHeight );
+		vcolors = img::genRandomColors( maxcolors );
+
 	}
 	void showImage()
 	{
@@ -1092,8 +1093,10 @@ struct Param_polysplit : Data
 	std::string win2 ="split";
 	OPolyline polyline_o;
 	CPolyline polyline_c;
+	std::vector<img::Color> vcolors;
+	size_t maxcolors = 20;
 //	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
-//	bool showClosedPoly = false;
+	bool showClosedPoly = true;
 };
 
 void action_polysplit( void* param )
@@ -1117,16 +1120,19 @@ void action_polysplit( void* param )
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
-
 	auto vpol = data.polyline_c.split(li);
 	data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
 	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
 
-	auto vcolors = img::genRandomColors( vpol.size() );
-
-	auto it_col= std::begin(vcolors);
-	for( const auto& p: vpol )
-		p.draw( data.img2, img::DrawParams().setColor( *it_col++ ) );
+	auto i=0;
+	for( auto p: vpol )
+	{
+		p.translate(
+			std::rand()*20./RAND_MAX,
+			std::rand()*20./RAND_MAX
+		);
+		p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
+	}
 	data.showImage();
 }
 
@@ -1141,8 +1147,8 @@ void demo_polysplit( int demidx )
 	action_polysplit( &data );
 
 	KeyboardLoop kbloop;
-//	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.showClosedPoly, "IsOpen="); }, "switch open/close" );
-//	kbloop.addCommonAction( [&] { action_PL(&data); } );
+	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.showClosedPoly, "Isclosed="); }, "switch open/close" );
+	kbloop.addCommonAction( action_polysplit );
 	kbloop.start( data );
 }
 

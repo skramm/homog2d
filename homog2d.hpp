@@ -6706,8 +6706,13 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			auto pt = inters1.get();
 			if( found ) // we already had an intersection previously
 			{
+				std::cout << "- found!, ajout: " << seg1.getPts().first << '\n';
 				vpts.push_back( seg1.getPts().first );
-				vpts.push_back( pt );  // final point
+				if( pt != vpts.front() )
+				{
+					std::cout << "- ajout: " << pt << '\n';
+					vpts.push_back( pt );  // final point
+				}
 				HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
 				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
 				std::cout << "Ajout de pol:" << pol << '\n';
@@ -6723,6 +6728,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 					pt_initial_int = pt;
 				}
 				found = true;
+				std::cout << "Création vec, ajout " << pt << '\n';
 				vpts.push_back( pt ); // initial point
 			}
 		}
@@ -6742,7 +6748,11 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		std::cout << "FINAL seg=" << seg1 << '\n';
 //	std::cout << "adding last int point:" << pt_prev_int << '\n';
 		vpts.push_back( seg1.getPts().second );
-		vpts.push_back( pt_initial_int );
+		if( pt_initial_int != vpts.front() )
+		{
+			std::cout << "- ajout: " << pt_initial_int << '\n';
+			vpts.push_back( pt_initial_int );
+		}
 
 		HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
 		CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
