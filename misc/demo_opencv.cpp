@@ -1075,6 +1075,7 @@ struct Param_polysplit : Data
 
 		cv::namedWindow( win2 );
 		cv::moveWindow( win2, _imWidth, 50 );
+
 		img2.setSize( _imWidth, _imHeight );
 		vcolors = img::genRandomColors( maxcolors );
 
@@ -1093,6 +1094,7 @@ struct Param_polysplit : Data
 	std::string win2 ="split";
 	OPolyline polyline_o;
 	CPolyline polyline_c;
+
 	std::vector<img::Color> vcolors;
 	size_t maxcolors = 20;
 //	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
@@ -1123,6 +1125,7 @@ void action_polysplit( void* param )
 	auto vpol = data.polyline_c.split(li);
 	data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
 	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
+
 
 	auto i=0;
 	for( auto p: vpol )

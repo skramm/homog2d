@@ -6689,6 +6689,7 @@ std::cout << "\n START, pol=" << *this << '\n';
 
 	Point2d_<HOMOG2D_INUMTYPE> pt_initial_int; // intersection point
 	OSegment_<HOMOG2D_INUMTYPE> seg1;
+
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpts;
 	vpts.reserve( size() );
 
@@ -6728,13 +6729,13 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			}
 			else
 			{
-				std::cout << "intersection:Y, found=N\n";
 				if( first )
 				{
 					first = false;
 					pt_initial_int = pt;
 				}
 				found = true;
+
 				std::cout << "Création vec, ajout " << pt << '\n';
 				vpts.push_back( pt ); // initial point
 			}
@@ -6751,7 +6752,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		}
 		current++;
 	}
-	while( current<nbSegs() );
+	while(  current<nbSegs() );
 
 	if( found )
 	{

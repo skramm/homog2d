@@ -80,5 +80,4 @@ int main()
 		Line2d li( LineDir::H, 2 );
 		process( vpts, li );
 	}
-
 }
