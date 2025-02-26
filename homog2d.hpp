@@ -6690,6 +6690,11 @@ std::cout << "\n START, pol=" << *this << '\n';
 	Point2d_<HOMOG2D_INUMTYPE> pt_initial_int; // intersection point
 	OSegment_<HOMOG2D_INUMTYPE> seg1;
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpts;
+	vpts.reserve( size() );
+
+// keep track of the encountered points before any intersection is found
+	size_t no_int_points = 0;
+
 	bool found = false;
 	bool first = true;
 	size_t nbIntersect = 0;
@@ -6706,7 +6711,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			auto pt = inters1.get();
 			if( found ) // we already had an intersection previously
 			{
-				std::cout << "- found!, ajout: " << seg1.getPts().first << '\n';
+				std::cout << "intersection:Y, found=Y, ajout: " << seg1.getPts().first << '\n';
 				vpts.push_back( seg1.getPts().first );
 				if( pt != vpts.front() )
 				{
@@ -6714,14 +6719,16 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 					vpts.push_back( pt );  // final point
 				}
 				HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
-				std::cout << "Ajout de pol:" << pol << '\n';
-				vout.push_back( pol );
-				vpts.clear();
-				vpts.push_back( pt ); // initial point
+//				std::cout << "Ajout de pol:" << pol << '\n';
+
+				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);  // create polyline and
+				vout.push_back( pol );                   // push it in the output set
+				vpts.clear();          // start again and add intersection point
+				vpts.push_back( pt ); // as first of the set
 			}
 			else
 			{
+				std::cout << "intersection:Y, found=N\n";
 				if( first )
 				{
 					first = false;
@@ -6736,21 +6743,29 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		{
 			if( found )
 			{
+				std::cout << "intersection:N, found=Y, adding " << pt1 << '\n';
 				vpts.push_back( pt1 );
 			}
+			else
+				no_int_points++;
 		}
 		current++;
 	}
-	while( /*!found_first &&*/  current<nbSegs() );
+	while( current<nbSegs() );
 
 	if( found )
 	{
-		std::cout << "FINAL seg=" << seg1 << '\n';
-//	std::cout << "adding last int point:" << pt_prev_int << '\n';
-		vpts.push_back( seg1.getPts().second );
+		std::cout << "Adding points up to " << no_int_points << '\n';
+
+		for( size_t i=0; i<=no_int_points; i++ )
+		{
+			std::cout << "  - adding pt " <<  _plinevec.at(i)  << '\n';
+			vpts.push_back( _plinevec.at(i) );
+		}
+
 		if( pt_initial_int != vpts.front() )
 		{
-			std::cout << "- ajout: " << pt_initial_int << '\n';
+			std::cout << "- ajout pt_initial_int: " << pt_initial_int << '\n';
 			vpts.push_back( pt_initial_int );
 		}
 
@@ -6759,7 +6774,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		std::cout << "Ajout FINAL de pol:" << pol << '\n';
 		vout.push_back( pol );
 	}
-
+	HOMOG2D_ASSERT_2( nbIntersect%2 == 0, nbIntersect );
 	std::cout << "Nb Intersection=" << nbIntersect << '\n';
 	return vout;
 }

@@ -66,4 +66,19 @@ int main()
 		Line2d li( LineDir::H, 2 );           // horizontal line at y=1
 		process( vpts, li );
 	}
+	{
+		std::vector<Point2d> vpts{
+			{0,0},{4,4},{6,4},{6,0}
+		};
+		Line2d li( LineDir::H, 2 );
+		process( vpts, li );
+	}
+	{
+		std::vector<Point2d> vpts{
+			{4,0},{0,4},{6,4},{6,0}
+		};
+		Line2d li( LineDir::H, 2 );
+		process( vpts, li );
+	}
+
 }
