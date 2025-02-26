@@ -122,6 +122,13 @@ See https://github.com/skramm/homog2d
 		std::exit(1); \
 	}
 
+#define HOMOG2D_ASSERT_2( a, value ) \
+	if( !(a) ) \
+	{ \
+		std::cerr << "ASSERT FAILURE, line=" << __LINE__ << "\n => value=" << value << std::endl; \
+		std::exit(1); \
+	}
+
 /// Assert debug macro, used internally if \c HOMOG2D_DEBUGMODE is defined
 #define HOMOG2D_DEBUG_ASSERT(a,b) \
 	{ \
@@ -6674,99 +6681,65 @@ template<typename FPT2>
 std::vector<PolylineBase<PLT,FPT>>
 PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li, bool closedOutput ) const
 {
+	p_normalizePoly();
 	std::vector<PolylineBase<PLT,FPT>> vout;
 
 	size_t current = 0;
-	Point2d_<HOMOG2D_INUMTYPE> pt1_first, pt2_last;
-	bool first = true;
-	do
+
+	Point2d_<HOMOG2D_INUMTYPE> pt_prev_int; // intersection point
+	OSegment_<HOMOG2D_INUMTYPE> seg1;
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpts;
+	bool found = false;
+	size_t nbIntersect = 0;
+	do  // search intersection points
 	{
-		std::cout<< "Current=" << current << '\n';
-		bool found_first  = false;
-		bool found_second = false;
-		Point2d_<HOMOG2D_INUMTYPE> pt1, pt2;
-		OSegment_<HOMOG2D_INUMTYPE> seg1, seg2;
-		size_t idx1, idx2;
+		seg1 = getOSegment(current);
+		auto pt1  = getPoint(current);
+std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n';
 
-		do  // fetch first intersection
+		auto inters1 = seg1.intersects( li );
+		if( inters1() )
 		{
-std::cout << "loop 1, current=" << current << '\n';
-			seg1 = getOSegment(current);
-			auto inters1 = seg1.intersects( li );
-			if( inters1() )
+			nbIntersect++;
+			auto pt = inters1.get();
+			if( found ) // we already had an intersection previously
 			{
-				std::cout << "inters1 size=" << inters1.size() << '\n';
-				std::cout << "found it1 at current=" << current << "\n";
-				pt1 = inters1.get();
-				if( first )
-				{
-					pt1_first = pt1;
-					first = false;
-				}
-				found_first = true;
-				idx1 = current+1;
+				vpts.push_back( seg1.getPts().first );
+				vpts.push_back( pt );  // final point
+				HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
+				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
+				std::cout << "Ajout de pol:" << pol << '\n';
+				vout.push_back( pol );
+				vpts.clear();
+				vpts.push_back( pt ); // initial point
 			}
-			current++;
+			else
+			{
+				pt_prev_int = pt;
+				found = true;
+				vpts.push_back( pt ); // initial point
+			}
 		}
-		while( !found_first && current<nbSegs() );
-
-		if( found_first )
+		else
 		{
-			do   // fetch second intersection
+			if( found )
 			{
-	std::cout << "loop 2a, current=" << current << '\n';
-				seg2 = getOSegment(current);
-				auto inters2 = seg2.intersects( li );
-				if( inters2() )
-				{
-					std::cout << "inters2 size=" << inters2.size() << '\n';
-					std::cout << "found it2 at current=" << current << "\n";
-					pt2 = inters2.get();
-					pt2_last = pt2;
-					found_second = true;
-					idx2 = current;
-				}
-				current++;
-	std::cout << "loop 2b, current=" << current << " nbSegs()="<< nbSegs() <<'\n';
+				vpts.push_back( pt1 );
 			}
-			while( !found_second && current<nbSegs() );
-
-			if( found_first && !found_second )
-				HOMOG2D_THROW_ERROR_1( "Found 1st but not second!" );
-
-			std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpolypts;
-			vpolypts.push_back( pt1 ); // add initial intersection point
-
-			std::cout << "idx1=" << idx1 << " idx2=" << idx2 << '\n';
-			for(size_t i=0; i< idx2-idx1+1; i++ )
-			{
-				std::cout << "ajout pt " << idx1+i << ": " << _plinevec.at(idx1+i) << '\n';
-				vpolypts.push_back( _plinevec.at(idx1+i) );
-			}
-			vpolypts.push_back( pt2 ); // add second intresection point
-			CPolyline_<HOMOG2D_INUMTYPE> pol(vpolypts);
-			std::cout << "Ajout de pol:" << pol << '\n';
-			vout.push_back( pol );
 		}
-		else // no intersection found
-		{
-			std::cout << "NO INTERSECTION\n";
-//			done = true;
-		}
+		current++;
 	}
-	while( current<nbSegs() );
+	while( /*!found_first &&*/  current<nbSegs() );
 
-// add the rest of source polyline, only is some intersection has been found
-	if( vout.size() )
-	{
-		std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpolypts;
-		vpolypts.push_back( pt2_last ); // add last second intersection point
-// other points
-		vpolypts.push_back( pt1_first ); // add first initial intersection point
-		CPolyline_<HOMOG2D_INUMTYPE> pol(vpolypts);
-		std::cout << "Ajout de pol:" << pol << '\n';
-		vout.push_back( pol );
-	}
+	std::cout << "FINAL seg=" << seg1 << '\n';
+//	std::cout << "adding last int point:" << pt_prev_int << '\n';
+	vpts.push_back( seg1.getPts().second );
+	HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
+	CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
+	std::cout << "Ajout FINAL de pol:" << pol << '\n';
+	vout.push_back( pol );
+
+	std::cout << "Nb Intersection=" << nbIntersect << '\n';
 	return vout;
 }
 

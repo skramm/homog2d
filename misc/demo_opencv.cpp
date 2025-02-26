@@ -1070,13 +1070,14 @@ struct Param_polysplit : Data
 {
 	explicit Param_polysplit( int demidx, std::string title, std::string txt ):Data( demidx, title, txt )
 	{
-		v_po.push_back( &polyline_o );
-		v_po.push_back( &polyline_c );
+//		v_po.push_back( &polyline_o );
+//		v_po.push_back( &polyline_c );
+	vpt.push_back( Point2d(154,175) );
 	}
 	OPolyline polyline_o;
 	CPolyline polyline_c;
-	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
-	bool showClosedPoly = false;
+//	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
+//	bool showClosedPoly = false;
 };
 
 void action_polysplit( void* param )
@@ -1084,6 +1085,30 @@ void action_polysplit( void* param )
 	auto& data = *reinterpret_cast<Param_polysplit*>(param);
 
 	data.clearImage();
+std::cout << "data.vpt.size()=" << data.vpt.size() << '\n';
+	std::vector<Point2d> v_polpts( data.vpt.size()-2 );
+
+	std::copy(
+		std::begin(data.vpt)+2,
+		std::end(data.vpt),
+		std::begin(v_polpts)
+	);
+
+std::cout << "v_polpts.size()=" << v_polpts.size() << '\n';
+	data.polyline_c.set(v_polpts);
+	data.polyline_c.draw( data.img, img::DrawParams().showPoints() );
+	Line2d li( data.vpt[0], data.vpt[1] );
+	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
+	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
+
+	li.draw( data.img, img::DrawParams().setColor(0,0,250) );
+
+	auto vpol = data.polyline_c.split(li);
+	auto vcolors = img::genRandomColors( vpol.size() );
+
+	auto it_col= std::begin(vcolors);
+	for( const auto& p: vpol )
+		p.draw( data.img, img::DrawParams().setColor( *it_col++ ) );
 	data.showImage();
 }
 
