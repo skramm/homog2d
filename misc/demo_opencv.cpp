@@ -1072,8 +1072,24 @@ struct Param_polysplit : Data
 	{
 //		v_po.push_back( &polyline_o );
 //		v_po.push_back( &polyline_c );
-	vpt.push_back( Point2d(154,175) );
+		vpt.push_back( Point2d(154,175) );
+
+		cv::namedWindow( win2 );
+		cv::moveWindow( win2, _imWidth, 50 );
+		img2.setSize( _imHeight, _imWidth );
 	}
+	void showImage()
+	{
+		img.show( win1 );
+		img2.show( win2 );
+	}
+	void clearImage()
+	{
+		img.clear();
+		img2.clear();
+	}
+	img::Image<cv::Mat> img2;
+	std::string win2 ="split";
 	OPolyline polyline_o;
 	CPolyline polyline_c;
 //	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
@@ -1085,7 +1101,6 @@ void action_polysplit( void* param )
 	auto& data = *reinterpret_cast<Param_polysplit*>(param);
 
 	data.clearImage();
-std::cout << "data.vpt.size()=" << data.vpt.size() << '\n';
 	std::vector<Point2d> v_polpts( data.vpt.size()-2 );
 
 	std::copy(
@@ -1094,21 +1109,24 @@ std::cout << "data.vpt.size()=" << data.vpt.size() << '\n';
 		std::begin(v_polpts)
 	);
 
-std::cout << "v_polpts.size()=" << v_polpts.size() << '\n';
 	data.polyline_c.set(v_polpts);
-	data.polyline_c.draw( data.img, img::DrawParams().showPoints() );
+
 	Line2d li( data.vpt[0], data.vpt[1] );
+	li.draw( data.img, img::DrawParams().setColor(0,0,250) );
+
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
-	li.draw( data.img, img::DrawParams().setColor(0,0,250) );
 
 	auto vpol = data.polyline_c.split(li);
+	data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
+	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
+
 	auto vcolors = img::genRandomColors( vpol.size() );
 
 	auto it_col= std::begin(vcolors);
 	for( const auto& p: vpol )
-		p.draw( data.img, img::DrawParams().setColor( *it_col++ ) );
+		p.draw( data.img2, img::DrawParams().setColor( *it_col++ ) );
 	data.showImage();
 }
 

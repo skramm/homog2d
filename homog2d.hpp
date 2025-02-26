@@ -6683,13 +6683,15 @@ PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li, bool closedOutput ) const
 {
 	p_normalizePoly();
 	std::vector<PolylineBase<PLT,FPT>> vout;
+std::cout << "\n START, pol=" << *this << '\n';
 
 	size_t current = 0;
 
-	Point2d_<HOMOG2D_INUMTYPE> pt_prev_int; // intersection point
+	Point2d_<HOMOG2D_INUMTYPE> pt_initial_int; // intersection point
 	OSegment_<HOMOG2D_INUMTYPE> seg1;
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpts;
 	bool found = false;
+	bool first = true;
 	size_t nbIntersect = 0;
 	do  // search intersection points
 	{
@@ -6715,7 +6717,11 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			}
 			else
 			{
-				pt_prev_int = pt;
+				if( first )
+				{
+					first = false;
+					pt_initial_int = pt;
+				}
 				found = true;
 				vpts.push_back( pt ); // initial point
 			}
@@ -6731,13 +6737,18 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 	}
 	while( /*!found_first &&*/  current<nbSegs() );
 
-	std::cout << "FINAL seg=" << seg1 << '\n';
+	if( found )
+	{
+		std::cout << "FINAL seg=" << seg1 << '\n';
 //	std::cout << "adding last int point:" << pt_prev_int << '\n';
-	vpts.push_back( seg1.getPts().second );
-	HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-	CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
-	std::cout << "Ajout FINAL de pol:" << pol << '\n';
-	vout.push_back( pol );
+		vpts.push_back( seg1.getPts().second );
+		vpts.push_back( pt_initial_int );
+
+		HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
+		CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
+		std::cout << "Ajout FINAL de pol:" << pol << '\n';
+		vout.push_back( pol );
+	}
 
 	std::cout << "Nb Intersection=" << nbIntersect << '\n';
 	return vout;

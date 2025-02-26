@@ -261,7 +261,7 @@ BUILD/homog2d_test_rtp_%: misc/test_files/homog2d_test_rtp_%.cpp homog2d.hpp bui
 # TMP
 
 test-splitpol: BUILD/test_splitpol
-	@echo "-done target $@"
+	BUILD/test_splitpol
 
 BUILD/test_splitpol: misc/test_files/test_splitpol.cpp homog2d.hpp buildf
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) 2>$@.stderr
