@@ -105,4 +105,19 @@ If the function is unable to find a "good" reference segment after that threshol
 The allowed distance between a given reference segment and one of the points of the polygon is given by `thr::nullDistance()`, that you may also adjust if necessary (see [homog2d_thresholds.md](homog2d_thresholds.md)).
 
 
+# 3 - Polyline splitting by a line
+
+The loop iterates on each of the segments of the polyline and checks if there is an intersection.
+If there has been one previously, then we just add the current point to the current point set vector.
+If not, the loop moves on, but
+  - if there has been an intersection detected previously, we add the current point to current point set vector.
+  - if not, we keep track of the current point (so we can add it to the final set, in case some intersections occured).
+
+At each intersection:
+1 - add the current intersection point to the current point set vector
+2 - Create a new Polyline with that set an push it to the output set
+3 - Clear the current point set vector and add to it the current intersection point
+
+After all the segments have been parsed, we need to add to the output set the final Polyline made of the rest of the points
+
 

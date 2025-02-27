@@ -6720,7 +6720,6 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 					vpts.push_back( pt );  // final point
 				}
 				HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-//				std::cout << "Ajout de pol:" << pol << '\n';
 
 				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);  // create polyline and
 				vout.push_back( pol );                   // push it in the output set

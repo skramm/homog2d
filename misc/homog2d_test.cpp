@@ -3203,6 +3203,32 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 }
 
 
+TEST_CASE( "Polyline split", "[poly-split]" )
+{
+// square centered on 0 plit by vertical/horizontal line at 0,0
+	CPolyline p0( std::vector<Point2d>{ {1,1},{1,-1},{-1,-1},{-1,1} } );
+	{
+		Line2d li( LineDir::H, 0 );
+		CPolyline p1( std::vector<Point2d>{ {-1,0},{-1,1},{1,1},{1,0} } );
+		CPolyline p2( std::vector<Point2d>{ {-1,0},{-1,-1},{1,-1},{1,0} } );
+		std::vector<CPolyline> vpol;
+		vpol.push_back(p1);
+		vpol.push_back(p2);
+		CHECK( p0.split( li ) == vpol );
+	}
+	{
+		Line2d li( LineDir::V, 0 );
+		CPolyline p1( std::vector<Point2d>{ {0,1},{-1,1},{-1,-1},{0,-1} } );
+		CPolyline p2( std::vector<Point2d>{ {0,1},{1,1},{1,-1},{0,-1} } );
+		std::vector<CPolyline> vpol;
+		vpol.push_back(p2);
+		vpol.push_back(p1);
+		CHECK( p0.split( li ) == vpol );
+	}
+
+}
+
+
 TEST_CASE( "Polyline minimization", "[polyline-min]" )
 {
 	INFO( "Polyline pl2( IsClosed::No" );
