@@ -3225,6 +3225,10 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		vpol.push_back(p1);
 		CHECK( p0.split( li ) == vpol );
 	}
+	{
+
+	#include "figures_test/polysplit_01.code"
+	}
 
 }
 

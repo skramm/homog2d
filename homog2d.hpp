@@ -3064,11 +3064,12 @@ public:
 	{
 		return !( *this == other );
 	}
-///@}
 
 	template<typename T>
 	friend std::ostream&
 	operator << ( std::ostream& f, const FRect_<T>& r );
+
+///@}
 
 private:
 	template<typename FPT2>
@@ -3110,6 +3111,13 @@ private:
 	}
 
 public:
+	std::vector<base::PolylineBase<typ::IsClosed,FPT>>
+	split( const Line2d_<FPT>& li, bool closedOutput=false ) const
+	{
+		base::PolylineBase<typ::IsClosed,FPT> pol(*this);
+		return pol.split( li, closedOutput );
+	}
+
 #ifdef HOMOG2D_USE_OPENCV
 	void draw( img::Image<cv::Mat>&,       img::DrawParams dp=img::DrawParams() ) const;
 #endif
@@ -6696,13 +6704,13 @@ std::cout << "\n START, pol=" << *this << '\n';
 // keep track of the encountered points before any intersection is found
 	size_t no_int_points = 0;
 
+//	bool skip_next_point = false;
 	bool found = false;
-	bool first = true;
 	size_t nbIntersect = 0;
 	do  // search intersection points
 	{
 		seg1 = getOSegment(current);
-		auto pt1  = getPoint(current);
+		auto pt1 = getPoint(current);
 std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n';
 
 		auto inters1 = seg1.intersects( li );
@@ -6718,7 +6726,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 				if( seg_init_pt != vpts.front() )
 					vpts.push_back( seg_init_pt );
 
-				if( pt != vpts.front() )
+				if( pt != vpts.back() ) //&& seg1.getLine() != li )
 				{
 					std::cout << "- ajout: " << pt << '\n';
 					vpts.push_back( pt );  // final point
@@ -6735,23 +6743,25 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			}
 			else
 			{
-				if( first )
-				{
-					first = false;
-					pt_initial_int = pt;
-				}
+				pt_initial_int = pt;
 				found = true;
-
 				std::cout << "Création vec, ajout " << pt << '\n';
 				vpts.push_back( pt ); // initial point
 			}
+//			if( !skip_next_point && seg.getLine() == li )  // if line is coincident with segment
+//				skip_next_point = true;
 		}
 		else
 		{
 			if( found )
 			{
-				std::cout << "intersection:N, found=Y, adding " << pt1 << '\n';
-				vpts.push_back( pt1 );
+				std::cout << "intersection:N, found=Y back=" << vpts.back() << "\n";
+				if( pt1 != vpts.back() )
+				{
+					std::cout << " adding " << pt1 << '\n';
+					vpts.push_back( pt1 );
+				}
+
 			}
 			else
 				no_int_points++;

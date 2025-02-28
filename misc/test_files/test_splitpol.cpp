@@ -8,6 +8,7 @@ Build and run with <code>$ make test-splitpol</code>
 */
 
 //#define HOMOG2D_NOCHECKS
+#define HOMOG2D_DEBUGMODE
 
 #include "../../homog2d.hpp"
 
@@ -87,6 +88,29 @@ int main()
 		};
 		Line2d li( LineDir::H, 2 );
 		process( vpts, li );
+	}
+	{
+	std::cout << "\n** TEST FRECT 1" << '\n';
+		FRect r(0,0,2,2);
+		Line2d li( LineDir::H, 1 );
+		auto vpol = r.split(li);
+		priv::printVector( vpol );
+	}
+
+	{
+	std::cout << "\n** TEST FRECT 2" << '\n';
+		FRect r(0,0,2,2);
+		Line2d li( LineDir::H, 2 );
+		auto vpol = r.split(li);
+		priv::printVector( vpol );
+	}
+
+	{
+	std::cout << "\n** TEST FRECT 3" << '\n';
+		FRect r(0,0,2,2);
+		Line2d li( 2,0, 4,2 );
+		auto vpol = r.split(li);
+		priv::printVector( vpol );
 	}
 }
 
