@@ -6713,16 +6713,23 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 			if( found ) // we already had an intersection previously
 			{
 				std::cout << "intersection:Y, found=Y, ajout: " << seg1.getPts().first << '\n';
-				vpts.push_back( seg1.getPts().first );
+
+				auto seg_init_pt = seg1.getPts().first;
+				if( seg_init_pt != vpts.front() )
+					vpts.push_back( seg_init_pt );
+
 				if( pt != vpts.front() )
 				{
 					std::cout << "- ajout: " << pt << '\n';
 					vpts.push_back( pt );  // final point
 				}
-				HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-
-				CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);  // create polyline and
-				vout.push_back( pol );                   // push it in the output set
+				HOMOG2D_ASSERT( vpts.size()>0 );
+				CPolyline_<HOMOG2D_INUMTYPE> pol;
+				if( vpts.size()>2 )
+				{
+					pol.set(vpts);  // create polyline and
+					vout.push_back( pol );                   // push it in the output set
+				}
 				vpts.clear();          // start again and add intersection point
 				vpts.push_back( pt ); // as first of the set
 			}
