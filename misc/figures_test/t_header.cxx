@@ -3,7 +3,7 @@
 
 //#define HOMOG2D_DEBUGMODE
 
-#include "../../homog2d.hpp"
+#include "../../../homog2d.hpp"
 
 #define NUMTYPE double
 
