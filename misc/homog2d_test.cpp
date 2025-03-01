@@ -3214,7 +3214,7 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		std::vector<CPolyline> vpol;
 		vpol.push_back(p1);
 		vpol.push_back(p2);
-		CHECK( p0.split( li ) == vpol );
+		CHECK( p0.splitC( li ) == vpol );
 	}
 	{
 		Line2d li( LineDir::V, 0 );
@@ -3223,23 +3223,69 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		std::vector<CPolyline> vpol;
 		vpol.push_back(p2);
 		vpol.push_back(p1);
-		CHECK( p0.split( li ) == vpol );
+		CHECK( p0.splitC( li ) == vpol );
 	}
 	{
 	#include "figures_test/polysplit_01.code"
 		std::vector<CPolyline> vpol;
 		vpol.push_back(p1);
 		vpol.push_back(p2);
-		CHECK( pol.split( li ) == vpol );
+		CHECK( pol.splitC( li ) == vpol );
 	}
 	{
 	#include "figures_test/polysplit_02.code"
 		std::vector<CPolyline> vpol;
 		vpol.push_back(p1);
 		vpol.push_back(p2);
-		CHECK( pol.split( li ) == vpol );
+		CHECK( pol.splitC( li ) == vpol );
+
+		li.translate(0,2);
+		vpol.clear();                        // if line if colinear with top segment,
+		vpol.push_back(pol);                 // then output polygon is equal to input
+		CHECK( pol.splitC( li ).size() == 1 );
+		CHECK( pol.splitC( li ) == vpol );
 	}
 
+}
+
+template<typename LINE,typename VEC>
+void
+rectSplit_helper( const LINE& li, const VEC& v1, const VEC& v2 )
+{
+	FRect_<NUMTYPE> r(0,0,2,2);
+	auto vpol = r.split( li );
+	CHECK( vpol.size() == 2 );
+	CHECK( vpol[0] == OPolyline_<NUMTYPE>( v1 ) );
+	CHECK( vpol[1] == OPolyline_<NUMTYPE>( v2 ) );
+
+	auto vpolc = r.splitC( li );
+	CHECK( vpolc.size() == 2 );
+	CHECK( vpolc[0] == CPolyline_<NUMTYPE>( v1 ) );
+	CHECK( vpolc[1] == CPolyline_<NUMTYPE>( v2 ) );
+}
+
+TEST_CASE( "FRect split", "[frect-split]" )
+{
+	Point2d_<NUMTYPE> pt00(0,0);
+	Point2d_<NUMTYPE> pt22(2,2);
+	Point2d_<NUMTYPE> pt20(2,0);
+	Point2d_<NUMTYPE> pt02(0,2);
+	Point2d_<NUMTYPE> pt01(0,1);
+	Point2d_<NUMTYPE> pt10(1,0);
+	Point2d_<NUMTYPE> pt21(2,1);
+	Point2d_<NUMTYPE> pt12(1,2);
+	{
+		Line2d_<NUMTYPE> li( LineDir::V, 1 );
+		auto v1 = std::vector<Point2d_<NUMTYPE>>{ pt10,pt00,pt02,pt12};
+		auto v2 = std::vector<Point2d_<NUMTYPE>>{ pt10,pt00,pt02,pt12};
+		rectSplit_helper( li, v1, v2 );
+	}
+	{
+		Line2d_<NUMTYPE> li( LineDir::H, 1 );
+		auto v1 = std::vector<Point2d_<NUMTYPE>>{ pt01,pt00,pt20,pt21};
+		auto v2 = std::vector<Point2d_<NUMTYPE>>{ pt01,pt02,pt22,pt21};
+		rectSplit_helper( li, v1, v2 );
+	}
 }
 
 

@@ -3111,11 +3111,20 @@ private:
 	}
 
 public:
-	std::vector<base::PolylineBase<typ::IsClosed,FPT>>
-	split( const Line2d_<FPT>& li, bool closedOutput=false ) const
+	template<typename FPT2>
+	std::vector<CPolyline_<FPT>>
+	splitC( const Line2d_<FPT2>& li ) const
 	{
-		base::PolylineBase<typ::IsClosed,FPT> pol(*this);
-		return pol.split( li, closedOutput );
+		CPolyline_<FPT> pol(*this);
+		return pol.split( li );
+	}
+
+	template<typename FPT2>
+	std::vector<OPolyline_<FPT>>
+	split( const Line2d_<FPT2>& li ) const
+	{
+		OPolyline_<FPT> pol(*this);
+		return pol.split( li );
 	}
 
 #ifdef HOMOG2D_USE_OPENCV
@@ -6514,10 +6523,14 @@ Also use the areCollinear() function
 	std::pair<HOMOG2D_INUMTYPE,HOMOG2D_INUMTYPE>
 	set( FPT2 rad, T n );
 
-/// Split Polyline by line
+
 	template<typename FPT2>
-	std::vector<PolylineBase<PLT,FPT>>
-	split( const Line2d_<FPT2>&, bool closedOutput=false ) const;
+	std::vector<CPolyline_<FPT>>
+	splitC( const Line2d_<FPT2>& ) const;
+
+	template<typename FPT2>
+	std::vector<OPolyline_<FPT>>
+	split( const Line2d_<FPT2>& ) const;
 
 ///@}
 
@@ -6683,14 +6696,29 @@ public:
 
 
 //------------------------------------------------------------------
-/// Split Polyline by line
+/// Split Polyline by line, return vector of CPolyline
 template<typename PLT,typename FPT>
 template<typename FPT2>
-std::vector<PolylineBase<PLT,FPT>>
-PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li, bool closedOutput ) const
+std::vector<CPolyline_<FPT>>
+PolylineBase<PLT,FPT>::splitC( const Line2d_<FPT2>& li ) const
+{
+	auto vpol = split(li); // get set of OPolyline
+
+	std::vector<CPolyline_<FPT>> out( vpol.size() );
+	auto it = std::begin( out );
+	for( const auto& pol: vpol ) // convert each of them to a CPolyline
+		*it++ = pol;
+	return out;
+}
+//------------------------------------------------------------------
+/// Split Polyline by line, return vector of OPolyline
+template<typename PLT,typename FPT>
+template<typename FPT2>
+std::vector<OPolyline_<FPT>>
+PolylineBase<PLT,FPT>::split( const Line2d_<FPT2>& li ) const
 {
 	p_normalizePoly();
-	std::vector<PolylineBase<PLT,FPT>> vout;
+	std::vector<OPolyline_<FPT>> vout;
 std::cout << "\n START, pol=" << *this << '\n';
 
 	size_t current = 0;
@@ -6704,7 +6732,6 @@ std::cout << "\n START, pol=" << *this << '\n';
 // keep track of the encountered points before any intersection is found
 	size_t no_int_points = 0;
 
-//	bool skip_next_point = false;
 	bool found = false;
 	size_t nbIntersect = 0;
 	do  // search intersection points
@@ -6732,7 +6759,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 					vpts.push_back( pt );  // final point
 				}
 				HOMOG2D_ASSERT( vpts.size()>0 );
-				CPolyline_<HOMOG2D_INUMTYPE> pol;
+				OPolyline_<HOMOG2D_INUMTYPE> pol;
 				if( vpts.size()>2 )
 				{
 					pol.set(vpts);  // create polyline and
@@ -6787,7 +6814,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		}
 
 		HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-		CPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
+		OPolyline_<HOMOG2D_INUMTYPE> pol(vpts);
 		std::cout << "Ajout FINAL de pol:" << pol << '\n';
 		vout.push_back( pol );
 	}
