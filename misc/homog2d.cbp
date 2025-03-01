@@ -144,9 +144,11 @@
 		<Unit filename="figures_test/polyline_min_2O.code" />
 		<Unit filename="figures_test/polyline_min_3C.code" />
 		<Unit filename="figures_test/polyline_min_3O.code" />
+		<Unit filename="figures_test/polysplit_01.code" />
 		<Unit filename="figures_test/readme.txt" />
 		<Unit filename="figures_test/t_footer_frect_1.cxx" />
 		<Unit filename="figures_test/t_footer_polyline_1.cxx" />
+		<Unit filename="figures_test/t_footer_polysplit_1.cxx" />
 		<Unit filename="figures_test/t_header.cxx" />
 		<Unit filename="gitlog.sh">
 			<Option target="&lt;{~None~}&gt;" />

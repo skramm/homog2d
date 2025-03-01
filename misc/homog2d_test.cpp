@@ -3226,8 +3226,18 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		CHECK( p0.split( li ) == vpol );
 	}
 	{
-
 	#include "figures_test/polysplit_01.code"
+		std::vector<CPolyline> vpol;
+		vpol.push_back(p1);
+		vpol.push_back(p2);
+		CHECK( pol.split( li ) == vpol );
+	}
+	{
+	#include "figures_test/polysplit_02.code"
+		std::vector<CPolyline> vpol;
+		vpol.push_back(p1);
+		vpol.push_back(p2);
+		CHECK( pol.split( li ) == vpol );
 	}
 
 }

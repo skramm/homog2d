@@ -349,7 +349,7 @@ test-fig: $(TEST_FIG_SVG)
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
 BUILD/figures_test/%.svg: BUILD/figures_test/bin/%
 	@echo "Running $<"
-	@./$<
+	@$<
 #	@mogrify -flip $<.png
 
 # build the program from source
