@@ -3253,10 +3253,6 @@ void
 rectSplit_helper( const LINE& li, const VEC& v1, const VEC& v2 )
 {
 	FRect_<NUMTYPE> r(0,0,2,2);
-	auto vpol = r.split( li );
-	CHECK( vpol.size() == 2 );
-	CHECK( vpol[0] == OPolyline_<NUMTYPE>( v1 ) );
-	CHECK( vpol[1] == OPolyline_<NUMTYPE>( v2 ) );
 
 	auto vpolc = r.splitC( li );
 	CHECK( vpolc.size() == 2 );

@@ -1122,7 +1122,7 @@ void action_polysplit( void* param )
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
-	auto vpol = data.polyline_c.split(li);
+	auto vpol = data.polyline_c.splitC(li);
 	data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
 	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
 
