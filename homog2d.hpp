@@ -6091,8 +6091,7 @@ class PolylineBase: public detail::Common<FPT>
 {
 public:
 	using FType = FPT;
-//	using PType = PLT;
-	using SType = std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
+	using SType = PLT; //std::conditional<std::is_same_v<PLT,typ::IsClosed>,typ::T_CPol,typ::T_OPol>;
 
 	using detail::Common<FPT>::isInside;
 
@@ -6589,7 +6588,7 @@ public:
 			if( size() != other.size() )          // for quick exit
 				return false;
 
-			p_normalizePoly();
+			this->p_normalizePoly();
 			other.p_normalizePoly();
 
 			auto it = other._plinevec.begin();
@@ -6607,6 +6606,10 @@ public:
 	{
 		return !( *this == other );
 	}
+
+	template<typename FPT2>
+	bool operator < ( const PolylineBase<PLT,FPT2>& other ) const;
+
 ///@}
 
 /// Polyline intersection with Line, Segment, FRect, Circle
@@ -6710,6 +6713,24 @@ public:
 
 }; // class PolylineBase
 
+
+//------------------------------------------------------------------
+template<typename PLT,typename FPT>
+template<typename FPT2>
+bool
+PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
+{
+	if( *this == other ) // this also normalises both of the polylines
+		return false;
+
+// up to here, we have the guarantee that they both have the same size
+	auto it2 = other._plinevec.begin();
+	for( const auto& pt: _plinevec )
+		if( pt < *it2++ )
+			return true;
+
+	return false;
+}
 
 //------------------------------------------------------------------
 /// Split Polyline by line, return vector of OPolyline or CPolyline (private member function)

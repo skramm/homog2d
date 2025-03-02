@@ -3182,6 +3182,36 @@ TEST_CASE( "FRect diagonals", "[frect-diags]" )
 	CHECK( psegs1.second == Segment(0,1,1,0) );
 }
 
+TEST_CASE( "Polyline sorting", "[polyline-sort]" )
+{
+	OPolyline opl1, opl2;
+	CHECK( !(opl1 < opl2) );
+	CPolyline cpl1, cpl2;
+	CHECK( !(cpl1 < cpl2) );
+
+	{
+		std::vector<Point2d> v1{ {0,0}, {1,1} };
+		std::vector<Point2d> v2{ {0,0}, {1,1} };
+		opl1.set( v1 );
+		opl2.set( v2 );
+		cpl1.set( v1 );
+		cpl2.set( v2 );
+		CHECK( !(opl1 < opl2) );
+		CHECK( !(cpl1 < cpl2) );
+	}
+	{
+		std::vector<Point2d> v1{ {0,0}, {1,1} };
+		std::vector<Point2d> v2{ {0,0}, {1,2} };
+		opl1.set( v1 );
+		opl2.set( v2 );
+		cpl1.set( v1 );
+		cpl2.set( v2 );
+		CHECK( opl1 < opl2 );
+		CHECK( cpl1 < cpl2 );
+	}
+}
+
+
 TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 {
 	std::vector<Point2d_<NUMTYPE>> vpt1{ {0,0}, {1,0}, {1,1}        };
@@ -3210,10 +3240,21 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 */
 template<typename LI,typename PIN,typename OUT>
 void
-polySplit_helper_2( const LI& li, const PIN& in, const OUT& out )
+polySplit_helper_2( const LI& li, const PIN& pin, OUT& out )
 {
-	CHECK( in.splitC( li ) == out );
-	CHECK( in.size() == out.size() );
+	std::sort( std::begin(out), std::end(out) );
+	if constexpr( std::is_same_v<typename OUT::value_type::SType,typ::IsClosed> )
+	{
+		auto split = pin.splitC( li );
+		std::sort( std::begin(split), std::end(split) );
+		CHECK( split == out );
+	}
+	else
+	{
+		auto split = pin.splitO( li );
+		std::sort( std::begin(split), std::end(split) );
+		CHECK( split == out );
+	}
 }
 
 /// Helper function for test case \c [poly-split]

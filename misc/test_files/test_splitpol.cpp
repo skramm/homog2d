@@ -19,7 +19,7 @@ void process( const PTS& vpts, const LI& li )
 	static int c;
 	std::cout << "\n** TEST " << ++c << '\n';
 	CPolyline pol(vpts);
-	auto res = pol.split(li);
+	auto res = pol.splitC(li);
 	std::cout << "\n* RESULTAT, size=" << res.size() << '\n';
 	for( const auto& p: res )
 		std::cout << p << '\n';
@@ -27,6 +27,18 @@ void process( const PTS& vpts, const LI& li )
 
 int main()
 {
+// test sorting
+	{
+		CPolyline pol1( std::vector<Point2d>{ {0,0},{10,10},{20,0} } );
+		CPolyline pol2( std::vector<Point2d>{ {1,0},{10,10},{20,0} } );
+		assert( pol1<pol2 );
+	}
+	{
+		CPolyline pol1( std::vector<Point2d>{ {0,0},{10,10},{20,0} } );
+		CPolyline pol2( std::vector<Point2d>{ {0,0},{10,10},{20,0} } );
+		assert( pol1<pol2 );
+	}
+
 	{
 		std::vector<Point2d> vpts{
 			{0,0},{10,10},{20,0}
@@ -93,7 +105,7 @@ int main()
 	std::cout << "\n** TEST FRECT 1" << '\n';
 		FRect r(0,0,2,2);
 		Line2d li( LineDir::H, 1 );
-		auto vpol = r.split(li);
+		auto vpol = r.splitC(li);
 		priv::printVector( vpol );
 	}
 
@@ -101,7 +113,7 @@ int main()
 	std::cout << "\n** TEST FRECT 2" << '\n';
 		FRect r(0,0,2,2);
 		Line2d li( LineDir::H, 2 );
-		auto vpol = r.split(li);
+		auto vpol = r.splitC(li);
 		priv::printVector( vpol );
 	}
 
@@ -109,7 +121,7 @@ int main()
 	std::cout << "\n** TEST FRECT 3" << '\n';
 		FRect r(0,0,2,2);
 		Line2d li( 2,0, 4,2 );
-		auto vpol = r.split(li);
+		auto vpol = r.splitC(li);
 		priv::printVector( vpol );
 	}
 }
