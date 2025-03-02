@@ -4180,6 +4180,8 @@ public:
 			_v[2] = 1.;
 			p_normalizePL();
 		}
+		else
+			HOMOG2D_LOG_WARNING( "Function call does nothing!" );
 	}
 
 /// Translate Point2d, does nothing for Line2d
@@ -6711,12 +6713,14 @@ public:
 
 //------------------------------------------------------------------
 /// Split Polyline by line, return vector of OPolyline or CPolyline (private member function)
+/**
+PT: output type of polyline: typ::IsClosed or typ::IsOpen
+*/
 template<typename PLT,typename FPT>
-template<typename PT,typename FPT2> // PT: output type of polyline: typ::IsClosed or typ::IsOpen
+template<typename PT,typename FPT2>
 auto
 PolylineBase<PLT,FPT>::p_split( const Line2d_<FPT2>& li, const PT& ) const
 {
-
 	p_normalizePoly();
 	std::vector<PolylineBase<PT,FPT>> vout;
 std::cout << "\n START, pol=" << *this << '\n';

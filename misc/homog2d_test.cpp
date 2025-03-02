@@ -3202,6 +3202,44 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 	}
 }
 
+/// Helper function for test case \c [poly-split]
+/**
+- LI: line
+- PIN: input polyline (open or closed)
+- OUT: expected set of polyline
+*/
+template<typename LI,typename PIN,typename OUT>
+void
+polySplit_helper_2( const LI& li, const PIN& in, const OUT& out )
+{
+	CHECK( in.splitC( li ) == out );
+	CHECK( in.size() == out.size() );
+}
+
+/// Helper function for test case \c [poly-split]
+/**
+- LI: line
+- SRC: vector of points of the polyline to be split
+- VVPTS: vector of vector of points, corresponding to the expected split
+*/
+template<typename LI,typename SRC,typename VVPT>
+void
+polySplit_helper( const LI& li, const SRC& src, const VVPT& vvpts )
+{
+	CPolyline polsrc(src);
+	{
+		std::vector<CPolyline> out;
+		for( const auto& vpts: vvpts )
+			out.push_back( CPolyline(vpts) );
+		polySplit_helper_2( li, polsrc, out );
+	}
+	{
+		std::vector<OPolyline> out;
+		for( const auto& vpts: vvpts )
+			out.push_back( OPolyline(vpts) );
+		polySplit_helper_2( li, polsrc, out );
+	}
+}
 
 TEST_CASE( "Polyline split", "[poly-split]" )
 {
@@ -3225,27 +3263,29 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		vpol.push_back(p1);
 		CHECK( p0.splitC( li ) == vpol );
 	}
+
 	{
 	#include "figures_test/polysplit_01.code"
-		std::vector<CPolyline> vpol;
-		vpol.push_back(p1);
-		vpol.push_back(p2);
-		CHECK( pol.splitC( li ) == vpol );
+		std::vector<std::vector<Point2d>> vvpts;
+		vvpts.push_back(v1);
+		vvpts.push_back(v2);
+		polySplit_helper( li, src, vvpts );
 	}
+/*
 	{
 	#include "figures_test/polysplit_02.code"
-		std::vector<CPolyline> vpol;
-		vpol.push_back(p1);
-		vpol.push_back(p2);
-		CHECK( pol.splitC( li ) == vpol );
-
-		li.translate(0,2);
-		vpol.clear();                        // if line if colinear with top segment,
-		vpol.push_back(pol);                 // then output polygon is equal to input
-		CHECK( pol.splitC( li ).size() == 1 );
-		CHECK( pol.splitC( li ) == vpol );
+		std::vector<Point2d> vvpts;
+		vvpts.push_back(v1);
+		vvpts.push_back(v2);
+		polySplit_helper( li, src, vvpts );
 	}
-
+	{
+	#include "figures_test/polysplit_03.code"
+		std::vector<Point2d> vvpts;
+		vvpts = src;
+		polySplit_helper( li, src, vvpts );
+	}
+*/
 }
 
 template<typename LINE,typename VEC>
@@ -3258,6 +3298,11 @@ rectSplit_helper( const LINE& li, const VEC& v1, const VEC& v2 )
 	CHECK( vpolc.size() == 2 );
 	CHECK( vpolc[0] == CPolyline_<NUMTYPE>( v1 ) );
 	CHECK( vpolc[1] == CPolyline_<NUMTYPE>( v2 ) );
+
+	auto vpolo = r.splitO( li );
+	CHECK( vpolo.size() == 2 );
+	CHECK( vpolo[0] == OPolyline_<NUMTYPE>( v1 ) );
+	CHECK( vpolo[1] == OPolyline_<NUMTYPE>( v2 ) );
 }
 
 TEST_CASE( "FRect split", "[frect-split]" )

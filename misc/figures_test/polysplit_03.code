@@ -1,5 +1,5 @@
 // input
-	Line2d li( LineDir::H, 2 );
+	Line2d li( LineDir::H, 4 );
 	std::vector<Point2d> src{ {4,0},{0,4},{6,4},{6,0} };
 
 // output

@@ -1,12 +1,7 @@
-
-	CPolyline pol(std::vector<Point2d>{
-			{0,0},{4,4},{6,4},{6,0}
-		});
+// input
 	Line2d li( LineDir::H, 2 );
+	std::vector<Point2d> src{ {0,0},{4,4},{6,4},{6,0} };
 
-	CPolyline p1(std::vector<Point2d>{
-			{2,2},{4,4},{6,4},{6,2}
-	});
-	CPolyline p2(std::vector<Point2d>{
-			{2,2},{0,0},{6,0},{6,2}
-	});
+// output
+	std::vector<Point2d> v1{ {2,2},{4,4},{6,4},{6,2} };
+	std::vector<Point2d> v2{ {2,2},{0,0},{6,0},{6,2} };
