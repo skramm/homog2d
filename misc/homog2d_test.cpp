@@ -3312,21 +3312,25 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		vvpts.push_back(v2);
 		polySplit_helper( li, src, vvpts );
 	}
-/*
+
 	{
 	#include "figures_test/polysplit_02.code"
-		std::vector<Point2d> vvpts;
+		std::vector<std::vector<Point2d>> vvpts;
 		vvpts.push_back(v1);
 		vvpts.push_back(v2);
 		polySplit_helper( li, src, vvpts );
 	}
 	{
 	#include "figures_test/polysplit_03.code"
-		std::vector<Point2d> vvpts;
-		vvpts = src;
+		std::vector<std::vector<Point2d>> vvpts;
+		vvpts.push_back(src);
 		polySplit_helper( li, src, vvpts );
 	}
-*/
+	{
+	#include "figures_test/polysplit_04.code"
+		std::vector<std::vector<Point2d>> vvpts; // empty, because single contact point
+		polySplit_helper( li, src, vvpts );
+	}
 }
 
 template<typename LINE,typename VEC>
@@ -3337,13 +3341,13 @@ rectSplit_helper( const LINE& li, const VEC& v1, const VEC& v2 )
 
 	auto vpolc = r.splitC( li );
 	CHECK( vpolc.size() == 2 );
-	CHECK( vpolc[0] == CPolyline_<NUMTYPE>( v1 ) );
-	CHECK( vpolc[1] == CPolyline_<NUMTYPE>( v2 ) );
+	CHECK( vpolc[0] == CPolyline_<NUMTYPE>( v2 ) );
+	CHECK( vpolc[1] == CPolyline_<NUMTYPE>( v1 ) );
 
 	auto vpolo = r.splitO( li );
 	CHECK( vpolo.size() == 2 );
-	CHECK( vpolo[0] == OPolyline_<NUMTYPE>( v1 ) );
-	CHECK( vpolo[1] == OPolyline_<NUMTYPE>( v2 ) );
+	CHECK( vpolo[0] == OPolyline_<NUMTYPE>( v2 ) );
+	CHECK( vpolo[1] == OPolyline_<NUMTYPE>( v1 ) );
 }
 
 TEST_CASE( "FRect split", "[frect-split]" )
