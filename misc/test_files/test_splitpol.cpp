@@ -27,6 +27,16 @@ void process( const PTS& vpts, const LI& li )
 
 int main()
 {
+
+	{
+	std::cout << "\n** TEST FRECT 2" << '\n';
+		FRect r(0,0,2,2);
+		Line2d li( LineDir::H, 2 );
+		auto vpol = r.splitC(li);
+		priv::printVector( vpol );
+	}
+	std::exit(0);
+
 // test sorting
 	{
 		CPolyline pol1( std::vector<Point2d>{ {0,0},{10,10},{20,0} } );

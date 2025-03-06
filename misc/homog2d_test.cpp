@@ -3237,11 +3237,15 @@ TEST_CASE( "Polyline comparison 1", "[polyline-comparison-1]" )
 - LI: line
 - PIN: input polyline (open or closed)
 - OUT: expected set of polyline
+
+Both of the polygon sets, the one expected and the one produced by the 'split()' function, are first sorted,
+to avoid tests failure due to an order issue.
 */
 template<typename LI,typename PIN,typename OUT>
 void
 polySplit_helper_2( const LI& li, const PIN& pin, OUT& out )
 {
+
 	std::sort( std::begin(out), std::end(out) );
 	if constexpr( std::is_same_v<typename OUT::value_type::SType,typ::IsClosed> )
 	{
@@ -3339,12 +3343,12 @@ rectSplit_helper( const LINE& li, const VEC& v1, const VEC& v2 )
 {
 	FRect_<NUMTYPE> r(0,0,2,2);
 
-	auto vpolc = r.splitC( li );
+	auto vpolc = r.splitC( li );    // split into closed polyline
 	CHECK( vpolc.size() == 2 );
 	CHECK( vpolc[0] == CPolyline_<NUMTYPE>( v2 ) );
 	CHECK( vpolc[1] == CPolyline_<NUMTYPE>( v1 ) );
 
-	auto vpolo = r.splitO( li );
+	auto vpolo = r.splitO( li );    // split into open polyline
 	CHECK( vpolo.size() == 2 );
 	CHECK( vpolo[0] == OPolyline_<NUMTYPE>( v2 ) );
 	CHECK( vpolo[1] == OPolyline_<NUMTYPE>( v1 ) );
@@ -3371,6 +3375,11 @@ TEST_CASE( "FRect split", "[frect-split]" )
 		auto v1 = std::vector<Point2d_<NUMTYPE>>{ pt01,pt00,pt20,pt21};
 		auto v2 = std::vector<Point2d_<NUMTYPE>>{ pt01,pt02,pt22,pt21};
 		rectSplit_helper( li, v1, v2 );
+	}
+	{
+		Line2d_<NUMTYPE> li( LineDir::H, 3 );
+		CHECK( r.splitC( li ).size() == 0 );
+		CHECK( r.splitO( li ).size() == 0 );
 	}
 }
 

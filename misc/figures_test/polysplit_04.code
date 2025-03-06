@@ -1,3 +1,5 @@
+// line touching one point of the polygon
+
 // input
 	Line2d li( LineDir::V, 0 );
 	std::vector<Point2d> src{ {4,0},{0,4},{6,4},{6,0} };

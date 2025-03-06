@@ -6563,6 +6563,7 @@ private:
 					"cannot add two consecutive identical points:\npt:"
 					<< elem << " and pt:" << next
 					<< " in set of size " << pts.size()
+					<< "\n-distance=" << std::scientific << elem.distTo(next)
 				);
 		}
 		if( pts.front() == pts.back() )
@@ -6570,6 +6571,7 @@ private:
 				"cannot add first point equal to last point:\npt:"
 				<< pts.front()
 				<< " in set of size " << pts.size()
+				<< "\n-distance=" << std::scientific << pts.front().distTo(pts.back())
 			);
 	}
 
