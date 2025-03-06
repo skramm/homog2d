@@ -2,8 +2,8 @@
 
 // input
 	Line2d li( LineDir::H, 4 );
-	std::vector<Point2d> src{ {4,0},{0,4},{6,4},{6,0} };
+	vector<Point2d> src{ {4,0},{0,4},{6,4},{6,0} };
 
-// output
-	std::vector<Point2d> v1{ {2,2},{4,0},{6,0},{6,2} };
-	std::vector<Point2d> v2{ {2,2},{0,4},{6,4},{6,2} };
+// output: nothing to split, empty vectors
+	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
+

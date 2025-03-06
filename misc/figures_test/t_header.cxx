@@ -8,6 +8,11 @@
 #define NUMTYPE double
 
 using namespace h2d;
+using namespace std;
+
+// forward declaration, only for polyline splitting
+template<typename IMG,typename TYPE,typename VVPTS>
+void drawSplit( IMG& img, TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string fname );
 
 template<typename IMG,typename HOMOG>
 void drawGrid( IMG& img, const HOMOG& H )
@@ -37,7 +42,7 @@ void drawGrid( IMG& img, const HOMOG& H )
 
 int main( int argc, const char** argv )
 {
-	img::Image<img::SvgImage> img2(350,400);
+	img::Image<img::SvgImage> img2(400,400);
 
 //#ifdef HOMOG2D_DEBUGMODE
 //	std::cout << "file: " << __FILE__ << '\n';

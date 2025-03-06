@@ -6821,6 +6821,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 	}
 	while(  current<nbSegs() );
 
+// done all the segments, now we process the "final" polyline
 	if( found )
 	{
 		std::cout << "Adding points up to " << no_int_points << '\n';
