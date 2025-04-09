@@ -1,0 +1,14 @@
+// line intersecting polygon
+
+// input
+	Line2d li( LineDir::H, 2 );
+	vector<Point2d> src{ {4,4},{6,4},{6,0},{0,0} };
+
+// output
+	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
+
+	vv_pts_O.push_back( vector<Point2d>{ {4,4},{6,4},{6,2} });
+	vv_pts_O.push_back( vector<Point2d>{ {6,2},{6,0},{0,0} });
+
+	vv_pts_C.push_back( vector<Point2d>{ {2,2},{0,0},{6,0},{6,2} });
+	vv_pts_C.push_back( vector<Point2d>{ {2,2},{4,4},{6,4},{6,2} });
