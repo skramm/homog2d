@@ -11,8 +11,8 @@ using namespace h2d;
 using namespace std;
 
 // forward declaration, only for polyline splitting
-template<typename IMG,typename TYPE,typename VVPTS>
-void drawSplit( IMG& img, TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string fname );
+template<typename TYPE,typename VVPTS>
+void drawSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string, string );
 
 template<typename IMG,typename HOMOG>
 void drawGrid( IMG& img, const HOMOG& H )

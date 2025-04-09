@@ -342,15 +342,21 @@ doc-fig-tex: $(TEX_FIG_PNG)
 
 TEST_FIG_LOC=misc/figures_test
 TEST_FIG_SRC=$(wildcard $(TEST_FIG_LOC)/*.code)
-TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/%.svg, $(TEST_FIG_SRC))
+TEST_FIG_SVG=$(patsubst $(TEST_FIG_LOC)/%.code,BUILD/figures_test/bin/%.svg, $(TEST_FIG_SRC))
 
 test-fig: $(TEST_FIG_SVG)
+	mkdir -p BUILD/figures_test/out/
+	mv BUILD/figures_test/bin/*.svg BUILD/figures_test/out/
 
 # run the program to produce image, and flip it vertically (so vertical axis is going up)
-BUILD/figures_test/%.svg: BUILD/figures_test/bin/%
+BUILD/figures_test/bin/%.svg: BUILD/figures_test/bin/%
 	@echo "Running $<"
 	@$<
 #	@mogrify -flip $<.png
+
+#BUILD/figures_test/out/%.svg: BUILD/figures_test/bin/%.svg
+#	@mkdir -p BUILD/figures_test/out/
+#	@mv $< $@
 
 # build the program from source
 BUILD/figures_test/bin/%: BUILD/figures_test/src/%.cpp
