@@ -9,3 +9,7 @@
 
 	vv_pts_C.push_back( vector<Point2d>{ {2,2},{4,0},{6,0},{6,2} });
 	vv_pts_C.push_back( vector<Point2d>{ {2,2},{0,4},{6,4},{6,2} });
+
+	vv_pts_O.push_back( vector<Point2d>{ {2,2},{4,0} });
+	vv_pts_O.push_back( vector<Point2d>{ {2,2},{0,4},{6,4},{6,2} });
+	vv_pts_O.push_back( vector<Point2d>{ {6,2},{6,0} });
