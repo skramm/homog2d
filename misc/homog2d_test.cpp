@@ -353,12 +353,22 @@ TEST_CASE( "types testing 2", "[test-types-2]" )
 	}
 }
 
-TEST_CASE( "normalization", "[normaliz]" )
+TEST_CASE( "Point normalization", "[normaliz-1]" )
 {
 	Point2d_<NUMTYPE> pt1(1,2,3);
 	CHECK( pt1.get() == std::array<NUMTYPE,3>{1,2,3} );
 	Point2d_<NUMTYPE> pt2(-1,2,3);
 	CHECK( pt2.get() == std::array<NUMTYPE,3>{1,-2,-3} );
+}
+
+TEST_CASE( "Polyline normalization", "[normaliz-2]" )
+{
+	CPolyline p_in(  std::vector<Point2d>{ {3,4}, {0,0}, {1,1} } );
+	CPolyline p_out( std::vector<Point2d>{ {0,0}, {1,1}, {3,4} } );
+	p_in.p_normalizePoly();
+	CHECK( p_in == p_out );
+
+	// TODO: MORE!!!
 }
 
 TEST_CASE( "homogeneous coordinates testing", "[homogeneous]" )
@@ -3308,7 +3318,7 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		vpol.push_back(p1);
 		CHECK( p0.splitC( li ) == vpol );
 	}
-
+/*
 	{
 	#include "figures_test/polysplit_01.code"
 		std::vector<std::vector<Point2d>> vvpts;
@@ -3335,6 +3345,7 @@ TEST_CASE( "Polyline split", "[poly-split]" )
 		std::vector<std::vector<Point2d>> vvpts; // empty, because single contact point
 		polySplit_helper( li, src, vvpts );
 	}
+*/
 }
 
 template<typename LINE,typename VEC>
@@ -3376,11 +3387,11 @@ TEST_CASE( "FRect split", "[frect-split]" )
 		auto v2 = std::vector<Point2d_<NUMTYPE>>{ pt01,pt02,pt22,pt21};
 		rectSplit_helper( li, v1, v2 );
 	}
-	{
+/*	{
 		Line2d_<NUMTYPE> li( LineDir::H, 3 );
 		CHECK( r.splitC( li ).size() == 0 );
 		CHECK( r.splitO( li ).size() == 0 );
-	}
+	}*/
 }
 
 

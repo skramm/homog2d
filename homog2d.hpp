@@ -157,7 +157,9 @@ See https://github.com/skramm/homog2d
 #ifndef HOMOG2D_NOWARNINGS
 #define HOMOG2D_LOG_WARNING( a ) \
 	if( err::printWarnings() == true ) \
-		std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ << ": " << a << "\n";
+		std::cerr << "homog2d warning (" << ++err::warningCount() << "), l. " << __LINE__ \
+			<< ", function '" << __FUNCTION__ << "()':\n" \
+			<< a << "\n";
 #else
 #define HOMOG2D_LOG_WARNING
 #endif
@@ -4181,7 +4183,7 @@ public:
 			p_normalizePL();
 		}
 		else
-			HOMOG2D_LOG_WARNING( "Function call does nothing!" );
+			HOMOG2D_LOG_WARNING( "Function call does nothing, called on line!" );
 	}
 
 /// Translate Point2d, does nothing for Line2d
@@ -6694,7 +6696,11 @@ Sfinae should resolve ONLY for CPolyline
 	bool isNormalized() const { return _plIsNormalized; }
 #endif
 
+#ifdef HOMOG2D_TEST_MODE
+public:
+#else
 private:
+#endif
 	void p_normalizePoly() const;
 
 public:
@@ -6717,11 +6723,15 @@ public:
 
 
 //------------------------------------------------------------------
+/// This is needed for the polyline splitting code
 template<typename PLT,typename FPT>
 template<typename FPT2>
 bool
 PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 {
+	if( this->size() < other.size() )
+		return true;
+
 	if( *this == other ) // this also normalises both of the polylines
 		return false;
 
@@ -6737,15 +6747,16 @@ PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 //------------------------------------------------------------------
 /// Split Polyline by line, return vector of OPolyline or CPolyline (private member function)
 /**
-PT: output type of polyline: typ::IsClosed or typ::IsOpen
+- PTI: type of input polyline
+- PTO: type of output polyline: typ::IsClosed or typ::IsOpen
 */
-template<typename PLT,typename FPT>
-template<typename PT,typename FPT2>
+template<typename PTI,typename FPT>
+template<typename PTO,typename FPT2>
 auto
-PolylineBase<PLT,FPT>::p_split( const Line2d_<FPT2>& li, const PT& ) const
+PolylineBase<PTI,FPT>::p_split( const Line2d_<FPT2>& li, const PTO& ) const
 {
 	p_normalizePoly();
-	std::vector<PolylineBase<PT,FPT>> vout;
+	std::vector<PolylineBase<PTO,FPT>> vout;
 std::cout << "\n START, pol=" << *this << '\n';
 
 	size_t current = 0;
@@ -6765,7 +6776,7 @@ std::cout << "\n START, pol=" << *this << '\n';
 	{
 		seg1 = getOSegment(current);
 		auto pt1 = getPoint(current);
-std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n';
+std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << " no_int_points=" << no_int_points << '\n';
 
 		auto inters1 = seg1.intersects( li );
 		if( inters1() )
@@ -6782,11 +6793,11 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 
 				if( pt != vpts.back() ) //&& seg1.getLine() != li )
 				{
-					std::cout << "- ajout: " << pt << '\n';
 					vpts.push_back( pt );  // final point
+					std::cout << "- adding: " << pt << " to current set, holds now " << vpts.size() << '\n';
 				}
 				HOMOG2D_ASSERT( vpts.size()>0 );
-				PolylineBase<PT,HOMOG2D_INUMTYPE> pol;
+				PolylineBase<PTO,HOMOG2D_INUMTYPE> pol;
 				if( vpts.size()>2 )
 				{
 					pol.set(vpts);  // create polyline and
@@ -6794,6 +6805,7 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 				}
 				vpts.clear();          // start again and add intersection point
 				vpts.push_back( pt ); // as first of the set
+				std::cout << "-new pointset, holds " << pt << '\n';
 			}
 			else
 			{
@@ -6819,10 +6831,12 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		}
 		current++;
 	}
-	while(  current<nbSegs() );
+	while( current<nbSegs() );
 
 // done all the segments, now we process the "final" polyline
-	if( found )
+	std::cout << "-FINAL STEP:, vpts size=" << vpts.size() << "=" << vpts.front() << '\n';
+
+	if( found && std::is_same_v<typ::IsClosed,PTI> )
 	{
 		std::cout << "Adding points up to " << no_int_points << '\n';
 
@@ -6839,10 +6853,32 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << '\n'
 		}
 
 		HOMOG2D_ASSERT_2( vpts.size()>1, vpts.size() );
-		PolylineBase<PT,HOMOG2D_INUMTYPE> pol(vpts);
+		PolylineBase<PTO,HOMOG2D_INUMTYPE> pol(vpts);
 		std::cout << "Ajout FINAL de pol:" << pol << '\n';
 		vout.push_back( pol );
 	}
+	if( found && std::is_same_v<typ::IsOpen,PTI> )
+	{
+		std::cout << "FINAL current=" << current << std::endl;
+		vpts.push_back( _plinevec.back() ); // to add the final point
+
+		PolylineBase<PTO,HOMOG2D_INUMTYPE> pol(vpts);
+		vout.push_back( pol );
+
+// handling the points BEFORE the first intersection point
+std::cout << "handling the points BEFORE the first intersection point\n";
+		vpts.clear();
+		for( size_t i=0; i<=no_int_points; i++ )
+		{
+			std::cout << "  - adding pt " <<  _plinevec.at(i)  << '\n';
+			vpts.push_back( _plinevec.at(i) );
+		}
+		vpts.push_back( pt_initial_int );
+
+		PolylineBase<PTO,HOMOG2D_INUMTYPE> pol2(vpts);
+		vout.push_back( pol2 );
+	}
+
 	HOMOG2D_ASSERT_2( nbIntersect%2 == 0, nbIntersect );
 	std::cout << "Nb Intersection=" << nbIntersect << '\n';
 	return vout;
