@@ -118,14 +118,14 @@ See https://github.com/skramm/homog2d
 #define HOMOG2D_ASSERT( a ) \
 	if( !(a) ) \
 	{ \
-		std::cerr << "ASSERT FAILURE, line=" << __LINE__ << std::endl; \
+		std::cerr << "homog2d: assert failure, line=" << __LINE__ << std::endl; \
 		std::exit(1); \
 	}
 
 #define HOMOG2D_ASSERT_2( a, value ) \
 	if( !(a) ) \
 	{ \
-		std::cerr << "ASSERT FAILURE, line=" << __LINE__ << "\n => value=" << value << std::endl; \
+		std::cerr << "homog2d: assert failure, line=" << __LINE__ << "\n => value=" << value << std::endl; \
 		std::exit(1); \
 	}
 
@@ -6729,8 +6729,10 @@ template<typename FPT2>
 bool
 PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 {
-	if( this->size() < other.size() )
-		return true;
+	auto s1 = this->size();
+	auto s2 = other.size();
+	if( s1 != s2 )
+		return ( s1 < s2 ? true : false );
 
 	if( *this == other ) // this also normalises both of the polylines
 		return false;
@@ -6811,8 +6813,9 @@ std::cout << "* current=" << current << " pt=" << pt1 << " seg=" << seg1 << " no
 			{
 				pt_initial_int = pt;
 				found = true;
-				std::cout << "Création vec, ajout " << pt << '\n';
+				std::cout << "First intersection, adding pt=" << pt << '\n';
 				vpts.push_back( pt ); // initial point
+				assert( vpts.size() == 1 );
 			}
 		}
 		else
@@ -6879,8 +6882,11 @@ std::cout << "handling the points BEFORE the first intersection point\n";
 		vout.push_back( pol2 );
 	}
 
-	HOMOG2D_ASSERT_2( nbIntersect%2 == 0, nbIntersect );
-	std::cout << "Nb Intersection=" << nbIntersect << '\n';
+	if( std::is_same_v<PTI,typ::IsClosed> )  // just some checking. For closed, the number of intersections
+	{                                       // must be even. But not for OPolyline, we can have only 1
+		HOMOG2D_ASSERT_2( nbIntersect%2 == 0, nbIntersect );
+		std::cout << "Nb Intersection=" << nbIntersect << '\n';
+	}
 	return vout;
 }
 

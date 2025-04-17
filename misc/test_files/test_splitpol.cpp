@@ -9,6 +9,7 @@ Build and run with <code>$ make test-splitpol</code>
 
 //#define HOMOG2D_NOCHECKS
 #define HOMOG2D_DEBUGMODE
+#define HOMOG2D_TEST_MODE
 
 #include "../../homog2d.hpp"
 
@@ -57,13 +58,12 @@ compareSetsPolylines( const std::vector<POL> split0, const std::vector<POL>& exp
 		std::cout << "Failure: split size="<< split.size() << " expected size=" << exp.size() <<'\n';
 		return;
 	}
-	priv::printVector( split, "BEFORE" );
+	for( auto& p: split )
+		p.p_normalizePoly();
+	for( auto& p: exp )
+		p.p_normalizePoly();
 	std::sort( split.begin(), split.end() );
-	priv::printVector( split, "AFTER" );
-
-	priv::printVector( exp, "BEFORE" );
 	std::sort( exp.begin(), exp.end() );
-	priv::printVector( exp, "AFTER" );
 
 	auto it = exp.begin();
 	bool success = true;
@@ -95,14 +95,15 @@ process1( const POLSET& split, const POLSET& exp )
 }
 
 void process2(
+	std::string                    id,
 	const std::vector<Point2d>&    src,      ///< input set of points, used to build the polylines
-	const Line2d&                  li,       ///< line that splits the polylines
-	const vector<vector<Point2d>>& vv_pts_O, ///< Output set of points that make the split, for OPolyline
-	const vector<vector<Point2d>>& vv_pts_C  ///< Output set of points that make the split, for CPolyline
+	const Line2d&                  li,       ///< line that splits the polyline
+	const vector<vector<Point2d>>& vv_pts_O, ///< Expected output set of points that make the split, for OPolyline
+	const vector<vector<Point2d>>& vv_pts_C  ///< Expected output set of points that make the split, for CPolyline
 )
 {
 	OPolyline psrc_o( src );
-	std::cout << "\n* Input: " << psrc_o << '\n';
+	std::cout << "\n* TEST " << id << ", Input: " << psrc_o << '\n';
 
 	process1( psrc_o.splitO(li), buildOutputPolySet( OPolyline(), vv_pts_O ) );
 	process1( psrc_o.splitC(li), buildOutputPolySet( CPolyline(), vv_pts_O ) );
@@ -120,17 +121,40 @@ int main()
 
 {
 	#include "../figures_test/polysplit_01a.code"
-	process2( src, li, vv_pts_O, vv_pts_C );
+	process2( "01a", src, li, vv_pts_O, vv_pts_C );
 }
-/*
 {
 	#include "../figures_test/polysplit_01b.code"
-	process2( src, li, vv_pts_O, vv_pts_C );
+	process2( "01b", src, li, vv_pts_O, vv_pts_C );
 }
 {
 	#include "../figures_test/polysplit_01c.code"
-	process2( src, li, vv_pts_O, vv_pts_C );
-}*/
+	process2( "01c", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_02.code"
+	process2( "02", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_03.code"
+	process2( "03", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_04.code"
+	process2( "04", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_05.code"
+	process2( "05", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_06.code"
+	process2( "06", src, li, vv_pts_O, vv_pts_C );
+}
+{
+	#include "../figures_test/polysplit_07.code"
+	process2( "07", src, li, vv_pts_O, vv_pts_C );
+}
 
 #else
 

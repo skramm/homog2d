@@ -232,6 +232,7 @@
 		<Unit filename="test_files/rtp_v.hpp" />
 		<Unit filename="test_files/single_file.cpp" />
 		<Unit filename="test_files/test_multiple.cpp" />
+		<Unit filename="test_files/test_splitpol.cpp" />
 		<Unit filename="test_files/ttmath_t1.cpp" />
 		<Unit filename="tryme.cpp" />
 		<Unit filename="tryme2.cpp" />

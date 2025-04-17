@@ -361,14 +361,54 @@ TEST_CASE( "Point normalization", "[normaliz-1]" )
 	CHECK( pt2.get() == std::array<NUMTYPE,3>{1,-2,-3} );
 }
 
-TEST_CASE( "Polyline normalization", "[normaliz-2]" )
+TEST_CASE( "Polyline normalization", "[poly-normalize]" )
 {
-	CPolyline p_in(  std::vector<Point2d>{ {3,4}, {0,0}, {1,1} } );
-	CPolyline p_out( std::vector<Point2d>{ {0,0}, {1,1}, {3,4} } );
-	p_in.p_normalizePoly();
-	CHECK( p_in == p_out );
+	{
+		CPolyline p_in_c;
+		OPolyline p_in_o;
+		p_in_c.p_normalizePoly();
+		p_in_o.p_normalizePoly();
+		CHECK( p_in_c == CPolyline() );
+		CHECK( p_in_o == OPolyline() );
+	}
+	{ // rotate
+		std::vector<Point2d> vin{  {3,1}, {0,0}, {2,2} };
+		std::vector<Point2d> vout{ {0,0}, {2,2}, {3,1} };
+		CPolyline p_in_c( vin );
+		OPolyline p_in_o( vin );
+		p_in_c.p_normalizePoly();
+		p_in_o.p_normalizePoly();
+		CHECK( p_in_c == CPolyline( vout ) );
+		CHECK( p_in_o == OPolyline( std::vector<Point2d>{ {2,2}, {0,0}, {3,1} } ) );
+	}
+	{ // rotate + reverse
+		std::vector<Point2d> vin{  {2,2}, {0,0}, {3,1} };
+		std::vector<Point2d> vout{ {0,0}, {2,2}, {3,1} };
+		CPolyline p_in_c( vin );
+		OPolyline p_in_o( vin );
+		p_in_c.p_normalizePoly();
+		p_in_o.p_normalizePoly();
+		CHECK( p_in_c == CPolyline( vout ) );
+		CHECK( p_in_o == OPolyline( vin  ) ); // vin, because for open polylines, we dont change them
+	}
+}
 
-	// TODO: MORE!!!
+TEST_CASE( "Polyline < op", "[pol<op]" )
+{
+	{
+		CPolyline pc1,pc2;
+		OPolyline po1,po2;
+		CHECK( !(pc1 < pc2) );
+		CHECK( !(po1 < po2) );
+	}
+	{
+		std::vector<Point2d> v1{ {3,1}, {0,0} };
+		std::vector<Point2d> v2{ {0,0}, {2,2}, {3,1} };
+		CPolyline pc1(v1), pc2(v2);
+		OPolyline po1(v1), po2(v2);
+		CHECK( pc1 < pc2 );
+		CHECK( po1 < po2 );
+	}
 }
 
 TEST_CASE( "homogeneous coordinates testing", "[homogeneous]" )
