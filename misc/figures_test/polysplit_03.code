@@ -6,4 +6,3 @@
 
 // output: nothing to split, empty vectors
 	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
-

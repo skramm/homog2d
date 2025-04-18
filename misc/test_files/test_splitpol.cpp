@@ -118,7 +118,6 @@ void process2(
 int main()
 {
 #if 1
-
 {
 	#include "../figures_test/polysplit_01a.code"
 	process2( "01a", src, li, vv_pts_O, vv_pts_C );
