@@ -189,6 +189,7 @@ See https://github.com/skramm/homog2d
 /// Error throw wrapper macro
 #define HOMOG2D_THROW_ERROR_1( msg ) \
 	{ \
+		std::cout << "homog2d: exception thrown, check stderr" << std::endl; \
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << __FUNCTION__ << "(): " \
 			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
@@ -199,6 +200,7 @@ See https://github.com/skramm/homog2d
 /// Error throw wrapper macro, first arg is the function name
 #define HOMOG2D_THROW_ERROR_2( func, msg ) \
 	{ \
+		std::cout << "homog2d: exception thrown, check stderr" << std::endl; \
 		std::ostringstream oss; \
 		oss << "homog2d: line " <<  __LINE__  << ", function:" << func << "(): " \
 			<< msg << "\n -full function name: " << HOMOG2D_PRETTY_FUNCTION \
@@ -6755,6 +6757,7 @@ PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 We need to keep track of the first intersection point (in case of CPolyline as input), because that first
 intersection might happen AFTER some segments, so we can't just add to the output set a
 polyline made of the points after that first intersection point.
+
 */
 #if 1
 // new version
@@ -6789,13 +6792,19 @@ PolylineBase<PTI,FPT>::p_split( const Line2d_<FPT2>& li, const PTO& ) const
 	do  // search intersection points
 	{
 		seg_curr     = getOSegment(current);
+//		auto pt1 = seg_curr.getPts().first;
+		auto pt2 = seg_curr.getPts().second;
 		auto pt_curr = getPoint(current);
 
 		// for closed input polylines,
 		if( isClosed() )       // we store the current point ONLY if we already have
 		{
 			if( found  )       // we store the current point ONLY if we already have
-				vpts.push_back( pt_curr );  // found a (first) intersection
+				if( pt_curr != vpts.back() )
+				{
+					std::cout << " add " << pt_curr << '\n';
+					vpts.push_back( pt_curr );  // found a (first) intersection
+				}
 		}
 		else
 				vpts.push_back( pt_curr );  // found a (first) intersection
@@ -6805,9 +6814,9 @@ std::cout << "* current=" << current << " pt=" << pt_curr << " seg=" << seg_curr
 		auto inters1 = seg_curr.intersects( li );
 		if( inters1() )
 		{
-			std::cout << " - INT!\n";
 			nbIntersect++;
 			auto int_pt = inters1.get();
+			std::cout << " - INT!:" << int_pt << '\n';
 			last_int = current;
 			if( !found && isClosed() )
 			{
@@ -6818,41 +6827,61 @@ std::cout << "* current=" << current << " pt=" << pt_curr << " seg=" << seg_curr
 			}
 			else
 			{
-				std::cout << " -add pt " << int_pt << '\n';
-				vpts.push_back( int_pt );
-				priv::printVector( vpts, "pushing" );
-				PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
-				vout.push_back( pol );
-				vpts.clear();
-				vpts.push_back( int_pt );
+				if( int_pt != vpts.back() )
+				{
+					std::cout << " -add pt " << int_pt << '\n';
+					if( int_pt != vpts.back() && int_pt != vpts.front() )
+						vpts.push_back( int_pt );
+//					priv::printVector( vpts, "pushing" );
+					PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
+					vout.push_back( pol );
+					vpts.clear();
+					if( int_pt != pt2 && int_pt != vpts.back() && int_pt != vpts.front() )
+						vpts.push_back( int_pt );
+				}
+				else
+					std::cout << " -NO add pt " << int_pt << " (already there)\n";
 			}
 		}
 		else
 			std::cout << " - NO INT: " << '\n';
 
-		priv::printVector( vpts, "Loop end");
+//		priv::printVector( vpts, "Loop end");
 		current++;
 	}
 	while( current<nbSegs() );
+
 
 // done all the segments, now we process the "final" polyline
 	std::cout << "-FINAL STEP:, vpts size=" << vpts.size() << " front=" << vpts.front()
 		<< " first_int=" << first_int
 		<< " last_int=" << last_int << std::endl;
-	priv::printVector( vpts, "Final step" );
+//	priv::printVector( vpts, "Final step" );
 	if( std::is_same_v<PTI,typ::IsOpen> )
 	{
 		std::cout << "-ADDING " << _plinevec.back() << std::endl;
 		vpts.push_back( _plinevec.back() );
 	}
-	if( isClosed() && std::is_same_v<PTO,typ::IsOpen> )
+	if( isClosed() ) //&& std::is_same_v<PTO,typ::IsOpen> )
 	{
-		vpts.push_back( getOSegment(last_int).getPts().second );
-//		for( size_t i=0; i<)
+		size_t idx = size()-1;
+		do
+		{
+			auto seg = getOSegment(idx);
+			std::cout << " -idx=" << idx << ", adding "<< seg.getPts().second << "\n";
+			vpts.push_back( seg.getPts().second );
+			idx++;
+			if( idx == size() )
+				idx=0;
+		}
+		while( idx != first_int );
 	}
-	priv::printVector( vpts, "Final step 2" );
-	PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
-	vout.push_back( pol );
+//	priv::printVector( vpts, "Final step 2" );
+	if( vpts.size() > 1 )
+	{
+		PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
+		vout.push_back( pol );
+	}
 
 	return vout;
 }

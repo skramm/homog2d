@@ -85,6 +85,7 @@ template<typename POLSET>
 void
 process1( const POLSET& split, const POLSET& exp )
 {
+
 	std::cout << "\n* Split result:\n";
 	for( const auto& pol: split )
 		std::cout << pol << '\n';
@@ -103,20 +104,25 @@ void process2(
 )
 {
 	OPolyline psrc_o( src );
-	std::cout << "\n* TEST " << id << ", Input: " << psrc_o << '\n';
-
+	std::cout << "\n* TEST (OPEN) " << id << ", Input: " << psrc_o << '\n';
 	process1( psrc_o.splitO(li), buildOutputPolySet( OPolyline(), vv_pts_O ) );
 	process1( psrc_o.splitC(li), buildOutputPolySet( CPolyline(), vv_pts_O ) );
 
 	CPolyline psrc_c( src );
-	std::cout << "\n* Input: " << psrc_c << '\n';
-
+	std::cout << "\n* TEST (CLOSED) " << id << ", Input: " << psrc_c << '\n';
 	process1( psrc_c.splitO(li), buildOutputPolySet( OPolyline(), vv_pts_C ) );
 	process1( psrc_c.splitC(li), buildOutputPolySet( CPolyline(), vv_pts_C ) );
 }
 
 int main()
 {
+#if 0
+{
+	#include "../figures_test/polysplit_07a.code"
+	process2( "07a", src, li, vv_pts_O, vv_pts_C );
+}
+
+#endif
 #if 1
 {
 	#include "../figures_test/polysplit_01a.code"
@@ -154,8 +160,9 @@ int main()
 	#include "../figures_test/polysplit_07.code"
 	process2( "07", src, li, vv_pts_O, vv_pts_C );
 }
+#endif
 
-#else
+#if 0
 
 	{
 	std::cout << "\n** TEST FRECT 2" << '\n';

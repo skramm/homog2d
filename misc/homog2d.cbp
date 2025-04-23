@@ -141,7 +141,9 @@
 		<Unit filename="figures_test/polysplit_04.code" />
 		<Unit filename="figures_test/polysplit_05.code" />
 		<Unit filename="figures_test/polysplit_06.code" />
-		<Unit filename="figures_test/polysplit_07.code" />
+		<Unit filename="figures_test/polysplit_07a.code" />
+		<Unit filename="figures_test/polysplit_07b.code" />
+		<Unit filename="figures_test/polysplit_07c.code" />
 		<Unit filename="figures_test/readme.txt" />
 		<Unit filename="figures_test/t_footer_frect_1.cxx" />
 		<Unit filename="figures_test/t_footer_polyline_1.cxx" />

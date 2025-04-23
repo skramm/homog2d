@@ -24,8 +24,8 @@
 	poly_c.draw( im_src_c, dp.setColor(250,0,0) );
 
 	auto li2 = H*li;
-	li2.draw( im_src_o, dp.setColor(0,250,0) );
-	li2.draw( im_src_c, dp.setColor(0,250,0) );
+	li2.draw( im_src_o, dp.setColor(0,250,0).setThickness(1) );
+	li2.draw( im_src_c, dp.setColor(0,250,0).setThickness(1) );
 
 	im_src_o.write( std::string(argv[0])+ "_O.svg" );
 	im_src_c.write( std::string(argv[0])+ "_C.svg" );

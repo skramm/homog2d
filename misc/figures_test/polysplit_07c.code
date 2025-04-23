@@ -1,8 +1,8 @@
 // line intersecting polygon
 
 // input
-	Line2d li( LineDir::H, 3 );
-	vector<Point2d> src{ {0,0},{0,2},{2,4},{4,4},{4,2},{2,2} };
+	Line2d li( LineDir::H, 1 );
+	vector<Point2d> src{ {0,0},{0,2},{2,4},{4,4},{4,1},{2,2} };
 
 // output
 	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
