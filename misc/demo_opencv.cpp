@@ -1102,6 +1102,22 @@ struct Param_polysplit : Data
 	bool outputClosed = true;
 };
 
+template<typename DATA, typename T>
+void drawSplittedPolylines( DATA& data, T& vpol )
+{
+	auto i=0;
+	for( auto p: vpol )
+	{
+		p.translate(
+			std::rand()*10./RAND_MAX,
+			std::rand()*10./RAND_MAX
+		);
+		p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
+	}
+	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
+
+}
+
 void action_polysplit( void* param )
 {
 	auto& data = *reinterpret_cast<Param_polysplit*>(param);
@@ -1124,61 +1140,26 @@ void action_polysplit( void* param )
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
-
-	auto vpol_cc = data.polyline_c.splitC(li);
-	auto vpol_co = data.polyline_c.splitO(li);
-	auto vpol_oc = data.polyline_o.splitC(li);
-	auto vpol_oo = data.polyline_o.splitO(li);
-	int s_cc, s_co, s_oc, s_oo;
 	if( data.inputClosed )
 	{
+		auto vpol_cc = data.polyline_c.splitC(li);
+		auto vpol_co = data.polyline_c.splitO(li);
 		data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
-		s_cc = vpol_cc.size();
-		s_co = vpol_co.size();
+		if( data.outputClosed )
+			drawSplittedPolylines( data, vpol_cc );
+		else
+			drawSplittedPolylines( data, vpol_co );
 	}
 	else
 	{
+		auto vpol_oc = data.polyline_o.splitC(li);
+		auto vpol_oo = data.polyline_o.splitO(li);
 		data.polyline_o.draw( data.img, img::DrawParams().showPoints().showIndex() );
-		s_oc = vpol_oc.size();
-		s_oo = vpol_oo.size();
+		if( data.outputClosed )
+			drawSplittedPolylines( data, vpol_oc );
+		else
+			drawSplittedPolylines( data, vpol_oo );
 	}
-
-/*	int siz;
-	if( data.outputClosed )
-		siz =
-
-	drawText( data.img, std::string("Nb polygons=") + std::to_string(si), Point2d( 20,20 ) );
-*/
-
-	translateSplittedPolylines( vpol_cc );
-
-//	if( data.inputClosed )
-
-	if( data.outputClosed )
-	{
-		auto i=0;
-		for( auto p: vpol_c )
-		{
-			p.translate(
-				std::rand()*10./RAND_MAX,
-				std::rand()*10./RAND_MAX
-			);
-			p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
-		}
-	}
-	else
-	{
-		auto i=0;
-		for( auto p: vpol_o )
-		{
-			p.translate(
-				std::rand()*10./RAND_MAX,
-				std::rand()*10./RAND_MAX
-			);
-			p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
-		}
-	}
-
 	data.showImage();
 }
 
