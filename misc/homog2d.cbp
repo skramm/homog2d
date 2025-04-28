@@ -104,31 +104,20 @@
 		<Unit filename="figures_src/src/segment_intersect_1.cpp" />
 		<Unit filename="figures_src/src/segment_intersect_circle_1.cpp" />
 		<Unit filename="figures_src/src/side_point_line.cpp" />
-		<Unit filename="figures_test/frect_intersect_1.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="figures_test/frect_intersect_1.code" />
 		<Unit filename="figures_test/frect_intersect_10.code" />
 		<Unit filename="figures_test/frect_intersect_11.code" />
 		<Unit filename="figures_test/frect_intersect_12.code" />
 		<Unit filename="figures_test/frect_intersect_13.code" />
-		<Unit filename="figures_test/frect_intersect_2.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_3.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_4.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_5.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="figures_test/frect_intersect_6.code">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="figures_test/frect_intersect_2.code" />
+		<Unit filename="figures_test/frect_intersect_3.code" />
+		<Unit filename="figures_test/frect_intersect_4.code" />
+		<Unit filename="figures_test/frect_intersect_5.code" />
+		<Unit filename="figures_test/frect_intersect_6.code" />
 		<Unit filename="figures_test/frect_intersect_7.code" />
 		<Unit filename="figures_test/frect_intersect_8.code" />
 		<Unit filename="figures_test/frect_intersect_9.code" />
+		<Unit filename="figures_test/polyline_chull_1.code" />
 		<Unit filename="figures_test/polyline_comp_1a.code" />
 		<Unit filename="figures_test/polyline_comp_1b.code" />
 		<Unit filename="figures_test/polyline_inside_a1.code" />
@@ -144,7 +133,9 @@
 		<Unit filename="figures_test/polyline_min_2O.code" />
 		<Unit filename="figures_test/polyline_min_3C.code" />
 		<Unit filename="figures_test/polyline_min_3O.code" />
-		<Unit filename="figures_test/polysplit_01.code" />
+		<Unit filename="figures_test/polysplit_01a.code" />
+		<Unit filename="figures_test/polysplit_01b.code" />
+		<Unit filename="figures_test/polysplit_01c.code" />
 		<Unit filename="figures_test/polysplit_02.code" />
 		<Unit filename="figures_test/polysplit_03.code" />
 		<Unit filename="figures_test/polysplit_04.code" />
