@@ -1103,7 +1103,7 @@ struct Param_polysplit : Data
 };
 
 template<typename DATA, typename T>
-void drawSplittedPolylines( DATA& data, T& vpol )
+void drawSplittedPolylines( DATA& data, const T& vpol )
 {
 	auto i=0;
 	for( auto p: vpol )
@@ -1112,7 +1112,8 @@ void drawSplittedPolylines( DATA& data, T& vpol )
 			std::rand()*10./RAND_MAX,
 			std::rand()*10./RAND_MAX
 		);
-		p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
+		p.draw( data.img2, img::DrawParams().setThickness(2).setColor( data.vcolors[i++%data.maxcolors] ) );
+		drawText( data.img2, std::to_string(i) + ", #=" + std::to_string(p.size()), p.getPts()[0] );
 	}
 	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
 
@@ -1140,26 +1141,38 @@ void action_polysplit( void* param )
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
+	std::string splitType = "Input:C, Out:";
 	if( data.inputClosed )
 	{
-		auto vpol_cc = data.polyline_c.splitC(li);
-		auto vpol_co = data.polyline_c.splitO(li);
 		data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
 		if( data.outputClosed )
-			drawSplittedPolylines( data, vpol_cc );
+		{
+			drawSplittedPolylines( data, data.polyline_c.splitC(li) );
+			splitType += "C";
+		}
 		else
-			drawSplittedPolylines( data, vpol_co );
+		{
+			drawSplittedPolylines( data, data.polyline_c.splitO(li) );
+			splitType += "O";
+		}
+
 	}
 	else
 	{
-		auto vpol_oc = data.polyline_o.splitC(li);
-		auto vpol_oo = data.polyline_o.splitO(li);
+		splitType = "Input:O, Out:";
 		data.polyline_o.draw( data.img, img::DrawParams().showPoints().showIndex() );
 		if( data.outputClosed )
-			drawSplittedPolylines( data, vpol_oc );
+		{
+			drawSplittedPolylines( data, data.polyline_o.splitC(li) );
+			splitType += "C";
+		}
 		else
-			drawSplittedPolylines( data, vpol_oo );
+		{
+			drawSplittedPolylines( data, data.polyline_o.splitO(li) );
+			splitType += "O";
+		}
 	}
+	drawText( data.img2, splitType, Point2d( 20, 20 ) );
 	data.showImage();
 }
 
