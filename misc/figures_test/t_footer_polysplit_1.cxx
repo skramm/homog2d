@@ -24,15 +24,17 @@
 	poly_c.draw( im_src_c, dp.setColor(250,0,0) );
 
 	auto li2 = H*li;
-	li2.draw( im_src_o, dp.setColor(0,250,0) );
-	li2.draw( im_src_c, dp.setColor(0,250,0) );
+	li2.draw( im_src_o, dp.setColor(0,250,0).setThickness(1) );
+	li2.draw( im_src_c, dp.setColor(0,250,0).setThickness(1) );
 
-	im_src_o.write( std::string(argv[0])+ "_o.svg" );
-	im_src_c.write( std::string(argv[0])+ "_c.svg" );
+	im_src_o.write( std::string(argv[0])+ "_O.svg" );
+	im_src_c.write( std::string(argv[0])+ "_C.svg" );
 
 	dp.showPoints(true).setPointSize(7);
-	drawSplit( CPolyline(), vv_pts_C, H, dp, std::string(argv[0]), "_C_" );
-	drawSplit( OPolyline(), vv_pts_O, H, dp, std::string(argv[0]), "_O_" );
+	drawSplit( OPolyline(), vv_pts_O, H, dp, std::string(argv[0]), "_O" );
+	drawSplit( CPolyline(), vv_pts_O, H, dp, std::string(argv[0]), "_O" );
+	drawSplit( OPolyline(), vv_pts_C, H, dp, std::string(argv[0]), "_C" );
+	drawSplit( CPolyline(), vv_pts_C, H, dp, std::string(argv[0]), "_C" );
 }
 
 template<typename TYPE,typename VVPTS>
@@ -51,6 +53,7 @@ void drawSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, 
 		else
 			dp.setColor(0,0,250).setPointStyle(img::PtStyle::Times);
 		(H*polsp).draw( im, dp );
-		im.write( fname+t+std::to_string(i)+".svg" );
+		char t2 = (polsp.isClosed() ? 'c' : 'o');
+		im.write( fname+t+t2+'_'+std::to_string(i)+".svg" );
 	}
 }

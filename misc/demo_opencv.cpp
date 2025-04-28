@@ -1098,8 +1098,25 @@ struct Param_polysplit : Data
 	std::vector<img::Color> vcolors;
 	size_t maxcolors = 20;
 //	std::vector<detail::Common<double>*> v_po; ///< both are stored here, so we can easily switch between them
-	bool showClosedPoly = true;
+	bool inputClosed = true;
+	bool outputClosed = true;
 };
+
+template<typename DATA, typename T>
+void drawSplittedPolylines( DATA& data, T& vpol )
+{
+	auto i=0;
+	for( auto p: vpol )
+	{
+		p.translate(
+			std::rand()*10./RAND_MAX,
+			std::rand()*10./RAND_MAX
+		);
+		p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
+	}
+	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
+
+}
 
 void action_polysplit( void* param )
 {
@@ -1115,6 +1132,7 @@ void action_polysplit( void* param )
 	);
 
 	data.polyline_c.set(v_polpts);
+	data.polyline_o.set(v_polpts);
 
 	Line2d li( data.vpt[0], data.vpt[1] );
 	li.draw( data.img, img::DrawParams().setColor(0,0,250) );
@@ -1122,19 +1140,25 @@ void action_polysplit( void* param )
 	data.vpt[0].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 	data.vpt[1].draw( data.img, img::DrawParams().setPointStyle( img::PtStyle::Dot ) );
 
-	auto vpol = data.polyline_c.splitC(li);
-	data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
-	drawText( data.img, std::string("Nb polygons=") + std::to_string(vpol.size()), Point2d( 20,20 ) );
-
-
-	auto i=0;
-	for( auto p: vpol )
+	if( data.inputClosed )
 	{
-		p.translate(
-			std::rand()*20./RAND_MAX,
-			std::rand()*20./RAND_MAX
-		);
-		p.draw( data.img2, img::DrawParams().setColor( data.vcolors[i++%data.maxcolors] ) );
+		auto vpol_cc = data.polyline_c.splitC(li);
+		auto vpol_co = data.polyline_c.splitO(li);
+		data.polyline_c.draw( data.img, img::DrawParams().showPoints().showIndex() );
+		if( data.outputClosed )
+			drawSplittedPolylines( data, vpol_cc );
+		else
+			drawSplittedPolylines( data, vpol_co );
+	}
+	else
+	{
+		auto vpol_oc = data.polyline_o.splitC(li);
+		auto vpol_oo = data.polyline_o.splitO(li);
+		data.polyline_o.draw( data.img, img::DrawParams().showPoints().showIndex() );
+		if( data.outputClosed )
+			drawSplittedPolylines( data, vpol_oc );
+		else
+			drawSplittedPolylines( data, vpol_oo );
 	}
 	data.showImage();
 }
@@ -1150,7 +1174,8 @@ void demo_polysplit( int demidx )
 	action_polysplit( &data );
 
 	KeyboardLoop kbloop;
-	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.showClosedPoly, "Isclosed="); }, "switch open/close" );
+	kbloop.addKeyAction( 'a', [&](void*) { toggle(data.inputClosed, "input Isclosed="); }, "switch input open/close" );
+	kbloop.addKeyAction( 'z', [&](void*) { toggle(data.outputClosed, "output Isclosed="); }, "switch output open/close" );
 	kbloop.addCommonAction( action_polysplit );
 	kbloop.start( data );
 }
