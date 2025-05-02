@@ -378,7 +378,12 @@ BUILD/figures_test/src/polyline_%.cpp: $(TEST_FIG_LOC)/polyline_%.code homog2d.h
 
 BUILD/figures_test/src/polysplit_%.cpp: $(TEST_FIG_LOC)/polysplit_%.code homog2d.hpp $(TEST_FIG_LOC)/t_header.cxx $(TEST_FIG_LOC)/t_footer_polysplit_1.cxx
 	@echo "generating $@"
+	@-if [ -a polysplit_O.html ]; then rm polysplit_O.html; fi
+	@-if [ -a polysplit_C.html ]; then rm polysplit_C.html; fi
+	@echo "<head><title>source: OPEN</title></head><body>" > polysplit_O.html
+	@echo "<head><title>source: CLOSED</title></head><body>" > polysplit_C.html
 	@mkdir -p BUILD/figures_test/src/
+	@mkdir -p BUILD/figures_test/out/
 	@cat $(TEST_FIG_LOC)/t_header.cxx $< $(TEST_FIG_LOC)/t_footer_polysplit_1.cxx >BUILD/figures_test/src/$(notdir $(basename $<)).cpp
 
 #=======================================================================

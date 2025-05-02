@@ -7,12 +7,15 @@
 
 #define NUMTYPE double
 
+#include <regex>
+
 using namespace h2d;
 using namespace std;
 
+
 // forward declaration, only for polyline splitting
-template<typename TYPE,typename VVPTS>
-void drawSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string, string );
+template<typename POLY,typename VVPTS,typename DP>
+void processAll( const POLY&, std::string fname, std::string OC, const VVPTS&, const Line2d&, const Homogr&, DP, std::ofstream& );
 
 template<typename IMG,typename HOMOG>
 void drawGrid( IMG& img, const HOMOG& H )
