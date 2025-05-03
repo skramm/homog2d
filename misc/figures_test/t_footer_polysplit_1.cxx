@@ -11,34 +11,32 @@
 	H.addScale( 50 );
 	H.addTranslation( 40,20 );
 
-	auto dp = img::DrawParams().setThickness(3);
-
 	auto poly_o = H*psrc_o;
 	auto poly_c = H*psrc_c;
-
-	img::Image<img::SvgImage> im_src_o(400,300);
-	img::Image<img::SvgImage> im_src_c(400,300);
-
-	drawGrid( im_src_o, H );
-	drawGrid( im_src_c, H );
-
-	poly_o.draw( im_src_o, dp.setColor(250,0,0) );
-	poly_c.draw( im_src_c, dp.setColor(250,0,0) );
-
-
 	auto li2 = H*li;
-	li2.draw( im_src_o, dp.setColor(0,250,0).setThickness(1) );
-	li2.draw( im_src_c, dp.setColor(0,250,0).setThickness(1) );
-
-	dp.setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
 
 	auto fname = std::regex_replace( std::string(argv[0]), std::regex("/bin/"), "/out/" );
 
-	im_src_o.write( fname+"_O.svg" );
-	im_src_c.write( fname+"_C.svg" );
+	processSource( poly_o, li2, H, fname, "O" );
+	processSource( poly_c, li2, H, fname, "C" );
 
-	processAll( poly_c, fname, "C", vv_pts_C, li2, H, dp, fhtml_C );
-	processAll( poly_o, fname, "O", vv_pts_O, li2, H, dp, fhtml_O );
+
+	processAll( poly_c, fname, "C", vv_pts_C, li2, H, fhtml_C );
+	processAll( poly_o, fname, "O", vv_pts_O, li2, H, fhtml_O );
+}
+
+template<typename PTYPE,typename HO>
+void
+processSource( const PTYPE& poly, const Line2d& li, const HO& H, std::string fname, std::string OC )
+{
+	auto dp = img::DrawParams().setThickness(3);
+
+	img::Image<img::SvgImage> im_src(400,300);
+	drawGrid( im_src, H );
+	poly.draw( im_src, dp.setColor(250,0,0) );
+
+	li.draw( im_src, dp.setColor(0,250,0).setThickness(1) );
+	im_src.write( fname+"_"+OC+".svg" );
 }
 
 
@@ -63,8 +61,9 @@ void drawExpectedSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawPar
 
 template<typename POLYSET,typename DP>
 void
-drawReal( const POLYSET& pset, const Homogr& H, DP dp, std::string fname, std::ofstream& fhtml )
+drawReal( POLYSET pset, const Homogr& H, DP dp, std::string fname, std::ofstream& fhtml )
 {
+	std::sort( pset.begin(), pset.end() );
 	for( size_t i=0;i<pset.size(); i++ )
 	{
 		img::Image<img::SvgImage> im(400,300);
@@ -88,7 +87,7 @@ void drawRealSplit( TYPE, const POLY& poly, const Line2d& li, const Homogr& H, D
 		drawReal( poly.splitO( li ), H, dp, fname + suffix, fhtml );
 }
 
-template<typename POLY,typename VVPTS,typename DP>
+template<typename POLY,typename VVPTS>
 void
 processAll(
 	const POLY&    poly,   ///< the polyline we want to split (open or closed)
@@ -97,7 +96,6 @@ processAll(
 	const VVPTS&   vv_pts, ///< expected set of points
 	const Line2d&  li,     ///< line used for the split
 	const Homogr&  H,      ///< Homography, needed to draw the grid
-	DP             dp,     ///< Drawing parameters
 	std::ofstream& fhtml   ///< output HTML file
 )
 {
@@ -105,6 +103,8 @@ processAll(
 	fhtml<< "<h2>Source polyline: " << fn << "</h2>\n"
 		<< "<img src='" << fn+".svg" << "'><br>\n"
 		<< "<h3>1/2 - Expected Split</h3>\n";
+
+	auto dp = img::DrawParams().setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
 
 	fhtml << "<h4>Output: Open</h4>\n";
 	drawExpectedSplit( OPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );

@@ -13,9 +13,13 @@ using namespace h2d;
 using namespace std;
 
 
+template<typename PTYPE,typename HO>
+void
+processSource( const PTYPE& poly, const Line2d&, const HO&, std::string fname, std::string OC );
+
 // forward declaration, only for polyline splitting
-template<typename POLY,typename VVPTS,typename DP>
-void processAll( const POLY&, std::string fname, std::string OC, const VVPTS&, const Line2d&, const Homogr&, DP, std::ofstream& );
+template<typename POLY,typename VVPTS>
+void processAll( const POLY&, std::string fname, std::string OC, const VVPTS&, const Line2d&, const Homogr&, std::ofstream& );
 
 template<typename IMG,typename HOMOG>
 void drawGrid( IMG& img, const HOMOG& H )
