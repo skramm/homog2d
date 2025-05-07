@@ -7,8 +7,8 @@
 // output
 	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
 
-	vv_pts_O.push_back( vector<Point2d>{ {0,0},{0,2},{1,3} });
-	vv_pts_O.push_back( vector<Point2d>{ {1,3},{2,4},{4,4},{4,3} });
-	vv_pts_O.push_back( vector<Point2d>{ {4,2},{4,3} });
+	vv_pts_O.push_back( vector<Point2d>{ {0,0},{0,2},{1,3} } );
+	vv_pts_O.push_back( vector<Point2d>{ {1,3},{2,4},{4,4},{4,3} } );
+	vv_pts_O.push_back( vector<Point2d>{ {4,3},{4,1},{2,2} } );
 
 	vv_pts_C = vv_pts_O;
