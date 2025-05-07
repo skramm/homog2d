@@ -9,7 +9,7 @@
 
 	Homogr H;
 	H.addScale( 50 );
-	H.addTranslation( 40,20 );
+	H.addTranslation( 40,40 );
 
 	auto poly_o = H*psrc_o;
 	auto poly_c = H*psrc_c;
