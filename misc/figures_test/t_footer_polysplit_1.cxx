@@ -35,7 +35,7 @@ processSource( const PTYPE& poly, const Line2d& li, const HO& H, std::string fna
 	drawGrid( im_src, H );
 	poly.draw( im_src, dp.setColor(250,0,0) );
 
-	li.draw( im_src, dp.setColor(0,250,0).setThickness(1) );
+	li.draw( im_src, dp.setColor(0,250,0).setThickness(2) );
 	im_src.write( fname+"_"+OC+".svg" );
 }
 
@@ -43,19 +43,22 @@ processSource( const PTYPE& poly, const Line2d& li, const HO& H, std::string fna
 template<typename TYPE,typename VVPTS>
 void drawExpectedSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string fname, string t, std::ofstream& fhtml )
 {
-	for( size_t i=0;i<vv_pts.size(); i++ )
-	{
-		img::Image<img::SvgImage> im(400,300);
-		drawGrid( im, H );
-		const auto& v_pts = vv_pts[i];
-		auto polsp = TYPE(v_pts);
-		(H*polsp).draw( im, dp );
-		char t2 = (polsp.isClosed() ? 'c' : 'o');
+	if( !vv_pts.size() )
+		fhtml << "<p>NIL</p>\n";
+	else
+		for( size_t i=0;i<vv_pts.size(); i++ )
+		{
+			img::Image<img::SvgImage> im(400,300);
+			drawGrid( im, H );
+			const auto& v_pts = vv_pts[i];
+			auto polsp = TYPE(v_pts);
+			(H*polsp).draw( im, dp );
+			char t2 = (polsp.isClosed() ? 'c' : 'o');
 
-		auto fn1 = fname+t+t2+'_'+std::to_string(i)+".svg";
-		im.write( fn1 );
-		fhtml << "<img src='"<< fn1 << "'>\n";
-	}
+			auto fn1 = fname+t+t2+'_'+std::to_string(i)+".svg";
+			im.write( fn1 );
+			fhtml << "<img src='"<< fn1 << "'>\n";
+		}
 }
 
 
@@ -101,21 +104,21 @@ processAll(
 {
 	auto fn = name + "_" + OC;
 	fhtml<< "<h2>Source polyline: " << fn << "</h2>\n"
-		<< "<img src='" << fn+".svg" << "'><br>\n"
-		<< "<h3>1/2 - Expected Split</h3>\n";
+		<< "<img src='" << fn+".svg" << "'><br>\n";
 
 	auto dp = img::DrawParams().setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
 
-	fhtml << "<h4>Output: Open</h4>\n";
+	fhtml << "<h3>1 - Open output</h3>\n";
+	fhtml << "<h4>1.1 - Expected</h4>\n";
 	drawExpectedSplit( OPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );
-	fhtml << "<h4>Output: Closed</h4>\n";
-	drawExpectedSplit( CPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );
+	fhtml << "<h4>1.2 - Generated</h4>\n";
+	drawRealSplit( OPolyline(), poly, li, H, dp, name, "_real_"+OC+"_o", fhtml );
 	fhtml << "<hr>\n";
 
-	fhtml << "<h3>2/2 - Generated Split</h3>\n";
-	fhtml << "<h4>Output: Open</h4>\n";
-	drawRealSplit( OPolyline(), poly, li, H, dp, name, "_real_"+OC+"_o", fhtml );
-	fhtml << "<h4>Output: Closed</h4>\n";
+	fhtml << "<h3>2 - Closed output</h3>\n";
+	fhtml << "<h4>2.1 - Expected</h4>\n";
+	drawExpectedSplit( CPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );
+	fhtml << "<h4>2.2 - Generated</h4>\n";
 	drawRealSplit( CPolyline(), poly, li, H, dp, name, "_real_"+OC+"_c", fhtml );
 	fhtml << "<hr>\n";
 }
