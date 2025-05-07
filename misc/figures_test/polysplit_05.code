@@ -7,5 +7,5 @@
 // output
 	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
 
-	vv_pts_C.push_back( vector<Point2d>{ {1,1},{0,1},{0,0},{2,0},{2,1} });
-	vv_pts_C.push_back( vector<Point2d>{ {1,1},{1,2},{2,2},{2,1} });
+	vv_pts_C.push_back( std::vector<Point2d>{ {1,1},{0,1},{0,0},{2,0},{2,1} });
+	vv_pts_C.push_back( std::vector<Point2d>{ {1,1},{1,2},{2,2},{2,1} });

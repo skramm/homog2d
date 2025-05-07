@@ -34,8 +34,10 @@ void drawGrid( IMG& img, const HOMOG& H )
 		if( i==0 )
 			li2.draw( img, colgrid0 );
 		else
+		{
 			li2.draw( img, colgrid );
-		drawText( img, std::to_string(i), Point2d(5,50*i+25) );
+			drawText( img, std::to_string(i), Point2d(5,50*i+30) );
+		}
 	}
 	for (int i=0; i<7; i++ )
 	{
@@ -44,8 +46,10 @@ void drawGrid( IMG& img, const HOMOG& H )
 		if( i==0 )
 			li2.draw( img, colgrid0 );
 		else
+		{
 			li2.draw( img, colgrid );
-		drawText( img, std::to_string(i), Point2d(50*i+32,15) );
+			drawText( img, std::to_string(i), Point2d(50*i+32,15) );
+		}
 	}
 }
 

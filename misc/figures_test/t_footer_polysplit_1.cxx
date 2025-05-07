@@ -11,18 +11,15 @@
 	H.addScale( 50 );
 	H.addTranslation( 40,40 );
 
-	auto poly_o = H*psrc_o;
-	auto poly_c = H*psrc_c;
-	auto li2 = H*li;
 
 	auto fname = std::regex_replace( std::string(argv[0]), std::regex("/bin/"), "/out/" );
 
-	processSource( poly_o, li2, H, fname, "O" );
-	processSource( poly_c, li2, H, fname, "C" );
+	processSource( psrc_o, li, H, fname, "O" );
+	processSource( psrc_c, li, H, fname, "C" );
 
 
-	processAll( poly_c, fname, "C", vv_pts_C, li2, H, fhtml_C );
-	processAll( poly_o, fname, "O", vv_pts_O, li2, H, fhtml_O );
+	processAll( psrc_o, fname, "O", vv_pts_O, li, H, fhtml_O );
+	processAll( psrc_c, fname, "C", vv_pts_C, li, H, fhtml_C );
 }
 
 template<typename PTYPE,typename HO>
@@ -33,9 +30,9 @@ processSource( const PTYPE& poly, const Line2d& li, const HO& H, std::string fna
 
 	img::Image<img::SvgImage> im_src(400,300);
 	drawGrid( im_src, H );
-	poly.draw( im_src, dp.setColor(250,0,0) );
+	(H*poly).draw( im_src, dp.setColor(250,0,0) );
 
-	li.draw( im_src, dp.setColor(0,250,0).setThickness(2) );
+	(H*li).draw( im_src, dp.setColor(0,250,0).setThickness(2) );
 	im_src.write( fname+"_"+OC+".svg" );
 }
 
@@ -44,22 +41,39 @@ template<typename TYPE,typename VVPTS>
 void drawExpectedSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams dp, string fname, string t, std::ofstream& fhtml )
 {
 	if( !vv_pts.size() )
+	{
 		fhtml << "<p>NIL</p>\n";
-	else
-		for( size_t i=0;i<vv_pts.size(); i++ )
-		{
-			img::Image<img::SvgImage> im(400,300);
-			drawGrid( im, H );
-			const auto& v_pts = vv_pts[i];
-			auto polsp = TYPE(v_pts);
-			(H*polsp).draw( im, dp );
-			char t2 = (polsp.isClosed() ? 'c' : 'o');
+		return;
+	}
 
-			auto fn1 = fname+t+t2+'_'+std::to_string(i)+".svg";
-			im.write( fn1 );
-			fhtml << "<img src='"<< fn1 << "'>\n";
-		}
+// we need to store them so we can sort them
+	std::vector<TYPE> v_exp;
+	for( size_t i=0;i<vv_pts.size(); i++ )
+	{
+		const auto& v_pts = vv_pts[i];
+		v_exp.push_back( TYPE(v_pts) );
+	}
+	std::sort( v_exp.begin(), v_exp.end() );
+
+	fhtml << "<table border='1'><tr>\n";
+	for( size_t i=0;i<vv_pts.size(); i++ )
+		fhtml << "<td>" << v_exp[i] << "</td>\n";
+	fhtml << "</tr><tr>\n";
+
+	for( size_t i=0;i<vv_pts.size(); i++ )
+	{
+		img::Image<img::SvgImage> im(400,300);
+		drawGrid( im, H );
+		(H*v_exp[i]).draw( im, dp );
+		char t2 = (v_exp[i].isClosed() ? 'c' : 'o');
+
+		auto fn1 = fname+t+t2+'_'+std::to_string(i)+".svg";
+		im.write( fn1 );
+		fhtml << "<td><img src='"<< fn1 << "'></td>\n";
+	}
+	fhtml << "</tr></table>\n";
 }
+
 
 
 template<typename POLYSET,typename DP>
@@ -67,17 +81,24 @@ void
 drawReal( POLYSET pset, const Homogr& H, DP dp, std::string fname, std::ofstream& fhtml )
 {
 	std::sort( pset.begin(), pset.end() );
+	fhtml << "<table border='1'><tr>\n";
+	for( size_t i=0;i<pset.size(); i++ )
+		fhtml << "<td>" << pset[i] << "</td>\n";
+	fhtml << "</tr><tr>\n";
+
 	for( size_t i=0;i<pset.size(); i++ )
 	{
 		img::Image<img::SvgImage> im(400,300);
 		drawGrid( im, H );
-		const auto& poly = pset[i];
+		const auto& poly = H*pset[i];
 		poly.draw( im, dp );
 		auto fn = fname+std::to_string(i)+".svg";
 		std::cout << "drawSplit(): name=" << fn << '\n';
 		im.write( fn );
-		fhtml << "<img src='"<< fn << "'>\n";
+		fhtml << "<td><img src='"<< fn << "'></td>\n";
 	}
+	fhtml << "</tr></table>\n";
+
 }
 
 template<typename TYPE,typename POLY,typename DP>
@@ -103,10 +124,12 @@ processAll(
 )
 {
 	auto fn = name + "_" + OC;
-	fhtml<< "<h2>Source polyline: " << fn << "</h2>\n"
+	auto dp = img::DrawParams().setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
+
+
+	fhtml<< "<h2>Source polyline: " << fn << " (open output)</h2>\n"
 		<< "<img src='" << fn+".svg" << "'><br>\n";
 
-	auto dp = img::DrawParams().setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
 
 	fhtml << "<h3>1 - Open output</h3>\n";
 	fhtml << "<h4>1.1 - Expected</h4>\n";
@@ -114,6 +137,9 @@ processAll(
 	fhtml << "<h4>1.2 - Generated</h4>\n";
 	drawRealSplit( OPolyline(), poly, li, H, dp, name, "_real_"+OC+"_o", fhtml );
 	fhtml << "<hr>\n";
+
+	fhtml<< "<h2>Source polyline: " << fn << " (closed output)</h2>\n"
+		<< "<img src='" << fn+".svg" << "'><br>\n";
 
 	fhtml << "<h3>2 - Closed output</h3>\n";
 	fhtml << "<h4>2.1 - Expected</h4>\n";
