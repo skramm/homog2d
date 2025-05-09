@@ -126,22 +126,18 @@ processAll(
 	auto fn = name + "_" + OC;
 	auto dp = img::DrawParams().setColor(250,0,0).showPoints(true).setPointSize(7).setThickness(2);
 
-
-	fhtml<< "<h2>Source polyline: " << fn << " (open output)</h2>\n"
+	fhtml<< "<h2>Source polyline: " << fn << "</h2>\n"
+		<< "<h3>1 - Open output</h3>\nsource:<br>\n"
 		<< "<img src='" << fn+".svg" << "'><br>\n";
 
-
-	fhtml << "<h3>1 - Open output</h3>\n";
 	fhtml << "<h4>1.1 - Expected</h4>\n";
 	drawExpectedSplit( OPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );
 	fhtml << "<h4>1.2 - Generated</h4>\n";
 	drawRealSplit( OPolyline(), poly, li, H, dp, name, "_real_"+OC+"_o", fhtml );
-	fhtml << "<hr>\n";
 
-	fhtml<< "<h2>Source polyline: " << fn << " (closed output)</h2>\n"
+	fhtml << "<hr>\n<h3>2 - Closed output</h3>\nsource:<br>\n"
 		<< "<img src='" << fn+".svg" << "'><br>\n";
 
-	fhtml << "<h3>2 - Closed output</h3>\n";
 	fhtml << "<h4>2.1 - Expected</h4>\n";
 	drawExpectedSplit( CPolyline(), vv_pts, H, dp, name, "_exp_"+OC, fhtml );
 	fhtml << "<h4>2.2 - Generated</h4>\n";

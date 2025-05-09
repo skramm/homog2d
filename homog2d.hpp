@@ -1277,6 +1277,10 @@ template<typename PLT,typename FPT>
 std::vector<Line2d_<HOMOG2D_INUMTYPE>>
 getBisectorLines( const base::PolylineBase<PLT,FPT>& );
 
+template<typename FPT1,typename FPT2>
+int
+side( const Point2d_<FPT1>&, const Line2d_<FPT2>& );
+
 template<typename T1,typename T2>
 HOMOG2D_INUMTYPE
 getAngle( const T1&, const T2& );
@@ -6749,6 +6753,218 @@ PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 }
 
 //------------------------------------------------------------------
+/// Private struct, need for \c p_split()
+template<typename FPT>
+struct PolySplitData
+{
+	size_t _curr = 0;       ///< index of current point/segment
+	size_t _nbSegs;         ///< Nb of segments of input polygon
+	bool   _found = false;  ///< did we already find an intersection?
+	bool   _inputClosed;
+	bool   _outputClosed;
+	size_t _nbIntersect = 0;  ///< nb of intersection points (useful? check that)
+	char   _case = '0';       ///< used when one of the segment points is equal to the intersection point
+
+	size_t _idxFirstInt = 0; ///< index of segment holding the first intersection point
+	size_t _idxLastInt = 0;  ///< index of segment holding the last intersection point
+
+	Line2d_<HOMOG2D_INUMTYPE>               _line;   ///< the crossing line
+	OSegment_<HOMOG2D_INUMTYPE>             _seg;    ///< current segment
+	Point2d_<HOMOG2D_INUMTYPE>              _pt;     ///< current point
+	Point2d_<HOMOG2D_INUMTYPE>              _intPt;  ///< intersection point
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;   ///< current set of output points
+	const std::vector<Point2d_<FPT>>&       _inputPts;
+
+	PolySplitData( size_t s, bool ic, bool oc, const std::vector<Point2d_<FPT>>& inpts )
+		: _nbSegs(s), _inputClosed(ic), _outputClosed(oc), _inputPts(inpts)
+	{
+		_vpts.reserve( s );
+	}
+
+	void processCurrent( const OSegment_<HOMOG2D_INUMTYPE>& );
+
+	auto processRemaining();
+
+	bool keepOn()
+	{
+		_curr++;
+		if( _curr < _nbSegs )
+			return true;
+		return false;
+	}
+
+	template<typename FP>
+	auto handleIntersection( const Point2d_<FP>& itpt );
+
+	void print() const
+	{
+		std::cout << "PolySplitData:"
+			<< "\n\t curr="         << _curr
+			<< "\n\t nbSegs="       << _nbSegs
+			<< "\n\t found="        << (_found?"YES":"NO")
+			<< "\n\t input="        << (_inputClosed?'C':'O')
+			<< " output="           << (_outputClosed?'C':'O')
+			<< "\n\t nbIntersect="  << _nbIntersect
+			<< "\n\t idxFirstInt="  << _idxFirstInt
+			<< "\n\t idxLastInt="   << _idxLastInt
+			<< "\n\t seg="          << _seg
+			<< "\n\t pt="           << _pt
+			<< "\n\t intPt="        << _intPt
+			<< "\n\t case="         << _case
+//	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;
+			<< std::endl;
+	}
+};
+
+//------------------------------------------------------------------
+/// Process remaining points, called once we have parsed all the segments
+template<typename FPT>
+auto
+PolySplitData<FPT>::processRemaining()
+{
+	std::cout << __FUNCTION__ << "()" << std::endl;;
+	print();
+	if( _case != 'C' )
+	{
+		if( _inputClosed )
+		{
+			for( size_t idx=0; idx<_idxFirstInt; idx++ )
+			{
+				_vpts.push_back( _inputPts.at(idx) );
+			}
+		}
+		else                   // input is closed polyline, so just add the final point
+		{
+			_vpts.push_back( _inputPts.back() );
+		}
+	}
+	return _vpts;
+}
+
+//------------------------------------------------------------------
+/// Adds the current point (its not about intersections here!)
+/**
+For input closed polyline, we DO NOT register points until we have found an intersection.
+this is because the points lying before the first intersection well be handled once we
+processed all the segments (see processRemaining() )
+*/
+template<typename FPT>
+void
+PolySplitData<FPT>::processCurrent( const OSegment_<HOMOG2D_INUMTYPE>& seg )
+{
+	std::cout << __FUNCTION__ << "()" << std::endl;
+
+	_seg = seg;
+	_pt = seg.getPts().first;
+	if( _inputClosed )       // we store the current point ONLY if we already have
+	{
+		if( _found )       // we store the current point ONLY if we already have
+//			if( pt_curr != vpts.back() )
+			{
+				std::cout << " add " << _pt << '\n';
+				_vpts.push_back( _pt );  // found a (first) intersection
+			}
+	}
+	else
+		_vpts.push_back( _pt );  // we did have a previous intersection (or input is open)
+}
+
+//------------------------------------------------------------------
+/// Handle intersection point
+/**
+Return value is a pair, first is a bool. If true, means we can push the output set of point (as second)
+as new polyline in the output set
+*/
+template<typename FPT>
+template<typename FP>
+auto
+PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
+{
+	std::cout << __FUNCTION__ << "()" << std::endl;
+	_intPt = intPt;
+	_nbIntersect++;
+
+//	auto pt1 = _seg.getPts().first;
+	auto pt2 = _seg.getPts().second;
+	decltype( _vpts ) out;
+	bool newPoly = true;
+
+	if( _case != '0' )                     // that means we had A, B or C just previously, so we can ignore the intersection point
+	{
+		std::cout << "case is " << _case << " ignore...\n";
+		return std::make_pair( false, out );
+	}
+
+	_idxLastInt = _curr;
+	if( pt2 == _intPt )  // special case A, B or C
+	{
+		newPoly = false;  // we will NOT add the intersection point to the output set !
+		std::cout << "Special case !\n";
+
+		if( _curr+1 == _nbSegs ) // no more segments, so ignore
+			std::cout << "No more segs !\n";
+		else
+		{
+			Point2d_<HOMOG2D_INUMTYPE> pt3 = _inputPts.at(_curr+2);
+			OSegment_<HOMOG2D_INUMTYPE> seg2( pt2, pt3 );
+
+			if( seg2.getLine() == _line )  // the following segment if coincident with the line, so we
+			{                              // ignore the intersection point
+				std::cout << "-case C\n";
+				_case = 'C';
+			}
+			else
+			{
+				auto side1 = side( _pt, _line );
+				auto side2 = side( pt3, _line );
+				if( side1 == side2 )
+				{
+					std::cout << "-case A\n"; // the points are on the same side,
+					_case = 'A';              // so we ignore the intersection point
+				}
+				else
+				{
+					std::cout << "-case B\n";  // the point are on opposite sides of the line,
+					_case = 'B';               // so we do add the intersection point
+					_vpts.push_back( _intPt );
+					if( _found )                // and we create a new polyline,
+					{                           // but only if it is *not* the first intersection
+						out = _vpts;
+						_vpts.clear();
+						_vpts.push_back( _intPt );
+						newPoly = true;
+					}
+					else
+						newPoly = false;
+				}
+			}
+		}
+	}
+	else
+	{
+		std::cout << "regular intersection, previous found=" << _found << "\n";
+		_case = '0';
+		_vpts.push_back( _intPt );
+		if( _found )
+		{
+			out = _vpts;
+			_vpts.clear();
+			_vpts.push_back( _intPt );
+		}
+		else
+			newPoly = false;  // because that was the FIRST intersection, so we only have a single point in the point set
+	}
+
+	if( !_found )
+	{
+		_idxFirstInt = _curr;
+		_found = true;
+	}
+	std::cout << __FUNCTION__ << "() END\n";
+	return std::make_pair( newPoly, out );
+}
+
+//------------------------------------------------------------------
 /// Split Polyline by line, return vector of OPolyline or CPolyline (private member function)
 /**
 - PTI: type of input polyline
@@ -6762,94 +6978,51 @@ polyline made of the points after that first intersection point.
 template<typename PTI,typename FPT>
 template<typename PTO,typename FPT2>
 auto
-PolylineBase<PTI,FPT>::p_split( const Line2d_<FPT2>& li, const PTO& ) const
+PolylineBase<PTI,FPT>::p_split(
+	const Line2d_<FPT2>& li,  ///< the crossing line
+	const PTO&                ///< dummy argument, just there so we can fetch the requested type of output polylines
+) const
 {
 	p_normalizePoly();
 	std::vector<PolylineBase<PTO,FPT>> vout;
 
-	std::cout << "\n START, pol=" << *this << " output: "
+	std::cout << "\n START, input pol=" << *this << " output: "
 	<< (std::is_same_v<PTO,typ::IsClosed>?"C":"O") << '\n';
 
-	size_t current = 0;
-
-/*	Point2d_<HOMOG2D_INUMTYPE> pt_initial_int; // intersection point
+	PolySplitData psdata( nbSegs(), std::is_same_v<PTI,typ::IsClosed>, std::is_same_v<PTO,typ::IsClosed>, _plinevec );
 	OSegment_<HOMOG2D_INUMTYPE> seg_curr;
-	OSegment_<HOMOG2D_INUMTYPE> seg_prev;
-*/
-	OSegment_<HOMOG2D_INUMTYPE> seg_curr;
-	std::vector<Point2d_<HOMOG2D_INUMTYPE>> vpts;
-	vpts.reserve( size() );
 
-// keep track of the encountered points before any intersection is found
-//	size_t no_int_points = 0;
-	size_t first_int = 0; // first intersection point
-	size_t last_int = 0; // last intersection point
-
-	bool found = false;
-	size_t nbIntersect = 0;
 	do  // search intersection points
 	{
-		seg_curr     = getOSegment(current);
-//		auto pt1 = seg_curr.getPts().first;
-		auto pt2 = seg_curr.getPts().second;
-		auto pt_curr = getPoint(current);
+		psdata.print();
 
-		// for closed input polylines,
-		if( isClosed() )       // we store the current point ONLY if we already have
-		{
-			if( found )       // we store the current point ONLY if we already have
-				if( pt_curr != vpts.back() )
-				{
-					std::cout << " add " << pt_curr << '\n';
-					vpts.push_back( pt_curr );  // found a (first) intersection
-				}
-		}
-		else
-			vpts.push_back( pt_curr );  // found a (first) intersection
-
-std::cout << "* current=" << current << " pt=" << pt_curr << " seg=" << seg_curr << " #=" << vpts.size() << std::endl;
+		seg_curr = getOSegment( psdata._curr );
+		psdata.processCurrent( seg_curr );
 
 		auto inters1 = seg_curr.intersects( li );
 		if( inters1() )
 		{
-			nbIntersect++;
 			auto int_pt = inters1.get();
-			std::cout << " - INT!:" << int_pt << '\n';
-			last_int = current;
-			if( !found && isClosed() )
+			std::cout << " - INT!: " << int_pt << '\n';
+
+			auto hi = psdata.handleIntersection( int_pt );
+
+			if( hi.first )
 			{
-				found = true;
-				first_int = current;
-				std::cout << " -no store\n";
-				vpts.push_back( int_pt );
-			}
-			else
-			{
-				if( int_pt != vpts.back() )
-				{
-					std::cout << " -add pt " << int_pt << '\n';
-					if( int_pt != vpts.back() && int_pt != vpts.front() )
-						vpts.push_back( int_pt );
-//					priv::printVector( vpts, "pushing" );
-					PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
-					vout.push_back( pol );
-					vpts.clear();
-					if( int_pt != pt2 && int_pt != vpts.back() && int_pt != vpts.front() )
-						vpts.push_back( int_pt );
-				}
-				else
-					std::cout << " -NO add pt " << int_pt << " (already there)\n";
+				PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( hi.second );
+				vout.emplace_back( pol );
 			}
 		}
 		else
 			std::cout << " - NO INT: " << '\n';
-
-//		priv::printVector( vpts, "Loop end");
-		current++;
 	}
-	while( current<nbSegs() );
+	while( psdata.keepOn() ); //current<nbSegs() );
 
+	auto rem = psdata.processRemaining();
+	if( !rem.empty() )
+		vout.push_back( rem );
 
+/*
 // done all the segments, now we process the "final" polyline
 	std::cout << "-FINAL STEP:, vpts size=" << vpts.size() << " front=" << vpts.front()
 		<< " first_int=" << first_int
@@ -6880,7 +7053,7 @@ std::cout << "* current=" << current << " pt=" << pt_curr << " seg=" << seg_curr
 		PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( vpts );
 		vout.push_back( pol );
 	}
-
+*/
 	return vout;
 }
 

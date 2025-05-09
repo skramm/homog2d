@@ -107,16 +107,22 @@ The allowed distance between a given reference segment and one of the points of 
 
 # 3 - Polyline splitting by a line
 
-The loop iterates on each of the segments of the polyline and checks if there is an intersection.
-If there has been one previously, then we just add the current point to the current point set vector.
-If not, the loop moves on, but
-  - if there has been an intersection detected previously, we add the current point to current point set vector.
-  - if not, we keep track of the current point (so we can add it to the final set, in case some intersections occured).
+The loop iterates on each of the segments of the polyline and checks for intersection with the line.
 
-At each intersection:
-1 - add the current intersection point to the current point set vector
-2 - Create a new Polyline with that set an push it to the output set
-3 - Clear the current point set vector and add to it the current intersection point
+- For input open polyline, we add the current point to the current output set
+- For input closed polyline, we do that only if an intersection previously.
+
+Then we check for an intersection on current (oriented) segment, defined by (pt1,pt2).
+If we find one, several situations need to be considered.
+
+First we check if the intersection point is the same as one of the points pt1 or pt2.
+case A: it is equal to pt1
+case B: it is equal to pt2
+case C: neither
+
+...TODO...
+
+
 
 After all the segments have been parsed, we need to add to the output set the final Polyline made of the rest of the points
 

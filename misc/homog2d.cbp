@@ -133,6 +133,7 @@
 		<Unit filename="figures_test/polyline_min_2O.code" />
 		<Unit filename="figures_test/polyline_min_3C.code" />
 		<Unit filename="figures_test/polyline_min_3O.code" />
+		<Unit filename="figures_test/polysplit_00.code" />
 		<Unit filename="figures_test/polysplit_01a.code" />
 		<Unit filename="figures_test/polysplit_01b.code" />
 		<Unit filename="figures_test/polysplit_01c.code" />
