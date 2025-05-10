@@ -120,6 +120,10 @@ case A: it is equal to pt1
 case B: it is equal to pt2
 case C: neither
 
+![polysplit_A](img/polyline_split_A.svg)
+![polysplit_B](img/polyline_split_B.svg)
+![polysplit_C](img/polyline_split_C.svg)
+
 ...TODO...
 
 

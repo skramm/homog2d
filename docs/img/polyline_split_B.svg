@@ -1,0 +1,12 @@
+<svg version="1.1" width="300" height="200" style="background-color:white;" xmlns="http://www.w3.org/2000/svg">
+<style>
+.txt1 { font: bold 12px sans-serif; };
+</style>
+<polyline stroke="rgb(150,100,50)" stroke-width="2" fill="none" points="10,90 40,60 130,120 190,150 250,120 "/>
+<line x1="0" y1="185" x2="299" y2="35.5" stroke="rgb(50,100,150)" stroke-width="2" />
+<text x="40" y="60" font-size="20px" fill="#000032">p1</text>
+<text x="130" y="120" font-size="20px" fill="#000032">p2</text>
+<text x="190" y="150" font-size="20px" fill="#000032">p3</text>
+<circle cx="40" cy="60" r="5" stroke="rgb(200,0,0)" stroke-width="1" fill="none" />
+<circle cx="190" cy="150" r="5" stroke="rgb(200,0,0)" stroke-width="1" fill="none" />
+</svg>
