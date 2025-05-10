@@ -1,0 +1,9 @@
+// line intersecting polygon
+
+// input: line intersecting only on one point
+	Line2d li( LineDir::H, 1 );
+	vector<Point2d> src{ {0,0},{1,1},{2,0} };
+
+// output: no split
+	vector<vector<Point2d>> vv_pts_C, vv_pts_O;
+
