@@ -6757,7 +6757,7 @@ PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 template<typename FPT>
 struct PolySplitData
 {
-	size_t _curr = 0;       ///< index of current point/segment
+	size_t _idx = 0;       ///< index of current point/segment
 	size_t _nbSegs;         ///< Nb of segments of input polygon
 	bool   _found = false;  ///< did we already find an intersection?
 	bool   _inputClosed;
@@ -6769,8 +6769,8 @@ struct PolySplitData
 	size_t _idxLastInt = 0;  ///< index of segment holding the last intersection point
 
 	Line2d_<HOMOG2D_INUMTYPE>               _line;   ///< the crossing line
-	OSegment_<HOMOG2D_INUMTYPE>             _seg;    ///< current segment
-	Point2d_<HOMOG2D_INUMTYPE>              _pt;     ///< current point
+	OSegment_<HOMOG2D_INUMTYPE>             _seg_curr;    ///< current segment
+	Point2d_<HOMOG2D_INUMTYPE>              _pt_curr;     ///< current point
 	Point2d_<HOMOG2D_INUMTYPE>              _intPt;  ///< intersection point
 	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;   ///< current set of output points
 	const std::vector<Point2d_<FPT>>&       _inputPts;
@@ -6787,8 +6787,8 @@ struct PolySplitData
 
 	bool keepOn()
 	{
-		_curr++;
-		if( _curr < _nbSegs )
+		_idx++;
+		if( _idx < _nbSegs )
 			return true;
 		return false;
 	}
@@ -6799,7 +6799,7 @@ struct PolySplitData
 	void print() const
 	{
 		std::cout << "PolySplitData:"
-			<< "\n\t curr="         << _curr
+			<< "\n\t idx="         << _idx
 			<< "\n\t nbSegs="       << _nbSegs
 			<< "\n\t found="        << (_found?"YES":"NO")
 			<< "\n\t input="        << (_inputClosed?'C':'O')
@@ -6807,12 +6807,14 @@ struct PolySplitData
 			<< "\n\t nbIntersect="  << _nbIntersect
 			<< "\n\t idxFirstInt="  << _idxFirstInt
 			<< "\n\t idxLastInt="   << _idxLastInt
-			<< "\n\t seg="          << _seg
-			<< "\n\t pt="           << _pt
+			<< "\n\t seg_curr="     << _seg_curr
+			<< "\n\t pt_curr="      << _pt_curr
 			<< "\n\t intPt="        << _intPt
 			<< "\n\t case="         << _case
+			<< "\n\t #vpts="        << _vpts.size()
 //	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;
 			<< std::endl;
+		priv::printVector( _vpts );
 	}
 };
 
@@ -6852,21 +6854,23 @@ template<typename FPT>
 void
 PolySplitData<FPT>::processCurrent( const OSegment_<HOMOG2D_INUMTYPE>& seg )
 {
-	std::cout << __FUNCTION__ << "()" << std::endl;
+	std::cout << __FUNCTION__ << "() seg=" << seg << std::endl;
 
-	_seg = seg;
-	_pt = seg.getPts().first;
+	_seg_curr = seg;
+	_pt_curr = seg.getPts().first;
 	if( _inputClosed )       // we store the current point ONLY if we already have
 	{
 		if( _found )       // we store the current point ONLY if we already have
 //			if( pt_curr != vpts.back() )
 			{
-				std::cout << " add " << _pt << '\n';
-				_vpts.push_back( _pt );  // found a (first) intersection
+				std::cout << " add " << _pt_curr << '\n';
+				_vpts.push_back( _pt_curr );  // found a (first) intersection
 			}
 	}
 	else
-		_vpts.push_back( _pt );  // we did have a previous intersection (or input is open)
+		_vpts.push_back( _pt_curr );  // we did have a previous intersection (or input is open)
+
+	std::cout << __FUNCTION__ << "() END, #vpts=" << _vpts.size() << std::endl;
 }
 
 //------------------------------------------------------------------
@@ -6880,12 +6884,12 @@ template<typename FP>
 auto
 PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 {
-	std::cout << __FUNCTION__ << "()" << std::endl;
+	std::cout << __FUNCTION__ << "()" << " it=" << intPt << " #vpts=" << _vpts.size() << std::endl;
 	_intPt = intPt;
 	_nbIntersect++;
 
 //	auto pt1 = _seg.getPts().first;
-	auto pt2 = _seg.getPts().second;
+	auto pt2 = _seg_curr.getPts().second;
 	decltype( _vpts ) out;
 	bool newPoly = true;
 
@@ -6895,17 +6899,17 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 		return std::make_pair( false, out );
 	}
 
-	_idxLastInt = _curr;
+	_idxLastInt = _idx;
 	if( pt2 == _intPt )  // special case A, B or C
 	{
 		newPoly = false;  // we will NOT add the intersection point to the output set !
 		std::cout << "Special case !\n";
 
-		if( _curr+1 == _nbSegs ) // no more segments, so ignore
+		if( _idx+1 == _nbSegs ) // no more segments, so ignore
 			std::cout << "No more segs !\n";
 		else
 		{
-			Point2d_<HOMOG2D_INUMTYPE> pt3 = _inputPts.at(_curr+2);
+			Point2d_<HOMOG2D_INUMTYPE> pt3 = _inputPts.at(_idx+2);
 			OSegment_<HOMOG2D_INUMTYPE> seg2( pt2, pt3 );
 
 			if( seg2.getLine() == _line )  // the following segment if coincident with the line, so we
@@ -6913,16 +6917,16 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 				std::cout << "-case C\n";
 				_case = 'C';
 			}
-			else
+			else  // second segment is NOT colinear with the line
 			{
-				auto side1 = side( _pt, _line );
+				auto side1 = side( _pt_curr, _line );
 				auto side2 = side( pt3, _line );
-				if( side1 == side2 )
+				if( side1 == side2 ) // points are on same side, relatively to the line
 				{
 					std::cout << "-case A\n"; // the points are on the same side,
 					_case = 'A';              // so we ignore the intersection point
 				}
-				else
+				else  // points are on different sides, relatively to the line
 				{
 					std::cout << "-case B\n";  // the point are on opposite sides of the line,
 					_case = 'B';               // so we do add the intersection point
@@ -6940,27 +6944,29 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 			}
 		}
 	}
-	else
+	else  // we are NOT in special case A, B or C
 	{
+		newPoly = false;
 		std::cout << "regular intersection, previous found=" << _found << "\n";
 		_case = '0';
 		_vpts.push_back( _intPt );
-		if( _found )
-		{
-			out = _vpts;
+		if( _found || ! _inputClosed )  // for open input, we return a new set
+		{                               // for closed input, we only return a new set if
+			out = _vpts;                // we already have found a previous intersection
 			_vpts.clear();
 			_vpts.push_back( _intPt );
+			newPoly = true;
 		}
-		else
-			newPoly = false;  // because that was the FIRST intersection, so we only have a single point in the point set
+		if( !_inputClosed )
+			newPoly = true;
 	}
 
 	if( !_found )
 	{
-		_idxFirstInt = _curr;
+		_idxFirstInt = _idx;
 		_found = true;
 	}
-	std::cout << __FUNCTION__ << "() END\n";
+	std::cout << __FUNCTION__ << "() END, newpoly=" << newPoly << "\n";
 	return std::make_pair( newPoly, out );
 }
 
@@ -6996,10 +7002,8 @@ PolylineBase<PTI,FPT>::p_split(
 	{
 		psdata.print();
 
-		seg_curr = getOSegment( psdata._curr );
-		psdata.processCurrent( seg_curr );
-
-		auto inters1 = seg_curr.intersects( li );
+		psdata.processCurrent( getOSegment( psdata._idx ) );
+		auto inters1 = psdata._seg_curr.intersects( li );
 		if( inters1() )
 		{
 			auto int_pt = inters1.get();
@@ -7009,6 +7013,8 @@ PolylineBase<PTI,FPT>::p_split(
 
 			if( hi.first )
 			{
+				std::cout << "create new poly from\n";
+				priv::printVector( hi.second );
 				PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( hi.second );
 				vout.emplace_back( pol );
 			}
