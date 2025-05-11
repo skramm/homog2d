@@ -6768,15 +6768,22 @@ struct PolySplitData
 	size_t _idxFirstInt = 0; ///< index of segment holding the first intersection point
 	size_t _idxLastInt = 0;  ///< index of segment holding the last intersection point
 
-	Line2d_<HOMOG2D_INUMTYPE>               _line;   ///< the crossing line
-	OSegment_<HOMOG2D_INUMTYPE>             _seg_curr;    ///< current segment
-	Point2d_<HOMOG2D_INUMTYPE>              _pt_curr;     ///< current point
-	Point2d_<HOMOG2D_INUMTYPE>              _intPt;  ///< intersection point
-	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;   ///< current set of output points
-	const std::vector<Point2d_<FPT>>&       _inputPts;
+	Line2d_<HOMOG2D_INUMTYPE>               _line;     ///< the line
+	OSegment_<HOMOG2D_INUMTYPE>             _seg_curr; ///< current segment
+	Point2d_<HOMOG2D_INUMTYPE>              _pt_curr;  ///< current point
+	Point2d_<HOMOG2D_INUMTYPE>              _intPt;    ///< intersection point
+	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;     ///< current set of output points
+	const std::vector<Point2d_<FPT>>&       _inputPts; ///< input set of points
 
-	PolySplitData( size_t s, bool ic, bool oc, const std::vector<Point2d_<FPT>>& inpts )
-		: _nbSegs(s), _inputClosed(ic), _outputClosed(oc), _inputPts(inpts)
+	template<typename FPLI>
+	PolySplitData(
+		const Line2d_<FPLI>& li,    ///< the line
+		size_t               s,     ///< Nb of segments
+		bool                 ic,    ///< Input is a closed polyline
+		bool                 oc,    ///< Output is a closed polyline
+		const std::vector<Point2d_<FPT>>& inpts ///< points of the input polyline
+	)
+		: _line(li), _nbSegs(s), _inputClosed(ic), _outputClosed(oc), _inputPts(inpts)
 	{
 		_vpts.reserve( s );
 	}
@@ -6814,7 +6821,9 @@ struct PolySplitData
 			<< "\n\t #vpts="        << _vpts.size()
 //	std::vector<Point2d_<HOMOG2D_INUMTYPE>> _vpts;
 			<< std::endl;
+#ifdef HOMOG2D_DEBUGMODE
 		priv::printVector( _vpts );
+#endif
 	}
 };
 
@@ -6858,6 +6867,10 @@ PolySplitData<FPT>::processCurrent( const OSegment_<HOMOG2D_INUMTYPE>& seg )
 
 	_seg_curr = seg;
 	_pt_curr = seg.getPts().first;
+
+	if( _case != '0' )  // if we had case A, B or C previously, we dont add
+		return;         // the current poin
+
 	if( _inputClosed )       // we store the current point ONLY if we already have
 	{
 		if( _found )       // we store the current point ONLY if we already have
@@ -6911,6 +6924,7 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 		{
 			Point2d_<HOMOG2D_INUMTYPE> pt3 = _inputPts.at(_idx+2);
 			OSegment_<HOMOG2D_INUMTYPE> seg2( pt2, pt3 );
+			std::cout << "_pt_curr" << _pt_curr << " pt3=" << pt3 << "\n";
 
 			if( seg2.getLine() == _line )  // the following segment if coincident with the line, so we
 			{                              // ignore the intersection point
@@ -6920,7 +6934,10 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 			else  // second segment is NOT colinear with the line
 			{
 				auto side1 = side( _pt_curr, _line );
-				auto side2 = side( pt3, _line );
+				auto side2 = side( pt3,      _line );
+				std::cout << "_pt_curr=" << _pt_curr << " pt3=" << pt3 << "\n";
+				std::cout << "li=" << _line << "\n";
+				std::cout << "side1=" << side1 << " side2=" << side2 << "\n";
 				if( side1 == side2 ) // points are on same side, relatively to the line
 				{
 					std::cout << "-case A\n"; // the points are on the same side,
@@ -6995,7 +7012,7 @@ PolylineBase<PTI,FPT>::p_split(
 	std::cout << "\n START, input pol=" << *this << " output: "
 	<< (std::is_same_v<PTO,typ::IsClosed>?"C":"O") << '\n';
 
-	PolySplitData psdata( nbSegs(), std::is_same_v<PTI,typ::IsClosed>, std::is_same_v<PTO,typ::IsClosed>, _plinevec );
+	PolySplitData psdata( li, nbSegs(), std::is_same_v<PTI,typ::IsClosed>, std::is_same_v<PTO,typ::IsClosed>, _plinevec );
 	OSegment_<HOMOG2D_INUMTYPE> seg_curr;
 
 	do  // search intersection points
@@ -7014,7 +7031,9 @@ PolylineBase<PTI,FPT>::p_split(
 			if( hi.first )
 			{
 				std::cout << "create new poly from\n";
+#ifdef HOMOG2D_DEBUGMODE
 				priv::printVector( hi.second );
+#endif
 				PolylineBase<PTO,HOMOG2D_INUMTYPE> pol( hi.second );
 				vout.emplace_back( pol );
 			}

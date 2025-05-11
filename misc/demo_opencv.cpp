@@ -566,6 +566,7 @@ void action_C( void* param )
 		draw( data.img, cr2.get(), img::DrawParams().setColor(0,20,220).setPointStyle(img::PtStyle::Diam) );
 
 // circle - lines intersections
+	std::ostringstream oss1,oss2;
 	for( size_t i=0; i<data.li.size(); i++ )
 	{
 		auto ri = data.li[i].intersects( c1 );
@@ -575,7 +576,13 @@ void action_C( void* param )
 			inter.first.draw(  data.img, img::DrawParams().setColor(250, 0, 0) );
 			inter.second.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
 		}
+		auto side1 = side( c1.center(), data.li[i] );
+		auto side2 = side( c2.center(), data.li[i] );
+		oss1 << (side1==1?'A':(side1==-1?'B':'-'));
+		oss2 << (side2==1?'A':(side2==-1?'B':'-'));
 	}
+	data.img.drawText( oss1.str(), c1.center() );
+	data.img.drawText( oss2.str(), c2.center() );
 
 	auto seg = getSegment( c1, c2 );
 	seg.draw( data.img, img::DrawParams().setColor(250, 0, 0) );
@@ -588,7 +595,7 @@ void action_C( void* param )
 
 void demo_C( int demidx )
 {
-	Param_C data( demidx, "circle demo", "move circle over line, hit [lm] to change circle radius" );
+	Param_C data( demidx, "circle demo", "move circle over line, hit [lm] to change circle radius. Also shows side of centers relatively to the 3 lines" );
 
 	data.li[0] = Point2d() * Point2d(200,100);
 	data.li[1] = Point2d(200,0) * Point2d(200,200);

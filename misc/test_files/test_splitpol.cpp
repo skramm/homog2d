@@ -116,7 +116,19 @@ void process2(
 
 int main()
 {
-#if 1
+// ??????????????? NO INTERSECTION ???
+	OSegment seg(0,4,6,4);
+	Line2d li( LineDir::H, 4 );
+	auto inters1 = seg.intersects( li );
+	if( inters1() )
+	{
+		std::cout << "INTERS!\n";
+	}
+	else
+		std::cout << "NO inters\n";
+
+
+#if 0
 {
 	#include "../figures_test/polysplit_01a.code"
 	process2( "01a", src, li, vv_pts_O, vv_pts_C );

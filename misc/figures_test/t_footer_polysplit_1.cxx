@@ -95,7 +95,6 @@ drawReal( POLYSET pset, const Homogr& H, DP dp, std::string fname, std::ofstream
 		const auto& poly = H*pset[i];
 		poly.draw( im, dp );
 		auto fn = fname+std::to_string(i)+".svg";
-		std::cout << "drawSplit(): name=" << fn << '\n';
 		im.write( fn );
 		fhtml << "<td><img src='"<< fn << "'></td>\n";
 	}
