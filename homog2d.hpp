@@ -6843,8 +6843,10 @@ PolySplitData<FPT>::processRemaining()
 			{
 				_vpts.push_back( _inputPts.at(idx) );
 			}
+			if( _vpts.size() == 1 ) // if only one point, we can discard it
+				_vpts.clear();
 		}
-		else                   // input is closed polyline, so just add the final point
+		else                   // input is an open polyline, so just add the final point
 		{
 			_vpts.push_back( _inputPts.back() );
 		}
@@ -6909,6 +6911,7 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 	if( _case != '0' )                     // that means we had A, B or C just previously, so we can ignore the intersection point
 	{
 		std::cout << "case is " << _case << " ignore...\n";
+		_case = '0';
 		return std::make_pair( false, out );
 	}
 
@@ -12232,26 +12235,30 @@ getArrowSegments(
 {
 	std::array<std::pair<Point2d_<double>,Point2d_<double>>,3> out;
 	auto ppts = vec.getPts();
-	auto pt1 = ppts.first;
-	auto pt2 = ppts.second;
+	auto pt1 = ppts.first;   // from
+	auto pt2 = ppts.second;  // to
 
-	const int arSize = 8;
+	const int arSize = 9;
+	const int arSize2 = 6;
 
+// output index 0 is the "bottom" line
 	Line2d_<double> liA = vec.getLine().getOrthogLine( pt1 );
-	out[0] = liA.getPoints( pt1, arSize );
+	out[0] = liA.getPoints( pt1, arSize2 );
 
+// get the two points at equal distance from the "to" point
 	auto ppts_B = vec.getLine().getPoints( pt2, arSize );
 
+// determine which one (p0) is lying on the segment
 	Point2d_<double> p0 = ppts_B.first;
 	if( dist( pt1, ppts_B.first) >  dist(pt1, ppts_B.second) )
 		p0 = ppts_B.second;
 
+// get the orthogonal line to the segment located at that point p0
 	Line2d_<double> liB = vec.getLine().getOrthogLine( p0 );
-	auto ppts_C = liB.getPoints( p0, arSize );
+	auto ppts_C = liB.getPoints( p0, arSize2 );
 
 	out[1] = std::make_pair(ppts_C.first, pt2);
 	out[2] = std::make_pair(ppts_C.second, pt2);
-
 	return out;
 }
 

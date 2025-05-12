@@ -20,20 +20,33 @@
 	processAll( psrc_c, fname, "C", vv_pts_C, li, H, fhtml_C );
 }
 
+/// Draw polyline as a set of oriented segments, with their index
+template<typename IM,typename POLY,typename DP>
+void
+drawPoly( IM& im, const POLY& poly, const DP& dp )
+{
+	for( size_t j=0; j<poly.nbSegs(); j++ )
+	{
+		auto seg = poly.getOSegment(j);
+		seg.draw( im, dp );
+		im.drawText( std::to_string(j), Point2d(seg.getCenter() ) );
+	}
+}
+
 template<typename PTYPE,typename HO>
 void
 processSource( const PTYPE& poly, const Line2d& li, const HO& H, std::string fname, std::string OC )
 {
-	auto dp = img::DrawParams().setThickness(3);
+	auto dp = img::DrawParams().setThickness(3).setColor(250,0,0);
 
 	img::Image<img::SvgImage> im_src(400,300);
 	drawGrid( im_src, H );
-	(H*poly).draw( im_src, dp.setColor(250,0,0) );
+	drawPoly( im_src, H*poly, dp );
+//	(H*poly).draw( im_src, dp.setColor(250,0,0) );
 
 	(H*li).draw( im_src, dp.setColor(0,250,0).setThickness(2) );
 	im_src.write( fname+"_"+OC+".svg" );
 }
-
 
 template<typename TYPE,typename VVPTS>
 std::vector<TYPE>
@@ -48,7 +61,6 @@ drawExpectedSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams d
 	}
 
 // we need to store them so we can sort them
-
 	for( size_t i=0;i<vv_pts.size(); i++ )
 	{
 		const auto& v_pts = vv_pts[i];
@@ -65,7 +77,8 @@ drawExpectedSplit( TYPE, const VVPTS& vv_pts, const Homogr& H, img::DrawParams d
 	{
 		img::Image<img::SvgImage> im(400,300);
 		drawGrid( im, H );
-		(H*v_exp[i]).draw( im, dp );
+		drawPoly( im, H*v_exp[i], dp );
+
 		char t2 = (v_exp[i].isClosed() ? 'c' : 'o');
 
 		auto fn1 = fname+t+t2+'_'+std::to_string(i)+".svg";
@@ -92,8 +105,7 @@ drawReal( POLYSET pset, const Homogr& H, DP dp, std::string fname, std::ofstream
 	{
 		img::Image<img::SvgImage> im(400,300);
 		drawGrid( im, H );
-		const auto& poly = H*pset[i];
-		poly.draw( im, dp );
+		drawPoly( im, H*pset[i], dp );
 		auto fn = fname+std::to_string(i)+".svg";
 		im.write( fn );
 		fhtml << "<td><img src='"<< fn << "'></td>\n";
