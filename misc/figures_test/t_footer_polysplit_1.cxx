@@ -129,7 +129,11 @@ drawRealSplit( TYPE, const POLY& poly, const Line2d& li, const Homogr& H, DP dp,
 		out = poly.splitO( li );
 	}
 	std::sort( std::begin(out), std::end(out) );
-	drawReal( out, H, dp, fname + suffix, fhtml );
+
+	if( !out.size() )
+		fhtml << "<p>NIL</p>\n";
+	else
+		drawReal( out, H, dp, fname + suffix, fhtml );
 	return out;
 }
 

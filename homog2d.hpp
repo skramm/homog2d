@@ -6757,16 +6757,17 @@ PolylineBase<PLT,FPT>::operator < ( const PolylineBase<PLT,FPT2>& other ) const
 template<typename FPT>
 struct PolySplitData
 {
-	size_t _idx = 0;       ///< index of current point/segment
+	size_t _idx = 0;        ///< index of current point/segment
 	size_t _nbSegs;         ///< Nb of segments of input polygon
 	bool   _found = false;  ///< did we already find an intersection?
 	bool   _inputClosed;
 	bool   _outputClosed;
-	size_t _nbIntersect = 0;  ///< nb of intersection points (useful? check that)
-	char   _case = '0';       ///< used when one of the segment points is equal to the intersection point
+	bool   _currHasInt = false;  ///< true if current segment holds an intersection
+	size_t _nbIntersect = 0;     ///< nb of intersection points (useful? check that)
+	char   _case = '0';          ///< used when one of the segment points is equal to the intersection point
 
-	size_t _idxFirstInt = 0; ///< index of segment holding the first intersection point
-	size_t _idxLastInt = 0;  ///< index of segment holding the last intersection point
+	size_t _idxFirstInt = 0;  ///< index of segment holding the first intersection point
+	size_t _idxLastInt = 0;   ///< index of segment holding the last intersection point (useful ???)
 
 	Line2d_<HOMOG2D_INUMTYPE>               _line;     ///< the line
 	OSegment_<HOMOG2D_INUMTYPE>             _seg_curr; ///< current segment
@@ -6812,6 +6813,7 @@ struct PolySplitData
 			<< "\n\t input="        << (_inputClosed?'C':'O')
 			<< " output="           << (_outputClosed?'C':'O')
 			<< "\n\t nbIntersect="  << _nbIntersect
+			<< "\n\t currHasInt="   << _currHasInt
 			<< "\n\t idxFirstInt="  << _idxFirstInt
 			<< "\n\t idxLastInt="   << _idxLastInt
 			<< "\n\t seg_curr="     << _seg_curr
@@ -6843,14 +6845,22 @@ PolySplitData<FPT>::processRemaining()
 			{
 				_vpts.push_back( _inputPts.at(idx) );
 			}
-			if( _vpts.size() == 1 ) // if only one point, we can discard it
-				_vpts.clear();
 		}
-		else                   // input is an open polyline, so just add the final point
+		else                   // input is an open polyline,
 		{
-			_vpts.push_back( _inputPts.back() );
+			if( _currHasInt )                        // if the final seg holds an intersection point,
+				_vpts.push_back( _seg_curr.getPts().second); // we add the second point of the segment
+			else
+				_vpts.push_back( _inputPts.back() ); // else, we just add the final point
+		}
+		if( _vpts.size() == 1 ) // if only one point, we can discard it
+		{
+			std::cout << "discard single pt " << _vpts.front() << '\n';
+			_vpts.clear();
 		}
 	}
+	std::cout << __FUNCTION__ << "() END #=" << _vpts.size() << std::endl;;
+
 	return _vpts;
 }
 
@@ -6907,6 +6917,7 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 	auto pt2 = _seg_curr.getPts().second;
 	decltype( _vpts ) out;
 	bool newPoly = true;
+	_currHasInt = false;
 
 	if( _case != '0' )                     // that means we had A, B or C just previously, so we can ignore the intersection point
 	{
@@ -6938,9 +6949,6 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 			{
 				auto side1 = side( _pt_curr, _line );
 				auto side2 = side( pt3,      _line );
-				std::cout << "_pt_curr=" << _pt_curr << " pt3=" << pt3 << "\n";
-				std::cout << "li=" << _line << "\n";
-				std::cout << "side1=" << side1 << " side2=" << side2 << "\n";
 				if( side1 == side2 ) // points are on same side, relatively to the line
 				{
 					std::cout << "-case A\n"; // the points are on the same side,
@@ -6966,6 +6974,7 @@ PolySplitData<FPT>::handleIntersection( const Point2d_<FP>& intPt )
 	}
 	else  // we are NOT in special case A, B or C
 	{
+		_currHasInt = true;
 		newPoly = false;
 		std::cout << "regular intersection, previous found=" << _found << "\n";
 		_case = '0';
@@ -7049,6 +7058,9 @@ PolylineBase<PTI,FPT>::p_split(
 	auto rem = psdata.processRemaining();
 	if( !rem.empty() )
 		vout.push_back( rem );
+
+	if( vout.size() < 2 )  // if less that one poly, this
+		vout.clear();      // means we have no split !
 
 /*
 // done all the segments, now we process the "final" polyline

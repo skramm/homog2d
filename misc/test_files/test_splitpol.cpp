@@ -116,6 +116,7 @@ void process2(
 
 int main()
 {
+/*
 // ??????????????? NO INTERSECTION ???
 	OSegment seg(0,4,6,4);
 	Line2d li( LineDir::H, 4 );
@@ -126,12 +127,12 @@ int main()
 	}
 	else
 		std::cout << "NO inters\n";
+*/
 
-
-#if 0
+#if 1
 {
-	#include "../figures_test/polysplit_01a.code"
-	process2( "01a", src, li, vv_pts_O, vv_pts_C );
+	#include "../figures_test/polysplit_05.code"
+	process2( "05", src, li, vv_pts_O, vv_pts_C );
 }
 
 #endif
