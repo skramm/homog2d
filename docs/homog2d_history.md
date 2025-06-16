@@ -14,8 +14,13 @@ See [Release page](https://github.com/skramm/homog2d/releases).
 
 - current Work In Progress
   - polygon minimization
+  - polygon splitting
 
 - current master branch
+
+(NIL)
+
+- [v2.13](https://github.com/skramm/homog2d/releases/tag/v2.13), released on 2025-06-16
   - changed behavior of the `size()` member and free functions:
 now all of these return the number of points that the primitive has, as a `size_t` type, see [details here](homog2d_manual.md#p_commonf).
   - added new type `OSegment` (code shared with `Segment`), enabling getting side of point relatively to vector with member function `getPointSide()`,
@@ -28,7 +33,7 @@ now all of these return the number of points that the primitive has, as a `size_
   The latter member function returns the associated displacement as a pair of numerical values.
   - clarified `getAngle()` for segments: now returns the full range [-PI:+PI] if both are oriented.
   - added `getBisectorLines()` for polyline objects
-  - added `getOSegment()` to Polyline class
+  - added `getOSegment()` to Polyline class (oriented segment)
   - changed normalization of closed polyline: now constant orientation
    - `getLmPoint()` and associated functions now return a `std::pair`, so user can fetch its position in the container.
   The downside is that it is now not possible to use a `std::list` as input container.
