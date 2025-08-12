@@ -2788,11 +2788,14 @@ public:
 		);
 	}
 
-/// Constructor from x1, y1, x2, y2 (need to be all the same type)
-	template<typename T>
-	FRect_( T x1, T y1, T x2, T y2 )
+/// Constructor from x1, y1, x2, y2
+	template<typename T1,typename T2,typename T3,typename T4>
+	FRect_( T1 x1, T2 y1, T3 x2, T4 y2 )
 	{
-		HOMOG2D_CHECK_IS_NUMBER(T);
+		HOMOG2D_CHECK_IS_NUMBER(T1);
+		HOMOG2D_CHECK_IS_NUMBER(T2);
+		HOMOG2D_CHECK_IS_NUMBER(T3);
+		HOMOG2D_CHECK_IS_NUMBER(T4);
 		set( Point2d_<FPT>(x1,y1), Point2d_<FPT>(x2,y2) );
 	}
 
@@ -4470,7 +4473,6 @@ public:
 	template<typename FPT2>
 	bool isInside( const FRect_<FPT2>& rect ) const;
 
-
 /// Point is inside circle defined by center and radius
 	template<
 		typename T,
@@ -5372,23 +5374,20 @@ public:
 		return Line2d_<HOMOG2D_INUMTYPE>(li);
 	}
 
-	template<typename T>
+	template<typename FPT>
 	PointSide
-	getPointSide( const Point2d_<T>& pt ) const;
+	getPointSide( const Point2d_<FPT>& pt ) const;
 
-/// Returns a pair of segments/vectors split by the middle
 	std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
-	split() const
-	{
-		auto pt_mid = getCenter();
-		return std::make_pair(
-			SegVec<SV,FPT>( _ptS1,  pt_mid ),
-			SegVec<SV,FPT>( pt_mid, _ptS2 )
-		);
-	}
+	split() const;
+
+	template<typename T>
+	std::pair<SegVec<typ::IsOSeg,FPT>,SegVec<typ::IsOSeg,FPT>>
+	split( T dist ) const;
 
 	template<typename FPT2>
-	HOMOG2D_INUMTYPE distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
+	HOMOG2D_INUMTYPE
+	distTo( const Point2d_<FPT2>&, int* segDistCase=0 ) const;
 
 	template<typename T>
 	constexpr bool
@@ -5401,7 +5400,7 @@ public:
 		return getLine().isParallelTo( other );
 	}
 
-	/// Returns point that at middle distance between \c p1 and \c p2
+	/// Returns point that is at middle distance between \c p1 and \c p2
 	auto
 	getCenter() const
 	{
@@ -5458,6 +5457,44 @@ public:
 }; // class SegVec
 
 //------------------------------------------------------------------
+/// Returns a pair of segments/vectors split by the middle
+template<typename SV,typename FPT>
+std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
+SegVec<SV,FPT>::split() const
+{
+	auto pt_mid = getCenter();
+	return std::make_pair(
+		SegVec<SV,FPT>( _ptS1,  pt_mid ),
+		SegVec<SV,FPT>( pt_mid, _ptS2 )
+	);
+}
+
+//------------------------------------------------------------------
+/// Returns a pair of segments/vectors split by point at arbitrary distance
+/// \note: distance value must be >0 and less than segment length
+template<typename SV,typename FPT>
+template<typename T>
+std::pair<OSegment_<FPT>,OSegment_<FPT>>
+SegVec<SV,FPT>::split( T dist ) const
+{
+	static_assert( std::is_same_v<SV,typ::IsOSeg>, "cannot use this on non-oriented segments" );
+	HOMOG2D_CHECK_IS_NUMBER(T);
+#ifndef HOMOG2D_NOCHECKS
+	if( dist <= 0 )
+		HOMOG2D_THROW_ERROR_1( "distance value must be >=0, current value=" << dist );
+	if( dist >= length() )
+		HOMOG2D_THROW_ERROR_1( "distance value must less than length, current value="
+			<< dist << " length=" << length() );
+#endif
+
+	auto pt = getPointAt(dist);
+	return std::make_pair(
+		SegVec<SV,FPT>( _ptS1, pt ),
+		SegVec<SV,FPT>( pt, _ptS2 )
+	);
+}
+
+//------------------------------------------------------------------
 /// Return side of point \c pt relatively to the segment (Oriented only)
 template<typename SV,typename FPT>
 template<typename T>
@@ -5491,6 +5528,10 @@ SegVec<SV,FPT>::getPointAt( FPT2 dist ) const
 {
 	static_assert( std::is_same_v<SV,typ::IsOSeg>, "Cannot apply on non-oriented segment" );
 	HOMOG2D_CHECK_IS_NUMBER(FPT2);
+#ifndef HOMOG2D_NOCHECKS
+	if( dist < 0 )
+		HOMOG2D_THROW_ERROR_1( "distance value must be >0, current value=" << dist );
+#endif
 
 	Line2d_<HOMOG2D_INUMTYPE> li = getLine();
 	auto ppts = li.getPoints( _ptS1, dist );
@@ -6279,7 +6320,6 @@ struct OffsetPolyParams
 {
 	bool _angleSplit = false;
 };
-
 
 
 namespace base {
@@ -13551,7 +13591,7 @@ parsePath( const char* s )
 	do
 	{
 		auto e = getNextElem( str, it );
-		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
+//		HOMOG2D_LOG( "parsing element -" << e << "- #=" << e.size() );
 
 		if( e.size() == 1 && !isDigit(e[0]) ) // we have a command !
 		{
@@ -13572,7 +13612,7 @@ parsePath( const char* s )
 		}
 		else // item is not a "path" command, but a value
 		{
-			HOMOG2D_LOG( "process value, values size=" << values.size() );
+//			HOMOG2D_LOG( "process value, values size=" << values.size() );
 			if( values.size() == (size_t)mode._nbValues ) // already got enough values
 				values.storeValues( vout[idx], mode );
 			values.addValue( e );
