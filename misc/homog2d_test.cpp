@@ -45,7 +45,7 @@ This allows using the same definition both for the test and to make a graphical 
 
 To generate that rendering, type:
 \code
-$ make test_fig
+$ make test-fig
 \endcode
 */
 

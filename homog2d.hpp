@@ -265,7 +265,7 @@ namespace dbg {
 	{
 		std::ostringstream oss;
 		for( int i=0;i<nb;i++)
-			oss << "  ";
+			oss << "- ";
 		return oss.str();
 	}
 } // namespace dbg
@@ -5374,9 +5374,9 @@ public:
 		return Line2d_<HOMOG2D_INUMTYPE>(li);
 	}
 
-	template<typename FPT>
+	template<typename FPT2>
 	PointSide
-	getPointSide( const Point2d_<FPT>& pt ) const;
+	getPointSide( const Point2d_<FPT2>& pt ) const;
 
 	std::pair<SegVec<SV,FPT>,SegVec<SV,FPT>>
 	split() const;
@@ -7658,7 +7658,8 @@ struct TriangleMetrics
 /// \warning: this index points on the \c _vecCritValue vector, so if "open" polyline, 0 means points with index 1
 	size_t              _lastOneRemoved=0;
 
-/// For closed polylines , this array holds the index values of the "special cases" that need to be considered when fetching points to compute distances.
+/// For closed polylines, this array holds the index values of the "special cases" that need to be considered
+/// when fetching points to compute distances.
 /**
 For a polyline of n points, when we need to get the index of point before 0 or after n-1, then
 special care has to be taken.
@@ -7747,7 +7748,7 @@ template<typename FP>
 void
 TriangleMetrics<FP>::computeMetric(
 	size_t idxp,    ///< current index of point
-	size_t idxm,    ///< current index of metric (equal to idxp if closed polyline, or idxp-1 if open)
+	size_t idxm,    ///< current index of metric (equal to \c idxp if closed polyline, or \c idxp-1 if open)
 	int    before,  ///< offset of "before" point (-2 or -1)
 	int    after    ///< offset of "after" point  (+1 or +2)
 )
@@ -7788,7 +7789,8 @@ TriangleMetrics<FP>::computeMetric(
 but is this really needed?
 */
 /// \todo 20241029:  adapt to "big numbers"
-
+/// \todo 20250813: the "triangle area" cannot be used for a polyline of only 3 points: the area will be the same
+/// for all three. So find a way to use another metric when we get down to 3 points
 		case PminimMetric::Angle:
 		{
 			auto vx1 = pt_aft.getX() - p0.getX();
@@ -7801,10 +7803,12 @@ but is this really needed?
 		}
 		break;
 
+// This uses the "Shoelace" formulae, see https://en.wikipedia.org/wiki/Area_of_a_triangle
+
 		case PminimMetric::TriangleArea:
 		{
 			detail::Matrix_<HOMOG2D_INUMTYPE> mat;
-
+			HOMOG2D_LOG( "ptbef=" << pt_bef << " p0=" << p0 << " pt_aft=" << pt_aft << '\n' );
 			mat.value(0,0) = pt_bef.getX();
 			mat.value(0,1) = pt_bef.getY();
 			mat.value(0,2) = 1.;
@@ -7842,6 +7846,9 @@ or triangle areas (Visvalingam-style)
 p_n-1 +-------+ p_n+1   \ /
          d1
 \endverbatim
+
+\todo 20250720 If only 3 points and metric is "triangle", we don't actually need to compute the 3 values,
+they will all be the same value!
 */
 template<typename FP>
 TriangleMetrics<FP>
@@ -7870,15 +7877,31 @@ computeMetrics(
 }
 
 //------------------------------------------------------------------
+/// Helper function for removeSinglePoint(), finds the last 3 points that are not tagged to be removed
+std::array<size_t,3>
+findLastThreePoints( const std::vector<PMetricValue>& vecCritValue )
+{
+	size_t idx = 0;
+	std::array<size_t,3> out;
+	for( size_t i=0; i<vecCritValue.size() && idx<3; i++ )
+	{
+		const auto& metricValue = vecCritValue[i];
+		if( metricValue._isRemoved == false )
+			out[idx++] = i;
+		assert( idx < 4 );
+	}
+	return out;
+}
+//------------------------------------------------------------------
 /// Searches through all the points and tag as removed the one that has
 /// the minimal criterion value (distance, area, or angle)
 /**
 - This function does NOT remove points from the vector!
-- If no points are removed ("tagged"), return false.
+- If no points are removed (aka "tagged"), return false.
 */
 template<typename FP>
 bool
-removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool /* isClosed */ )
+removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool isClosed )
 {
 	HOMOG2D_IN;
 
@@ -7891,22 +7914,60 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool /
 		return false;
 	}
 
-// step 1: find element with minimal distance
-	auto minval_it = std::min_element(
-		std::begin(metData._vecCritValue),
-		std::end(metData._vecCritValue),
-		[]
-		( const auto& e1, const auto& e2 )         // lambda
-		{
-			if( e1._isRemoved )
-				return false;
-			if( e2._isRemoved )
-				return true;
-			return e1._value < e2._value;
-		}
-	);
-	assert( !minval_it->_isRemoved );
+	// needed because the function is called only in a certain case
+//	decltype( std::min_element( std::begin(metData._vecCritValue), std::end(metData._vecCritValue) ) ) minval_it;
+	decltype( std::begin(metData._vecCritValue) ) minval_it;
 
+	const auto& pts = metData._vpoints; // shorthand
+//	const auto& pts = metData._vecCritValue; // shorthand
+	if(
+		isClosed                                             // IF closed polyline
+		&& params._metric == PminimMetric::TriangleArea      // AND triangle metric,
+		&& metData._vpoints.size() - metData._nbRemoved == 3 // AND only 3 pts left
+	)
+	{    // then compute the 3 lengths of the 3 segments, and remove the point that is not on longest segment
+		auto last3Pts = findLastThreePoints( metData._vecCritValue );
+		std::array<HOMOG2D_INUMTYPE,3> segLength = {
+			Segment_<HOMOG2D_INUMTYPE>( pts[last3Pts[0]], pts[last3Pts[1]] ).length(),
+			Segment_<HOMOG2D_INUMTYPE>( pts[last3Pts[2]], pts[last3Pts[1]] ).length(),
+			Segment_<HOMOG2D_INUMTYPE>( pts[last3Pts[0]], pts[last3Pts[2]] ).length()
+		};
+		auto maxLength_it = std::max_element( segLength.begin(), segLength.end() );
+		auto maxIdx = std::distance( std::begin(segLength), maxLength_it );
+//		priv::printArray( last3Pts );
+		HOMOG2D_LOG( "L0=" << segLength[0] << " L1=" << segLength[1] << " L2=" << segLength[2]
+			<< " maxIdx=" << maxIdx );
+		switch( maxIdx )
+		{
+			case 0:
+				minval_it = std::vector<PMetricValue>::iterator( metData._vecCritValue.begin() + last3Pts[2] );
+			break;
+			case 1:
+				minval_it = std::vector<PMetricValue>::iterator( metData._vecCritValue.begin() + last3Pts[0] );
+			break;
+			default:
+				minval_it = std::vector<PMetricValue>::iterator( metData._vecCritValue.begin() + last3Pts[1] );
+		}
+		HOMOG2D_LOG( "min pt to be removed=" << *minval_it );
+
+	}
+	else  // find element with minimal distance
+	{
+		minval_it = std::min_element(
+			std::begin(metData._vecCritValue),
+			std::end(metData._vecCritValue),
+			[]
+			( const auto& e1, const auto& e2 )         // lambda
+			{
+				if( e1._isRemoved )
+					return false;
+				if( e2._isRemoved )
+					return true;
+				return e1._value < e2._value;
+			}
+		);
+		assert( !minval_it->_isRemoved );
+	}
 // step 2: determine if we do remove the point or not
 	bool doRemovePoint = false;
 
@@ -7973,7 +8034,7 @@ TriangleMetrics<FP>::recomputeMetrics( typ::IsClosed )
 	HOMOG2D_IN;
 	if( _nbRemoved+2 == _vpoints.size() )
 	{
-		HOMOG2D_LOG( "no recomputeing of metrics" );
+		HOMOG2D_LOG( "no recomputing of metrics" );
 		HOMOG2D_OUT;
 		return;
 	}
@@ -8072,12 +8133,12 @@ PolylineBase<PLT,FPT>::minimize(
 	}
 	if( params._maxNbPoints > size()-1 )
 		HOMOG2D_THROW_ERROR_1( "Invalid value, polyline has only"
-			+ std::to_string(size()) + ", cannot remove "
-			+ std::to_string(params._maxNbPoints) + " points" );
+			<< size() << " points, cannot remove "
+			<< params._maxNbPoints << " points" );
 
 // step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );
-
+	distances.print();
 // step 2: iterate until no more points are tagged as removed
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 //		distances.recomputeMetrics( trait::PolIsClosed<PLT>::value );
@@ -10168,7 +10229,7 @@ LPBase<LP,FPT>::impl_isInsidePoly( const base::PolylineBase<PTYPE,T>& poly, cons
 		}
 	}
 	while( iter < HOMOG2D_MAXITER_PIP );
-	HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside after " + std::to_string(HOMOG2D_MAXITER_PIP) + " iterations" );
+	HOMOG2D_THROW_ERROR_1( "unable to determine if point is inside after " << HOMOG2D_MAXITER_PIP << " iterations" );
 	return false; // to avoid a warning
 }
 

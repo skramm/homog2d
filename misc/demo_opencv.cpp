@@ -144,8 +144,8 @@ public:
 	{
 //		cv::Mat dst;
 //		cv::flip(img.getReal(), dst, 0 );
+//		std::cout << "IMG SIZE=" << img.size().first << "," << img.size().second << std::endl;
 		img.show( win1 );
-//		cv::imshow( win1, dst );
 	}
 	void putTextLine( std::string msg, int lineindex=-1 )
 	{
@@ -2184,7 +2184,7 @@ struct Param_polyMinim : Data
 	ProxyTrackBar   _proxyTB_1;    ///< a proxy used for the first TrackBar (needed because only ints are allowed in TrackBars)
 	ProxyTrackBar   _proxyTB_2;    ///< a proxy used for the second TrackBar
 
-	VarPoly _polySrc;     ///< holds the source polyline, in "mouse" mode
+	VarPoly _polySrc;     ///< holds the source polyline (as variant), in "mouse" mode
 	VarPoly _polyDst;     ///< holds the minimized polyline
 	std::vector<VarPoly>    _vecLoaded; ///< holds the polylines that where loaded from file
 	std::vector<FRect>      _vecBB;     ///< holds the bounding boxes of the loaded polylines
@@ -2250,6 +2250,7 @@ struct PolyMinimFunct
 /// Called both by the mouse callback and by the trackbar callback
 void action_polyMinim( void* param )
 {
+HOMOG2D_IN;
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
 
 	data.clearImage();
@@ -2270,6 +2271,7 @@ void action_polyMinim( void* param )
 	auto pos_x_txt = data.img.cols() - 200;
 	if( data._pminimFileMode ) // if mode is "show real svg file"
 	{
+		HOMOG2D_LOG( "real svg file" );
 		int i=0;
 		for( const auto& e: data._vecLoaded )
 		{
@@ -2294,6 +2296,7 @@ void action_polyMinim( void* param )
 	}
 	else        // draw polyline with mouse
 	{
+		HOMOG2D_LOG( "draw polyline with mouse" );
 		auto idx = checkIfPointIsClose( data._pt_mouse, data.vpt );
 		if( idx != -1 )
 			drawAlgoParams( idx, data );
@@ -2313,12 +2316,14 @@ void action_polyMinim( void* param )
 		drawText( data.img2, "NbPts=" + std::to_string( nbPts2 ), Point2d(pos_x_txt,20) );
 	}
 	data.showImage();
+	HOMOG2D_OUT;
 }
 
 /// OpenCv trackbar callback (free function), changes parameter value for the metric
 /// according to trackbar value, and calls the corresponding "action" function
 void trackbarCallback( int val, void* param )
 {
+HOMOG2D_IN;
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
 
 	switch( data._pmParams._metric )
@@ -2344,11 +2349,13 @@ void trackbarCallback( int val, void* param )
 	}
 
 	action_polyMinim( param );
+	HOMOG2D_OUT;
 }
 
 /// OpenCv trackbar callback (free function), changes parameter value for the Strop Criterion
 void trackbarCallback_2( int val, void* param )
 {
+HOMOG2D_IN;
 	auto& data = *reinterpret_cast<Param_polyMinim*>(param);
 
 	if( data._pmParams._stopCrit == PminimStopCrit::NbPtsRatio )
@@ -2363,10 +2370,12 @@ void trackbarCallback_2( int val, void* param )
 	}
 
 	action_polyMinim( param );
+	HOMOG2D_OUT;
 }
 
 void Param_polyMinim::createTrackbar()
 {
+HOMOG2D_IN;
 	std::string tbName;
 	switch( _pmParams._metric )
 	{
@@ -2397,21 +2406,27 @@ void Param_polyMinim::createTrackbar()
 
 		default: assert(0);
 	}
-	cv::createTrackbar( tbName, win2, &_proxyTB_1.slider, _proxyTB_1.slider_max, &trackbarCallback, (void*)(this) );
+
+// removed pointer on 20250820, replaced with nullptr, because passing a pointer seems deprecated and crashes
+//	cv::createTrackbar( tbName, win2, &_proxyTB_1.slider, _proxyTB_1.slider_max, &trackbarCallback, (void*)(this) );
+	cv::createTrackbar( tbName, win2, nullptr, _proxyTB_1.slider_max, &trackbarCallback, (void*)(this) );
 
 	if( _pmParams._stopCrit == PminimStopCrit::NbPtsRatio )
 	{
 		_proxyTB_2.slider = 20; // %
 		_proxyTB_2.slider_max = 80; // %
-		cv::createTrackbar( "PtsRatio", win2,  &_proxyTB_2.slider, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
+//		cv::createTrackbar( "PtsRatio", win2,  &_proxyTB_2.slider, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
+		cv::createTrackbar( "PtsRatio", win2,  nullptr, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
 	}
 
 	if( _pmParams._stopCrit == PminimStopCrit::AbsNbPoints )
 	{
 		_proxyTB_2.slider = 1; // %
 		_proxyTB_2.slider_max = 100; // %
-		cv::createTrackbar( "AbsNbPoints", win2,  &_proxyTB_2.slider, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
+//		cv::createTrackbar( "AbsNbPoints", win2,  &_proxyTB_2.slider, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
+		cv::createTrackbar( "AbsNbPoints", win2,  nullptr, _proxyTB_2.slider_max, &trackbarCallback_2, (void*)(this) );
 	}
+	HOMOG2D_OUT;
 }
 
 void demo_polyMinim( int demidx )
@@ -2477,7 +2492,7 @@ void process_PO( IM& im, const POL& pol, Param_PO& data )
 		auto cpoly_off = pol.getOffsetPoly( (data._side?1:-1)*data._offsetDist, data._params );
 		draw( im, cpoly_off , img::DrawParams().showPoints(false).setColor(0,0,250) );
 
-		draw( im, dbg.psegs );
+//		draw( im, dbg.psegs );
 		auto centr = pol.centroid();
 		draw( im, centr, img::DrawParams().showPoints().setColor(0,0,250) );
 

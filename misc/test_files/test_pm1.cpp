@@ -2,7 +2,7 @@
 \file
 \brief WIP: a test file used to test the polygon minimisation algorithm
 
-build with: $ make test_pm
+build with: $ make test-pm
 */
 //#define HOMOG2D_DEBUGMODE
 #define HOMOG2D_ENABLE_VRTP
@@ -63,11 +63,14 @@ void process( const T& v1, const T& v0 )
 int main()
 {
 	{
-		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
+//		std::vector<Point2d> v1{ {0,0},{5,0.2},{8,0} };
+		std::vector<Point2d> v1{ {0,0},{4,0.3},{5,0.2},{6,0.15},{8,0} };
 		std::vector<Point2d> v0{ {0,0},{8,0} };
 		PolyMinimParams par;
 		par.setMetric( PminimMetric::TriangleArea );
+//		par.setMetric( PminimMetric::Angle );
 		CPolyline pol( v1 );
+		std::cout << pol << '\n';
 		pol.minimize( par );
 		std::cout << pol << '\n';
 	}
