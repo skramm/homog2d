@@ -472,12 +472,35 @@ Segment s1( Point2d(1,2), Point2d(3,4) );
 auto p_middle = s1.getCenter(); // or: getCenter(s1)
 ```
 
+For oriented segments, you can get a point at an arbitrary (positive) distance from the starting point:
+```C++
+OSegment s( 0,0, 10,0 );
+auto pt = s.getPointAt(6);
+std::cout << pt;       // will print [6,0]
+auto pt = s.getPointAt(15);
+std::cout << pt;       // will print [15,0]
+```
+
 This middle point can be used to split a segment into two equal length segments,
 returned as a `std::pair`:
 ```C++
 Segment seg( Point2d(1,2), Point2d(3,4) );
 auto p_segs = seg.split(); // or: split(seg)
 ```
+
+Types are preserved: if the source segment is not oriented (`Segment`), then this will produce two non-oriented segments,
+il source is oriented (`OSegment`), this will produce two oriented segments, with same direction.
+
+Similarly, you can split oriented segments at an arbitrary position, defined by a distance
+(but must be >0 and less than the length of the segment):
+
+```C++
+OSegment seg( Point2d(0,0), Point2d(10,0) );
+auto p_segs = seg.split(4); // or split(seg,4)
+std::cout << p_segs.first; // print [0,0]--[4,0]
+std::cout << p_segs.second; // print [4,0]--[10,0]
+```
+
 
 The bisector line is available, using a member or free function:
 ```C++
@@ -732,7 +755,8 @@ Circle c1( vpts);
 c1.set( vpts );
 ```
 See [showcase13](homog2d_showcase.md#sc13) for an example.
-It uses the Welzl algorithm, that require O(n) time and O(n) memory (recursive technique).
+It uses the [Welzl algorithm](https://en.wikipedia.org/wiki/Smallest-circle_problem),
+that requires O(n) time and O(n) memory (recursive technique).
 The input container can be `std::vector`, `std::array`, or `std::list`.
 It requires a least 2 points in the container, and will throw if condition not met.
 
@@ -1198,7 +1222,7 @@ bool b2 = isCircle( ell, 1E-15 );
 ### 3.6 - Common functions
 <a name="p_commonf"></a>
 
-All the types above share some common functions, that are also declared as virtual in the root class `Root`.
+All the types above share some common member functions, that are also declared as virtual in the root class `Root`.
 Thus, this enables classical pointer-based runtime polymorphism, [see here](#section_rtp).
 
 All of these are `const`.
@@ -1214,7 +1238,7 @@ The names of these functions are:
 
 
 The `type()` function will return an enum value of type `Type` having one of these values:
-`Point2d`, `Line2d`, `Segment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
+`Point2d`, `Line2d`, `Segment`, `OSegment`, `FRect`, `Circle`, `Ellipse`, `OPolyline`, `CPolyline`.
 You can get a human-readable value ot the object type with `getString(Type)`:
 ```C++
 	Point2d pt;
@@ -1229,7 +1253,7 @@ They are declared as `constexpr`, except of course for the last two.
 | Type         | Return Value |
 |--------------|--------------|
 | `Point2d`    |  1  |
-| `Line2d`     |  1  |
+| `Line2d`     |  0  |
 | `Segment`    |  2  |
 | `OSegment`   |  2  |
 | `FRect`      |  4  |

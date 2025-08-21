@@ -64,13 +64,13 @@ everything that gets build ends up in the `BUILD` folder
 * `doc`: build html reference (requires doxygen), with only public user API
 * `doc-dev`: build full html reference (requires doxygen), including private class members
 * `nobuild`: checks that the files in `misc/no_build` contain illegal code (part of the test process)
-* `test_fig`: build and run the code that generates the SVG figures used in test cases
+* `test-fig`: build and run the code that generates the SVG figures used in test cases
 
 **Targets only available if Opencv is installed:**
 
 * `demo`: build and run the Opencv interactive demo
 * `showcase`: build and run the gif figures used in manual
-* `doc_fig`: build and run the code used to produce the figures of the manual
+* `doc-fig`: build and run the code used to produce the figures of the manual
 * `test-fig`: build and run the code that generates the figures used in test cases
 
 **Targets only available if LaTeX installed:**
@@ -239,7 +239,7 @@ Two Yaml workflow files are present.
 - one [msvc.yml](.github/workflows/msvc.yml) is only dedicated to checking that the Microsoft C++ compiler is able to build the software.
 - the [other (c-cpp.yml)](.github/workflows/c-cpp.yml) runs the unit test file using both GCC and Clang, on two different platforms (Ubuntu 22 and Ubuntu 24).
 
-If both of theses workflows succeed, it will generate the badge on front page.
+If both of these workflows succeed, it will generate the badge on front page.
 
 Once the test app has been build (with `$ make test`), you can run a single test with:
 ```
