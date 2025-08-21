@@ -6190,11 +6190,11 @@ getString( PolyMinimAlgo alg )
 //------------------------------------------------------------------
 /// Stop criterion for the iterative polyline decimating algorithm
 enum class PminimStopCrit {
-/// Stop iterating when a ratio of removed points is reached (relatively to the total number of points)
+/// Stop iterating when a ratio of removed points is reached, relatively to the total number of points
 /// \sa PolyMinimParams::_ptRemovalRatio
 	NbPtsRatio,
 
-/// No stop, goes all the way until no more points meet the requirements
+/// No stop, goes all the way until no more points meet the requirements. This is the default.
 	NoStop,
 
 /// Stop iterating when a given nb of points was removed
@@ -7878,6 +7878,7 @@ computeMetrics(
 
 //------------------------------------------------------------------
 /// Helper function for removeSinglePoint(), finds the last 3 points that are not tagged to be removed
+inline
 std::array<size_t,3>
 findLastThreePoints( const std::vector<PMetricValue>& vecCritValue )
 {
@@ -7915,7 +7916,6 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 	}
 
 	// needed because the function is called only in a certain case
-//	decltype( std::min_element( std::begin(metData._vecCritValue), std::end(metData._vecCritValue) ) ) minval_it;
 	decltype( std::begin(metData._vecCritValue) ) minval_it;
 
 	const auto& pts = metData._vpoints; // shorthand
@@ -8138,7 +8138,8 @@ PolylineBase<PLT,FPT>::minimize(
 
 // step 1: compute initial metric values
 	auto distances = pminim::computeMetrics( _plinevec, params, isClosed() ); //istart, iend );
-	distances.print();
+//	distances.print();
+
 // step 2: iterate until no more points are tagged as removed
 	while( pminim::removeSinglePoint( params, distances, isClosed() ) )
 //		distances.recomputeMetrics( trait::PolIsClosed<PLT>::value );
@@ -11888,12 +11889,13 @@ getAxisLines( const Ellipse_<FPT>& ell )
 
 namespace priv {
 
-/// used in findPoint()
-struct F_MIN{};
-struct F_MAX{};
+struct F_MIN{}; ///< tag used in findPoint()
+struct F_MAX{}; ///< tag used in findPoint()
 
-/// Private. Common function for searching nearest of farthest point
-/*
+/// Private. Common function for searching nearest of farthest point.
+/**
+The `S_WHAT` type is used to select the operation, with \c priv::F_MIN or \c priv::F_MAX
+
 \sa findNearestPoint()
 \sa findFarthestPoint
 */
@@ -11901,7 +11903,7 @@ template<typename FPT, typename CONT, typename S_WHAT>
 size_t
 findPoint(
 	const Point2d_<FPT>& qpt,  ///< query point
-	const CONT&          cont, ///< container
+	const CONT&          cont, ///< container holding the points
 	const S_WHAT&              ///< F_MIN or F_MAX
 //	const CONT2*         mask  ///< optional vector or list or array of bool
 )

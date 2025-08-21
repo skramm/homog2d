@@ -24,11 +24,18 @@ It also enables run-time polymorphism without pointers, with the help of `std::v
 
 Some Q&A about this: (WIP)
 
--Q: How can I know if a type T is a variant
--A: use `trait::IsVariant<T>::value`
+- Q: How can I know if a type T is a variant
+- A: use `trait::IsVariant<T>::value`<br>
+For example:
+```
+	if constexpr( trait::IsVariant<T>::value )
+		std::cout << "T is a variant type\n";
+	else
+		std::cout << "T is NOT a variant type\n";
+```
 
--Q: How can I assign an primitive to a `CommonType` opbject:
--A: Very simple, example:
+- Q: How can I assign an primitive to a `CommonType` object:
+- A: Very simple, example:
 ```
 	CPolylyne pol;
 	CommonType ct = pol;
@@ -265,10 +272,11 @@ This is actually what is tested when using the Microsoft C++ compiler (see [corr
 ## 6 - Coding style
 
 - TABS, not spaces (1 byte per level)
-- types have first character uppercase, variables and functions are lowercase
+- types have first character uppercase, variables and functions are lowercase:<br>
+`ThisIsAType`, `thisIsNotAType`, `thisIsAFunction()`
 - `camelCase` for identifiers
 - class member variables are prefixed with an underscore (`_`)
-- spaces after parenthesis (`if( someBool )`)
+- spaces after parenthesis: `if( someBool )`
 - private and protected member function are prefixed with `p_` (or `impl_` for tag dispatch implementation)
 - all symbols start with `HOMOG2D_`, to avoid name collisions
 

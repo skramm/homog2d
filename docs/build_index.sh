@@ -18,4 +18,4 @@ do
 done < /tmp/index.csv
 
 echo "<hr>">>$outfn
-echo "Page generated on $(date '+%Y-%m-%d')">>$outfn
+echo "Page generated from file index.csv on $(date '+%Y-%m-%d')">>$outfn
