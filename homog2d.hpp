@@ -7760,6 +7760,7 @@ TriangleMetrics<FP>::computeMetric(
 	auto pt_aft = _vpoints.at( getIndex( idxp, after  ) );
 	auto p0     = _vpoints.at(idxp);
 	HOMOG2D_LOG( "p0=" << p0 << " idxp=" << idxp << " idxm=" << idxm << " before=" << before << " after=" << after );
+	HOMOG2D_LOG( "pt-Bef=" << pt_bef << " pt-aft=" << pt_aft );
 
 /*	if( pt_bef == pt_aft )
 	{
@@ -7789,8 +7790,6 @@ TriangleMetrics<FP>::computeMetric(
 but is this really needed?
 */
 /// \todo 20241029:  adapt to "big numbers"
-/// \todo 20250813: the "triangle area" cannot be used for a polyline of only 3 points: the area will be the same
-/// for all three. So find a way to use another metric when we get down to 3 points
 		case PminimMetric::Angle:
 		{
 			auto vx1 = pt_aft.getX() - p0.getX();
@@ -7804,7 +7803,8 @@ but is this really needed?
 		break;
 
 // This uses the "Shoelace" formulae, see https://en.wikipedia.org/wiki/Area_of_a_triangle
-
+/// \todo 20250813: the "triangle area" cannot be used for a polyline of only 3 points: the area will be the same
+/// for all three. So find a way to use another metric when we get down to 3 points
 		case PminimMetric::TriangleArea:
 		{
 			detail::Matrix_<HOMOG2D_INUMTYPE> mat;
@@ -7827,7 +7827,7 @@ but is this really needed?
 		default: assert(0);
 	}
 
-//	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._value );
+	HOMOG2D_LOG( "idx="<<idxm<< ", distance=" << _vecCritValue.at(idxm)._value );
 	HOMOG2D_OUT;
 }
 
@@ -7951,7 +7951,7 @@ removeSinglePoint( PolyMinimParams& params, TriangleMetrics<FP>& metData, bool i
 		HOMOG2D_LOG( "min pt to be removed=" << *minval_it );
 
 	}
-	else  // find element with minimal distance
+	else  // find element with minimum distance and NOT tagged as removed
 	{
 		minval_it = std::min_element(
 			std::begin(metData._vecCritValue),
@@ -8145,8 +8145,8 @@ PolylineBase<PLT,FPT>::minimize(
 //		distances.recomputeMetrics( trait::PolIsClosed<PLT>::value );
 		distances.recomputeMetrics( PLT() );
 
-//	HOMOG2D_LOG( "removed " << params._nbPtsRemoved << " pts" );
-//	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
+	HOMOG2D_LOG( "removed " << params._nbPtsRemoved << " pts" );
+	priv::printVector( distances._vecCritValue, "distances._vecCritValue" );
 
 // step 3: replace original points vector with the new one
 	_plinevec = pminim::generateNewSet<PolylineBase<PLT,FPT>,FPT>( _plinevec, distances._vecCritValue, params._nbPtsRemoved );

@@ -9,72 +9,101 @@ build with: $ make test-pm
 #include "../../homog2d.hpp"
 
 using namespace h2d;
-
-static size_t count = 0;
+static size_t count2 = 0;
 
 template<typename T>
-void process2( const T& pol_in, PminimMetric metric, const T& pol_out )
+bool process2(
+	const T& pol_in, ///< input polyline (open or closed)
+	PminimMetric metric,
+	const T& pol_out ///< output expected polyline (open or closed)
+)
 {
 	PolyMinimParams par;
 	par.setMetric( metric );
 
+	std::cout << "test " << count2 << ", type=" << (pol_in.isClosed()?"C":"O") << ", metric=" << getString( metric ) << ": ";
+
 	T pol( pol_in );
 	minimize( pol, par );
-	count++;
-
-	std::cout << "test " << count << ", metric=" << getString( metric ) << ": ";
+	count2++;
 
 	if( pol != pol_out )
+	{
 		std::cout << "fail\n -input=" << pol_in
 			<< "\n -result=" << pol
 			<< "\n -expected=" << pol_out
 			<< "\n" << par;
-//			<< "\n";
-	else
-		std::cout << "success!\n";
+		return false;
+	}
+	std::cout << "success!\n";
+	return true;
 }
-void process1( const std::vector<Point2d>& vec_in, PminimMetric metric, const std::vector<Point2d>& vec_out )
+
+template<typename T>
+void
+process1(
+	const T&            vec_in,   ///< input set of points
+	PminimMetric        metric,   ///< metric
+	const T&            vec_out,  ///< output expected set of points
+	std::pair<int,int>& res       ///< result tracker
+)
 {
 	static int p;
 	std::cout << "*** START " << __FUNCTION__ << "(" << ++p<< ")\n";
 	{
 		CPolyline pol_in(vec_in);
 		CPolyline pol_out(vec_out);
-		process2( pol_in, metric, pol_out );
+		res.first += process2( pol_in, metric, pol_out );
 	}
+#if 0
 	{
 		OPolyline pol_in(vec_in);
 		OPolyline pol_out(vec_out);
-		process2( pol_in, metric, pol_out );
+		res.second += process2( pol_in, metric, pol_out );
 	}
+#endif
 }
 
 template<typename T>
-void process( const T& v1, const T& v0 )
+void process(
+	const T& v_in,  ///< input set of points
+	const T& v_out ///< output expected set of points
+)
 {
 	static int p;
 	std::cout << "* START " << __FUNCTION__ << "(" << ++p<< ")\n";
-	process1( v1, PminimMetric::AbsDistance,  v0 );
-	process1( v1, PminimMetric::RelDistance,  v0 );
-	process1( v1, PminimMetric::Angle,        v0 );
-	process1( v1, PminimMetric::TriangleArea, v0 );
+
+	std::pair<int,int> res{0,0};
+	process1( v_in, PminimMetric::AbsDistance,  v_out, res );
+//	process1( v_in, PminimMetric::RelDistance,  v_out, res );
+//	process1( v_in, PminimMetric::Angle,        v_out, res );
+//	process1( v_in, PminimMetric::TriangleArea, v_out, res );
+	std::cout << "Results: Nb success\n - closed=" << res.first << "\n - open=" << res.second << '\n';
 }
 
 int main()
 {
 	{
+		std::vector<Point2d> v1{ {0,1},{1,1.1},{2,1}, {3,1} };
+		std::vector<Point2d> v0{ {0,1},{3,1} };
+		process( v1, v0 );
+	}
+	std::exit(1);
+
+	{
 //		std::vector<Point2d> v1{ {0,0},{5,0.2},{8,0} };
 		std::vector<Point2d> v1{ {0,0},{4,0.3},{5,0.2},{6,0.15},{8,0} };
 		std::vector<Point2d> v0{ {0,0},{8,0} };
-		PolyMinimParams par;
+		process( v1, v0 );
+/*		PolyMinimParams par;
 		par.setMetric( PminimMetric::TriangleArea );
 //		par.setMetric( PminimMetric::Angle );
 		CPolyline pol( v1 );
 		std::cout << pol << '\n';
 		pol.minimize( par );
-		std::cout << pol << '\n';
+		std::cout << pol << '\n';*/
 	}
-	std::exit(1);
+//	std::exit(1);
 
 	{
 		std::vector<Point2d> v1{ {0,0},{4,0.1},{8,0} };
