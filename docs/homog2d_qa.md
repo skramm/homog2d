@@ -10,7 +10,7 @@ Q: Is this library usable on a Windows platform?
 A: Sure, should be!
 I am not a Windows user myself, so I can't help on specific issues but as long as you are able to handle the inclusion of a file in your build process, it will work.
 FWIW, the GH action CI test process includes building using the Microsoft Visual C++ compiler (known as MSVC),
-[see here yamlfile](../.github/workflows/msvc.yml).
+<a href="https://github.com/skramm/homog2d/blob/master/.github/workflows/msvc.yml">see here</a>.
 <br>
 However, all the additional stuff here (Opencv graphical demo, test files, ...) will probably not build "out of the box", and will require some build tweaking.
 But the library end-user doesn't need it.
