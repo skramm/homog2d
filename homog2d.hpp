@@ -2581,7 +2581,8 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const IntersectM& i )
 	{
-		f << "IntersectM: size=" << i.size() << '\n' << i._vecInters;
+		f << "IntersectM: size=" << i.size() << '\n';
+		priv::printVector( i._vecInters );
 		return f;
 	}
 };
@@ -3711,7 +3712,7 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
-#ifdef HOMOG2D_DEBUGMODE
+//#ifdef HOMOG2D_DEBUGMODE
 template<typename T>
 void printVector( const std::vector<T>& v, std::string msg=std::string(), bool linefeed=false )
 {
@@ -3731,7 +3732,7 @@ void printVector( const std::vector<T>& v, std::string msg=std::string(), bool l
 template<typename T,size_t N>
 void printArray( const std::array<T,N>& v, std::string msg=std::string() )
 {
-	std::cout << "array: " << msg << " #=" << N<< '\n';
+	std::cout << "array: " << msg << " #=" << N << '\n';
 	for( const auto& elem: v )
 		std::cout << elem << "-";
 	std::cout << '\n';
@@ -3744,7 +3745,7 @@ void printVectorPairs( const std::vector<std::pair<T,T>>& v )
 		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
 	std::cout << '\n';
 }
-#endif
+//#endif
 } // namespace priv
 
 // forward declaration
