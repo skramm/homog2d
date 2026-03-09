@@ -46,7 +46,7 @@ void demo_something( int demo_index)
 \endcode
 */
 
-//#define HOMOG2D_PRELIMINAR
+#define HOMOG2D_PRELIMINAR
 
 #define HOMOG2D_USE_OPENCV
 #define HOMOG2D_ENABLE_VRTP
@@ -2322,7 +2322,8 @@ void action_Square( void* param )
 	dbg.li0.draw( data.img ); //, img::DrawParams().setColor(0,0,250) );
 
 	data.img.draw( dbg.ppts, img::DrawParams().setColor(0,250,0) );
-	drawText( data.img, "E", dbg.ppts.second );
+	drawText( data.img, "E", dbg.ppts.first );
+	drawText( data.img, "F", dbg.ppts.second );
 
 	data.img.draw( dbg.pt_resL, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	data.img.draw( dbg.pt_resR, img::DrawParams().setPointStyle(img::PtStyle::Diam) );

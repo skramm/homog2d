@@ -7603,6 +7603,25 @@ struct TMP_DebugSquare
 	Point2d_<double> pt_resL, pt_resR;
 };
 
+/// Build the square defined by four random non-colinear points
+/**
+Algorithm:
+- find the 2 points that are the farthest appart => (A,B), and build the associated segment S0
+- build the line l1 that is perpendicular to S0 and passes through point C
+- determine the two points E and F that are on l1 at a distance d(S0).
+- find the one that is the closest to S0. Say its F.
+- build the line l2 from F and fourth point D
+- build the two lines l3a and l3b that are perpendicular to l2 and pass
+through A and B, respectively
+- compute distance \$d\$ between these two parallel lines. That will be the
+size of the square
+
+WIP !
+
+square_build.png
+
+See figure
+*/
 template<typename CONT>
 auto
 buildSquare( const CONT& pts )
