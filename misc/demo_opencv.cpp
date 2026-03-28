@@ -1968,7 +1968,8 @@ void action_BB( void* param )
 	auto pp1 = std::visit( fct::PtPairFunct{}, curr1 );      // get their "pseudo" bounding box (as pair of points)
 	auto pp2 = std::visit( fct::PtPairFunct{}, curr2 );
 
-	try	{
+	try
+	{
 		getBB( pp1, pp2 ).draw( data.img, style0 );
 	}
 	catch( std::runtime_error& err )
@@ -2287,7 +2288,10 @@ struct Param_Square : Data
 {
 	explicit Param_Square( int demidx, std::string title ): Data( demidx, title )
 	{}
+	bool swapFC1 = false;
+	bool swapFC2 = false;
 };
+
 
 void action_Square( void* param )
 {
@@ -2303,7 +2307,10 @@ void action_Square( void* param )
 
 	decltype(buildSquare( data.vpt )) res;
 	try {
-		res = buildSquare( data.vpt ); // four lines
+		TMP_Params par;
+		par.swapFC1 = data.swapFC1;
+		par.swapFC2 = data.swapFC2;
+		res = buildSquare( data.vpt, par ); // four lines
 	}
 	catch( std::exception& err )
 	{
@@ -2315,15 +2322,22 @@ void action_Square( void* param )
 
 	auto dbg = res.second;
 
-	dbg.s1.draw( data.img, img::DrawParams().setColor(250,0,0) );
-	dbg.line_ortho.draw( data.img, img::DrawParams().setColor(100,100,250) );
-	dbg.li_L.draw( data.img, img::DrawParams().setColor(0,150,250) );
-	dbg.li_R.draw( data.img, img::DrawParams().setColor(150,0,250) );
-	dbg.li0.draw( data.img ); //, img::DrawParams().setColor(0,0,250) );
+	int a=190;
+	int b=90;
+
+	dbg.s0.getLine().draw( data.img, img::DrawParams().setColor(250,a,a) );
+	dbg.s0.draw( data.img, img::DrawParams().setColor(250,0,0) );
+
+	dbg.l1.draw( data.img, img::DrawParams().setColor(b,b,250) );
+	dbg.l2.draw( data.img,   img::DrawParams().setColor(0,0,250) );
+	dbg.l3_A.draw( data.img, img::DrawParams().setColor(a,250,a) );
+	dbg.l3_B.draw( data.img, img::DrawParams().setColor(a,250,a) );
 
 	data.img.draw( dbg.ppts, img::DrawParams().setColor(0,250,0) );
 	drawText( data.img, "E", dbg.ppts.first );
 	drawText( data.img, "F", dbg.ppts.second );
+
+	dbg.s_Top.draw( data.img, img::DrawParams().setColor(125,250,50) );
 
 	data.img.draw( dbg.pt_resL, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
 	data.img.draw( dbg.pt_resR, img::DrawParams().setPointStyle(img::PtStyle::Diam) );
@@ -2338,6 +2352,8 @@ void demo_Square( int demidx )
 	data.setMouseCB( action_Square );
 	KeyboardLoop kbloop;
 	kbloop.addCommonAction( action_Square );
+	kbloop.addKeyAction( 'a', [&](void*){ toggle(data.swapFC1,"swapFC1"); }, "swapFC1" );	
+	kbloop.addKeyAction( 'b', [&](void*){ toggle(data.swapFC2,"swapFC2"); }, "swapFC2" );	
 	action_Square( &data );
 	kbloop.start( data );
 }

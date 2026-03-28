@@ -6788,7 +6788,7 @@ struct PolySplitData
 		bool                 oc,    ///< Output is a closed polyline
 		const std::vector<Point2d_<FPT>>& inpts ///< points of the input polyline
 	)
-		: _line(li), _nbSegs(s), _inputClosed(ic), _outputClosed(oc), _inputPts(inpts)
+		: _nbSegs(s), _inputClosed(ic), _outputClosed(oc), _line(li), _inputPts(inpts)
 	{
 		_vpts.reserve( s );
 	}
@@ -7599,60 +7599,63 @@ PolylineBase<PLT,FPT>::getRmPoint() const
 struct TMP_DebugSquare
 {
 	Line2d_<double> li0;
-	Line2d_<double> line_ortho;
-	Line2d_<double> li_L, li_R;
+	Line2d_<double> l1;
+	Line2d_<double> l2;
+//	Line2d_<double> line_ortho;
+	Line2d_<double> l3_A, l3_B;
 
-	Segment_<double> s1;
+
+	Segment_<double> s0;
 	Segment_<double> sL,sR;
+	Segment_<double> s_Top;
 
 	double dist;
 	PointPair_<double>  ppts;
 	Point2d_<double> pt_resL, pt_resR;
 };
 
+struct TMP_Params
+{
+	bool swapFC1 = false;
+	bool swapFC2 = false;
+};
+
 namespace priv {
 /// Used in buildSquare()
 /**
-Returns an array of 4 indexes related to the input container.
-The first 2 are the ones that are the indexes of the points that are the farthest apart
+Returns an array of 4 indexes related to the input container, that holds 4 points.
+The first 2 indexes are the ones that are the indexes of the points that are the farthest apart.
 The other two are the remaining ones.
 
-For example, if the two farthest apart points have the indexes 0 and 2,
-then the output array will hold:
-0213
+For example:
+- if the two farthest apart points have the indexes 0 and 2,
+then the output array will hold: 0213
+- if the two farthest apart points have the indexes 1 and 2,
+then the output array will hold: 1203
 
 It computes the 6 possible distances.
+
+\todo 20260328: maybe store the \c vindexs statically? Here, it gets rebuild every time the \c buildSquare() function is called.
 */
 template<typename CONT>
 auto
 getFarthestPair( const CONT& pts )
 {
-	std::array<size_t,4> out;
-	std::array<HOMOG2D_INUMTYPE,6> dists;
 	size_t i=0;
+	std::array<std::array<uint8_t,4>,6> vindexs;
+	vindexs[i++] = {{0,1,2,3}};
+	vindexs[i++] = {{0,2,1,3}};
+	vindexs[i++] = {{0,3,1,2}};
+	vindexs[i++] = {{1,2,0,3}};
+	vindexs[i++] = {{1,3,0,2}};
+	vindexs[i++] = {{2,3,0,1}};
 
-/*	dists[i++] = h2d::dist( pts[0], pts[1] );
-	dists[i++] = h2d::dist( pts[0], pts[2] );
-	dists[i++] = h2d::dist( pts[0], pts[3] );
-	dists[i++] = h2d::dist( pts[2], pts[1] );
-	dists[i++] = h2d::dist( pts[3], pts[1] );
-	dists[i++] = h2d::dist( pts[3], pts[2] );
-*/
-/*
-	0 = 0,1 => 2,3
-	1 = 0,2 => 1,3
-	...
-*/
-	std::vector<std::pair<uint8_t,uint8_t>> vindexs(6);
-	vindexs[i++] = std::make_pair(0,1);
-	vindexs[i++] = std::make_pair(0,2);
-	vindexs[i++] = std::make_pair(0,3);
-	vindexs[i++] = std::make_pair(1,3);
-	vindexs[i++] = std::make_pair(2,3);
-	vindexs[i++] = std::make_pair(1,2);
-	for( auto i=0; i<6; i++ )
-		dists[i] = h2d::dist( vindexs[i].first,  vindexs[i].second );
+// compute all the 6 distances between first two elements of array
+	std::array<HOMOG2D_INUMTYPE,6> dists;
+	for( auto j=0; j<6; j++ )
+		dists[j] = h2d::dist( pts[vindexs[j][0]], pts[vindexs[j][1]] );
 
+// find iterator on max distance
 	auto maxd = std::max_element(
 		std::begin(dists),
 		std::end(dists),
@@ -7664,11 +7667,12 @@ getFarthestPair( const CONT& pts )
 			return false;
 		}
 	);
-	priv::printVector( dists );
+//	priv::printVector( dists );
 	std::cout << "max dist=" << *maxd  << "\n";
 	std::cout << "index=" << std::distance( std::begin(dists), maxd ) << "\n";
 
-	return out;
+	auto out_idx = std::distance( std::begin(dists), maxd );
+	return vindexs[out_idx];
 }
 
 } // namespace priv
@@ -7676,12 +7680,14 @@ getFarthestPair( const CONT& pts )
 /// Build the square defined by four random non-colinear points
 /**
 Algorithm:
-- find the 2 points that are the farthest appart => (A,B), and build the associated segment \f$S_0\f$
-- build the line l1 that is perpendicular to \f$S_0\f$ and passes through point C
+- find the 2 points that are the farthest appart => (A,B), and build the associated segment \f$S_0\f$,
+lying on line \f$l_0\f$
+- determine wich of the two remaining point if the farthest away from \f$S_0\f$, call it C.
+- build the line \f$l_1\f$ that is perpendicular to \f$S_0\f$ and passes through point C
 - determine the two points E and F that are on \f$l_1\f$ at a distance d(S0) from point C
 - find the one that is the closest to \f$S_0\f$. Say its F.
-- build the line l2 from F and fourth point D
-- build the two lines l3a and l3b that are perpendicular to \f$l_2\f$ and pass
+- build the line \f$l_2\f$ from F and fourth point D
+- build the two lines \f$l_{3a}\f$ and \f$l_{3b}\f$ that are perpendicular to \f$l_2\f$ and pass
 through A and B, respectively
 - compute distance \f$d\f$ between these two parallel lines. That will be the
 size of the square
@@ -7697,7 +7703,7 @@ See figure
 */
 template<typename CONT>
 auto
-buildSquare( const CONT& pts )
+buildSquare( const CONT& pts, TMP_Params par=TMP_Params() )
 {
 	TMP_DebugSquare dbg;
 
@@ -7716,67 +7722,73 @@ buildSquare( const CONT& pts )
 	auto idxarr = priv::getFarthestPair( pts );
 	auto ptA = pts[ idxarr[0] ];
 	auto ptB = pts[ idxarr[1] ];
-
-//	auto pt_L = getLmPoint( pts );
-//	auto pt_R = getRmPoint( pts );
-//	auto pt_T = getTmPoint( pts );
-//	auto pt_B = getBmPoint( pts );
-//	Segment_<HOMOG2D_INUMTYPE> s1( pt_L.first, pt_R.first );
-	Segment_<HOMOG2D_INUMTYPE> s1( ptA, ptB );
-dbg.s1 = s1;
-	auto dist = s1.length();
+	Segment_<HOMOG2D_INUMTYPE> s0( ptA, ptB );
+dbg.s0 = s0;
+	auto dist = s0.length();
+	auto l0   = s0.getLine();
 dbg.dist = dist;
 
-// among the 2 remaining points, find the one that is the farthest of line s1
-
-
+// among the 2 remaining points, find the one that is the farthest away from line s0
 	auto ptC = pts[ idxarr[2] ];
 	auto ptD = pts[ idxarr[3] ];
 
-	auto dtC = s1.distTo( ptC );
-	auto dtD = s1.distTo( ptD );
+	auto dtC = l0.distTo( ptC );
+	auto dtD = l0.distTo( ptD );
 
 	if( dtD>dtC )
 		std::swap( ptC, ptD );
+// at this point, ptC is the farthest away from l0,
+// ptD is the closest
 
-	auto line_ortho = s1.getLine().getOrthogLine( ptC );
-dbg.line_ortho = line_ortho;
+	auto pt2 = ptC;
+	auto pt3 = ptD;
+	if( par.swapFC1 ) //swap Farthest/Closest between C and D
+		std::swap( pt2, pt3 );
 
-	auto ppts = line_ortho.getPoints( ptC, dist );
+// compute orthogonal line at that point, and get the two points on that line
+// that are at a distance dist
+	auto l1 = l0.getOrthogLine( pt2 );
+dbg.l1 = l1;
+
+	auto ppts = l1.getPoints( pt2, dist );
 dbg.ppts = ppts;
-	auto d1 = ppts.first.distTo( ptD );
-	auto d2 = ppts.second.distTo( ptD );
+
+// find the one that is the farthest
+	auto d1 = ppts.first.distTo( l0 );
+	auto d2 = ppts.second.distTo( l0 );
 
 	auto goodpt = ppts.first;
-	if( d2 < d1 )
+	if( par.swapFC2 )
 		goodpt = ppts.second;
 
-	auto li0 = goodpt * ptB;
-dbg.li0 = li0;
+	auto l2 = goodpt * pt3;
+dbg.l2 = l2;
 
-	auto li_L = li0.getOrthogLine( ptA );
-	auto li_R = li0.getOrthogLine( ptB );
-dbg.li_L = li_L;
-dbg.li_R = li_R;
+	auto l3_A = l2.getOrthogLine( ptA );
+	auto l3_B = l2.getOrthogLine( ptB );
+dbg.l3_A = l3_A;
+dbg.l3_B = l3_B;
 
-	auto pt_resL = li_L * li0;
-	auto pt_resR = li_R * li0;
+
+	auto pt_resL = l3_A * l2;
+	auto pt_resR = l3_B * l2;
 dbg.pt_resL = pt_resL;
 dbg.pt_resR = pt_resR;
-	auto s_Top = li_L.getOrthogSegment( ptC );
+	auto s_Top = l3_A.getOrthogSegment( ptC ); // ou ptD?
 	auto li_Top = s_Top.getLine();
+dbg.s_Top = s_Top;
+	auto pt_res3 = l3_B * li_Top;
+	auto pt_res4 = l3_B * li_Top;
 
-	auto pt_res3 = li_L * li_Top;
-	auto pt_res4 = li_R * li_Top;
-
-	std::vector<Point2d_<double>> vout;
+using FPTYPE = typename CONT::value_type::FType;
+	std::vector<Point2d_<FPTYPE>> vout;
 	vout.push_back( pt_resL );
 	vout.push_back( pt_res3 );
 	vout.push_back( pt_res4 );
 	vout.push_back( pt_resR );
-
+priv::printVector( vout );
 	return std::make_pair(
-		base::PolylineBase<typ::IsClosed,typename CONT::value_type::FType>( vout ),
+		base::PolylineBase<typ::IsClosed,FPTYPE>(), // vout ),
 		dbg
 	);
 }

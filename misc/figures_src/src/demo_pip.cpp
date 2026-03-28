@@ -4,8 +4,6 @@
 */
 #include "fig_src.header"
 
-using namespace h2d;
-
 template<typename IMG>
 void drawFig( const CPolyline& poly, const FRect& bb, const Point2d& pt, const Point2d* pt2, const Segment* source_seg, IMG& im, int n )
 {
