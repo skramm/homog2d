@@ -7754,8 +7754,8 @@ dbg.l1 = l1;
 dbg.ppts = ppts;
 
 // find the one that is the farthest
-	auto d1 = ppts.first.distTo( l0 );
-	auto d2 = ppts.second.distTo( l0 );
+//	auto d1 = ppts.first.distTo( l0 );
+//	auto d2 = ppts.second.distTo( l0 );
 
 	auto goodpt = ppts.first;
 	if( par.swapFC2 )
@@ -7786,7 +7786,7 @@ using FPTYPE = typename CONT::value_type::FType;
 	vout.push_back( pt_res3 );
 	vout.push_back( pt_res4 );
 	vout.push_back( pt_resR );
-priv::printVector( vout );
+//priv::printVector( vout );
 	return std::make_pair(
 		base::PolylineBase<typ::IsClosed,FPTYPE>(), // vout ),
 		dbg
@@ -7809,6 +7809,100 @@ buildSquare(
 	v[3] = p4;
 	return buildSquare( v );
 }
+
+struct TMP_DebugSquare2
+{
+};
+
+/// v2, using circles
+/**
+See demo build_squares2.cpp
+*/
+template<typename CONT>
+auto
+buildSquare2( const CONT& pts, TMP_Params par=TMP_Params() )
+{
+	TMP_DebugSquare2 dbg;
+	auto idxarr = priv::getFarthestPair( pts );
+	auto ptA = pts[ idxarr[0] ];
+	auto ptB = pts[ idxarr[1] ];
+	auto ptC = pts[ idxarr[2] ];
+	auto ptD = pts[ idxarr[3] ];
+
+//	Segment_<HOMOG2D_INUMTYPE> sAB( ptA, ptB );
+//dbg.s0 = s0;
+//	auto dist = sAB.length();
+
+	Circle_<HOMOG2D_INUMTYPE> cAB( ptA, ptB );
+	Circle_<HOMOG2D_INUMTYPE> cCD( ptC, ptD );
+
+	auto sAB = Segment(ptA,ptB);
+	auto sCD = Segment(ptC,ptD);
+
+	auto ptE = cAB.getCenter();
+	auto ptG = cCD.getCenter();
+
+	auto liE = sAB.getLine().getOrthogLine(ptE);
+	auto liG = sCD.getLine().getOrthogLine(ptG);
+
+	auto pptsE = liE.getPoints( ptE, sAB.length()/2. );
+	auto pptsG = liG.getPoints( ptG, sCD.length()/2. );
+
+	auto ptF = pptsE.first;
+	if( dist( pptsE.second, ptG) < dist( ptF, ptG ) )
+		ptF = pptsE.second;
+
+	auto ptH = pptsG.first;
+	if( dist( pptsG.second, ptE) < dist( ptH, ptE ) )
+		ptH = pptsG.second;
+
+	auto liFH = ptF * ptH;
+
+	Point2d_<HOMOG2D_INUMTYPE> ptI, ptK;
+
+	auto itI = cAB.intersects( liFH );
+	if( itI() )
+	{
+		auto ppts = itI.get();
+		auto d1 = dist( ppts.first,  ptG );
+		auto d2 = dist( ppts.second, ptG );
+		ptI = ( d1>d2 ? ppts.first : ppts.second );
+	}
+	else
+		HOMOG2D_THROW_ERROR_1( "failure, no intersection of circle AB with line FH" );
+
+	auto itK = cCD.intersects( liFH );
+	if( itK() )
+	{
+		auto ppts = itK.get();
+		auto d1 = dist( ppts.first,  ptG );
+		auto d2 = dist( ppts.second, ptG );
+		ptK = ( d1>d2 ? ppts.first : ppts.second );
+	}
+	else
+		HOMOG2D_THROW_ERROR_1( "failure, no intersection of circle CD with line FH" );
+
+	auto liAI = ptI * ptA;
+	auto liBI = ptI * ptB;
+	auto liCK = ptK * ptC;
+	auto liDK = ptK * ptD;
+
+	using FPTYPE = typename CONT::value_type::FType;
+
+	std::array<Point2d_<FPTYPE>,4> vout;
+	vout = {{
+		ptI,
+		liBI * liCK,   // intersection point
+		ptK,
+		liAI * liDK   // intersection point
+	}};
+
+	return std::make_pair(
+		base::PolylineBase<typ::IsClosed,FPTYPE>( vout ),
+		dbg
+	);
+}
+
 #endif // HOMOG2D_PRELIMINAR
 
 namespace base {

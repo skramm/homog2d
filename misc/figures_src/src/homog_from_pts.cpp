@@ -2,8 +2,13 @@
 // used to build a figure that is included in manual
 // see makefile target doc_fig
 
+#define HOMOG2D_USE_OPENCV
 #include "fig_src.header"
 
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+
+/// This one requires Opencv, because the default behavior is to use the Opencv routine
 int main()
 {
 	std::vector<Point2d> v1 { {20,20}, {250,20}, {230,170}, {60,190} };

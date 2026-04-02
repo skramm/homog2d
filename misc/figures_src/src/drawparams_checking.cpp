@@ -2,7 +2,11 @@
 // used to build a figure that is included in manual
 // see makefile target doc-fig
 
+#define HOMOG2D_USE_OPENCV
 #include "fig_src.header"
+
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 
 template<typename T>
 void process( img::Image<T>& im, std::string fn, int width )
@@ -72,7 +76,7 @@ void process( img::Image<T>& im, std::string fn, int width )
 	im.write( fn );
 }
 
-/// Used to check the drawing parameters for points
+/// Used to check the drawing parameters for points, for both backends (Opencv and SVG)
 int main()
 {
 	img::Image<SvgImage> im1( 400,350 );

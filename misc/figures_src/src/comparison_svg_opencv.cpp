@@ -2,7 +2,11 @@
 // used to build a figure that is included in manual
 // see makefile target doc-fig
 
+#define HOMOG2D_USE_OPENCV
 #include "fig_src.header"
+
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 
 struct LocalData
 {
@@ -39,6 +43,7 @@ struct LocalData
 	}
 };
 
+/// Builds two figure files, used to compare the renderings with Opencv and SVG.
 int main()
 {
 	img::DrawParams dp;

@@ -1,6 +1,7 @@
 // this file is part of homog2d
 // used to build the figures that are included in manual
 
+// not needed anymore, all the figures (except two) are now build as SVG
 //#define HOMOG2D_USE_OPENCV
 
 #include "homog2d.hpp"
