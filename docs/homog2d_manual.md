@@ -989,6 +989,8 @@ if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 
 ![centroid](img/polyline_centroid.svg)
 
+source: [polyline_centroid.cpp](../misc/figures_src/src/polyline_centroid.cpp)
+
 Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
 For closed types, you can determine its convexity:
