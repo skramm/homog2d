@@ -19,6 +19,12 @@ set output "linecount.png"
 plot "/tmp/homog2d/tags_linecount.csv" using (column(2)/1000):xtic(1) with histogram ti "Library file", \
 	"" using (column(3)/1000):xtic(1) with histogram ti "Test file"
 
+set title "homog2d: Unit testing"
+set output "tests.png"
+plot "/tmp/homog2d/tags_linecount.csv" \
+	using (column(6)):xtic(1) with histogram ti "Nb test cases", \
+	"" using (column(7)/10):xtic(1) with histogram ti "Nb tests x10"
+
 set title "homog2d: KBytes per release"
 set output "bytecount.png"
 plot "/tmp/homog2d/tags_linecount.csv" using (column(4)/1000):xtic(1) with histogram ti "Library file", \

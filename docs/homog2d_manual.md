@@ -484,8 +484,12 @@ std::cout << pt;       // will print [15,0]
 This middle point can be used to split a segment into two equal length segments,
 returned as a `std::pair`:
 ```C++
-Segment seg( Point2d(1,2), Point2d(3,4) );
-auto p_segs = seg.split(); // or: split(seg)
+Segment  segu( Point2d(0,0), Point2d(10,0) );
+OSegment sego( Point2d(0,0), Point2d(10,0) );
+auto p_segsu = segu.split(); // or: split(segu)
+auto p_segso = sego.split(); // or: split(sego)
+std::cout << p_segsu.first; // print [0,0]--[5,0]
+std::cout << p_segso.second; // print [5,0]--[10,0]
 ```
 
 Types are preserved: if the source segment is not oriented (`Segment`), then this will produce two non-oriented segments,
@@ -582,7 +586,6 @@ The only constraint is that no coordinate can be equal.
 The function will throw if it is not enforced.
 
 You can also build the rectangle by giving the 4 coordinates x1,y1 and x2,y2.
-The only constraint is that they must be all of the same type (no int/float/double mix).
 ```C++
 FRect r1( x1, y1, x2, y2 );
 ```
@@ -974,6 +977,7 @@ You can check if it fullfilths the requirements to be a **simple polygon** (must
 <br>
 See [definition here](https://en.wikipedia.org/wiki/Simple_polygon).
 
+<a name="polyline_centroid"></a>
 
 If it is, you can get its area and its centroid point:
 ```C++
@@ -984,6 +988,10 @@ if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
+
+![centroid](img/polyline_centroid.svg)
+
+source: [polyline_centroid.cpp](../misc/figures_src/src/polyline_centroid.cpp)
 
 Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
@@ -1102,11 +1110,14 @@ The minimum value for `nb` is 3 (will generate an equilateral triangle), the fun
 =======
 #### 3.4.12 - Offsetted polyline
 
-For closed Polyline objects, the member function `getOffsetPoly()` can compute a new polyline at a given distance.
+For closed Polyline objects, the member function `getOffsetPoly()` can compute a new polyline at a given distance, by using
+[parallel curves](https://en.wikipedia.org/wiki/Parallel_curve).
 Its argument is a distance (numerical value).
-If positive, the returned polyline will be "outside", if negative, il will be inside.
+If positive, the returned polyline will be "outside" the original one, if negative, il will be inside.
 
-An optional second argument of type `OffsetPolyParams` holds a boolean value `_angleSplit` that can be set to `true` to "smoothen" the return polyline, by adding some points on sharp angles
+The source polyline must be "simple" (closed, and no intersections).
+
+An optional second argument of type `OffsetPolyParams` holds a boolean value `_angleSplit` that can be set to `true` to "smoothen" the return polyline, by adding two points on sharp angles
 (applies only to "outside" computation).
 
 See [showcase 22](homog2d_showcase.md#sc22)
@@ -1620,6 +1631,8 @@ For the union, if there is no intersection, the function will return an empty `C
 
 If one rectangle is inside the other one, then the union will return the largest rectangle (as a Polyline object), ant the intersection will return the smallest one.
 
+
+<a name="rectangle_iou"></a>
 For conveniency, a function `IoU()` is provided.
 It computes the ratio of the area of the intersection of two rectangles over the area of the union of these two rectangles.
 See this [WP page](https://en.wikipedia.org/wiki/Jaccard_index) where this is described.

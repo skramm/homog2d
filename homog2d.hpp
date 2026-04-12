@@ -242,7 +242,7 @@ See https://github.com/skramm/homog2d
 	#define HOMOG2D_MAXITER_PIP 5
 #endif
 
-#define HOMOG2D_VERSION "2.12.2"
+#define HOMOG2D_VERSION "2.13.1"
 
 // some MS environments seem to lack Pi definition, even if _USE_MATH_DEFINES is defined
 #ifndef M_PI
@@ -1293,6 +1293,40 @@ namespace priv {
 	}
 
 #endif
+
+template<typename T>
+void printVector( const std::vector<T>& v, std::string msg=std::string(), bool linefeed=false )
+{
+	std::cout << "vector: ";
+	if( !msg.empty() )
+		std::cout << msg;
+	std::cout << " #=" << v.size() << '\n';
+	size_t c=0;
+	for( const auto& elem: v )
+	{
+		if( linefeed )
+			std::cout << c++ << ": ";
+		std::cout << elem << (linefeed?'\n':'-');
+	}
+	std::cout << '\n';
+}
+template<typename T,size_t N>
+void printArray( const std::array<T,N>& v, std::string msg=std::string() )
+{
+	std::cout << "array: " << msg << " #=" << N << '\n';
+	for( const auto& elem: v )
+		std::cout << elem << "-";
+	std::cout << '\n';
+}
+template<typename T>
+void printVectorPairs( const std::vector<std::pair<T,T>>& v )
+{
+	std::cout << "vector of pairs: #=" << v.size() << '\n';
+	for( const auto& elem: v )
+		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
+	std::cout << '\n';
+}
+
 } // namespace priv
 
 
@@ -2693,7 +2727,8 @@ public:
 	friend std::ostream&
 	operator << ( std::ostream& f, const IntersectM& i )
 	{
-		f << "IntersectM: size=" << i.size() << '\n' << i._vecInters;
+		f << "IntersectM: size=" << i.size() << '\n';
+		priv::printVector( i._vecInters );
 		return f;
 	}
 };
@@ -3832,40 +3867,6 @@ getOrthogonalLine_B2( const Point2d_<T2>& pt, const Line2d_<T1>& li )
 	return out;
 }
 
-#ifdef HOMOG2D_DEBUGMODE
-template<typename T>
-void printVector( const std::vector<T>& v, std::string msg=std::string(), bool linefeed=false )
-{
-	std::cout << "vector: ";
-	if( !msg.empty() )
-		std::cout << msg;
-	std::cout << " #=" << v.size() << '\n';
-	size_t c=0;
-	for( const auto& elem: v )
-	{
-		if( linefeed )
-			std::cout << c++ << ": ";
-		std::cout << elem << (linefeed?'\n':'-');
-	}
-	std::cout << '\n';
-}
-template<typename T,size_t N>
-void printArray( const std::array<T,N>& v, std::string msg=std::string() )
-{
-	std::cout << "array: " << msg << " #=" << N<< '\n';
-	for( const auto& elem: v )
-		std::cout << elem << "-";
-	std::cout << '\n';
-}
-template<typename T>
-void printVectorPairs( const std::vector<std::pair<T,T>>& v )
-{
-	std::cout << "vector of pairs: #=" << v.size() << '\n';
-	for( const auto& elem: v )
-		std::cout << " [" << (int)elem.first << "-" << (int)elem.second << "] ";
-	std::cout << '\n';
-}
-#endif
 } // namespace priv
 
 // forward declaration
@@ -5400,7 +5401,7 @@ public:
 		return getLine().isParallelTo( other );
 	}
 
-	/// Returns point that is at middle distance between \c p1 and \c p2
+/// Returns point at middle distance between \c p1 and \c p2
 	auto
 	getCenter() const
 	{
@@ -11475,12 +11476,24 @@ getExtended( const Segment_<FPT>& seg )
 
 /// Returns a pair of segments, corresponding to the input segment split by middle point (free function)
 /// \sa Segment_::split()
-template<typename FPT>
-std::pair<Segment_<FPT>,Segment_<FPT>>
-split( const Segment_<FPT>& seg )
+template<typename SV,typename FPT>
+std::pair<base::SegVec<SV,FPT>,base::SegVec<SV,FPT>>
+split( const base::SegVec<SV,FPT>& seg )
 {
 	return seg.split();
 }
+
+/// Returns a pair of segments, corresponding to the input segment split by point at distance \c dist (free function)
+/// \note: can only be used on oriented segments
+/// \sa Segment_::split( T )
+template<typename FPT, typename T>
+std::pair<OSegment_<FPT>,OSegment_<FPT>>
+split( const OSegment_<FPT>& seg, T dist )
+{
+	HOMOG2D_CHECK_IS_NUMBER(T);
+	return seg.split( dist );
+}
+
 
 /// Returns the 4 orthogonal segments to the segment
 /// \sa Segment_::getOrthogSegs()

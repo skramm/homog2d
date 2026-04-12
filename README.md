@@ -57,7 +57,7 @@ will print:
 [7,8]
 ```
 
-(Depending on your GCC version, you might need to add `--std::c++17` to the compiler call above.)
+(Depending on your GCC version, you might need to add `--std=c++17` to the compiler call above.)
 
 #### TRYME2:
 
@@ -76,7 +76,8 @@ It will generate this Svg file:
 
 ### News
 
-- 2025-01-26: fresh 2.12 release, see https://github.com/skramm/homog2d/releases
+- 2025-06-13: fresh 2.13 release, see https://github.com/skramm/homog2d/releases
+- 2025-01-26: 2.12 release, see https://github.com/skramm/homog2d/releases
 - 2024-04-21: switch to C++17, enable runtime polymorphism using `std::variant`, [see here](docs/homog2d_manual.md#section_rtp), and the use of `if constexpr`
 - 2024-03-23: added SVG "path" element import
 - 2023-12-26: 2.11 release
