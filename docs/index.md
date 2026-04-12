@@ -1,12 +1,15 @@
 # Index
 * [Big numbers](homog2d_manual.md#bignum)
 * [Boost Geometry library](homog2d_manual.md#boost_geom_1)
+* [Bounding Box](homog2d_manual.md#bbox_set)
 * [Build options](homog2d_manual.md#build_options)
+* [centroid](homog2d_manual.md#polyline_centroid)
 * [Circle](homog2d_manual.md#p_circle)
 * [Convex Hull](homog2d_manual.md#convex-hull-ff)
 * [Drawing parameters](homog2d_manual.md#drawing_params)
 * [Ellipse](homog2d_manual.md#p_ellipse)
 * [Homographies](homog2d_manual.md#matrix)
+* [IOU](homog2d_manual.md#rectangle_iou)
 * [Lines and Points](homog2d_manual.md#basic)
 * [Minimum Enclosing Circle (MEC)](homog2d_manual.md#minenccir)
 * [Numerical data types](homog2d_manual.md#numdt)
@@ -27,4 +30,4 @@
 * [ttmath library](homog2d_manual.md#bignum)
 * [Welzl](homog2d_manual.md#minenccir)
 <hr>
-Page generated on 2025-02-24
+Page generated on 2026-04-12
