@@ -17,8 +17,7 @@ See [Release page](https://github.com/skramm/homog2d/releases).
   - polygon splitting
 
 - current master branch
-
-(NIL)
+  - minor doc edits
 
 - [v2.13](https://github.com/skramm/homog2d/releases/tag/v2.13), released on 2025-06-16
   - changed behavior of the `size()` member and free functions:

@@ -1,3 +1,4 @@
+# Generates the output markdown index from input csv file
 
 sort --ignore-case index.csv >/tmp/index.csv
 outfn=index.md
@@ -19,3 +20,4 @@ done < /tmp/index.csv
 
 echo "<hr>">>$outfn
 echo "Page generated on $(date '+%Y-%m-%d')">>$outfn
+
