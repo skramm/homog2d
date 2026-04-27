@@ -27,3 +27,7 @@ Opencv;manual;drawing
 SVG drawing;manual;drawing
 Rectangle union/intersection;manual;frect_union
 Welzl;manual;minenccir
+centroid;manual;polyline_centroid
+IOU;manual;rectangle_iou
+Bounding Box;manual;bbox_set
+

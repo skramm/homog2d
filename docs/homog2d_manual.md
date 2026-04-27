@@ -976,6 +976,7 @@ You can check if it fullfilths the requirements to be a **simple polygon** (must
 <br>
 See [definition here](https://en.wikipedia.org/wiki/Simple_polygon).
 
+<a name="polyline_centroid"></a>
 
 If it is, you can get its area and its centroid point:
 ```C++
@@ -986,6 +987,10 @@ if( pl.isSimple() ) {  // or : if( isSimple(pl) )  (free function)
 	std::cout << "centroid point=" << pl.centroid();
 }
 ```
+
+![centroid](img/polyline_centroid.svg)
+
+source: [polyline_centroid.cpp](../misc/figures_src/src/polyline_centroid.cpp)
 
 Please note that if not a simple polygon, or if applied on a open type, then the `area()` function will return 0 but the `centroid()` function will throw.
 
@@ -1600,6 +1605,8 @@ For the union, if there is no intersection, the function will return an empty `C
 
 If one rectangle is inside the other one, then the union will return the largest rectangle (as a Polyline object), ant the intersection will return the smallest one.
 
+
+<a name="rectangle_iou"></a>
 For conveniency, a function `IoU()` is provided.
 It computes the ratio of the area of the intersection of two rectangles over the area of the union of these two rectangles.
 See this [WP page](https://en.wikipedia.org/wiki/Jaccard_index) where this is described.

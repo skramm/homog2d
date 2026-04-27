@@ -2,6 +2,7 @@
 // used to build a figure that is included in manual
 // see makefile target doc_fig
 
+#define HOMOG2D_USE_OPENCV
 #include "fig_src.header"
 
 int main()
